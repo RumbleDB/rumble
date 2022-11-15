@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -35,7 +36,6 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -53,6 +53,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -325,7 +326,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             sequenceDependencies
         );
 
-        System.err.println("[INFO] Rumble detected an equi-join in the left clause.");
+        LogManager.getLogger("LetClauseSparkIterator").info("Rumble detected an equi-join in the left clause.");
 
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
@@ -727,7 +728,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
-                        ItemParser.decimalType
+                        TypeMappings.decimalType
                     );
                 return true;
             }
@@ -744,7 +745,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
-                        ItemParser.decimalType
+                        TypeMappings.decimalType
                     );
                 return true;
             }
@@ -803,9 +804,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a let clause to a native SQL query."
-        );
+        LogManager.getLogger("LetClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a let clause to a native SQL query."
+            );
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         return dataFrame.sparkSession()

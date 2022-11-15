@@ -192,6 +192,14 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             Name variable
     ) {
+        if (variable.equals(Name.CONTEXT_ITEM)) {
+            for (String columnName : inputSchema.fieldNames()) {
+                if (columnName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         String escapedName = variable.getLocalName().replace("`", FlworDataFrameUtils.backtickEscape);
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
@@ -327,6 +335,14 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             Name variable
     ) {
+        if (variable.equals(Name.CONTEXT_ITEM)) {
+            for (String columnName : inputSchema.fieldNames()) {
+                if (columnName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -808,6 +824,9 @@ public class FlworDataFrameUtils {
             List<FlworDataFrameColumn> columnNames,
             boolean trailingComma
     ) {
+        if (columnNames.isEmpty() && !trailingComma) {
+            return "'' AS `" + SparkSessionManager.temporaryColumnName + "`";
+        }
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (FlworDataFrameColumn var : columnNames) {

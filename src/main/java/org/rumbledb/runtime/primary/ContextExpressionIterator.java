@@ -20,13 +20,22 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
 
+import sparksoniq.spark.SparkSessionManager;
+
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -54,5 +63,36 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
         return result;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        DataType schema = nativeClauseContext.getSchema();
+        if (!(schema instanceof StructType)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        // check if name is in the schema
+        StructType structSchema = (StructType) schema;
+        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, Name.CONTEXT_ITEM)) {
+            List<Item> items = nativeClauseContext.getContext()
+                .getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return items.get(0).generateNativeQuery(nativeClauseContext);
+        }
+        if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, Name.CONTEXT_ITEM)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        StructField field = structSchema.fields()[structSchema.fieldIndex(
+            SparkSessionManager.atomicJSONiqItemColumnName
+        )];
+        DataType fieldType = field.dataType();
+        ItemType variableType = FlworDataFrameUtils.mapToJsoniqType(fieldType);
+        NativeClauseContext newContext = new NativeClauseContext(
+                nativeClauseContext,
+                "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
+                variableType
+        );
+        newContext.setSchema(fieldType);
+        return newContext;
     }
 }

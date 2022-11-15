@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -184,9 +185,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         // }
 
         if (optimizableJoin) {
-            System.err.println(
-                "[INFO] Rumble detected that it can optimize your query and make it faster with an equi-join."
-            );
+            LogManager.getLogger("JoinClauseSparkIterator")
+                .info(
+                    "Rumble detected that it can optimize your query and make it faster with an equi-join."
+                );
         }
 
 
@@ -463,9 +465,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a join to a native SQL query."
-        );
+        LogManager.getLogger("JoinClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a join to a native SQL query."
+            );
         String left = FlworDataFrameUtils.createTempView(leftInputTuple);
         String right = FlworDataFrameUtils.createTempView(rightInputTuple);
         List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(

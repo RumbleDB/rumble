@@ -34,7 +34,6 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -67,9 +66,6 @@ public class ItemParser implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
-    private static final DataType vectorType = new VectorUDT();
-    public static final DataType integerType = new DecimalType(38, 0);
-    public static final DataType decimalType = new DecimalType(38, 19);
 
     /**
      * Parses a JSON string to an item.
@@ -426,13 +422,13 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
         } else if (fieldType.equals(DataTypes.LongType)) {
-            BigDecimal value;
+            long value;
             if (row != null) {
-                value = new BigDecimal(row.getLong(i));
+                value = row.getLong(i);
             } else {
-                value = new BigDecimal((Long) o);
+                value = ((Long) o).longValue();
             }
-            Item item = ItemFactory.getInstance().createDecimalItem(value);
+            Item item = ItemFactory.getInstance().createLongItem(value);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem)) {
                 return item;
             } else {
@@ -440,6 +436,15 @@ public class ItemParser implements Serializable {
             }
         } else if (fieldType.equals(DataTypes.NullType)) {
             return ItemFactory.getInstance().createNullItem();
+        } else if (fieldType.equals(DataTypes.ByteType)) {
+            byte value;
+            if (row != null) {
+                value = row.getByte(i);
+            } else {
+                value = (Byte) o;
+            }
+            Item item = ItemFactory.getInstance().createIntItem(value);
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
             if (row != null) {
@@ -575,93 +580,5 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
-    }
-
-    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
-            return DataTypes.BooleanType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
-            return DataTypes.DoubleType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-            return DataTypes.FloatType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-            return DataTypes.IntegerType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
-            return DataTypes.LongType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-            return integerType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
-            return decimalType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-            return DataTypes.NullType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
-            return DataTypes.DateType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return DataTypes.TimestampType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
-            return DataTypes.BinaryType;
-        }
-        throw new IllegalArgumentException(
-                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
-        );
-    }
-
-    public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
-        if (DataTypes.BooleanType.equals(dataType)) {
-            return BuiltinTypesCatalogue.booleanItem.getName();
-        }
-        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return BuiltinTypesCatalogue.integerItem.getName();
-        }
-        if (DataTypes.DoubleType.equals(dataType)) {
-            return BuiltinTypesCatalogue.doubleItem.getName();
-        }
-        if (DataTypes.FloatType.equals(dataType)) {
-            return BuiltinTypesCatalogue.floatItem.getName();
-        }
-        if (dataType instanceof DecimalType && ((DecimalType) dataType).scale() == 0) {
-            return BuiltinTypesCatalogue.integerItem.getName();
-        }
-        if (dataType instanceof DecimalType) {
-            return BuiltinTypesCatalogue.decimalItem.getName();
-        }
-        if (DataTypes.LongType.equals(dataType)) {
-            return BuiltinTypesCatalogue.decimalItem.getName();
-        }
-        if (DataTypes.StringType.equals(dataType)) {
-            return BuiltinTypesCatalogue.stringItem.getName();
-        }
-        if (DataTypes.NullType.equals(dataType)) {
-            return BuiltinTypesCatalogue.nullItem.getName();
-        }
-        if (DataTypes.DateType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateItem.getName();
-        }
-        if (DataTypes.TimestampType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateTimeItem.getName();
-        }
-        if (DataTypes.BinaryType.equals(dataType)) {
-            return BuiltinTypesCatalogue.hexBinaryItem.getName();
-        }
-        if (vectorType.equals(dataType)) {
-            return BuiltinTypesCatalogue.objectItem.getName();
-        }
-        throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
 }
