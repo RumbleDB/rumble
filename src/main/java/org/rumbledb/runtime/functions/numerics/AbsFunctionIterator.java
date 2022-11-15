@@ -28,6 +28,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.util.List;
 
@@ -68,5 +69,14 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDecimalItem(value.getDecimalValue().abs());
         }
         throw new OurBadException("Numeric value expected in abs()");
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if(nativeChildQuery != NativeClauseContext.NoNativeQuery) {
+            return new NativeClauseContext(nativeClauseContext, "ABS (" + nativeChildQuery.getResultingQuery() + ")", nativeChildQuery.getResultingType());
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }
