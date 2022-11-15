@@ -577,51 +577,6 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
-            return DataTypes.BooleanType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
-            return DataTypes.DoubleType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-            return DataTypes.FloatType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-            return DataTypes.IntegerType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
-            return DataTypes.LongType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-            return integerType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
-            return decimalType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-            return DataTypes.NullType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
-            return DataTypes.DateType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return DataTypes.TimestampType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
-            return DataTypes.BinaryType;
-        }
-        throw new IllegalArgumentException(
-                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
-        );
-    }
-
     public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
             return BuiltinTypesCatalogue.booleanItem.getName();

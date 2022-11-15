@@ -23,6 +23,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
@@ -178,7 +179,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (itemType.isObjectItemType()) {
             return convertToDataFrameSchema(itemType);
         }
-        return ItemParser.getDataFrameDataTypeFromItemType(itemType);
+        return getDataFrameDataTypeFromItemType(itemType);
     }
 
     public static JSoundDataFrame convertLocalItemsToDataFrame(
@@ -462,5 +463,56 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         return item;
+    }
+
+    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
+            return DataTypes.BooleanType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            return DataTypes.DoubleType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            return DataTypes.FloatType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.byteItem)) {
+            return DataTypes.ByteType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.shortItem)) {
+            return DataTypes.ShortType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
+            return DataTypes.IntegerType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
+            return DataTypes.LongType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+            return ItemParser.integerType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+            return ItemParser.decimalType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+            return DataTypes.StringType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
+            return DataTypes.StringType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+            return DataTypes.NullType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
+            return DataTypes.DateType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return DataTypes.TimestampType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
+            return DataTypes.BinaryType;
+        }
+        throw new IllegalArgumentException(
+                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
+        );
     }
 }

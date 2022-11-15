@@ -237,7 +237,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         List<StructField> fields = Collections.singletonList(
             DataTypes.createStructField(
                 SparkSessionManager.atomicJSONiqItemColumnName,
-                itemType.toDataFrameType(),
+                ValidateTypeIterator.getDataFrameDataTypeFromItemType(itemType),
                 true
             )
         );
