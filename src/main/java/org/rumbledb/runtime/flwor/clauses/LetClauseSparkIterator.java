@@ -36,7 +36,6 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -54,6 +53,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -728,7 +728,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
-                        ItemParser.decimalType
+                        TypeMappings.decimalType
                     );
                 return true;
             }
@@ -745,7 +745,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
-                        ItemParser.decimalType
+                        TypeMappings.decimalType
                     );
                 return true;
             }

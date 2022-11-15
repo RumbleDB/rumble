@@ -1,12 +1,16 @@
 package org.rumbledb.types;
 
+import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.parsing.ItemParser;
 
 public class TypeMappings {
+
+    public static final DataType vectorType = new VectorUDT();
+    public static final DataType integerType = new DecimalType(38, 0);
+    public static final DataType decimalType = new DecimalType(38, 19);
 
     public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
@@ -31,10 +35,10 @@ public class TypeMappings {
             return DataTypes.LongType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-            return ItemParser.integerType;
+            return integerType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
-            return ItemParser.decimalType;
+            return decimalType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
@@ -102,7 +106,7 @@ public class TypeMappings {
         if (DataTypes.BinaryType.equals(dataType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
         }
-        if (ItemParser.vectorType.equals(dataType)) {
+        if (vectorType.equals(dataType)) {
             return BuiltinTypesCatalogue.objectItem;
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");

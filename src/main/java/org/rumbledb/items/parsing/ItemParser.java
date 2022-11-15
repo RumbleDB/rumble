@@ -66,9 +66,6 @@ public class ItemParser implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
-    public static final DataType vectorType = new VectorUDT();
-    public static final DataType integerType = new DecimalType(38, 0);
-    public static final DataType decimalType = new DecimalType(38, 19);
 
     /**
      * Parses a JSON string to an item.

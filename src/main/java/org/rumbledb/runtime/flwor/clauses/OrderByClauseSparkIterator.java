@@ -49,6 +49,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
@@ -61,9 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import static org.rumbledb.items.parsing.ItemParser.decimalType;
-import static org.rumbledb.items.parsing.ItemParser.integerType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -369,7 +367,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.integerItem.getName())) {
-                columnType = integerType;
+                columnType = TypeMappings.integerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.intItem.getName())) {
                 columnType = DataTypes.IntegerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
@@ -377,7 +375,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.floatItem.getName())) {
                 columnType = DataTypes.FloatType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
-                columnType = decimalType;
+                columnType = TypeMappings.decimalType;
             } else if (
                 columnTypeString.equals(BuiltinTypesCatalogue.durationItem.getName())
                     || columnTypeString.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
