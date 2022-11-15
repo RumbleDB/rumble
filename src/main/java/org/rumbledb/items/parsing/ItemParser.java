@@ -440,6 +440,15 @@ public class ItemParser implements Serializable {
             }
         } else if (fieldType.equals(DataTypes.NullType)) {
             return ItemFactory.getInstance().createNullItem();
+        } else if (fieldType.equals(DataTypes.ByteType)) {
+            byte value;
+            if (row != null) {
+                value = row.getByte(i);
+            } else {
+                value = (Byte) o;
+            }
+            Item item = ItemFactory.getInstance().createIntItem(value);
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
             if (row != null) {
@@ -581,8 +590,17 @@ public class ItemParser implements Serializable {
         if (DataTypes.BooleanType.equals(dataType)) {
             return BuiltinTypesCatalogue.booleanItem.getName();
         }
-        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
+        if (DataTypes.LongType.equals(dataType)) {
+            return BuiltinTypesCatalogue.decimalItem.getName();
+        }
+        if (DataTypes.IntegerType.equals(dataType)) {
             return BuiltinTypesCatalogue.integerItem.getName();
+        }
+        if (DataTypes.ShortType.equals(dataType)) {
+            return BuiltinTypesCatalogue.shortItem.getName();
+        }
+        if (DataTypes.ByteType.equals(dataType)) {
+            return BuiltinTypesCatalogue.byteItem.getName();
         }
         if (DataTypes.DoubleType.equals(dataType)) {
             return BuiltinTypesCatalogue.doubleItem.getName();
@@ -594,9 +612,6 @@ public class ItemParser implements Serializable {
             return BuiltinTypesCatalogue.integerItem.getName();
         }
         if (dataType instanceof DecimalType) {
-            return BuiltinTypesCatalogue.decimalItem.getName();
-        }
-        if (DataTypes.LongType.equals(dataType)) {
             return BuiltinTypesCatalogue.decimalItem.getName();
         }
         if (DataTypes.StringType.equals(dataType)) {
