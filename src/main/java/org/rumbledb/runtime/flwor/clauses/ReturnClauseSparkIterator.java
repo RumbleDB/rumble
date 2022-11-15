@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -352,9 +353,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a return clause to a native SQL query."
-        );
+        LogManager.getLogger("ReturnClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a return clause to a native SQL query."
+            );
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         Dataset<Row> result = dataFrame.sparkSession()
             .sql(

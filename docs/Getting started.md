@@ -35,17 +35,17 @@ Do make sure it is not Java 17, which will not work.
 
 RumbleDB is just a download and no installation is required.
 
-In order to run RumbleDB, you simply need to download rumbledb-1.19.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
+In order to run RumbleDB, you simply need to download rumbledb-1.20.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
 Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
 You can test that it works with:
 
-    java -jar rumbledb-1.19.0-standalone.jar run -q '1+1'
+    java -jar rumbledb-1.20.0-standalone.jar run -q '1+1'
 
 or launch a JSONiq shell with:
 
-    java -jar rumbledb-1.19.0-standalone.jar repl
+    java -jar rumbledb-1.20.0-standalone.jar repl
     
 If you run out of memory, you can set allocate more memory to Java with an additional Java parameter, e.g., -Xmx10g
 
@@ -78,11 +78,11 @@ If you use Linux, Florian Kellner also kindly contributed an [installation scrip
 
 RumbleDB requires an Apache Spark installation on Linux, Mac or Windows.
 
-It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.1.2. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
+It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.2.2. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
 
 What you need to do then is to add the subdirectory "bin" within the unpacked directory to the PATH variable. On macOS this is done by adding
 
-    export SPARK_HOME=/path/to/spark-3.1.2-bin-hadoop3.2
+    export SPARK_HOME=/path/to/spark-3.2.2-bin-hadoop3.2
     export PATH=$SPARK_HOME/bin:$PATH
 
 (with SPARK_HOME appropriately set to match your unzipped Spark directory) to the file .zshrc in your home directory, then making sure to force the change with
@@ -92,8 +92,6 @@ What you need to do then is to add the subdirectory "bin" within the unpacked di
 in the shell. In Windows, changing the PATH variable is done in the control panel. In Linux, it is similar to macOS.
 
 As an alternative, users who love the command line can also install Spark with a package management system instead, such as brew (on macOS) or apt-get (on Ubuntu). However, these might be less predictable than a raw download.
-
-Spark 3.2 has not been thoroughly tested by us yet. We had to fix an issue by downgrading the Kryo version we use to Kryo 4 because Spark uses Kryo 4 in a way incompatible with Kryo 5. This may lead to a performance regression if you use Spark 3.2.
 
 You can test that Spark was correctly installed with:
 
@@ -113,11 +111,9 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download one of the small .jar files from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 3.0+, use rumbledb-1.19.0-for-spark-3.0.jar.
+If you use Spark 3.2+, use rumbledb-1.20.0-for-spark-3.2.jar.
 
-If you use Spark 3.1+, use rumbledb-1.19.0-for-spark-3.1.jar.
-
-If you use Spark 3.2+, use rumbledb-1.19.0-for-spark-3.2.jar.
+If you use Spark 3.3+, use rumbledb-1.20.0-for-spark-3.3.jar.
 
 These jars do not embed Spark, since you chose to set it up separately. They will work with your Spark installation with the spark-submit command.
 
@@ -162,7 +158,7 @@ The RumbleDB shell appears:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.19.0 "Tipuana Tipu" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.20.0 "Honeylocust" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     
