@@ -420,8 +420,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         // handle 'parquet-file' function
         if (
-            functionName.equals(Name.createVariableInDefaultFunctionNamespace("parquet-file"))
-                && args.size() > 0
+                functionName.equals(Name.createVariableInDefaultFunctionNamespace("parquet-file"))
+                        && args.size() > 0
                 && args.get(0) instanceof StringLiteralExpression
         ) {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
@@ -431,10 +431,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             try {
                 StructType s = SparkSessionManager.getInstance()
-                    .getOrCreateSession()
-                    .read()
-                    .parquet(uri.toString())
-                    .schema();
+                        .getOrCreateSession()
+                        .read()
+                        .parquet(uri.toString())
+                        .schema();
                 ItemType schemaItemType = ItemTypeFactory.createItemType(s);
                 // TODO : check if arity is correct
                 expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
@@ -1558,7 +1558,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMetadata()
             );
         }
-
+        if(mainType.getItemType().isArrayItemType()){
+            SequenceType sequenceType = new SequenceType(mainType.getItemType().getArrayContentFacet()).incrementArity();
+            expression.setStaticSequenceType(sequenceType);
+            return argument;
+        }
         expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
         return argument;
     }
