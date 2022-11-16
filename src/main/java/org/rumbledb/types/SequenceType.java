@@ -287,7 +287,7 @@ public class SequenceType implements Serializable {
                 return this == Arity.Zero;
             }
             if (this == Zero) {
-                return this == Arity.ZeroOrMore || this == Arity.OneOrZero;
+                return superArity == Arity.ZeroOrMore || superArity == Arity.OneOrZero;
             }
             if (superArity == Arity.ZeroOrMore || superArity == this)
                 return true;
