@@ -53,7 +53,7 @@ public class SimpleMapExpression extends Expression {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.leftExpression.getHighestExecutionMode(visitorConfig);
-        if(this.highestExecutionMode == ExecutionMode.DATAFRAME){
+        if (this.highestExecutionMode == ExecutionMode.DATAFRAME) {
             this.highestExecutionMode = ExecutionMode.RDD;
         }
     }
