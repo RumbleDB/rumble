@@ -249,7 +249,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new LetClauseSparkIterator(
                     previousIterator,
                     letClause.getVariableName(),
-                    letClause.getActualSequenceType(),
+                    letClause.getStaticType(),
                     assignmentIterator,
                     letClause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()

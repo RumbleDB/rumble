@@ -371,30 +371,22 @@ public class VariableValues implements Serializable, KryoSerializable {
         return sb.toString();
     }
 
-    public void importModuleValues(VariableValues moduleValues, String targetNamespace) {
+    public void importModuleValues(VariableValues moduleValues) {
         for (Name name : moduleValues.localVariableValues.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                List<Item> items = moduleValues.localVariableValues.get(name);
-                this.localVariableValues.put(name, items);
-            }
+            List<Item> items = moduleValues.localVariableValues.get(name);
+            this.localVariableValues.put(name, items);
         }
         for (Name name : moduleValues.localVariableCounts.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                Item item = moduleValues.localVariableCounts.get(name);
-                this.localVariableCounts.put(name, item);
-            }
+            Item item = moduleValues.localVariableCounts.get(name);
+            this.localVariableCounts.put(name, item);
         }
         for (Name name : moduleValues.rddVariableValues.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                JavaRDD<Item> items = moduleValues.rddVariableValues.get(name);
-                this.rddVariableValues.put(name, items);
-            }
+            JavaRDD<Item> items = moduleValues.rddVariableValues.get(name);
+            this.rddVariableValues.put(name, items);
         }
         for (Name name : moduleValues.dataFrameVariableValues.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
-                this.dataFrameVariableValues.put(name, items);
-            }
+            JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
+            this.dataFrameVariableValues.put(name, items);
         }
     }
 }

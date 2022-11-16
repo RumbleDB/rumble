@@ -103,6 +103,40 @@ public class ItemTypeFactory {
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
+    /**
+     * Create an anonymous object type from keys and values.
+     * 
+     * @param keys a list of String representing the keys of the object
+     * @param values a list of ItemType of the values, all with arity == Arity.One
+     * @return an anonymous object type based on the provided keys and values
+     */
+    public static ItemType createAnonymousObjectType(List<String> keys, List<ItemType> values) {
+        if (keys.size() != values.size()) {
+            throw new InvalidSchemaException(
+                    "Key list and value list must have the same dimensions",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            ItemType field = values.get(i);
+            FieldDescriptor fieldDescriptor = new FieldDescriptor();
+            fieldDescriptor.setName(key);
+            fieldDescriptor.setType(field);
+            fieldDescriptor.setRequired(true);
+            content.put(key, fieldDescriptor);
+        }
+        return new ObjectItemType(
+                null,
+                BuiltinTypesCatalogue.objectItem,
+                true,
+                content,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
         if (!item.isObject()) {
             throw new InvalidSchemaException(

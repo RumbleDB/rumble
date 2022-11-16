@@ -35,6 +35,7 @@ import java.util.List;
 public class FunctionDeclaration extends Node {
 
     private final InlineFunctionExpression functionExpression;
+    private boolean recursive = false;
 
     public FunctionDeclaration(
             InlineFunctionExpression functionExpression,
@@ -89,6 +90,14 @@ public class FunctionDeclaration extends Node {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         this.functionExpression.serializeToJSONiq(sb, 0);
+    }
+
+    public boolean isRecursive() {
+        return this.recursive;
+    }
+
+    public void setRecursive(boolean recursive) {
+        this.recursive = recursive;
     }
 }
 

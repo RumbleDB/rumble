@@ -38,6 +38,7 @@ public class LetClause extends Clause {
 
     private final Name variableName;
     protected SequenceType sequenceType;
+    protected SequenceType staticType;
     protected Expression expression;
 
     // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
@@ -118,8 +119,10 @@ public class LetClause extends Clause {
             " ("
                 + (this.variableName)
                 + ", "
-                + this.getSequenceType().toString()
-                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ((this.getStaticType() != null) ? this.getStaticType().toString() : "(unset)")
+                + ((this.getStaticType() != null)
+                    ? (this.getStaticType().isResolved() ? " (resolved)" : " (unresolved)")
+                    : "")
                 + ") "
         );
         buffer.append(")");
@@ -142,5 +145,13 @@ public class LetClause extends Clause {
         sb.append(" := (");
         this.expression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
+    }
+
+    public SequenceType getStaticType() {
+        return this.staticType;
+    }
+
+    public void setStaticType(SequenceType staticType) {
+        this.staticType = staticType;
     }
 }
