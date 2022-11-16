@@ -1896,7 +1896,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             groupingVars.add(groupByVar.getVariableName());
         }
 
-        // finally if there was a for clause we need to change the arity of the variables binded so far in the flowr
+        // finally if there was a for clause we need to change the arity of the variables bound so far in the flwor
         // expression, from ? to * and from 1 to +
         // excluding the grouping variables
         StaticContext firstClauseStaticContext = expression.getFirstClause().getStaticContext();
