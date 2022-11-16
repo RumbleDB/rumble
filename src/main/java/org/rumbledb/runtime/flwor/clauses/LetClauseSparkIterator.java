@@ -386,20 +386,22 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     new GroupClauseSerializeAggregateResultsUDF(),
                     DataTypes.BinaryType
                 );
+            FlworDataFrameColumn newVariableNameAggregatedColumn = new FlworDataFrameColumn(
+                    this.variableName,
+                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
+            );
+
             expressionDF = expressionDF.sparkSession()
                 .sql(
                     String.format(
                         "SELECT `%s`, serializeArray(%s) AS %s FROM %s",
                         SparkSessionManager.rightHandSideHashColumnName,
                         variableNameAggregatedColumn,
-                        variableNameAggregatedColumn,
+                        newVariableNameAggregatedColumn,
                         groupedResults
                     )
                 );
-            variableNameAggregatedColumn = new FlworDataFrameColumn(
-                    this.variableName,
-                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
-            );
+            variableNameAggregatedColumn = newVariableNameAggregatedColumn;
         }
         String groupedAndSerializedResults = FlworDataFrameUtils.createTempView(expressionDF);
         variableNameAggregatedColumn.setTableName(groupedAndSerializedResults);
