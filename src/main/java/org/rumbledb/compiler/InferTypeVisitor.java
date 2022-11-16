@@ -1558,7 +1558,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMetadata()
             );
         }
-
+        if (mainType.getItemType().isArrayItemType()) {
+            SequenceType sequenceType = new SequenceType(mainType.getItemType().getArrayContentFacet())
+                .incrementArity();
+            expression.setStaticSequenceType(sequenceType);
+            return argument;
+        }
         expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
         return argument;
     }
