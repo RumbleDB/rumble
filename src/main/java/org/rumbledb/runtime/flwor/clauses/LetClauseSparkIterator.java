@@ -389,10 +389,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             expressionDF = expressionDF.sparkSession()
                 .sql(
                     String.format(
-                        "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM %s",
+                        "SELECT `%s`, serializeArray`%s) AS %s FROM %s",
                         SparkSessionManager.rightHandSideHashColumnName,
-                        this.variableName,
-                        this.variableName,
+                        variableNameAggregatedColumn,
+                        variableNameAggregatedColumn,
                         groupedResults
                     )
                 );
