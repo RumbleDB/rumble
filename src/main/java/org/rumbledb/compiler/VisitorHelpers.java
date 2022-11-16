@@ -23,6 +23,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -59,6 +60,21 @@ public class VisitorHelpers {
         if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
+    }
+
+    private static void findFunctionDependencies(Module module) {
+        new FunctionDependenciesVisitor().visit(module, null);
+    }
+
+    private static MainModule inlineFunctions(MainModule module) {
+        FunctionInliningVisitor functionInliningVisitor = new FunctionInliningVisitor();
+        MainModule result = new MainModule(
+                module.getProlog(),
+                (Expression) functionInliningVisitor.visit(module.getExpression(), module.getProlog()),
+                module.getMetadata()
+        );
+        result.setStaticContext(module.getStaticContext());
+        return result;
     }
 
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
@@ -138,6 +154,8 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
+            findFunctionDependencies(mainModule);
+            mainModule = inlineFunctions(mainModule);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);

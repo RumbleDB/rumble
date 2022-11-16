@@ -101,6 +101,15 @@ public class TypeSwitchExpression extends Expression {
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.defaultCase.getReturnExpression().getHighestExecutionMode(visitorConfig);
 
+        if (this.highestExecutionMode == ExecutionMode.DATAFRAME) {
+            for (TypeswitchCase c : this.cases) {
+                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isDataFrame()) {
+                    this.highestExecutionMode = ExecutionMode.RDD;
+                    break;
+                }
+            }
+        }
+
         if (this.highestExecutionMode == ExecutionMode.RDD) {
             for (TypeswitchCase c : this.cases) {
                 if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
