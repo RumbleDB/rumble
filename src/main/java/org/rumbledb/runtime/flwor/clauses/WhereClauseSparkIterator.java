@@ -346,9 +346,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(-1);
 
-            // leftTuples.show();
-            // rightTuples.show();
-
             Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
                 leftTuples,
@@ -361,7 +358,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 getMetadata()
             );
-            // result.show();
             return result;
         } catch (Exception e) {
             LogManager.getLogger("WhereClauseSparkIterator")
@@ -442,11 +438,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
         LogManager.getLogger("WhereClauseSparkIterator")
             .info(
-                "Rumble was able to optimize a where clause to a native SQL query."
+                "Rumble was able to optimize a where clause to a native SQL query: "
+                    + String.format(
+                        "select * from %s where %s",
+                        input,
+                        nativeQuery.getResultingQuery()
+                    )
             );
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
         return dataFrame.sparkSession()
             .sql(
                 String.format(

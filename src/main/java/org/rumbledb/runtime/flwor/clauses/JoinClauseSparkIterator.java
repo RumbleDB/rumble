@@ -223,8 +223,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        // leftInputTuple.show();
-        // rightInputTuple.show();
 
         // And we extend the expression and input tuple views with the hashes.
         if (optimizableJoin) {
@@ -238,7 +236,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 true
             );
-            // rightInputTuple.show();
             leftInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 leftInputTuple,
                 Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
@@ -249,7 +246,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 true
             );
-            // leftInputTuple.show();
         }
 
 
