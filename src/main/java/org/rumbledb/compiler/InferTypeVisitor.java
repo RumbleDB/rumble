@@ -1812,7 +1812,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getVariableName(),
             expression.getMetadata()
         );
-
+        expression.setStaticType(inferredType);
         return argument;
     }
 
