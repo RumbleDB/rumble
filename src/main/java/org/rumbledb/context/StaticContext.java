@@ -392,10 +392,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         StaticContext current = this.parent;
         while (current != null && current != stopContext) {
             for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
-                if (!varToExclude.contains(entry.getKey()) && !this.inScopeVariables.containsKey(entry.getKey())) {
+                if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
                         entry.getKey(),
-                        entry.getValue().getSequenceType().incrementArity(),
+                        varToExclude.contains(entry.getKey())
+                            ? entry.getValue().getSequenceType()
+                            : entry.getValue().getSequenceType().incrementArity(),
                         entry.getValue().getMetadata()
                     );
                 }
