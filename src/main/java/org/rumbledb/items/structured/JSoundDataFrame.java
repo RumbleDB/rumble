@@ -1,6 +1,7 @@
 package org.rumbledb.items.structured;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -194,5 +196,16 @@ public class JSoundDataFrame implements Serializable {
 
     public JSoundDataFrame repartition(int n) {
         return new JSoundDataFrame(this.getDataFrame().repartition(n), this.itemType);
+    }
+
+    /**
+     * @return list of FLWOR columns in the schema
+     */
+    public List<FlworDataFrameColumn> getColumns() {
+        List<FlworDataFrameColumn> result = new ArrayList<>();
+        for (String s : this.dataFrame.schema().fieldNames()) {
+            result.add(new FlworDataFrameColumn(s, this.dataFrame.schema()));
+        }
+        return result;
     }
 }

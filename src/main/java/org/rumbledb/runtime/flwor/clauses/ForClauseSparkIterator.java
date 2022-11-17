@@ -775,7 +775,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
-                List<FlworDataFrameColumn> fields = FlworDataFrameUtils.getColumns(rows.getDataFrame().schema());
+                List<FlworDataFrameColumn> fields = rows.getColumns();
                 String columnNames = FlworDataFrameUtils.getSQLColumnProjection(fields, false);
                 df = rows.getDataFrame()
                     .sparkSession()

@@ -79,7 +79,6 @@ import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -152,21 +151,6 @@ public class FlworDataFrameUtils {
             lastObjectItemCache.set(toSerialize);
         }
         return serializedBytes;
-    }
-
-    /**
-     * Retrieves the variable name represented by a physical data frame column.
-     * 
-     * @param columnName the column name.
-     * @return the variable name.
-     */
-    private static Name variableForColumnName(String columnName) {
-        int pos = columnName.indexOf(".");
-        if (pos == -1) {
-            return Name.createVariableInNoNamespace(columnName);
-        } else {
-            return Name.createVariableInNoNamespace(columnName.substring(0, pos));
-        }
     }
 
     /**
@@ -690,26 +674,6 @@ public class FlworDataFrameUtils {
         return new StructType(recursiveRename(schema, inverse));
     }
 
-    public static ItemType mapToJsoniqType(DataType type) {
-        // TODO: once type mapping is defined add string field to determine and document properly
-        if (type == DataTypes.StringType) {
-            return BuiltinTypesCatalogue.stringItem;
-        } else if (type == DataTypes.IntegerType) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (type.equals(DataTypes.createDecimalType())) {
-            // TODO: test correct working
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (type == DataTypes.LongType) {
-            return BuiltinTypesCatalogue.longItem;
-        } else if (type == DataTypes.DoubleType) {
-            return BuiltinTypesCatalogue.doubleItem;
-        } else if (type == DataTypes.FloatType) {
-            return BuiltinTypesCatalogue.floatItem;
-        } else {
-            return null;
-        }
-    }
-
     /**
      * Prepares a SQL projection for use in a GROUP BY query.
      * 
@@ -750,17 +714,17 @@ public class FlworDataFrameUtils {
                 } else if (column.isMin()) {
                     queryColumnString.append(String.format("min(%s)", column));
                 } else if (
-                    shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, column.getColumnName())
+                    shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, column)
                 ) {
                     queryColumnString.append("1");
-                } else if (shouldCalculateCount(dependencies, column.getColumnName())) {
+                } else if (shouldCalculateCount(dependencies, column)) {
                     if (column.isNativeSequence()) {
                         queryColumnString.append(String.format("sum(cardinality(%s))", column));
                     } else {
                         queryColumnString.append(String.format("count(%s)", column));
                     }
                     column = new FlworDataFrameColumn(column.getVariableName(), ColumnFormat.COUNT);
-                } else if (isProcessingGroupingColumn(groupbyVariableNames, column.getColumnName())) {
+                } else if (isProcessingGroupingColumn(groupbyVariableNames, column)) {
                     // rows that end up in the same group have the same value for the grouping column
                     // return a single instance of this value in the grouping column
                     queryColumnString.append(String.format("first(%s)", column));
@@ -792,16 +756,6 @@ public class FlworDataFrameUtils {
         return queryColumnString.toString();
     }
 
-    public static boolean isCountPreComputed(StructType schema, String columnName) {
-        String[] fields = schema.fieldNames();
-        for (String field : fields) {
-            if (field.equals(columnName)) {
-                return columnName.endsWith(".count");
-            }
-        }
-        throw new OurBadException("Column does not exist: " + columnName);
-    }
-
     public static boolean isNativeSequence(StructType schema, String columnName) {
         String[] fields = schema.fieldNames();
         for (String field : fields) {
@@ -815,30 +769,30 @@ public class FlworDataFrameUtils {
     private static boolean shouldCalculateCountGroupingColumn(
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> groupbyVariableNames,
-            String columnName
+            FlworDataFrameColumn column
     ) {
-        return dependencies.containsKey(variableForColumnName(columnName))
+        return dependencies.containsKey(column.getVariableName())
             && dependencies.get(
-                variableForColumnName(columnName)
+                column.getVariableName()
             ) == DynamicContext.VariableDependency.COUNT
-            && groupbyVariableNames.contains(variableForColumnName(columnName));
+            && groupbyVariableNames.contains(column.getVariableName());
     }
 
     private static boolean shouldCalculateCount(
             Map<Name, DynamicContext.VariableDependency> dependencies,
-            String columnName
+            FlworDataFrameColumn column
     ) {
-        return dependencies.containsKey(variableForColumnName(columnName))
+        return dependencies.containsKey(column.getVariableName())
             && dependencies.get(
-                variableForColumnName(columnName)
+                column.getVariableName()
             ) == DynamicContext.VariableDependency.COUNT;
     }
 
     private static boolean isProcessingGroupingColumn(
             List<Name> groupbyVariableNames,
-            String columnName
+            FlworDataFrameColumn column
     ) {
-        return groupbyVariableNames.contains(variableForColumnName(columnName));
+        return groupbyVariableNames.contains(column.getVariableName());
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
