@@ -124,6 +124,24 @@ public class JSoundDataFrame implements Serializable {
         return Arrays.asList(this.dataFrame.schema().fieldNames());
     }
 
+    public String getSQLColumnProjection(
+            boolean trailingComma
+    ) {
+        StringBuilder queryColumnString = new StringBuilder();
+        String comma = "";
+        for (String var : Arrays.asList(this.dataFrame.schema().fieldNames())) {
+            queryColumnString.append(comma);
+            comma = ",";
+            queryColumnString.append("`");
+            queryColumnString.append(var);
+            queryColumnString.append("`");
+        }
+        if (trailingComma) {
+            queryColumnString.append(comma);
+        }
+        return queryColumnString.toString();
+    }
+
     public void createOrReplaceTempView(String name) {
         this.dataFrame.createOrReplaceTempView(name);
     }

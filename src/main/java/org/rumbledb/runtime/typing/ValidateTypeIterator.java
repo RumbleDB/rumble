@@ -84,7 +84,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             List<Item> items = inputDataIterator.materialize(context);
             JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context);
-            // jdf.getDataFrame().show();
             return jdf;
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(

@@ -355,38 +355,56 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
         String hashedExpressionResults = FlworDataFrameUtils.createTempView(expressionDF);
+        FlworDataFrameColumn variableNameAggregatedColumn = new FlworDataFrameColumn(
+                this.variableName,
+                FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE
+        );
+        boolean isBinary = FlworDataFrameUtils.isVariableAvailableAsSerializedSequence(
+            expressionDF.schema(),
+            Name.CONTEXT_ITEM
+        );
         expressionDF = expressionDF.sparkSession()
             .sql(
                 String.format(
-                    "SELECT `%s`, collect_list(`%s`) AS `%s` FROM %s GROUP BY `%s`",
+                    "SELECT `%s`, collect_list(`%s`) AS %s FROM %s GROUP BY `%s`",
                     SparkSessionManager.rightHandSideHashColumnName,
                     Name.CONTEXT_ITEM.toString(),
-                    this.variableName,
+                    variableNameAggregatedColumn,
                     hashedExpressionResults,
                     SparkSessionManager.rightHandSideHashColumnName
                 )
             );
 
+
         // We serialize back all grouped items as sequences of items.
-        String groupedResults = FlworDataFrameUtils.createTempView(expressionDF);
-        expressionDF.sparkSession()
-            .udf()
-            .register(
-                "serializeArray",
-                new GroupClauseSerializeAggregateResultsUDF(),
-                DataTypes.BinaryType
-            );
-        expressionDF = expressionDF.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM %s",
-                    SparkSessionManager.rightHandSideHashColumnName,
+        if (isBinary) {
+            String groupedResults = FlworDataFrameUtils.createTempView(expressionDF);
+            expressionDF.sparkSession()
+                .udf()
+                .register(
+                    "serializeArray",
+                    new GroupClauseSerializeAggregateResultsUDF(),
+                    DataTypes.BinaryType
+                );
+            FlworDataFrameColumn newVariableNameAggregatedColumn = new FlworDataFrameColumn(
                     this.variableName,
-                    this.variableName,
-                    groupedResults
-                )
+                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
             );
+
+            expressionDF = expressionDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT `%s`, serializeArray(%s) AS %s FROM %s",
+                        SparkSessionManager.rightHandSideHashColumnName,
+                        variableNameAggregatedColumn,
+                        newVariableNameAggregatedColumn,
+                        groupedResults
+                    )
+                );
+            variableNameAggregatedColumn = newVariableNameAggregatedColumn;
+        }
         String groupedAndSerializedResults = FlworDataFrameUtils.createTempView(expressionDF);
+        variableNameAggregatedColumn.setTableName(groupedAndSerializedResults);
         String inputTuples = FlworDataFrameUtils.createTempView(inputDF);
 
         // We gather the columns to select.
@@ -406,11 +424,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         inputDF = inputDF.sparkSession()
             .sql(
                 String.format(
-                    "SELECT %s %s.`%s` AS `%s` FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
+                    "SELECT %s %s FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
                     projectionVariables,
-                    groupedAndSerializedResults,
-                    this.variableName,
-                    this.variableName,
+                    variableNameAggregatedColumn,
                     inputTuples,
                     groupedAndSerializedResults,
                     SparkSessionManager.rightHandSideHashColumnName,
@@ -644,21 +660,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
 
         } else {
-            // System.out.println(
-            // String.format(
-            // "select %s hashUDF(%s) as `%s` from input",
-            // selectSQL,
-            // UDFParameters,
-            // newVariableName
-            // )
-            // );
             dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
-                        "select %s hashUDF(%s) as `%s` from %s",
+                        "select %s hashUDF(%s) as %s from %s",
                         selectSQL,
                         UDFParameters,
-                        newVariableName,
+                        dfColumnNative,
                         input
                     )
                 );

@@ -107,6 +107,10 @@ public class FlworDataFrameColumn implements Serializable {
         return this.tableName;
     }
 
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
     public String getColumnName() {
         switch (this.columnFormat) {
             case SERIALIZED_SEQUENCE:
