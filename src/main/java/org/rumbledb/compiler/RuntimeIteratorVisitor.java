@@ -804,7 +804,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,
-                expression.getComparisonOperator(),
+                (((Expression) expression.getChildren().get(0)).getStaticSequenceType()
+                    .getArity() == SequenceType.Arity.One
+                    &&
+                    ((Expression) expression.getChildren().get(1)).getStaticSequenceType()
+                        .getArity() == SequenceType.Arity.One)
+                            ? ComparisonExpression.ComparisonOperator.getValueComparisonFromComparison(
+                                expression.getComparisonOperator()
+                            )
+                            : expression.getComparisonOperator(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
