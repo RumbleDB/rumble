@@ -638,7 +638,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMetadata()
             );
         }
-
+        if (expressionSequenceType.getArity() == SequenceType.Arity.One) {
+            castedSequenceType = new SequenceType(castedSequenceType.getItemType(), SequenceType.Arity.One);
+        }
         expression.setStaticSequenceType(castedSequenceType);
         return argument;
     }
@@ -1586,8 +1588,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         if (mainType.getItemType().isArrayItemType()) {
-            SequenceType sequenceType = new SequenceType(mainType.getItemType().getArrayContentFacet())
-                .incrementArity();
+            SequenceType sequenceType = new SequenceType(
+                    mainType.getItemType().getArrayContentFacet(),
+                    SequenceType.Arity.ZeroOrMore
+            );
             expression.setStaticSequenceType(sequenceType);
             return argument;
         }
