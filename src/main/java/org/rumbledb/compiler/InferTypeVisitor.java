@@ -1588,8 +1588,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         if (mainType.getItemType().isArrayItemType()) {
-            SequenceType sequenceType = new SequenceType(mainType.getItemType().getArrayContentFacet())
-                .incrementArity();
+            SequenceType sequenceType = new SequenceType(
+                    mainType.getItemType().getArrayContentFacet(),
+                    SequenceType.Arity.ZeroOrMore
+            );
             expression.setStaticSequenceType(sequenceType);
             return argument;
         }
