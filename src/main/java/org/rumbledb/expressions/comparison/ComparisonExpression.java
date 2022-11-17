@@ -112,6 +112,31 @@ public class ComparisonExpression extends Expression {
             }
             throw new OurBadException("Unrecognized comparison symbol: " + symbol);
         }
+
+        public static ComparisonOperator getValueComparisonFromComparison(ComparisonOperator operator) {
+            switch (operator) {
+                case VC_EQ:
+                case GC_EQ:
+                    return VC_EQ;
+                case VC_NE:
+                case GC_NE:
+                    return VC_NE;
+                case VC_LT:
+                case GC_LT:
+                    return VC_LT;
+                case VC_LE:
+                case GC_LE:
+                    return VC_LE;
+                case VC_GT:
+                case GC_GT:
+                    return VC_GT;
+                case VC_GE:
+                case GC_GE:
+                    return VC_GE;
+                default:
+                    return operator;
+            }
+        }
     };
 
     private Expression leftExpression;
