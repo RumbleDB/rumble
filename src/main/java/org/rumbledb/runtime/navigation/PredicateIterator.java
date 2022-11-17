@@ -36,6 +36,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.logics.AndOperationIterator;
@@ -250,7 +251,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
                     childDataFrame.getDataFrame().schema(),
                     null,
                     null,
@@ -265,7 +266,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                         new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
                         DataTypes.BooleanType
                     );
-                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+                String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT * FROM %s WHERE predicate(%s) = 'true'",
@@ -280,13 +281,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
                     1L
                 );
                 String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
-                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
                     zippedChildDataFrame.getDataFrame().schema(),
                     null,
                     null,
                     null
                 );
-                List<String> originalcolumns = FlworDataFrameUtils.getColumnNames(
+                List<FlworDataFrameColumn> originalcolumns = FlworDataFrameUtils.getColumns(
                     childDataFrame.getDataFrame().schema(),
                     null,
                     null,
@@ -308,8 +309,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
                         ),
                         DataTypes.BooleanType
                     );
-                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-                String projection = FlworDataFrameUtils.getSQLProjection(originalcolumns, false);
+                String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
+                String projection = FlworDataFrameUtils.getSQLColumnProjection(originalcolumns, false);
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT %s FROM %s WHERE predicate(%s) = 'true'",

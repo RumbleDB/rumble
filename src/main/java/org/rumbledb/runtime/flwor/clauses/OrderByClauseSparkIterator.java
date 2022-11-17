@@ -229,7 +229,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
 
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             null,
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -251,12 +251,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, inputSchema, UDFcolumns),
+                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -433,7 +433,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 new OrderClauseCreateColumnsUDF(
                         this.expressionsWithIterator,
                         context,
-                        inputSchema,
                         typesForAllColumns,
                         UDFcolumns
                 ),

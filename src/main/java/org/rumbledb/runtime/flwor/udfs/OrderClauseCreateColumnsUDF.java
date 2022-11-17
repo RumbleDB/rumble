@@ -23,7 +23,6 @@ package org.rumbledb.runtime.flwor.udfs;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -32,6 +31,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -61,11 +61,10 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
-            StructType schema,
             Map<Integer, Name> sortingKeyTypes,
-            List<String> columnNames
+            List<FlworDataFrameColumn> columns
     ) {
-        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expressionsWithIterator = expressionsWithIterator;
         this.sortingKeyTypes = sortingKeyTypes;
 
