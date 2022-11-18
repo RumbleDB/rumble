@@ -29,6 +29,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -93,5 +94,18 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
                     this.item.serialize(),
                 getMetadata()
         );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childResult = this.child.generateNativeQuery(nativeClauseContext);
+        if (childResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(childResult.getResultingType().isNumeric()){
+            String resultingQuery = "-" + childResult.getResultingQuery();
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, childResult.getResultingType());
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }
