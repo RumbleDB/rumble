@@ -480,6 +480,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(args.get(0).getStaticSequenceType());
             return true;
         }
+        // handle 'size' function
+        if (
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("size"))
+                && args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
+        ) {
+            // set output type to 'Integer' if inputType is 'Array'
+            expression.setStaticSequenceType(
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+            );
+            return true;
+        }
 
         return false;
     }
