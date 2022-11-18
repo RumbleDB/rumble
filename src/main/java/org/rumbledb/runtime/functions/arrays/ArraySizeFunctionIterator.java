@@ -57,8 +57,12 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        if(nativeChildQuery != NativeClauseContext.NoNativeQuery) {
-            return new NativeClauseContext(nativeClauseContext, "SIZE (" + nativeChildQuery.getResultingQuery() + ")", BuiltinTypesCatalogue.integerItem);
+        if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "SIZE (" + nativeChildQuery.getResultingQuery() + ")",
+                    BuiltinTypesCatalogue.integerItem
+            );
         }
         return NativeClauseContext.NoNativeQuery;
     }

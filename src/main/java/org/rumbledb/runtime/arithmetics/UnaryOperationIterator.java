@@ -102,7 +102,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (childResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if(childResult.getResultingType().isNumeric()){
+        if (childResult.getResultingType().isNumeric()) {
             String resultingQuery = "-" + childResult.getResultingQuery();
             return new NativeClauseContext(nativeClauseContext, resultingQuery, childResult.getResultingType());
         }

@@ -156,8 +156,12 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        if(nativeChildQuery != NativeClauseContext.NoNativeQuery) {
-            return new NativeClauseContext(nativeClauseContext, "COUNT (" + nativeChildQuery.getResultingQuery() + ")", BuiltinTypesCatalogue.integerItem);
+        if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "COUNT (" + nativeChildQuery.getResultingQuery() + ")",
+                    BuiltinTypesCatalogue.integerItem
+            );
         }
         return NativeClauseContext.NoNativeQuery;
     }
