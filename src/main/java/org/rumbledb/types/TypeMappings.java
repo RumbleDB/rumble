@@ -1,9 +1,11 @@
 package org.rumbledb.types;
 
 import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.exceptions.OurBadException;
 
 public class TypeMappings {
@@ -107,6 +109,12 @@ public class TypeMappings {
             return BuiltinTypesCatalogue.hexBinaryItem;
         }
         if (vectorType.equals(dataType)) {
+            return BuiltinTypesCatalogue.objectItem;
+        }
+        if (dataType instanceof ArrayType) {
+            return BuiltinTypesCatalogue.arrayItem;
+        }
+        if (dataType instanceof StructType) {
             return BuiltinTypesCatalogue.objectItem;
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
