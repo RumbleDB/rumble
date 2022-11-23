@@ -61,7 +61,6 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -776,8 +775,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
-                String[] fields = rows.getDataFrame().schema().fieldNames();
-                String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
+                List<FlworDataFrameColumn> fields = rows.getColumns();
+                String columnNames = FlworDataFrameUtils.getSQLColumnProjection(fields, false);
                 df = rows.getDataFrame()
                     .sparkSession()
                     .sql(

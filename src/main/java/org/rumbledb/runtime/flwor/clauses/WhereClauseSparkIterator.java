@@ -38,6 +38,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
@@ -187,7 +188,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // was not possible, we use let udf
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             this.expression.getVariableDependencies(),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -198,11 +199,11 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumns),
+                new WhereClauseUDF(this.expression, context, UDFcolumns),
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         String input = FlworDataFrameUtils.createTempView(df);
         df = df.sparkSession()

@@ -286,7 +286,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         List<Name> variablesInJointTuple = new ArrayList<>();
         variablesInJointTuple.addAll(variablesInLeftInputTuple);
         variablesInJointTuple.addAll(variablesInRightInputTuple);
-        List<String> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
             jointSchema,
             predicateIterator.getVariableDependencies(),
             variablesInJointTuple,
@@ -298,11 +298,11 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "joinUDF",
-                new WhereClauseUDF(predicateIterator, context, jointSchema, joinCriterionUDFcolumns),
+                new WhereClauseUDF(predicateIterator, context, joinCriterionUDFcolumns),
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(joinCriterionUDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(joinCriterionUDFcolumns);
 
         // If we allow empty, we need a LEFT OUTER JOIN.
         if (isLeftOuterJoin) {

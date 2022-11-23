@@ -412,13 +412,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = inputDF.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(this.variableName);
-        List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
             inputSchema,
             parentProjection,
             null,
             variableNamesToExclude
         );
-        String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
+        String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, true);
 
         // Now we proceed with the left outer join.
         inputDF = inputDF.sparkSession()
@@ -608,7 +608,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // }
 
         // was not possible, we use let udf
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
             variablesInInputTuple,
@@ -633,13 +633,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 .udf()
                 .register(
                     "hashUDF",
-                    new HashUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                    new HashUDF(newVariableExpression, context, UDFcolumns),
                     DataTypes.LongType
                 );
         }
 
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         String input = FlworDataFrameUtils.createTempView(dataFrame);
 
@@ -679,7 +679,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeIterator newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
-            List<String> UDFcolumns,
+            List<FlworDataFrameColumn> UDFcolumns,
             SequenceType sequenceType
     ) {
         // for the moment we only consider native types with single arity (what about optional)
@@ -698,7 +698,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<String>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "String"
                         ),
@@ -715,7 +714,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<Integer>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "Integer"
                         ),
@@ -732,7 +730,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<Integer>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
@@ -749,7 +746,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<BigDecimal>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
@@ -766,7 +762,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<Double>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "Double"
                         ),
@@ -781,7 +776,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "letClauseUDF",
-                new ExpressionEvaluationUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                new ExpressionEvaluationUDF(newVariableExpression, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
         return false;

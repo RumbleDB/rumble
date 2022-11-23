@@ -43,6 +43,7 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -299,7 +300,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setSchema(field.dataType());
-            newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(field.dataType()));
+            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 throw new UnexpectedStaticTypeException(
