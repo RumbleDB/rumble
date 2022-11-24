@@ -45,6 +45,12 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (this.children.get(0).isDataFrame()) {
+            return ItemFactory.getInstance()
+                .createBooleanItem(
+                    !this.children.get(0).getDataFrame(dynamicContext).take(1).isEmpty()
+                );
+        }
         if (this.children.get(0).isRDDOrDataFrame()) {
             List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
