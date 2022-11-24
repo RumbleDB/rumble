@@ -21,6 +21,7 @@
 package sparksoniq.spark;
 
 import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
@@ -117,10 +118,11 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
-                System.err.println(
-                    "[WARNING] No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                        + APP_NAME
-                );
+                LogManager.getLogger("SparkSessionManager")
+                    .warn(
+                        "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                            + APP_NAME
+                    );
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product

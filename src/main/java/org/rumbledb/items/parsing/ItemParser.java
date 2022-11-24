@@ -34,13 +34,13 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -49,10 +49,12 @@ import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -64,8 +66,6 @@ public class ItemParser implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
-    private static final DataType vectorType = new VectorUDT();
-    public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
     /**
      * Parses a JSON string to an item.
@@ -138,6 +138,103 @@ public class ItemParser implements Serializable {
         } catch (Exception e) {
             RumbleException r = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    metadata
+            );
+            r.initCause(e);
+            throw r;
+        }
+    }
+
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     * 
+     * @param parser the YAML parser.
+     * @param lookahead the lookahead token.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
+    public static Item getItemFromYAML(
+            YAMLParser parser,
+            com.fasterxml.jackson.core.JsonToken lookahead,
+            ExceptionMetadata metadata
+    ) {
+        try {
+            if (lookahead == null) {
+                // System.err.println("End of file.");
+                return null;
+            }
+            // System.err.println("Lookahead (top level): " + lookahead.toString());
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_STRING)) {
+                return ItemFactory.getInstance().createStringItem(parser.getValueAsString());
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_INT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_FLOAT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_FALSE)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_TRUE)) {
+                return ItemFactory.getInstance().createBooleanItem(true);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_ARRAY)) {
+                List<Item> values = new ArrayList<>();
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading array): " + nt.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_ARRAY)) {
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading array): " + nt.toString());
+                }
+                // System.err.println("Finished reading array.");
+                return ItemFactory.getInstance().createArrayItem(values);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
+                List<String> keys = new ArrayList<>();
+                List<Item> values = new ArrayList<>();
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading object): " + lookahead.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_OBJECT)) {
+                    if (!nt.equals(com.fasterxml.jackson.core.JsonToken.FIELD_NAME)) {
+                        throw new ParsingException("Expected field name!", metadata);
+                    }
+                    keys.add(parser.getText());
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
+                }
+                // System.err.println("Finished reading object.");
+                return ItemFactory.getInstance()
+                    .createObjectItem(keys, values, metadata);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
+                return ItemFactory.getInstance().createNullItem();
+            }
+            throw new ParsingException(
+                    "Invalid value found while parsing. YAML is not well-formed! Unexpected " + lookahead.toString(),
+                    metadata
+            );
+        } catch (IOException e) {
+            RumbleException r = new ParsingException(
+                    "An error happened while parsing YAML. YAML is not well-formed!",
                     metadata
             );
             r.initCause(e);
@@ -297,7 +394,21 @@ public class ItemParser implements Serializable {
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType.equals(decimalType)) {
+        } else if (fieldType instanceof DecimalType && ((DecimalType) fieldType).scale() == 0) {
+            BigDecimal value;
+            if (row != null) {
+                value = row.getDecimal(i);
+            } else {
+                value = (BigDecimal) o;
+            }
+            BigInteger integerValue = value.toBigIntegerExact();
+            Item item = ItemFactory.getInstance().createIntegerItem(integerValue);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
+        } else if (fieldType instanceof DecimalType) {
             BigDecimal value;
             if (row != null) {
                 value = row.getDecimal(i);
@@ -311,13 +422,13 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
         } else if (fieldType.equals(DataTypes.LongType)) {
-            BigDecimal value;
+            long value;
             if (row != null) {
-                value = new BigDecimal(row.getLong(i));
+                value = row.getLong(i);
             } else {
-                value = new BigDecimal((Long) o);
+                value = ((Long) o).longValue();
             }
-            Item item = ItemFactory.getInstance().createDecimalItem(value);
+            Item item = ItemFactory.getInstance().createLongItem(value);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem)) {
                 return item;
             } else {
@@ -325,6 +436,15 @@ public class ItemParser implements Serializable {
             }
         } else if (fieldType.equals(DataTypes.NullType)) {
             return ItemFactory.getInstance().createNullItem();
+        } else if (fieldType.equals(DataTypes.ByteType)) {
+            byte value;
+            if (row != null) {
+                value = row.getByte(i);
+            } else {
+                value = (Byte) o;
+            }
+            Item item = ItemFactory.getInstance().createIntItem(value);
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
             if (row != null) {
@@ -460,84 +580,5 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
-    }
-
-    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
-            return DataTypes.BooleanType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
-            return DataTypes.DoubleType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-            return DataTypes.FloatType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-            return DataTypes.IntegerType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
-            return DataTypes.LongType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
-            return decimalType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-            return DataTypes.NullType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
-            return DataTypes.DateType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return DataTypes.TimestampType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
-            return DataTypes.BinaryType;
-        }
-        throw new IllegalArgumentException(
-                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
-        );
-    }
-
-    public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
-        if (DataTypes.BooleanType.equals(dataType)) {
-            return BuiltinTypesCatalogue.booleanItem.getName();
-        }
-        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return BuiltinTypesCatalogue.integerItem.getName();
-        }
-        if (DataTypes.DoubleType.equals(dataType)) {
-            return BuiltinTypesCatalogue.doubleItem.getName();
-        }
-        if (DataTypes.FloatType.equals(dataType)) {
-            return BuiltinTypesCatalogue.floatItem.getName();
-        }
-        if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
-            return BuiltinTypesCatalogue.decimalItem.getName();
-        }
-        if (DataTypes.StringType.equals(dataType)) {
-            return BuiltinTypesCatalogue.stringItem.getName();
-        }
-        if (DataTypes.NullType.equals(dataType)) {
-            return BuiltinTypesCatalogue.nullItem.getName();
-        }
-        if (DataTypes.DateType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateItem.getName();
-        }
-        if (DataTypes.TimestampType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateTimeItem.getName();
-        }
-        if (DataTypes.BinaryType.equals(dataType)) {
-            return BuiltinTypesCatalogue.hexBinaryItem.getName();
-        }
-        if (vectorType.equals(dataType)) {
-            return BuiltinTypesCatalogue.objectItem.getName();
-        }
-        throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
 }

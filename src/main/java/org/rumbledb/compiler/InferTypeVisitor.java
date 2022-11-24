@@ -1103,23 +1103,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             // Type must be a strict subtype of atomic
             if (
-                leftItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
-                    || rightItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                !leftItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                    || !rightItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
             ) {
                 throwStaticTypeException(
                     "It is not possible to compare with non-atomic types",
                     ErrorCode.NonAtomicElementErrorCode,
-                    expression.getMetadata()
-                );
-            }
-            if (
-                !leftItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                    || !rightItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                    || leftItemType.equals(BuiltinTypesCatalogue.atomicItem)
-                    || rightItemType.equals(BuiltinTypesCatalogue.atomicItem)
-            ) {
-                throwStaticTypeException(
-                    "It is not possible to compare with non-atomic types",
                     expression.getMetadata()
                 );
             }
@@ -1757,7 +1746,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType forType;
 
         while (clause != null) {
-            this.visit(clause, clause.getStaticContext());
+            try {
+                this.visit(clause, clause.getStaticContext());
+            } catch (UnexpectedStaticTypeException e) {
+                if (
+                    forArities.equals(SequenceType.Arity.Zero)
+                        &&
+                        clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)
+                ) {
+                    clause = clause.getNextClause();
+                    continue;
+                }
+                throw e;
+            }
             // if there are for clauses we need to consider their arities for the returning expression
             if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
                 forType = ((ForClause) clause).getExpression().getStaticSequenceType();
@@ -1767,6 +1768,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // count as arity.One
                 if (!forType.isEmptySequence()) {
                     forArities = forType.getArity().multiplyWith(forArities);
+                } else if (!((ForClause) clause).isAllowEmpty()) {
+                    forArities = SequenceType.Arity.Zero;
                 }
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
                 // where clause could reject all tuples so arity change from + => * and 1 => ?
@@ -1800,12 +1803,18 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         basicChecks(inferredType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (inferredType.isEmptySequence()) {
             if (!expression.isAllowEmpty()) {
-                // for sure we will not have any tuple to process and return the empty sequence
-                throwStaticTypeException(
-                    "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata()
-                );
+                if (
+                    !expression.getVariableName().equals(Name.TEMP_VAR1)
+                        && !expression.getVariableName().equals(Name.TEMP_VAR2)
+                ) {
+                    // for sure we will not have any tuple to process and return the empty sequence
+                    throwStaticTypeException(
+                        "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        expression.getMetadata()
+                    );
+                }
+                inferredType = new SequenceType(BuiltinTypesCatalogue.atomicItem);
             }
         } else {
             // we take the single arity version of the inferred type or optional arity if we allow empty and the

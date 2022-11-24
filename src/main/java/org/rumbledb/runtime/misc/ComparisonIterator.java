@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -42,7 +43,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.List;
 
 
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -125,30 +125,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return valueComparison(this.left, this.right);
         }
 
-        // fetch all values and perform comparison
-        List<Item> left = this.leftIterator.materialize(dynamicContext);
-        List<Item> right = this.rightIterator.materialize(dynamicContext);
-
-        return generalComparison(left, right);
-    }
-
-    /**
-     * Function to compare two lists of items one by one with each other.
-     *
-     * @param left item list of left iterator
-     * @param right item list of right iterator
-     * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
-     */
-    private Item generalComparison(List<Item> left, List<Item> right) {
-        for (Item l : left) {
-            for (Item r : right) {
-                Item result = valueComparison(l, r);
-                if (result.getBooleanValue()) {
-                    return result;
-                }
-            }
-        }
-        return ItemFactory.getInstance().createBooleanItem(false);
+        throw new OurBadException("General comparison should normally be translated to FLWOR at runtime.");
     }
 
     private Item valueComparison(Item left, Item right) {

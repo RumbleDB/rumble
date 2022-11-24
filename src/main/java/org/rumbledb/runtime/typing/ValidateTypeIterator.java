@@ -7,6 +7,7 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -18,12 +19,12 @@ import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -83,7 +84,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             List<Item> items = inputDataIterator.materialize(context);
             JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context);
-            // jdf.getDataFrame().show();
             return jdf;
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
@@ -123,7 +123,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    private static StructType convertToDataFrameSchema(ItemType itemType) {
+    public static StructType convertToDataFrameSchema(ItemType itemType) {
         if (itemType.isAtomicItemType()) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
@@ -177,7 +177,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (itemType.isObjectItemType()) {
             return convertToDataFrameSchema(itemType);
         }
-        return ItemParser.getDataFrameDataTypeFromItemType(itemType);
+        return TypeMappings.getDataFrameDataTypeFromItemType(itemType);
     }
 
     public static JSoundDataFrame convertLocalItemsToDataFrame(
@@ -282,7 +282,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.FloatType)) {
                 return item.getFloatValue();
             }
-            if (dataType.equals(ItemParser.decimalType)) {
+            if (dataType instanceof DecimalType) {
                 return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {

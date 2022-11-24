@@ -29,6 +29,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -93,5 +95,27 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
                     this.item.serialize(),
                 getMetadata()
         );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.child.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String leftQuery = leftResult.getResultingQuery();
+        ItemType resultType = leftResult.getResultingType();
+        if (this.negated) {
+            String resultingQuery = "( "
+                + " - "
+                + leftQuery
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+        } else {
+            String resultingQuery = "( "
+                + leftQuery
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+        }
     }
 }

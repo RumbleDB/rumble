@@ -20,6 +20,7 @@
 
 package org.rumbledb.types;
 
+import org.apache.log4j.LogManager;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -59,19 +60,21 @@ public class SequenceType implements Serializable {
         this.itemType = itemType;
         this.arity = arity;
         if (this.itemType == null) {
-            System.err.println(
-                "[WARNING] Missing item type in incomplete sequence type "
-                    + this.arity
-                    + ", defaulting to item. Please let us know as we would like to look into this!"
-            );
+            LogManager.getLogger("SequenceType")
+                .warn(
+                    "Missing item type in incomplete sequence type "
+                        + this.arity
+                        + ", defaulting to item. Please let us know as we would like to look into this!"
+                );
             this.itemType = BuiltinTypesCatalogue.item;
         }
         if (this.arity == null) {
-            System.err.println(
-                "[WARNING] Missing arity in incomplete sequence type "
-                    + this.itemType
-                    + ", defaulting to *. Please let us know as we would like to look into this!"
-            );
+            LogManager.getLogger("SequenceType")
+                .warn(
+                    "Missing arity in incomplete sequence type "
+                        + this.itemType
+                        + ", defaulting to *. Please let us know as we would like to look into this!"
+                );
             this.arity = Arity.ZeroOrMore;
         }
     }

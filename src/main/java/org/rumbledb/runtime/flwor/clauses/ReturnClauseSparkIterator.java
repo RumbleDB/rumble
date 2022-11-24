@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -38,6 +39,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
@@ -114,13 +116,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType oldSchema = df.schema();
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
             this.expression.getVariableDependencies(),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
-        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
+        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumns));
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
@@ -352,9 +354,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a return clause to a native SQL query."
-        );
+        LogManager.getLogger("ReturnClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a return clause to a native SQL query."
+            );
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         Dataset<Row> result = dataFrame.sparkSession()
             .sql(
