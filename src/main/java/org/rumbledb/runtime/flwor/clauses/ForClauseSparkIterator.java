@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
@@ -60,7 +61,6 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -775,8 +775,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
-                String[] fields = rows.getDataFrame().schema().fieldNames();
-                String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
+                List<FlworDataFrameColumn> fields = rows.getColumns();
+                String columnNames = FlworDataFrameUtils.getSQLColumnProjection(fields, false);
                 df = rows.getDataFrame()
                     .sparkSession()
                     .sql(
@@ -988,9 +988,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a for clause to a native SQL query."
-        );
+        LogManager.getLogger("ForClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a for clause to a native SQL query."
+            );
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String viewName = FlworDataFrameUtils.createTempView(dataFrame);
 

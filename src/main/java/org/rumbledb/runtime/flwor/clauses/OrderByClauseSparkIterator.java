@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -48,6 +49,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
@@ -60,8 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import static org.rumbledb.items.parsing.ItemParser.decimalType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -229,7 +229,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
 
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             null,
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -251,12 +251,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, inputSchema, UDFcolumns),
+                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -267,6 +267,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
+
         Object columnTypesObject = columnTypesDf.collect();
         Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
 
@@ -366,7 +367,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.integerItem.getName())) {
-                columnType = DataTypes.IntegerType;
+                columnType = TypeMappings.integerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.intItem.getName())) {
                 columnType = DataTypes.IntegerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
@@ -374,8 +375,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.floatItem.getName())) {
                 columnType = DataTypes.FloatType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
-                columnType = decimalType;
-                // columnType = DataTypes.createDecimalType();
+                columnType = TypeMappings.decimalType;
             } else if (
                 columnTypeString.equals(BuiltinTypesCatalogue.durationItem.getName())
                     || columnTypeString.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
@@ -433,7 +433,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 new OrderClauseCreateColumnsUDF(
                         this.expressionsWithIterator,
                         context,
-                        inputSchema,
                         typesForAllColumns,
                         UDFcolumns
                 ),
@@ -564,7 +563,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        System.err.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query.");
+        LogManager.getLogger("OrderByClauseSparkIterator")
+            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()

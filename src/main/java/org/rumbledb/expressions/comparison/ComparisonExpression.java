@@ -73,6 +73,25 @@ public class ComparisonExpression extends Expression {
             return this.isValueComparison;
         }
 
+        public ComparisonOperator getCorrespondingValueComparison() {
+            switch (this) {
+                case GC_EQ:
+                    return VC_EQ;
+                case GC_NE:
+                    return VC_NE;
+                case GC_LE:
+                    return VC_LE;
+                case GC_LT:
+                    return VC_LT;
+                case GC_GE:
+                    return VC_GE;
+                case GC_GT:
+                    return VC_GT;
+                default:
+                    throw new OurBadException("Only works on general comparisons.");
+            }
+        }
+
         public static ComparisonOperator fromSymbol(String symbol) {
             if (symbol.equals(VC_EQ.toString())) {
                 return VC_EQ;

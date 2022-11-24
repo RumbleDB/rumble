@@ -63,6 +63,7 @@ import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
+import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
@@ -415,6 +416,13 @@ public class BuiltinFunctionCatalogue {
         "string",
         "item*",
         JsonDocFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction yaml_doc = createBuiltinFunction(
+        new Name(Name.JN_NS, "fn", "yaml-doc"),
+        "string",
+        "item*",
+        YamlDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction parse_json = createBuiltinFunction(
@@ -2625,6 +2633,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
+        builtinFunctions.put(yaml_doc.getIdentifier(), yaml_doc);
         builtinFunctions.put(unparsed_text.getIdentifier(), unparsed_text);
         builtinFunctions.put(unparsed_text_lines.getIdentifier(), unparsed_text_lines);
         builtinFunctions.put(text_file1.getIdentifier(), text_file1);

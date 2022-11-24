@@ -20,10 +20,12 @@
 
 package org.rumbledb.compiler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.log4j.LogManager;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -44,6 +46,8 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -51,8 +55,13 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -449,11 +458,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getSequenceType().getItemType().isObjectItemType()
                         && expression.getSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
-                    System.err.println(
-                        "[INFO] Validation against "
-                            + expression.getSequenceType().getItemType().getName()
-                            + " compatible with data frames."
-                    );
+                    LogManager.getLogger("ExecutionModeVisitor")
+                        .info(
+                            "Validation against "
+                                + expression.getSequenceType().getItemType().getName()
+                                + " compatible with data frames."
+                        );
                     expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
                 } else {
                     if (
@@ -472,11 +482,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getSequenceType().getItemType().isObjectItemType()
                         && expression.getSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
-                    System.err.println(
-                        "[INFO] Validation against "
-                            + expression.getSequenceType().getItemType().getName()
-                            + " compatible with data frames."
-                    );
+                    LogManager.getLogger("ExecutionModeVisitor")
+                        .info(
+                            "Validation against "
+                                + expression.getSequenceType().getItemType().getName()
+                                + " compatible with data frames."
+                        );
                     expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
                 } else {
                     if (
@@ -493,6 +504,74 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             default:
                 return argument;
         }
+    }
+
+    @Override
+    public StaticContext visitRangeExpr(RangeExpression rangeExpression, StaticContext argument) {
+        visitDescendants(rangeExpression, argument);
+        Expression left = rangeExpression.getLeftExpression();
+        Expression right = rangeExpression.getRightExpression();
+        if (
+            left instanceof IntegerLiteralExpression
+                &&
+                right instanceof IntegerLiteralExpression
+        ) {
+            String leftLiteral = ((IntegerLiteralExpression) left).getLexicalValue();
+            String rightLiteral = ((IntegerLiteralExpression) right).getLexicalValue();
+            BigInteger leftValue = ItemFactory.getInstance().createIntegerItem(leftLiteral).getIntegerValue();
+            BigInteger rightValue = ItemFactory.getInstance().createIntegerItem(rightLiteral).getIntegerValue();
+            if (
+                rightValue.subtract(leftValue).compareTo(BigInteger.valueOf(RangeOperationIterator.PARTITION_SIZE)) >= 0
+            ) {
+                rangeExpression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                return argument;
+            }
+        }
+        rangeExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitSimpleMapExpr(SimpleMapExpression simpleMapExpression, StaticContext argument) {
+        visitDescendants(simpleMapExpression, argument);
+        Expression left = simpleMapExpression.getLeftExpression();
+        ExecutionMode leftMode = left.getHighestExecutionMode(this.visitorConfig);
+        if (leftMode.equals(ExecutionMode.LOCAL)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+        SequenceType staticSequenceType = simpleMapExpression.getStaticSequenceType();
+        if (staticSequenceType.getArity().equals(Arity.One)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+        if (staticSequenceType.getArity().equals(Arity.OneOrZero)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+        if (staticSequenceType.getArity().equals(Arity.Zero)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+        if (leftMode.equals(ExecutionMode.RDD)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        ItemType itemType = staticSequenceType.getItemType();
+        if (!itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (itemType.equals(BuiltinTypesCatalogue.numericItem)) {
+            simpleMapExpression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        simpleMapExpression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+        return argument;
     }
 
 }
