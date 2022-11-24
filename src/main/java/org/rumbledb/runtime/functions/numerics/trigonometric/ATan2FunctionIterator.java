@@ -27,6 +27,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+
 import java.util.List;
 
 public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -51,5 +54,20 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         return ItemFactory.getInstance().createDoubleItem(Math.atan2(y, x));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext yQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext xQuery = this.children.get(1).generateNativeQuery(nativeClauseContext);
+        if (yQuery == NativeClauseContext.NoNativeQuery || xQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "ATAN2( "
+            + yQuery.getResultingQuery()
+            + ", "
+            + xQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.doubleItem);
     }
 }

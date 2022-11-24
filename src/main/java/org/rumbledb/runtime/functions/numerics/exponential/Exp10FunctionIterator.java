@@ -27,6 +27,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.List;
 
@@ -54,6 +56,21 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, dexponent));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext powerQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (baseQuery == NativeClauseContext.NoNativeQuery || powerQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "POW( "
+            + "10.0"
+            + ", "
+            + powerQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.doubleItem);
     }
 
 }

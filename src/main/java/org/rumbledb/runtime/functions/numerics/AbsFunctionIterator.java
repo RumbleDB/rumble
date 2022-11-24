@@ -77,7 +77,7 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             return new NativeClauseContext(
                     nativeClauseContext,
-                    "ABS (" + nativeChildQuery.getResultingQuery() + ")",
+                    "ABS(" + nativeChildQuery.getResultingQuery() + ")",
                     nativeChildQuery.getResultingType()
             );
         }

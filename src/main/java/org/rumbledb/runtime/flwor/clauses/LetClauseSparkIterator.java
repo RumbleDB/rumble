@@ -807,12 +807,19 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        LogManager.getLogger("LetClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a let clause to a native SQL query."
-            );
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String input = FlworDataFrameUtils.createTempView(dataFrame);
+        LogManager.getLogger("LetClauseSparkIterator")
+                .info(
+                        "Rumble was able to optimize a let clause to a native SQL query: "
+                        + String.format(
+                                "select %s %s as `%s` from %s",
+                                selectSQL,
+                                nativeQuery.getResultingQuery(),
+                                newVariableName,
+                                input
+                        )
+                );
         return dataFrame.sparkSession()
             .sql(
                 String.format(

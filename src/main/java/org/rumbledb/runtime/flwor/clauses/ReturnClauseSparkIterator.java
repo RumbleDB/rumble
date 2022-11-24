@@ -354,11 +354,17 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
         LogManager.getLogger("ReturnClauseSparkIterator")
             .info(
-                "Rumble was able to optimize a return clause to a native SQL query."
+                "Rumble was able to optimize a return clause to a native SQL query: "
+                    + String.format(
+                        "select %s as `%s` from %s",
+                        nativeQuery.getResultingQuery(),
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        input
+                )
             );
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
         Dataset<Row> result = dataFrame.sparkSession()
             .sql(
                 String.format(
