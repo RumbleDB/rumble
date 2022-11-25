@@ -160,6 +160,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
+    public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
+        return this.iterator.generateNativeQuery(nativeClauseContext);
+    }
+
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());

@@ -24,7 +24,9 @@ import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -45,14 +47,12 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import scala.Tuple2;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
@@ -345,5 +345,47 @@ public class PredicateIterator extends HybridRuntimeIterator {
         result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.iterator.getVariableDependencies());
         return result;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (!isBooleanOnlyFilter()) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!(this.iterator instanceof ArrayUnboxingIterator)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext arrayReferenceQuery = ((ArrayUnboxingIterator) this.children.get(0))
+            .generateArrayReferenceQuery(nativeClauseContext);
+        if (arrayReferenceQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        nativeClauseContext.setSchema(
+            ((StructType) nativeClauseContext.getSchema()).add(
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                ((ArrayType) arrayReferenceQuery.getSchema()).elementType()
+            )
+        );
+        NativeClauseContext filterQuery = this.filter.generateNativeQuery(nativeClauseContext);
+
+        if (
+            filterQuery != NativeClauseContext.NoNativeQuery
+        ) {
+            String resultingQuery = " EXPLODE ( FILTER ( "
+                + arrayReferenceQuery.getResultingQuery()
+                + ", "
+                + "`"
+                + SparkSessionManager.atomicJSONiqItemColumnName
+                + "`"
+                + " -> "
+                + filterQuery.getResultingQuery()
+                + " ) ) ";
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    resultingQuery,
+                    BuiltinTypesCatalogue.booleanItem
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }
