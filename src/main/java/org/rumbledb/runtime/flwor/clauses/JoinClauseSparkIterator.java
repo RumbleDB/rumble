@@ -34,6 +34,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -108,7 +109,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
      * @param metadata the metadata.
      * @return the joined tuple.
      */
-    public static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
+    public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
@@ -408,7 +409,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public FlworDataFrame getDataFrame(DynamicContext context) {
         // TODO Auto-generated method stub
         return null;
     }

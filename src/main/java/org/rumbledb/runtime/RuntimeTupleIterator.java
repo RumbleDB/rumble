@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
@@ -146,7 +147,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
      * @return the DataFrame with the tuples returned by the child clause.
      */
-    public abstract Dataset<Row> getDataFrame(
+    public abstract FlworDataFrame getDataFrame(
             DynamicContext context
     );
 
