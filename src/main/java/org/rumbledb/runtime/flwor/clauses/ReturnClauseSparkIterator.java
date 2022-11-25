@@ -363,7 +363,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                         nativeQuery.getResultingQuery(),
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         input
-                )
+                    )
             );
         Dataset<Row> result = dataFrame.sparkSession()
             .sql(

@@ -66,8 +66,8 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "array( "
-                + childQuery.getResultingQuery()
-                + " )";
+            + childQuery.getResultingQuery()
+            + " )";
         return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.arrayItem);
     }
 }
