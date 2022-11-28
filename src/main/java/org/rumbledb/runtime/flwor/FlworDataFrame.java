@@ -2,6 +2,7 @@ package org.rumbledb.runtime.flwor;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,13 @@ public class FlworDataFrame implements Serializable {
     private Map<Name, SequenceType> columnTypes;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
+        if (this.dataFrame == null) {
+            throw new OurBadException("The dataframe cannot be null!");
+        }
         this.dataFrame = dataFrame;
         StructType schema = dataFrame.schema();
         this.columns = new ArrayList<>();
+        this.columnTypes = new HashMap<>();
         for (String c : schema.fieldNames()) {
             this.columns.add(new FlworDataFrameColumn(c, schema));
         }
