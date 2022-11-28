@@ -160,11 +160,9 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("EXPLODE")) {
                 return new NativeClauseContext(
                         nativeClauseContext,
-                        "SIZE ("
-                            +
-                            nativeChildQuery.getResultingQuery()
-                                .substring(nativeChildQuery.getResultingQuery().indexOf("EXPLODE") + 7)
-                            + ")",
+                        "SIZE"
+                            + nativeChildQuery.getResultingQuery()
+                                .substring(nativeChildQuery.getResultingQuery().indexOf("EXPLODE") + 7),
                         BuiltinTypesCatalogue.integerItem
                 );
 
