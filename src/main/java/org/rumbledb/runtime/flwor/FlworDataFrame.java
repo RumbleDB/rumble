@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.flwor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.sql.Dataset;
@@ -16,6 +17,7 @@ public class FlworDataFrame implements Serializable {
     public FlworDataFrame(Dataset<Row> dataFrame) {
         this.dataFrame = dataFrame;
         StructType schema = dataFrame.schema();
+        this.columns = new ArrayList<>();
         for (String c : schema.fieldNames()) {
             this.columns.add(new FlworDataFrameColumn(c, schema));
         }
