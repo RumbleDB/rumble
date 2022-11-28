@@ -49,7 +49,6 @@ public class FlworDataFrameColumn implements Serializable {
     private String tableName;
     private Name variableName;
     private ColumnFormat columnFormat;
-    private SequenceType sequenceType;
 
     public FlworDataFrameColumn(
             String tableName,
@@ -60,7 +59,6 @@ public class FlworDataFrameColumn implements Serializable {
         this.tableName = tableName;
         this.variableName = variableName;
         this.columnFormat = columnFormat;
-        this.sequenceType = sequenceType;
     }
 
     public FlworDataFrameColumn(String tableName, Name variableName, ColumnFormat columnFormat) {
@@ -69,28 +67,9 @@ public class FlworDataFrameColumn implements Serializable {
         this.columnFormat = columnFormat;
     }
 
-    public FlworDataFrameColumn(Name variableName, ColumnFormat columnFormat, SequenceType sequenceType) {
-        this.variableName = variableName;
-        this.columnFormat = columnFormat;
-        this.sequenceType = sequenceType;
-    }
-
     public FlworDataFrameColumn(Name variableName, ColumnFormat columnFormat) {
         this.variableName = variableName;
         this.columnFormat = columnFormat;
-    }
-
-    public FlworDataFrameColumn(String columnName, StructType inputSchema, SequenceType sequenceType) {
-        this.tableName = null;
-        this.sequenceType = sequenceType;
-        this.columnFormat = getColumnFormat(columnName, inputSchema);
-        this.sequenceType = getSequenceTypeFromColumn(columnName, inputSchema);
-        int pos = columnName.indexOf(".");
-        if (pos == -1) {
-            this.variableName = Name.createVariableInNoNamespace(columnName);
-        } else {
-            this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
-        }
     }
 
     public FlworDataFrameColumn(String columnName, StructType inputSchema) {
@@ -102,6 +81,38 @@ public class FlworDataFrameColumn implements Serializable {
         } else {
             this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof FlworDataFrameColumn)) {
+            return false;
+        }
+        FlworDataFrameColumn other = (FlworDataFrameColumn) o;
+        if (this.tableName == null && other.tableName != null) {
+            return false;
+        }
+        if (this.tableName != null && other.tableName == null) {
+            return false;
+        }
+        if (this.tableName != null && !this.tableName.equals(other.tableName)) {
+            return false;
+        }
+        if (!this.variableName.equals(other.variableName)) {
+            return false;
+        }
+        if (!this.columnFormat.equals(other.columnFormat)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        if (this.tableName == null) {
+            return this.variableName.hashCode() + this.columnFormat.hashCode();
+        }
+        return this.tableName.hashCode() + this.variableName.hashCode() + this.columnFormat.hashCode();
     }
 
     public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
@@ -174,14 +185,6 @@ public class FlworDataFrameColumn implements Serializable {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-    public SequenceType getSequenceType() {
-        return this.sequenceType;
-    }
-
-    public void setSequenceType(SequenceType sequenceType) {
-        this.sequenceType = sequenceType;
     }
 
     public String getColumnName() {

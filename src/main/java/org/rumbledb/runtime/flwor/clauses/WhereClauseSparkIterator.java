@@ -24,7 +24,6 @@ import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
@@ -175,13 +174,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return dataFrameIfJoinPossible;
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
-        StructType inputSchema = df.schema();
+        FlworDataFrame df = this.child.getDataFrame(context);
+        // StructType inputSchema = df.schema();
 
         FlworDataFrame nativeQueryResult = tryNativeQuery(
             df,
             this.expression,
-            inputSchema,
             context
         );
         if (nativeQueryResult != null) {
@@ -189,15 +187,13 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // was not possible, we use let udf
-        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-            inputSchema,
+        List<FlworDataFrameColumn> UDFcolumns = df.getColumns(
             this.expression.getVariableDependencies(),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
 
-        df.sparkSession()
-            .udf()
+        df.getUDFRegistration()
             .register(
                 "whereClauseUDF",
                 new WhereClauseUDF(this.expression, context, UDFcolumns),
@@ -206,16 +202,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
         String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
-        String input = FlworDataFrameUtils.createTempView(df);
-        df = df.sparkSession()
-            .sql(
-                String.format(
-                    "select * from %s where whereClauseUDF(%s) = 'true'",
-                    input,
-                    UDFParameters
-                )
-            );
-        return new FlworDataFrame(df);
+        String input = df.createTempView();
+        return df.sql(
+            String.format(
+                "select * from %s where whereClauseUDF(%s) = 'true'",
+                input,
+                UDFParameters
+            )
+        );
     }
 
     private Dataset<Row> getDataFrameIfLimit(DynamicContext context) {
@@ -430,17 +424,20 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
      * @return resulting dataframe of the let clause if successful, null otherwise
      */
     public static FlworDataFrame tryNativeQuery(
-            Dataset<Row> dataFrame,
+            FlworDataFrame dataFrame,
             RuntimeIterator iterator,
-            StructType inputSchema,
             DynamicContext context
     ) {
-        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, inputSchema, context);
+        NativeClauseContext letContext = new NativeClauseContext(
+                FLWOR_CLAUSES.WHERE,
+                dataFrame.getDataFrame().schema(),
+                context
+        );
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
+        String input = FlworDataFrameUtils.createTempView(dataFrame.getDataFrame());
         LogManager.getLogger("WhereClauseSparkIterator")
             .info(
                 "Rumble was able to optimize a where clause to a native SQL query: "
@@ -451,7 +448,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     )
             );
         return new FlworDataFrame(
-                dataFrame.sparkSession()
+                dataFrame.getDataFrame()
+                    .sparkSession()
                     .sql(
                         String.format(
                             "select * from %s where %s",
