@@ -419,7 +419,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
      *
      * @param dataFrame input dataframe for the query
      * @param iterator where filtering expression iterator
-     * @param inputSchema input schema of the dataframe
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the let clause if successful, null otherwise
      */
