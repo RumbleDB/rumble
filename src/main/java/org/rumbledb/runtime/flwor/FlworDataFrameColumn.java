@@ -26,7 +26,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -52,7 +51,12 @@ public class FlworDataFrameColumn implements Serializable {
     private ColumnFormat columnFormat;
     private SequenceType sequenceType;
 
-    public FlworDataFrameColumn(String tableName, Name variableName, ColumnFormat columnFormat, SequenceType sequenceType) {
+    public FlworDataFrameColumn(
+            String tableName,
+            Name variableName,
+            ColumnFormat columnFormat,
+            SequenceType sequenceType
+    ) {
         this.tableName = tableName;
         this.variableName = variableName;
         this.columnFormat = columnFormat;
@@ -75,7 +79,7 @@ public class FlworDataFrameColumn implements Serializable {
         this.variableName = variableName;
         this.columnFormat = columnFormat;
     }
-    
+
     public FlworDataFrameColumn(String columnName, StructType inputSchema, SequenceType sequenceType) {
         this.tableName = null;
         this.sequenceType = sequenceType;
@@ -99,9 +103,9 @@ public class FlworDataFrameColumn implements Serializable {
             this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
         }
     }
-    
+
     public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
-    	int pos = columnName.indexOf(".");
+        int pos = columnName.indexOf(".");
         if (pos == -1) {
             int index = inputSchema.fieldIndex(columnName);
             if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
@@ -171,13 +175,13 @@ public class FlworDataFrameColumn implements Serializable {
     public void setTableName(String tableName) {
         this.tableName = tableName;
     }
-    
+
     public SequenceType getSequenceType() {
-    	return this.sequenceType;
+        return this.sequenceType;
     }
-    
+
     public void setSequenceType(SequenceType sequenceType) {
-    	this.sequenceType = sequenceType;
+        this.sequenceType = sequenceType;
     }
 
     public String getColumnName() {

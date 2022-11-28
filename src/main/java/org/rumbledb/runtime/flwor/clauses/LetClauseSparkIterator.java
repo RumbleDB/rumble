@@ -39,6 +39,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -182,11 +183,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child != null && this.evaluationDepthLimit != 0) {
-            Dataset<Row> df = this.child.getDataFrame(context);
+            FlworDataFrame df = this.child.getDataFrame(context);
 
             if (!this.outputTupleProjection.containsKey(this.variableName)) {
                 return df;
@@ -196,8 +197,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
-            df = bindLetVariableInDataFrame(
-                df,
+            Dataset<Row> result = bindLetVariableInDataFrame(
+                df.getDataFrame(),
                 this.variableName,
                 this.sequenceType,
                 this.assignmentIterator,
@@ -209,17 +210,17 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 false
             );
 
-            return df;
+            return new FlworDataFrame(result);
         }
         throw new RuntimeException(
                 "Unexpected program state reached. Initial let clauses are always locally executed."
         );
     }
 
-    public Dataset<Row> getDataFrameAsJoin(
+    public FlworDataFrame getDataFrameAsJoin(
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
-            Dataset<Row> childDF
+            FlworDataFrame childDF
     ) {
         // We try to detect an equi-join.
 
@@ -295,7 +296,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
-        Dataset<Row> inputDF = this.child.getDataFrame(context);
+        Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
@@ -324,7 +325,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             false,
             context,
             sequenceDependencies
-        );
+        ).getDataFrame();
 
         LogManager.getLogger("LetClauseSparkIterator").info("Rumble detected an equi-join in the left clause.");
 
@@ -457,7 +458,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             false
         );
 
-        return inputDF;
+        return new FlworDataFrame(inputDF);
     }
 
     public static boolean isExpressionIndependentFromInputTuple(

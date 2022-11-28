@@ -14,19 +14,18 @@ public class FlworDataFrame implements Serializable {
     private List<FlworDataFrameColumn> columns;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
-    	this.dataFrame = dataFrame;
-    	StructType schema = dataFrame.schema();
-        for (String c : schema.fieldNames())
-        {
-        	columns.add(new FlworDataFrameColumn(c, schema));
+        this.dataFrame = dataFrame;
+        StructType schema = dataFrame.schema();
+        for (String c : schema.fieldNames()) {
+            this.columns.add(new FlworDataFrameColumn(c, schema));
         }
     }
-    
+
     public Dataset<Row> getDataFrame() {
-    	return dataFrame;
+        return this.dataFrame;
     }
-    
+
     public List<FlworDataFrameColumn> getColumns() {
-    	return columns;
+        return this.columns;
     }
 }
