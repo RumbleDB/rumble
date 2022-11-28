@@ -21,8 +21,6 @@
 package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.log4j.LogManager;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -164,9 +162,9 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        Dataset<Row> dataFrameIfLimit = getDataFrameIfLimit(context);
+        FlworDataFrame dataFrameIfLimit = getDataFrameIfLimit(context);
         if (dataFrameIfLimit != null) {
-            return new FlworDataFrame(dataFrameIfLimit);
+            return dataFrameIfLimit;
         }
 
         FlworDataFrame dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
@@ -212,7 +210,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         );
     }
 
-    private Dataset<Row> getDataFrameIfLimit(DynamicContext context) {
+    private FlworDataFrame getDataFrameIfLimit(DynamicContext context) {
         if (!(this.child instanceof CountClauseSparkIterator)) {
             return null;
         }
@@ -257,9 +255,9 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .info(
                 "Rumble detected a LIMIT in a count and where clause."
             );
-        Dataset<Row> df = this.child.getChildIterator().getDataFrame(context).getDataFrame();
-        String input = FlworDataFrameUtils.createTempView(df);
-        return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
+        FlworDataFrame df = this.child.getChildIterator().getDataFrame(context);
+        String input = df.createTempView();
+        return df.sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
     }
 
     private FlworDataFrame getDataFrameIfJoinPossible(DynamicContext context) {
@@ -336,7 +334,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 temporaryInputProjection.remove(key);
             }
             this.child.setInputAndOutputTupleVariableDependencies(temporaryInputProjection);
-            Dataset<Row> rightTuples = this.child.getDataFrame(context).getDataFrame();
+            FlworDataFrame rightTuples = this.child.getDataFrame(context);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
 
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
@@ -345,7 +343,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             FlworDataFrame result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
                 leftTuples.getDataFrame(),
-                rightTuples,
+                rightTuples.getDataFrame(),
                 this.outputTupleProjection,
                 new ArrayList<Name>(leftVariables),
                 new ArrayList<Name>(rightVariables),

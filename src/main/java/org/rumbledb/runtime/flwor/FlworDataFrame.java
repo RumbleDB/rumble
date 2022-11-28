@@ -23,7 +23,7 @@ public class FlworDataFrame implements Serializable {
     private Map<Name, SequenceType> columnTypes;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
-        if (this.dataFrame == null) {
+        if (dataFrame == null) {
             throw new OurBadException("The dataframe cannot be null!");
         }
         this.dataFrame = dataFrame;
