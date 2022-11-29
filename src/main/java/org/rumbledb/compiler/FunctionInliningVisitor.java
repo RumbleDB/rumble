@@ -46,8 +46,37 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         return null;
     }
 
+    private boolean isVariableReferenced(Node expression, Name name) {
+        if (expression instanceof VariableReferenceExpression) {
+            return ((VariableReferenceExpression) expression).getVariableName().equals(name);
+        }
+        if (expression instanceof Clause) {
+            if (
+                ((Clause) expression).getPreviousClause() != null
+                    && isVariableReferenced(((Clause) expression).getPreviousClause(), name)
+            ) {
+                return true;
+            }
+        }
+        for (Node child : expression.getChildren()) {
+            if (isVariableReferenced(child, name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isVariableReferenced(List<Expression> expressions, Name name, int index) {
+        for (int i = 0; i < index; i++) {
+            if (isVariableReferenced(expressions.get(i), name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Expression createTypePromotion(
-            VariableReferenceExpression variableReferenceExpression,
+            Expression expression,
             SequenceType paramType
     ) {
         // integer > decimal > double
@@ -58,9 +87,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("integer?")),
                         new CastExpression(
-                                variableReferenceExpression,
+                                expression,
                                 SequenceType.createSequenceType("double?"),
-                                variableReferenceExpression.getMetadata()
+                                expression.getMetadata()
                         )
                 )
             );
@@ -69,9 +98,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("decimal?")),
                         new CastExpression(
-                                variableReferenceExpression,
+                                expression,
                                 SequenceType.createSequenceType("double?"),
-                                variableReferenceExpression.getMetadata()
+                                expression.getMetadata()
                         )
                 )
             );
@@ -79,22 +108,22 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 new TypeswitchCase(
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("double?")),
-                        variableReferenceExpression
+                        expression
                 )
             );
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    variableReferenceExpression,
+                    expression,
                     cases,
                     new TypeswitchCase(
                             null,
                             new TreatExpression(
-                                    variableReferenceExpression,
+                                    expression,
                                     paramType,
                                     ErrorCode.UnexpectedTypeErrorCode,
-                                    variableReferenceExpression.getMetadata()
+                                    expression.getMetadata()
                             )
                     ),
-                    variableReferenceExpression.getMetadata()
+                    expression.getMetadata()
             );
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -106,9 +135,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("integer?")),
                         new CastExpression(
-                                variableReferenceExpression,
+                                expression,
                                 SequenceType.createSequenceType("decimal?"),
-                                variableReferenceExpression.getMetadata()
+                                expression.getMetadata()
                         )
                 )
             );
@@ -116,22 +145,22 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 new TypeswitchCase(
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                        variableReferenceExpression
+                        expression
                 )
             );
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    variableReferenceExpression,
+                    expression,
                     cases,
                     new TypeswitchCase(
                             null,
                             new TreatExpression(
-                                    variableReferenceExpression,
+                                    expression,
                                     paramType,
                                     ErrorCode.UnexpectedTypeErrorCode,
-                                    variableReferenceExpression.getMetadata()
+                                    expression.getMetadata()
                             )
                     ),
-                    variableReferenceExpression.getMetadata()
+                    expression.getMetadata()
             );
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -144,9 +173,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("anyURI?")),
                         new CastExpression(
-                                variableReferenceExpression,
+                                expression,
                                 SequenceType.createSequenceType("string?"),
-                                variableReferenceExpression.getMetadata()
+                                expression.getMetadata()
                         )
                 )
             );
@@ -154,27 +183,27 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 new TypeswitchCase(
                         null,
                         Collections.singletonList(SequenceType.createSequenceType("string?")),
-                        variableReferenceExpression
+                        expression
                 )
             );
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    variableReferenceExpression,
+                    expression,
                     cases,
                     new TypeswitchCase(
                             null,
                             new TreatExpression(
-                                    variableReferenceExpression,
+                                    expression,
                                     paramType,
                                     ErrorCode.UnexpectedTypeErrorCode,
-                                    variableReferenceExpression.getMetadata()
+                                    expression.getMetadata()
                             )
                     ),
-                    variableReferenceExpression.getMetadata()
+                    expression.getMetadata()
             );
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
         }
-        return variableReferenceExpression;
+        return expression;
     }
 
     @Override
@@ -429,35 +458,63 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
 
-            Name columnName = new Name("", "", "param" + UUID.randomUUID().toString().replaceAll("-", ""));
-            Clause expressionClause = new LetClause(
-                    columnName,
-                    null,
-                    argumentExpression,
-                    expression.getMetadata()
-            );
-            Expression assignmentExpression = createTypePromotion(
-                new VariableReferenceExpression(columnName, expression.getMetadata()),
-                paramType
-            );
+            // if there is a name collision, use a temporary variable
+            if (isVariableReferenced(expression.getArguments(), paramName, i)) {
+                Name columnName = new Name(
+                        "",
+                        "",
+                        String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
+                );
+                Clause expressionClause = new LetClause(
+                        columnName,
+                        null,
+                        argumentExpression,
+                        expression.getMetadata()
+                );
+                Expression assignmentExpression = createTypePromotion(
+                    new VariableReferenceExpression(columnName, expression.getMetadata()),
+                    paramType
+                );
 
-            Clause assignmentClause = new LetClause(
-                    paramName,
-                    null,
-                    assignmentExpression,
-                    expression.getMetadata()
-            );
-            if (assignmentClauses != null) {
-                assignmentClause.chainWith(assignmentClauses);
+                Clause assignmentClause = new LetClause(
+                        paramName,
+                        null,
+                        assignmentExpression,
+                        expression.getMetadata()
+                );
+                if (assignmentClauses != null) {
+                    assignmentClause.chainWith(assignmentClauses);
+                }
+                assignmentClauses = assignmentClause;
+                if (expressionClauses != null) {
+                    expressionClause.chainWith(expressionClauses);
+                }
+                expressionClauses = expressionClause;
+            } else {
+                Expression assignmentExpression = createTypePromotion(
+                    argumentExpression,
+                    paramType
+                );
+                Clause expressionClause = new LetClause(
+                        paramName,
+                        null,
+                        assignmentExpression,
+                        expression.getMetadata()
+                );
+                if (expressionClauses != null) {
+                    expressionClause.chainWith(expressionClauses);
+                }
+                expressionClauses = expressionClause;
             }
-            assignmentClauses = assignmentClause;
-            if (expressionClauses != null) {
-                expressionClause.chainWith(expressionClauses);
-            }
-            expressionClauses = expressionClause;
+
+
         }
-        assignmentClauses.getLastClause().chainWith(returnClause);
-        expressionClauses.getLastClause().chainWith(assignmentClauses);
+        if (assignmentClauses != null) {
+            assignmentClauses.getLastClause().chainWith(returnClause);
+            expressionClauses.getLastClause().chainWith(assignmentClauses);
+        } else {
+            expressionClauses.getLastClause().chainWith(returnClause);
+        }
         FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
         if (inlineFunction.getReturnType() != null) {
             return new TreatExpression(
