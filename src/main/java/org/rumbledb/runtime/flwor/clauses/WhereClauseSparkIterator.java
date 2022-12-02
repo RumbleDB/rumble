@@ -495,4 +495,23 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 return false;
         }
     }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
+        if (fromQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        nativeClauseContext.setClauseType(FLWOR_CLAUSES.WHERE);
+        NativeClauseContext whereQuery = this.expression.generateNativeQuery(nativeClauseContext);
+        if (whereQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultString = String.format(
+            "select * from (%s) where %s",
+            fromQuery.getResultingQuery(),
+            whereQuery.getResultingQuery()
+        );
+        return new NativeClauseContext(nativeClauseContext, resultString, fromQuery.getResultingType());
+    }
 }

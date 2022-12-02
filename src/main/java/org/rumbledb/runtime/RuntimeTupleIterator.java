@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
@@ -394,4 +395,16 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
      */
     public abstract boolean isSparkJobNeeded();
+
+    /**
+     * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
+     *
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
+     *         it is not possible
+     * @param nativeClauseContext context information to generate the native query
+     */
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

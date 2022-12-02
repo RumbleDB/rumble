@@ -14,13 +14,14 @@ import java.util.List;
  */
 public class NativeClauseContext {
     public static NativeClauseContext NoNativeQuery = new NativeClauseContext();
-
     private FLWOR_CLAUSES clauseType;
     private DataType schema;
     private DynamicContext context;
     private String resultingQuery;
     private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
     private ItemType resultingType;
+
+    private String tempView;
 
     private NativeClauseContext() {
     }
@@ -56,6 +57,10 @@ public class NativeClauseContext {
         return this.clauseType;
     }
 
+    public void setClauseType(FLWOR_CLAUSES clauseType) {
+        this.clauseType = clauseType;
+    }
+
     public void setResultingQuery(String resultingQuery) {
         this.resultingQuery = resultingQuery;
     }
@@ -86,5 +91,14 @@ public class NativeClauseContext {
 
     public void setResultingType(ItemType resultingType) {
         this.resultingType = resultingType;
+    }
+
+
+    public String getTempView() {
+        return this.tempView;
+    }
+
+    public void setTempView(String tempView) {
+        this.tempView = tempView;
     }
 }

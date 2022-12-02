@@ -22,6 +22,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -278,6 +279,12 @@ public class TreatIterator extends HybridRuntimeIterator {
         ) {
             throw errorToThrow("A sequence of more than one item");
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        // FIXME correct implementation of TreatIterator
+        return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 }
 

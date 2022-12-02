@@ -26,6 +26,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -56,6 +57,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -68,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 
 public class ForClauseSparkIterator extends RuntimeTupleIterator {
@@ -1340,5 +1343,69 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             default:
                 return false;
         }
+    }
+
+    /**
+     * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
+     *
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
+     *         it is not possible
+     * @param nativeClauseContext context information to generate the native query
+     */
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        // FIXME need to consider "for $x at $i in (1,2,3)"
+        // look above and do it equivalently
+        nativeClauseContext.setClauseType(FLWOR_CLAUSES.FOR);
+        String tempView = nativeClauseContext.getTempView();
+        NativeClauseContext selectQuery = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+        if (selectQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (this.child == null) {
+            nativeClauseContext.setTempView(null);
+            if (tempView != null) {
+                return createNativeQueryForTemporaryView(nativeClauseContext, selectQuery, tempView);
+            }
+        } else {
+            NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
+            if (fromQuery != NativeClauseContext.NoNativeQuery) {
+                return createNativeQueryForTemporaryView(nativeClauseContext, selectQuery, fromQuery.getTempView());
+            }
+        }
+        return NativeClauseContext.NoNativeQuery;
+    }
+
+    private NativeClauseContext createNativeQueryForTemporaryView(
+            NativeClauseContext nativeClauseContext,
+            NativeClauseContext selectQuery,
+            String view
+    ) {
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) nativeClauseContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        String resultString = String.format( // FIXME currently only works for one
+            "select %s %s as %s from (%s)",
+            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                selectQuery.getLateralViewPart().get(0),
+            this.variableName,
+            view
+        );
+        DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
+            selectQuery.getResultingType().isArrayItemType()
+                ? selectQuery.getResultingType().getArrayContentFacet()
+                : selectQuery.getResultingType()
+        );
+        TypeMappings.getDataFrameDataTypeFromItemType(selectQuery.getResultingType());
+        nativeClauseContext.setSchema(
+            ((StructType) nativeClauseContext.getSchema()).add(
+                this.variableName.getLocalName(),
+                resultingType
+            )
+        );
+        return new NativeClauseContext(nativeClauseContext, resultString, BuiltinTypesCatalogue.objectItem);
     }
 }

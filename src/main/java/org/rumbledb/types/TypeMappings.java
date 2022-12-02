@@ -1,12 +1,11 @@
 package org.rumbledb.types;
 
 import org.apache.spark.ml.linalg.VectorUDT;
-import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.DecimalType;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import org.rumbledb.exceptions.OurBadException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TypeMappings {
 
@@ -58,6 +57,16 @@ public class TypeMappings {
             return DataTypes.TimestampType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
+            return DataTypes.BinaryType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)){
+            List<StructField> fields = new ArrayList<>();
+            itemType.getObjectContentFacet().forEach((key, value) ->
+                    fields.add(DataTypes.createStructField(key, getDataFrameDataTypeFromItemType(value.getType()), !value.isRequired()))
+            );
+            if(fields.size() > 0) {
+                return DataTypes.createStructType(fields);
+            }
             return DataTypes.BinaryType;
         }
         throw new IllegalArgumentException(
@@ -112,10 +121,10 @@ public class TypeMappings {
             return BuiltinTypesCatalogue.objectItem;
         }
         if (dataType instanceof ArrayType) {
-            return BuiltinTypesCatalogue.arrayItem;
+            return ItemTypeFactory.createItemType(dataType);
         }
         if (dataType instanceof StructType) {
-            return BuiltinTypesCatalogue.objectItem;
+            return ItemTypeFactory.createItemType(dataType);
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }

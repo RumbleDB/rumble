@@ -377,4 +377,32 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         return result;
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        // only return the initial schema and the result
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+                (StructType) nativeClauseContext.getSchema(),
+                null,
+                null,
+                null
+        );
+        NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
+        if (fromQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        nativeClauseContext.setClauseType(FLWOR_CLAUSES.RETURN);
+        NativeClauseContext selectQuery = this.expression.generateNativeQuery(nativeClauseContext);
+        if (selectQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultString = String.format(
+            "select %s %s as `%s` from (%s)",
+            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+            selectQuery.getResultingQuery(),
+            SparkSessionManager.atomicJSONiqItemColumnName,
+            fromQuery.getResultingQuery()
+        );
+        // TODO update schema
+        return new NativeClauseContext(nativeClauseContext, resultString, fromQuery.getResultingType());
+    }
 }
