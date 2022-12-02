@@ -107,7 +107,7 @@ public class FlworDataFrame implements Serializable {
             throw new OurBadException("Variable " + name + "does not exist!");
         }
         if (!this.columnTypes.containsKey(name)) {
-            throw new OurBadException("Variable " + name + "does not have a type!");
+            return SequenceType.ITEM_STAR;
         }
         return this.columnTypes.get(name);
     }

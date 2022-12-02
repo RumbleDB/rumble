@@ -48,6 +48,11 @@ public class SequenceType implements Serializable {
             Arity.One
     );
 
+    public final static SequenceType INTEGER = new SequenceType(
+            BuiltinTypesCatalogue.integerItem,
+            Arity.One
+    );
+
     public final static SequenceType EMPTY_SEQUENCE = new SequenceType();
 
 

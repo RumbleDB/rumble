@@ -56,6 +56,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -773,9 +774,15 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> outputDependencies
     ) {
-        Dataset<Row> df = null;;
+        Dataset<Row> df = null;
+        SequenceType sequencetype = null;
         if (iterator.isDataFrame()) {
             JSoundDataFrame rows = iterator.getDataFrame(context);
+            if (allowingEmpty) {
+                sequencetype = new SequenceType(rows.getItemType(), Arity.OneOrZero);
+            } else {
+                sequencetype = new SequenceType(rows.getItemType(), Arity.One);
+            }
 
             String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
@@ -807,9 +814,16 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             // create initial RDD from expression
             JavaRDD<Item> expressionRDD = iterator.getRDD(context);
             df = getDataFrameFromItemRDD(variableName, expressionRDD).getDataFrame();
+            if (allowingEmpty) {
+                sequencetype = new SequenceType(BuiltinTypesCatalogue.item, Arity.OneOrZero);
+            } else {
+                sequencetype = SequenceType.ITEM;
+            }
         }
         if (positionalVariableName == null && !allowingEmpty) {
-            return new FlworDataFrame(df);
+            FlworDataFrame result = new FlworDataFrame(df);
+            result.setVariableType(variableName, sequencetype);
+            return result;
         }
         if (positionalVariableName == null && allowingEmpty) {
             String viewName = FlworDataFrameUtils.createTempView(df);
@@ -822,7 +836,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         viewName
                     )
                 );
-            return new FlworDataFrame(df);
+            FlworDataFrame result = new FlworDataFrame(df);
+            result.setVariableType(variableName, sequencetype);
+            return result;
         }
         // Add column for positional variable, similar to count clause.
         Dataset<Row> dfWithIndex = CountClauseSparkIterator.addSerializedCountColumn(
@@ -830,8 +846,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             outputDependencies,
             positionalVariableName
         );
+
         if (!allowingEmpty) {
-            return new FlworDataFrame(dfWithIndex);
+            FlworDataFrame result = new FlworDataFrame(dfWithIndex);
+            result.setVariableType(variableName, sequencetype);
+            result.setVariableType(positionalVariableName, SequenceType.INTEGER);
+            return result;
         }
         String inputWithIndex = FlworDataFrameUtils.createTempView(dfWithIndex);
         dfWithIndex.sparkSession()
@@ -856,7 +876,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     inputWithIndex
                 )
             );
-        return new FlworDataFrame(dfWithIndex);
+        FlworDataFrame result = new FlworDataFrame(dfWithIndex);
+        result.setVariableType(variableName, sequencetype);
+        result.setVariableType(positionalVariableName, SequenceType.INTEGER);
+        return result;
     }
 
     private static FlworDataFrame getDataFrameFromItemRDD(Name variableName, JavaRDD<Item> expressionRDD) {
