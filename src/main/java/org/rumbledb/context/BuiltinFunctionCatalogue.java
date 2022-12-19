@@ -77,13 +77,7 @@ import org.rumbledb.runtime.functions.numerics.exponential.Log10FunctionIterator
 import org.rumbledb.runtime.functions.numerics.exponential.LogFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.PowFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.SqrtFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.ACosFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.ASinFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.ATan2FunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.ATanFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.CosFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.SinFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.*;
 import org.rumbledb.runtime.functions.object.ObjectAccumulateFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantPairsFunctionIterator;
@@ -1241,6 +1235,34 @@ public class BuiltinFunctionCatalogue {
         "double",
         "double",
         ATan2FunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns the hyperbolic cosine of the angle given in radians
+     */
+    static final BuiltinFunction cosh = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "cosh"
+        ),
+        "double?",
+        "double?",
+        CoshFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns the hyperbolic sine of the angle given in radians
+     */
+    static final BuiltinFunction sinh = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "sinh"
+        ),
+        "double?",
+        "double?",
+        SinhFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2708,6 +2730,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(acos.getIdentifier(), acos);
         builtinFunctions.put(atan.getIdentifier(), atan);
         builtinFunctions.put(atan2.getIdentifier(), atan2);
+        builtinFunctions.put(cosh.getIdentifier(), cosh);
+        builtinFunctions.put(sinh.getIdentifier(), sinh);
 
         builtinFunctions.put(string0.getIdentifier(), string0);
         builtinFunctions.put(string1.getIdentifier(), string1);

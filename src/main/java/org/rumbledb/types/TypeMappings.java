@@ -41,6 +41,9 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
             return decimalType;
         }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+            return decimalType;
+        }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
         }
@@ -59,15 +62,25 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)){
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
-            itemType.getObjectContentFacet().forEach((key, value) ->
-                    fields.add(DataTypes.createStructField(key, getDataFrameDataTypeFromItemType(value.getType()), !value.isRequired()))
-            );
-            if(fields.size() > 0) {
+            itemType.getObjectContentFacet()
+                .forEach(
+                    (key, value) -> fields.add(
+                        DataTypes.createStructField(
+                            key,
+                            getDataFrameDataTypeFromItemType(value.getType()),
+                            !value.isRequired()
+                        )
+                    )
+                );
+            if (fields.size() > 0) {
                 return DataTypes.createStructType(fields);
             }
             return DataTypes.BinaryType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
+            return DataTypes.createArrayType(getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet()));
         }
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
