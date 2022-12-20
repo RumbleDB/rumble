@@ -70,7 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 
 public class ForClauseSparkIterator extends RuntimeTupleIterator {
@@ -292,10 +291,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * 
+     *
      * Non-starting clause, the child clause (above in the syntax) is parallelizable, the expression as well, and the
      * expression does not depend on the input tuple.
-     * 
+     *
      * @param context the dynamic context.
      * @return the resulting DataFrame.
      */
@@ -380,10 +379,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * 
+     *
      * Non-starting clause, the child clause (above in the syntax) is parallelizable, the expression as well, and the
      * expression is a predicate whose lhs does not depend on the input tuple.
-     * 
+     *
      * @param context the dynamic context.
      * @return the resulting DataFrame.
      */
@@ -505,9 +504,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * 
+     *
      * Non-starting clause, the child clause (above in the syntax) is local but the expression is parallelizable.
-     * 
+     *
      * @param context the dynamic context.
      * @return the resulting DataFrame.
      */
@@ -585,9 +584,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * 
+     *
      * Non-starting clause and the child clause (above in the syntax) is parallelizable.
-     * 
+     *
      * @param context the dynamic context.
      * @return the resulting DataFrame.
      */
@@ -732,9 +731,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * 
+     *
      * Starting clause and the expression is parallelizable.
-     * 
+     *
      * @param context the dynamic context.
      * @return the resulting DataFrame.
      */
@@ -753,9 +752,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * 
+     *
      * Starting clause and the expression is parallelizable.
-     * 
+     *
      * @param iterator the expression iterator
      * @param variableName the name of the for variable
      * @param positionalVariableName the name of the positional variable (or null if none)
@@ -1354,58 +1353,131 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @param nativeClauseContext context information to generate the native query
      */
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        // FIXME need to consider "for $x at $i in (1,2,3)"
-        // look above and do it equivalently
-        nativeClauseContext.setClauseType(FLWOR_CLAUSES.FOR);
-        String tempView = nativeClauseContext.getTempView();
-        NativeClauseContext selectQuery = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
-        if (selectQuery == NativeClauseContext.NoNativeQuery) {
+        // since the schema of the parent is preserved, we have to avoid collisions
+        if (
+            FlworDataFrameUtils.hasColumnForVariable((StructType) nativeClauseContext.getSchema(), this.variableName)
+                ||
+                (this.positionalVariableName != null
+                    && FlworDataFrameUtils.hasColumnForVariable(
+                        (StructType) nativeClauseContext.getSchema(),
+                        this.positionalVariableName
+                    ))
+        ) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (this.child == null) {
-            nativeClauseContext.setTempView(null);
-            if (tempView != null) {
-                return createNativeQueryForTemporaryView(nativeClauseContext, selectQuery, tempView);
+        if (this.allowingEmpty) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        nativeClauseContext.setClauseType(FLWOR_CLAUSES.FOR);
+        String tempView = nativeClauseContext.getTempView();
+        if (tempView != null) {
+            // if child not null -> evaluate child query
+            if (this.child != null) {
+                NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+                if (childContext == NativeClauseContext.NoNativeQuery) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                nativeClauseContext = childContext;
+                tempView = nativeClauseContext.getTempView();
             }
-        } else {
-            NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
-            if (fromQuery != NativeClauseContext.NoNativeQuery) {
-                return createNativeQueryForTemporaryView(nativeClauseContext, selectQuery, fromQuery.getTempView());
+            // evaluate assignment expression, don't allow FLWOR
+            nativeClauseContext.setTempView(null);
+            NativeClauseContext selectionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+            if (selectionContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            if (selectionContext.getLateralViewPart().size() > 0) {
+                // get columns
+                List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+                    (StructType) nativeClauseContext.getSchema(),
+                    null,
+                    null,
+                    null
+                );
+                // create exploded expression
+                String resultString;
+                if (this.positionalVariableName != null) {
+                    StringBuilder lateralViewString = new StringBuilder();
+                    int arrIndex = 0;
+                    List<String> lateralViewPart = selectionContext.getLateralViewPart();
+                    for (String lateralView : lateralViewPart) {
+                        ++arrIndex;
+                        lateralViewString.append(" lateral view ");
+                        if (arrIndex == lateralViewPart.size()) {
+                            lateralView = lateralView.replace("explode", "posexplode");
+                        }
+                        lateralViewString.append(lateralView);
+                        lateralViewString.append(" arr");
+                        lateralViewString.append(arrIndex);
+                    }
+                    // create query string
+                    resultString = String.format(
+                        "select %s arr%d.col%s as `%s`, (arr%d.pos%s + 1) as `%s` from (%s) %s",
+                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                        arrIndex,
+                        selectionContext.getResultingQuery(),
+                        this.variableName,
+                        arrIndex,
+                        selectionContext.getResultingQuery(),
+                        this.positionalVariableName,
+                        tempView,
+                        lateralViewString
+                    );
+                } else {
+                    StringBuilder lateralViewString = new StringBuilder();
+                    int arrIndex = 0;
+                    List<String> lateralViewPart = selectionContext.getLateralViewPart();
+                    for (String lateralView : lateralViewPart) {
+                        ++arrIndex;
+                        lateralViewString.append(" lateral view ");
+                        lateralViewString.append(lateralView);
+                        lateralViewString.append(" arr");
+                        lateralViewString.append(arrIndex);
+                    }
+                    // create query string
+                    resultString = String.format(
+                        "select %s arr%d.col%s as `%s` from (%s) %s",
+                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                        arrIndex,
+                        selectionContext.getResultingQuery(),
+                        this.variableName,
+                        tempView,
+                        lateralViewString
+                    );
+                }
+                // update context
+                selectionContext.getLateralViewPart().clear();
+                DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
+                    selectionContext.getResultingType().getItemType().isArrayItemType()
+                        ? selectionContext.getResultingType().getItemType().getArrayContentFacet()
+                        : selectionContext.getResultingType().getItemType()
+                );
+                selectionContext.setSchema(
+                    ((StructType) nativeClauseContext.getSchema()).add(
+                        this.variableName.getLocalName(),
+                        resultingType
+                    )
+                );
+                if (this.positionalVariableName != null) {
+                    selectionContext.setSchema(
+                        ((StructType) selectionContext.getSchema()).add(
+                            this.positionalVariableName.getLocalName(),
+                            DataTypes.IntegerType
+                        )
+                    );
+                }
+                selectionContext.setTempView(resultString);
+                // the result of this FLWOR clause is a sequence
+                selectionContext.setExplodedView(true);
+                // create context with updated type
+                return new NativeClauseContext(
+                        selectionContext,
+                        null,
+                        new SequenceType(TypeMappings.getItemTypeFromDataFrameDataType(selectionContext.getSchema()), SequenceType.Arity.One)
+                );
             }
         }
         return NativeClauseContext.NoNativeQuery;
     }
 
-    private NativeClauseContext createNativeQueryForTemporaryView(
-            NativeClauseContext nativeClauseContext,
-            NativeClauseContext selectQuery,
-            String view
-    ) {
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            (StructType) nativeClauseContext.getSchema(),
-            null,
-            null,
-            null
-        );
-        String resultString = String.format( // FIXME currently only works for one
-            "select %s %s as %s from (%s)",
-            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                selectQuery.getLateralViewPart().get(0),
-            this.variableName,
-            view
-        );
-        DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
-            selectQuery.getResultingType().isArrayItemType()
-                ? selectQuery.getResultingType().getArrayContentFacet()
-                : selectQuery.getResultingType()
-        );
-        TypeMappings.getDataFrameDataTypeFromItemType(selectQuery.getResultingType());
-        nativeClauseContext.setSchema(
-            ((StructType) nativeClauseContext.getSchema()).add(
-                this.variableName.getLocalName(),
-                resultingType
-            )
-        );
-        return new NativeClauseContext(nativeClauseContext, resultString, BuiltinTypesCatalogue.objectItem);
-    }
 }

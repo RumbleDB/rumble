@@ -36,6 +36,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -46,6 +47,7 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 
+import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -59,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
@@ -379,30 +382,85 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        // FIXME for column id, use nativeClauseContext.getAndIncreaseResultColumnId()
+
         // only return the initial schema and the result
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-                (StructType) nativeClauseContext.getSchema(),
-                null,
-                null,
-                null
+            (StructType) nativeClauseContext.getSchema(),
+            null,
+            null,
+            null
         );
         NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
         if (fromQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        nativeClauseContext.setClauseType(FLWOR_CLAUSES.RETURN);
-        NativeClauseContext selectQuery = this.expression.generateNativeQuery(nativeClauseContext);
+        if (!(this.expression instanceof ReturnClauseSparkIterator)) {
+            // don't allow nesting of FLWOR queries inside expression
+            fromQuery.setTempView(null);
+        }
+        if (this.expression instanceof CommaExpressionIterator) {
+            // special case: return a sequence
+            fromQuery.setTempView(null);
+            NativeClauseContext commaExpressionContext = ((CommaExpressionIterator) this.expression)
+                .generateCommaExpressionQuery(fromQuery);
+            if (commaExpressionContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            String resultString = String.format(
+                "select %s, `%s`.col as `%s` from (%s) lateral view explode(array(%s)) `%s`",
+                allColumns.stream()
+                    .map(FlworDataFrameColumn::getColumnName)
+                    .map(name -> "`" + name + "`")
+                    .collect(Collectors.joining(",")),
+                SparkSessionManager.temporaryColumnName,
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                fromQuery.getResultingQuery(),
+                commaExpressionContext.getResultingQuery(),
+                SparkSessionManager.temporaryColumnName
+            );
+            fromQuery.setSchema(
+                ((StructType) nativeClauseContext.getSchema()).add(
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    TypeMappings.getDataFrameDataTypeFromItemType(fromQuery.getResultingType())
+                )
+            );
+            fromQuery.setTempView(resultString);
+            return new NativeClauseContext(fromQuery, resultString, fromQuery.getResultingType());
+        }
+        fromQuery.setClauseType(FLWOR_CLAUSES.RETURN);
+        NativeClauseContext selectQuery = this.expression.generateNativeQuery(fromQuery);
         if (selectQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        String selectQueryString;
+        String fromQueryString;
+        // FIXME there is a TREAT expression in the way
+        if (this.expression instanceof ReturnClauseSparkIterator) {
+            selectQueryString = "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`";
+            fromQueryString = selectQuery.getTempView();
+        } else {
+            selectQueryString = selectQuery.getResultingQuery();
+            fromQueryString = fromQuery.getResultingQuery();
+        }
         String resultString = String.format(
-            "select %s %s as `%s` from (%s)",
-            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-            selectQuery.getResultingQuery(),
+            "select %s, %s as `%s` from (%s)",
+            allColumns.stream()
+                .map(FlworDataFrameColumn::getColumnName)
+                .map(name -> "`" + name + "`")
+                .collect(Collectors.joining(",")),
+            selectQueryString,
             SparkSessionManager.atomicJSONiqItemColumnName,
-            fromQuery.getResultingQuery()
+            fromQueryString
         );
-        // TODO update schema
-        return new NativeClauseContext(nativeClauseContext, resultString, fromQuery.getResultingType());
+        // extend the original schema with the resulting column
+        selectQuery.setSchema(
+            ((StructType) nativeClauseContext.getSchema()).add(
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                TypeMappings.getDataFrameDataTypeFromItemType(selectQuery.getResultingType())
+            )
+        );
+        selectQuery.setTempView(resultString);
+        return new NativeClauseContext(selectQuery, resultString, selectQuery.getResultingType());
     }
 }

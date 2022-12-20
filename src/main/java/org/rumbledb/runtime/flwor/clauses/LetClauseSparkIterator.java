@@ -811,23 +811,55 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             input = FlworDataFrameUtils.createTempView(dataFrame);
             NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
             letContext.setSchema(
-                    ((StructType) letContext.getSchema()).add(
-                            rowIdField,
-                            DataTypes.LongType
-                    )
+                ((StructType) letContext.getSchema()).add(
+                    rowIdField,
+                    DataTypes.LongType
+                )
             );
             letContext.setTempView(input);
             List<String> columnNames = Arrays.asList(inputSchema.fieldNames());
             NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
             if (nativeQuery != NativeClauseContext.NoNativeQuery) {
                 String query = String.format(
-                    "select %s, collect_list(`%s`) as `%s.sequence` from (%s) group by `%s` order by `%s`",
+                    "select %s, `%s`, collect_list(`%s`) as `%s.sequence` from (%s) group by `%s` order by `%s`",
                     columnNames.stream()
-                        .map(name -> String.format("first(`%s`) as `%s`", name, name))
+                        .map(
+                            name -> String.format(
+                                "first(%s) as `%s`",
+                                recursivelyUnwrapArray(name, nativeQuery.getGrouped()),
+                                name
+                            )
+                        )
                         .collect(Collectors.joining(",")),
+                    rowIdField,
                     SparkSessionManager.atomicJSONiqItemColumnName,
                     newVariableName.getLocalName(),
                     nativeQuery.getResultingQuery(),
+                    rowIdField,
+                    rowIdField
+                );
+                // columns might disappear based on filter, use union to not lose them
+                query = String.format(
+                    "select %s, first(`%s.sequence`) as `%s.sequence` from (select %s, `%s`, `%s.sequence` from (%s) union select %s, `%s`, null as `%s.sequence` from (%s)) group by `%s` order by `%s`",
+                    columnNames.stream()
+                        .map(
+                            name -> String.format(
+                                "first(%s) as `%s`",
+                                name,
+                                name
+                            )
+                        )
+                        .collect(Collectors.joining(",")),
+                        newVariableName.getLocalName(),
+                        newVariableName.getLocalName(),
+                    String.join(",", columnNames),
+                    rowIdField,
+                        newVariableName.getLocalName(),
+                    query,
+                    String.join(",", columnNames),
+                    rowIdField,
+                        newVariableName.getLocalName(),
+                    input,
                     rowIdField,
                     rowIdField
                 );
@@ -871,6 +903,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
+    private static String recursivelyUnwrapArray(String name, int groupCount) {
+        if (groupCount <= 0) {
+            return "`" + name + "`";
+        }
+        return "array_min( " + recursivelyUnwrapArray(name, groupCount - 1) + " )";
+    }
+
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.LET) {
             return true;
@@ -910,39 +949,94 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (this.child == null) {
+        // since the schema of the parent is preserved, we have to avoid collisions
+        if (FlworDataFrameUtils.hasColumnForVariable((StructType) nativeClauseContext.getSchema(), this.variableName)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
-        if (fromQuery == NativeClauseContext.NoNativeQuery) {
-            return NativeClauseContext.NoNativeQuery;
-        }
-        String tempView = nativeClauseContext.getTempView();
-        nativeClauseContext.setTempView(null);
-        NativeClauseContext nativeQuery = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
-        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-            return NativeClauseContext.NoNativeQuery;
-        }
-        nativeClauseContext.setTempView(tempView);
-        nativeClauseContext.setSchema(
-            ((StructType) nativeClauseContext.getSchema()).add(
+        if (this.child != null) {
+            NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+            if (childContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            childContext.setClauseType(FLWOR_CLAUSES.LET);
+            NativeClauseContext nativeQuery;
+            String expressionString;
+            List<FlworDataFrameColumn>
+            // project all columns
+            allColumns = FlworDataFrameUtils.getColumns(
+                (StructType) childContext.getSchema(),
+                null,
+                null,
+                null
+            );
+            if (this.assignmentIterator instanceof ReturnClauseSparkIterator) {
+                nativeQuery = this.assignmentIterator.generateNativeQuery(childContext);
+                expressionString = "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`";
+            } else {
+                // otherwise, inline expression in projection, don't allow FLWOR
+                String tempView = childContext.getTempView();
+                childContext.setTempView(null);
+                nativeQuery = this.assignmentIterator.generateNativeQuery(childContext);
+                nativeQuery.setTempView(tempView);
+                expressionString = nativeQuery.getResultingQuery();
+            }
+            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            childContext.setSchema(
+                ((StructType) childContext.getSchema()).add(
+                    this.variableName.getLocalName(),
+                    TypeMappings.getDataFrameDataTypeFromItemType(nativeQuery.getResultingType())
+                )
+            );
+            String resultString = String.format(
+                "select %s %s as `%s` from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                expressionString,
                 this.variableName.getLocalName(),
-                TypeMappings.getDataFrameDataTypeFromItemType(nativeQuery.getResultingType())
-            )
-        );
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-            (StructType) fromQuery.getSchema(),
-            null,
-            null,
-            null
-        );
-        String resultString = String.format(
-            "select %s %s as %s from (%s)",
-            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-            nativeQuery.getResultingQuery(),
-            this.variableName.getLocalName(),
-            fromQuery.getResultingQuery()
-        );
-        return new NativeClauseContext(nativeClauseContext, resultString, fromQuery.getResultingType());
+                nativeQuery.getTempView()
+            );
+            childContext.setTempView(resultString);
+            return new NativeClauseContext(childContext, resultString, childContext.getResultingType());
+        } else {
+            if (nativeClauseContext.getTempView() == null) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            // FLWOR expressions can start with a LET clause. In this case, use the temporary view
+            NativeClauseContext childContext;
+            String selectQueryString;
+            nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
+            if (this.assignmentIterator instanceof ReturnClauseSparkIterator) {
+                childContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+                selectQueryString = "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`";
+            } else {
+                String tempView = nativeClauseContext.getTempView();
+                nativeClauseContext.setTempView(null);
+                childContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+                childContext.setTempView(tempView);
+                selectQueryString = childContext.getResultingQuery();
+            }
+            if (childContext == null) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            String resultString = String.format(
+                "select %s %s as %s from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(
+                    FlworDataFrameUtils.getColumns((StructType) nativeClauseContext.getSchema()),
+                    true
+                ),
+                selectQueryString,
+                this.variableName.getLocalName(),
+                    childContext.getTempView()
+            );
+            childContext.setSchema(
+                ((StructType) nativeClauseContext.getSchema()).add(
+                    this.variableName.getLocalName(),
+                    TypeMappings.getDataFrameDataTypeFromItemType(childContext.getResultingType())
+                )
+            );
+            childContext.setTempView(resultString);
+            return new NativeClauseContext(childContext, resultString, childContext.getResultingType());
+        }
     }
 }

@@ -301,6 +301,19 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setSchema(field.dataType());
             newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+        } else if (
+            newContext.getResultingType().isObjectItemType()
+                && newContext.getResultingType().getObjectContentFacet().containsKey(key)
+        ) {
+            String leftQuery = newContext.getResultingQuery();
+            if (leftQuery != null) {
+                newContext.setResultingQuery(leftQuery + ".`" + key + "`");
+            } else {
+                newContext.setResultingQuery("`" + key + "`");
+            }
+            ItemType resultType = newContext.getResultingType().getObjectContentFacet().get(key).getType();
+            newContext.setSchema(TypeMappings.getDataFrameDataTypeFromItemType(resultType));
+            newContext.setResultingType(resultType);
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 throw new UnexpectedStaticTypeException(

@@ -526,6 +526,58 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context
     ) {
         NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
+        String orderSql = createNativeQuery(expressionsWithIterator, orderContext);
+        if (orderSql == null)
+            return null;
+
+        LogManager.getLogger("OrderByClauseSparkIterator")
+            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
+        dataFrame.createOrReplaceTempView("input");
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s from input order by %s",
+                    selectSQL,
+                    orderSql
+                )
+            );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        childContext.setTempView(null);
+        String orderQueryString = createNativeQuery(this.expressionsWithIterator, childContext);
+        if (orderQueryString != null) {
+            String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(
+                FlworDataFrameUtils.getColumns(
+                    (StructType) childContext.getSchema(),
+                    null,
+                    null,
+                    null
+                ),
+                false
+            );
+            orderQueryString = String.format(
+                "select %s from (%s) order by %s",
+                selectSQL,
+                childContext.getTempView(),
+                orderQueryString
+            );
+            childContext.setTempView(orderQueryString);
+            return new NativeClauseContext(childContext, orderQueryString, childContext.getResultingType());
+        }
+        return NativeClauseContext.NoNativeQuery;
+    }
+
+    private static String createNativeQuery(
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
+            NativeClauseContext orderContext
+    ) {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         NativeClauseContext nativeQuery;
@@ -562,19 +614,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-
-        LogManager.getLogger("OrderByClauseSparkIterator")
-            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
-        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
-        dataFrame.createOrReplaceTempView("input");
-        return dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from input order by %s",
-                    selectSQL,
-                    orderSql
-                )
-            );
+        return orderSql.toString();
     }
 
     public boolean containsClause(FLWOR_CLAUSES kind) {

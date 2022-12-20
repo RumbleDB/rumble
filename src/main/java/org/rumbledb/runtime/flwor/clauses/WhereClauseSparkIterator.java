@@ -498,20 +498,23 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext fromQuery = this.child.generateNativeQuery(nativeClauseContext);
-        if (fromQuery == NativeClauseContext.NoNativeQuery) {
+        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        nativeClauseContext.setClauseType(FLWOR_CLAUSES.WHERE);
-        NativeClauseContext whereQuery = this.expression.generateNativeQuery(nativeClauseContext);
+        childContext.setClauseType(FLWOR_CLAUSES.WHERE);
+        // don't allow FLWOR expressions in where clause
+        childContext.setTempView(null);
+        NativeClauseContext whereQuery = this.expression.generateNativeQuery(childContext);
         if (whereQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultString = String.format(
             "select * from (%s) where %s",
-            fromQuery.getResultingQuery(),
+            childContext.getResultingQuery(),
             whereQuery.getResultingQuery()
         );
-        return new NativeClauseContext(nativeClauseContext, resultString, fromQuery.getResultingType());
+        childContext.setTempView(resultString);
+        return new NativeClauseContext(childContext, resultString, childContext.getResultingType());
     }
 }
