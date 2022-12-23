@@ -30,6 +30,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -106,7 +107,10 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(value.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("
@@ -114,7 +118,11 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + value.getResultingQuery()
             + " ) AS FLOAT)"
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One)
+        );
     }
 
 

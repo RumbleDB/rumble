@@ -28,6 +28,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 
 public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -52,7 +54,7 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "" + this.item.getDecimalValue(),
-                BuiltinTypesCatalogue.decimalItem
+                new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.One)
         );
     }
 }

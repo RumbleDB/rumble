@@ -812,7 +812,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             return new NativeClauseContext(
                     nativeClauseContext,
                     "CAST (" + childQuery.getResultingQuery() + " AS FLOAT)",
-                    BuiltinTypesCatalogue.floatItem
+                    new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One)
             );
         }
         return NativeClauseContext.NoNativeQuery;

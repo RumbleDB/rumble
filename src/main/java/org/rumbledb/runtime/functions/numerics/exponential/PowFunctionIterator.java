@@ -30,6 +30,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -73,12 +74,23 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (baseQuery == NativeClauseContext.NoNativeQuery || exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "POW( "
+        if (
+            SequenceType.Arity.OneOrMore.isSubtypeOf(baseQuery.getResultingType().getArity())
+                ||
+                SequenceType.Arity.OneOrMore.isSubtypeOf(exponentQuery.getResultingType().getArity())
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "pow( "
             + baseQuery.getResultingQuery()
             + ", "
             + exponentQuery.getResultingQuery()
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.doubleItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+        );
     }
 
 }

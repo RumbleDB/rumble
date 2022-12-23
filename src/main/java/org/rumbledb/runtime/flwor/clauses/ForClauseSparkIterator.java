@@ -1063,6 +1063,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             } else {
                 List<String> lateralViewPart = nativeQuery.getLateralViewPart();
                 if (lateralViewPart.size() == 0) {
+                    // if the resulting query is a sequence, use explode
+                    if (SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())) {
+                        nativeQuery.setResultingQuery("explode(" + nativeQuery.getResultingQuery() + ")");
+                    }
                     // no array unboxing in the operation
                     return dataFrame.sparkSession()
                         .sql(
@@ -1380,71 +1384,54 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 nativeClauseContext = childContext;
                 tempView = nativeClauseContext.getTempView();
             }
-            // evaluate assignment expression, don't allow FLWOR
-            nativeClauseContext.setTempView(null);
             NativeClauseContext selectionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
             if (selectionContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            if (selectionContext.getLateralViewPart().size() > 0) {
-                // get columns
-                List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-                    (StructType) nativeClauseContext.getSchema(),
-                    null,
-                    null,
-                    null
+            // get columns
+            List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+                (StructType) nativeClauseContext.getSchema(),
+                null,
+                null,
+                null
+            );
+            // if the position is not named, create a unique name
+            Name positionalVariableName = (this.positionalVariableName != null)
+                ? this.positionalVariableName
+                : Name.createVariableInNoNamespace(
+                    SparkSessionManager.positionalVariableName
+                        + selectionContext.getAndIncrementMonotonicallyIncreasingId()
                 );
+            if (selectionContext.getLateralViewPart().size() > 0) {
                 // create exploded expression
                 String resultString;
-                if (this.positionalVariableName != null) {
-                    StringBuilder lateralViewString = new StringBuilder();
-                    int arrIndex = 0;
-                    List<String> lateralViewPart = selectionContext.getLateralViewPart();
-                    for (String lateralView : lateralViewPart) {
-                        ++arrIndex;
-                        lateralViewString.append(" lateral view ");
-                        if (arrIndex == lateralViewPart.size()) {
-                            lateralView = lateralView.replace("explode", "posexplode");
-                        }
-                        lateralViewString.append(lateralView);
-                        lateralViewString.append(" arr");
-                        lateralViewString.append(arrIndex);
+                StringBuilder lateralViewString = new StringBuilder();
+                int arrIndex = 0;
+                List<String> lateralViewPart = selectionContext.getLateralViewPart();
+                for (String lateralView : lateralViewPart) {
+                    ++arrIndex;
+                    lateralViewString.append(" lateral view ");
+                    if (arrIndex == lateralViewPart.size()) {
+                        lateralView = lateralView.replace("explode", "posexplode");
                     }
-                    // create query string
-                    resultString = String.format(
-                        "select %s arr%d.col%s as `%s`, (arr%d.pos%s + 1) as `%s` from (%s) %s",
-                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                        arrIndex,
-                        selectionContext.getResultingQuery(),
-                        this.variableName,
-                        arrIndex,
-                        selectionContext.getResultingQuery(),
-                        this.positionalVariableName,
-                        tempView,
-                        lateralViewString
-                    );
-                } else {
-                    StringBuilder lateralViewString = new StringBuilder();
-                    int arrIndex = 0;
-                    List<String> lateralViewPart = selectionContext.getLateralViewPart();
-                    for (String lateralView : lateralViewPart) {
-                        ++arrIndex;
-                        lateralViewString.append(" lateral view ");
-                        lateralViewString.append(lateralView);
-                        lateralViewString.append(" arr");
-                        lateralViewString.append(arrIndex);
-                    }
-                    // create query string
-                    resultString = String.format(
-                        "select %s arr%d.col%s as `%s` from (%s) %s",
-                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                        arrIndex,
-                        selectionContext.getResultingQuery(),
-                        this.variableName,
-                        tempView,
-                        lateralViewString
-                    );
+                    lateralViewString.append(lateralView);
+                    lateralViewString.append(" arr");
+                    lateralViewString.append(arrIndex);
                 }
+                // create query string
+                resultString = String.format(
+                    "select %s arr%d.col%s as `%s`, (arr%d.pos%s + 1) as `%s` from (%s) %s",
+                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                    arrIndex,
+                    selectionContext.getResultingQuery(),
+                    this.variableName,
+                    arrIndex,
+                    selectionContext.getResultingQuery(),
+                    positionalVariableName,
+                    tempView,
+                    lateralViewString
+                );
+
                 // update context
                 selectionContext.getLateralViewPart().clear();
                 DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
@@ -1458,14 +1445,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         resultingType
                     )
                 );
-                if (this.positionalVariableName != null) {
-                    selectionContext.setSchema(
-                        ((StructType) selectionContext.getSchema()).add(
-                            this.positionalVariableName.getLocalName(),
-                            DataTypes.IntegerType
-                        )
-                    );
-                }
+                selectionContext.setSchema(
+                    ((StructType) selectionContext.getSchema()).add(
+                        positionalVariableName.getLocalName(),
+                        DataTypes.IntegerType
+                    )
+                );
+                selectionContext.addPositionalVariableName(positionalVariableName);
                 selectionContext.setTempView(resultString);
                 // the result of this FLWOR clause is a sequence
                 selectionContext.setExplodedView(true);
@@ -1473,7 +1459,42 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 return new NativeClauseContext(
                         selectionContext,
                         null,
-                        new SequenceType(TypeMappings.getItemTypeFromDataFrameDataType(selectionContext.getSchema()), SequenceType.Arity.One)
+                        null
+                );
+            } else if (SequenceType.Arity.OneOrMore.isSubtypeOf(selectionContext.getResultingType().getArity())) {
+                // create query string
+                String resultString = String.format(
+                    "select %s explodedsequence.col as `%s`, (explodedsequence.pos + 1) as `%s` from (%s) lateral view posexplode(%s) explodedsequence",
+                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                    this.variableName,
+                    positionalVariableName,
+                    selectionContext.getTempView(),
+                    selectionContext.getResultingQuery()
+                );
+                DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
+                    selectionContext.getResultingType().getItemType()
+                );
+                selectionContext.setSchema(
+                    ((StructType) nativeClauseContext.getSchema()).add(
+                        this.variableName.getLocalName(),
+                        resultingType
+                    )
+                );
+                selectionContext.setSchema(
+                    ((StructType) selectionContext.getSchema()).add(
+                        positionalVariableName.getLocalName(),
+                        DataTypes.IntegerType
+                    )
+                );
+                selectionContext.addPositionalVariableName(positionalVariableName);
+                selectionContext.setTempView(resultString);
+                // the result of this FLWOR clause is a sequence
+                selectionContext.setExplodedView(true);
+                // create context with updated type
+                return new NativeClauseContext(
+                        selectionContext,
+                        null,
+                        null
                 );
             }
         }

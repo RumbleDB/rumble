@@ -29,6 +29,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -61,10 +62,9 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return new NativeClauseContext(
                     nativeClauseContext,
                     "SIZE (" + nativeChildQuery.getResultingQuery() + ")",
-                    BuiltinTypesCatalogue.integerItem
+                    new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
             );
         }
         return NativeClauseContext.NoNativeQuery;
     }
-
 }

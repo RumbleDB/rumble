@@ -48,6 +48,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -371,7 +372,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (
             filterQuery != NativeClauseContext.NoNativeQuery
         ) {
-            String resultingQuery = " EXPLODE ( FILTER ( "
+            String resultingQuery = " explode ( filter ( "
                 + arrayReferenceQuery.getResultingQuery()
                 + ", "
                 + "`"
@@ -383,7 +384,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    BuiltinTypesCatalogue.booleanItem
+                    new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
             );
         }
         return NativeClauseContext.NoNativeQuery;

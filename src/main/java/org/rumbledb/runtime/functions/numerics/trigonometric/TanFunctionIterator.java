@@ -29,6 +29,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -65,10 +66,17 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         String resultingQuery = "TAN( "
             + childQuery.getResultingQuery()
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.doubleItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+        );
     }
 
 }

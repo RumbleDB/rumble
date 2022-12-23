@@ -32,6 +32,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 import java.util.Map;
@@ -157,20 +158,20 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
-            if (nativeChildQuery.getResultingQuery().trim().startsWith("EXPLODE")) {
+            if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(
                         nativeClauseContext,
-                        "SIZE"
+                        "size"
                             + nativeChildQuery.getResultingQuery()
-                                .substring(nativeChildQuery.getResultingQuery().indexOf("EXPLODE") + 7),
-                        BuiltinTypesCatalogue.integerItem
+                                .substring(nativeChildQuery.getResultingQuery().indexOf("explode") + 7),
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
                 );
 
             } else {
                 return new NativeClauseContext(
                         nativeClauseContext,
-                        "COUNT (" + nativeChildQuery.getResultingQuery() + ")",
-                        BuiltinTypesCatalogue.integerItem
+                        "size (" + nativeChildQuery.getResultingQuery() + ")",
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
                 );
             }
         }

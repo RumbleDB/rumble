@@ -28,9 +28,14 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CommaExpressionIterator extends HybridRuntimeIterator {
 
@@ -137,5 +142,49 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             return sparkContext.emptyRDD();
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        List<NativeClauseContext> childClauses = this.children.stream()
+            .map(child -> child.generateNativeQuery(nativeClauseContext))
+            .collect(Collectors.toList());
+        if (!childClauses.stream().allMatch(child -> child != NativeClauseContext.NoNativeQuery)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        ItemType resultType = childClauses.stream()
+            .map(childClause -> childClause.getResultingType().getItemType())
+            .reduce((a, b) -> a.equals(b) ? a : BuiltinTypesCatalogue.item)
+            .orElse(BuiltinTypesCatalogue.item);
+        if (BuiltinTypesCatalogue.item.equals(resultType)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingString;
+        // if a child is already a sequence, use concat to merge the sequences
+        if (
+            childClauses.stream()
+                .anyMatch(child -> SequenceType.Arity.OneOrMore.isSubtypeOf(child.getResultingType().getArity()))
+        ) {
+            resultingString = childClauses.stream()
+                .map(
+                    child -> (SequenceType.Arity.OneOrMore.isSubtypeOf(child.getResultingType().getArity()))
+                        ? child.getResultingQuery()
+                        : "array(" + child.getResultingQuery() + ")"
+                )
+                .collect(Collectors.joining(","));
+            resultingString = String.format("concat(%s)", resultingString);
+        } else {
+            resultingString = String.format(
+                "array(%s)",
+                childClauses.stream()
+                    .map(NativeClauseContext::getResultingQuery)
+                    .collect(Collectors.joining(","))
+            );
+        }
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingString,
+                new SequenceType(resultType, SequenceType.Arity.ZeroOrMore)
+        );
     }
 }

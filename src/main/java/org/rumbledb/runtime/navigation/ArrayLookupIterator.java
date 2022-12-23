@@ -37,6 +37,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -163,6 +164,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
@@ -188,7 +192,12 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             ArrayType arraySchema = (ArrayType) schema;
             newContext.setSchema(arraySchema.elementType());
-            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(arraySchema.elementType()));
+            newContext.setResultingType(
+                new SequenceType(
+                        TypeMappings.getItemTypeFromDataFrameDataType(arraySchema.elementType()),
+                        SequenceType.Arity.One
+                )
+            );
             newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
         }
         return newContext;

@@ -31,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,27 +65,32 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (!this.children.isEmpty()) {
-            NativeClauseContext childQuery;
+            NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+            String resultingQuery;
             if (this.children.get(0) instanceof CommaExpressionIterator) {
-                childQuery = ((CommaExpressionIterator) this.children.get(0)).generateCommaExpressionQuery(
-                    nativeClauseContext
-                );
+                resultingQuery = childQuery.getResultingQuery();
             } else {
-                childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+                resultingQuery = "array( "
+                    + childQuery.getResultingQuery()
+                    + " )";
             }
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            String resultingQuery = "array( "
-                + childQuery.getResultingQuery()
-                + " )";
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    ArrayItemType.arrayOf(childQuery.getResultingType())
+                    new SequenceType(
+                            ArrayItemType.arrayOf(childQuery.getResultingType().getItemType()),
+                            SequenceType.Arity.One
+                    )
             );
         } else {
-            return new NativeClauseContext(nativeClauseContext, "array()", BuiltinTypesCatalogue.arrayItem);
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "array()",
+                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
+            );
         }
     }
 }

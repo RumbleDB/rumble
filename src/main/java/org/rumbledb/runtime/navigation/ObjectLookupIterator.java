@@ -40,10 +40,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.FieldDescriptor;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.TypeMappings;
+import org.rumbledb.types.*;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -300,10 +297,15 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setSchema(field.dataType());
-            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+            newContext.setResultingType(
+                new SequenceType(
+                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
+                        SequenceType.Arity.One
+                )
+            );
         } else if (
-            newContext.getResultingType().isObjectItemType()
-                && newContext.getResultingType().getObjectContentFacet().containsKey(key)
+            newContext.getResultingType().getItemType().isObjectItemType()
+                && newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(key)
         ) {
             String leftQuery = newContext.getResultingQuery();
             if (leftQuery != null) {
@@ -311,9 +313,13 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } else {
                 newContext.setResultingQuery("`" + key + "`");
             }
-            ItemType resultType = newContext.getResultingType().getObjectContentFacet().get(key).getType();
+            ItemType resultType = newContext.getResultingType()
+                .getItemType()
+                .getObjectContentFacet()
+                .get(key)
+                .getType();
             newContext.setSchema(TypeMappings.getDataFrameDataTypeFromItemType(resultType));
-            newContext.setResultingType(resultType);
+            newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.One));
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 throw new UnexpectedStaticTypeException(

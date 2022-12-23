@@ -29,10 +29,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -44,16 +41,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.SparkSessionManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -181,7 +173,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             df,
             this.expression,
             inputSchema,
-            context
+            context,
+            this.getMetadata()
         );
         if (nativeQueryResult != null) {
             return nativeQueryResult;
@@ -426,34 +419,45 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
      * @param iterator where filtering expression iterator
      * @param inputSchema input schema of the dataframe
      * @param context current dynamic context of the dataframe
+     * @param metadata
      * @return resulting dataframe of the let clause if successful, null otherwise
      */
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             RuntimeIterator iterator,
             StructType inputSchema,
-            DynamicContext context
+            DynamicContext context,
+            ExceptionMetadata metadata
     ) {
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, inputSchema, context);
+        letContext.setTempView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
+        if (!nativeQuery.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+            throw new InvalidArgumentTypeException(
+                    "Effective boolean value not defined for items of type "
+                        +
+                        nativeQuery.getResultingType().getItemType().toString(),
+                    metadata
+            );
+        }
         LogManager.getLogger("WhereClauseSparkIterator")
             .info(
                 "Rumble was able to optimize a where clause to a native SQL query: "
                     + String.format(
-                        "select * from %s where %s",
-                        input,
+                        "select * from (%s) where %s",
+                        nativeQuery.getTempView(),
                         nativeQuery.getResultingQuery()
                     )
             );
         return dataFrame.sparkSession()
             .sql(
                 String.format(
-                    "select * from %s where %s",
-                    input,
+                    "select * from (%s) where %s",
+                    nativeQuery.getTempView(),
                     nativeQuery.getResultingQuery()
                 )
             );
@@ -503,18 +507,43 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         childContext.setClauseType(FLWOR_CLAUSES.WHERE);
-        // don't allow FLWOR expressions in where clause
-        childContext.setTempView(null);
-        NativeClauseContext whereQuery = this.expression.generateNativeQuery(childContext);
-        if (whereQuery == NativeClauseContext.NoNativeQuery) {
+        NativeClauseContext expressionContext = this.expression.generateNativeQuery(childContext);
+        if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        if (!expressionContext.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+            throw new InvalidArgumentTypeException(
+                    "Effective boolean value not defined for items of type "
+                        +
+                        expressionContext.getResultingType().getItemType().toString(),
+                    getMetadata()
+            );
+        }
+        String conditionalColumnName = SparkSessionManager.conditionalColumnName
+            + expressionContext.getAndIncrementMonotonicallyIncreasingId();
+
         String resultString = String.format(
-            "select * from (%s) where %s",
-            childContext.getResultingQuery(),
-            whereQuery.getResultingQuery()
+            "select *, %s as `%s` from (%s)",
+            expressionContext.getResultingQuery(),
+            conditionalColumnName,
+            expressionContext.getTempView()
         );
+        if (nativeClauseContext.getPositionalVariableName() != null) {
+            resultString = String.format(
+                "%s where (%s) or (`%s` = 1)",
+                resultString,
+                expressionContext.getResultingQuery(),
+                nativeClauseContext.getPositionalVariableName().getLocalName()
+            );
+        }
+        childContext.setSchema(
+            ((StructType) childContext.getSchema()).add(
+                conditionalColumnName,
+                DataTypes.BooleanType
+            )
+        );
+        childContext.addConditionalColumn(conditionalColumnName);
         childContext.setTempView(resultString);
-        return new NativeClauseContext(childContext, resultString, childContext.getResultingType());
+        return new NativeClauseContext(childContext, null, null);
     }
 }

@@ -110,10 +110,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
+        // sequences cannot be referenced, so resulting type is always OneOrZero
         NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
                 "`" + escapedName + "`",
-                variableType
+                new SequenceType(variableType, SequenceType.Arity.OneOrZero)
         );
         newContext.setSchema(fieldType);
         return newContext;

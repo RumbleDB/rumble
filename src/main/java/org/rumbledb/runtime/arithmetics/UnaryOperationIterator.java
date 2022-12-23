@@ -30,7 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -104,7 +104,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         String leftQuery = leftResult.getResultingQuery();
-        ItemType resultType = leftResult.getResultingType();
+        SequenceType resultType = leftResult.getResultingType();
         if (this.negated) {
             String resultingQuery = "( "
                 + " - "

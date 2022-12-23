@@ -174,8 +174,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
                 tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
                 tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                                                                                                  // variables from new
-                                                                                                  // tuple
+                // variables from new
+                // tuple
 
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
                 try {
@@ -526,7 +526,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context
     ) {
         NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
-        String orderSql = createNativeQuery(expressionsWithIterator, orderContext);
+        String orderSql = createOrderExpression(expressionsWithIterator, orderContext);
         if (orderSql == null)
             return null;
 
@@ -544,37 +544,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             );
     }
 
-    @Override
-    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
-        if (childContext == NativeClauseContext.NoNativeQuery) {
-            return NativeClauseContext.NoNativeQuery;
-        }
-        childContext.setTempView(null);
-        String orderQueryString = createNativeQuery(this.expressionsWithIterator, childContext);
-        if (orderQueryString != null) {
-            String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(
-                FlworDataFrameUtils.getColumns(
-                    (StructType) childContext.getSchema(),
-                    null,
-                    null,
-                    null
-                ),
-                false
-            );
-            orderQueryString = String.format(
-                "select %s from (%s) order by %s",
-                selectSQL,
-                childContext.getTempView(),
-                orderQueryString
-            );
-            childContext.setTempView(orderQueryString);
-            return new NativeClauseContext(childContext, orderQueryString, childContext.getResultingType());
-        }
-        return NativeClauseContext.NoNativeQuery;
-    }
-
-    private static String createNativeQuery(
+    private static String createOrderExpression(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             NativeClauseContext orderContext
     ) {
@@ -593,8 +563,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
             // and jsoniq (order by a costant, so no actual ordering is performed)
             if (
-                (nativeQuery.getResultingType() == BuiltinTypesCatalogue.integerItem
-                    || nativeQuery.getResultingType() == BuiltinTypesCatalogue.intItem)
+                (nativeQuery.getResultingType().getItemType() == BuiltinTypesCatalogue.integerItem
+                    || nativeQuery.getResultingType().getItemType() == BuiltinTypesCatalogue.intItem)
                     && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');
@@ -654,5 +624,33 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String view = childContext.getTempView();
+        nativeClauseContext.setTempView(null);
+        String orderString = createOrderExpression(this.expressionsWithIterator, childContext);
+        if (orderString == null) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) childContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        String resultString = String.format(
+            "select %s from (%s) order by %s",
+            FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
+            view,
+            orderString
+        );
+        childContext.setTempView(resultString);
+        return new NativeClauseContext(childContext, null, null);
     }
 }

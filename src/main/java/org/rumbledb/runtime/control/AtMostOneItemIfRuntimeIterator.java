@@ -30,6 +30,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -72,13 +73,13 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!conditionResult.getResultingType().equals(BuiltinTypesCatalogue.booleanItem)) {
+        if (!conditionResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!thenResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!thenResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!elseResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!elseResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
@@ -89,6 +90,10 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             + ", "
             + elseResult.getResultingQuery()
             + " ) )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One)
+        );
     }
 }
