@@ -29,6 +29,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
@@ -135,7 +136,107 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        // the keys need to be strings
+        if (this.isMergedObject) {
+            return generateMergedObject(nativeClauseContext);
+        }
+        return generateKeyValueObject(nativeClauseContext);
+    }
+
+    private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
+        List<RuntimeIterator> objectsToMerge = this.children;
+        if (this.children.get(0) instanceof CommaExpressionIterator) {
+            objectsToMerge = ((CommaExpressionIterator) this.children.get(0)).getChildren();
+        }
+        if (
+            !objectsToMerge.stream()
+                .allMatch(
+                    objectToMerge -> objectToMerge instanceof VariableReferenceIterator
+                        || objectToMerge instanceof ObjectConstructorRuntimeIterator
+                )
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<String> queries = new ArrayList<>();
+        List<String> keyNames = new ArrayList<>();
+        List<ItemType> valueTypes = new ArrayList<>();
+        for (RuntimeIterator objectToMerge : objectsToMerge) {
+            if (objectToMerge instanceof VariableReferenceIterator) {
+                NativeClauseContext objectPartContext = objectToMerge.generateNativeQuery(nativeClauseContext);
+                if (objectPartContext == NativeClauseContext.NoNativeQuery) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                objectPartContext.getResultingType().getItemType().getObjectContentFacet().forEach((k, v) -> {
+                    keyNames.add(k);
+                    valueTypes.add(v.getType());
+                });
+                // special case: if there is only one item, spark treats it as a reference, in that case don't use .*
+                queries.add(
+                    String.format(
+                        "%s%s",
+                        objectPartContext.getResultingQuery(),
+                        objectsToMerge.size() > 1 ? ".*" : ""
+                    )
+                );
+            } else {
+                ObjectConstructorRuntimeIterator child = (ObjectConstructorRuntimeIterator) objectToMerge;
+                if (child.isMergedObject) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                if (child.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                List<NativeClauseContext> keyNativeContexts = child.keys.stream()
+                    .map(key -> key.generateNativeQuery(nativeClauseContext))
+                    .collect(Collectors.toList());
+                List<NativeClauseContext> valueNativeContexts = child.values.stream()
+                    .map(value -> value.generateNativeQuery(nativeClauseContext))
+                    .collect(Collectors.toList());
+                if (
+                    !(keyNativeContexts.stream().allMatch(key -> key != NativeClauseContext.NoNativeQuery)
+                        && valueNativeContexts.stream()
+                            .allMatch(value -> value != NativeClauseContext.NoNativeQuery))
+                ) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                int subQueryCount = keyNativeContexts.size();
+                if (subQueryCount == 0) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                for (int i = 0; i < subQueryCount; i++) {
+                    queries.add(
+                        String.format(
+                            "(%s) as `%s`",
+                            valueNativeContexts.get(i).getResultingQuery(),
+                            keyNativeContexts.get(i)
+                                .getResultingQuery()
+                                .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1)
+                        )
+                    );
+                }
+                keyNativeContexts
+                    .stream()
+                    .map(NativeClauseContext::getResultingQuery)
+                    .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
+                    .forEach(keyNames::add);
+                valueNativeContexts
+                    .stream()
+                    .map(value -> value.getResultingType().getItemType())
+                    .forEach(valueTypes::add);
+            }
+        }
+        String resultString = String.join(",", queries);
+        ItemType resultType = ItemTypeFactory.createAnonymousObjectType(keyNames, valueTypes);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultString,
+                new SequenceType(
+                        resultType,
+                        SequenceType.Arity.One
+                )
+        );
+    }
+
+    private NativeClauseContext generateKeyValueObject(NativeClauseContext nativeClauseContext) {
         if (this.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -146,51 +247,51 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             .map(value -> value.generateNativeQuery(nativeClauseContext))
             .collect(Collectors.toList());
         if (
-            keyNativeContexts.stream().allMatch(key -> key != NativeClauseContext.NoNativeQuery)
-                && valueNativeContexts.stream().allMatch(value -> value != NativeClauseContext.NoNativeQuery)
+            !(keyNativeContexts.stream().allMatch(key -> key != NativeClauseContext.NoNativeQuery)
+                && valueNativeContexts.stream().allMatch(value -> value != NativeClauseContext.NoNativeQuery))
         ) {
-            int subQueryCount = keyNativeContexts.size();
-            if (subQueryCount == 0) {
-                return NativeClauseContext.NoNativeQuery;
-            }
+            return NativeClauseContext.NoNativeQuery;
+        }
+        int subQueryCount = keyNativeContexts.size();
+        if (subQueryCount == 0) {
+            return NativeClauseContext.NoNativeQuery;
+        }
 
-            List<String> objectItems = new ArrayList<>();
-            for (int i = 0; i < subQueryCount; i++) {
-                objectItems.add(
-                    String.format(
-                        "%s, (%s)",
-                        keyNativeContexts.get(i).getResultingQuery(),
-                        valueNativeContexts.get(i).getResultingQuery()
-                    )
-                );
-            }
-            String resultString =
+        List<String> objectItems = new ArrayList<>();
+        for (int i = 0; i < subQueryCount; i++) {
+            objectItems.add(
                 String.format(
-                    "named_struct(%s)",
-                    String.join(",", objectItems)
-                );
-
-            ItemType resultType =
-                ItemTypeFactory.createAnonymousObjectType(
-                    keyNativeContexts
-                        .stream()
-                        .map(NativeClauseContext::getResultingQuery)
-                        .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
-                        .collect(Collectors.toList()),
-                    valueNativeContexts
-                        .stream()
-                        .map(value -> value.getResultingType().getItemType())
-                        .collect(Collectors.toList())
-                );
-            return new NativeClauseContext(
-                    nativeClauseContext,
-                    resultString,
-                    new SequenceType(
-                            resultType,
-                            SequenceType.Arity.One
-                    )
+                    "%s, (%s)",
+                    keyNativeContexts.get(i).getResultingQuery(),
+                    valueNativeContexts.get(i).getResultingQuery()
+                )
             );
         }
-        return NativeClauseContext.NoNativeQuery;
+        String resultString =
+            String.format(
+                "named_struct(%s)",
+                String.join(",", objectItems)
+            );
+
+        ItemType resultType =
+            ItemTypeFactory.createAnonymousObjectType(
+                keyNativeContexts
+                    .stream()
+                    .map(NativeClauseContext::getResultingQuery)
+                    .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
+                    .collect(Collectors.toList()),
+                valueNativeContexts
+                    .stream()
+                    .map(value -> value.getResultingType().getItemType())
+                    .collect(Collectors.toList())
+            );
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultString,
+                new SequenceType(
+                        resultType,
+                        SequenceType.Arity.One
+                )
+        );
     }
 }

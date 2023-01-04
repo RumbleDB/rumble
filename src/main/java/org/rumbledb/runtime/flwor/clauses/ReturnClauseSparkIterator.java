@@ -427,9 +427,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         // if there are conditional columns, use "if(condition,then,else)"
         if (childContext.getConditionalColumns().isEmpty()) {
             resultingQuery = String.format(
-                "select %s%s, (%s) as `%s` from (%s)",
+                "select %s%s (%s) as `%s` from (%s)",
                 FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                childContext.isExplodedView() ? " `" + rowIdField + "`" : "",
+                childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
                 expressionContext.getResultingQuery(),
                 resultColumnName,
                 expressionContext.getTempView()

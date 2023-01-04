@@ -1537,7 +1537,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             : SequenceType.Arity.ZeroOrMore;
 
         ItemType inferredType = BuiltinTypesCatalogue.item;
-        // if we have a specific object type and a string literal as key try perform better inference
+        // if we have a specific object type and a string literal as key try to perform better inference
         if (
             mainType.getItemType().isObjectItemType()
                 && (expression.getLookupExpression() instanceof StringLiteralExpression)

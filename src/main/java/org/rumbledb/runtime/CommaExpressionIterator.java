@@ -187,4 +187,8 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                 new SequenceType(resultType, SequenceType.Arity.ZeroOrMore)
         );
     }
+
+    public List<RuntimeIterator> getChildren() {
+        return this.children;
+    }
 }
