@@ -114,7 +114,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        if (arity == SequenceType.Arity.ZeroOrMore) {
+        if (arity == SequenceType.Arity.ZeroOrMore && fieldType instanceof ArrayType) {
             if (((ArrayType) fieldType).elementType().equals(DataTypes.BinaryType)) {
                 return NativeClauseContext.NoNativeQuery;
             }
