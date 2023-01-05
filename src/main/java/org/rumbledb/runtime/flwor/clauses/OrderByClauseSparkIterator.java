@@ -49,6 +49,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -553,7 +554,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         NativeClauseContext nativeQuery;
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
             nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
-            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            if (
+                nativeQuery == NativeClauseContext.NoNativeQuery
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
+            ) {
                 return null;
             }
             orderSql.append(orderSeparator);
@@ -561,7 +565,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // special check to avoid ordering by an integer constant in an ordering clause
             // second check to assure it is a literal
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
-            // and jsoniq (order by a costant, so no actual ordering is performed)
+            // and jsoniq (order by a constant, so no actual ordering is performed)
             if (
                 (nativeQuery.getResultingType().getItemType() == BuiltinTypesCatalogue.integerItem
                     || nativeQuery.getResultingType().getItemType() == BuiltinTypesCatalogue.intItem)

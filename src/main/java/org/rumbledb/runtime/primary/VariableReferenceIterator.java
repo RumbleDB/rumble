@@ -21,9 +21,7 @@
 package org.rumbledb.runtime.primary;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -103,18 +101,29 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             }
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
-        if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
-            return NativeClauseContext.NoNativeQuery;
-        }
         String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
+        SequenceType.Arity arity;
+        if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(structSchema, this.variableName)) {
+            escapedName = escapedName + ".sequence";
+            arity = SequenceType.Arity.ZeroOrMore;
+        } else if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
+            return NativeClauseContext.NoNativeQuery;
+        } else {
+            arity = SequenceType.Arity.OneOrZero;
+        }
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        // sequences cannot be referenced, so resulting type is always OneOrZero
+        if (arity == SequenceType.Arity.ZeroOrMore) {
+            if (((ArrayType) fieldType).elementType().equals(DataTypes.BinaryType)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            variableType = variableType.getArrayContentFacet();
+        }
         NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
                 "`" + escapedName + "`",
-                new SequenceType(variableType, SequenceType.Arity.OneOrZero)
+                new SequenceType(variableType, arity)
         );
         newContext.setSchema(fieldType);
         return newContext;
