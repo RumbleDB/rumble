@@ -75,6 +75,17 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         return false;
     }
 
+    private static boolean allArgumentsMatch(FunctionCallExpression expression, List<Name> paramNames) {
+        boolean allArgumentsMatch = true;
+        for (int i = 0; i < expression.getArguments().size(); i++) {
+            allArgumentsMatch = allArgumentsMatch
+                && expression.getArguments().get(i) instanceof VariableReferenceExpression
+                && paramNames.get(i)
+                    .equals(((VariableReferenceExpression) expression.getArguments().get(i)).getVariableName());
+        }
+        return allArgumentsMatch;
+    }
+
     private Expression createTypePromotion(
             Expression expression,
             SequenceType paramType
@@ -437,7 +448,8 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
         Expression body = (Expression) visit(inlineFunction.getBody(), argument);
-        if (expression.getArguments().size() == 0) {
+        List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
+        if (expression.getArguments().size() == 0 || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
                 return new TreatExpression(
                         body,
@@ -452,11 +464,17 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
-        List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
             SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
+            // only use assignment clause when the variables have different names
+            if (
+                argumentExpression instanceof VariableReferenceExpression
+                    && ((VariableReferenceExpression) argumentExpression).getVariableName().equals(paramName)
+            ) {
+                continue;
+            }
 
             // if there is a name collision, use a temporary variable
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
@@ -475,7 +493,6 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                     new VariableReferenceExpression(columnName, expression.getMetadata()),
                     paramType
                 );
-
                 Clause assignmentClause = new LetClause(
                         paramName,
                         null,
@@ -506,8 +523,6 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 }
                 expressionClauses = expressionClause;
             }
-
-
         }
         if (assignmentClauses != null) {
             assignmentClauses.getLastClause().chainWith(returnClause);
