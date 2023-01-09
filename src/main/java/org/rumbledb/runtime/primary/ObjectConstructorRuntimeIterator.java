@@ -224,7 +224,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     .forEach(valueTypes::add);
             }
         }
-        String resultString = String.join(",", queries);
+        String resultString = "(" + String.join(",", queries) + ")";
         ItemType resultType = ItemTypeFactory.createAnonymousObjectType(keyNames, valueTypes);
         return new NativeClauseContext(
                 nativeClauseContext,
