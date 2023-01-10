@@ -230,8 +230,41 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (inferredType.isEmptySequence()) {
                     inferredType = childExpressionInferredType;
                 } else {
-                    ItemType resultingItemType = inferredType.getItemType()
-                        .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
+                    ItemType resultingItemType;
+                    if (
+                        inferredType.getItemType().isObjectItemType()
+                            && childExpressionInferredType.getItemType().isObjectItemType()
+                    ) {
+                        final Map<String, FieldDescriptor> currentItemTypeObject = inferredType.getItemType()
+                            .getObjectContentFacet();
+                        resultingItemType = (currentItemTypeObject.keySet().size() == childExpressionInferredType
+                            .getItemType()
+                            .getObjectContentFacet()
+                            .keySet()
+                            .size()
+                            && currentItemTypeObject
+                                .keySet()
+                                .stream()
+                                .allMatch(
+                                    key -> childExpressionInferredType.getItemType()
+                                        .getObjectContentFacet()
+                                        .containsKey(key)
+                                        && currentItemTypeObject
+                                            .get(key)
+                                            .getType()
+                                            .equals(
+                                                childExpressionInferredType.getItemType()
+                                                    .getObjectContentFacet()
+                                                    .get(key)
+                                                    .getType()
+                                            )
+                                ))
+                                    ? inferredType.getItemType()
+                                    : BuiltinTypesCatalogue.objectItem;
+                    } else {
+                        resultingItemType = inferredType.getItemType()
+                            .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
+                    }
                     SequenceType.Arity resultingArity =
                         ((inferredType.getArity() == SequenceType.Arity.OneOrZero
                             || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
@@ -807,6 +840,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private ItemType resolveNumericType(ItemType left, ItemType right) {
         if (left.equals(BuiltinTypesCatalogue.doubleItem) || right.equals(BuiltinTypesCatalogue.doubleItem)) {
             return BuiltinTypesCatalogue.doubleItem;
+        } else if (left.equals(BuiltinTypesCatalogue.floatItem) || right.equals(BuiltinTypesCatalogue.floatItem)) {
+            return BuiltinTypesCatalogue.floatItem;
         } else if (left.equals(BuiltinTypesCatalogue.decimalItem) || right.equals(BuiltinTypesCatalogue.decimalItem)) {
             return BuiltinTypesCatalogue.decimalItem;
         } else {
