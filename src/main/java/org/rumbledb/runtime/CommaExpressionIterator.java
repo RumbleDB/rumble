@@ -152,10 +152,37 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         if (!childClauses.stream().allMatch(child -> child != NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        ItemType resultType = childClauses.stream()
-            .map(childClause -> childClause.getResultingType().getItemType())
-            .reduce((a, b) -> a.equals(b) ? a : BuiltinTypesCatalogue.item)
-            .orElse(BuiltinTypesCatalogue.item);
+        ItemType resultType;
+        if (
+            childClauses.stream()
+                .allMatch(childClause -> childClause.getResultingType().getItemType().isObjectItemType())
+        ) {
+            // all keys and types must be equal
+            resultType = childClauses.stream()
+                .map(childClause -> childClause.getResultingType().getItemType())
+                .reduce(
+                    (a, b) -> (a.isObjectItemType()
+                        && a.getObjectContentFacet().keySet().size() == b.getObjectContentFacet().keySet().size()
+                        && a.getObjectContentFacet()
+                            .keySet()
+                            .stream()
+                            .allMatch(
+                                key -> b.getObjectContentFacet().containsKey(key)
+                                    && a.getObjectContentFacet()
+                                        .get(key)
+                                        .getType()
+                                        .equals(b.getObjectContentFacet().get(key).getType())
+                            ))
+                                ? a
+                                : BuiltinTypesCatalogue.item
+                )
+                .orElse(BuiltinTypesCatalogue.item);
+        } else {
+            resultType = childClauses.stream()
+                .map(childClause -> childClause.getResultingType().getItemType())
+                .reduce((a, b) -> a.equals(b) ? a : BuiltinTypesCatalogue.item)
+                .orElse(BuiltinTypesCatalogue.item);
+        }
         if (BuiltinTypesCatalogue.item.equals(resultType)) {
             return NativeClauseContext.NoNativeQuery;
         }
