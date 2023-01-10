@@ -1410,7 +1410,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 List<String> lateralViewPart = selectionContext.getLateralViewPart();
                 for (String lateralView : lateralViewPart) {
                     ++arrIndex;
-                    lateralViewString.append(" lateral view ");
+                    lateralViewString.append(" lateral view outer ");
                     if (arrIndex == lateralViewPart.size()) {
                         lateralView = lateralView.replace("explode", "posexplode");
                     }
@@ -1418,9 +1418,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     lateralViewString.append(" arr");
                     lateralViewString.append(arrIndex);
                 }
+                String nullFilterColumn = String.format(
+                    "%s%d",
+                    SparkSessionManager.nullFilterColumnName,
+                    selectionContext.getAndIncrementMonotonicallyIncreasingId()
+                );
                 // create query string
                 resultString = String.format(
-                    "select %s arr%d.col%s as `%s`, (arr%d.pos%s + 1) as `%s` from (%s) %s",
+                    "select %s arr%d.col%s as `%s`, (arr%d.pos%s + 1) as `%s`, (arr%d.col%s is not null) as `%s` from (%s) %s",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                     arrIndex,
                     selectionContext.getResultingQuery(),
@@ -1428,6 +1433,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     arrIndex,
                     selectionContext.getResultingQuery(),
                     positionalVariableName,
+                    arrIndex,
+                    selectionContext.getResultingQuery(),
+                    nullFilterColumn,
                     tempView,
                     lateralViewString
                 );
@@ -1451,8 +1459,15 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         DataTypes.IntegerType
                     )
                 );
+                selectionContext.setSchema(
+                    ((StructType) selectionContext.getSchema()).add(
+                        nullFilterColumn,
+                        DataTypes.BooleanType
+                    )
+                );
                 selectionContext.addPositionalVariableName(positionalVariableName);
                 selectionContext.setTempView(resultString);
+                selectionContext.addConditionalColumn(nullFilterColumn);
                 // the result of this FLWOR clause is a sequence
                 selectionContext.setExplodedView(true);
                 // create context with updated type
@@ -1462,12 +1477,18 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         null
                 );
             } else if (SequenceType.Arity.OneOrMore.isSubtypeOf(selectionContext.getResultingType().getArity())) {
+                String nullFilterColumn = String.format(
+                        "%s%d",
+                        SparkSessionManager.nullFilterColumnName,
+                        selectionContext.getAndIncrementMonotonicallyIncreasingId()
+                );
                 // create query string
                 String resultString = String.format(
-                    "select %s explodedsequence.col as `%s`, (explodedsequence.pos + 1) as `%s` from (%s) lateral view posexplode(%s) explodedsequence",
+                    "select %s explodedsequence.col as `%s`, (explodedsequence.pos + 1) as `%s`, (explodedsequence.col is not null) as `%s` from (%s) lateral view outer posexplode(%s) explodedsequence",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                     this.variableName,
                     positionalVariableName,
+                    nullFilterColumn,
                     selectionContext.getTempView(),
                     selectionContext.getResultingQuery()
                 );
@@ -1486,6 +1507,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         DataTypes.IntegerType
                     )
                 );
+                selectionContext.setSchema(
+                        ((StructType) selectionContext.getSchema()).add(
+                                nullFilterColumn,
+                                DataTypes.BooleanType
+                        )
+                );
+                selectionContext.addConditionalColumn(nullFilterColumn);
                 selectionContext.addPositionalVariableName(positionalVariableName);
                 selectionContext.setTempView(resultString);
                 // the result of this FLWOR clause is a sequence
