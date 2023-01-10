@@ -1478,9 +1478,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
             } else if (SequenceType.Arity.OneOrMore.isSubtypeOf(selectionContext.getResultingType().getArity())) {
                 String nullFilterColumn = String.format(
-                        "%s%d",
-                        SparkSessionManager.nullFilterColumnName,
-                        selectionContext.getAndIncrementMonotonicallyIncreasingId()
+                    "%s%d",
+                    SparkSessionManager.nullFilterColumnName,
+                    selectionContext.getAndIncrementMonotonicallyIncreasingId()
                 );
                 // create query string
                 String resultString = String.format(
@@ -1508,10 +1508,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
                 selectionContext.setSchema(
-                        ((StructType) selectionContext.getSchema()).add(
-                                nullFilterColumn,
-                                DataTypes.BooleanType
-                        )
+                    ((StructType) selectionContext.getSchema()).add(
+                        nullFilterColumn,
+                        DataTypes.BooleanType
+                    )
                 );
                 selectionContext.addConditionalColumn(nullFilterColumn);
                 selectionContext.addPositionalVariableName(positionalVariableName);
