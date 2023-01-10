@@ -1425,11 +1425,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
                 // create query string
                 resultString = String.format(
-                    "select %s arr%d.col%s as `%s`, (arr%d.pos%s + 1) as `%s`, (arr%d.col%s is not null) as `%s` from (%s) %s",
+                    "select %s arr%d.col%s as `%s`, (if(arr%d.col%s is not null, arr%d.pos%s + 1, 1)) as `%s`, (arr%d.col%s is not null) as `%s` from (%s) %s",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                     arrIndex,
                     selectionContext.getResultingQuery(),
                     this.variableName,
+                    arrIndex,
+                    selectionContext.getResultingQuery(),
                     arrIndex,
                     selectionContext.getResultingQuery(),
                     positionalVariableName,
@@ -1484,7 +1486,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
                 // create query string
                 String resultString = String.format(
-                    "select %s explodedsequence.col as `%s`, (explodedsequence.pos + 1) as `%s`, (explodedsequence.col is not null) as `%s` from (%s) lateral view outer posexplode(%s) explodedsequence",
+                    "select %s explodedsequence.col as `%s`, (if(explodedsequence.col is not null, explodedsequence.pos + 1, 1)) as `%s`, (explodedsequence.col is not null) as `%s` from (%s) lateral view outer posexplode(%s) explodedsequence",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                     this.variableName,
                     positionalVariableName,

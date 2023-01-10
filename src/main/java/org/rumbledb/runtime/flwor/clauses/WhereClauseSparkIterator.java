@@ -528,6 +528,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             conditionalColumnName,
             expressionContext.getTempView()
         );
+        if (nativeClauseContext.getPositionalVariableName() != null) {
+            resultString = String.format(
+                "%s where (%s) or (`%s` = 1)",
+                resultString,
+                expressionContext.getResultingQuery(),
+                nativeClauseContext.getPositionalVariableName().getLocalName()
+            );
+        }
         childContext.setSchema(
             ((StructType) childContext.getSchema()).add(
                 conditionalColumnName,
