@@ -1526,6 +1526,39 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         null,
                         null
                 );
+            } else if (selectionContext.getResultingType().getArity().equals(SequenceType.Arity.One)) {
+                String resultString = String.format(
+                    "select %s %s as `%s`%s from (%s)",
+                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                    selectionContext.getResultingQuery(),
+                    this.variableName.getLocalName(),
+                    (this.positionalVariableName != null)
+                        ? String.format(
+                            ", 1 as %s",
+                            this.positionalVariableName
+                        )
+                        : "",
+                    tempView
+                );
+                NativeClauseContext letClauseContext = new NativeClauseContext(selectionContext);
+                letClauseContext.setSchema(
+                    ((StructType) nativeClauseContext.getSchema()).add(
+                        this.variableName.getLocalName(),
+                        TypeMappings.getDataFrameDataTypeFromItemType(selectionContext.getResultingType().getItemType())
+                    )
+                );
+                if (this.positionalVariableName != null) {
+                    letClauseContext.setSchema(
+                        ((StructType) nativeClauseContext.getSchema()).add(
+                            this.positionalVariableName.getLocalName(),
+                            DataTypes.IntegerType
+                        )
+                    );
+                }
+                letClauseContext.setTempView(resultString);
+                letClauseContext.setResultingQuery(null);
+                letClauseContext.setResultingType(null);
+                return letClauseContext;
             }
         }
         return NativeClauseContext.NoNativeQuery;
