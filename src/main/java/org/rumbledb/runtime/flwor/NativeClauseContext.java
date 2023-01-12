@@ -33,6 +33,7 @@ public class NativeClauseContext {
     private boolean isExplodedView; // if the view is exploded, then the result is a sequence; otherwise it's atomic
 
     private List<Name> positionalVariableNames;
+    private boolean sorted;
 
 
     private NativeClauseContext() {
@@ -50,6 +51,7 @@ public class NativeClauseContext {
         this.monotonicallyIncreasingId = 0;
         this.isExplodedView = false;
         this.positionalVariableNames = new ArrayList<>();
+        this.sorted = false;
     }
 
     public NativeClauseContext(NativeClauseContext sibling) {
@@ -64,6 +66,7 @@ public class NativeClauseContext {
         this.monotonicallyIncreasingId = sibling.monotonicallyIncreasingId;
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;
+        this.sorted = sibling.sorted;
     }
 
     public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
@@ -78,6 +81,7 @@ public class NativeClauseContext {
         this.parent = sibling.parent;
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;
+        this.sorted = sibling.sorted;
     }
 
     public NativeClauseContext createChild() {
@@ -87,6 +91,7 @@ public class NativeClauseContext {
         result.parent = this;
         result.tempView = this.tempView;
         result.positionalVariableNames = new ArrayList<>();
+        result.sorted = false;
         return result;
     }
 
@@ -175,5 +180,13 @@ public class NativeClauseContext {
             return null;
         }
         return this.positionalVariableNames.get(this.positionalVariableNames.size() - 1);
+    }
+
+    public void setSorted(boolean sorted) {
+        this.sorted = sorted;
+    }
+
+    public boolean isSorted() {
+        return this.sorted;
     }
 }

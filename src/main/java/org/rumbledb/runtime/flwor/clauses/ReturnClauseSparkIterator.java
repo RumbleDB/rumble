@@ -47,6 +47,7 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 
+import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -456,7 +457,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 ? "flatten(collect_list(`" + resultColumnName + "`))"
                 : "collect_list(`" + resultColumnName + "`)";
             resultingQuery = String.format(
-                "select %s, %s as `%s.sequence` from (%s) group by `%s` order by `%s`",
+                "select %s, first(`%s`) as `%s`, %s as `%s.sequence` from (%s) group by `%s`",
                 allColumns.stream()
                     .map(
                         name -> String.format(
@@ -466,13 +467,26 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                         )
                     )
                     .collect(Collectors.joining(",")),
+                rowIdField,
+                rowIdField,
                 collectingString,
                 resultColumnName,
                 resultingQuery,
-                rowIdField,
                 rowIdField
             );
             resultColumnName = resultColumnName + ".sequence";
+            if (childContext.isSorted()) {
+                resultingQuery = String.format(
+                    "select %s, `%s` from (%s) order by `%s`",
+                    allColumns.stream()
+                        .map(FlworDataFrameColumn::toString)
+                        .collect(Collectors.joining(",")),
+                    resultColumnName,
+                    resultingQuery,
+                    rowIdField
+                );
+            }
+
             resultType = new SequenceType(
                     expressionContext.getResultingType().getItemType(),
                     SequenceType.Arity.ZeroOrMore
@@ -480,7 +494,12 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         } else {
             resultType = expressionContext.getResultingType();
         }
-
+        nativeClauseContext.setSchema(
+            ((StructType) nativeClauseContext.getSchema()).add(
+                resultColumnName,
+                TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
+            )
+        );
         nativeClauseContext.setTempView(resultingQuery);
         resultColumnName = "`" + resultColumnName + "`";
         return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);

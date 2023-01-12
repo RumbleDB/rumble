@@ -655,6 +655,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             orderString
         );
         childContext.setTempView(resultString);
+        childContext.setSorted(true);
         return new NativeClauseContext(childContext, null, null);
     }
 }

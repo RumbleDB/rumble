@@ -76,10 +76,10 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         if (!conditionResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!thenResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!thenResult.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!elseResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!elseResult.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
@@ -93,7 +93,12 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One)
+                new SequenceType(
+                        thenResult.getResultingType()
+                            .getItemType()
+                            .findLeastCommonSuperTypeWith(elseResult.getResultingType().getItemType()),
+                        SequenceType.Arity.One
+                )
         );
     }
 }

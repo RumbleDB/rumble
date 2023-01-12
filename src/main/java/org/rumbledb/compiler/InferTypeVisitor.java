@@ -728,6 +728,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
+        if (SequenceType.ITEM_STAR.equals(treatedSequenceType)) {
+            treatedSequenceType = expressionSequenceType;
+        }
         expression.setStaticSequenceType(treatedSequenceType);
         return argument;
     }
