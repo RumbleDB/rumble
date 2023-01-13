@@ -47,8 +47,6 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.SequenceType;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
