@@ -554,11 +554,15 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 default:
                     return NativeClauseContext.NoNativeQuery;
             }
+            SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+                && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                    ? SequenceType.Arity.One
+                    : SequenceType.Arity.OneOrZero;
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
             return new NativeClauseContext(
                     nativeClauseContext,
                     query,
-                    new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                    new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
             );
         }
         return NativeClauseContext.NoNativeQuery;

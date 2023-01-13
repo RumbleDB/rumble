@@ -26,6 +26,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.SequenceType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,4 +65,24 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
+            String resultString = String.format(
+                "element_at(%s, %d)",
+                childContext.getResultingQuery(),
+                this.position
+            );
+            return new NativeClauseContext(
+                    childContext,
+                    resultString,
+                    new SequenceType(childContext.getResultingType().getItemType(), SequenceType.Arity.OneOrZero)
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

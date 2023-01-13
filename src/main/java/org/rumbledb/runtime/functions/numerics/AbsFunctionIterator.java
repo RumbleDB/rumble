@@ -75,16 +75,16 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
-            return new NativeClauseContext(
-                    nativeClauseContext,
-                    "ABS(" + nativeChildQuery.getResultingQuery() + ")",
-                    nativeChildQuery.getResultingType()
-            );
-        }
-        return NativeClauseContext.NoNativeQuery;
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "ABS(" + nativeChildQuery.getResultingQuery() + ")",
+                nativeChildQuery.getResultingType()
+        );
     }
 }

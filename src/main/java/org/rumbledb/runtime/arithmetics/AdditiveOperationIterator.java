@@ -485,6 +485,11 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return NativeClauseContext.NoNativeQuery;
         }
 
+        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+
         if (this.isMinus) {
             String resultingQuery = "( "
                 + leftQuery
@@ -494,7 +499,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    new SequenceType(resultType, SequenceType.Arity.One)
+                    new SequenceType(resultType, resultingArity)
             );
         } else {
             String resultingQuery = "( "
@@ -505,7 +510,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    new SequenceType(resultType, SequenceType.Arity.One)
+                    new SequenceType(resultType, resultingArity)
             );
         }
     }

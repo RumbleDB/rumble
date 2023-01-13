@@ -160,7 +160,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
         );
     }
 }

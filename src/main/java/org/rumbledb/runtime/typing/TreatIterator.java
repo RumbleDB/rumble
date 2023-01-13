@@ -283,8 +283,6 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        // FIXME correct implementation of TreatIterator
         return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 }
-

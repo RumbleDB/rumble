@@ -83,6 +83,10 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
+        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         String resultingQuery = "( "
             + leftResult.getResultingQuery()
             + " AND "
@@ -91,7 +95,7 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
         );
     }
 }

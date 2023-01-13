@@ -195,7 +195,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             newContext.setResultingType(
                 new SequenceType(
                         TypeMappings.getItemTypeFromDataFrameDataType(arraySchema.elementType()),
-                        SequenceType.Arity.One
+                        SequenceType.Arity.OneOrZero
                 )
             );
             newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");

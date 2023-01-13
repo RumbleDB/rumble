@@ -359,29 +359,31 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        String queryString = String.format(
+            "select %s as `%s` from (%s)",
+            SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
+                ? "explode(" + nativeQuery.getResultingQuery() + ")"
+                : nativeQuery.getResultingQuery(),
+            SparkSessionManager.atomicJSONiqItemColumnName,
+            nativeQuery.getTempView()
+        );
+        if (
+            nativeQuery.getResultingType().getArity() == SequenceType.Arity.OneOrZero
+                || nativeQuery.getResultingType().getArity() == SequenceType.Arity.ZeroOrMore
+        ) {
+            queryString = String.format(
+                "select `%s` from (%s) where `%s` is not null",
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                queryString,
+                SparkSessionManager.atomicJSONiqItemColumnName
+            );
+        }
         LogManager.getLogger("ReturnClauseSparkIterator")
             .info(
                 "Rumble was able to optimize a return clause to a native SQL query: "
-                    + String.format(
-                        "select %s as `%s` from %s",
-                        SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
-                            ? "explode(" + nativeQuery.getResultingQuery() + ")"
-                            : nativeQuery.getResultingQuery(),
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        nativeQuery.getTempView()
-                    )
+                    + queryString
             );
-        return dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s as `%s` from (%s)",
-                    SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
-                        ? "explode(" + nativeQuery.getResultingQuery() + ")"
-                        : nativeQuery.getResultingQuery(),
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    nativeQuery.getTempView()
-                )
-            );
+        return dataFrame.sparkSession().sql(queryString);
     }
 
     @Override
@@ -489,7 +491,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
             resultType = new SequenceType(
                     expressionContext.getResultingType().getItemType(),
-                    SequenceType.Arity.ZeroOrMore
+                    expressionContext.getResultingType().getArity() == SequenceType.Arity.One
+                        ? SequenceType.Arity.OneOrMore
+                        : SequenceType.Arity.ZeroOrMore
             );
         } else {
             resultType = expressionContext.getResultingType();

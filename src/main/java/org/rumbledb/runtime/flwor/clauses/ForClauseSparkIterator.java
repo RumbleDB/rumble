@@ -1526,7 +1526,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         null,
                         null
                 );
-            } else if (selectionContext.getResultingType().getArity().equals(SequenceType.Arity.One)) {
+            } else if (
+                selectionContext.getResultingType().getArity().equals(SequenceType.Arity.One)
+                    || selectionContext.getResultingType().getArity().equals(SequenceType.Arity.OneOrZero)
+            ) {
                 String resultString = String.format(
                     "select %s %s as `%s`%s from (%s)",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),

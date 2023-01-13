@@ -611,6 +611,10 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = null;
+        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         switch (this.multiplicativeOperator) {
             case MUL:
                 resultingQuery = "( "
@@ -621,7 +625,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 return new NativeClauseContext(
                         nativeClauseContext,
                         resultingQuery,
-                        new SequenceType(resultType, SequenceType.Arity.One)
+                        new SequenceType(resultType, resultingArity)
                 );
             case DIV:
                 resultingQuery = "( "
@@ -632,7 +636,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 return new NativeClauseContext(
                         nativeClauseContext,
                         resultingQuery,
-                        new SequenceType(resultType, SequenceType.Arity.One)
+                        new SequenceType(resultType, resultingArity)
                 );
             case MOD:
                 resultingQuery = "( "
@@ -643,7 +647,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 return new NativeClauseContext(
                         nativeClauseContext,
                         resultingQuery,
-                        new SequenceType(resultType, SequenceType.Arity.One)
+                        new SequenceType(resultType, resultingArity)
                 );
             default:
                 return NativeClauseContext.NoNativeQuery;

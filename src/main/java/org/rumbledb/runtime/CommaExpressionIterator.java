@@ -208,10 +208,15 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                     .collect(Collectors.joining(","))
             );
         }
+        // if there is a OneOrZero, null values have to be filtered out
+        SequenceType.Arity resultingArity = childClauses.stream()
+            .anyMatch(childClause -> childClause.getResultingType().getArity() == SequenceType.Arity.OneOrZero)
+                ? SequenceType.Arity.ZeroOrMore
+                : SequenceType.Arity.OneOrMore;
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingString,
-                new SequenceType(resultType, SequenceType.Arity.ZeroOrMore)
+                new SequenceType(resultType, resultingArity)
         );
     }
 

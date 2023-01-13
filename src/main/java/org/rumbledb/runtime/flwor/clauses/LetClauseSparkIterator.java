@@ -893,7 +893,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null
         );
         String localName = this.variableName.getLocalName();
-        if (expressionContext.getResultingType().getArity() == SequenceType.Arity.ZeroOrMore) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(expressionContext.getResultingType().getArity())) {
             localName = localName + ".sequence";
         }
         String resultString = String.format(

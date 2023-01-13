@@ -81,6 +81,10 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
+        SequenceType.Arity resultingArity = (baseQuery.getResultingType().getArity() == SequenceType.Arity.One
+            && exponentQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         String resultingQuery = "pow( "
             + baseQuery.getResultingQuery()
             + ", "
@@ -89,7 +93,7 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
         );
     }
 

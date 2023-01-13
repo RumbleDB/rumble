@@ -384,7 +384,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             return new NativeClauseContext(
                     nativeClauseContext,
                     resultingQuery,
-                    new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                    arrayReferenceQuery.getResultingType()
             );
         }
         return NativeClauseContext.NoNativeQuery;

@@ -73,11 +73,15 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
+        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         String resultingQuery = "( " + leftResult.getResultingQuery() + " OR " + rightResult.getResultingQuery() + " )";
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
         );
     }
 }

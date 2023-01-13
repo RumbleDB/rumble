@@ -66,7 +66,7 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, childResult.getResultingType().getArity())
         );
     }
 }

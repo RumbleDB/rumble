@@ -75,7 +75,7 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
         );
     }
 

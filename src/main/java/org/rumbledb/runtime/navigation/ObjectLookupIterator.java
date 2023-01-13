@@ -300,7 +300,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             newContext.setResultingType(
                 new SequenceType(
                         TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
-                        SequenceType.Arity.One
+                        SequenceType.Arity.OneOrZero
                 )
             );
         } else if (
@@ -319,7 +319,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 .get(key)
                 .getType();
             newContext.setSchema(TypeMappings.getDataFrameDataTypeFromItemType(resultType));
-            newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.One));
+            newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 throw new UnexpectedStaticTypeException(

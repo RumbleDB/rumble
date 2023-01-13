@@ -90,6 +90,10 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             + ", "
             + elseResult.getResultingQuery()
             + " ) )";
+        SequenceType.Arity resultingArity = (thenResult.getResultingType().getArity() == SequenceType.Arity.One
+            && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
@@ -97,7 +101,7 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
                         thenResult.getResultingType()
                             .getItemType()
                             .findLeastCommonSuperTypeWith(elseResult.getResultingType().getItemType()),
-                        SequenceType.Arity.One
+                        resultingArity
                 )
         );
     }

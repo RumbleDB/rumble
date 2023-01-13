@@ -61,16 +61,11 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         NativeClauseContext powerQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        if (baseQuery == NativeClauseContext.NoNativeQuery || powerQuery == NativeClauseContext.NoNativeQuery) {
+        if (powerQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(baseQuery.getResultingType().getArity())
-                ||
-                SequenceType.Arity.OneOrMore.isSubtypeOf(powerQuery.getResultingType().getArity())
-        ) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(powerQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "POW( "
@@ -81,7 +76,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, powerQuery.getResultingType().getArity())
         );
     }
 

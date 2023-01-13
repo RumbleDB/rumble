@@ -71,6 +71,10 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
+        SequenceType.Arity resultingArity = (yQuery.getResultingType().getArity() == SequenceType.Arity.One
+            && xQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         String resultingQuery = "ATAN2( "
             + yQuery.getResultingQuery()
             + ", "
@@ -79,7 +83,7 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
         );
     }
 }
