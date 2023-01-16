@@ -35,10 +35,12 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
@@ -516,5 +518,25 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
         return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.children.size() > 1) {
+            // for now, only consider max over a sequence
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "array_max(" + nativeChildQuery.getResultingQuery() + ")",
+                nativeChildQuery.getResultingType()
+        );
     }
 }
