@@ -477,17 +477,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 rowIdField
             );
             resultColumnName = resultColumnName + ".sequence";
-            if (childContext.isSorted()) {
-                resultingQuery = String.format(
-                    "select %s, `%s` from (%s) order by `%s`",
-                    allColumns.stream()
-                        .map(FlworDataFrameColumn::toString)
-                        .collect(Collectors.joining(",")),
-                    resultColumnName,
-                    resultingQuery,
-                    rowIdField
-                );
-            }
+            resultingQuery = String.format(
+                "select %s, `%s` from (%s) order by `%s`",
+                allColumns.stream()
+                    .map(FlworDataFrameColumn::toString)
+                    .collect(Collectors.joining(",")),
+                resultColumnName,
+                resultingQuery,
+                rowIdField
+            );
 
             resultType = new SequenceType(
                     expressionContext.getResultingType().getItemType(),

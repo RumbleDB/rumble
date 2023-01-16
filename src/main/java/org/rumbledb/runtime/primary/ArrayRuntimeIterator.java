@@ -66,6 +66,9 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (!this.children.isEmpty()) {
             NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+            if (childQuery == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             String resultingQuery;
             if (this.children.get(0) instanceof CommaExpressionIterator) {
                 resultingQuery = childQuery.getResultingQuery();
@@ -73,9 +76,6 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 resultingQuery = "array( "
                     + childQuery.getResultingQuery()
                     + " )";
-            }
-            if (childQuery == NativeClauseContext.NoNativeQuery) {
-                return NativeClauseContext.NoNativeQuery;
             }
             return new NativeClauseContext(
                     nativeClauseContext,
