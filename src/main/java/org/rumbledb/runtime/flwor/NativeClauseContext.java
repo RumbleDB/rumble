@@ -8,7 +8,9 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
@@ -34,6 +36,8 @@ public class NativeClauseContext {
 
     private List<Name> positionalVariableNames;
 
+    private Map<String, Boolean> sortingColumns;
+
 
     private NativeClauseContext() {
     }
@@ -50,6 +54,7 @@ public class NativeClauseContext {
         this.monotonicallyIncreasingId = 0;
         this.isExplodedView = false;
         this.positionalVariableNames = new ArrayList<>();
+        this.sortingColumns = new HashMap<>();
     }
 
     public NativeClauseContext(NativeClauseContext sibling) {
@@ -64,6 +69,7 @@ public class NativeClauseContext {
         this.monotonicallyIncreasingId = sibling.monotonicallyIncreasingId;
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;
+        this.sortingColumns = sibling.sortingColumns;
     }
 
     public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
@@ -78,6 +84,7 @@ public class NativeClauseContext {
         this.parent = sibling.parent;
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;
+        this.sortingColumns = sibling.sortingColumns;
     }
 
     public NativeClauseContext createChild() {
@@ -175,5 +182,13 @@ public class NativeClauseContext {
             return null;
         }
         return this.positionalVariableNames.get(this.positionalVariableNames.size() - 1);
+    }
+
+    public Map<String, Boolean> getSortingColumns() {
+        return this.sortingColumns;
+    }
+
+    public void addSortingColumn(String name, boolean descending) {
+        this.sortingColumns.put(name, descending);
     }
 }

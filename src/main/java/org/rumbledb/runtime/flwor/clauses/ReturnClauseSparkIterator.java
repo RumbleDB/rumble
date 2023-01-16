@@ -443,9 +443,17 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 .map(name -> "`" + name + "`")
                 .collect(Collectors.joining(" and "));
             resultingQuery = String.format(
-                "select %s%s (if(%s, %s, null)) as `%s` from (%s)",
+                "select %s%s%s (if(%s, %s, null)) as `%s` from (%s)",
                 FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                 childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
+                childContext.isExplodedView() && childContext.getSortingColumns().size() > 0
+                    ? childContext.getSortingColumns()
+                        .keySet()
+                        .stream()
+                        .map(key -> "`" + key + "`")
+                        .collect(Collectors.joining(","))
+                        + ","
+                    : "",
                 condition,
                 expressionContext.getResultingQuery(),
                 resultColumnName,
@@ -454,28 +462,74 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         SequenceType resultType;
         if (childContext.isExplodedView()) {
-            // if the resulting expression is already a sequence type, then create one sequence from it
-            String collectingString = expressionContext.getResultingType().getArity() == SequenceType.Arity.ZeroOrMore
-                ? "flatten(collect_list(`" + resultColumnName + "`))"
-                : "collect_list(`" + resultColumnName + "`)";
-            resultingQuery = String.format(
-                "select %s, first(`%s`) as `%s`, %s as `%s.sequence` from (%s) group by `%s`",
-                allColumns.stream()
-                    .map(
-                        name -> String.format(
-                            "first(%s) as %s",
-                            name,
-                            name
+            if (childContext.getSortingColumns().size() == 0) {
+                // if the resulting expression is already a sequence type, then create one sequence from it
+                String collectingString = expressionContext.getResultingType()
+                    .getArity() == SequenceType.Arity.ZeroOrMore
+                        ? "flatten(collect_list(`" + resultColumnName + "`))"
+                        : "collect_list(`" + resultColumnName + "`)";
+                resultingQuery = String.format(
+                    "select %s, first(`%s`) as `%s`, %s as `%s.sequence` from (%s) group by `%s`",
+                    allColumns.stream()
+                        .map(
+                            name -> String.format(
+                                "first(%s) as %s",
+                                name,
+                                name
+                            )
                         )
-                    )
-                    .collect(Collectors.joining(",")),
-                rowIdField,
-                rowIdField,
-                collectingString,
-                resultColumnName,
-                resultingQuery,
-                rowIdField
-            );
+                        .collect(Collectors.joining(",")),
+                    rowIdField,
+                    rowIdField,
+                    collectingString,
+                    resultColumnName,
+                    resultingQuery,
+                    rowIdField
+                );
+            } else {
+                String collectingString = expressionContext.getResultingType()
+                    .getArity() == SequenceType.Arity.ZeroOrMore
+                        ? "flatten(collect_list(`" + resultColumnName + "`))"
+                        : "collect_list(`" + resultColumnName + "`)";
+                // group by doesn't keep the order, because of this first partition by the row ID to collect the list,
+                // then do group by row ID
+                collectingString = String.format(
+                    "%s over (partition by `%s` order by %s) as `%s`",
+                    collectingString,
+                    rowIdField,
+                    childContext.getSortingColumns()
+                        .entrySet()
+                        .stream()
+                        .map(entry -> String.format("`%s` %s", entry.getKey(), entry.getValue() ? "desc" : "asc"))
+                        .collect(Collectors.joining(",")),
+                    resultColumnName
+                );
+                resultingQuery = String.format(
+                    "select %s %s, `%s` from (%s)",
+                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                    collectingString,
+                    rowIdField,
+                    resultingQuery
+                );
+                resultingQuery = String.format(
+                    "select %s, first(`%s`) as `%s`, last(`%s`) as `%s.sequence` from (%s) group by `%s`",
+                    allColumns.stream()
+                        .map(
+                            name -> String.format(
+                                "first(%s) as %s",
+                                name,
+                                name
+                            )
+                        )
+                        .collect(Collectors.joining(",")),
+                    rowIdField,
+                    rowIdField,
+                    resultColumnName,
+                    resultColumnName,
+                    resultingQuery,
+                    rowIdField
+                );
+            }
             resultColumnName = resultColumnName + ".sequence";
             resultingQuery = String.format(
                 "select %s, `%s` from (%s) order by `%s`",

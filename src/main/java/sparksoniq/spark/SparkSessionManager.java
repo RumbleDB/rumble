@@ -92,6 +92,7 @@ public class SparkSessionManager {
     public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
     public static String positionalVariableName = "7722d450-210b-4e20-b698-72ec3af79c5d";
     public static Object nullFilterColumnName = "aa0c5d69-1e02-44cb-9592-526d9e1d381b";
+    public static Object sortingColumnName = "105e6832-80f0-4a8c-8358-41719dee4271";
 
     private SparkSessionManager() {
     }
