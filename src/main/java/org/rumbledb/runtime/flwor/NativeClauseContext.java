@@ -81,6 +81,7 @@ public class NativeClauseContext {
         this.resultingType = resultingType;
         this.tempView = sibling.tempView;
         this.conditionalColumns = sibling.conditionalColumns;
+        this.monotonicallyIncreasingId = sibling.monotonicallyIncreasingId;
         this.parent = sibling.parent;
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;

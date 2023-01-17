@@ -146,9 +146,13 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        // TODO implement FLWOR for child queries
+        String view = nativeClauseContext.getTempView();
+        nativeClauseContext.setTempView(null);
         List<NativeClauseContext> childClauses = this.children.stream()
             .map(child -> child.generateNativeQuery(nativeClauseContext))
             .collect(Collectors.toList());
+        nativeClauseContext.setTempView(view);
         if (!childClauses.stream().allMatch(child -> child != NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
