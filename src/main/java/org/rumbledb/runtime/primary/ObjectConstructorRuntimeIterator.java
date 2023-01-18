@@ -32,9 +32,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -202,6 +204,15 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 if (subQueryCount == 0) {
                     return NativeClauseContext.NoNativeQuery;
                 }
+                if (
+                    subQueryCount == 1
+                        && keyNativeContexts.get(0)
+                            .getResultingQuery()
+                            .substring(1, keyNativeContexts.get(0).getResultingQuery().length() - 1)
+                            .equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                ) {
+                    continue;
+                }
                 for (int i = 0; i < subQueryCount; i++) {
                     queries.add(
                         String.format(
@@ -254,7 +265,14 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         }
         int subQueryCount = keyNativeContexts.size();
         if (subQueryCount == 0) {
-            return NativeClauseContext.NoNativeQuery;
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "named_struct(\"" + SparkSessionManager.emptyObjectJSONiqItemColumnName + "\", null)",
+                    new SequenceType(
+                            BuiltinTypesCatalogue.objectItem,
+                            SequenceType.Arity.One
+                    )
+            );
         }
 
         List<String> objectItems = new ArrayList<>();
