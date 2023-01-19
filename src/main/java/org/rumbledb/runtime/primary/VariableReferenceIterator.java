@@ -84,14 +84,14 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        String name = this.variableName.toString();
+        Name name = nativeClauseContext.getVariable(this.variableName);
         DataType schema = nativeClauseContext.getSchema();
         if (!(schema instanceof StructType)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
         StructType structSchema = (StructType) schema;
-        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, this.variableName)) {
+        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, name)) {
             List<Item> items = nativeClauseContext.getContext()
                 .getVariableValues()
                 .getLocalVariableValue(this.variableName, getMetadata());
@@ -101,12 +101,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             }
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
-        String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
+        String escapedName = name.toString().replace("`", FlworDataFrameUtils.backtickEscape);
         SequenceType.Arity arity;
-        if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(structSchema, this.variableName)) {
+        if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(structSchema, name)) {
             escapedName = escapedName + ".sequence";
             arity = SequenceType.Arity.ZeroOrMore;
-        } else if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
+        } else if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, name)) {
             return NativeClauseContext.NoNativeQuery;
         } else {
             arity = SequenceType.Arity.OneOrZero;

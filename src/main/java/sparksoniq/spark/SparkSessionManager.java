@@ -84,15 +84,12 @@ public class SparkSessionManager {
     private JavaSparkContext javaSparkContext;
 
     public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
-    public static String conditionalColumnName = "bfe18fcf-d0fc-4d9f-9d67-884bbe55ed94";
     public static String emptyObjectJSONiqItemColumnName = "a84bc646-05af-4383-8853-2e9f31a710f2";
     public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
     public static String countColumnName = "5af0c0c8-e84c-482a-82ce-1887565cf448";
     public static String rightHandSideHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
     public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
-    public static String positionalVariableName = "7722d450-210b-4e20-b698-72ec3af79c5d";
-    public static Object nullFilterColumnName = "aa0c5d69-1e02-44cb-9592-526d9e1d381b";
-    public static Object sortingColumnName = "105e6832-80f0-4a8c-8358-41719dee4271";
+    public static String sparkSqlVariableName = "73706172-6b73-716c-7661-726961626c65";
 
     private SparkSessionManager() {
     }

@@ -388,7 +388,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        String rowIdField = "idx-9384-3948-1272-4376" + nativeClauseContext.getAndIncrementMonotonicallyIncreasingId();
+        String rowIdField = nativeClauseContext.addVariable().toString();
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             (StructType) nativeClauseContext.getSchema(),
             null,
@@ -423,9 +423,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultColumnName = SparkSessionManager.atomicJSONiqItemColumnName
-            +
-            expressionContext.getAndIncrementMonotonicallyIncreasingId();
+        String resultColumnName = expressionContext.addVariable().toString();
         String resultingQuery;
         // if there are conditional columns, use "if(condition,then,else)"
         if (childContext.getConditionalColumns().isEmpty()) {

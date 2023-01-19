@@ -869,10 +869,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        // since the schema of the parent is preserved, we have to avoid collisions
-        if (FlworDataFrameUtils.hasColumnForVariable((StructType) nativeClauseContext.getSchema(), this.variableName)) {
-            return NativeClauseContext.NoNativeQuery;
-        }
         if (this.child != null) {
             nativeClauseContext = this.child.generateNativeQuery(nativeClauseContext);
             if (nativeClauseContext == NativeClauseContext.NoNativeQuery) {
@@ -886,27 +882,27 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        String variableName = nativeClauseContext.addVariable(this.variableName).toString();
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             (StructType) nativeClauseContext.getSchema(),
             null,
             null,
             null
         );
-        String localName = this.variableName.getLocalName();
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(expressionContext.getResultingType().getArity())) {
-            localName = localName + ".sequence";
+            variableName = variableName + ".sequence";
         }
         String resultString = String.format(
             "select %s %s as `%s` from (%s)",
             FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
             expressionContext.getResultingQuery(),
-            localName,
+            variableName,
             expressionContext.getTempView()
         );
         NativeClauseContext letClauseContext = new NativeClauseContext(nativeClauseContext);
         letClauseContext.setSchema(
             ((StructType) letClauseContext.getSchema()).add(
-                localName,
+                variableName,
                 TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
             )
         );

@@ -55,7 +55,6 @@ import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.*;
 
@@ -679,14 +678,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         StringBuilder orderColumnString = new StringBuilder();
-        sortingColumns.entrySet().stream().forEach(entry -> {
-            String columnName = String.format(
-                "%s%d",
-                SparkSessionManager.sortingColumnName,
-                childContext.getAndIncrementMonotonicallyIncreasingId()
-            );
-            orderColumnString.append(String.format("%s as `%s`,", entry.getKey(), columnName));
-            childContext.addSortingColumn(columnName, entry.getValue());
+        sortingColumns.forEach((key, value) -> {
+            String columnName = childContext.addVariable().toString();
+            orderColumnString.append(String.format("%s as `%s`,", key, columnName));
+            childContext.addSortingColumn(columnName, value);
             childContext.setSchema(((StructType) childContext.getSchema()).add(columnName, DataTypes.BinaryType));
         });
         String view = orderContext.getTempView();

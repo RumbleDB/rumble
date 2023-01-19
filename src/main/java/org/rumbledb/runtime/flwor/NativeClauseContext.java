@@ -6,6 +6,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.types.SequenceType;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +39,8 @@ public class NativeClauseContext {
 
     private Map<String, Boolean> sortingColumns;
 
+    private Map<Name, Name> variables;
+
 
     private NativeClauseContext() {
     }
@@ -55,6 +58,7 @@ public class NativeClauseContext {
         this.isExplodedView = false;
         this.positionalVariableNames = new ArrayList<>();
         this.sortingColumns = new HashMap<>();
+        this.variables = new HashMap<>();
     }
 
     public NativeClauseContext(NativeClauseContext sibling) {
@@ -70,6 +74,7 @@ public class NativeClauseContext {
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;
         this.sortingColumns = sibling.sortingColumns;
+        this.variables = sibling.variables;
     }
 
     public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
@@ -86,6 +91,7 @@ public class NativeClauseContext {
         this.isExplodedView = sibling.isExplodedView;
         this.positionalVariableNames = sibling.positionalVariableNames;
         this.sortingColumns = sibling.sortingColumns;
+        this.variables = sibling.variables;
     }
 
     public NativeClauseContext createChild() {
@@ -95,6 +101,7 @@ public class NativeClauseContext {
         result.parent = this;
         result.tempView = this.tempView;
         result.positionalVariableNames = new ArrayList<>();
+        result.variables = new HashMap<>();
         return result;
     }
 
@@ -159,11 +166,37 @@ public class NativeClauseContext {
         return result;
     }
 
-    public int getAndIncrementMonotonicallyIncreasingId() {
+    private int getAndIncrementMonotonicallyIncreasingId() {
         if (this.parent != null) {
             return this.parent.getAndIncrementMonotonicallyIncreasingId();
         }
         return this.monotonicallyIncreasingId++;
+    }
+
+    public Name addVariable() {
+        Name variable = Name.createVariableInNoNamespace(
+            SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId()
+        );
+        this.variables.put(variable, variable);
+        return variable;
+    }
+
+    public Name addVariable(Name name) {
+        Name variable = Name.createVariableInNoNamespace(
+            SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId()
+        );
+        this.variables.put(name, variable);
+        return variable;
+    }
+
+    public Name getVariable(Name name) {
+        if (this.variables.containsKey(name)) {
+            return this.variables.get(name);
+        }
+        if (this.parent != null) {
+            return this.parent.getVariable(name);
+        }
+        return name;
     }
 
     public void setExplodedView(boolean isExplodedView) {

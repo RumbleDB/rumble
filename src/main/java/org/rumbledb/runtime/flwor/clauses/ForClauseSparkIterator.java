@@ -1357,18 +1357,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @param nativeClauseContext context information to generate the native query
      */
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        // since the schema of the parent is preserved, we have to avoid collisions
-        if (
-            FlworDataFrameUtils.hasColumnForVariable((StructType) nativeClauseContext.getSchema(), this.variableName)
-                ||
-                (this.positionalVariableName != null
-                    && FlworDataFrameUtils.hasColumnForVariable(
-                        (StructType) nativeClauseContext.getSchema(),
-                        this.positionalVariableName
-                    ))
-        ) {
-            return NativeClauseContext.NoNativeQuery;
-        }
         if (this.allowingEmpty) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -1395,13 +1383,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 null
             );
+
+            Name variableName = nativeClauseContext.addVariable(this.variableName);
             // if the position is not named, create a unique name
             Name positionalVariableName = (this.positionalVariableName != null)
-                ? this.positionalVariableName
-                : Name.createVariableInNoNamespace(
-                    SparkSessionManager.positionalVariableName
-                        + selectionContext.getAndIncrementMonotonicallyIncreasingId()
-                );
+                ? nativeClauseContext.addVariable(this.positionalVariableName)
+                : nativeClauseContext.addVariable();
             if (selectionContext.getLateralViewPart().size() > 0) {
                 // create exploded expression
                 String resultString;
@@ -1418,18 +1405,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     lateralViewString.append(" arr");
                     lateralViewString.append(arrIndex);
                 }
-                String nullFilterColumn = String.format(
-                    "%s%d",
-                    SparkSessionManager.nullFilterColumnName,
-                    selectionContext.getAndIncrementMonotonicallyIncreasingId()
-                );
+                String nullFilterColumn = selectionContext.addVariable().toString();
                 // create query string
                 resultString = String.format(
                     "select %s arr%d.col%s as `%s`, (if(arr%d.col%s is not null, arr%d.pos%s + 1, 1)) as `%s`, (arr%d.col%s is not null) as `%s` from (%s) %s",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                     arrIndex,
                     selectionContext.getResultingQuery(),
-                    this.variableName,
+                    variableName,
                     arrIndex,
                     selectionContext.getResultingQuery(),
                     arrIndex,
@@ -1451,13 +1434,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
                 selectionContext.setSchema(
                     ((StructType) nativeClauseContext.getSchema()).add(
-                        this.variableName.getLocalName(),
+                        variableName.toString(),
                         resultingType
                     )
                 );
                 selectionContext.setSchema(
                     ((StructType) selectionContext.getSchema()).add(
-                        positionalVariableName.getLocalName(),
+                        positionalVariableName.toString(),
                         DataTypes.IntegerType
                     )
                 );
@@ -1479,16 +1462,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         null
                 );
             } else if (SequenceType.Arity.OneOrMore.isSubtypeOf(selectionContext.getResultingType().getArity())) {
-                String nullFilterColumn = String.format(
-                    "%s%d",
-                    SparkSessionManager.nullFilterColumnName,
-                    selectionContext.getAndIncrementMonotonicallyIncreasingId()
-                );
+                String nullFilterColumn = selectionContext.addVariable().toString();
                 // create query string
                 String resultString = String.format(
                     "select %s explodedsequence.col as `%s`, (if(explodedsequence.col is not null, explodedsequence.pos + 1, 1)) as `%s`, (explodedsequence.col is not null) as `%s` from (%s) lateral view outer posexplode(%s) explodedsequence",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
-                    this.variableName,
+                    variableName,
                     positionalVariableName,
                     nullFilterColumn,
                     selectionContext.getTempView(),
@@ -1499,13 +1478,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
                 selectionContext.setSchema(
                     ((StructType) nativeClauseContext.getSchema()).add(
-                        this.variableName.getLocalName(),
+                        variableName.toString(),
                         resultingType
                     )
                 );
                 selectionContext.setSchema(
                     ((StructType) selectionContext.getSchema()).add(
-                        positionalVariableName.getLocalName(),
+                        positionalVariableName.toString(),
                         DataTypes.IntegerType
                     )
                 );
@@ -1531,33 +1510,26 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     || selectionContext.getResultingType().getArity().equals(SequenceType.Arity.OneOrZero)
             ) {
                 String resultString = String.format(
-                    "select %s %s as `%s`%s from (%s)",
+                    "select %s %s as `%s`, 1 as `%s` from (%s)",
                     FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                     selectionContext.getResultingQuery(),
-                    this.variableName.getLocalName(),
-                    (this.positionalVariableName != null)
-                        ? String.format(
-                            ", 1 as %s",
-                            this.positionalVariableName
-                        )
-                        : "",
+                    variableName,
+                    positionalVariableName,
                     tempView
                 );
                 NativeClauseContext letClauseContext = new NativeClauseContext(selectionContext);
                 letClauseContext.setSchema(
                     ((StructType) nativeClauseContext.getSchema()).add(
-                        this.variableName.getLocalName(),
+                        variableName.toString(),
                         TypeMappings.getDataFrameDataTypeFromItemType(selectionContext.getResultingType().getItemType())
                     )
                 );
-                if (this.positionalVariableName != null) {
-                    letClauseContext.setSchema(
-                        ((StructType) nativeClauseContext.getSchema()).add(
-                            this.positionalVariableName.getLocalName(),
-                            DataTypes.IntegerType
-                        )
-                    );
-                }
+                letClauseContext.setSchema(
+                    ((StructType) letClauseContext.getSchema()).add(
+                        positionalVariableName.toString(),
+                        DataTypes.IntegerType
+                    )
+                );
                 letClauseContext.setTempView(resultString);
                 letClauseContext.setResultingQuery(null);
                 letClauseContext.setResultingType(null);

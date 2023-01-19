@@ -43,7 +43,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.*;
 
@@ -519,8 +518,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     getMetadata()
             );
         }
-        String conditionalColumnName = SparkSessionManager.conditionalColumnName
-            + expressionContext.getAndIncrementMonotonicallyIncreasingId();
+        String conditionalColumnName = childContext.addVariable().toString();
 
         String resultString = String.format(
             "select *, %s as `%s` from (%s)",
