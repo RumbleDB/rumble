@@ -130,9 +130,9 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
         if (
             !value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
-                &&
-                !this.itemType.equals(BuiltinTypesCatalogue.numericItem)
+                && !this.itemType.equals(BuiltinTypesCatalogue.numericItem)
                 && !this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+                && !this.itemType.equals(BuiltinTypesCatalogue.stringItem)
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
