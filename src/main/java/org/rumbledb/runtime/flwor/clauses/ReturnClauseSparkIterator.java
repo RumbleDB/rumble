@@ -412,6 +412,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 DataTypes.IntegerType
             )
         );
+        subQueryContext.setRowId(rowIdField);
         // get child query
         NativeClauseContext childContext = this.child.generateNativeQuery(subQueryContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {

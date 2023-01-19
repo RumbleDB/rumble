@@ -40,6 +40,7 @@ public class NativeClauseContext {
     private Map<String, Boolean> sortingColumns;
 
     private Map<Name, Name> variables;
+    private String rowIdField;
 
 
     private NativeClauseContext() {
@@ -59,6 +60,7 @@ public class NativeClauseContext {
         this.positionalVariableNames = new ArrayList<>();
         this.sortingColumns = new HashMap<>();
         this.variables = new HashMap<>();
+        this.rowIdField = null;
     }
 
     public NativeClauseContext(NativeClauseContext sibling) {
@@ -75,6 +77,7 @@ public class NativeClauseContext {
         this.positionalVariableNames = sibling.positionalVariableNames;
         this.sortingColumns = sibling.sortingColumns;
         this.variables = sibling.variables;
+        this.rowIdField = sibling.rowIdField;
     }
 
     public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
@@ -92,6 +95,7 @@ public class NativeClauseContext {
         this.positionalVariableNames = sibling.positionalVariableNames;
         this.sortingColumns = sibling.sortingColumns;
         this.variables = sibling.variables;
+        this.rowIdField = sibling.rowIdField;
     }
 
     public NativeClauseContext createChild() {
@@ -224,5 +228,17 @@ public class NativeClauseContext {
 
     public void addSortingColumn(String name, boolean descending) {
         this.sortingColumns.put(name, descending);
+    }
+
+    public void setRowId(String rowIdField) {
+        this.rowIdField = rowIdField;
+    }
+
+    public String getRowIdField() {
+        return this.rowIdField;
+    }
+
+    public void clearConditionalColumns() {
+        this.conditionalColumns.clear();
     }
 }
