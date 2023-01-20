@@ -722,7 +722,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
         // create aggregation for each column
-        // TODO sum, count etc.
         List<String> selectionStrings = new ArrayList<>();
         String conditionString = childContext.getConditionalColumns()
             .stream()
