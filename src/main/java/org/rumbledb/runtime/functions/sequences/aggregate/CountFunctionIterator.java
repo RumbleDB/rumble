@@ -166,7 +166,8 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                 .substring(nativeChildQuery.getResultingQuery().indexOf("explode") + 7),
                         new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
                 );
-
+            } else if (nativeChildQuery.getResultingQuery().contains(".count")) {
+                return nativeChildQuery;
             } else {
                 return new NativeClauseContext(
                         nativeClauseContext,

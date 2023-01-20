@@ -749,7 +749,32 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     String.format("first(`%s`) as `%s`", column.getColumnName(), column.getColumnName())
                 );
             } else {
-                if (column.isNativeSequence()) {
+                if (column.isCount()) {
+                    selectionStrings.add(
+                        String.format("sum(`%s`) as `%s`", column.getColumnName(), column.getColumnName())
+                    );
+                    newSchema = newSchema.add(column.getColumnName(), type);
+                } else if (
+                    this.outputTupleProjection.entrySet()
+                        .stream()
+                        .filter(
+                            out -> nativeClauseContext.getVariable(out.getKey())
+                                .toString()
+                                .equals(column.getColumnName())
+                        )
+                        .map(entry -> entry.getValue() == DynamicContext.VariableDependency.COUNT)
+                        .findFirst()
+                        .orElse(false)
+                ) {
+                    FlworDataFrameColumn countColumn = new FlworDataFrameColumn(
+                            column.getVariableName(),
+                            ColumnFormat.COUNT
+                    );
+                    selectionStrings.add(
+                        String.format("count(`%s`) as `%s`", column.getColumnName(), countColumn.getColumnName())
+                    );
+                    newSchema = newSchema.add(countColumn.getColumnName(), DataTypes.IntegerType);
+                } else if (column.isNativeSequence()) {
                     // if it's a sequence, use flatten
                     selectionStrings.add(
                         String.format(
@@ -762,14 +787,24 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 } else {
                     if (!childContext.getConditionalColumns().contains(column.getColumnName())) {
                         String groupedColumnName = column.getColumnName() + ".sequence";
-                        selectionStrings.add(
-                            String.format(
-                                "collect_list(if(%s, `%s`, null)) as `%s`",
-                                conditionString,
-                                column.getColumnName(),
-                                groupedColumnName
-                            )
-                        );
+                        if (childContext.getConditionalColumns().size() > 0) {
+                            selectionStrings.add(
+                                String.format(
+                                    "collect_list(if(%s, `%s`, null)) as `%s`",
+                                    conditionString,
+                                    column.getColumnName(),
+                                    groupedColumnName
+                                )
+                            );
+                        } else {
+                            selectionStrings.add(
+                                String.format(
+                                    "collect_list(`%s`) as `%s`",
+                                    column.getColumnName(),
+                                    groupedColumnName
+                                )
+                            );
+                        }
                         newSchema = newSchema.add(groupedColumnName, type);
                     }
                 }

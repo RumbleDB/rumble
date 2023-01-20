@@ -106,6 +106,9 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(structSchema, name)) {
             escapedName = escapedName + ".sequence";
             arity = SequenceType.Arity.ZeroOrMore;
+        } else if (FlworDataFrameUtils.isVariableAvailableAsCountOnly(structSchema, name)) {
+            escapedName = escapedName + ".count";
+            arity = SequenceType.Arity.One;
         } else if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, name)) {
             return NativeClauseContext.NoNativeQuery;
         } else {
