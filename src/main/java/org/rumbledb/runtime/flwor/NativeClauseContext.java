@@ -241,4 +241,8 @@ public class NativeClauseContext {
     public void clearConditionalColumns() {
         this.conditionalColumns.clear();
     }
+
+    public void clearSortingColumns() {
+        this.sortingColumns.clear();
+    }
 }

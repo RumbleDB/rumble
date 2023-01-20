@@ -731,6 +731,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         StructType ungroupedSchema = (StructType) childContext.getSchema();
         StructType newSchema = (StructType) nativeClauseContext.getSchema();
         for (FlworDataFrameColumn column : allColumns) {
+            // group by doesn't preserve ordering
+            if (nativeClauseContext.getSortingColumns().containsKey(column.getColumnName())) {
+                continue;
+            }
             DataType type = ungroupedSchema.fields()[ungroupedSchema.fieldIndex(column.getColumnName())].dataType();
             if (groupingVars.contains(column.getVariableName().toString())) {
                 // if it's a grouping variable, don't aggregate
@@ -773,6 +777,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         childContext.clearConditionalColumns();
+        childContext.clearSortingColumns();
         childContext.setSchema(newSchema);
         String groupingString = String.format(
             "select %s from (%s) group by %s",
