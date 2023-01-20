@@ -37,6 +37,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
@@ -49,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -255,5 +257,71 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.child == null) {
+            throw new OurBadException("Invalid count clause.");
+        }
+        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) childContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
+        String variableName = childContext.addVariable(this.variableName).toString();
+        String resultingQuery;
+        if (childContext.isExplodedView()) {
+            Map<String, Boolean> sortingColumns = childContext.getSortingColumns().isEmpty()
+                ? Collections.singletonMap(childContext.getPositionalVariableName().toString(), false)
+                : childContext.getSortingColumns();
+            String aggregateString;
+            if (childContext.getConditionalColumns().size() > 0) {
+                String condition = childContext.getConditionalColumns()
+                    .stream()
+                    .map(name -> "`" + name + "`")
+                    .collect(Collectors.joining(" and "));
+                aggregateString = String.format(
+                    "if((%s) ,`%s`, null)",
+                    condition,
+                    childContext.getRowIdField()
+                );
+            } else {
+                aggregateString = String.format("`%s`", childContext.getRowIdField());
+            }
+            resultingQuery = String.format(
+                "select %s count(%s) over (partition by `%s` order by %s) as `%s` from (%s)",
+                selectSQL,
+                aggregateString,
+                childContext.getRowIdField(),
+                sortingColumns.entrySet()
+                    .stream()
+                    .map(entry -> String.format("`%s` %s", entry.getKey(), entry.getValue() ? "desc" : "asc"))
+                    .collect(Collectors.joining(",")),
+                variableName,
+                childContext.getTempView()
+            );
+        } else {
+            resultingQuery = String.format(
+                "select %s 1 as `%s` from (%s)",
+                selectSQL,
+                variableName,
+                childContext.getTempView()
+            );
+        }
+        childContext.setSchema(
+            ((StructType) childContext.getSchema()).add(
+                variableName,
+                DataTypes.IntegerType
+            )
+        );
+        childContext.setTempView(resultingQuery);
+        return new NativeClauseContext(childContext, null, null);
     }
 }
