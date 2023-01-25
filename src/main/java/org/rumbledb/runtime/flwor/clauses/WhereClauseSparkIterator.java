@@ -22,6 +22,7 @@ package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;

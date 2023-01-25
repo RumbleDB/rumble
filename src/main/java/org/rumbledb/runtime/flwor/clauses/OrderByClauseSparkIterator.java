@@ -532,14 +532,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .info("Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
-        return dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from input order by %s",
-                    selectSQL,
-                    queryContext.getResultingQuery()
-                )
-            );
+        return new FlworDataFrame(
+                dataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from input order by %s",
+                            selectSQL,
+                            queryContext.getResultingQuery()
+                        )
+                    )
+        );
     }
 
     private static NativeClauseContext createOrderExpression(
