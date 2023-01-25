@@ -42,6 +42,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -169,8 +170,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
                 tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
                 tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                // variables from new
-                // tuple
+                                                                                                  // variables from new
+                                                                                                  // tuple
 
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
                 try {
@@ -202,7 +203,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -220,7 +221,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
 
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
@@ -231,7 +232,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             null
         );
 
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
+        FlworDataFrame nativeQueryResult = tryNativeQuery(
             df,
             this.expressionsWithIterator,
             allColumns,
@@ -268,7 +269,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
         if (columnTypesOfRows.length == 0) {
             // The input is empty, so we output this empty DF again.
-            return df;
+            return new FlworDataFrame(df);
         }
 
         // Every column represents an order by expression
@@ -437,17 +438,19 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
-        return df.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
-                    projectSQL,
-                    selectSQL,
-                    UDFParameters,
-                    appendedOrderingColumnsName,
-                    orderingSQL
-                )
-            );
+        return new FlworDataFrame(
+                df.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
+                            projectSQL,
+                            selectSQL,
+                            UDFParameters,
+                            appendedOrderingColumnsName,
+                            orderingSQL
+                        )
+                    )
+        );
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
@@ -513,7 +516,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the order by clause if successful, null otherwise
      */
-    public static Dataset<Row> tryNativeQuery(
+    public static FlworDataFrame tryNativeQuery(
             Dataset<Row> dataFrame,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             List<FlworDataFrameColumn> allColumns,
