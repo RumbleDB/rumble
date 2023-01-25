@@ -213,20 +213,24 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 ) {
                     continue;
                 }
+
+                List<String> constructorKeyNames = createKeyNames(
+                    keyNativeContexts,
+                    valueNativeContexts,
+                    subQueryCount
+                );
                 for (int i = 0; i < subQueryCount; i++) {
                     queries.add(
                         String.format(
                             "(%s) as `%s`",
                             valueNativeContexts.get(i).getResultingQuery(),
-                            keyNativeContexts.get(i)
-                                .getResultingQuery()
+                            constructorKeyNames.get(i)
                                 .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1)
                         )
                     );
                 }
-                keyNativeContexts
+                constructorKeyNames
                     .stream()
-                    .map(NativeClauseContext::getResultingQuery)
                     .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
                     .forEach(keyNames::add);
                 valueNativeContexts
@@ -275,12 +279,14 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             );
         }
 
+        List<String> keyNames = createKeyNames(keyNativeContexts, valueNativeContexts, subQueryCount);
+
         List<String> objectItems = new ArrayList<>();
         for (int i = 0; i < subQueryCount; i++) {
             objectItems.add(
                 String.format(
                     "%s, (%s)",
-                    keyNativeContexts.get(i).getResultingQuery(),
+                    keyNames.get(i),
                     valueNativeContexts.get(i).getResultingQuery()
                 )
             );
@@ -293,9 +299,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
 
         ItemType resultType =
             ItemTypeFactory.createAnonymousObjectType(
-                keyNativeContexts
+                keyNames
                     .stream()
-                    .map(NativeClauseContext::getResultingQuery)
                     .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
                     .collect(Collectors.toList()),
                 valueNativeContexts
@@ -311,5 +316,29 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                         SequenceType.Arity.One
                 )
         );
+    }
+
+    private List<String> createKeyNames(
+            List<NativeClauseContext> keyNativeContexts,
+            List<NativeClauseContext> valueNativeContexts,
+            int subQueryCount
+    ) {
+        List<String> constructorKeyNames = new ArrayList<>();
+        for (int i = 0; i < subQueryCount; i++) {
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(valueNativeContexts.get(i).getResultingType().getArity())) {
+                constructorKeyNames.add(
+                    String.format(
+                        "\"%s%s\"",
+                        keyNativeContexts.get(i)
+                            .getResultingQuery()
+                            .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1),
+                        SparkSessionManager.sequenceColumnName
+                    )
+                );
+            } else {
+                constructorKeyNames.add(keyNativeContexts.get(i).getResultingQuery());
+            }
+        }
+        return constructorKeyNames;
     }
 }
