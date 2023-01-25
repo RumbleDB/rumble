@@ -114,7 +114,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             return result;
         }
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
@@ -180,7 +180,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             );
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
