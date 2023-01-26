@@ -74,7 +74,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + powerQuery.getResultingQuery()
             + " )";
         return new NativeClauseContext(
-                nativeClauseContext,
+                powerQuery,
                 resultingQuery,
                 new SequenceType(BuiltinTypesCatalogue.doubleItem, powerQuery.getResultingType().getArity())
         );

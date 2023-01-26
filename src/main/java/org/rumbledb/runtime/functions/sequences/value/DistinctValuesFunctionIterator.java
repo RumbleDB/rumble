@@ -146,6 +146,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         String resultingQuery = "DISTINCT( "
             + sequenceQuery.getResultingQuery()
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, sequenceQuery.getResultingType());
+        return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
     }
 }

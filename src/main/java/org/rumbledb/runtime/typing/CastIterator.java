@@ -810,14 +810,14 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    childQuery,
                     "CAST (" + childQuery.getResultingQuery() + " AS FLOAT)",
                     new SequenceType(BuiltinTypesCatalogue.floatItem, childQuery.getResultingType().getArity())
             );
         }
         if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    childQuery,
                     "CAST (" + childQuery.getResultingQuery() + " AS DOUBLE)",
                     new SequenceType(BuiltinTypesCatalogue.floatItem, childQuery.getResultingType().getArity())
             );

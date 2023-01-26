@@ -170,7 +170,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 return nativeChildQuery;
             } else {
                 return new NativeClauseContext(
-                        nativeClauseContext,
+                        nativeChildQuery,
                         "size (" + nativeChildQuery.getResultingQuery() + ")",
                         new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
                 );

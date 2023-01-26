@@ -24,7 +24,6 @@ import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -47,6 +46,7 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
+import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -359,13 +359,18 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (arrayReferenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        nativeClauseContext.setSchema(
-            ((StructType) nativeClauseContext.getSchema()).add(
+        arrayReferenceQuery.setSchema(
+            ((StructType) arrayReferenceQuery.getSchema()).add(
                 SparkSessionManager.atomicJSONiqItemColumnName,
-                ((ArrayType) arrayReferenceQuery.getSchema()).elementType()
+                TypeMappings.getDataFrameDataTypeFromItemType(
+                    arrayReferenceQuery.getResultingType().getItemType().getArrayContentFacet()
+                )
             )
         );
-        NativeClauseContext filterQuery = this.filter.generateNativeQuery(nativeClauseContext);
+        FLWOR_CLAUSES previousType = arrayReferenceQuery.getClauseType();
+        arrayReferenceQuery.setClauseType(FLWOR_CLAUSES.FILTER);
+        NativeClauseContext filterQuery = this.filter.generateNativeQuery(arrayReferenceQuery);
+        arrayReferenceQuery.setClauseType(previousType);
 
         if (
             filterQuery != NativeClauseContext.NoNativeQuery
@@ -380,7 +385,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 + filterQuery.getResultingQuery()
                 + " ) ) ";
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    filterQuery,
                     resultingQuery,
                     arrayReferenceQuery.getResultingType()
             );

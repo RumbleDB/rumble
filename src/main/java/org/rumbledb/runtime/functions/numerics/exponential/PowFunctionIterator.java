@@ -70,8 +70,12 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        NativeClauseContext exponentQuery = this.children.get(1).generateNativeQuery(nativeClauseContext);
-        if (baseQuery == NativeClauseContext.NoNativeQuery || exponentQuery == NativeClauseContext.NoNativeQuery) {
+        if (baseQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext exponentQuery = this.children.get(1)
+            .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
+        if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (
@@ -91,7 +95,7 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + exponentQuery.getResultingQuery()
             + " )";
         return new NativeClauseContext(
-                nativeClauseContext,
+                exponentQuery,
                 resultingQuery,
                 new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
         );

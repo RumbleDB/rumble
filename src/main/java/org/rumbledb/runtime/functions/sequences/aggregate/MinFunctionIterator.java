@@ -513,7 +513,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
-                nativeClauseContext,
+                nativeChildQuery,
                 "array_min(" + nativeChildQuery.getResultingQuery() + ")",
                 nativeChildQuery.getResultingType()
         );

@@ -534,7 +534,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(
-                nativeClauseContext,
+                nativeChildQuery,
                 "array_max(" + nativeChildQuery.getResultingQuery() + ")",
                 nativeChildQuery.getResultingType()
         );

@@ -78,7 +78,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                     + " )";
             }
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    childQuery,
                     resultingQuery,
                     new SequenceType(
                             ArrayItemType.arrayOf(childQuery.getResultingType().getItemType()),

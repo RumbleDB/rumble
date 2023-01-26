@@ -22,7 +22,6 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -38,7 +37,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -186,15 +184,13 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             initLookupPosition(newContext.getContext());
 
-            schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType)) {
+            ItemType resultType = newContext.getResultingType().getItemType();
+            if (!(resultType.isArrayItemType())) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            ArrayType arraySchema = (ArrayType) schema;
-            newContext.setSchema(arraySchema.elementType());
             newContext.setResultingType(
                 new SequenceType(
-                        TypeMappings.getItemTypeFromDataFrameDataType(arraySchema.elementType()),
+                        resultType.getArrayContentFacet(),
                         SequenceType.Arity.OneOrZero
                 )
             );

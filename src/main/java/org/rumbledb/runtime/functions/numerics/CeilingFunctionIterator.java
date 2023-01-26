@@ -119,7 +119,7 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + " ) AS FLOAT)"
             + " )";
         return new NativeClauseContext(
-                nativeClauseContext,
+                value,
                 resultingQuery,
                 new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
         );

@@ -89,12 +89,10 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         )];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        NativeClauseContext newContext = new NativeClauseContext(
+        return new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
                 new SequenceType(variableType, SequenceType.Arity.One)
         );
-        newContext.setSchema(fieldType);
-        return newContext;
     }
 }

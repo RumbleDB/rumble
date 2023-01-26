@@ -34,6 +34,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -146,15 +147,14 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        // TODO implement FLWOR for child queries
-        String view = nativeClauseContext.getTempView();
-        nativeClauseContext.setTempView(null);
-        List<NativeClauseContext> childClauses = this.children.stream()
-            .map(child -> child.generateNativeQuery(nativeClauseContext))
-            .collect(Collectors.toList());
-        nativeClauseContext.setTempView(view);
-        if (!childClauses.stream().allMatch(child -> child != NativeClauseContext.NoNativeQuery)) {
-            return NativeClauseContext.NoNativeQuery;
+        List<NativeClauseContext> childClauses = new ArrayList<>();
+        for (RuntimeIterator iterator : this.children) {
+            NativeClauseContext childContext = iterator.generateNativeQuery(nativeClauseContext);
+            if (childContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            childClauses.add(childContext);
+            nativeClauseContext = new NativeClauseContext(childContext, null, null);
         }
         ItemType resultType;
         if (

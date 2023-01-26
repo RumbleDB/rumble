@@ -167,6 +167,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 if (objectPartContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
+                nativeClauseContext = new NativeClauseContext(objectPartContext, null, null);
                 objectPartContext.getResultingType().getItemType().getObjectContentFacet().forEach((k, v) -> {
                     keyNames.add(k);
                     valueTypes.add(v.getType());
@@ -187,19 +188,25 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 if (child.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
                     return NativeClauseContext.NoNativeQuery;
                 }
-                List<NativeClauseContext> keyNativeContexts = child.keys.stream()
-                    .map(key -> key.generateNativeQuery(nativeClauseContext))
-                    .collect(Collectors.toList());
-                List<NativeClauseContext> valueNativeContexts = child.values.stream()
-                    .map(value -> value.generateNativeQuery(nativeClauseContext))
-                    .collect(Collectors.toList());
-                if (
-                    !(keyNativeContexts.stream().allMatch(key -> key != NativeClauseContext.NoNativeQuery)
-                        && valueNativeContexts.stream()
-                            .allMatch(value -> value != NativeClauseContext.NoNativeQuery))
-                ) {
-                    return NativeClauseContext.NoNativeQuery;
+                List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
+                List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
+                for (RuntimeIterator key : child.keys) {
+                    NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+                    if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
+                        return NativeClauseContext.NoNativeQuery;
+                    }
+                    keyNativeContexts.add(keyNativeContext);
+                    nativeClauseContext = keyNativeContext;
                 }
+                for (RuntimeIterator value : child.values) {
+                    NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+                    if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
+                        return NativeClauseContext.NoNativeQuery;
+                    }
+                    valueNativeContexts.add(valueNativeContext);
+                    nativeClauseContext = valueNativeContext;
+                }
+
                 int subQueryCount = keyNativeContexts.size();
                 if (subQueryCount == 0) {
                     return NativeClauseContext.NoNativeQuery;
@@ -255,17 +262,23 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         if (this.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
             return NativeClauseContext.NoNativeQuery;
         }
-        List<NativeClauseContext> keyNativeContexts = this.keys.stream()
-            .map(key -> key.generateNativeQuery(nativeClauseContext))
-            .collect(Collectors.toList());
-        List<NativeClauseContext> valueNativeContexts = this.values.stream()
-            .map(value -> value.generateNativeQuery(nativeClauseContext))
-            .collect(Collectors.toList());
-        if (
-            !(keyNativeContexts.stream().allMatch(key -> key != NativeClauseContext.NoNativeQuery)
-                && valueNativeContexts.stream().allMatch(value -> value != NativeClauseContext.NoNativeQuery))
-        ) {
-            return NativeClauseContext.NoNativeQuery;
+        List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
+        List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
+        for (RuntimeIterator key : this.keys) {
+            NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+            if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            keyNativeContexts.add(keyNativeContext);
+            nativeClauseContext = keyNativeContext;
+        }
+        for (RuntimeIterator value : this.values) {
+            NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+            if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            valueNativeContexts.add(valueNativeContext);
+            nativeClauseContext = valueNativeContext;
         }
         int subQueryCount = keyNativeContexts.size();
         if (subQueryCount == 0) {

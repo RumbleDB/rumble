@@ -22,6 +22,7 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -246,24 +247,29 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             nativeClauseContext.getClauseType().equals(FLWOR_CLAUSES.FILTER)
                 && (this.iterator instanceof ContextExpressionIterator)
         ) {
-            leftSchema = outerContextSchema;
-            if (outerContextSchema instanceof StructType) {
+            leftSchema = (nativeClauseContext.getResultingType() != null)
+                ? TypeMappings.getDataFrameDataTypeFromItemType(nativeClauseContext.getResultingType().getItemType())
+                : outerContextSchema;
+            if (leftSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
                         null,
                         nativeClauseContext.getResultingType()
                 );
             } else {
+                if (leftSchema instanceof ArrayType) {
+                    leftSchema = ((ArrayType) leftSchema).elementType();
+                }
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
                         nativeClauseContext.getResultingType()
                 );
             }
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = newContext.getSchema();
+                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(newContext.getResultingType().getItemType());
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -303,7 +309,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 newContext.setResultingQuery("`" + key + "`");
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
-            newContext.setSchema(field.dataType());
             newContext.setResultingType(
                 new SequenceType(
                         TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
@@ -329,7 +334,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 .getObjectContentFacet()
                 .get(key)
                 .getType();
-            newContext.setSchema(TypeMappings.getDataFrameDataTypeFromItemType(resultType));
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {

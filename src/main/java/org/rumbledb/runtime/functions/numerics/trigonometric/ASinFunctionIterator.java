@@ -72,7 +72,7 @@ public class ASinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + childQuery.getResultingQuery()
             + " )";
         return new NativeClauseContext(
-                nativeClauseContext,
+                childQuery,
                 resultingQuery,
                 new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
         );

@@ -60,8 +60,12 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext yQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        NativeClauseContext xQuery = this.children.get(1).generateNativeQuery(nativeClauseContext);
-        if (yQuery == NativeClauseContext.NoNativeQuery || xQuery == NativeClauseContext.NoNativeQuery) {
+        if (yQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext xQuery = this.children.get(1)
+            .generateNativeQuery(new NativeClauseContext(yQuery, null, null));
+        if (xQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (
@@ -81,7 +85,7 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + xQuery.getResultingQuery()
             + " )";
         return new NativeClauseContext(
-                nativeClauseContext,
+                xQuery,
                 resultingQuery,
                 new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
         );

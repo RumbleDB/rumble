@@ -508,9 +508,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.comparisonOperator.isValueComparison()) {
             NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
-            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-
-            if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+            if (leftResult == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+                new NativeClauseContext(leftResult, null, null)
+            );
+            if (rightResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
             if (
@@ -560,7 +564,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                     : SequenceType.Arity.OneOrZero;
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    rightResult,
                     query,
                     new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
             );

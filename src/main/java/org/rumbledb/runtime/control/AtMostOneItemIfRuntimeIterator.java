@@ -64,13 +64,17 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext conditionResult = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        NativeClauseContext thenResult = this.children.get(1).generateNativeQuery(nativeClauseContext);
-        NativeClauseContext elseResult = this.children.get(2).generateNativeQuery(nativeClauseContext);
-        if (
-            conditionResult == NativeClauseContext.NoNativeQuery
-                || thenResult == NativeClauseContext.NoNativeQuery
-                || elseResult == NativeClauseContext.NoNativeQuery
-        ) {
+        if (conditionResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext thenResult = this.children.get(1)
+            .generateNativeQuery(new NativeClauseContext(conditionResult, null, null));
+        if (thenResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext elseResult = this.children.get(2)
+            .generateNativeQuery(new NativeClauseContext(thenResult, null, null));
+        if (elseResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (!conditionResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
@@ -95,7 +99,7 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
         return new NativeClauseContext(
-                nativeClauseContext,
+                elseResult,
                 resultingQuery,
                 new SequenceType(
                         thenResult.getResultingType()

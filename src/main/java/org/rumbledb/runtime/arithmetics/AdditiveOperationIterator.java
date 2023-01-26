@@ -426,8 +426,13 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+            new NativeClauseContext(leftResult, null, null)
+        );
+        if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         ItemType resultType = null;
@@ -497,7 +502,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
                 + rightQuery
                 + " )";
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    rightResult,
                     resultingQuery,
                     new SequenceType(resultType, resultingArity)
             );
@@ -508,7 +513,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
                 + rightQuery
                 + " )";
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    rightResult,
                     resultingQuery,
                     new SequenceType(resultType, resultingArity)
             );
