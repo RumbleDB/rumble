@@ -798,7 +798,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
-        letContext.setTempView(input);
+        letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
@@ -814,7 +814,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
                             ? newVariableName + ".sequence"
                             : newVariableName,
-                        nativeQuery.getTempView()
+                        nativeQuery.getView()
                     )
             );
         return dataFrame.sparkSession()
@@ -826,7 +826,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
                         ? newVariableName + ".sequence"
                         : newVariableName,
-                    nativeQuery.getTempView()
+                    nativeQuery.getView()
                 )
             );
     }
@@ -875,7 +875,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if (nativeClauseContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-        } else if (nativeClauseContext.getTempView() == null) {
+        } else if (nativeClauseContext.getView() == null) {
             return NativeClauseContext.NoNativeQuery;
         }
         nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
@@ -898,7 +898,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
             expressionContext.getResultingQuery(),
             variableName,
-            expressionContext.getTempView()
+            expressionContext.getView()
         );
         NativeClauseContext letClauseContext = new NativeClauseContext(nativeClauseContext);
         letClauseContext.setSchema(
@@ -907,7 +907,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
             )
         );
-        letClauseContext.setTempView(resultString);
+        letClauseContext.setView(resultString);
         letClauseContext.setResultingQuery(null);
         letClauseContext.setResultingType(null);
         return letClauseContext;

@@ -306,14 +306,14 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                     .map(entry -> String.format("`%s` %s", entry.getKey(), entry.getValue() ? "desc" : "asc"))
                     .collect(Collectors.joining(",")),
                 variableName,
-                childContext.getTempView()
+                childContext.getView()
             );
         } else {
             resultingQuery = String.format(
                 "select %s 1 as `%s` from (%s)",
                 selectSQL,
                 variableName,
-                childContext.getTempView()
+                childContext.getView()
             );
         }
         childContext.setSchema(
@@ -322,7 +322,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.IntegerType
             )
         );
-        childContext.setTempView(resultingQuery);
+        childContext.setView(resultingQuery);
         return new NativeClauseContext(childContext, null, null);
     }
 }

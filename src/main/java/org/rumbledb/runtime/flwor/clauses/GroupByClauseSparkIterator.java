@@ -662,8 +662,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             null,
             null
         );
-        String view = childContext.getTempView();
-        childContext.setTempView(null);
+        String view = childContext.getView();
+        childContext.setView(null);
         // get all variables, get expressions for grouping
         Map<Name, String> bindingColumns = new HashMap<>();
         List<String> groupingVars = new ArrayList<>();
@@ -820,7 +820,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             view,
             groupingVars.stream().map(name -> "`" + name + "`").collect(Collectors.joining(","))
         );
-        childContext.setTempView(groupingString);
+        childContext.setView(groupingString);
         return new NativeClauseContext(childContext, null, null);
     }
 }

@@ -354,7 +354,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     ) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
-        letContext.setTempView(input);
+        letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
@@ -365,7 +365,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 ? "explode(" + nativeQuery.getResultingQuery() + ")"
                 : nativeQuery.getResultingQuery(),
             SparkSessionManager.atomicJSONiqItemColumnName,
-            nativeQuery.getTempView()
+            nativeQuery.getView()
         );
         if (
             nativeQuery.getResultingType().getArity() == SequenceType.Arity.OneOrZero
@@ -397,12 +397,12 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         );
         // add an id column to get the initial dataframe back
         NativeClauseContext subQueryContext = nativeClauseContext.createChild();
-        subQueryContext.setTempView(
+        subQueryContext.setView(
             String.format(
                 "select %s monotonically_increasing_id() as `%s` from (%s)",
                 FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
                 rowIdField,
-                nativeClauseContext.getTempView()
+                nativeClauseContext.getView()
             )
         );
         // update schema
@@ -434,7 +434,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
                 expressionContext.getResultingQuery(),
                 resultColumnName,
-                expressionContext.getTempView()
+                expressionContext.getView()
             );
         } else {
             String condition = childContext.getConditionalColumns()
@@ -456,7 +456,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 condition,
                 expressionContext.getResultingQuery(),
                 resultColumnName,
-                expressionContext.getTempView()
+                expressionContext.getView()
             );
         }
         SequenceType resultType;
@@ -555,7 +555,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
             )
         );
-        nativeClauseContext.setTempView(resultingQuery);
+        nativeClauseContext.setView(resultingQuery);
         resultColumnName = "`" + resultColumnName + "`";
         return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);
     }

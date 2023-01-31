@@ -29,7 +29,7 @@ public class NativeClauseContext {
 
     private List<String> conditionalColumns; // used in where clauses
 
-    private String tempView;
+    private String view;
 
     private int monotonicallyIncreasingId;
 
@@ -87,7 +87,7 @@ public class NativeClauseContext {
         this.resultingQuery = newResultingQuery;
         this.lateralViewPart = sibling.lateralViewPart;
         this.resultingType = resultingType;
-        this.tempView = sibling.tempView;
+        this.view = sibling.view;
         this.conditionalColumns = sibling.conditionalColumns;
         this.monotonicallyIncreasingId = sibling.monotonicallyIncreasingId;
         this.parent = sibling.parent;
@@ -103,7 +103,7 @@ public class NativeClauseContext {
         NativeClauseContext result = new NativeClauseContext(FLWOR_CLAUSES.RETURN, schema, this.context);
         result.conditionalColumns = new ArrayList<>();
         result.parent = this;
-        result.tempView = this.tempView;
+        result.view = this.view;
         result.positionalVariableNames = new ArrayList<>();
         result.variables = new HashMap<>();
         return result;
@@ -150,12 +150,12 @@ public class NativeClauseContext {
     }
 
 
-    public String getTempView() {
-        return this.tempView;
+    public String getView() {
+        return this.view;
     }
 
-    public void setTempView(String tempView) {
-        this.tempView = tempView;
+    public void setView(String view) {
+        this.view = view;
     }
 
     public void addConditionalColumn(String name) {

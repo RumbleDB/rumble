@@ -426,7 +426,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 dataFrame.getDataFrame().schema(),
                 context
         );
-        letContext.setTempView(input);
+        letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
@@ -444,7 +444,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 "Rumble was able to optimize a where clause to a native SQL query: "
                     + String.format(
                         "select * from (%s) where %s",
-                        nativeQuery.getTempView(),
+                        nativeQuery.getView(),
                         nativeQuery.getResultingQuery()
                     )
             );
@@ -454,7 +454,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     .sql(
                         String.format(
                             "select * from (%s) where %s",
-                            nativeQuery.getTempView(),
+                            nativeQuery.getView(),
                             nativeQuery.getResultingQuery()
                         )
                     )
@@ -523,7 +523,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             "select *, %s as `%s` from (%s)",
             expressionContext.getResultingQuery(),
             conditionalColumnName,
-            expressionContext.getTempView()
+            expressionContext.getView()
         );
         if (nativeClauseContext.getPositionalVariableName() != null) {
             resultString = String.format(
@@ -540,7 +540,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             )
         );
         childContext.addConditionalColumn(conditionalColumnName);
-        childContext.setTempView(resultString);
+        childContext.setView(resultString);
         return new NativeClauseContext(childContext, null, null);
     }
 }

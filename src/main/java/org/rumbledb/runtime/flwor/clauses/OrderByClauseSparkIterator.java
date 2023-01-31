@@ -689,14 +689,14 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             childContext.addSortingColumn(columnName, value);
             childContext.setSchema(((StructType) childContext.getSchema()).add(columnName, DataTypes.BinaryType));
         });
-        String view = orderContext.getTempView();
+        String view = orderContext.getView();
         String resultString = String.format(
             "select %s %s from (%s)",
             orderColumnString,
             FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
             view
         );
-        childContext.setTempView(resultString);
+        childContext.setView(resultString);
         return new NativeClauseContext(childContext, null, null);
     }
 }
