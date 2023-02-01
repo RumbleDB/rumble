@@ -813,6 +813,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
         childContext.clearConditionalColumns();
         childContext.clearSortingColumns();
+        childContext.setGrouped(true);
         childContext.setSchema(newSchema);
         String groupingString = String.format(
             "select %s from (%s) group by %s",

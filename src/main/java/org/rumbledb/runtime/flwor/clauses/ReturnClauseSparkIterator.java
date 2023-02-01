@@ -511,11 +511,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                     resultingQuery
                 );
                 resultingQuery = String.format(
-                    "select %s, first(`%s`) as `%s`, last(`%s`) as `%s.sequence` from (%s) group by `%s`",
+                    "select %s, last(`%s`) as `%s`, last(`%s`) as `%s.sequence` from (%s) group by `%s`",
                     allColumns.stream()
                         .map(
                             name -> String.format(
-                                "first(%s) as %s",
+                                "last(%s) as %s",
                                 name,
                                 name
                             )

@@ -41,6 +41,7 @@ public class NativeClauseContext {
 
     private Map<Name, Name> variables;
     private String rowIdField;
+    private boolean grouped;
 
 
     private NativeClauseContext() {
@@ -61,6 +62,7 @@ public class NativeClauseContext {
         this.sortingColumns = new HashMap<>();
         this.variables = new HashMap<>();
         this.rowIdField = null;
+        this.grouped = false;
     }
 
     public NativeClauseContext(NativeClauseContext sibling) {
@@ -78,6 +80,7 @@ public class NativeClauseContext {
         this.sortingColumns = sibling.sortingColumns;
         this.variables = sibling.variables;
         this.rowIdField = sibling.rowIdField;
+        this.grouped = sibling.grouped;
     }
 
     public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
@@ -96,6 +99,7 @@ public class NativeClauseContext {
         this.sortingColumns = sibling.sortingColumns;
         this.variables = sibling.variables;
         this.rowIdField = sibling.rowIdField;
+        this.grouped = sibling.grouped;
     }
 
     public NativeClauseContext createChild() {
@@ -244,5 +248,13 @@ public class NativeClauseContext {
 
     public void clearSortingColumns() {
         this.sortingColumns.clear();
+    }
+
+    public void setGrouped(boolean grouped) {
+        this.grouped = grouped;
+    }
+
+    public boolean isGrouped() {
+        return this.grouped;
     }
 }

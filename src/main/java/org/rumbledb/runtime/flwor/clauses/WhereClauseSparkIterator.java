@@ -525,11 +525,11 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             conditionalColumnName,
             expressionContext.getView()
         );
-        if (nativeClauseContext.getPositionalVariableName() != null) {
+        if (nativeClauseContext.getPositionalVariableName() != null && !childContext.isGrouped()) {
             resultString = String.format(
-                "%s where (%s) or (`%s` = 1)",
+                "select * from (%s) where `%s` or (`%s` = 1)",
                 resultString,
-                expressionContext.getResultingQuery(),
+                conditionalColumnName,
                 nativeClauseContext.getPositionalVariableName().getLocalName()
             );
         }
