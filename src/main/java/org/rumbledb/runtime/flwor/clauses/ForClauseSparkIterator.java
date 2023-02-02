@@ -1402,8 +1402,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.allowingEmpty) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String tempView = nativeClauseContext.getView();
-        if (tempView != null) {
+        if (nativeClauseContext.getView() != null) {
             // if child not null -> evaluate child query
             if (this.child != null) {
                 NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
@@ -1411,7 +1410,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     return NativeClauseContext.NoNativeQuery;
                 }
                 nativeClauseContext = childContext;
-                tempView = nativeClauseContext.getView();
             }
             nativeClauseContext.setClauseType(FLWOR_CLAUSES.FOR);
             NativeClauseContext selectionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
@@ -1463,7 +1461,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     arrIndex,
                     selectionContext.getResultingQuery(),
                     nullFilterColumn,
-                    tempView,
+                    selectionContext.getView(),
                     lateralViewString
                 );
 
@@ -1557,7 +1555,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     selectionContext.getResultingQuery(),
                     variableName,
                     positionalVariableName,
-                    tempView
+                    selectionContext.getView()
                 );
                 NativeClauseContext letClauseContext = new NativeClauseContext(selectionContext);
                 letClauseContext.setSchema(
