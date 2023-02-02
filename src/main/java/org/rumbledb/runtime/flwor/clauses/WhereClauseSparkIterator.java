@@ -420,10 +420,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
+        StructType inputSchema = dataFrame.getDataFrame().schema();
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
         String input = FlworDataFrameUtils.createTempView(dataFrame.getDataFrame());
         NativeClauseContext letContext = new NativeClauseContext(
                 FLWOR_CLAUSES.WHERE,
-                dataFrame.getDataFrame().schema(),
+                inputSchema,
                 context
         );
         letContext.setView(input);
@@ -443,7 +445,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .info(
                 "Rumble was able to optimize a where clause to a native SQL query: "
                     + String.format(
-                        "select * from (%s) where %s",
+                        "select %s from (%s) where %s",
+                        FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                         nativeQuery.getView(),
                         nativeQuery.getResultingQuery()
                     )
@@ -453,7 +456,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "select * from (%s) where %s",
+                            "select %s from (%s) where %s",
+                            FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                             nativeQuery.getView(),
                             nativeQuery.getResultingQuery()
                         )
