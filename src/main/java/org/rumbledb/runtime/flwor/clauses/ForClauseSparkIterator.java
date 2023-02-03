@@ -850,7 +850,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         if (!allowingEmpty) {
             FlworDataFrame result = new FlworDataFrame(dfWithIndex);
-            if (sequenceType != null) {
+            if (sequenceType != null && outputDependencies.containsKey(variableName)) {
                 result.setVariableType(variableName, sequenceType);
             }
             return result;
@@ -1147,6 +1147,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 // if allowing empty we do not deal with this
                 if (allowingEmpty) {
                     return null;
+                }
+                // if the resulting query is a sequence, use explode
+                if (SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())) {
+                    return new FlworDataFrame(
+                            dataFrame.sparkSession()
+                                .sql(
+                                    String.format(
+                                        "select %s explodedsequence.col as `%s`, explodedsequence.pos + 1 as `%s` from %s lateral view posexplode(%s) explodedsequence",
+                                        selectSQL,
+                                        newVariableName,
+                                        positionalVariableName,
+                                        viewName,
+                                        nativeQuery.getResultingQuery()
+                                    )
+                                )
+                    );
                 }
                 // no array unboxing in the operation
                 // therefore position is for sure 1
