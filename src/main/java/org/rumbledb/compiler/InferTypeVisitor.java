@@ -1852,18 +1852,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         basicChecks(inferredType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (inferredType.isEmptySequence()) {
             if (!expression.isAllowEmpty()) {
-                if (
-                    !expression.getVariableName().equals(Name.TEMP_VAR1)
-                        && !expression.getVariableName().equals(Name.TEMP_VAR2)
-                ) {
-                    // for sure we will not have any tuple to process and return the empty sequence
-                    throwStaticTypeException(
-                        "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata()
-                    );
-                }
-                inferredType = new SequenceType(BuiltinTypesCatalogue.atomicItem);
+                // for sure we will not have any tuple to process and return the empty sequence
+                throwStaticTypeException(
+                    "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    expression.getMetadata()
+                );
             }
         } else {
             // we take the single arity version of the inferred type or optional arity if we allow empty and the

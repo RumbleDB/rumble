@@ -1,8 +1,7 @@
 package org.rumbledb.compiler;
 
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -18,7 +17,10 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.*;
+import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
@@ -28,198 +30,22 @@ import org.rumbledb.types.SequenceType;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
-
-    private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
-        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
-            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
-                return declaration;
-            }
-        }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
-    }
-
-    private boolean isVariableReferenced(Node expression, Name name) {
-        if (expression instanceof VariableReferenceExpression) {
-            return ((VariableReferenceExpression) expression).getVariableName().equals(name);
-        }
-        if (expression instanceof Clause) {
-            if (
-                ((Clause) expression).getPreviousClause() != null
-                    && isVariableReferenced(((Clause) expression).getPreviousClause(), name)
-            ) {
-                return true;
-            }
-        }
-        for (Node child : expression.getChildren()) {
-            if (isVariableReferenced(child, name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isVariableReferenced(List<Expression> expressions, Name name, int index) {
-        for (int i = 0; i < index; i++) {
-            if (isVariableReferenced(expressions.get(i), name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean allArgumentsMatch(FunctionCallExpression expression, List<Name> paramNames) {
-        boolean allArgumentsMatch = true;
-        for (int i = 0; i < expression.getArguments().size(); i++) {
-            allArgumentsMatch = allArgumentsMatch
-                && expression.getArguments().get(i) instanceof VariableReferenceExpression
-                && paramNames.get(i)
-                    .equals(((VariableReferenceExpression) expression.getArguments().get(i)).getVariableName());
-        }
-        return allArgumentsMatch;
-    }
-
-    private Expression createTypePromotion(
-            Expression expression,
-            SequenceType paramType
-    ) {
-        // integer > decimal > double
-        if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
-            List<TypeswitchCase> cases = new ArrayList<>();
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("double?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("double?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("double?")),
-                        expression
-                )
-            );
-            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    expression,
-                    cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata()
-                            )
-                    ),
-                    expression.getMetadata()
-            );
-            typeSwitchExpression.setStaticSequenceType(paramType);
-            return typeSwitchExpression;
-        }
-        if (paramType.getItemType() == BuiltinTypesCatalogue.decimalItem) {
-            List<TypeswitchCase> cases = new ArrayList<>();
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("decimal?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                        expression
-                )
-            );
-            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    expression,
-                    cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata()
-                            )
-                    ),
-                    expression.getMetadata()
-            );
-            typeSwitchExpression.setStaticSequenceType(paramType);
-            return typeSwitchExpression;
-        }
-        // anyURI > string
-        if (paramType.getItemType() == BuiltinTypesCatalogue.stringItem) {
-            List<TypeswitchCase> cases = new ArrayList<>();
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("anyURI?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("string?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("string?")),
-                        expression
-                )
-            );
-            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    expression,
-                    cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata()
-                            )
-                    ),
-                    expression.getMetadata()
-            );
-            typeSwitchExpression.setStaticSequenceType(paramType);
-            return typeSwitchExpression;
-        }
-        return expression;
-    }
-
+public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
     @Override
     protected Node defaultAction(Node node, Node argument) {
         return node;
+    }
+
+    @Override
+    public Node visitProlog(Prolog expression, Node argument) {
+        List<Node> declarations = expression.getFunctionDeclarations()
+            .stream()
+            .map(expr -> visit(expr, argument))
+            .collect(Collectors.toList());
+        declarations.addAll(expression.getVariableDeclarations());
+        declarations.addAll(expression.getTypeDeclarations());
+        expression.setDeclarations(declarations);
+        return expression;
     }
 
     @Override
@@ -229,6 +55,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             children.add((Expression) visit(child, argument));
         }
         CommaExpression result = new CommaExpression(children, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
     }
@@ -246,7 +73,10 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             result = temp;
             clause = clause.getNextClause();
         }
-        return new FlworExpression((ReturnClause) result, expression.getMetadata());
+        Expression resultingExpression = new FlworExpression((ReturnClause) result, expression.getMetadata());
+        resultingExpression.setStaticContext(expression.getStaticContext());
+        resultingExpression.setStaticSequenceType(expression.getStaticSequenceType());
+        return resultingExpression;
     }
 
     public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
@@ -254,13 +84,15 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getVariableName(),
                 expression.getMetadata()
         );
+        result.setActualType(expression.getActualType());
+        result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
     }
 
     @Override
     public Node visitForClause(ForClause clause, Node argument) {
-        return new ForClause(
+        Clause result = new ForClause(
                 clause.getVariableName(),
                 clause.isAllowEmpty(),
                 clause.getActualSequenceType(),
@@ -268,16 +100,21 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(clause.getExpression(), argument),
                 clause.getMetadata()
         );
+        result.setStaticContext(clause.getStaticContext());
+        return result;
     }
 
     @Override
     public Node visitLetClause(LetClause clause, Node argument) {
-        return new LetClause(
+        LetClause result = new LetClause(
                 clause.getVariableName(),
                 clause.getActualSequenceType(),
                 (Expression) visit(clause.getExpression(), argument),
                 clause.getMetadata()
         );
+        result.setStaticType(clause.getStaticType());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
     }
 
     @Override
@@ -294,7 +131,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 )
             );
         }
-        return new GroupByClause(groupByVariableDeclarations, clause.getMetadata());
+        Clause result = new GroupByClause(groupByVariableDeclarations, clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
     }
 
     @Override
@@ -311,25 +150,36 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             );
 
         }
-        return new OrderByClause(groupByVariableDeclarations, clause.isStable(), clause.getMetadata());
+        Clause result = new OrderByClause(groupByVariableDeclarations, clause.isStable(), clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
     }
 
     @Override
     public Node visitCountClause(CountClause expression, Node argument) {
-        return new CountClause(
+        Clause result = new CountClause(
                 (VariableReferenceExpression) visit(expression.getCountVariable(), argument),
                 expression.getMetadata()
         );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
 
     @Override
     public Node visitWhereClause(WhereClause clause, Node argument) {
-        return new WhereClause((Expression) visit(clause.getWhereExpression(), argument), clause.getMetadata());
+        Clause result = new WhereClause(
+                (Expression) visit(clause.getWhereExpression(), argument),
+                clause.getMetadata()
+        );
+        result.setStaticContext(clause.getStaticContext());
+        return result;
     }
 
     @Override
     public Node visitReturnClause(ReturnClause clause, Node argument) {
-        return new ReturnClause((Expression) visit(clause.getReturnExpr(), argument), clause.getMetadata());
+        Clause result = new ReturnClause((Expression) visit(clause.getReturnExpr(), argument), clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
     }
     // endregion
 
@@ -341,6 +191,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -352,6 +203,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -363,6 +215,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -374,6 +227,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -385,6 +239,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
     // endregion
@@ -398,16 +253,19 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
     @Override
     public Node visitObjectConstructor(ObjectConstructorExpression expression, Node argument) {
         if (expression.isMergedConstructor()) {
-            return new ObjectConstructorExpression(
+            Expression result = new ObjectConstructorExpression(
                     (Expression) visit(expression.getChildren().get(0), argument),
                     expression.getMetadata()
             );
+            result.setStaticContext(expression.getStaticContext());
+            return result;
         } else {
             List<Expression> keys = expression.getKeys()
                 .stream()
@@ -417,127 +275,34 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 .stream()
                 .map(key -> (Expression) visit(key, argument))
                 .collect(Collectors.toList());
-            return new ObjectConstructorExpression(keys, values, expression.getMetadata());
+            Expression result = new ObjectConstructorExpression(keys, values, expression.getMetadata());
+            result.setStaticContext(expression.getStaticContext());
+            result.setStaticSequenceType(expression.getStaticSequenceType());
+            return result;
         }
     }
 
     @Override
     public Node visitContextExpr(ContextItemExpression expression, Node argument) {
-        return new ContextItemExpression(expression.getMetadata());
+        Expression result = new ContextItemExpression(expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
-            (Prolog) argument,
-            expression.getFunctionIdentifier()
+        List<Expression> arguments = expression.getArguments()
+            .stream()
+            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+            .collect(Collectors.toList());
+        Expression result = new FunctionCallExpression(
+                expression.getFunctionName(),
+                arguments,
+                expression.getMetadata()
         );
-        if (expression.isPartialApplication() || targetFunction == null || targetFunction.isRecursive()) {
-            List<Expression> arguments = new ArrayList<>();
-            for (Expression arg : expression.getArguments()) {
-                arguments.add(arg == null ? null : (Expression) visit(arg, argument));
-            }
-            FunctionCallExpression result = new FunctionCallExpression(
-                    expression.getFunctionName(),
-                    arguments,
-                    expression.getMetadata()
-            );
-            result.setStaticSequenceType(expression.getStaticSequenceType());
-            return result;
-        }
-        InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
-        Expression body = (Expression) visit(inlineFunction.getBody(), argument);
-        List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
-        if (expression.getArguments().size() == 0 || allArgumentsMatch(expression, paramNames)) {
-            if (inlineFunction.getReturnType() != null) {
-                return new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata()
-                );
-            }
-            return body;
-        }
-        body.setStaticSequenceType(inlineFunction.getReturnType());
-        ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
-        Clause expressionClauses = null;
-        Clause assignmentClauses = null;
-        for (int i = 0; i < expression.getArguments().size(); i++) {
-            Name paramName = paramNames.get(i);
-            SequenceType paramType = inlineFunction.getParams().get(paramName);
-            Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
-            // only use assignment clause when the variables have different names
-            if (
-                argumentExpression instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) argumentExpression).getVariableName().equals(paramName)
-            ) {
-                continue;
-            }
-
-            // if there is a name collision, use a temporary variable
-            if (isVariableReferenced(expression.getArguments(), paramName, i)) {
-                Name columnName = new Name(
-                        "",
-                        "",
-                        String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
-                );
-                Clause expressionClause = new LetClause(
-                        columnName,
-                        null,
-                        argumentExpression,
-                        expression.getMetadata()
-                );
-                Expression assignmentExpression = createTypePromotion(
-                    new VariableReferenceExpression(columnName, expression.getMetadata()),
-                    paramType
-                );
-                Clause assignmentClause = new LetClause(
-                        paramName,
-                        null,
-                        assignmentExpression,
-                        expression.getMetadata()
-                );
-                if (assignmentClauses != null) {
-                    assignmentClause.chainWith(assignmentClauses);
-                }
-                assignmentClauses = assignmentClause;
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
-            } else {
-                Expression assignmentExpression = createTypePromotion(
-                    argumentExpression,
-                    paramType
-                );
-                Clause expressionClause = new LetClause(
-                        paramName,
-                        null,
-                        assignmentExpression,
-                        expression.getMetadata()
-                );
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
-            }
-        }
-        if (assignmentClauses != null) {
-            assignmentClauses.getLastClause().chainWith(returnClause);
-            expressionClauses.getLastClause().chainWith(assignmentClauses);
-        } else {
-            expressionClauses.getLastClause().chainWith(returnClause);
-        }
-        FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
-        if (inlineFunction.getReturnType() != null) {
-            return new TreatExpression(
-                    result,
-                    inlineFunction.getReturnType(),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata()
-            );
-        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
     }
 
@@ -551,37 +316,59 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
     public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
-        return new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
+        Expression result = new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
     // endregion
 
     // region literal
     public Node visitInteger(IntegerLiteralExpression expression, Node argument) {
-        return new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
+        Expression result = new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     public Node visitString(StringLiteralExpression expression, Node argument) {
-        return new StringLiteralExpression(expression.getValue(), expression.getMetadata());
+        Expression result = new StringLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     public Node visitDouble(DoubleLiteralExpression expression, Node argument) {
-        return new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
+        Expression result = new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     public Node visitDecimal(DecimalLiteralExpression expression, Node argument) {
-        return new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
+        Expression result = new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     public Node visitNull(NullLiteralExpression expression, Node argument) {
-        return new NullLiteralExpression(expression.getMetadata());
+        Expression result = new NullLiteralExpression(expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     public Node visitBoolean(BooleanLiteralExpression expression, Node argument) {
-        return new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
+        Expression result = new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
     // endregion
 
@@ -595,6 +382,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -607,6 +395,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -618,6 +407,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -629,6 +419,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -640,6 +431,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -650,6 +442,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -661,6 +454,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -672,6 +466,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -683,18 +478,170 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
     @Override
     public Node visitComparisonExpr(ComparisonExpression expression, Node argument) {
-        ComparisonExpression result = new ComparisonExpression(
+        Expression leftChild = (Expression) visit(expression.getChildren().get(0), argument);
+        Expression rightChild = (Expression) visit(expression.getChildren().get(1), argument);
+
+        // if it's already value comparison, return it
+        if (expression.getComparisonOperator().isValueComparison()) {
+            ComparisonExpression result = new ComparisonExpression(
+                    leftChild,
+                    rightChild,
+                    expression.getComparisonOperator(),
+                    expression.getMetadata()
+            );
+            result.setStaticSequenceType(expression.getStaticSequenceType());
+            result.setStaticContext(expression.getStaticContext());
+            return result;
+        }
+        ComparisonExpression.ComparisonOperator comparisonOperator = ComparisonExpression.ComparisonOperator
+            .getValueComparisonFromComparison(
+                expression.getComparisonOperator()
+            );
+        // if left and right have arity one, use value comparison
+        if (
+            leftChild.getStaticSequenceType().getArity() == SequenceType.Arity.One
+                && rightChild.getStaticSequenceType().getArity() == SequenceType.Arity.One
+        ) {
+            ComparisonExpression result = new ComparisonExpression(
+                    leftChild,
+                    rightChild,
+                    comparisonOperator,
+                    expression.getMetadata()
+            );
+            result.setStaticSequenceType(expression.getStaticSequenceType());
+            result.setStaticContext(expression.getStaticContext());
+            return result;
+        }
+        // if left or right are a sequence, use FLWOR
+        if (
+            SequenceType.Arity.OneOrMore.isSubtypeOf(leftChild.getStaticSequenceType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(rightChild.getStaticSequenceType().getArity())
+        ) {
+            Name variableNameLeft = Name.TEMP_VAR1;
+            Name variableNameRight = Name.TEMP_VAR2;
+
+            StaticContext leftContext = new StaticContext(expression.getStaticContext());
+            leftContext.addVariable(variableNameLeft, leftChild.getStaticSequenceType(), expression.getMetadata());
+            Clause firstClause = new ForClause(
+                    variableNameLeft,
+                    false,
+                    leftChild.getStaticSequenceType(),
+                    null,
+                    leftChild,
+                    expression.getMetadata()
+            );
+            firstClause.setStaticContext(leftContext);
+            StaticContext rightContext = new StaticContext(leftContext);
+            rightContext.addVariable(variableNameRight, rightChild.getStaticSequenceType(), expression.getMetadata());
+            Clause secondClause = new ForClause(
+                    variableNameRight,
+                    false,
+                    rightChild.getStaticSequenceType(),
+                    null,
+                    rightChild,
+                    expression.getMetadata()
+            );
+            secondClause.setStaticContext(rightContext);
+            firstClause.chainWith(secondClause);
+            Expression leftReference = new VariableReferenceExpression(variableNameLeft, expression.getMetadata());
+            leftReference.setStaticSequenceType(
+                new SequenceType(leftChild.getStaticSequenceType().getItemType(), SequenceType.Arity.One)
+            );
+            leftReference.setStaticContext(rightContext);
+            Expression rightReference = new VariableReferenceExpression(variableNameRight, expression.getMetadata());
+            rightReference.setStaticSequenceType(
+                new SequenceType(rightChild.getStaticSequenceType().getItemType(), SequenceType.Arity.One)
+            );
+            rightReference.setStaticContext(rightContext);
+            Expression valueComparison = new ComparisonExpression(
+                    leftReference,
+                    rightReference,
+                    comparisonOperator,
+                    expression.getMetadata()
+            );
+            valueComparison.setStaticContext(rightContext);
+            valueComparison.setStaticSequenceType(
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+            );
+            WhereClause whereClause = new WhereClause(valueComparison, expression.getMetadata());
+            whereClause.setStaticContext(rightContext);
+            secondClause.chainWith(whereClause);
+            Expression stringLiteralExpression = new StringLiteralExpression("", null);
+            stringLiteralExpression.setStaticContext(rightContext);
+            stringLiteralExpression.setStaticSequenceType(
+                new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One)
+            );
+            ReturnClause returnClause = new ReturnClause(
+                    stringLiteralExpression,
+                    expression.getMetadata()
+            );
+            returnClause.setStaticContext(rightContext);
+            whereClause.chainWith(returnClause);
+            Expression flworExpression = new FlworExpression(returnClause, expression.getMetadata());
+            flworExpression.setStaticSequenceType(
+                new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.ZeroOrMore)
+            );
+            flworExpression.setStaticContext(expression.getStaticContext());
+            FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                    Name.createVariableInDefaultFunctionNamespace("exists"),
+                    Collections.singletonList(flworExpression),
+                    expression.getMetadata()
+            );
+            functionCallExpression.setStaticSequenceType(
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+            );
+            functionCallExpression.setStaticContext(expression.getStaticContext());
+            return functionCallExpression;
+        }
+        // otherwise, use ([left op right, false][[1]])
+        ComparisonExpression comparisonExpression = new ComparisonExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
-                expression.getComparisonOperator(),
+                comparisonOperator,
                 expression.getMetadata()
         );
-        result.setStaticSequenceType(expression.getStaticSequenceType());
+        comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
+        comparisonExpression.setStaticContext(expression.getStaticContext());
+        BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
+        booleanExpression.setStaticSequenceType(
+            new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+        );
+        booleanExpression.setStaticContext(expression.getStaticContext());
+
+        List<Expression> commaExpressions = new ArrayList<>();
+        commaExpressions.add(comparisonExpression);
+        commaExpressions.add(booleanExpression);
+        CommaExpression commaExpression = new CommaExpression(commaExpressions, expression.getMetadata());
+        commaExpression.setStaticSequenceType(
+            new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.OneOrMore)
+        );
+        commaExpression.setStaticContext(expression.getStaticContext());
+
+        ArrayConstructorExpression arrayConstructorExpression = new ArrayConstructorExpression(
+                commaExpression,
+                expression.getMetadata()
+        );
+        arrayConstructorExpression.setStaticContext(expression.getStaticContext());
+        arrayConstructorExpression.setStaticSequenceType(
+            new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
+        );
+
+        Expression integerLiteralExpression = new IntegerLiteralExpression("1", expression.getMetadata());
+        integerLiteralExpression.setStaticSequenceType(SequenceType.INTEGER);
+        integerLiteralExpression.setStaticContext(expression.getStaticContext());
+        ArrayLookupExpression result = new ArrayLookupExpression(
+                arrayConstructorExpression,
+                integerLiteralExpression,
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -706,6 +653,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -717,6 +665,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -729,6 +678,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -740,6 +690,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -751,6 +702,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
     // endregion
@@ -765,6 +717,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -785,6 +738,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -827,6 +781,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
 
@@ -845,6 +800,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
         return result;
     }
     // endregion
@@ -875,10 +831,13 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitValidateTypeExpression(ValidateTypeExpression expression, Node argument) {
-        return new ValidateTypeExpression(
+        Expression result = new ValidateTypeExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
                 expression.getSequenceType(),
                 expression.getMetadata()
         );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 }

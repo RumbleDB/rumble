@@ -28,6 +28,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
+import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.XQueryLexer;
@@ -71,6 +72,17 @@ public class VisitorHelpers {
         MainModule result = new MainModule(
                 module.getProlog(),
                 (Expression) functionInliningVisitor.visit(module.getExpression(), module.getProlog()),
+                module.getMetadata()
+        );
+        result.setStaticContext(module.getStaticContext());
+        return result;
+    }
+
+    private static MainModule setValueComparisons(MainModule module) {
+        ComparisonVisitor comparisonVisitor = new ComparisonVisitor();
+        MainModule result = new MainModule(
+                (Prolog) comparisonVisitor.visit(module.getProlog(), module.getProlog()),
+                (Expression) comparisonVisitor.visit(module.getExpression(), module.getProlog()),
                 module.getMetadata()
         );
         result.setStaticContext(module.getStaticContext());
@@ -158,6 +170,7 @@ public class VisitorHelpers {
             mainModule = inlineFunctions(mainModule);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = setValueComparisons(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -198,6 +211,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = setValueComparisons(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
