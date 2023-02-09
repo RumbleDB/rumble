@@ -623,20 +623,11 @@ public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
         );
         commaExpression.setStaticContext(expression.getStaticContext());
 
-        ArrayConstructorExpression arrayConstructorExpression = new ArrayConstructorExpression(
-                commaExpression,
-                expression.getMetadata()
-        );
-        arrayConstructorExpression.setStaticContext(expression.getStaticContext());
-        arrayConstructorExpression.setStaticSequenceType(
-            new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
-        );
-
         Expression integerLiteralExpression = new IntegerLiteralExpression("1", expression.getMetadata());
         integerLiteralExpression.setStaticSequenceType(SequenceType.INTEGER);
         integerLiteralExpression.setStaticContext(expression.getStaticContext());
-        ArrayLookupExpression result = new ArrayLookupExpression(
-                arrayConstructorExpression,
+        FilterExpression result = new FilterExpression(
+                commaExpression,
                 integerLiteralExpression,
                 expression.getMetadata()
         );
