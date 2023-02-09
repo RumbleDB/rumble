@@ -31,6 +31,12 @@ import java.util.stream.Collectors;
 
 public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
+    private final FunctionDependenciesVisitor functionDependenciesVisitor;
+
+    public FunctionInliningVisitor() {
+        this.functionDependenciesVisitor = new FunctionDependenciesVisitor();
+    }
+
     private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
@@ -220,6 +226,18 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
     @Override
     protected Node defaultAction(Node node, Node argument) {
         return node;
+    }
+
+    @Override
+    public Node visitMainModule(MainModule mainModule, Node argument) {
+        this.functionDependenciesVisitor.visit(mainModule, null);
+        MainModule result = new MainModule(
+                mainModule.getProlog(),
+                (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),
+                mainModule.getMetadata()
+        );
+        result.setStaticContext(mainModule.getStaticContext());
+        return result;
     }
 
     @Override

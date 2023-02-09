@@ -17,10 +17,7 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.module.TypeDeclaration;
-import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
@@ -34,6 +31,17 @@ public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
     @Override
     protected Node defaultAction(Node node, Node argument) {
         return node;
+    }
+
+    @Override
+    public Node visitMainModule(MainModule module, Node argument) {
+        MainModule result = new MainModule(
+                (Prolog) visit(module.getProlog(), module.getProlog()),
+                (Expression) visit(module.getExpression(), module.getProlog()),
+                module.getMetadata()
+        );
+        result.setStaticContext(module.getStaticContext());
+        return result;
     }
 
     @Override

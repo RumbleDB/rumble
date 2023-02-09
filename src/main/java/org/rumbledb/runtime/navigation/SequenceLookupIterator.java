@@ -71,7 +71,10 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE && this.iterator instanceof CommaExpressionIterator) {
+        if (
+            nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
+                && this.iterator instanceof CommaExpressionIterator
+        ) {
             CommaExpressionIterator childIterator = (CommaExpressionIterator) this.iterator;
             if (
                 childIterator.getChildren().size() == 2
