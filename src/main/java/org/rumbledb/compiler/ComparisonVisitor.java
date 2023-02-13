@@ -37,7 +37,7 @@ public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
     public Node visitMainModule(MainModule module, Node argument) {
         MainModule result = new MainModule(
                 (Prolog) visit(module.getProlog(), module.getProlog()),
-                (Expression) visit(module.getExpression(), module.getProlog()),
+                (Expression) visit(module.getExpression(), argument),
                 module.getMetadata()
         );
         result.setStaticContext(module.getStaticContext());
