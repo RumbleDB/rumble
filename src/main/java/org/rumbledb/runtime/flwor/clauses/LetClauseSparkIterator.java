@@ -878,6 +878,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         } else if (nativeClauseContext.getView() == null) {
             return NativeClauseContext.NoNativeQuery;
         }
+        if (!this.outputTupleProjection.containsKey(this.variableName)) {
+            return nativeClauseContext;
+        }
         nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
         NativeClauseContext expressionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
