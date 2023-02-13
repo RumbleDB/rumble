@@ -46,6 +46,7 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
@@ -348,9 +349,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (!isBooleanOnlyFilter()) {
-            return NativeClauseContext.NoNativeQuery;
-        }
         if (!(this.iterator instanceof ArrayUnboxingIterator)) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -370,8 +368,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
         FLWOR_CLAUSES previousType = arrayReferenceQuery.getClauseType();
         arrayReferenceQuery.setClauseType(FLWOR_CLAUSES.FILTER);
         NativeClauseContext filterQuery = this.filter.generateNativeQuery(arrayReferenceQuery);
+        if (
+            filterQuery == NativeClauseContext.NoNativeQuery
+                || filterQuery.getResultingType().getItemType() != BuiltinTypesCatalogue.booleanItem
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         arrayReferenceQuery.setClauseType(previousType);
-
         if (
             filterQuery != NativeClauseContext.NoNativeQuery
         ) {
