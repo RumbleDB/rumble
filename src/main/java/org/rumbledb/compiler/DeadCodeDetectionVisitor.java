@@ -45,7 +45,6 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
         if (clause.getPreviousClause() != null && !argument.containsKey(clause.getVariableName())) {
             if (!argument.containsKey(LOCK_OBJECT)) {
                 clause.setReferenced(false);
-                System.out.println("unused variable " + clause.getVariableName());
             }
             return argument;
         }
@@ -160,7 +159,6 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
             if (!argument.isEmpty() && !argument.containsKey(name)) {
                 if (!argument.containsKey(LOCK_OBJECT)) {
                     expression.setReferenced(i, false);
-                    System.out.println("key " + key.getValue() + " is never used!");
                 }
             } else {
                 result.add(visit(expression.getValues().get(i), argument.getReferenceMap(name)));
@@ -185,7 +183,11 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
         if (BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier()) != null) {
             ReferenceMap result = new ReferenceMap();
             argument.add(LOCK_OBJECT, new ReferenceMap());
-            expression.getArguments().stream().filter(Objects::nonNull).map(arg -> visit(arg, argument)).forEach(result::add);
+            expression.getArguments()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(arg -> visit(arg, argument))
+                .forEach(result::add);
             argument.drop(LOCK_OBJECT);
             return result;
         }
@@ -242,26 +244,6 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
 
         public boolean isEmpty() {
             return this.map.isEmpty();
-        }
-
-        // FIXME convenience methods for debugging
-        public void toString(int offset) {
-            this.map.forEach((key, value) -> {
-                System.out.println(repeat(offset) + key.getLocalName());
-                if (value.map.isEmpty()) {
-                    System.out.println(repeat(offset + 2) + "(none)");
-                } else {
-                    value.toString(offset + 4);
-                }
-            });
-        }
-
-        private String repeat(int num) {
-            StringBuilder result = new StringBuilder();
-            while (num-- > 0) {
-                result.append(" ");
-            }
-            return result.toString();
         }
     }
 }

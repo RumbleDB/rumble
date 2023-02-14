@@ -64,10 +64,9 @@ public class VisitorHelpers {
     }
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module) {
-        List<AbstractNodeVisitor<?>> optimizers = new ArrayList<>();
+        List<TypeIndependentNodeVisitor> optimizers = new ArrayList<>();
         optimizers.add(new FunctionInliningVisitor());
         optimizers.add(new DeadCodeVisitor());
-
         MainModule result = module;
         for (AbstractNodeVisitor<?> optimizer : optimizers) {
             result = (MainModule) optimizer.visit(module, null);
@@ -76,7 +75,7 @@ public class VisitorHelpers {
     }
 
     private static MainModule applyTypeDependentOptimizations(MainModule module) {
-        List<AbstractNodeVisitor<?>> optimizers = Collections.singletonList(new ComparisonVisitor());
+        List<AbstractNodeVisitor<Node>> optimizers = Collections.singletonList(new ComparisonVisitor());
         MainModule result = module;
         for (AbstractNodeVisitor<?> optimizer : optimizers) {
             result = (MainModule) optimizer.visit(module, null);
