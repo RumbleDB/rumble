@@ -262,8 +262,6 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         return result;
     }
 
-
-
     @Override
     public Node visitInlineFunctionExpr(InlineFunctionExpression expression, Node argument) {
         InlineFunctionExpression result = new InlineFunctionExpression(

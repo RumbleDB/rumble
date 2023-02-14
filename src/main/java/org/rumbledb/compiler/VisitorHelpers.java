@@ -69,7 +69,7 @@ public class VisitorHelpers {
         optimizers.add(new DeadCodeVisitor());
         MainModule result = module;
         for (AbstractNodeVisitor<?> optimizer : optimizers) {
-            result = (MainModule) optimizer.visit(module, null);
+            result = (MainModule) optimizer.visit(result, null);
         }
         return result;
     }
@@ -78,7 +78,7 @@ public class VisitorHelpers {
         List<AbstractNodeVisitor<Node>> optimizers = Collections.singletonList(new ComparisonVisitor());
         MainModule result = module;
         for (AbstractNodeVisitor<?> optimizer : optimizers) {
-            result = (MainModule) optimizer.visit(module, null);
+            result = (MainModule) optimizer.visit(result, null);
         }
         return result;
     }
