@@ -26,7 +26,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ArrayItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,5 +60,37 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item item = ItemFactory.getInstance().createArrayItem(result);
         return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (!this.children.isEmpty()) {
+            NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+            if (childQuery == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            String resultingQuery;
+            if (this.children.get(0) instanceof CommaExpressionIterator) {
+                resultingQuery = childQuery.getResultingQuery();
+            } else {
+                resultingQuery = "array( "
+                    + childQuery.getResultingQuery()
+                    + " )";
+            }
+            return new NativeClauseContext(
+                    childQuery,
+                    resultingQuery,
+                    new SequenceType(
+                            ArrayItemType.arrayOf(childQuery.getResultingType().getItemType()),
+                            SequenceType.Arity.One
+                    )
+            );
+        } else {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "array()",
+                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
+            );
+        }
     }
 }

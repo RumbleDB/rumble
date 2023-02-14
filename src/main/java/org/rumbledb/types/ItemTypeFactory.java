@@ -605,8 +605,6 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.stringItem;
         } else if (dt instanceof CharType) {
             return BuiltinTypesCatalogue.stringItem;
-        } else if (dt.equals(DataTypes.StringType)) {
-            return BuiltinTypesCatalogue.stringItem;
         } else if (dt.equals(DataTypes.BooleanType)) {
             return BuiltinTypesCatalogue.booleanItem;
         } else if (dt.equals(DataTypes.DoubleType)) {

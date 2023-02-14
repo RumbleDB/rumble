@@ -27,6 +27,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -47,4 +50,12 @@ public class PiFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return ItemFactory.getInstance().createDoubleItem(Math.PI);
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "CAST (" + Math.PI + " AS DOUBLE)",
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One)
+        );
+    }
 }

@@ -24,8 +24,15 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
+import org.rumbledb.types.SequenceType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,4 +69,48 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (
+            nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
+                && this.iterator instanceof CommaExpressionIterator
+        ) {
+            CommaExpressionIterator childIterator = (CommaExpressionIterator) this.iterator;
+            if (
+                childIterator.getChildren().size() == 2
+                    && childIterator.getChildren().get(0) instanceof ComparisonIterator
+                    && childIterator.getChildren().get(1) instanceof BooleanRuntimeIterator
+                    && this.position == 1
+            ) {
+                NativeClauseContext childContext = childIterator.getChildren()
+                    .get(0)
+                    .generateNativeQuery(nativeClauseContext);
+                if (childContext == NativeClauseContext.NoNativeQuery) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                return new NativeClauseContext(
+                        childContext,
+                        childContext.getResultingQuery(),
+                        new SequenceType(childContext.getResultingType().getItemType(), SequenceType.Arity.One)
+                );
+            }
+        }
+        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
+            String resultString = String.format(
+                "%s[%d]",
+                childContext.getResultingQuery(),
+                (this.position - 1)
+            );
+            return new NativeClauseContext(
+                    childContext,
+                    resultString,
+                    new SequenceType(childContext.getResultingType().getItemType(), SequenceType.Arity.OneOrZero)
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

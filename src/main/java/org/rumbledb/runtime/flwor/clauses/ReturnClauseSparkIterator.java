@@ -24,6 +24,7 @@ import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -46,6 +47,7 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 
+import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -59,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
@@ -349,26 +352,211 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
+        letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        String queryString = String.format(
+            "select %s as `%s` from (%s)",
+            SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
+                ? "explode(" + nativeQuery.getResultingQuery() + ")"
+                : nativeQuery.getResultingQuery(),
+            SparkSessionManager.atomicJSONiqItemColumnName,
+            nativeQuery.getView()
+        );
+        if (
+            nativeQuery.getResultingType().getArity() == SequenceType.Arity.OneOrZero
+                || nativeQuery.getResultingType().getArity() == SequenceType.Arity.ZeroOrMore
+        ) {
+            queryString = String.format(
+                "select `%s` from (%s) where `%s` is not null",
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                queryString,
+                SparkSessionManager.atomicJSONiqItemColumnName
+            );
+        }
         LogManager.getLogger("ReturnClauseSparkIterator")
             .info(
-                "Rumble was able to optimize a return clause to a native SQL query."
+                "Rumble was able to optimize a return clause to a native SQL query: "
+                    + queryString
             );
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
-        Dataset<Row> result = dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s as `%s` from %s",
-                    nativeQuery.getResultingQuery(),
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    input
-                )
-            );
-        return result;
+        return dataFrame.sparkSession().sql(queryString);
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        String rowIdField = nativeClauseContext.addVariable().toString();
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) nativeClauseContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        // add an id column to get the initial dataframe back
+        NativeClauseContext subQueryContext = nativeClauseContext.createChild();
+        subQueryContext.setView(
+            String.format(
+                "select %s monotonically_increasing_id() as `%s` from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                rowIdField,
+                nativeClauseContext.getView()
+            )
+        );
+        // update schema
+        subQueryContext.setSchema(
+            ((StructType) subQueryContext.getSchema()).add(
+                rowIdField,
+                DataTypes.IntegerType
+            )
+        );
+        subQueryContext.setRowId(rowIdField);
+        // get child query
+        NativeClauseContext childContext = this.child.generateNativeQuery(subQueryContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        // get expression
+        childContext.setClauseType(FLWOR_CLAUSES.RETURN);
+        NativeClauseContext expressionContext = this.expression.generateNativeQuery(childContext);
+        if (expressionContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultColumnName = expressionContext.addVariable().toString();
+        String resultingQuery;
+        // if there are conditional columns, use "if(condition,then,else)"
+        if (childContext.getConditionalColumns().isEmpty()) {
+            resultingQuery = String.format(
+                "select %s%s (%s) as `%s` from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
+                expressionContext.getResultingQuery(),
+                resultColumnName,
+                expressionContext.getView()
+            );
+        } else {
+            String condition = childContext.getConditionalColumns()
+                .stream()
+                .map(name -> "`" + name + "`")
+                .collect(Collectors.joining(" and "));
+            resultingQuery = String.format(
+                "select %s%s%s (if(%s, %s, null)) as `%s` from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                childContext.isExplodedView() ? " `" + rowIdField + "`," : "",
+                childContext.isExplodedView() && childContext.getSortingColumns().size() > 0
+                    ? childContext.getSortingColumns()
+                        .keySet()
+                        .stream()
+                        .map(key -> "`" + key + "`")
+                        .collect(Collectors.joining(","))
+                        + ","
+                    : "",
+                condition,
+                expressionContext.getResultingQuery(),
+                resultColumnName,
+                expressionContext.getView()
+            );
+        }
+        SequenceType resultType;
+        if (childContext.isExplodedView()) {
+            if (childContext.getSortingColumns().size() == 0) {
+                // if the resulting expression is already a sequence type, then create one sequence from it
+                String collectingString = expressionContext.getResultingType()
+                    .getArity() == SequenceType.Arity.ZeroOrMore
+                        ? "flatten(collect_list(`" + resultColumnName + "`))"
+                        : "collect_list(`" + resultColumnName + "`)";
+                resultingQuery = String.format(
+                    "select %s, first(`%s`) as `%s`, %s as `%s.sequence` from (%s) group by `%s`",
+                    allColumns.stream()
+                        .map(
+                            name -> String.format(
+                                "first(%s) as %s",
+                                name,
+                                name
+                            )
+                        )
+                        .collect(Collectors.joining(",")),
+                    rowIdField,
+                    rowIdField,
+                    collectingString,
+                    resultColumnName,
+                    resultingQuery,
+                    rowIdField
+                );
+            } else {
+                String collectingString = expressionContext.getResultingType()
+                    .getArity() == SequenceType.Arity.ZeroOrMore
+                        ? "flatten(collect_list(`" + resultColumnName + "`))"
+                        : "collect_list(`" + resultColumnName + "`)";
+                // group by doesn't keep the order, because of this first partition by the row ID to collect the list,
+                // then do group by row ID
+                collectingString = String.format(
+                    "%s over (partition by `%s` order by %s) as `%s`",
+                    collectingString,
+                    rowIdField,
+                    childContext.getSortingColumns()
+                        .entrySet()
+                        .stream()
+                        .map(entry -> String.format("`%s` %s", entry.getKey(), entry.getValue() ? "desc" : "asc"))
+                        .collect(Collectors.joining(",")),
+                    resultColumnName
+                );
+                resultingQuery = String.format(
+                    "select %s %s, `%s` from (%s)",
+                    FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                    collectingString,
+                    rowIdField,
+                    resultingQuery
+                );
+                resultingQuery = String.format(
+                    "select %s, last(`%s`) as `%s`, last(`%s`) as `%s.sequence` from (%s) group by `%s`",
+                    allColumns.stream()
+                        .map(
+                            name -> String.format(
+                                "last(%s) as %s",
+                                name,
+                                name
+                            )
+                        )
+                        .collect(Collectors.joining(",")),
+                    rowIdField,
+                    rowIdField,
+                    resultColumnName,
+                    resultColumnName,
+                    resultingQuery,
+                    rowIdField
+                );
+            }
+            resultColumnName = resultColumnName + ".sequence";
+            resultingQuery = String.format(
+                "select %s, `%s` from (%s) order by `%s`",
+                allColumns.stream()
+                    .map(FlworDataFrameColumn::toString)
+                    .collect(Collectors.joining(",")),
+                resultColumnName,
+                resultingQuery,
+                rowIdField
+            );
+
+            resultType = new SequenceType(
+                    expressionContext.getResultingType().getItemType(),
+                    expressionContext.getResultingType().getArity() == SequenceType.Arity.One
+                        ? SequenceType.Arity.OneOrMore
+                        : SequenceType.Arity.ZeroOrMore
+            );
+        } else {
+            resultType = expressionContext.getResultingType();
+        }
+        nativeClauseContext.setSchema(
+            ((StructType) nativeClauseContext.getSchema()).add(
+                resultColumnName,
+                TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
+            )
+        );
+        nativeClauseContext.setView(resultingQuery);
+        resultColumnName = "`" + resultColumnName + "`";
+        return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);
+    }
 }

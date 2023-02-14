@@ -30,6 +30,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -63,22 +64,26 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext conditionResult = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        NativeClauseContext thenResult = this.children.get(1).generateNativeQuery(nativeClauseContext);
-        NativeClauseContext elseResult = this.children.get(2).generateNativeQuery(nativeClauseContext);
-        if (
-            conditionResult == NativeClauseContext.NoNativeQuery
-                || thenResult == NativeClauseContext.NoNativeQuery
-                || elseResult == NativeClauseContext.NoNativeQuery
-        ) {
+        if (conditionResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!conditionResult.getResultingType().equals(BuiltinTypesCatalogue.booleanItem)) {
+        NativeClauseContext thenResult = this.children.get(1)
+            .generateNativeQuery(new NativeClauseContext(conditionResult, null, null));
+        if (thenResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!thenResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        NativeClauseContext elseResult = this.children.get(2)
+            .generateNativeQuery(new NativeClauseContext(thenResult, null, null));
+        if (elseResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!elseResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!conditionResult.getResultingType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!thenResult.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!elseResult.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
@@ -89,6 +94,19 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             + ", "
             + elseResult.getResultingQuery()
             + " ) )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+        SequenceType.Arity resultingArity = (thenResult.getResultingType().getArity() == SequenceType.Arity.One
+            && elseResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        return new NativeClauseContext(
+                elseResult,
+                resultingQuery,
+                new SequenceType(
+                        thenResult.getResultingType()
+                            .getItemType()
+                            .findLeastCommonSuperTypeWith(elseResult.getResultingType().getItemType()),
+                        resultingArity
+                )
+        );
     }
 }

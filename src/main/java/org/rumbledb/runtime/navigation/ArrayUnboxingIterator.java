@@ -22,8 +22,6 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -37,7 +35,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.TypeMappings;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -137,14 +135,17 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            DataType schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType)) {
+            ItemType newContextType = newContext.getResultingType().getItemType();
+            if (!newContextType.isArrayItemType()) {
                 // let control to UDF when what we are unboxing is not an array
                 return NativeClauseContext.NoNativeQuery;
             }
-            ArrayType arraySchema = (ArrayType) schema;
-            newContext.setSchema(arraySchema.elementType());
-            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(arraySchema.elementType()));
+            newContext.setResultingType(
+                new SequenceType(
+                        newContextType.getArrayContentFacet(),
+                        SequenceType.Arity.ZeroOrMore
+                )
+            );
             List<String> lateralViewPart = newContext.getLateralViewPart();
             if (lateralViewPart.size() == 0) {
                 lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
@@ -158,6 +159,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             newContext.setResultingQuery(""); // dealt by for clause
         }
         return newContext;
+    }
+
+    public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
+        return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {

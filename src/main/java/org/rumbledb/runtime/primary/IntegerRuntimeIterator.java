@@ -28,6 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.types.SequenceType;
 
 public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -54,7 +55,7 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "" + this.item.getIntValue(),
-                BuiltinTypesCatalogue.integerItem
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
         );
     }
 }

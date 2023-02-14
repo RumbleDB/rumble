@@ -18,9 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.logics;
-
-import java.util.Collections;
+package org.rumbledb.runtime.functions.numerics.trigonometric;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -33,40 +31,52 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
+import java.util.List;
+
+public class CoshFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
 
-    public NotOperationIterator(
-            RuntimeIterator child,
+    public CoshFunctionIterator(
+            List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
-        this.child = child;
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        boolean effectiveBooleanValue = this.child.getEffectiveBooleanValue(dynamicContext);
-        return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
+        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (value == null) {
+            return null;
+        }
+        double dvalue = value.getDoubleValue();
+        if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        }
+        return ItemFactory.getInstance().createDoubleItem(Math.cosh(dvalue));
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childResult = this.child.generateNativeQuery(nativeClauseContext);
-        if (childResult == NativeClauseContext.NoNativeQuery) {
+        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childResult.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
+        String resultingQuery = "COSH( "
+            + childQuery.getResultingQuery()
+            + " )";
         return new NativeClauseContext(
-                nativeClauseContext,
+                childQuery,
                 resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.booleanItem, childResult.getResultingType().getArity())
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
         );
     }
+
+
 }

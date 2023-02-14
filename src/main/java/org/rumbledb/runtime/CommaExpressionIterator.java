@@ -28,9 +28,15 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CommaExpressionIterator extends HybridRuntimeIterator {
 
@@ -137,5 +143,88 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             return sparkContext.emptyRDD();
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        List<NativeClauseContext> childClauses = new ArrayList<>();
+        for (RuntimeIterator iterator : this.children) {
+            NativeClauseContext childContext = iterator.generateNativeQuery(nativeClauseContext);
+            if (childContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            childClauses.add(childContext);
+            nativeClauseContext = new NativeClauseContext(childContext, null, null);
+        }
+        ItemType resultType;
+        if (
+            childClauses.stream()
+                .allMatch(childClause -> childClause.getResultingType().getItemType().isObjectItemType())
+        ) {
+            // all keys and types must be equal
+            resultType = childClauses.stream()
+                .map(childClause -> childClause.getResultingType().getItemType())
+                .reduce(
+                    (a, b) -> (a.isObjectItemType()
+                        && a.getObjectContentFacet().keySet().size() == b.getObjectContentFacet().keySet().size()
+                        && a.getObjectContentFacet()
+                            .keySet()
+                            .stream()
+                            .allMatch(
+                                key -> b.getObjectContentFacet().containsKey(key)
+                                    && a.getObjectContentFacet()
+                                        .get(key)
+                                        .getType()
+                                        .equals(b.getObjectContentFacet().get(key).getType())
+                            ))
+                                ? a
+                                : BuiltinTypesCatalogue.item
+                )
+                .orElse(BuiltinTypesCatalogue.item);
+        } else {
+            resultType = childClauses.stream()
+                .map(childClause -> childClause.getResultingType().getItemType())
+                .reduce((a, b) -> a.equals(b) ? a : BuiltinTypesCatalogue.item)
+                .orElse(BuiltinTypesCatalogue.item);
+        }
+        if (BuiltinTypesCatalogue.item.equals(resultType)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingString;
+        // if a child is already a sequence, use concat to merge the sequences
+        if (
+            childClauses.stream()
+                .anyMatch(child -> SequenceType.Arity.OneOrMore.isSubtypeOf(child.getResultingType().getArity()))
+        ) {
+            resultingString = childClauses.stream()
+                .map(
+                    child -> (SequenceType.Arity.OneOrMore.isSubtypeOf(child.getResultingType().getArity()))
+                        ? child.getResultingQuery()
+                        : "array(" + child.getResultingQuery() + ")"
+                )
+                .collect(Collectors.joining(","));
+            resultingString = String.format("concat(%s)", resultingString);
+        } else {
+            resultingString = String.format(
+                "array(%s)",
+                childClauses.stream()
+                    .map(NativeClauseContext::getResultingQuery)
+                    .collect(Collectors.joining(","))
+            );
+        }
+        // if there is a OneOrZero, null values have to be filtered out
+        SequenceType.Arity resultingArity = childClauses.stream()
+            .anyMatch(childClause -> childClause.getResultingType().getArity() == SequenceType.Arity.OneOrZero)
+                ? SequenceType.Arity.ZeroOrMore
+                : SequenceType.Arity.OneOrMore;
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingString,
+                new SequenceType(resultType, resultingArity)
+        );
+    }
+
+    public List<RuntimeIterator> getChildren() {
+        return this.children;
     }
 }

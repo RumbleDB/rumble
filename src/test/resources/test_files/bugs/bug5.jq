@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="RBST0003"; ErrorMetadata="LINE:5:COLUMN:7:" :)
+(:JIQS: ShouldCrash; ErrorCode="RBDY0005"; ErrorMetadata="LINE:5:COLUMN:13:" :)
 count(
 let $doc := json-file("../../queries/confusion_sample.json")
 for $d in $doc

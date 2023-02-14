@@ -230,8 +230,41 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (inferredType.isEmptySequence()) {
                     inferredType = childExpressionInferredType;
                 } else {
-                    ItemType resultingItemType = inferredType.getItemType()
-                        .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
+                    ItemType resultingItemType;
+                    if (
+                        inferredType.getItemType().isObjectItemType()
+                            && childExpressionInferredType.getItemType().isObjectItemType()
+                    ) {
+                        final Map<String, FieldDescriptor> currentItemTypeObject = inferredType.getItemType()
+                            .getObjectContentFacet();
+                        resultingItemType = (currentItemTypeObject.keySet().size() == childExpressionInferredType
+                            .getItemType()
+                            .getObjectContentFacet()
+                            .keySet()
+                            .size()
+                            && currentItemTypeObject
+                                .keySet()
+                                .stream()
+                                .allMatch(
+                                    key -> childExpressionInferredType.getItemType()
+                                        .getObjectContentFacet()
+                                        .containsKey(key)
+                                        && currentItemTypeObject
+                                            .get(key)
+                                            .getType()
+                                            .equals(
+                                                childExpressionInferredType.getItemType()
+                                                    .getObjectContentFacet()
+                                                    .get(key)
+                                                    .getType()
+                                            )
+                                ))
+                                    ? inferredType.getItemType()
+                                    : BuiltinTypesCatalogue.objectItem;
+                    } else {
+                        resultingItemType = inferredType.getItemType()
+                            .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
+                    }
                     SequenceType.Arity resultingArity =
                         ((inferredType.getArity() == SequenceType.Arity.OneOrZero
                             || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
@@ -480,6 +513,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(args.get(0).getStaticSequenceType());
             return true;
         }
+        // handle 'size' function
+        if (
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("size"))
+                && args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
+        ) {
+            // set output type to 'Integer' if inputType is 'Array'
+            expression.setStaticSequenceType(
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+            );
+            return true;
+        }
 
         return false;
     }
@@ -684,6 +728,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
+        if (SequenceType.ITEM_STAR.equals(treatedSequenceType)) {
+            treatedSequenceType = expressionSequenceType;
+        }
         expression.setStaticSequenceType(treatedSequenceType);
         return argument;
     }
@@ -796,6 +843,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private ItemType resolveNumericType(ItemType left, ItemType right) {
         if (left.equals(BuiltinTypesCatalogue.doubleItem) || right.equals(BuiltinTypesCatalogue.doubleItem)) {
             return BuiltinTypesCatalogue.doubleItem;
+        } else if (left.equals(BuiltinTypesCatalogue.floatItem) || right.equals(BuiltinTypesCatalogue.floatItem)) {
+            return BuiltinTypesCatalogue.floatItem;
         } else if (left.equals(BuiltinTypesCatalogue.decimalItem) || right.equals(BuiltinTypesCatalogue.decimalItem)) {
             return BuiltinTypesCatalogue.decimalItem;
         } else {
@@ -1526,7 +1575,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             : SequenceType.Arity.ZeroOrMore;
 
         ItemType inferredType = BuiltinTypesCatalogue.item;
-        // if we have a specific object type and a string literal as key try perform better inference
+        // if we have a specific object type and a string literal as key try to perform better inference
         if (
             mainType.getItemType().isObjectItemType()
                 && (expression.getLookupExpression() instanceof StringLiteralExpression)
@@ -1803,18 +1852,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         basicChecks(inferredType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (inferredType.isEmptySequence()) {
             if (!expression.isAllowEmpty()) {
-                if (
-                    !expression.getVariableName().equals(Name.TEMP_VAR1)
-                        && !expression.getVariableName().equals(Name.TEMP_VAR2)
-                ) {
-                    // for sure we will not have any tuple to process and return the empty sequence
-                    throwStaticTypeException(
-                        "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata()
-                    );
-                }
-                inferredType = new SequenceType(BuiltinTypesCatalogue.atomicItem);
+                // for sure we will not have any tuple to process and return the empty sequence
+                throwStaticTypeException(
+                    "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    expression.getMetadata()
+                );
             }
         } else {
             // we take the single arity version of the inferred type or optional arity if we allow empty and the

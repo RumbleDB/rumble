@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -22,8 +23,8 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -62,18 +63,21 @@ public class VisitorHelpers {
         }
     }
 
-    private static void findFunctionDependencies(Module module) {
-        new FunctionDependenciesVisitor().visit(module, null);
+    private static MainModule applyTypeIndependentOptimizations(MainModule module) {
+        List<AbstractNodeVisitor<?>> optimizers = Collections.singletonList(new FunctionInliningVisitor());
+        MainModule result = module;
+        for (AbstractNodeVisitor<?> optimizer : optimizers) {
+            result = (MainModule) optimizer.visit(module, null);
+        }
+        return result;
     }
 
-    private static MainModule inlineFunctions(MainModule module) {
-        FunctionInliningVisitor functionInliningVisitor = new FunctionInliningVisitor();
-        MainModule result = new MainModule(
-                module.getProlog(),
-                (Expression) functionInliningVisitor.visit(module.getExpression(), module.getProlog()),
-                module.getMetadata()
-        );
-        result.setStaticContext(module.getStaticContext());
+    private static MainModule applyTypeDependentOptimizations(MainModule module) {
+        List<AbstractNodeVisitor<?>> optimizers = Collections.singletonList(new ComparisonVisitor());
+        MainModule result = module;
+        for (AbstractNodeVisitor<?> optimizer : optimizers) {
+            result = (MainModule) optimizer.visit(module, null);
+        }
         return result;
     }
 
@@ -154,10 +158,10 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
-            findFunctionDependencies(mainModule);
-            mainModule = inlineFunctions(mainModule);
+            mainModule = applyTypeIndependentOptimizations(mainModule);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -198,6 +202,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
