@@ -1,6 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -15,12 +14,9 @@ import org.rumbledb.expressions.primary.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 
 public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetectionVisitor.ReferenceMap> {
-
-    private static final Name LOCK_OBJECT = Name.createVariableInNoNamespace("*");
 
     @Override
     public ReferenceMap visitForClause(ForClause clause, ReferenceMap argument) {
@@ -43,9 +39,7 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
     @Override
     public ReferenceMap visitLetClause(LetClause clause, ReferenceMap argument) {
         if (clause.getPreviousClause() != null && !argument.containsKey(clause.getVariableName())) {
-            if (!argument.containsKey(LOCK_OBJECT)) {
-                clause.setReferenced(false);
-            }
+            clause.setReferenced(false);
             return argument;
         }
         ReferenceMap letReferenceMap = argument.getReferenceMap(clause.getVariableName());
@@ -80,6 +74,12 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
     @Override
     public ReferenceMap visitWhereClause(WhereClause expression, ReferenceMap argument) {
         argument.add(visit(expression.getWhereExpression(), new ReferenceMap()));
+        return argument;
+    }
+
+    @Override
+    public ReferenceMap visitCountClause(CountClause expression, ReferenceMap argument) {
+        argument.drop(expression.getCountVariable().getVariableName());
         return argument;
     }
 
@@ -157,9 +157,7 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
             StringLiteralExpression key = (StringLiteralExpression) expression.getKeys().get(i);
             Name name = Name.createVariableInNoNamespace(key.getValue());
             if (!argument.isEmpty() && !argument.containsKey(name)) {
-                if (!argument.containsKey(LOCK_OBJECT)) {
-                    expression.setReferenced(i, false);
-                }
+                expression.setReferenced(i, false);
             } else {
                 result.add(visit(expression.getValues().get(i), argument.getReferenceMap(name)));
             }
@@ -180,18 +178,7 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
 
     @Override
     public ReferenceMap visitFunctionCall(FunctionCallExpression expression, ReferenceMap argument) {
-        if (BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier()) != null) {
-            ReferenceMap result = new ReferenceMap();
-            argument.add(LOCK_OBJECT, new ReferenceMap());
-            expression.getArguments()
-                .stream()
-                .filter(Objects::nonNull)
-                .map(arg -> visit(arg, argument))
-                .forEach(result::add);
-            argument.drop(LOCK_OBJECT);
-            return result;
-        }
-        return defaultAction(expression, argument);
+        return defaultAction(expression, new ReferenceMap());
     }
 
     public static class ReferenceMap {
@@ -211,11 +198,10 @@ public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetect
                 this.map.put(name, object);
             } else {
                 ReferenceMap reference = this.map.get(name);
-                if (reference.map.size() == 0) {
-                    // reference everything
-                    return;
-                }
-                if (object.containsKey(name)) {
+                if (object.isEmpty() || reference.map.size() == 0) {
+                    // if either this or the other is empty, then all fields are required
+                    reference.map.clear();
+                } else if (object.containsKey(name)) {
                     if (object.getReferenceMap(name).isEmpty()) {
                         reference.map.clear();
                     } else {
