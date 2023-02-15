@@ -109,7 +109,7 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(value.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!value.getResultingType().getItemType().isNumeric()) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("
