@@ -41,6 +41,8 @@ public class LetClause extends Clause {
     protected SequenceType staticType;
     protected Expression expression;
 
+    private boolean isReferenced;
+
     // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -57,6 +59,7 @@ public class LetClause extends Clause {
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
+        this.isReferenced = true;
     }
 
     public Name getVariableName() {
@@ -153,5 +156,13 @@ public class LetClause extends Clause {
 
     public void setStaticType(SequenceType staticType) {
         this.staticType = staticType;
+    }
+
+    public boolean getReferenced() {
+        return this.isReferenced;
+    }
+
+    public void setReferenced(boolean isReferenced) {
+        this.isReferenced = false;
     }
 }
