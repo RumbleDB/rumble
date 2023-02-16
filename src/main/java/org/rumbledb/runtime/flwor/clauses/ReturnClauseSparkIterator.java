@@ -388,6 +388,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (nativeClauseContext.getView() == null) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         String rowIdField = nativeClauseContext.addVariable().toString();
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             (StructType) nativeClauseContext.getSchema(),
