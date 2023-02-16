@@ -45,7 +45,22 @@ public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitLibraryModule(LibraryModule module, Node argument) {
+        LibraryModule result = new LibraryModule(
+                (Prolog) visit(module.getProlog(), module.getProlog()),
+                module.getNamespace(),
+                module.getMetadata()
+        );
+        result.setStaticContext(module.getStaticContext());
+        return result;
+    }
+
+    @Override
     public Node visitProlog(Prolog expression, Node argument) {
+        List<LibraryModule> libraryModules = expression.getImportedModules()
+            .stream()
+            .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
+            .collect(Collectors.toList());
         List<Node> declarations = expression.getFunctionDeclarations()
             .stream()
             .map(expr -> visit(expr, argument))
@@ -53,6 +68,8 @@ public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
         declarations.addAll(expression.getVariableDeclarations());
         declarations.addAll(expression.getTypeDeclarations());
         expression.setDeclarations(declarations);
+        expression.getImportedModules().clear();
+        expression.getImportedModules().addAll(libraryModules);
         return expression;
     }
 
