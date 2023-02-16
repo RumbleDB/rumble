@@ -161,10 +161,10 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
         throw new UnexpectedTypeException(
                 this.exceptionMessage
-                        + value.getResultingType().getItemType().toString()
-                        + " cannot be promoted to type "
-                        + this.sequenceType
-                        + ".",
+                    + value.getResultingType().getItemType().toString()
+                    + " cannot be promoted to type "
+                    + this.sequenceType
+                    + ".",
                 getMetadata()
         );
     }
