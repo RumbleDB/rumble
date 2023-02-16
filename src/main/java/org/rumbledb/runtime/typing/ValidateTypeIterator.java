@@ -22,6 +22,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.TypeMappings;
@@ -461,5 +462,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return this.children.get(0).generateNativeQuery(nativeClauseContext);
     }
 }
