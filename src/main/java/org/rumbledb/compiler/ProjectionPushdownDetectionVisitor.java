@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class DeadCodeDetectionVisitor extends AbstractNodeVisitor<DeadCodeDetectionVisitor.ReferenceMap> {
+public class ProjectionPushdownDetectionVisitor extends AbstractNodeVisitor<ProjectionPushdownDetectionVisitor.ReferenceMap> {
 
     @Override
     public ReferenceMap visitForClause(ForClause clause, ReferenceMap argument) {
