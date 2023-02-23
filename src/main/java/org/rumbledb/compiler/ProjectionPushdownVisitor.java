@@ -12,12 +12,12 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeadCodeVisitor extends TypeIndependentNodeVisitor {
+public class ProjectionPushdownVisitor extends TypeIndependentNodeVisitor {
 
-    private final DeadCodeDetectionVisitor deadCodeDetectionVisitor;
+    private final ProjectionPushdownDetectionVisitor projectionPushdownDetectionVisitor;
 
-    public DeadCodeVisitor() {
-        this.deadCodeDetectionVisitor = new DeadCodeDetectionVisitor();
+    public ProjectionPushdownVisitor() {
+        this.projectionPushdownDetectionVisitor = new ProjectionPushdownDetectionVisitor();
     }
 
     @Override
@@ -27,7 +27,7 @@ public class DeadCodeVisitor extends TypeIndependentNodeVisitor {
 
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
-        this.deadCodeDetectionVisitor.visit(mainModule, null);
+        this.projectionPushdownDetectionVisitor.visit(mainModule, null);
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),

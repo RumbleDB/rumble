@@ -66,7 +66,7 @@ public class VisitorHelpers {
     private static MainModule applyTypeIndependentOptimizations(MainModule module) {
         List<TypeIndependentNodeVisitor> optimizers = new ArrayList<>();
         optimizers.add(new FunctionInliningVisitor());
-        optimizers.add(new DeadCodeVisitor());
+        optimizers.add(new ProjectionPushdownVisitor());
         MainModule result = module;
         for (AbstractNodeVisitor<?> optimizer : optimizers) {
             result = (MainModule) optimizer.visit(result, null);
