@@ -846,6 +846,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new ValidateTypeIterator(
                 childExpression,
                 expression.getSequenceType().getItemType(),
+                expression.isValidate(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 this.config,
                 expression.getMetadata()

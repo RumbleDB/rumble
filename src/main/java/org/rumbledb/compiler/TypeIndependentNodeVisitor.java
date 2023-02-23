@@ -599,6 +599,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     public Node visitValidateTypeExpression(ValidateTypeExpression expression, Node argument) {
         return new ValidateTypeExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
+                expression.isValidate(),
                 expression.getSequenceType(),
                 expression.getMetadata()
         );

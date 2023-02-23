@@ -177,9 +177,12 @@ arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
 unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 
 valueExpr               : simpleMap_expr=simpleMapExpr
-                        | validate_expr=validateExpr;
+                        | validate_expr=validateExpr
+                        | annotated_expr=annotatedExpr;
 
 validateExpr            : 'validate' Ktype sequenceType '{' expr '}';
+
+annotatedExpr           : 'annotated' Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
