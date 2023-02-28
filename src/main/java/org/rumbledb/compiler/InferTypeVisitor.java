@@ -525,6 +525,18 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return true;
         }
 
+        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("sum"))) {
+            expression.setStaticSequenceType(
+                new SequenceType(
+                        args.get(0).getStaticSequenceType().getItemType(),
+                        args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.OneOrMore
+                            ? SequenceType.Arity.One
+                            : SequenceType.Arity.OneOrZero
+                )
+            );
+            return true;
+        }
+
         return false;
     }
 
