@@ -14,13 +14,20 @@ public class ValidateTypeExpression extends Expression {
 
     private Expression mainExpression;
     private SequenceType sequenceType;
+    private boolean isValidate;
 
-    public ValidateTypeExpression(Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {
+    public ValidateTypeExpression(
+            Expression mainExpression,
+            boolean isValidate,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata
+    ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
         }
         this.mainExpression = mainExpression;
+        this.isValidate = isValidate;
         this.sequenceType = sequenceType;
         if (sequenceType.isEmptySequence()) {
             throw new OurBadException(
@@ -78,5 +85,9 @@ public class ValidateTypeExpression extends Expression {
         sb.append(" validate type " + this.sequenceType.toString() + "\n");
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(" as {" + this.sequenceType.toString() + "\n}\n");
+    }
+
+    public boolean isValidate() {
+        return this.isValidate;
     }
 }

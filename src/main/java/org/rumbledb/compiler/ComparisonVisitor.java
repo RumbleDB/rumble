@@ -849,6 +849,7 @@ public class ComparisonVisitor extends AbstractNodeVisitor<Node> {
     public Node visitValidateTypeExpression(ValidateTypeExpression expression, Node argument) {
         Expression result = new ValidateTypeExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
+                expression.isValidate(),
                 expression.getSequenceType(),
                 expression.getMetadata()
         );
