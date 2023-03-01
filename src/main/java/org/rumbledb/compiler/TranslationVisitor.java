@@ -1069,11 +1069,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.validate_expr != null) {
             return this.visitValidateExpr(ctx.validate_expr);
         }
-        return this.visitAnnotatedExpr(ctx.annotated_expr);
+        return this.visitAnnotateExpr(ctx.annotate_expr);
     }
 
     @Override
-    public Node visitAnnotatedExpr(JsoniqParser.AnnotatedExprContext ctx) {
+    public Node visitAnnotateExpr(JsoniqParser.AnnotateExprContext ctx) {
         Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
         SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
         return new ValidateTypeExpression(mainExpr, false, sequenceType, createMetadataFromContext(ctx));

@@ -178,11 +178,11 @@ unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 
 valueExpr               : simpleMap_expr=simpleMapExpr
                         | validate_expr=validateExpr
-                        | annotated_expr=annotatedExpr;
+                        | annotate_expr=annotateExpr;
 
-validateExpr            : 'validate' Ktype sequenceType '{' expr '}';
+validateExpr            : Kvalidate Ktype sequenceType '{' expr '}';
 
-annotatedExpr           : 'annotated' Ktype sequenceType '{' expr '}';
+annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
@@ -318,6 +318,8 @@ keyWords                : Kjsoniq
                         | Ktrue
                         | Kfalse
                         | Ktype
+                        | Kvalidate
+                        | Kannotate
                         ;
 
 ///////////////////////// literals
@@ -417,6 +419,10 @@ Ktrue                   : 'true';
 Kfalse                  : 'false';
 
 Ktype                   : 'type';
+
+Kvalidate               : 'validate';
+
+Kannotate               : 'annotate';
 
 Kdeclare                : 'declare';
 
