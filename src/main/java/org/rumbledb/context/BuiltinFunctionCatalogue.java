@@ -490,13 +490,26 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that parses a parquet file
      */
-    static final BuiltinFunction parquet_file = createBuiltinFunction(
+    static final BuiltinFunction parquet_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "parquet-file"),
         "string",
         "item*",
         ParquetFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
+
+    /**
+     * function that parses a parquet file
+     */
+    static final BuiltinFunction parquet_file2 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "parquet-file"),
+        "string",
+        "integer",
+        "item*",
+        ParquetFileFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
     /**
      * function that parses a csv file
      */
@@ -2663,7 +2676,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(local_text_file.getIdentifier(), local_text_file);
         builtinFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtinFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
-        builtinFunctions.put(parquet_file.getIdentifier(), parquet_file);
+        builtinFunctions.put(parquet_file1.getIdentifier(), parquet_file1);
+        builtinFunctions.put(parquet_file2.getIdentifier(), parquet_file2);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);
