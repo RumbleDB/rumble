@@ -491,23 +491,23 @@ public class BuiltinFunctionCatalogue {
      * function that parses a parquet file
      */
     static final BuiltinFunction parquet_file1 = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "parquet-file"),
-            "string",
-            "item*",
-            ParquetFileFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        new Name(Name.JN_NS, "jn", "parquet-file"),
+        "string",
+        "item*",
+        ParquetFileFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
     /**
      * function that parses a parquet file
      */
     static final BuiltinFunction parquet_file2 = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "parquet-file"),
-            "string",
-            "integer",
-            "item*",
-            ParquetFileFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        new Name(Name.JN_NS, "jn", "parquet-file"),
+        "string",
+        "integer",
+        "item*",
+        ParquetFileFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
     /**
