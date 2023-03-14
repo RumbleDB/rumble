@@ -124,6 +124,7 @@ import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -1154,7 +1155,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
-        return super.visitRenameExpr(ctx);
+        return new RenameExpression(mainExpression, finalExpression, nameExpression, createMetadataFromContext(ctx));
     }
 
     @Override
