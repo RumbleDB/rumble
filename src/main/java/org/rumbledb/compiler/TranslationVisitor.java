@@ -123,6 +123,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -560,6 +561,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (content instanceof JsoniqParser.TryCatchExprContext) {
             return this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteExprContext) {
+            return this.visitDeleteExpr((JsoniqParser.DeleteExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertExprContext) {
+            return this.visitInsertExpr((JsoniqParser.InsertExprContext) content);
+        }
+        if (content instanceof JsoniqParser.ReplaceExprContext) {
+            return this.visitReplaceExpr((JsoniqParser.ReplaceExprContext) content);
+        }
+        if (content instanceof JsoniqParser.RenameExprContext) {
+            return this.visitRenameExpr((JsoniqParser.RenameExprContext) content);
+        }
+        if (content instanceof JsoniqParser.AppendExprContext) {
+            return this.visitAppendExpr((JsoniqParser.AppendExprContext) content);
         }
         throw new OurBadException("Unrecognized ExprSingle.");
     }
@@ -1129,7 +1145,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
         Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        Expression finalExpr = (Expression) this.visitExprSingle(ctx.exprSingle(ctx.exprSingle().size() - 1));
+        Expression finalExpression = (Expression) this.visitExprSingle(ctx.exprSingle(ctx.exprSingle().size() - 1));
         List<Expression> locExprs = new ArrayList<>();
         for (int i = 0; i < ctx.exprSingle().size() - 1; i++) {
             JsoniqParser.ExprSingleContext locExprCtx = ctx.exprSingle(i);
@@ -1141,7 +1157,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 locExprs,
                 createMetadataFromContext(ctx)
         );
-        return super.visitDeleteExpr(ctx);
+        return new DeleteExpression(mainExpression, finalExpression, createMetadataFromContext(ctx));
     }
 
     @Override

@@ -242,18 +242,18 @@ inlineFunctionExpr      : 'function' '(' paramList? ')'
 
 ///////////////////////// Updating Expressions
 
-insertExpr              : 'insert' 'json' exprSingle 'into' exprSingle ('at' 'position' exprSingle)?
-                        | 'insert' 'json' pairConstructor ( ',' pairConstructor )* 'into' exprSingle;
+insertExpr              : 'insert' exprSingle 'into' exprSingle ('at' 'position' exprSingle)?
+                        | 'insert' pairConstructor ( ',' pairConstructor )* 'into' exprSingle;
 
-deleteExpr              : 'delete' 'json' main_expr=primaryExpr ( '(' exprSingle ')' )+;
+deleteExpr              : 'delete' main_expr=primaryExpr ( '(' exprSingle ')' )+;
 
-renameExpr              : 'rename' 'json' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'as' exprSingle;
+renameExpr              : 'rename' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'as' exprSingle;
 
-replaceExpr             : 'replace' 'json' 'value' 'of' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'with' exprSingle;
+replaceExpr             : 'replace' 'value' 'of' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'with' exprSingle;
 
 transformExpr           : 'transform';
 
-appendExpr              : 'append' 'json' exprSingle 'into' exprSingle;
+appendExpr              : 'append' exprSingle 'into' exprSingle;
 
 ///////////////////////// Types
 
