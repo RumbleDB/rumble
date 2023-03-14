@@ -1153,11 +1153,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
         return super.visitRenameExpr(ctx);
     }
 
     @Override
     public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression newExpression = (Expression) this.visitExprSingle(ctx.new_expr);
         return super.visitReplaceExpr(ctx);
     }
 
