@@ -8,7 +8,7 @@ import org.rumbledb.expressions.Node;
 import java.util.List;
 
 public class ReplaceExpression extends Expression {
-    protected ReplaceExpression(ExceptionMetadata metadata) {
+    public ReplaceExpression(ExceptionMetadata metadata) {
         super(metadata);
     }
 

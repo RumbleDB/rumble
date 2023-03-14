@@ -8,7 +8,7 @@ import org.rumbledb.expressions.Node;
 import java.util.List;
 
 public class InsertExpression extends Expression {
-    protected InsertExpression(ExceptionMetadata metadata) {
+    public InsertExpression(ExceptionMetadata metadata) {
         super(metadata);
     }
 

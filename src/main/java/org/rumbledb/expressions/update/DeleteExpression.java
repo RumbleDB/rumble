@@ -49,6 +49,7 @@ public class DeleteExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
+        sb.append("delete ");
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append("(");
         this.finalExpression.serializeToJSONiq(sb,0);

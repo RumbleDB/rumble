@@ -8,7 +8,7 @@ import org.rumbledb.expressions.Node;
 import java.util.List;
 
 public class AppendExpression extends Expression {
-    protected AppendExpression(ExceptionMetadata metadata) {
+    public AppendExpression(ExceptionMetadata metadata) {
         super(metadata);
     }
 
