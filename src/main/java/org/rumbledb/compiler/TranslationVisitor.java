@@ -1144,24 +1144,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        Expression finalExpression = (Expression) this.visitExprSingle(ctx.exprSingle(ctx.exprSingle().size() - 1));
-        List<Expression> locExprs = new ArrayList<>();
-        for (int i = 0; i < ctx.exprSingle().size() - 1; i++) {
-            JsoniqParser.ExprSingleContext locExprCtx = ctx.exprSingle(i);
-            Expression locExpr = (Expression) this.visitExprSingle(locExprCtx);
-            locExprs.add(locExpr);
-        }
-        mainExpression = new DynamicFunctionCallExpression(
-                mainExpression,
-                locExprs,
-                createMetadataFromContext(ctx)
-        );
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
         return new DeleteExpression(mainExpression, finalExpression, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
         return super.visitRenameExpr(ctx);
     }
 
@@ -1178,6 +1169,26 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
         return super.visitAppendExpr(ctx);
+    }
+
+    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+        List<Expression> locExprs = new ArrayList<>();
+        for (int i = 0; i < ctx.exprSingle().size() - 1; i++) {
+            JsoniqParser.ExprSingleContext locExprCtx = ctx.exprSingle(i);
+            Expression locExpr = (Expression) this.visitExprSingle(locExprCtx);
+            locExprs.add(locExpr);
+        }
+        mainExpression = new DynamicFunctionCallExpression(
+                mainExpression,
+                locExprs,
+                createMetadataFromContext(ctx)
+        );
+        return mainExpression;
+    }
+
+    public Expression getFinalExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        return (Expression) this.visitExprSingle(ctx.exprSingle(ctx.exprSingle().size() - 1));
     }
 
     // endregion

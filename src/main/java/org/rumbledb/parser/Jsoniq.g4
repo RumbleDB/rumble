@@ -245,15 +245,17 @@ inlineFunctionExpr      : 'function' '(' paramList? ')'
 insertExpr              : 'insert' exprSingle 'into' exprSingle ('at' 'position' exprSingle)?
                         | 'insert' pairConstructor ( ',' pairConstructor )* 'into' exprSingle;
 
-deleteExpr              : 'delete' main_expr=primaryExpr ( '(' exprSingle ')' )+;
+deleteExpr              : 'delete' updateLocator;
 
-renameExpr              : 'rename' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'as' exprSingle;
+renameExpr              : 'rename' updateLocator 'as' name_expr=exprSingle;
 
-replaceExpr             : 'replace' 'value' 'of' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'with' exprSingle;
+replaceExpr             : 'replace' 'value' 'of' updateLocator 'with' new_expr=exprSingle;
 
 transformExpr           : 'transform';
 
 appendExpr              : 'append' exprSingle 'into' exprSingle;
+
+updateLocator           : main_expr=primaryExpr ( '(' exprSingle ')' )+;
 
 ///////////////////////// Types
 
