@@ -1119,6 +1119,53 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
     // endregion
 
+    // region update
+
+    @Override
+    public Node visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
+        return super.visitInsertExpr(ctx);
+    }
+
+    @Override
+    public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+        Expression finalExpr = (Expression) this.visitExprSingle(ctx.exprSingle(ctx.exprSingle().size() - 1));
+        List<Expression> locExprs = new ArrayList<>();
+        for (int i = 0; i < ctx.exprSingle().size() - 1; i++) {
+            JsoniqParser.ExprSingleContext locExprCtx = ctx.exprSingle(i);
+            Expression locExpr = (Expression) this.visitExprSingle(locExprCtx);
+            locExprs.add(locExpr);
+        }
+        mainExpression = new DynamicFunctionCallExpression(
+                mainExpression,
+                locExprs,
+                createMetadataFromContext(ctx)
+        );
+        return super.visitDeleteExpr(ctx);
+    }
+
+    @Override
+    public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
+        return super.visitRenameExpr(ctx);
+    }
+
+    @Override
+    public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
+        return super.visitReplaceExpr(ctx);
+    }
+
+    @Override
+    public Node visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
+        return super.visitTransformExpr(ctx);
+    }
+
+    @Override
+    public Node visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
+        return super.visitAppendExpr(ctx);
+    }
+
+    // endregion
+
     // region postfix
     @Override
     public Node visitPostFixExpr(JsoniqParser.PostFixExprContext ctx) {

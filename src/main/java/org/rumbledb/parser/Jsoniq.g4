@@ -83,6 +83,12 @@ exprSingle              : flowrExpr
                         | typeSwitchExpr
                         | ifExpr
                         | tryCatchExpr
+                        | insertExpr
+                        | deleteExpr
+                        | renameExpr
+                        | replaceExpr
+                        | transformExpr
+                        | appendExpr
                         | orExpr;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
@@ -233,6 +239,21 @@ namedFunctionRef        : fn_name=qname '#' arity=Literal;
 inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
                            ('{' (fn_body=expr)? '}');
+
+///////////////////////// Updating Expressions
+
+insertExpr              : 'insert' 'json' exprSingle 'into' exprSingle ('at' 'position' exprSingle)?
+                        | 'insert' 'json' pairConstructor ( ',' pairConstructor )* 'into' exprSingle;
+
+deleteExpr              : 'delete' 'json' main_expr=primaryExpr ( '(' exprSingle ')' )+;
+
+renameExpr              : 'rename' 'json' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'as' exprSingle;
+
+replaceExpr             : 'replace' 'json' 'value' 'of' main_expr=primaryExpr ( '(' exprSingle ')' )+ 'with' exprSingle;
+
+transformExpr           : 'transform';
+
+appendExpr              : 'append' 'json' exprSingle 'into' exprSingle;
 
 ///////////////////////// Types
 
