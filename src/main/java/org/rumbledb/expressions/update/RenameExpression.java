@@ -35,13 +35,25 @@ public class RenameExpression extends Expression {
     }
 
     @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitRenameExpression(this, argument);
+    public List<Node> getChildren() {
+        return Arrays.asList(this.mainExpression, this.finalExpression, this.nameExpression);
+    }
+
+    public Expression getMainExpression() {
+        return mainExpression;
+    }
+
+    public Expression getFinalExpression() {
+        return finalExpression;
+    }
+
+    public Expression getNameExpression() {
+        return nameExpression;
     }
 
     @Override
-    public List<Node> getChildren() {
-        return Arrays.asList(this.mainExpression, this.finalExpression, this,nameExpression);
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitRenameExpression(this, argument);
     }
 
     @Override
