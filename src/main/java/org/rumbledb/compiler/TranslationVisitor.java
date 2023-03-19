@@ -126,6 +126,7 @@ import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.DeleteExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.UpdateLocatorKind;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -1147,24 +1148,27 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        return new DeleteExpression(mainExpression, finalExpression, createMetadataFromContext(ctx));
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
+        return new DeleteExpression(mainExpression, locatorExpression, locatorKind, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
         Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
-        return new RenameExpression(mainExpression, finalExpression, nameExpression, createMetadataFromContext(ctx));
+        return new RenameExpression(mainExpression, locatorExpression, nameExpression, locatorKind, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression finalExpression = getFinalExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
         Expression newExpression = (Expression) this.visitExprSingle(ctx.new_expr);
-        return new ReplaceExpression(mainExpression, finalExpression, newExpression, createMetadataFromContext(ctx));
+        return new ReplaceExpression(mainExpression, locatorExpression, newExpression, locatorKind, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1179,22 +1183,54 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
         Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        List<Expression> locExprs = new ArrayList<>();
-        for (int i = 0; i < ctx.exprSingle().size() - 1; i++) {
-            JsoniqParser.ExprSingleContext locExprCtx = ctx.exprSingle(i);
-            Expression locExpr = (Expression) this.visitExprSingle(locExprCtx);
-            locExprs.add(locExpr);
+        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
+            if (child instanceof JsoniqParser.ObjectLookupContext) {
+                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
+                mainExpression = new ObjectLookupExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            else if (child instanceof JsoniqParser.ArrayLookupContext) {
+                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
+                mainExpression = new ArrayLookupExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            else {
+                throw new OurBadException("Unrecognized locator expression found in update expression.");
+            }
         }
-        mainExpression = new DynamicFunctionCallExpression(
-                mainExpression,
-                locExprs,
-                createMetadataFromContext(ctx)
-        );
         return mainExpression;
     }
 
-    public Expression getFinalExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        return (Expression) this.visitExprSingle(ctx.exprSingle(ctx.exprSingle().size() - 1));
+    public UpdateLocatorKind getLocatorKindFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
+        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
+            return UpdateLocatorKind.OBJECT_LOOKUP;
+        }
+        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
+            return UpdateLocatorKind.ARRAY_LOOKUP;
+        }
+        else {
+            throw new OurBadException("Unrecognized locator found in update expression.");
+        }
+    }
+
+    public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
+        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
+            return (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) locatorExprCtx);
+        }
+        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
+            return (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) locatorExprCtx);
+        }
+        else {
+            throw new OurBadException("Unrecognized locator found in update expression.");
+        }
     }
 
     // endregion

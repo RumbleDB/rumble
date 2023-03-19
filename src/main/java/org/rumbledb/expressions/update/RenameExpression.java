@@ -12,43 +12,53 @@ import java.util.List;
 public class RenameExpression extends Expression {
 
     private Expression mainExpression;
-    private Expression finalExpression;
+    private Expression locatorExpression;
     private Expression nameExpression;
+    private UpdateLocatorKind locatorKind;
     public RenameExpression(Expression mainExpression,
-                               Expression finalExpression,
+                               Expression locatorExpression,
                                Expression nameExpression,
+                               UpdateLocatorKind locatorKind,
                                ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a rename expression.");
         }
-        if (finalExpression == null) {
-            throw new OurBadException("Final expression cannot be null in a rename expression.");
+        if (locatorExpression == null) {
+            throw new OurBadException("Locator expression cannot be null in a rename expression.");
         }
         if (nameExpression == null) {
             throw new OurBadException("Name expression cannot be null in a rename expression.");
         }
+        if (locatorKind == null) {
+            throw new OurBadException("Locator kind cannot be null in a rename expression.");
+        }
         this.mainExpression = mainExpression;
-        this.finalExpression = finalExpression;
+        this.locatorExpression = locatorExpression;
         this.nameExpression = nameExpression;
+        this.locatorKind = locatorKind;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.mainExpression, this.finalExpression, this.nameExpression);
+        return Arrays.asList(this.mainExpression, this.locatorExpression, this.nameExpression);
     }
 
     public Expression getMainExpression() {
         return mainExpression;
     }
 
-    public Expression getFinalExpression() {
-        return finalExpression;
+    public Expression getLocatorExpression() {
+        return locatorExpression;
     }
 
     public Expression getNameExpression() {
         return nameExpression;
+    }
+
+    public UpdateLocatorKind getLocatorKind() {
+        return locatorKind;
     }
 
     @Override
@@ -59,11 +69,9 @@ public class RenameExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("rename ");
+        sb.append("rename json ");
         this.mainExpression.serializeToJSONiq(sb, 0);
-        sb.append("(");
-        this.finalExpression.serializeToJSONiq(sb,0);
-        sb.append(") as ");
+        this.locatorExpression.serializeToJSONiq(sb,0);
         this.nameExpression.serializeToJSONiq(sb,0);
         sb.append("\n");
 

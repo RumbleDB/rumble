@@ -12,43 +12,53 @@ import java.util.List;
 public class ReplaceExpression extends Expression {
 
     private Expression mainExpression;
-    private Expression finalExpression;
+    private Expression locatorExpression;
     private Expression newExpression;
+    private UpdateLocatorKind locatorKind;
     public ReplaceExpression(Expression mainExpression,
-                             Expression finalExpression,
+                             Expression locatorExpression,
                              Expression newExpression,
+                             UpdateLocatorKind locatorKind,
                              ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a replace expression.");
         }
-        if (finalExpression == null) {
-            throw new OurBadException("Final expression cannot be null in a replace expression.");
+        if (locatorExpression == null) {
+            throw new OurBadException("Locator expression cannot be null in a replace expression.");
         }
         if (newExpression == null) {
             throw new OurBadException("New expression cannot be null in a replace expression.");
         }
+        if (locatorKind == null) {
+            throw new OurBadException("Locator kind cannot be null in a replace expression.");
+        }
         this.mainExpression = mainExpression;
-        this.finalExpression = finalExpression;
+        this.locatorExpression = locatorExpression;
         this.newExpression = newExpression;
+        this.locatorKind = locatorKind;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.mainExpression, this.finalExpression, this.newExpression);
+        return Arrays.asList(this.mainExpression, this.locatorExpression, this.newExpression);
     }
 
     public Expression getMainExpression() {
         return mainExpression;
     }
 
-    public Expression getFinalExpression() {
-        return finalExpression;
+    public Expression getLocatorExpression() {
+        return locatorExpression;
     }
 
     public Expression getNewExpression() {
         return newExpression;
+    }
+
+    public UpdateLocatorKind getLocatorKind() {
+        return locatorKind;
     }
 
     @Override
@@ -59,11 +69,10 @@ public class ReplaceExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("replace value of ");
+        sb.append("replace json value of ");
         this.mainExpression.serializeToJSONiq(sb, 0);
-        sb.append("(");
-        this.finalExpression.serializeToJSONiq(sb,0);
-        sb.append(") with ");
+        this.locatorExpression.serializeToJSONiq(sb,0);
+        sb.append(" with ");
         this.newExpression.serializeToJSONiq(sb,0);
         sb.append("\n");
     }

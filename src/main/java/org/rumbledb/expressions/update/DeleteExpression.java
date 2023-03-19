@@ -12,33 +12,43 @@ import java.util.List;
 public class DeleteExpression extends Expression {
 
     private Expression mainExpression;
-    private Expression finalExpression;
+    private Expression locatorExpression;
+    private UpdateLocatorKind locatorKind;
     public DeleteExpression(Expression mainExpression,
-                               Expression finalExpression,
-                               ExceptionMetadata metadata
+                            Expression locatorExpression,
+                            UpdateLocatorKind locatorKind,
+                            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a delete expression.");
         }
-        if (finalExpression == null) {
-            throw new OurBadException("Final expression cannot be null in a delete expression.");
+        if (locatorExpression == null) {
+            throw new OurBadException("Locator expression cannot be null in a delete expression.");
+        }
+        if (locatorKind == null) {
+            throw new OurBadException("Locator kind cannot be null in a delete expression.");
         }
         this.mainExpression = mainExpression;
-        this.finalExpression = finalExpression;
+        this.locatorExpression = locatorExpression;
+        this.locatorKind = locatorKind;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.mainExpression, this.finalExpression);
+        return Arrays.asList(this.mainExpression, this.locatorExpression);
     }
 
     public Expression getMainExpression() {
         return mainExpression;
     }
 
-    public Expression getFinalExpression() {
-        return finalExpression;
+    public Expression getLocatorExpression() {
+        return locatorExpression;
+    }
+
+    public UpdateLocatorKind getLocatorKind() {
+        return locatorKind;
     }
 
     @Override
@@ -49,10 +59,9 @@ public class DeleteExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("delete ");
+        sb.append("delete json ");
         this.mainExpression.serializeToJSONiq(sb, 0);
-        sb.append("(");
-        this.finalExpression.serializeToJSONiq(sb,0);
-        sb.append(")\n");
+        this.locatorExpression.serializeToJSONiq(sb,0);
+        sb.append("\n");
     }
 }
