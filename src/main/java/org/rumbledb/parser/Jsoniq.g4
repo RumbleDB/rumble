@@ -249,11 +249,11 @@ deleteExpr              : 'delete' 'json' updateLocator;
 
 renameExpr              : 'rename' 'json' updateLocator 'as' name_expr=exprSingle;
 
-replaceExpr             : 'replace' 'json' 'value' 'of' updateLocator 'with' new_expr=exprSingle;
+replaceExpr             : 'replace' 'json' 'value' 'of' updateLocator 'with' replacer_expr=exprSingle;
 
 transformExpr           : 'copy' varRef ':=' exprSingle ( ',' varRef ':=' exprSingle )* 'modify' exprSingle Kreturn exprSingle;
 
-appendExpr              : 'append' 'json' exprSingle 'into' exprSingle;
+appendExpr              : 'append' 'json' to_append_expr=exprSingle 'into' array_expr=exprSingle;
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 

@@ -123,10 +123,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
-import org.rumbledb.expressions.update.DeleteExpression;
-import org.rumbledb.expressions.update.RenameExpression;
-import org.rumbledb.expressions.update.ReplaceExpression;
-import org.rumbledb.expressions.update.UpdateLocatorKind;
+import org.rumbledb.expressions.update.*;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -1167,7 +1164,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
         UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
-        Expression newExpression = (Expression) this.visitExprSingle(ctx.new_expr);
+        Expression newExpression = (Expression) this.visitExprSingle(ctx.replacer_expr);
         return new ReplaceExpression(mainExpression, locatorExpression, newExpression, locatorKind, createMetadataFromContext(ctx));
     }
 
@@ -1178,7 +1175,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
-        return super.visitAppendExpr(ctx);
+        Expression arrayExpression = (Expression) this.visitExprSingle(ctx.array_expr);
+        Expression toAppendExpression = (Expression) this.visitExprSingle(ctx.to_append_expr);
+        return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
