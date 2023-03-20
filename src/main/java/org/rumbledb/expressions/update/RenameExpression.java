@@ -34,6 +34,9 @@ public class RenameExpression extends Expression {
         if (locatorKind == null) {
             throw new OurBadException("Locator kind cannot be null in a rename expression.");
         }
+        if (!locatorKind.isObjectLookup()) {
+            throw new OurBadException("Locator kind must be Object Lookup");
+        }
         this.mainExpression = mainExpression;
         this.locatorExpression = locatorExpression;
         this.nameExpression = nameExpression;
