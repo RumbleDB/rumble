@@ -577,6 +577,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (content instanceof JsoniqParser.AppendExprContext) {
             return this.visitAppendExpr((JsoniqParser.AppendExprContext) content);
         }
+        if (content instanceof JsoniqParser.TransformExprContext) {
+            return this.visitTransformExpr((JsoniqParser.TransformExprContext) content);
+        }
         throw new OurBadException("Unrecognized ExprSingle.");
     }
     // endregion
@@ -1139,7 +1142,32 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
-        return super.visitInsertExpr(ctx);
+        Expression toInsertExpr = null;
+        Expression posExpr = null;
+        if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
+            List<Expression> keys = new ArrayList<>();
+            List<Expression> values = new ArrayList<>();
+            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+                if (currentPair.lhs != null) {
+                    keys.add((Expression) this.visitExprSingle(currentPair.lhs));
+                } else {
+                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                }
+                values.add((Expression) this.visitExprSingle(currentPair.rhs));
+            }
+            toInsertExpr = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+        } else if (ctx.to_insert_expr != null) {
+            toInsertExpr = (Expression) this.visitExprSingle(ctx.to_insert_expr);
+            if (ctx.pos_expr != null) {
+                posExpr = (Expression) this.visitExprSingle(ctx.pos_expr);
+            }
+        }
+        else {
+            throw new OurBadException("Unrecognised expression to insert in Insert Expression");
+        }
+        Expression mainExpr = (Expression) this.visitExprSingle(ctx.main_expr);
+
+        return new InsertExpression(mainExpr, toInsertExpr, posExpr, createMetadataFromContext(ctx));
     }
 
     @Override
