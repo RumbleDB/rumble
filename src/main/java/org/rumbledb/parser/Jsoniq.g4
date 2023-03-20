@@ -242,8 +242,8 @@ inlineFunctionExpr      : 'function' '(' paramList? ')'
 
 ///////////////////////// Updating Expressions
 
-insertExpr              : 'insert' 'json' exprSingle 'into' exprSingle ('at' 'position' exprSingle)?
-                        | 'insert' 'json' pairConstructor ( ',' pairConstructor )* 'into' exprSingle;
+insertExpr              : 'insert' 'json' to_insert_expr=exprSingle 'into' main_expr=exprSingle ('at' 'position' pos_expr=exprSingle)?
+                        | 'insert' 'json' pairConstructor ( ',' pairConstructor )* 'into' main_expr=exprSingle;
 
 deleteExpr              : 'delete' 'json' updateLocator;
 
@@ -251,11 +251,13 @@ renameExpr              : 'rename' 'json' updateLocator 'as' name_expr=exprSingl
 
 replaceExpr             : 'replace' 'json' 'value' 'of' updateLocator 'with' replacer_expr=exprSingle;
 
-transformExpr           : 'copy' varRef ':=' exprSingle ( ',' varRef ':=' exprSingle )* 'modify' exprSingle Kreturn exprSingle;
+transformExpr           : 'copy' 'json' copyDecl ( ',' copyDecl )* 'modify' mod_expr=exprSingle Kreturn ret_expr=exprSingle;
 
 appendExpr              : 'append' 'json' to_append_expr=exprSingle 'into' array_expr=exprSingle;
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+
+copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
 ///////////////////////// Types
 

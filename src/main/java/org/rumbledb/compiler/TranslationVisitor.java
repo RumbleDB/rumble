@@ -1170,7 +1170,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
-        return super.visitTransformExpr(ctx);
+        List<Node> copyDecls = ctx.copyDecl().stream().map(this::visitCopyDecl).collect(Collectors.toList());
+        Expression modifyExpression = (Expression) this.visitExprSingle(ctx.mod_expr);
+        Expression returnExpression = (Expression) this.visitExprSingle(ctx.ret_expr);
+        return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1230,6 +1233,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         else {
             throw new OurBadException("Unrecognized locator found in update expression.");
         }
+    }
+
+    @Override
+    public Node visitCopyDecl(JsoniqParser.CopyDeclContext ctx) {
+        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Expression expr = (Expression) this.visitExprSingle(ctx.src_expr);
+        return new CopyDeclaration(var, expr, createMetadataFromContext(ctx));
     }
 
     // endregion

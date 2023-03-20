@@ -302,7 +302,11 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitTransformExpression(AppendExpression expression, T argument) {
+    public T visitTransformExpression(TransformExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCopyDeclaration(CopyDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
 
