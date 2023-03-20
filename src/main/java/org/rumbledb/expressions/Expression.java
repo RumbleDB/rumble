@@ -120,6 +120,15 @@ public abstract class Expression extends Node {
         this.expressionClassification = expressionClassification;
     }
 
+    /**
+     * Tells whether this expression is an updating expression or not.
+     *
+     * @return true if yes, false otherwise.
+     */
+    public boolean isUpdating() {
+        return this.expressionClassification.isUpdating();
+    }
+
     @Override
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
