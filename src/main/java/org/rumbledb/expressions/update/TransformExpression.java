@@ -3,6 +3,7 @@ package org.rumbledb.expressions.update;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class TransformExpression extends Expression
         this.copyDeclarations = copyDeclarations;
         this.modifyExpression = modifyExpression;
         this.returnExpression = returnExpression;
+        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     public List<Node> getCopyDeclarations() {

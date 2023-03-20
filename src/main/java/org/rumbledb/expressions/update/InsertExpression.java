@@ -3,6 +3,7 @@ package org.rumbledb.expressions.update;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
 public class InsertExpression extends Expression {
     public InsertExpression(ExceptionMetadata metadata) {
         super(metadata);
+        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     @Override
