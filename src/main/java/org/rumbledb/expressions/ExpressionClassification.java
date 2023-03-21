@@ -15,10 +15,15 @@ package org.rumbledb.expressions;
  * an expression that can be determined statically to return an empty sequence or raise an error.
  */
 public enum ExpressionClassification {
+    UNSET,
     BASIC_UPDATING,
     UPDATING,
     SIMPLE,
     VACUOUS;
+
+    public boolean isUnset() {
+        return this == ExpressionClassification.UNSET;
+    }
 
     public boolean isUpdating() {
         return this == ExpressionClassification.BASIC_UPDATING || this == ExpressionClassification.UPDATING;
@@ -34,6 +39,8 @@ public enum ExpressionClassification {
 
     public String toString() {
         switch (this) {
+            case UNSET:
+                return "unset";
             case BASIC_UPDATING:
                 return "basic_updating";
             case UPDATING:

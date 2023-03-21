@@ -141,6 +141,7 @@ public class VisitorHelpers {
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
+            populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -181,6 +182,8 @@ public class VisitorHelpers {
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
+            // TODO populate expression classifications here?
+//            populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -352,6 +355,19 @@ public class VisitorHelpers {
             printTree(module, conf);
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
+        visitor.visit(module, module.getStaticContext());
+
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+    }
+
+    private static void populateExpressionClassifications(Module module, RumbleRuntimeConfiguration conf) {
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+
+        ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
         visitor.visit(module, module.getStaticContext());
 
         if (conf.isPrintIteratorTree()) {
