@@ -54,6 +54,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -324,6 +325,18 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             variableDeclaration.getVariableName(),
             variableDeclaration.getActualSequenceType(),
             variableDeclaration.getMetadata()
+        );
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCopyDeclaration(CopyDeclaration copyDeclaration, StaticContext argument) {
+        this.visit(copyDeclaration.getSourceExpression(), argument);
+        // first pass.
+        argument.addVariable(
+                copyDeclaration.getVariableName(),
+                copyDeclaration.getSourceSequenceType(),
+                copyDeclaration.getMetadata()
         );
         return argument;
     }

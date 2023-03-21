@@ -6,6 +6,7 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +34,10 @@ public class CopyDeclaration extends Node {
 
     public Expression getSourceExpression() {
         return sourceExpression;
+    }
+
+    public SequenceType getSourceSequenceType() {
+        return sourceExpression.getStaticSequenceType();
     }
 
     @Override
