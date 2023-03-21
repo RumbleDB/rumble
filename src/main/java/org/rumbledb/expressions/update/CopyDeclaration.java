@@ -1,9 +1,12 @@
 package org.rumbledb.expressions.update;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
@@ -15,6 +18,9 @@ public class CopyDeclaration extends Node {
 
     private Name variableName;
     private Expression sourceExpression;
+
+    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
+
 
     public CopyDeclaration(Name variableName,
                            Expression sourceExpression,
@@ -39,6 +45,23 @@ public class CopyDeclaration extends Node {
     public SequenceType getSourceSequenceType() {
         return sourceExpression.getStaticSequenceType();
     }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = ExecutionMode.LOCAL;
+        this.variableHighestStorageMode = ExecutionMode.LOCAL;
+    }
+
+    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
+        if (
+                !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                        && this.variableHighestStorageMode == ExecutionMode.UNSET
+        ) {
+            throw new OurBadException("A copy variable storage mode is accessed without being set.");
+        }
+        return this.variableHighestStorageMode;
+    }
+
 
     @Override
     public List<Node> getChildren() {

@@ -58,6 +58,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -429,6 +430,18 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         argument.setVariableStorageMode(
             variableDeclaration.getVariableName(),
             variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
+        );
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCopyDeclaration(CopyDeclaration copyDeclaration, StaticContext argument) {
+        this.visit(copyDeclaration.getSourceExpression(), null);
+        copyDeclaration.initHighestExecutionMode(this.visitorConfig);
+        // first pass.
+        argument.setVariableStorageMode(
+                copyDeclaration.getVariableName(),
+                copyDeclaration.getVariableHighestStorageMode(this.visitorConfig)
         );
         return argument;
     }
