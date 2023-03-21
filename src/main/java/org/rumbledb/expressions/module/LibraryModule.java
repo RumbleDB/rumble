@@ -77,6 +77,7 @@ public class LibraryModule extends Module {
         }
         buffer.append("Library module " + this.namespace);
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
