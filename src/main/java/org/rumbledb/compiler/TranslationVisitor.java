@@ -1142,7 +1142,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
-        Expression toInsertExpr = null;
+        Expression toInsertExpr;
         Expression posExpr = null;
         if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
             List<Expression> keys = new ArrayList<>();
