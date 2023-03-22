@@ -1,6 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.apache.hadoop.fs.Stat;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -21,6 +20,8 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<StaticC
         }
         if (node instanceof Expression && hasUpdatingChild) {
             node.setExpressionClassification(ExpressionClassification.UPDATING);
+        } else {
+            node.setExpressionClassification(ExpressionClassification.SIMPLE);
         }
         return staticContext;
     }

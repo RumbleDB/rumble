@@ -82,6 +82,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.*;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -658,6 +659,77 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.setStaticSequenceType(treatedSequenceType);
         return argument;
     }
+
+    // endregion
+
+    // region updating
+
+    @Override
+    public StaticContext visitDeleteExpression(DeleteExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType mainExprInferredType = expression.getMainExpression().getStaticSequenceType();
+        SequenceType locExprInferredType = expression.getLocatorExpression().getStaticSequenceType();
+
+        basicChecks(
+                Arrays.asList(mainExprInferredType, locExprInferredType),
+                expression.getClass().getSimpleName(),
+                true,
+                true,
+                expression.getMetadata()
+        );
+
+
+        return super.visitDeleteExpression(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitRenameExpression(RenameExpression expression, StaticContext argument) {
+        return super.visitRenameExpression(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitReplaceExpression(ReplaceExpression expression, StaticContext argument) {
+        return super.visitReplaceExpression(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitInsertExpression(InsertExpression expression, StaticContext argument) {
+        return super.visitInsertExpression(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitAppendExpression(AppendExpression expression, StaticContext argument) {
+        return super.visitAppendExpression(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        return super.visitTransformExpression(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitCopyDeclaration(CopyDeclaration expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        SequenceType declaredType = expression.getSourceSequenceType();
+        SequenceType inferredType;
+        if (declaredType == null) {
+            inferredType = expression.getSourceExpression().getStaticSequenceType();
+        } else {
+            inferredType = declaredType;
+        }
+        checkAndUpdateVariableStaticType(
+                declaredType,
+                inferredType,
+                argument,
+                expression.getClass().getSimpleName(),
+                expression.getVariableName(),
+                expression.getMetadata()
+        );
+
+        return argument;
+    }
+
 
     // endregion
 
