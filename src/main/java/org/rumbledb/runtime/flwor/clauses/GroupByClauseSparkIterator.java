@@ -40,6 +40,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -250,7 +251,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -266,7 +267,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema;
         // String[] columnNamesArray;
         // List<String> columnNames;
@@ -321,7 +322,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         );
         if (nativeQueryResult != null) {
 
-            return nativeQueryResult;
+            return new FlworDataFrame(nativeQueryResult);
         }
 
         Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
@@ -418,7 +419,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     appendedGroupingColumnsName
                 )
             );
-        return result;
+        return new FlworDataFrame(result);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {

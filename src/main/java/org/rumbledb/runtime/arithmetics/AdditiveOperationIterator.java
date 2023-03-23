@@ -438,7 +438,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
                 rightResult.getResultingType().isNumeric()
         ) {
             if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
-                rightQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
+                rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
@@ -456,7 +456,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
                 rightResult.getResultingType().isNumeric()
         ) {
             if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-                rightQuery = "(CAST (" + leftQuery + " AS FLOAT))";
+                rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (

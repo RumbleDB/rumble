@@ -28,7 +28,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -68,33 +67,6 @@ public class DataFrameContext implements Serializable {
      * The only allowed methods are getKryo, getInput and getOutput.
      */
     public DataFrameContext() {
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
-    }
-
-    /**
-     * Builds a new data frame context.
-     * 
-     * @param context the parent dynamic context, which contains all variable values except those in input tuples.
-     * @param schema the schema.
-     * @param columnNames the names of the DataFrame column names applicable to the calling clause, organized by
-     *        types (currently Long for non-materialized counts, or byte[] for serialized sequences).
-     */
-    public DataFrameContext(
-            DynamicContext context,
-            StructType schema,
-            List<String> columnNames
-    ) {
-        this.columns = new ArrayList<>();
-        for (String columnName : columnNames) {
-            this.columns.add(new FlworDataFrameColumn(columnName, schema));
-        }
-
-        this.context = new DynamicContext(context);
-
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);

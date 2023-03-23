@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -95,9 +94,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
-        StructType inputSchema = df.getDataFrame().schema();
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
+        List<FlworDataFrameColumn> allColumns = df.getColumns();
 
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 

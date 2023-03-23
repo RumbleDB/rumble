@@ -39,6 +39,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -182,11 +183,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child != null && this.evaluationDepthLimit != 0) {
-            Dataset<Row> df = this.child.getDataFrame(context);
+            FlworDataFrame df = this.child.getDataFrame(context);
 
             if (!this.outputTupleProjection.containsKey(this.variableName)) {
                 return df;
@@ -196,8 +197,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
-            df = bindLetVariableInDataFrame(
-                df,
+            Dataset<Row> result = bindLetVariableInDataFrame(
+                df.getDataFrame(),
                 this.variableName,
                 this.sequenceType,
                 this.assignmentIterator,
@@ -209,17 +210,17 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 false
             );
 
-            return df;
+            return new FlworDataFrame(result);
         }
         throw new RuntimeException(
                 "Unexpected program state reached. Initial let clauses are always locally executed."
         );
     }
 
-    public Dataset<Row> getDataFrameAsJoin(
+    public FlworDataFrame getDataFrameAsJoin(
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
-            Dataset<Row> childDF
+            FlworDataFrame childDF
     ) {
         // We try to detect an equi-join.
 
@@ -295,7 +296,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
-        Dataset<Row> inputDF = this.child.getDataFrame(context);
+        Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
@@ -324,7 +325,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             false,
             context,
             sequenceDependencies
-        );
+        ).getDataFrame();
 
         LogManager.getLogger("LetClauseSparkIterator").info("Rumble detected an equi-join in the left clause.");
 
@@ -355,38 +356,56 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
         String hashedExpressionResults = FlworDataFrameUtils.createTempView(expressionDF);
+        FlworDataFrameColumn variableNameAggregatedColumn = new FlworDataFrameColumn(
+                this.variableName,
+                FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE
+        );
+        boolean isBinary = FlworDataFrameUtils.isVariableAvailableAsSerializedSequence(
+            expressionDF.schema(),
+            Name.CONTEXT_ITEM
+        );
         expressionDF = expressionDF.sparkSession()
             .sql(
                 String.format(
-                    "SELECT `%s`, collect_list(`%s`) AS `%s` FROM %s GROUP BY `%s`",
+                    "SELECT `%s`, collect_list(`%s`) AS %s FROM %s GROUP BY `%s`",
                     SparkSessionManager.rightHandSideHashColumnName,
                     Name.CONTEXT_ITEM.toString(),
-                    this.variableName,
+                    variableNameAggregatedColumn,
                     hashedExpressionResults,
                     SparkSessionManager.rightHandSideHashColumnName
                 )
             );
 
+
         // We serialize back all grouped items as sequences of items.
-        String groupedResults = FlworDataFrameUtils.createTempView(expressionDF);
-        expressionDF.sparkSession()
-            .udf()
-            .register(
-                "serializeArray",
-                new GroupClauseSerializeAggregateResultsUDF(),
-                DataTypes.BinaryType
-            );
-        expressionDF = expressionDF.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM %s",
-                    SparkSessionManager.rightHandSideHashColumnName,
+        if (isBinary) {
+            String groupedResults = FlworDataFrameUtils.createTempView(expressionDF);
+            expressionDF.sparkSession()
+                .udf()
+                .register(
+                    "serializeArray",
+                    new GroupClauseSerializeAggregateResultsUDF(),
+                    DataTypes.BinaryType
+                );
+            FlworDataFrameColumn newVariableNameAggregatedColumn = new FlworDataFrameColumn(
                     this.variableName,
-                    this.variableName,
-                    groupedResults
-                )
+                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
             );
+
+            expressionDF = expressionDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT `%s`, serializeArray(%s) AS %s FROM %s",
+                        SparkSessionManager.rightHandSideHashColumnName,
+                        variableNameAggregatedColumn,
+                        newVariableNameAggregatedColumn,
+                        groupedResults
+                    )
+                );
+            variableNameAggregatedColumn = newVariableNameAggregatedColumn;
+        }
         String groupedAndSerializedResults = FlworDataFrameUtils.createTempView(expressionDF);
+        variableNameAggregatedColumn.setTableName(groupedAndSerializedResults);
         String inputTuples = FlworDataFrameUtils.createTempView(inputDF);
 
         // We gather the columns to select.
@@ -394,23 +413,21 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = inputDF.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(this.variableName);
-        List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
             inputSchema,
             parentProjection,
             null,
             variableNamesToExclude
         );
-        String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
+        String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, true);
 
         // Now we proceed with the left outer join.
         inputDF = inputDF.sparkSession()
             .sql(
                 String.format(
-                    "SELECT %s %s.`%s` AS `%s` FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
+                    "SELECT %s %s FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
                     projectionVariables,
-                    groupedAndSerializedResults,
-                    this.variableName,
-                    this.variableName,
+                    variableNameAggregatedColumn,
                     inputTuples,
                     groupedAndSerializedResults,
                     SparkSessionManager.rightHandSideHashColumnName,
@@ -441,7 +458,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             false
         );
 
-        return inputDF;
+        return new FlworDataFrame(inputDF);
     }
 
     public static boolean isExpressionIndependentFromInputTuple(
@@ -592,7 +609,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // }
 
         // was not possible, we use let udf
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
             variablesInInputTuple,
@@ -617,13 +634,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 .udf()
                 .register(
                     "hashUDF",
-                    new HashUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                    new HashUDF(newVariableExpression, context, UDFcolumns),
                     DataTypes.LongType
                 );
         }
 
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         String input = FlworDataFrameUtils.createTempView(dataFrame);
 
@@ -644,21 +661,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
 
         } else {
-            // System.out.println(
-            // String.format(
-            // "select %s hashUDF(%s) as `%s` from input",
-            // selectSQL,
-            // UDFParameters,
-            // newVariableName
-            // )
-            // );
             dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
-                        "select %s hashUDF(%s) as `%s` from %s",
+                        "select %s hashUDF(%s) as %s from %s",
                         selectSQL,
                         UDFParameters,
-                        newVariableName,
+                        dfColumnNative,
                         input
                     )
                 );
@@ -671,7 +680,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeIterator newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
-            List<String> UDFcolumns,
+            List<FlworDataFrameColumn> UDFcolumns,
             SequenceType sequenceType
     ) {
         // for the moment we only consider native types with single arity (what about optional)
@@ -690,7 +699,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<String>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "String"
                         ),
@@ -707,7 +715,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<Integer>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "Integer"
                         ),
@@ -724,7 +731,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<Integer>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
@@ -741,7 +747,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<BigDecimal>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
@@ -758,7 +763,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericLetClauseUDF<Double>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "Double"
                         ),
@@ -773,7 +777,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "letClauseUDF",
-                new ExpressionEvaluationUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                new ExpressionEvaluationUDF(newVariableExpression, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
         return false;

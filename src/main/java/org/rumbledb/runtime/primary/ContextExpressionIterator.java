@@ -32,6 +32,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -86,7 +87,7 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
             SparkSessionManager.atomicJSONiqItemColumnName
         )];
         DataType fieldType = field.dataType();
-        ItemType variableType = FlworDataFrameUtils.mapToJsoniqType(fieldType);
+        ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
         NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",

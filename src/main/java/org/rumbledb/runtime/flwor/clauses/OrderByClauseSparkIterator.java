@@ -42,6 +42,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -207,7 +208,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -225,18 +226,18 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
 
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             null,
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
 
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
+        FlworDataFrame nativeQueryResult = tryNativeQuery(
             df,
             this.expressionsWithIterator,
             allColumns,
@@ -251,12 +252,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, inputSchema, UDFcolumns),
+                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -273,7 +274,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
         if (columnTypesOfRows.length == 0) {
             // The input is empty, so we output this empty DF again.
-            return df;
+            return new FlworDataFrame(df);
         }
 
         // Every column represents an order by expression
@@ -433,7 +434,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 new OrderClauseCreateColumnsUDF(
                         this.expressionsWithIterator,
                         context,
-                        inputSchema,
                         typesForAllColumns,
                         UDFcolumns
                 ),
@@ -443,17 +443,19 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
-        return df.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
-                    projectSQL,
-                    selectSQL,
-                    UDFParameters,
-                    appendedOrderingColumnsName,
-                    orderingSQL
-                )
-            );
+        return new FlworDataFrame(
+                df.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
+                            projectSQL,
+                            selectSQL,
+                            UDFParameters,
+                            appendedOrderingColumnsName,
+                            orderingSQL
+                        )
+                    )
+        );
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
@@ -519,7 +521,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the order by clause if successful, null otherwise
      */
-    public static Dataset<Row> tryNativeQuery(
+    public static FlworDataFrame tryNativeQuery(
             Dataset<Row> dataFrame,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             List<FlworDataFrameColumn> allColumns,
@@ -568,14 +570,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .info("Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
-        return dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from input order by %s",
-                    selectSQL,
-                    orderSql
-                )
-            );
+        return new FlworDataFrame(
+                dataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from input order by %s",
+                            selectSQL,
+                            orderSql
+                        )
+                    )
+        );
     }
 
     public boolean containsClause(FLWOR_CLAUSES kind) {

@@ -67,6 +67,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
+    private boolean optimizeGeneralComparisonToValueComparison;
     private boolean thirdFeature;
 
     private Map<String, String> shortcutMap;
@@ -392,6 +393,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.datesWithTimeZone = false;
         }
+
+        if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
+            this.optimizeGeneralComparisonToValueComparison = this.arguments.get(
+                "optimize-general-comparison-to-value-comparison"
+            ).equals("yes");
+        } else {
+            this.optimizeGeneralComparisonToValueComparison = true;
+        }
     }
 
     public boolean getOverwrite() {
@@ -573,6 +582,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setDateWithTimezone(boolean b) {
         this.datesWithTimeZone = b;
+    }
+
+    public boolean optimizeGeneralComparisonToValueComparison() {
+        return this.optimizeGeneralComparisonToValueComparison;
+    }
+
+    public void setOptimizeGeneralComparisonToValueComparison(boolean b) {
+        this.optimizeGeneralComparisonToValueComparison = b;
     }
 
     public boolean isLocal() {
