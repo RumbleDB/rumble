@@ -178,5 +178,4 @@ public class ComparisonVisitor extends CloneVisitor {
         result.setStaticContext(expression.getStaticContext());
         return result;
     }
-
 }
