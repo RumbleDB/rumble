@@ -708,27 +708,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return super.visitTransformExpression(expression, argument);
     }
 
-    @Override
-    public StaticContext visitCopyDeclaration(CopyDeclaration expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        SequenceType declaredType = expression.getSourceSequenceType();
-        SequenceType inferredType;
-        if (declaredType == null) {
-            inferredType = expression.getSourceExpression().getStaticSequenceType();
-        } else {
-            inferredType = declaredType;
-        }
-        checkAndUpdateVariableStaticType(
-                declaredType,
-                inferredType,
-                argument,
-                expression.getClass().getSimpleName(),
-                expression.getVariableName(),
-                expression.getMetadata()
-        );
-
-        return argument;
-    }
+//    @Override
+//    public StaticContext visitCopyDeclaration(CopyDeclaration expression, StaticContext argument) {
+//        visitDescendants(expression, argument);
+//        SequenceType declaredType = expression.getSourceSequenceType();
+//        SequenceType inferredType;
+//        if (declaredType == null) {
+//            inferredType = expression.getSourceExpression().getStaticSequenceType();
+//        } else {
+//            inferredType = declaredType;
+//        }
+//        checkAndUpdateVariableStaticType(
+//                declaredType,
+//                inferredType,
+//                argument,
+//                expression.getClass().getSimpleName(),
+//                expression.getVariableName(),
+//                expression.getMetadata()
+//        );
+//
+//        return argument;
+//    }
 
 
     // endregion

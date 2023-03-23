@@ -1,10 +1,10 @@
 package org.rumbledb.expressions.update;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionClassification;
-import org.rumbledb.expressions.Node;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.expressions.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,24 +13,33 @@ import java.util.stream.Collectors;
 public class TransformExpression extends Expression
 {
 
-    private List<Node> copyDeclarations;
+    private List<CopyDeclaration> copyDeclarations;
     private Expression modifyExpression;
     private Expression returnExpression;
 
-    public TransformExpression(List<Node> copyDeclarations,
+    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
+
+    public TransformExpression(List<CopyDeclaration> copyDeclarations,
                                Expression modifyExpression,
                                Expression returnExpression,
                                ExceptionMetadata metadata
     ) {
         super(metadata);
+        if (copyDeclarations == null || copyDeclarations.isEmpty()) {
+            throw new SemanticException("Transform expression must have at least one variable", metadata);
+        }
         this.copyDeclarations = copyDeclarations;
         this.modifyExpression = modifyExpression;
         this.returnExpression = returnExpression;
         this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
-    public List<Node> getCopyDeclarations() {
+    public List<CopyDeclaration> getCopyDeclarations() {
         return copyDeclarations;
+    }
+
+    public List<Expression> getCopySourceExpressions() {
+        return this.copyDeclarations.stream().filter(Objects::nonNull).map(CopyDeclaration::getSourceExpression).collect(Collectors.toList());
     }
 
     public Expression getModifyExpression() {
@@ -42,8 +51,24 @@ public class TransformExpression extends Expression
     }
 
     @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = ExecutionMode.LOCAL;
+        this.variableHighestStorageMode = ExecutionMode.LOCAL;
+    }
+
+    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
+        if (
+                !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                        && this.variableHighestStorageMode == ExecutionMode.UNSET
+        ) {
+            throw new OurBadException("A copy variable storage mode is accessed without being set.");
+        }
+        return this.variableHighestStorageMode;
+    }
+
+    @Override
     public List<Node> getChildren() {
-        List<Node> result = this.copyDeclarations.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        List<Node> result = this.copyDeclarations.stream().filter(Objects::nonNull).map(CopyDeclaration::getSourceExpression).collect(Collectors.toList());
         result.add(this.modifyExpression);
         result.add(this.returnExpression);
         return result;
@@ -57,8 +82,11 @@ public class TransformExpression extends Expression
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        for (Node copyDecl : this.copyDeclarations) {
-            copyDecl.serializeToJSONiq(sb, 0);
+        for (CopyDeclaration copyDecl : this.copyDeclarations) {
+            sb.append("copy $").append(copyDecl.getVariableName().toString());
+            sb.append(" := (");
+            copyDecl.getSourceExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
         }
         sb.append("\n modify ");
         this.modifyExpression.serializeToJSONiq(sb, 0);
