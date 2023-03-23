@@ -50,6 +50,14 @@ public class RangeExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
+    }
+
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         // TODO Check if it makes sense

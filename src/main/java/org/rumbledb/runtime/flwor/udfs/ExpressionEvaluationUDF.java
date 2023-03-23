@@ -22,11 +22,11 @@ package org.rumbledb.runtime.flwor.udfs;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
@@ -45,10 +45,9 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
     public ExpressionEvaluationUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            StructType schema,
-            List<String> columnNames
+            List<FlworDataFrameColumn> columns
     ) {
-        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
         if (this.expression.isSparkJobNeeded()) {
             throw new JobWithinAJobException(

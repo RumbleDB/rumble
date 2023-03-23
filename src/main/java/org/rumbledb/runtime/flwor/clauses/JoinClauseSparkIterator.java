@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -33,6 +34,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -107,7 +109,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
      * @param metadata the metadata.
      * @return the joined tuple.
      */
-    public static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
+    public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
@@ -119,7 +121,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata
     ) {
-        Dataset<Row> result = tryNativeQueryStatically(
+        FlworDataFrame result = tryNativeQueryStatically(
             context,
             leftInputTuple,
             rightInputTuple,
@@ -184,9 +186,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         // }
 
         if (optimizableJoin) {
-            System.err.println(
-                "[INFO] Rumble detected that it can optimize your query and make it faster with an equi-join."
-            );
+            LogManager.getLogger("JoinClauseSparkIterator")
+                .info(
+                    "Rumble detected that it can optimize your query and make it faster with an equi-join."
+                );
         }
 
 
@@ -221,8 +224,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        // leftInputTuple.show();
-        // rightInputTuple.show();
 
         // And we extend the expression and input tuple views with the hashes.
         if (optimizableJoin) {
@@ -236,7 +237,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 true
             );
-            // rightInputTuple.show();
             leftInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 leftInputTuple,
                 Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
@@ -247,7 +247,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 true
             );
-            // leftInputTuple.show();
         }
 
 
@@ -288,7 +287,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         List<Name> variablesInJointTuple = new ArrayList<>();
         variablesInJointTuple.addAll(variablesInLeftInputTuple);
         variablesInJointTuple.addAll(variablesInRightInputTuple);
-        List<String> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
             jointSchema,
             predicateIterator.getVariableDependencies(),
             variablesInJointTuple,
@@ -300,11 +299,11 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "joinUDF",
-                new WhereClauseUDF(predicateIterator, context, jointSchema, joinCriterionUDFcolumns),
+                new WhereClauseUDF(predicateIterator, context, joinCriterionUDFcolumns),
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(joinCriterionUDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(joinCriterionUDFcolumns);
 
         // If we allow empty, we need a LEFT OUTER JOIN.
         if (isLeftOuterJoin) {
@@ -318,7 +317,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                         UDFParameters
                     )
                 );
-            return resultDF;
+            return new FlworDataFrame(resultDF);
         }
 
         if (optimizableJoin) {
@@ -335,7 +334,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                         UDFParameters
                     )
                 );
-            return resultDF;
+            return new FlworDataFrame(resultDF);
         }
         // Otherwise, it's a regular join.
         Dataset<Row> resultDF = leftInputTuple.sparkSession()
@@ -348,7 +347,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
-        return resultDF;
+        return new FlworDataFrame(resultDF);
     }
 
     private static boolean extractEqualityComparisonsForHashing(
@@ -410,7 +409,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public FlworDataFrame getDataFrame(DynamicContext context) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -439,7 +438,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the group by clause if successful, null otherwise
      */
-    private static Dataset<Row> tryNativeQueryStatically(
+    private static FlworDataFrame tryNativeQueryStatically(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
@@ -463,9 +462,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a join to a native SQL query."
-        );
+        LogManager.getLogger("JoinClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a join to a native SQL query."
+            );
         String left = FlworDataFrameUtils.createTempView(leftInputTuple);
         String right = FlworDataFrameUtils.createTempView(rightInputTuple);
         List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
@@ -478,7 +478,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             columnsToSelect,
             newRightSideVariableName != null
         );
-        return leftInputTuple.sparkSession()
+        Dataset<Row> result = leftInputTuple.sparkSession()
             .sql(
                 String.format(
                     "SELECT %s FROM %s JOIN %s ON %s",
@@ -488,6 +488,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     nativeQuery.getResultingQuery()
                 )
             );
+        return new FlworDataFrame(result);
     }
 
     /**

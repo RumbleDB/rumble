@@ -18,7 +18,7 @@ Caution! Launching a server always has consequences on security, especially as R
 
 The HTTP server is meant not to be used directly by end users, but instead to make it possible to integrate RumbleDB in other languages and environments, such as Python and Jupyter notebooks. 
 
-To test that the the server running, you can try the following address in your browser, assuming you have a query stored locally at /tmp/query.jq. All queries have to go to the /jsoniq path.
+To test that the server is running, you can try the following address in your browser, assuming you have a query stored locally at /tmp/query.jq. All queries have to go to the /jsoniq path.
 
     http://localhost:8001/jsoniq?query-path=/tmp/query.jq
     

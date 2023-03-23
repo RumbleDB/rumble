@@ -26,6 +26,10 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.types.TypeMappings;
 
 public class FlworDataFrameColumn implements Serializable {
 
@@ -46,6 +50,17 @@ public class FlworDataFrameColumn implements Serializable {
     private Name variableName;
     private ColumnFormat columnFormat;
 
+    public FlworDataFrameColumn(
+            String tableName,
+            Name variableName,
+            ColumnFormat columnFormat,
+            SequenceType sequenceType
+    ) {
+        this.tableName = tableName;
+        this.variableName = variableName;
+        this.columnFormat = columnFormat;
+    }
+
     public FlworDataFrameColumn(String tableName, Name variableName, ColumnFormat columnFormat) {
         this.tableName = tableName;
         this.variableName = variableName;
@@ -59,37 +74,98 @@ public class FlworDataFrameColumn implements Serializable {
 
     public FlworDataFrameColumn(String columnName, StructType inputSchema) {
         this.tableName = null;
+        this.columnFormat = getColumnFormat(columnName, inputSchema);
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             this.variableName = Name.createVariableInNoNamespace(columnName);
-            int index = inputSchema.fieldIndex(columnName);
-            if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
-                this.columnFormat = ColumnFormat.SERIALIZED_SEQUENCE;
-                return;
-            }
-            this.columnFormat = ColumnFormat.FULLY_NATIVE;
-            return;
         } else {
             this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof FlworDataFrameColumn)) {
+            return false;
+        }
+        FlworDataFrameColumn other = (FlworDataFrameColumn) o;
+        if (this.tableName == null && other.tableName != null) {
+            return false;
+        }
+        if (this.tableName != null && other.tableName == null) {
+            return false;
+        }
+        if (this.tableName != null && !this.tableName.equals(other.tableName)) {
+            return false;
+        }
+        if (!this.variableName.equals(other.variableName)) {
+            return false;
+        }
+        if (!this.columnFormat.equals(other.columnFormat)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        if (this.tableName == null) {
+            return this.variableName.hashCode() + this.columnFormat.hashCode();
+        }
+        return this.tableName.hashCode() + this.variableName.hashCode() + this.columnFormat.hashCode();
+    }
+
+    public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
+        int pos = columnName.indexOf(".");
+        if (pos == -1) {
+            int index = inputSchema.fieldIndex(columnName);
+            if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                return SequenceType.ITEM_STAR;
+            }
+            ItemType itemType = TypeMappings.getItemTypeFromDataFrameDataType(inputSchema.fields()[index].dataType());
+            return new SequenceType(itemType, Arity.ZeroOrMore);
+        } else {
             switch (columnName.substring(pos)) {
                 case ".count":
-                    this.columnFormat = ColumnFormat.COUNT;
-                    break;
+                    return SequenceType.ITEM_STAR;
                 case ".sequence":
-                    this.columnFormat = ColumnFormat.NATIVE_SEQUENCE;
-                    break;
+                    return SequenceType.ITEM_STAR;
                 case ".sum":
-                    this.columnFormat = ColumnFormat.SUM;
-                    break;
+                    return SequenceType.ITEM_STAR;
                 case ".max":
-                    this.columnFormat = ColumnFormat.MAX;
-                    break;
+                    return SequenceType.ITEM_STAR;
                 case ".min":
-                    this.columnFormat = ColumnFormat.MIN;
-                    break;
+                    return SequenceType.ITEM_STAR;
                 case ".average":
-                    this.columnFormat = ColumnFormat.AVERAGE;
-                    break;
+                    return SequenceType.ITEM_STAR;
+                default:
+                    throw new OurBadException("Unrecognized column name: " + columnName);
+            }
+        }
+    }
+
+    public static ColumnFormat getColumnFormat(String columnName, StructType inputSchema) {
+        int pos = columnName.indexOf(".");
+        if (pos == -1) {
+            int index = inputSchema.fieldIndex(columnName);
+            if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                return ColumnFormat.SERIALIZED_SEQUENCE;
+            }
+            return ColumnFormat.FULLY_NATIVE;
+        } else {
+            switch (columnName.substring(pos)) {
+                case ".count":
+                    return ColumnFormat.COUNT;
+                case ".sequence":
+                    return ColumnFormat.NATIVE_SEQUENCE;
+                case ".sum":
+                    return ColumnFormat.SUM;
+                case ".max":
+                    return ColumnFormat.MAX;
+                case ".min":
+                    return ColumnFormat.MIN;
+                case ".average":
+                    return ColumnFormat.AVERAGE;
                 default:
                     throw new OurBadException("Unrecognized column name: " + columnName);
             }
@@ -105,6 +181,10 @@ public class FlworDataFrameColumn implements Serializable {
 
     public String getTableName() {
         return this.tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     public String getColumnName() {

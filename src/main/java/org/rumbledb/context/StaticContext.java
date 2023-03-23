@@ -312,18 +312,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = input.readBoolean();
     }
 
-    public void importModuleContext(StaticContext moduleContext, String targetNamespace) {
+    public void importModuleContext(StaticContext moduleContext) {
         for (Name name : moduleContext.inScopeVariables.keySet()) {
-            if (name.getNamespace().contentEquals(targetNamespace)) {
-                InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-                this.inScopeVariables.put(name, variable);
-            }
+            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
+            this.inScopeVariables.put(name, variable);
         }
         for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
-            if (fi.getName().getNamespace().contentEquals(targetNamespace)) {
-                FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-                this.staticallyKnownFunctionSignatures.put(fi, signature);
-            }
+            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
+            this.staticallyKnownFunctionSignatures.put(fi, signature);
         }
     }
 
@@ -377,7 +373,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
     // with same variable with sequence type arity changed from 1 to + and form ? to *
-    // used by groupBy cluse
+    // used by groupBy clause
     public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
         this.inScopeVariables.replaceAll(
             (key, value) -> varToExclude.contains(key)
@@ -395,7 +391,9 @@ public class StaticContext implements Serializable, KryoSerializable {
                 if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
                         entry.getKey(),
-                        entry.getValue().getSequenceType().incrementArity(),
+                        varToExclude.contains(entry.getKey())
+                            ? entry.getValue().getSequenceType()
+                            : entry.getValue().getSequenceType().incrementArity(),
                         entry.getValue().getMetadata()
                     );
                 }
