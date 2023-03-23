@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -22,6 +23,7 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -59,6 +61,15 @@ public class VisitorHelpers {
         if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
+    }
+
+    private static MainModule applyTypeDependentOptimizations(MainModule module) {
+        List<AbstractNodeVisitor<Node>> optimizers = Collections.singletonList(new ComparisonVisitor());
+        MainModule result = module;
+        for (AbstractNodeVisitor<?> optimizer : optimizers) {
+            result = (MainModule) optimizer.visit(result, null);
+        }
+        return result;
     }
 
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
@@ -140,6 +151,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -180,6 +192,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
