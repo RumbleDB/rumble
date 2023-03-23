@@ -58,7 +58,6 @@ public class CountClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.countClauseVar) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + this.expressionClassification);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

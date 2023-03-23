@@ -38,8 +38,6 @@ public abstract class Node {
 
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
 
-    protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
-
     protected Node() {
     }
 
@@ -114,44 +112,6 @@ public abstract class Node {
         return result;
     }
 
-
-    /**
-     * Gets the inferred expression classification of this node, for use ...
-     *
-     * @return Expression Classification of the expression.
-     */
-    public ExpressionClassification getExpressionClassification() {
-        return expressionClassification;
-    }
-
-    /**
-     * Sets the inferred expression classification of this node, for use ...
-     *
-     * @param expressionClassification the statically inferred expression classification.
-     */
-    public void setExpressionClassification(ExpressionClassification expressionClassification) {
-        this.expressionClassification = expressionClassification;
-    }
-
-    /**
-     * Tells whether this node is an updating expression or not.
-     *
-     * @return true if yes, false otherwise.
-     */
-    public boolean isUpdating() {
-        return this.expressionClassification.isUpdating();
-    }
-
-    /**
-     * Tells whether this node has an unset expression classification.
-     *
-     * @return true if yes, false otherwise.
-     */
-    public boolean isUnset() {
-        return this.expressionClassification.isUnset();
-    }
-
-
     /**
      * Accept method for the visitor pattern.
      *
@@ -219,7 +179,6 @@ public abstract class Node {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + this.expressionClassification);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

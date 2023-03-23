@@ -103,7 +103,7 @@ public abstract class Expression extends Node {
     }
 
     /**
-     * Gets the inferred expression classification, for use ...
+     * Gets the inferred expression classification of this node, for use ...
      *
      * @return Expression Classification of the expression.
      */
@@ -112,7 +112,7 @@ public abstract class Expression extends Node {
     }
 
     /**
-     * Sets the inferred expression classification, for use ...
+     * Sets the inferred expression classification of this node, for use ...
      *
      * @param expressionClassification the statically inferred expression classification.
      */
@@ -121,13 +121,23 @@ public abstract class Expression extends Node {
     }
 
     /**
-     * Tells whether this expression is an updating expression or not.
+     * Tells whether this node is an updating expression or not.
      *
      * @return true if yes, false otherwise.
      */
     public boolean isUpdating() {
         return this.expressionClassification.isUpdating();
     }
+
+    /**
+     * Tells whether this node has an unset expression classification.
+     *
+     * @return true if yes, false otherwise.
+     */
+    public boolean isUnset() {
+        return this.expressionClassification.isUnset();
+    }
+
 
     @Override
     public void print(StringBuffer buffer, int indent) {

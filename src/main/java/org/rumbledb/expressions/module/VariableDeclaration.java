@@ -131,7 +131,6 @@ public class VariableDeclaration extends Node {
                 + ") "
         );
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + this.expressionClassification);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
