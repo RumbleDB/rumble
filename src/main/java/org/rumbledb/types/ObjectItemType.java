@@ -356,8 +356,6 @@ public class ObjectItemType implements ItemType {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            System.err.println("Req " + entry.getValue().isRequired());
-            System.err.println("SReq " + superTypeDescriptor.isRequired());
             if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
                 throw new InvalidSchemaException(
                         "Since the field "

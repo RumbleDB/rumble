@@ -39,6 +39,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
 
 public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -428,48 +429,75 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        ItemType resultType = null;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
-        if (!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            if (leftResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            if (
-                leftResult.getResultingType().isNumeric()
-                    && rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
-            ) {
-                leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
-            } else {
-                return NativeClauseContext.NoNativeQuery;
-            }
-        }
-        if (!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            if (rightResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            if (
+        if (
+            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)
+                &&
                 rightResult.getResultingType().isNumeric()
-                    && leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
-            ) {
-                rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
-            } else {
-                return NativeClauseContext.NoNativeQuery;
+        ) {
+            if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+                rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
+            resultType = BuiltinTypesCatalogue.doubleItem;
+        } else if (
+            rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)
+                &&
+                leftResult.getResultingType().isNumeric()
+        ) {
+            if (!leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+                leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
+            }
+            resultType = BuiltinTypesCatalogue.doubleItem;
+        } else if (
+            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)
+                &&
+                rightResult.getResultingType().isNumeric()
+        ) {
+            if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+                rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
+            }
+            resultType = BuiltinTypesCatalogue.floatItem;
+        } else if (
+            rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)
+                &&
+                leftResult.getResultingType().isNumeric()
+        ) {
+            if (!leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+                leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
+            }
+            resultType = BuiltinTypesCatalogue.floatItem;
+        } else if (
+            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.integerItem)
+                &&
+                rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.integerItem)
+        ) {
+            resultType = BuiltinTypesCatalogue.integerItem;
+        } else if (
+            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                &&
+                rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+        ) {
+            resultType = BuiltinTypesCatalogue.decimalItem;
+        } else {
+            return NativeClauseContext.NoNativeQuery;
         }
+
         if (this.isMinus) {
             String resultingQuery = "( "
                 + leftQuery
                 + " - "
                 + rightQuery
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
         } else {
             String resultingQuery = "( "
                 + leftQuery
                 + " + "
                 + rightQuery
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
         }
     }
 }

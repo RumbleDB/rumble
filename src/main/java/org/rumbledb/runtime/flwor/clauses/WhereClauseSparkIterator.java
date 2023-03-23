@@ -20,10 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
@@ -37,6 +35,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
@@ -148,7 +148,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -162,23 +162,22 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        Dataset<Row> dataFrameIfLimit = getDataFrameIfLimit(context);
+        FlworDataFrame dataFrameIfLimit = getDataFrameIfLimit(context);
         if (dataFrameIfLimit != null) {
             return dataFrameIfLimit;
         }
 
-        Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
+        FlworDataFrame dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
         if (dataFrameIfJoinPossible != null) {
             return dataFrameIfJoinPossible;
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
-        StructType inputSchema = df.schema();
+        FlworDataFrame df = this.child.getDataFrame(context);
+        // StructType inputSchema = df.schema();
 
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
+        FlworDataFrame nativeQueryResult = tryNativeQuery(
             df,
             this.expression,
-            inputSchema,
             context
         );
         if (nativeQueryResult != null) {
@@ -186,36 +185,32 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // was not possible, we use let udf
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
+        List<FlworDataFrameColumn> UDFcolumns = df.getColumns(
             this.expression.getVariableDependencies(),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
 
-        df.sparkSession()
-            .udf()
+        df.getUDFRegistration()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumns),
+                new WhereClauseUDF(this.expression, context, UDFcolumns),
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
-        String input = FlworDataFrameUtils.createTempView(df);
-        df = df.sparkSession()
-            .sql(
-                String.format(
-                    "select * from %s where whereClauseUDF(%s) = 'true'",
-                    input,
-                    UDFParameters
-                )
-            );
-        return df;
+        String input = df.createTempView();
+        return df.sql(
+            String.format(
+                "select * from %s where whereClauseUDF(%s) = 'true'",
+                input,
+                UDFParameters
+            )
+        );
     }
 
-    private Dataset<Row> getDataFrameIfLimit(DynamicContext context) {
+    private FlworDataFrame getDataFrameIfLimit(DynamicContext context) {
         if (!(this.child instanceof CountClauseSparkIterator)) {
             return null;
         }
@@ -256,15 +251,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         if (!item.isInteger()) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble detected a LIMIT in a count and where clause."
-        );
-        Dataset<Row> df = this.child.getChildIterator().getDataFrame(context);
-        String input = FlworDataFrameUtils.createTempView(df);
-        return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
+        LogManager.getLogger("WhereClauseSparkIterator")
+            .info(
+                "Rumble detected a LIMIT in a count and where clause."
+            );
+        FlworDataFrame df = this.child.getChildIterator().getDataFrame(context);
+        String input = df.createTempView();
+        return df.sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
     }
 
-    private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
+    private FlworDataFrame getDataFrameIfJoinPossible(DynamicContext context) {
         if (this.evaluationDepthLimit >= 0) {
             return null;
         }
@@ -326,12 +322,11 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
 
-        System.err.println(
-            "[INFO] Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ")."
-        );
+        LogManager.getLogger("WhereClauseSparkIterator")
+            .info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
 
         try {
-            Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+            FlworDataFrame leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
             Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(limit);
             Map<Name, VariableDependency> temporaryInputProjection = new HashMap<>(this.inputTupleProjection);
@@ -339,19 +334,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 temporaryInputProjection.remove(key);
             }
             this.child.setInputAndOutputTupleVariableDependencies(temporaryInputProjection);
-            Dataset<Row> rightTuples = this.child.getDataFrame(context);
+            FlworDataFrame rightTuples = this.child.getDataFrame(context);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
 
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(-1);
 
-            // leftTuples.show();
-            // rightTuples.show();
-
-            Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+            FlworDataFrame result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
-                leftTuples,
-                rightTuples,
+                leftTuples.getDataFrame(),
+                rightTuples.getDataFrame(),
                 this.outputTupleProjection,
                 new ArrayList<Name>(leftVariables),
                 new ArrayList<Name>(rightVariables),
@@ -360,12 +352,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 getMetadata()
             );
-            // result.show();
             return result;
         } catch (Exception e) {
-            System.err.println(
-                "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
-            );
+            LogManager.getLogger("WhereClauseSparkIterator")
+                .warn(
+                    "Join failed. Falling back to regular execution (nevertheless, please let us know!)."
+                );
 
             this.setEvaluationDepthLimit(-1);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
@@ -425,33 +417,44 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
      *
      * @param dataFrame input dataframe for the query
      * @param iterator where filtering expression iterator
-     * @param inputSchema input schema of the dataframe
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the let clause if successful, null otherwise
      */
-    public static Dataset<Row> tryNativeQuery(
-            Dataset<Row> dataFrame,
+    public static FlworDataFrame tryNativeQuery(
+            FlworDataFrame dataFrame,
             RuntimeIterator iterator,
-            StructType inputSchema,
             DynamicContext context
     ) {
-        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, inputSchema, context);
+        NativeClauseContext letContext = new NativeClauseContext(
+                FLWOR_CLAUSES.WHERE,
+                dataFrame.getDataFrame().schema(),
+                context
+        );
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a where clause to a native SQL query."
-        );
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
-        return dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select * from %s where %s",
-                    input,
-                    nativeQuery.getResultingQuery()
-                )
+        String input = FlworDataFrameUtils.createTempView(dataFrame.getDataFrame());
+        LogManager.getLogger("WhereClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a where clause to a native SQL query: "
+                    + String.format(
+                        "select * from %s where %s",
+                        input,
+                        nativeQuery.getResultingQuery()
+                    )
             );
+        return new FlworDataFrame(
+                dataFrame.getDataFrame()
+                    .sparkSession()
+                    .sql(
+                        String.format(
+                            "select * from %s where %s",
+                            input,
+                            nativeQuery.getResultingQuery()
+                        )
+                    )
+        );
     }
 
     public boolean containsClause(FLWOR_CLAUSES kind) {

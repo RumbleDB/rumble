@@ -20,19 +20,29 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.LongStream;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-public class RangeOperationIterator extends LocalRuntimeIterator {
+import sparksoniq.spark.SparkSessionManager;
+
+public class RangeOperationIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -41,6 +51,7 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
     private long left;
     private long right;
     private long index;
+    public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(
             RuntimeIterator leftIterator,
@@ -53,12 +64,13 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
         this.rightIterator = rightiterator;
     }
 
-    public boolean hasNext() {
+    @Override
+    public boolean hasNextLocal() {
         return this.hasNext;
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext) {
             if (this.index == this.right) {
                 this.hasNext = false;
@@ -68,37 +80,60 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
 
-    public void open(DynamicContext context) {
-        super.open(context);
+    /**
+     * Initializes the boundaries of the range.
+     * 
+     * @param context the dynamic context.
+     * @return true if the two bounds are defined, false if one of them is the empty sequence.
+     */
+    public Boolean init(DynamicContext context) {
+        Item left;
+        Item right;
+        try {
+            left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Range expression must have integer input, but instead received more than one item",
+                    getMetadata()
+            );
+        }
+        try {
+            right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Range expression must have integer input, but instead received more than one item",
+                    getMetadata()
+            );
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        if (
+            !(left.isInteger())
+                || !(right.isInteger())
+        ) {
+            throw new UnexpectedTypeException(
+                    "Range expression must have integer input, but instead received "
+                        +
+                        left.getDynamicType()
+                        + " and "
+                        + right.getDynamicType(),
+                    getMetadata()
+            );
+        }
+        try {
+            this.left = left.castToIntegerValue().longValue();
+            this.right = right.castToIntegerValue().longValue();
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
+        return true;
+    }
 
+    @Override
+    public void openLocal() {
         this.index = 0;
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
-        if (this.leftIterator.hasNext() && this.rightIterator.hasNext()) {
-            Item left = this.leftIterator.next();
-            Item right = this.rightIterator.next();
-
-            if (
-                this.leftIterator.hasNext()
-                    || this.rightIterator.hasNext()
-                    || !(left.isInteger())
-                    || !(right.isInteger())
-            ) {
-                throw new UnexpectedTypeException(
-                        "Range expression must have integer input, but instead received "
-                            +
-                            left.getDynamicType()
-                            + " and "
-                            + right.getDynamicType(),
-                        getMetadata()
-                );
-            }
-            try {
-                this.left = left.castToIntegerValue().longValue();
-                this.right = right.castToIntegerValue().longValue();
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+        if (init(this.currentDynamicContextForLocalExecution)) {
             if (this.right < this.left) {
                 this.hasNext = false;
             } else {
@@ -108,9 +143,54 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
         } else {
             this.hasNext = false;
         }
+    }
 
-        this.leftIterator.close();
-        this.rightIterator.close();
+    @Override
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        return null;
+    }
 
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        if (!init(this.currentDynamicContextForLocalExecution)) {
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    BuiltinTypesCatalogue.item
+            );
+        }
+        return createLongInterval(this.left, this.right);
+    }
+
+    /**
+     * Creates a dataframe with a sequence of increasing numbers, of type long.
+     * 
+     * @param left the left bound(inclusive).
+     * @param right the right bound (inclusive).
+     * @return
+     */
+    public static JSoundDataFrame createLongInterval(long left, long right) {
+        List<Long> list = new ArrayList<>();
+        for (long i = left; i <= right; i += PARTITION_SIZE) {
+            list.add(i);
+        }
+        JavaRDD<Long> rdd = SparkSessionManager.getInstance()
+            .getJavaSparkContext()
+            .parallelize(list, list.size());
+        rdd = rdd.flatMap(
+            i -> LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE)).iterator()
+        );
+        return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem);
+    }
+
+    @Override
+    protected void closeLocal() {
+    }
+
+    @Override
+    protected void resetLocal() {
     }
 }

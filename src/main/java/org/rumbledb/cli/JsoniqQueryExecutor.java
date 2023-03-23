@@ -20,6 +20,7 @@
 
 package org.rumbledb.cli;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
@@ -138,10 +139,11 @@ public class JsoniqQueryExecutor implements Logging {
             Map<String, String> options = this.configuration.getOutputFormatOptions();
             for (String key : options.keySet()) {
                 writer.option(key, options.get(key));
-                System.err.println("[INFO] Writing with option " + key + " : " + options.get(key));
+                LogManager.getLogger("JsoniqQueryExecutor")
+                    .info("Writing with option " + key + " : " + options.get(key));
             }
             String format = this.configuration.getOutputFormat();
-            System.err.println("[INFO] Writing to format " + format);
+            LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
             switch (format) {
                 case "json":
                     writer.json(outputPath);
