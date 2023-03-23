@@ -667,69 +667,66 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitDeleteExpression(DeleteExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType mainExprInferredType = expression.getMainExpression().getStaticSequenceType();
-        SequenceType locExprInferredType = expression.getLocatorExpression().getStaticSequenceType();
-
-        basicChecks(
-                Arrays.asList(mainExprInferredType, locExprInferredType),
-                expression.getClass().getSimpleName(),
-                true,
-                true,
-                expression.getMetadata()
-        );
-
-
-        return super.visitDeleteExpression(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
     }
 
     @Override
     public StaticContext visitRenameExpression(RenameExpression expression, StaticContext argument) {
-        return super.visitRenameExpression(expression, argument);
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
     }
 
     @Override
     public StaticContext visitReplaceExpression(ReplaceExpression expression, StaticContext argument) {
-        return super.visitReplaceExpression(expression, argument);
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
     }
 
     @Override
     public StaticContext visitInsertExpression(InsertExpression expression, StaticContext argument) {
-        return super.visitInsertExpression(expression, argument);
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
     }
 
     @Override
     public StaticContext visitAppendExpression(AppendExpression expression, StaticContext argument) {
-        return super.visitAppendExpression(expression, argument);
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
     }
 
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
-        return super.visitTransformExpression(expression, argument);
+        visitDescendants(expression, argument);
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            visit(copyDecl.getSourceExpression(), argument);
+            SequenceType declaredType = copyDecl.getSourceSequenceType();
+            SequenceType inferredType;
+            if (declaredType == null) {
+                inferredType = copyDecl.getSourceExpression().getStaticSequenceType();
+            } else {
+                inferredType = declaredType;
+            }
+            checkAndUpdateVariableStaticType(
+                    declaredType,
+                    inferredType,
+                    argument,
+                    expression.getClass().getSimpleName(),
+                    copyDecl.getVariableName(),
+                    expression.getMetadata()
+            );
+        }
+        visit(expression.getModifyExpression(), argument);
+        visit(expression.getReturnExpression(), argument);
+
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+
+        return argument;
     }
-
-//    @Override
-//    public StaticContext visitCopyDeclaration(CopyDeclaration expression, StaticContext argument) {
-//        visitDescendants(expression, argument);
-//        SequenceType declaredType = expression.getSourceSequenceType();
-//        SequenceType inferredType;
-//        if (declaredType == null) {
-//            inferredType = expression.getSourceExpression().getStaticSequenceType();
-//        } else {
-//            inferredType = declaredType;
-//        }
-//        checkAndUpdateVariableStaticType(
-//                declaredType,
-//                inferredType,
-//                argument,
-//                expression.getClass().getSimpleName(),
-//                expression.getVariableName(),
-//                expression.getMetadata()
-//        );
-//
-//        return argument;
-//    }
-
 
     // endregion
 
