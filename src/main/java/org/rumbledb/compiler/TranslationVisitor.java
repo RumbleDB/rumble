@@ -854,7 +854,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return new ComparisonExpression(
                     mainExpression,
                     childExpression,
-                    ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
+                    kind,
                     createMetadataFromContext(ctx)
             );
         }
