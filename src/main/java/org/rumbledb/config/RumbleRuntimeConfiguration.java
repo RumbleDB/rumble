@@ -395,7 +395,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
 
         if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
-            this.optimizeGeneralComparisonToValueComparison = this.arguments.get("optimize-general-comparison-to-value-comparison").equals("yes");
+            this.optimizeGeneralComparisonToValueComparison = this.arguments.get(
+                "optimize-general-comparison-to-value-comparison"
+            ).equals("yes");
         } else {
             this.optimizeGeneralComparisonToValueComparison = true;
         }
