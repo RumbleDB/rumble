@@ -194,6 +194,22 @@ cos(pi())
 ```
 
 
+### cosh
+JSONiq-specific. Fully implemented
+
+```
+cosh(pi())
+```
+
+
+### sinh
+JSONiq-specific. Fully implemented
+
+```
+sinh(pi())
+```
+
+
 ### tan
 [W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-tan)
 
