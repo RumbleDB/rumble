@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -63,8 +62,11 @@ public class VisitorHelpers {
         }
     }
 
-    private static MainModule applyTypeDependentOptimizations(MainModule module) {
-        List<AbstractNodeVisitor<Node>> optimizers = Collections.singletonList(new ComparisonVisitor());
+    private static MainModule applyTypeDependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
+        List<AbstractNodeVisitor<Node>> optimizers = new ArrayList<>();
+        if (conf.optimizeGeneralComparisonToValueComparison()) {
+            optimizers.add(new ComparisonVisitor());
+        }
         MainModule result = module;
         for (AbstractNodeVisitor<?> optimizer : optimizers) {
             result = (MainModule) optimizer.visit(result, null);
@@ -151,7 +153,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
-            mainModule = applyTypeDependentOptimizations(mainModule);
+            mainModule = applyTypeDependentOptimizations(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -192,7 +194,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
-            mainModule = applyTypeDependentOptimizations(mainModule);
+            mainModule = applyTypeDependentOptimizations(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
