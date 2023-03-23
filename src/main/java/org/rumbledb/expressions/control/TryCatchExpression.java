@@ -33,6 +33,7 @@ import org.rumbledb.expressions.Node;
 public class TryCatchExpression extends Expression {
 
     private final Expression tryExpression;
+
     private final Map<String, Expression> catchExpressions;
     private final Expression catchAllExpression;
 
@@ -54,6 +55,10 @@ public class TryCatchExpression extends Expression {
 
     public List<String> getErrorsCaught() {
         return new ArrayList<>(this.catchExpressions.keySet());
+    }
+
+    public Map<String, Expression> getCatchExpressions() {
+        return this.catchExpressions;
     }
 
     public boolean catches(String error) {
