@@ -23,6 +23,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -368,7 +369,7 @@ public class VisitorHelpers {
         }
 
         ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
-        visitor.visit(module, module.getStaticContext());
+        visitor.visit(module, ExpressionClassification.SIMPLE);
 
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);

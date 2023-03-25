@@ -27,7 +27,6 @@ public class AppendExpression extends Expression {
         }
         this.arrayExpression = arrayExpression;
         this.toAppendExpression = toAppendExpression;
-        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     public Expression getArrayExpression() {

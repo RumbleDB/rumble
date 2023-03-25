@@ -33,7 +33,6 @@ public class DeleteExpression extends Expression {
         this.mainExpression = mainExpression;
         this.locatorExpression = locatorExpression;
         this.locatorKind = locatorKind;
-        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     @Override

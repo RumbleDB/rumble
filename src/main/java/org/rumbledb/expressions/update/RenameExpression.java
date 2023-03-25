@@ -42,7 +42,6 @@ public class RenameExpression extends Expression {
         this.locatorExpression = locatorExpression;
         this.nameExpression = nameExpression;
         this.locatorKind = locatorKind;
-        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     @Override

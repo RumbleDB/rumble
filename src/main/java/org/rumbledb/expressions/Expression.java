@@ -44,7 +44,7 @@ public abstract class Expression extends Node {
 
     protected SequenceType staticSequenceType;
 
-    protected ExpressionClassification expressionClassification = ExpressionClassification.SIMPLE;
+    protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);

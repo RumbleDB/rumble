@@ -31,7 +31,6 @@ public class TransformExpression extends Expression
         this.copyDeclarations = copyDeclarations;
         this.modifyExpression = modifyExpression;
         this.returnExpression = returnExpression;
-        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     public List<CopyDeclaration> getCopyDeclarations() {

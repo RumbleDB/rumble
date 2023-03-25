@@ -25,7 +25,6 @@ public class InsertExpression extends Expression {
         this.mainExpression = mainExpression;
         this.toInsertExpression = toInsertExpression;
         this.positionExpression = positionExpression;
-        this.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
     }
 
     public boolean hasPositionExpression() {
