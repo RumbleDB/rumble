@@ -6,10 +6,12 @@ import org.rumbledb.expressions.*;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.update.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,7 +85,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitOrderByClause(OrderByClause expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visitDescendants(expression, argument);
         if (result.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException("Expression in Order By Clause can't be updating", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("Expressions in Order By Clause can't be updating", expression.getMetadata());
         }
         return result;
     }
@@ -124,9 +126,30 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitTypeSwitchExpression(TypeSwitchExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
-//        boolean allVacuous = expression.getChildren().stream().allMatch(e -> e.)
-        return super.visitTypeSwitchExpression(expression, argument);
+        ExpressionClassification condResult = this.visit(expression.getTestCondition(), argument);
+        if (condResult.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Condition expression in Type Switch expression can't be updating", expression.getMetadata());
+        }
+
+        List<ExpressionClassification> branchResults = new ArrayList<>();
+        branchResults.add(this.visit(expression.getDefaultCase().getReturnExpression(), argument));
+        for (TypeswitchCase branch : expression.getCases()) {
+            branchResults.add(this.visit(branch.getReturnExpression(), argument));
+        }
+        boolean anyUpdating = branchResults.stream().anyMatch(ExpressionClassification::isUpdating);
+        if (anyUpdating && !branchResults.stream().allMatch(e -> e.isUpdating() || e.isVacuous())) {
+            throw new InvalidUpdatingExpressionPositionException("All branch expressions in Type Switch expression must be Simple or Updating/Vacuous", expression.getMetadata());
+        }
+
+        if (anyUpdating) {
+            expression.setExpressionClassification(ExpressionClassification.UPDATING);
+        } else if (branchResults.stream().allMatch(ExpressionClassification::isVacuous)) {
+            expression.setExpressionClassification(ExpressionClassification.VACUOUS);
+        } else {
+            expression.setExpressionClassification(ExpressionClassification.SIMPLE);
+        }
+
+        return expression.getExpressionClassification();
     }
 
     // Endregion
