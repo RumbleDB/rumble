@@ -1,6 +1,7 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
 import org.rumbledb.expressions.*;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -56,31 +57,49 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitForClause(ForClause expression, ExpressionClassification argument) {
-        return super.visitForClause(expression, argument);
+        ExpressionClassification result = this.visit(expression.getExpression(), argument);
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Expression in For Clause can't be updating", expression.getMetadata());
+        }
+        return result;
     }
 
     @Override
     public ExpressionClassification visitLetClause(LetClause expression, ExpressionClassification argument) {
-        return super.visitLetClause(expression, argument);
+        ExpressionClassification result = this.visit(expression.getExpression(), argument);
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Expression in Let Clause can't be updating", expression.getMetadata());
+        }
+        return result;
     }
 
     @Override
     public ExpressionClassification visitGroupByClause(GroupByClause expression, ExpressionClassification argument) {
+        // TODO: Add check for updating?
         return super.visitGroupByClause(expression, argument);
     }
 
     @Override
     public ExpressionClassification visitOrderByClause(OrderByClause expression, ExpressionClassification argument) {
-        return super.visitOrderByClause(expression, argument);
+        ExpressionClassification result = this.visitDescendants(expression, argument);
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Expression in Order By Clause can't be updating", expression.getMetadata());
+        }
+        return result;
     }
 
     @Override
     public ExpressionClassification visitWhereClause(WhereClause expression, ExpressionClassification argument) {
-        return super.visitWhereClause(expression, argument);
+        ExpressionClassification result = this.visitDescendants(expression, argument);
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Expression in Where Clause can't be updating", expression.getMetadata());
+        }
+        return result;
     }
 
     @Override
     public ExpressionClassification visitCountClause(CountClause expression, ExpressionClassification argument) {
+        // TODO: Add check for updating?
         return super.visitCountClause(expression, argument);
     }
 

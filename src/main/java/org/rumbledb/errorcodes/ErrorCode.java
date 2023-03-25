@@ -120,7 +120,10 @@ public enum ErrorCode {
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
     ArithmeticOverflowOrUnderflow("FODT0002"),
-    InvalidTimezoneValue("FODT0003");
+    InvalidTimezoneValue("FODT0003"),
+
+    InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
+    SimpleExpressionMustBeVacuousErrorCode("XUST0002");
 
 
 
