@@ -2,12 +2,14 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
+import org.rumbledb.exceptions.SimpleExpressionMustBeVacuousException;
 import org.rumbledb.expressions.*;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.*;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.update.*;
 
@@ -209,45 +211,138 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitDeleteExpression(DeleteExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
+        ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
+        if (!mainResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Main expression in Delete expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification locatorResult = this.visit(expression.getLocatorExpression(), argument);
+        if (!locatorResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Locator expression in Delete expression must be Simple", expression.getMetadata());
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
     @Override
     public ExpressionClassification visitRenameExpression(RenameExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
+        ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
+        if (!mainResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Main expression in Rename expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification locatorResult = this.visit(expression.getLocatorExpression(), argument);
+        if (!locatorResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Locator expression in Rename expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification replacerResult = this.visit(expression.getNameExpression(), argument);
+        if (!replacerResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Replacer expression in Rename expression must be Simple", expression.getMetadata());
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
     @Override
     public ExpressionClassification visitReplaceExpression(ReplaceExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
+        ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
+        if (!mainResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Main expression in Replace expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification locatorResult = this.visit(expression.getLocatorExpression(), argument);
+        if (!locatorResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Locator expression in Replace expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification replacerResult = this.visit(expression.getReplacerExpression(), argument);
+        if (!replacerResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Replacer expression in Replace expression must be Simple", expression.getMetadata());
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
     @Override
     public ExpressionClassification visitInsertExpression(InsertExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
+        ExpressionClassification mainResult = this.visit(expression.getMainExpression(), argument);
+        if (!mainResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Main expression in Insert expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification toInsertResult = this.visit(expression.getToInsertExpression(), argument);
+        if (!toInsertResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("toInsert expression in Insert expression must be Simple", expression.getMetadata());
+        }
+
+        if (expression.hasPositionExpression()) {
+            ExpressionClassification positionResult = this.visit(expression.getPositionExpression(), argument);
+            if (!positionResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException("Position expression in Insert expression must be Simple", expression.getMetadata());
+            }
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
     @Override
     public ExpressionClassification visitAppendExpression(AppendExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
+        ExpressionClassification arrayResult = this.visit(expression.getArrayExpression(), argument);
+        if (!arrayResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Array expression in Append expression must be Simple", expression.getMetadata());
+        }
+
+        ExpressionClassification toAppendResult = this.visit(expression.getToAppendExpression(), argument);
+        if (!toAppendResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("toAppend expression in Append expression must be Simple", expression.getMetadata());
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
     @Override
     public ExpressionClassification visitTransformExpression(TransformExpression expression, ExpressionClassification argument) {
-        this.visitDescendants(expression, argument);
+
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            ExpressionClassification copyDeclResult = this.visit(copyDecl.getSourceExpression(), argument);
+            if (!copyDeclResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException("Source expression in Copy Declaration must be Simple", expression.getMetadata());
+            }
+        }
+
+        ExpressionClassification modifyResult = this.visit(expression.getModifyExpression(), argument);
+        if (!(modifyResult.isUpdating() || modifyResult.isVacuous())) {
+            throw new SimpleExpressionMustBeVacuousException("Modify expression must be Updating or Vacuous", expression.getMetadata());
+        }
+
+        ExpressionClassification returnResult = this.visit(expression.getReturnExpression(), argument);
+        if (!returnResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Return expression of Transform expression must be Simple", expression.getMetadata());
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }
 
     // Endregion
+
+
+    @Override
+    public ExpressionClassification visitVariableDeclaration(VariableDeclaration expression, ExpressionClassification argument) {
+        if (expression.getExpression() == null) {
+            return argument;
+        }
+
+        ExpressionClassification result = this.visit(expression.getExpression(), argument);
+        if (!result.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException("Initialising expression in variable declaration must be Simple", expression.getMetadata());
+        }
+        return ExpressionClassification.SIMPLE;
+    }
 }

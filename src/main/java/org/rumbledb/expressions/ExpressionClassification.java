@@ -30,7 +30,7 @@ public enum ExpressionClassification {
     }
 
     public boolean isSimple() {
-        return this == ExpressionClassification.SIMPLE;
+        return !isUpdating();
     }
 
     public boolean isVacuous() {
