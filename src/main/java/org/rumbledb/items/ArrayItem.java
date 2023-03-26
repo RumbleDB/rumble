@@ -83,6 +83,14 @@ public class ArrayItem implements Item {
         this.arrayItems.add(value);
     }
 
+    public void putItemAt(Item value, int i) {
+        this.arrayItems.add(i, value);
+    }
+
+    public void putItemsAt(List<Item> values, int i) {
+        this.arrayItems.addAll(i, values);
+    }
+
     @Override
     public boolean isArray() {
         return true;
