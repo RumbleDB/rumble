@@ -1161,8 +1161,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             if (ctx.pos_expr != null) {
                 posExpr = (Expression) this.visitExprSingle(ctx.pos_expr);
             }
-        }
-        else {
+        } else {
             throw new OurBadException("Unrecognised expression to insert in Insert Expression");
         }
         Expression mainExpr = (Expression) this.visitExprSingle(ctx.main_expr);
@@ -1184,7 +1183,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
         UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
         Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
-        return new RenameExpression(mainExpression, locatorExpression, nameExpression, locatorKind, createMetadataFromContext(ctx));
+        return new RenameExpression(
+                mainExpression,
+                locatorExpression,
+                nameExpression,
+                locatorKind,
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
@@ -1193,18 +1198,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
         UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
         Expression newExpression = (Expression) this.visitExprSingle(ctx.replacer_expr);
-        return new ReplaceExpression(mainExpression, locatorExpression, newExpression, locatorKind, createMetadataFromContext(ctx));
+        return new ReplaceExpression(
+                mainExpression,
+                locatorExpression,
+                newExpression,
+                locatorKind,
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
     public Node visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
-        List<CopyDeclaration> copyDecls = ctx.copyDecl().stream()
-                .map(copyDeclCtx -> {
-                    Name var = ((VariableReferenceExpression) this.visitVarRef(copyDeclCtx.var_ref)).getVariableName();
-                    Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
-                    return new CopyDeclaration(var, expr);
-                })
-                .collect(Collectors.toList());
+        List<CopyDeclaration> copyDecls = ctx.copyDecl()
+            .stream()
+            .map(copyDeclCtx -> {
+                Name var = ((VariableReferenceExpression) this.visitVarRef(copyDeclCtx.var_ref)).getVariableName();
+                Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
+                return new CopyDeclaration(var, expr);
+            })
+            .collect(Collectors.toList());
         Expression modifyExpression = (Expression) this.visitExprSingle(ctx.mod_expr);
         Expression returnExpression = (Expression) this.visitExprSingle(ctx.ret_expr);
         return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
@@ -1227,16 +1239,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                         expr,
                         createMetadataFromContext(ctx)
                 );
-            }
-            else if (child instanceof JsoniqParser.ArrayLookupContext) {
+            } else if (child instanceof JsoniqParser.ArrayLookupContext) {
                 Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
                 mainExpression = new ArrayLookupExpression(
                         mainExpression,
                         expr,
                         createMetadataFromContext(ctx)
                 );
-            }
-            else {
+            } else {
                 throw new OurBadException("Unrecognized locator expression found in update expression.");
             }
         }
@@ -1250,8 +1260,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
             return UpdateLocatorKind.ARRAY_LOOKUP;
-        }
-        else {
+        } else {
             throw new OurBadException("Unrecognized locator found in update expression.");
         }
     }
@@ -1263,8 +1272,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
             return (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) locatorExprCtx);
-        }
-        else {
+        } else {
             throw new OurBadException("Unrecognized locator found in update expression.");
         }
     }

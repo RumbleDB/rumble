@@ -712,12 +712,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 inferredType = declaredType;
             }
             checkAndUpdateVariableStaticType(
-                    declaredType,
-                    inferredType,
-                    argument,
-                    expression.getClass().getSimpleName(),
-                    copyDecl.getVariableName(),
-                    expression.getMetadata()
+                declaredType,
+                inferredType,
+                argument,
+                expression.getClass().getSimpleName(),
+                copyDecl.getVariableName(),
+                expression.getMetadata()
             );
         }
         visit(expression.getModifyExpression(), argument);

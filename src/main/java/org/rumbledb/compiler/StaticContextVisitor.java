@@ -336,9 +336,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(copyDecl.getSourceExpression(), argument);
             // first pass.
             argument.addVariable(
-                    copyDecl.getVariableName(),
-                    copyDecl.getSourceSequenceType(),
-                    expression.getMetadata()
+                copyDecl.getVariableName(),
+                copyDecl.getSourceSequenceType(),
+                expression.getMetadata()
             );
         }
 

@@ -15,11 +15,13 @@ public class ReplaceExpression extends Expression {
     private Expression locatorExpression;
     private Expression replacerExpression;
     private UpdateLocatorKind locatorKind;
-    public ReplaceExpression(Expression mainExpression,
-                             Expression locatorExpression,
-                             Expression replacerExpression,
-                             UpdateLocatorKind locatorKind,
-                             ExceptionMetadata metadata
+
+    public ReplaceExpression(
+            Expression mainExpression,
+            Expression locatorExpression,
+            Expression replacerExpression,
+            UpdateLocatorKind locatorKind,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
@@ -71,9 +73,9 @@ public class ReplaceExpression extends Expression {
         indentIt(sb, indent);
         sb.append("replace json value of ");
         this.mainExpression.serializeToJSONiq(sb, 0);
-        this.locatorExpression.serializeToJSONiq(sb,0);
+        this.locatorExpression.serializeToJSONiq(sb, 0);
         sb.append(" with ");
-        this.replacerExpression.serializeToJSONiq(sb,0);
+        this.replacerExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
 }

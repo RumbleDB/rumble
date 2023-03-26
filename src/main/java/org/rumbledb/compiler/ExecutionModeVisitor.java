@@ -441,8 +441,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(copyDecl.getSourceExpression(), null);
             // first pass.
             argument.setVariableStorageMode(
-                    copyDecl.getVariableName(),
-                    expression.getVariableHighestStorageMode(this.visitorConfig)
+                copyDecl.getVariableName(),
+                expression.getVariableHighestStorageMode(this.visitorConfig)
             );
         }
         expression.initHighestExecutionMode(this.visitorConfig);

@@ -4,7 +4,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 
 import java.util.Arrays;
@@ -16,10 +15,11 @@ public class InsertExpression extends Expression {
     private Expression toInsertExpression;
     private Expression positionExpression;
 
-    public InsertExpression(Expression mainExpression,
-                            Expression toInsertExpression,
-                            Expression positionExpression,
-                            ExceptionMetadata metadata
+    public InsertExpression(
+            Expression mainExpression,
+            Expression toInsertExpression,
+            Expression positionExpression,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this.mainExpression = mainExpression;
@@ -48,9 +48,9 @@ public class InsertExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return this.positionExpression == null ?
-                Arrays.asList(mainExpression, toInsertExpression) :
-                Arrays.asList(mainExpression, toInsertExpression, positionExpression);
+        return this.positionExpression == null
+            ? Arrays.asList(mainExpression, toInsertExpression)
+            : Arrays.asList(mainExpression, toInsertExpression, positionExpression);
     }
 
     @Override

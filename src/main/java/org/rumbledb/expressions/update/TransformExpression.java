@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class TransformExpression extends Expression
-{
+public class TransformExpression extends Expression {
 
     private List<CopyDeclaration> copyDeclarations;
     private Expression modifyExpression;
@@ -19,10 +18,11 @@ public class TransformExpression extends Expression
 
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
-    public TransformExpression(List<CopyDeclaration> copyDeclarations,
-                               Expression modifyExpression,
-                               Expression returnExpression,
-                               ExceptionMetadata metadata
+    public TransformExpression(
+            List<CopyDeclaration> copyDeclarations,
+            Expression modifyExpression,
+            Expression returnExpression,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (copyDeclarations == null || copyDeclarations.isEmpty()) {
@@ -38,7 +38,10 @@ public class TransformExpression extends Expression
     }
 
     public List<Expression> getCopySourceExpressions() {
-        return this.copyDeclarations.stream().filter(Objects::nonNull).map(CopyDeclaration::getSourceExpression).collect(Collectors.toList());
+        return this.copyDeclarations.stream()
+            .filter(Objects::nonNull)
+            .map(CopyDeclaration::getSourceExpression)
+            .collect(Collectors.toList());
     }
 
     public Expression getModifyExpression() {
@@ -57,8 +60,8 @@ public class TransformExpression extends Expression
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
-                !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                        && this.variableHighestStorageMode == ExecutionMode.UNSET
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET
         ) {
             throw new OurBadException("A copy variable storage mode is accessed without being set.");
         }
@@ -67,7 +70,10 @@ public class TransformExpression extends Expression
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = this.copyDeclarations.stream().filter(Objects::nonNull).map(CopyDeclaration::getSourceExpression).collect(Collectors.toList());
+        List<Node> result = this.copyDeclarations.stream()
+            .filter(Objects::nonNull)
+            .map(CopyDeclaration::getSourceExpression)
+            .collect(Collectors.toList());
         result.add(this.modifyExpression);
         result.add(this.returnExpression);
         return result;

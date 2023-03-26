@@ -4,7 +4,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 
 import java.util.Arrays;
@@ -15,10 +14,12 @@ public class DeleteExpression extends Expression {
     private Expression mainExpression;
     private Expression locatorExpression;
     private UpdateLocatorKind locatorKind;
-    public DeleteExpression(Expression mainExpression,
-                            Expression locatorExpression,
-                            UpdateLocatorKind locatorKind,
-                            ExceptionMetadata metadata
+
+    public DeleteExpression(
+            Expression mainExpression,
+            Expression locatorExpression,
+            UpdateLocatorKind locatorKind,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
@@ -62,7 +63,7 @@ public class DeleteExpression extends Expression {
         indentIt(sb, indent);
         sb.append("delete json ");
         this.mainExpression.serializeToJSONiq(sb, 0);
-        this.locatorExpression.serializeToJSONiq(sb,0);
+        this.locatorExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
 }

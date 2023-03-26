@@ -4,7 +4,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 
 import java.util.Arrays;
@@ -14,9 +13,11 @@ public class AppendExpression extends Expression {
 
     private Expression arrayExpression;
     private Expression toAppendExpression;
-    public AppendExpression(Expression arrayExpression,
-                            Expression toAppendExpression,
-                            ExceptionMetadata metadata
+
+    public AppendExpression(
+            Expression arrayExpression,
+            Expression toAppendExpression,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (arrayExpression == null) {
@@ -53,7 +54,7 @@ public class AppendExpression extends Expression {
         sb.append("append json ");
         this.toAppendExpression.serializeToJSONiq(sb, 0);
         sb.append(" into ");
-        this.arrayExpression.serializeToJSONiq(sb,0);
+        this.arrayExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
 }

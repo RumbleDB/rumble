@@ -4,7 +4,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 
 import java.util.Arrays;
@@ -16,11 +15,13 @@ public class RenameExpression extends Expression {
     private Expression locatorExpression;
     private Expression nameExpression;
     private UpdateLocatorKind locatorKind;
-    public RenameExpression(Expression mainExpression,
-                               Expression locatorExpression,
-                               Expression nameExpression,
-                               UpdateLocatorKind locatorKind,
-                               ExceptionMetadata metadata
+
+    public RenameExpression(
+            Expression mainExpression,
+            Expression locatorExpression,
+            Expression nameExpression,
+            UpdateLocatorKind locatorKind,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
@@ -75,8 +76,8 @@ public class RenameExpression extends Expression {
         indentIt(sb, indent);
         sb.append("rename json ");
         this.mainExpression.serializeToJSONiq(sb, 0);
-        this.locatorExpression.serializeToJSONiq(sb,0);
-        this.nameExpression.serializeToJSONiq(sb,0);
+        this.locatorExpression.serializeToJSONiq(sb, 0);
+        this.nameExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
 
     }

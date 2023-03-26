@@ -184,7 +184,7 @@ public class VisitorHelpers {
             inferTypes(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
             // TODO populate expression classifications here?
-//            populateExpressionClassifications(mainModule, configuration);
+            // populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
