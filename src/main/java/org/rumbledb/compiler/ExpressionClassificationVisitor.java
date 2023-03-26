@@ -38,7 +38,23 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitCommaExpression(CommaExpression expression, ExpressionClassification argument) {
-        return super.visitCommaExpression(expression, argument);
+        List<ExpressionClassification> results = expression.getChildren().stream().map(n -> this.visit(n, argument)).collect(Collectors.toList());
+        boolean anyUpdating = results.stream().anyMatch(ExpressionClassification::isUpdating);
+        boolean allUpdatingOrVacuous = results.stream().allMatch(e -> e.isVacuous() || e.isUpdating());
+
+        if (anyUpdating && !allUpdatingOrVacuous) {
+            throw new InvalidUpdatingExpressionPositionException("All expressions in Comma separated expressions must only be Simple expressions or only be Updating/Vacuous expressions", expression.getMetadata());
+        }
+
+        if (anyUpdating) {
+            expression.setExpressionClassification(ExpressionClassification.UPDATING);
+        } else if (results.stream().allMatch(ExpressionClassification::isVacuous)) {
+            expression.setExpressionClassification(ExpressionClassification.VACUOUS);
+        } else {
+            expression.setExpressionClassification(ExpressionClassification.SIMPLE);
+        }
+
+        return expression.getExpressionClassification();
     }
 
     // Region FLWOR
@@ -61,7 +77,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitForClause(ForClause expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visit(expression.getExpression(), argument);
         if (result.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException("Expression in For Clause can't be updating", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("Expression in For Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -70,7 +86,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitLetClause(LetClause expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visit(expression.getExpression(), argument);
         if (result.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException("Expression in Let Clause can't be updating", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("Expression in Let Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -85,7 +101,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitOrderByClause(OrderByClause expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visitDescendants(expression, argument);
         if (result.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException("Expressions in Order By Clause can't be updating", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("Expressions in Order By Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -94,7 +110,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitWhereClause(WhereClause expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visitDescendants(expression, argument);
         if (result.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException("Expression in Where Clause can't be updating", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("Expression in Where Clause cannot be updating", expression.getMetadata());
         }
         return result;
     }
@@ -116,7 +132,30 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitConditionalExpression(ConditionalExpression expression, ExpressionClassification argument) {
-        return super.visitConditionalExpression(expression, argument);
+        ExpressionClassification condResult = this.visit(expression.getCondition(), argument);
+        if (condResult.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Condition expression in Conditional expression cannot be updating", expression.getMetadata());
+        }
+
+        ExpressionClassification thenResult = this.visit(expression.getBranch(), argument);
+        ExpressionClassification elseResult = this.visit(expression.getElseBranch(), argument);
+
+        boolean oneUpdating = thenResult.isUpdating() || elseResult.isUpdating();
+        boolean bothUpdatingOrVacuous = (thenResult.isUpdating() || thenResult.isVacuous()) && (elseResult.isVacuous()|| elseResult.isUpdating());
+
+        if (oneUpdating && !bothUpdatingOrVacuous) {
+            throw new InvalidUpdatingExpressionPositionException("Both branch expressions in Conditional expression must only be Simple expressions or only be Updating/Vacuous expressions", expression.getMetadata());
+        }
+
+        if (oneUpdating) {
+            expression.setExpressionClassification(ExpressionClassification.UPDATING);
+        } else if (thenResult.isVacuous() && elseResult.isVacuous()) {
+            expression.setExpressionClassification(ExpressionClassification.VACUOUS);
+        } else {
+            expression.setExpressionClassification(ExpressionClassification.SIMPLE);
+        }
+
+        return expression.getExpressionClassification();
     }
 
     @Override
@@ -128,7 +167,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitTypeSwitchExpression(TypeSwitchExpression expression, ExpressionClassification argument) {
         ExpressionClassification condResult = this.visit(expression.getTestCondition(), argument);
         if (condResult.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException("Condition expression in Type Switch expression can't be updating", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("Condition expression in Type Switch expression cannot be updating", expression.getMetadata());
         }
 
         List<ExpressionClassification> branchResults = new ArrayList<>();
@@ -138,7 +177,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         }
         boolean anyUpdating = branchResults.stream().anyMatch(ExpressionClassification::isUpdating);
         if (anyUpdating && !branchResults.stream().allMatch(e -> e.isUpdating() || e.isVacuous())) {
-            throw new InvalidUpdatingExpressionPositionException("All branch expressions in Type Switch expression must be Simple or Updating/Vacuous", expression.getMetadata());
+            throw new InvalidUpdatingExpressionPositionException("All branch expressions in Type Switch expression must only be Simple expressions or only be Updating/Vacuous expressions", expression.getMetadata());
         }
 
         if (anyUpdating) {
