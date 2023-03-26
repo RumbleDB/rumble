@@ -83,6 +83,12 @@ exprSingle              : flowrExpr
                         | typeSwitchExpr
                         | ifExpr
                         | tryCatchExpr
+                        | insertExpr
+                        | deleteExpr
+                        | renameExpr
+                        | replaceExpr
+                        | transformExpr
+                        | appendExpr
                         | orExpr;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
@@ -234,6 +240,25 @@ inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
                            ('{' (fn_body=expr)? '}');
 
+///////////////////////// Updating Expressions
+
+insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
+                        | Kinsert Kjson pairConstructor ( ',' pairConstructor )* Kinto main_expr=exprSingle;
+
+deleteExpr              : Kdelete Kjson updateLocator;
+
+renameExpr              : Krename Kjson updateLocator Kas name_expr=exprSingle;
+
+replaceExpr             : Kreplace Kjson Kvalue Kof updateLocator Kwith replacer_expr=exprSingle;
+
+transformExpr           : Kcopy Kjson copyDecl ( ',' copyDecl )* Kmodify mod_expr=exprSingle Kreturn ret_expr=exprSingle;
+
+appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
+
+updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+
+copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
+
 ///////////////////////// Types
 
 sequenceType            : '(' ')'
@@ -315,6 +340,18 @@ keyWords                : Kjsoniq
                         | Ktrue
                         | Kfalse
                         | Ktype
+                        | Kinsert
+                        | Kdelete
+                        | Krename
+                        | Kreplace
+                        | Kappend
+                        | Kcopy
+                        | Kmodify
+                        | Kjson
+                        | Kinto
+                        | Kvalue
+                        | Kwith
+                        | Kposition
                         ;
 
 ///////////////////////// literals
@@ -422,6 +459,30 @@ Kcontext                : 'context';
 Kitem                   : 'item';
 
 Kvariable               : 'variable';
+
+Kinsert                 : 'insert';
+
+Kdelete                 : 'delete';
+
+Krename                 : 'rename';
+
+Kreplace                : 'replace';
+
+Kcopy                   : 'copy';
+
+Kmodify                 : 'modify';
+
+Kappend                 : 'append';
+
+Kinto                   : 'into';
+
+Kvalue                  : 'value';
+
+Kjson                   : 'json';
+
+Kwith                   : 'with';
+
+Kposition               : 'position';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 

@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.8
+// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.7
 
 // Java header
 package org.rumbledb.parser;
@@ -493,6 +493,54 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#insertExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInsertExpr(JsoniqParser.InsertExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#deleteExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDeleteExpr(JsoniqParser.DeleteExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#renameExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRenameExpr(JsoniqParser.RenameExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#replaceExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#transformExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTransformExpr(JsoniqParser.TransformExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#appendExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAppendExpr(JsoniqParser.AppendExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#updateLocator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUpdateLocator(JsoniqParser.UpdateLocatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#copyDecl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCopyDecl(JsoniqParser.CopyDeclContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#sequenceType}.
 	 * @param ctx the parse tree

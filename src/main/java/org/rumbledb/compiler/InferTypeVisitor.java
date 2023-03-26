@@ -82,6 +82,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.*;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -656,6 +657,74 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(treatedSequenceType);
+        return argument;
+    }
+
+    // endregion
+
+    // region updating
+
+    @Override
+    public StaticContext visitDeleteExpression(DeleteExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitRenameExpression(RenameExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitReplaceExpression(ReplaceExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInsertExpression(InsertExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAppendExpression(AppendExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            visit(copyDecl.getSourceExpression(), argument);
+            SequenceType declaredType = copyDecl.getSourceSequenceType();
+            SequenceType inferredType;
+            if (declaredType == null) {
+                inferredType = copyDecl.getSourceExpression().getStaticSequenceType();
+            } else {
+                inferredType = declaredType;
+            }
+            checkAndUpdateVariableStaticType(
+                declaredType,
+                inferredType,
+                argument,
+                expression.getClass().getSimpleName(),
+                copyDecl.getVariableName(),
+                expression.getMetadata()
+            );
+        }
+        visit(expression.getModifyExpression(), argument);
+        visit(expression.getReturnExpression(), argument);
+
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+
         return argument;
     }
 
