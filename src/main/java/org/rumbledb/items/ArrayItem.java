@@ -91,6 +91,10 @@ public class ArrayItem implements Item {
         this.arrayItems.addAll(i, values);
     }
 
+    public void removeItemAt(int i) {
+        this.arrayItems.remove(i);
+    }
+
     @Override
     public boolean isArray() {
         return true;

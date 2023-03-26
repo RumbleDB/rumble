@@ -152,6 +152,14 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
     }
 
+    public void removeItemByKey(String s) {
+        if (this.keys.contains(s)) {
+            int index = this.keys.indexOf(s);
+            this.values.remove(index);
+            this.keys.remove(index);
+        }
+    }
+
     @Override
     public boolean isObject() {
         return true;
