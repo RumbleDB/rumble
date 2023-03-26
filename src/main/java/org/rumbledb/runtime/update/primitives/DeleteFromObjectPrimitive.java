@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 
@@ -30,5 +31,10 @@ public class DeleteFromObjectPrimitive extends UpdatePrimitive {
         for (String str : this.namesToRemove.stream().map(StringItem::getStringValue).collect(Collectors.toList())) {
             this.targetObject.removeItemByKey(str);
         }
+    }
+
+    @Override
+    public Item getTarget() {
+        return targetObject;
     }
 }

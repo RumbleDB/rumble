@@ -16,7 +16,7 @@ public class InsertIntoArrayPrimitive extends UpdatePrimitive {
 
     public InsertIntoArrayPrimitive(ArrayItem targetArray, IntItem positionInt, List<Item> sourceSequence) {
         if (positionInt.getIntValue() < 0 || positionInt.getIntValue() >= targetArray.getSize()) {
-            //TODO throw error or do nothing?
+            // TODO throw error or do nothing?
         }
         this.targetArray = targetArray;
         this.positionInt = positionInt;
@@ -38,5 +38,10 @@ public class InsertIntoArrayPrimitive extends UpdatePrimitive {
     @Override
     public void apply() {
         this.targetArray.putItemsAt(this.sourceSequence, this.positionInt.getIntValue());
+    }
+
+    @Override
+    public Item getTarget() {
+        return targetArray;
     }
 }

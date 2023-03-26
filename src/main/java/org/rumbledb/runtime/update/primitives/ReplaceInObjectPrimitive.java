@@ -38,4 +38,9 @@ public class ReplaceInObjectPrimitive extends UpdatePrimitive {
             this.targetObject.putItemByKey(name, this.replacementItem);
         }
     }
+
+    @Override
+    public Item getTarget() {
+        return targetObject;
+    }
 }

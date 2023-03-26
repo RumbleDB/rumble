@@ -42,4 +42,9 @@ public class ReplaceInArrayPrimitive extends UpdatePrimitive {
             }
         }
     }
+
+    @Override
+    public Item getTarget() {
+        return targetArray;
+    }
 }

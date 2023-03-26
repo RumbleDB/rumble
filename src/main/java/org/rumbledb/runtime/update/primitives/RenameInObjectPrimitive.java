@@ -40,4 +40,9 @@ public class RenameInObjectPrimitive extends UpdatePrimitive {
         }
         // TODO: implement replace and rename methods for Array & Object to avoid deletion and append
     }
+
+    @Override
+    public Item getTarget() {
+        return targetObject;
+    }
 }

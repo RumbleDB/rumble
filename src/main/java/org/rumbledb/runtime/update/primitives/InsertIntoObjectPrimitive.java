@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 
 public class InsertIntoObjectPrimitive extends UpdatePrimitive {
@@ -25,5 +26,10 @@ public class InsertIntoObjectPrimitive extends UpdatePrimitive {
         for (String key : this.sourceObject.getKeys()) {
             this.targetObject.putItemByKey(key, this.sourceObject.getItemByKey(key));
         }
+    }
+
+    @Override
+    public Item getTarget() {
+        return targetObject;
     }
 }
