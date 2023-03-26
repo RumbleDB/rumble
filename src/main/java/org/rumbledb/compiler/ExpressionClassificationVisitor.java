@@ -22,8 +22,13 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     @Override
     protected ExpressionClassification defaultAction(Node node, ExpressionClassification argument) {
         ExpressionClassification expressionClassification = this.visitDescendants(node, argument);
+
         if (!(node instanceof Expression)) {
             return expressionClassification;
+        }
+
+        if (expressionClassification.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException("Operand of expression is Updating when it should be Simple or Vacuous", node.getMetadata());
         }
         Expression expression = (Expression) node;
         expression.setExpressionClassification(expressionClassification);
@@ -33,9 +38,15 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     @Override
     public ExpressionClassification visitDescendants(Node node, ExpressionClassification argument) {
         List<ExpressionClassification> expressionClassifications = node.getChildren().stream().map(child -> this.visit(child, argument)).collect(Collectors.toList());
-        return expressionClassifications.stream().anyMatch(ExpressionClassification::isUpdating) ?
+        ExpressionClassification result = expressionClassifications.stream().anyMatch(ExpressionClassification::isUpdating) ?
                 ExpressionClassification.UPDATING :
                 ExpressionClassification.SIMPLE;
+
+//        if (result.isUpdating()) {
+//            throw new InvalidUpdatingExpressionPositionException("Operand of expression is Updating when it should be Simple or Vacuous", node.getMetadata());
+//        }
+
+        return result;
     }
 
     @Override
@@ -125,7 +136,10 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitReturnClause(ReturnClause expression, ExpressionClassification argument) {
-        return super.visitReturnClause(expression, argument);
+        if (expression.getReturnExpr() == null) {
+            return argument;
+        }
+        return this.visit(expression.getReturnExpr(), argument);
     }
 
     // Endregion
