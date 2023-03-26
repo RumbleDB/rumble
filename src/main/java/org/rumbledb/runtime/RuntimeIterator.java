@@ -50,6 +50,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -269,6 +270,20 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
+    }
+
+    public boolean isUpdating() {
+        throw new OurBadException(
+                "Updating classification is not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
+    }
+
+    public PendingUpdateList getPendingUpdateList() {
+        throw new OurBadException(
+                "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
         );
     }
