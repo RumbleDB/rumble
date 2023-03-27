@@ -52,7 +52,7 @@ public class OrderByClause extends Clause {
                 result.add(e.getExpression());
             }
         });
-    	result.add(this.getPreviousClause());
+        result.add(this.getPreviousClause());
         return result;
     }
 

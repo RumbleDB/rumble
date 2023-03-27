@@ -84,6 +84,7 @@ public class LocalRuntimeTests extends AnnotationsTestsBase {
                 }
             )
         );
+
     public LocalRuntimeTests(File testFile) {
         this.testFile = testFile;
     }

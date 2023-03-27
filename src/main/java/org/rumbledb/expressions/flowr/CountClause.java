@@ -43,7 +43,7 @@ public class CountClause extends Clause {
         if (this.countClauseVar != null) {
             result.add(this.countClauseVar);
         }
-    	result.add(this.getPreviousClause());
+        result.add(this.getPreviousClause());
         return result;
     }
 

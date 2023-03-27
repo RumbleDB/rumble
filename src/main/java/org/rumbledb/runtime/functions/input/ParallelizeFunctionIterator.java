@@ -91,28 +91,28 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         return rdd;
     }
 
-	@Override
-	protected void openLocal() {
-		this.children.get(0).open(this.currentDynamicContextForLocalExecution);
-	}
+    @Override
+    protected void openLocal() {
+        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+    }
 
-	@Override
-	protected void closeLocal() {
-		this.children.get(0).close();
-	}
+    @Override
+    protected void closeLocal() {
+        this.children.get(0).close();
+    }
 
-	@Override
-	protected void resetLocal() {
-		this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
-	}
+    @Override
+    protected void resetLocal() {
+        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
+    }
 
-	@Override
-	protected boolean hasNextLocal() {
-		return this.children.get(0).hasNext();
-	}
+    @Override
+    protected boolean hasNextLocal() {
+        return this.children.get(0).hasNext();
+    }
 
-	@Override
-	protected Item nextLocal() {
-		return this.children.get(0).next();
-	}
+    @Override
+    protected Item nextLocal() {
+        return this.children.get(0).next();
+    }
 }
