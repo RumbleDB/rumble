@@ -59,6 +59,7 @@ public class GroupByClause extends Clause {
                 result.add(e.getExpression());
             }
         });
+    	result.add(this.getPreviousClause());
         return result;
     }
 

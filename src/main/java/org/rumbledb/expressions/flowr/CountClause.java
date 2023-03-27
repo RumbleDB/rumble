@@ -20,13 +20,13 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-
-import java.util.Collections;
-import java.util.List;
 
 
 public class CountClause extends Clause {
@@ -39,7 +39,12 @@ public class CountClause extends Clause {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.countClauseVar);
+        List<Node> result = new ArrayList<>();
+        if (this.countClauseVar != null) {
+            result.add(this.countClauseVar);
+        }
+    	result.add(this.getPreviousClause());
+        return result;
     }
 
     @Override
