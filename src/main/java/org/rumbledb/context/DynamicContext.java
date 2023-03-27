@@ -169,15 +169,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return result;
     }
 
-    public static void printVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> deps
-    ) {
-        System.err.println("" + deps.size() + " variable dependencies:");
-        for (Name v : deps.keySet()) {
-            System.err.println("Key: " + v + " Value: " + deps.get(v));
-        }
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
