@@ -394,6 +394,7 @@ public class FlworDataFrameUtils {
             List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude
     ) {
+        inputSchema.printTreeString();
         List<FlworDataFrameColumn> result = new ArrayList<>();
         if (dependencies == null) {
             for (String columnName : inputSchema.fieldNames()) {
@@ -438,6 +439,10 @@ public class FlworDataFrameUtils {
         }
         if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
             return;
+        }
+        System.err.println(variableName.toString());
+        for (String s : columnNames) {
+            System.err.println(" c " + s);
         }
         switch (dependency.getValue()) {
             case FULL: {
