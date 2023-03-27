@@ -440,10 +440,6 @@ public class FlworDataFrameUtils {
         if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
             return;
         }
-        System.err.println(variableName.toString());
-        for (String s : columnNames) {
-            System.err.println(" c " + s);
-        }
         switch (dependency.getValue()) {
             case FULL: {
                 if (columnNames.contains(variableName.toString())) {
