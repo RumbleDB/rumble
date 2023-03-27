@@ -1755,7 +1755,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
-    	expression.getExpression().accept(this, argument);
+        expression.getExpression().accept(this, argument);
         SequenceType declaredType = expression.getActualSequenceType();
         SequenceType inferredType = SequenceType.ITEM_STAR;
         if (declaredType == null) {
