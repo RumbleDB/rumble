@@ -394,7 +394,6 @@ public class FlworDataFrameUtils {
             List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude
     ) {
-        inputSchema.printTreeString();
         List<FlworDataFrameColumn> result = new ArrayList<>();
         if (dependencies == null) {
             for (String columnName : inputSchema.fieldNames()) {
