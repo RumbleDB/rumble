@@ -8,40 +8,28 @@ import java.util.List;
 
 public class InsertIntoArrayPrimitive extends UpdatePrimitive {
 
-    private ArrayItem targetArray;
-
-    private IntItem positionInt;
-
-    private List<Item> sourceSequence;
-
     public InsertIntoArrayPrimitive(ArrayItem targetArray, IntItem positionInt, List<Item> sourceSequence) {
+        super(targetArray, positionInt, sourceSequence);
         if (positionInt.getIntValue() < 0 || positionInt.getIntValue() >= targetArray.getSize()) {
             // TODO throw error or do nothing?
         }
-        this.targetArray = targetArray;
-        this.positionInt = positionInt;
-        this.sourceSequence = sourceSequence;
     }
 
     public ArrayItem getTargetArray() {
-        return targetArray;
+        return (ArrayItem) target.getMainTarget();
     }
 
     public IntItem getPositionInt() {
-        return positionInt;
+        return (IntItem) source.getLocator();
     }
 
     public List<Item> getSourceSequence() {
-        return sourceSequence;
+        return (List<Item>) source.getSourceItems();
     }
 
     @Override
     public void apply() {
-        this.targetArray.putItemsAt(this.sourceSequence, this.positionInt.getIntValue());
+        this.getTargetArray().putItemsAt(this.getSourceSequence(), this.getPositionInt().getIntValue());
     }
 
-    @Override
-    public Item getTarget() {
-        return targetArray;
-    }
 }

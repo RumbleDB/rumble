@@ -6,41 +6,29 @@ import org.rumbledb.items.StringItem;
 
 public class ReplaceInObjectPrimitive extends UpdatePrimitive {
 
-    private ObjectItem targetObject;
-
-    private StringItem targetName;
-
-    private Item replacementItem;
-
     public ReplaceInObjectPrimitive(ObjectItem targetObject, StringItem targetName, Item replacementItem) {
-        this.targetObject = targetObject;
-        this.targetName = targetName;
-        this.replacementItem = replacementItem;
+        super(targetObject, targetName, replacementItem);
     }
 
     public ObjectItem getTargetObject() {
-        return targetObject;
+        return (ObjectItem) target.getMainTarget();
     }
 
     public StringItem getTargetName() {
-        return targetName;
+        return (StringItem) source.getLocator();
     }
 
     public Item getReplacementItem() {
-        return replacementItem;
+        return source.getSingletonSource();
     }
 
     @Override
     public void apply() {
-        String name = this.targetName.getStringValue();
-        if (this.targetObject.getKeys().contains(name)) {
-            this.targetObject.removeItemByKey(name);
-            this.targetObject.putItemByKey(name, this.replacementItem);
+        String name = this.getTargetName().getStringValue();
+        if (this.getTargetObject().getKeys().contains(name)) {
+            this.getTargetObject().removeItemByKey(name);
+            this.getTargetObject().putItemByKey(name, this.getReplacementItem());
         }
     }
 
-    @Override
-    public Item getTarget() {
-        return targetObject;
-    }
 }

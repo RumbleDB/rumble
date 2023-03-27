@@ -5,31 +5,24 @@ import org.rumbledb.items.ObjectItem;
 
 public class InsertIntoObjectPrimitive extends UpdatePrimitive {
 
-    private ObjectItem targetObject;
-    private ObjectItem sourceObject;
 
     public InsertIntoObjectPrimitive(ObjectItem targetObject, ObjectItem sourceObject) {
-        this.targetObject = targetObject;
-        this.sourceObject = sourceObject;
+        super(targetObject, sourceObject);
     }
 
     public ObjectItem getTargetObject() {
-        return targetObject;
+        return (ObjectItem) target.getMainTarget();
     }
 
     public ObjectItem getSourceObject() {
-        return sourceObject;
+        return (ObjectItem) source.getSingletonSource();
     }
 
     @Override
     public void apply() {
-        for (String key : this.sourceObject.getKeys()) {
-            this.targetObject.putItemByKey(key, this.sourceObject.getItemByKey(key));
+        for (String key : this.getSourceObject().getKeys()) {
+            this.getTargetObject().putItemByKey(key, this.getTargetObject().getItemByKey(key));
         }
     }
 
-    @Override
-    public Item getTarget() {
-        return targetObject;
-    }
 }

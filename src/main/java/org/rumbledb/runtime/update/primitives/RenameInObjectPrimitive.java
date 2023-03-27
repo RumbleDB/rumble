@@ -6,43 +6,31 @@ import org.rumbledb.items.StringItem;
 
 public class RenameInObjectPrimitive extends UpdatePrimitive {
 
-    private ObjectItem targetObject;
-
-    private StringItem targetName;
-
-    private StringItem replacementName;
-
     public RenameInObjectPrimitive(ObjectItem targetObject, StringItem targetName, StringItem replacementName) {
-        this.targetObject = targetObject;
-        this.targetName = targetName;
-        this.replacementName = replacementName;
+        super(targetObject, targetName, replacementName);
     }
 
     public ObjectItem getTargetObject() {
-        return targetObject;
+        return (ObjectItem) target.getMainTarget();
     }
 
     public StringItem getTargetName() {
-        return targetName;
+        return (StringItem) source.getLocator();
     }
 
     public StringItem getReplacementName() {
-        return replacementName;
+        return (StringItem) source.getSingletonSource();
     }
 
     @Override
     public void apply() {
-        String name = this.targetName.getStringValue();
-        if (this.targetObject.getKeys().contains(name)) {
-            Item item = this.targetObject.getItemByKey(name);
-            this.targetObject.removeItemByKey(name);
-            this.targetObject.putItemByKey(this.replacementName.getStringValue(), item);
+        String name = this.getTargetName().getStringValue();
+        if (this.getTargetObject().getKeys().contains(name)) {
+            Item item = this.getTargetObject().getItemByKey(name);
+            this.getTargetObject().removeItemByKey(name);
+            this.getTargetObject().putItemByKey(this.getTargetName().getStringValue(), item);
         }
         // TODO: implement replace and rename methods for Array & Object to avoid deletion and append
     }
 
-    @Override
-    public Item getTarget() {
-        return targetObject;
-    }
 }

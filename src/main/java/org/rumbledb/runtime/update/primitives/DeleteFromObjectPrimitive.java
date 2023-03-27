@@ -9,32 +9,23 @@ import java.util.stream.Collectors;
 
 public class DeleteFromObjectPrimitive extends UpdatePrimitive {
 
-    private ObjectItem targetObject;
-
-    private List<StringItem> namesToRemove;
-
     public DeleteFromObjectPrimitive(ObjectItem targetObject, List<StringItem> namesToRemove) {
-        this.targetObject = targetObject;
-        this.namesToRemove = namesToRemove;
+        super(targetObject, namesToRemove);
     }
 
     public ObjectItem getTargetObject() {
-        return targetObject;
+        return (ObjectItem) target.getMainTarget();
     }
 
     public List<StringItem> getNamesToRemove() {
-        return namesToRemove;
+        return (List<StringItem>) source.getSourceItems();
     }
 
     @Override
     public void apply() {
-        for (String str : this.namesToRemove.stream().map(StringItem::getStringValue).collect(Collectors.toList())) {
-            this.targetObject.removeItemByKey(str);
+        for (String str : this.getNamesToRemove().stream().map(StringItem::getStringValue).collect(Collectors.toList())) {
+            this.getTargetObject().removeItemByKey(str);
         }
     }
 
-    @Override
-    public Item getTarget() {
-        return targetObject;
-    }
 }

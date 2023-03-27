@@ -6,45 +6,33 @@ import org.rumbledb.items.IntItem;
 
 public class ReplaceInArrayPrimitive extends UpdatePrimitive {
 
-    private ArrayItem targetArray;
-
-    private IntItem positionInt;
-
-    private Item replacementItem;
-
     public ReplaceInArrayPrimitive(ArrayItem targetArray, IntItem positionInt, Item replacementItem) {
-        this.targetArray = targetArray;
-        this.positionInt = positionInt;
-        this.replacementItem = replacementItem;
+        super(targetArray, positionInt, replacementItem);
     }
 
     public ArrayItem getTargetArray() {
-        return targetArray;
+        return (ArrayItem) target.getMainTarget();
     }
 
     public IntItem getPositionInt() {
-        return positionInt;
+        return (IntItem) source.getLocator();
     }
 
     public Item getReplacementItem() {
-        return replacementItem;
+        return source.getSingletonSource();
     }
 
     @Override
     public void apply() {
-        int index = this.positionInt.getIntValue() - 1;
-        if (index >= 0 || index < this.targetArray.getSize()) {
-            this.targetArray.removeItemAt(index);
-            if (index == this.targetArray.getSize()) {
-                this.targetArray.append(this.replacementItem);
+        int index = this.getPositionInt().getIntValue() - 1;
+        if (index >= 0 || index < this.getTargetArray().getSize()) {
+            this.getTargetArray().removeItemAt(index);
+            if (index == this.getTargetArray().getSize()) {
+                this.getTargetArray().append(this.getReplacementItem());
             } else {
-                this.targetArray.putItemAt(this.replacementItem, index);
+                this.getTargetArray().putItemAt(this.getReplacementItem(), index);
             }
         }
     }
 
-    @Override
-    public Item getTarget() {
-        return targetArray;
-    }
 }
