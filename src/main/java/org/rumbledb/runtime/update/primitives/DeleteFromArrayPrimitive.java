@@ -6,14 +6,14 @@ import org.rumbledb.items.IntItem;
 public class DeleteFromArrayPrimitive extends UpdatePrimitive {
 
     public DeleteFromArrayPrimitive(ArrayItem targetArray, IntItem positionInt) {
-        super(targetArray, positionInt);
+        super(targetArray, positionInt, positionInt);
         if (positionInt.getIntValue() < 0 || positionInt.getIntValue() >= targetArray.getSize()) {
             // TODO throw error or do nothing?
         }
     }
 
     public ArrayItem getTargetArray() {
-        return (ArrayItem) target.getMainTarget();
+        return target.getTargetAsArray();
     }
 
     public IntItem getPositionInt() {

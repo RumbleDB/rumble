@@ -4,6 +4,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.IntItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InsertIntoArrayPrimitive extends UpdatePrimitive {
@@ -16,20 +17,26 @@ public class InsertIntoArrayPrimitive extends UpdatePrimitive {
     }
 
     public ArrayItem getTargetArray() {
-        return (ArrayItem) target.getMainTarget();
+        return target.getTargetAsArray();
     }
 
     public IntItem getPositionInt() {
-        return (IntItem) source.getLocator();
+        return selector.getSelectorAsInt();
     }
 
     public List<Item> getSourceSequence() {
-        return (List<Item>) source.getSourceItems();
+        return source.getSourceAsListOfItems();
     }
 
     @Override
     public void apply() {
         this.getTargetArray().putItemsAt(this.getSourceSequence(), this.getPositionInt().getIntValue());
+    }
+
+    public static UpdatePrimitiveSource mergeSources(UpdatePrimitiveSource first, UpdatePrimitiveSource second) {
+        List<Item> merged = new ArrayList<>(first.getSource());
+        merged.addAll(second.getSource());
+        return new UpdatePrimitiveSource(merged);
     }
 
 }

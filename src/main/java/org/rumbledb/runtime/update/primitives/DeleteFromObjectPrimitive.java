@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 
@@ -14,18 +13,27 @@ public class DeleteFromObjectPrimitive extends UpdatePrimitive {
     }
 
     public ObjectItem getTargetObject() {
-        return (ObjectItem) target.getMainTarget();
+        return target.getTargetAsObject();
     }
 
     public List<StringItem> getNamesToRemove() {
-        return (List<StringItem>) source.getSourceItems();
+        return source.getSourceAsListOfStrings();
     }
 
     @Override
     public void apply() {
-        for (String str : this.getNamesToRemove().stream().map(StringItem::getStringValue).collect(Collectors.toList())) {
+        for (
+            String str : this.getNamesToRemove().stream().map(StringItem::getStringValue).collect(Collectors.toList())
+        ) {
             this.getTargetObject().removeItemByKey(str);
         }
+    }
+
+    public static UpdatePrimitiveSource mergeSources(UpdatePrimitiveSource first, UpdatePrimitiveSource second) {
+        List<StringItem> merged = first.getSourceAsListOfStrings();
+        merged.addAll(second.getSourceAsListOfStrings());
+        merged = merged.stream().distinct().collect(Collectors.toList());
+        return new UpdatePrimitiveSource(merged);
     }
 
 }

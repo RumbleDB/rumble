@@ -1,12 +1,15 @@
 package org.rumbledb.runtime.update.primitives;
 
-import java.io.Serializable;
-
-public interface UpdatePrimitiveInterface extends Serializable {
+public interface UpdatePrimitiveInterface {
 
     void apply();
 
+    boolean hasSelector();
+
     UpdatePrimitiveTarget getTarget();
 
+    UpdatePrimitiveSelector getSelector();
+
     UpdatePrimitiveSource getSource();
+
 }

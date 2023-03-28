@@ -1,57 +1,50 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.StringItem;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class UpdatePrimitiveSource {
 
-    private List<? extends Item> sourceItems;
+    private List<? extends Item> source;
 
-    private Item locator;
-
-    public UpdatePrimitiveSource(List<? extends Item> sourceItems, Item locator) {
-        this.sourceItems = sourceItems;
-        this.locator = locator;
+    public UpdatePrimitiveSource(List<? extends Item> source) {
+        this.source = source;
     }
 
-    public UpdatePrimitiveSource(Item sourceItem, Item locator) {
-        this(Collections.singletonList(sourceItem), locator);
+    public UpdatePrimitiveSource(Item source) {
+        this.source = Collections.singletonList(source);
     }
 
-    public UpdatePrimitiveSource(List<? extends Item> sourceItems) {
-        this(sourceItems, null);
-    }
-
-    public UpdatePrimitiveSource(Item sourceItem) {
-        this(sourceItem, null);
-    }
-
-    public boolean isSingleton() {
-        return this.sourceItems.size() == 1;
+    public List<? extends Item> getSource() {
+        return source;
     }
 
     public Item getSingletonSource() {
-        if (!this.isSingleton()) {
-            throw new OurBadException("Invalid call to getSingletonSource when source of UpdatePrimitiveSource is a list");
+        if (this.isSingleton()) {
+            return this.source.get(0);
         }
-        return this.sourceItems.get(0);
+        // TODO: Find out if error
+        return null;
     }
 
-    public List<? extends Item> getSourceItems() {
-        return sourceItems;
-    }
-    public Item getLocator() {
-        if (!this.hasLocator()) {
-            throw new OurBadException("Invalid call to getLocator for UpdatePrimitiveTarget without locator");
-        }
-        return locator;
+    public boolean isSingleton() {
+        return this.source.size() == 1;
     }
 
-    public boolean hasLocator() {
-        return this.locator != null;
+    public List<StringItem> getSourceAsListOfStrings() {
+        List<StringItem> result = new ArrayList<>();
+        for (Item item : this.source) {
+            result.add((StringItem) item);
+        }
+        return result;
+    }
+
+    public List<Item> getSourceAsListOfItems() {
+        return new ArrayList<>(this.source);
     }
 
 }

@@ -11,11 +11,11 @@ public class ReplaceInObjectPrimitive extends UpdatePrimitive {
     }
 
     public ObjectItem getTargetObject() {
-        return (ObjectItem) target.getMainTarget();
+        return target.getTargetAsObject();
     }
 
     public StringItem getTargetName() {
-        return (StringItem) source.getLocator();
+        return selector.getSelectorAsString();
     }
 
     public Item getReplacementItem() {

@@ -11,11 +11,11 @@ public class ReplaceInArrayPrimitive extends UpdatePrimitive {
     }
 
     public ArrayItem getTargetArray() {
-        return (ArrayItem) target.getMainTarget();
+        return target.getTargetAsArray();
     }
 
     public IntItem getPositionInt() {
-        return (IntItem) source.getLocator();
+        return selector.getSelectorAsInt();
     }
 
     public Item getReplacementItem() {
