@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
+
 public enum UpdatePrimitiveEnum {
 
     DELETE_FROM_ARRAY,
@@ -9,6 +10,5 @@ public enum UpdatePrimitiveEnum {
     REPLACE_IN_ARRAY,
     REPLACE_IN_OBJECT,
     RENAME_IN_OBJECT;
-
 
 }
