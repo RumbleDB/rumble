@@ -290,7 +290,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One),
             clause.getMetadata()
         );
-        this.visit(clause.getCountVariable(), argument);
         this.visit(clause.getNextClause(), result);
         return argument;
     }
