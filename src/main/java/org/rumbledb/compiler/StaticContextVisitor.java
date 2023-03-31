@@ -90,10 +90,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             ((Expression) node).setStaticContext(argument);
         }
         if (node instanceof Clause) {
-            System.err.println("Visiting ");
-            System.err.println(node);
-            System.err.println("Context: ");
-            System.err.println(argument);
             ((Clause) node).setStaticContext(argument);
         }
         return node.accept(this, argument);
