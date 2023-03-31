@@ -21,7 +21,6 @@
 package org.rumbledb.runtime;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 
 import java.util.List;
@@ -36,9 +35,6 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.DATAFRAME) {
-            throw new OurBadException("DF runtime iterators support only dataframe execution mode");
-        }
     }
 
     @Override

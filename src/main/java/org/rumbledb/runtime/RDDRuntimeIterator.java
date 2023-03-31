@@ -39,13 +39,15 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.RDD && executionMode != ExecutionMode.DATAFRAME) {
-            throw new OurBadException("RDD runtime iterators support either RDD or DF execution modes");
-        }
     }
 
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
+    protected boolean implementsLocal() {
+        return false;
     }
 
     @Override
