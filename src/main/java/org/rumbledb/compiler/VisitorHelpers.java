@@ -314,7 +314,6 @@ public class VisitorHelpers {
             printTree(module, conf);
         }
         if (conf.localExecutionOnly()) {
-            System.err.println("[Local execution only]");
             LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
             visitor.visit(module, module.getStaticContext());
             if (conf.isPrintIteratorTree()) {
