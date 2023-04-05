@@ -138,7 +138,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     @Override
     public Node visitCountClause(CountClause expression, Node argument) {
         return new CountClause(
-                (VariableReferenceExpression) visit(expression.getCountVariable(), argument),
+                expression.getCountVariableName(),
                 expression.getMetadata()
         );
     }

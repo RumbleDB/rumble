@@ -81,7 +81,7 @@ public class ProjectionPushdownDetectionVisitor
 
     @Override
     public ReferenceMap visitCountClause(CountClause expression, ReferenceMap argument) {
-        argument.drop(expression.getCountVariable().getVariableName());
+        argument.drop(expression.getCountVariableName());
         return argument;
     }
 

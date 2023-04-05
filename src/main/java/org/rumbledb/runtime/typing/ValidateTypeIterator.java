@@ -357,7 +357,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata, boolean isValidate) {
         if (!isValidate) {
-            return item;
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         }
         if (itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
