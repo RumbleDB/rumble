@@ -22,6 +22,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.TypeMappings;
@@ -41,15 +42,19 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     private ItemType itemType;
 
+    private boolean isValidate;
+
     public ValidateTypeIterator(
             RuntimeIterator instance,
             ItemType itemType,
+            boolean isValidate,
             ExecutionMode executionMode,
             RumbleRuntimeConfiguration configuration,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(instance), executionMode, iteratorMetadata);
         this.itemType = itemType;
+        this.isValidate = isValidate;
     }
 
     @Override
@@ -74,16 +79,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType, context);
+                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType, context, this.isValidate);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType, context);
+                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context);
+            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate);
             return jdf;
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
@@ -98,7 +103,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     public static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
             ItemType itemType,
-            DynamicContext context
+            DynamicContext context,
+            boolean isValidate
     ) {
         if (!itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
             throw new OurBadException(
@@ -112,7 +118,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
                 @Override
                 public Row call(Item item) {
-                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
+                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate);
                     return convertLocalItemToRow(item, schema, context);
                 }
             }
@@ -183,7 +189,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     public static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
             ItemType itemType,
-            DynamicContext context
+            DynamicContext context,
+            boolean isValidate
     ) {
         if (items.size() == 0) {
             return new JSoundDataFrame(
@@ -194,7 +201,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = convertToDataFrameSchema(itemType);
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
+            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate);
             Row row = convertLocalItemToRow(item, schema, context);
             rows.add(row);
         }
@@ -319,7 +326,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
-        return childrenItems.map(x -> validate(x, this.itemType, getMetadata()));
+        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate));
     }
 
     @Override
@@ -344,11 +351,14 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        Item i = validate(this.children.get(0).next(), this.itemType, getMetadata());
+        Item i = validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate);
         return i;
     }
 
-    private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata) {
+    private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata, boolean isValidate) {
+        if (!isValidate) {
+            return item;
+        }
         if (itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
                 throw new InvalidInstanceException(
@@ -378,7 +388,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, itemType.getArrayContentFacet(), metadata));
+                members.add(validate(member, itemType.getArrayContentFacet(), metadata, true));
             }
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
@@ -414,7 +424,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             for (String key : item.getKeys()) {
                 if (facets.containsKey(key)) {
                     keys.add(key);
-                    values.add(validate(item.getItemByKey(key), facets.get(key).getType(), metadata));
+                    values.add(validate(item.getItemByKey(key), facets.get(key).getType(), metadata, true));
                 } else {
                     if (itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
@@ -461,5 +471,13 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.isValidate) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return this.children.get(0).generateNativeQuery(nativeClauseContext);
     }
 }
