@@ -45,19 +45,25 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return ValidateTypeIterator.convertRDDToValidDataFrame(inputDataAsRDDOfItems, schemaType, context);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    inputDataAsRDDOfItems,
+                    schemaType,
+                    context,
+                    true
+                );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, schemaType, context);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, schemaType, context, true);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
                 schemaType,
-                context
+                context,
+                true
             );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
