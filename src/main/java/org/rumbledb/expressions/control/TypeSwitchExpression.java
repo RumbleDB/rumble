@@ -1,10 +1,8 @@
 package org.rumbledb.expressions.control;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -94,20 +92,6 @@ public class TypeSwitchExpression extends Expression {
             sb.append("return (");
             this.defaultCase.getReturnExpression().serializeToJSONiq(sb, 0);
             sb.append(")\n");
-        }
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.defaultCase.getReturnExpression().getHighestExecutionMode(visitorConfig);
-
-        if (this.highestExecutionMode == ExecutionMode.RDD) {
-            for (TypeswitchCase c : this.cases) {
-                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
-                    this.highestExecutionMode = ExecutionMode.LOCAL;
-                    break;
-                }
-            }
         }
     }
 
