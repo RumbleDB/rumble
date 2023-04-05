@@ -18,27 +18,29 @@
  *
  */
 
-package org.rumbledb.runtime;
+package org.rumbledb.compiler;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.Node;
 
-import java.util.List;
+/**
+ * Static context visitor implements a multi-pass algorithm that enables function hoisting
+ */
+public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
+    LocalExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {
+    }
 
-    private static final long serialVersionUID = 1L;
-
-    protected DataFrameRuntimeIterator(
-            List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(children, executionMode, iteratorMetadata);
+    void setVisitorConfig(VisitorConfig visitorConfig) {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
+    protected StaticContext defaultAction(Node node, StaticContext argument) {
+        visitDescendants(node, argument);
+        node.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
     }
 }

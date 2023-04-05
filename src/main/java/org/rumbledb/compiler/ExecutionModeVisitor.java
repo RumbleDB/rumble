@@ -27,11 +27,15 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.LogManager;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
@@ -228,14 +232,95 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
         }
-        expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                expression.getFunctionIdentifier()
+            );
+            expression.setHighestExecutionMode(
+                getBuiltInFunctionExecutionMode(
+                    builtinFunction,
+                    expression.getArguments().size() > 0
+                        ? expression.getArguments().get(0).getHighestExecutionMode(this.visitorConfig)
+                        : null,
+                    this.visitorConfig
+                )
+            );
+        } else {
+            if (
+                expression.getStaticContext()
+                    .getUserDefinedFunctionsExecutionModes()
+                    .exists(expression.getFunctionIdentifier())
+            ) {
+                if (expression.isPartialApplication()) {
+                    expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                } else {
+                    expression.setHighestExecutionMode(
+                        expression.getStaticContext()
+                            .getUserDefinedFunctionsExecutionModes()
+                            .getExecutionMode(expression.getFunctionIdentifier(), expression.getMetadata())
+                    );
+                }
+            } else {
+
+                if (!this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+                    throw new UnknownFunctionCallException(
+                            expression.getFunctionIdentifier().getName(),
+                            expression.getFunctionIdentifier().getArity(),
+                            expression.getMetadata()
+                    );
+                }
+            }
+        }
         return argument;
     }
+
+    private static ExecutionMode getBuiltInFunctionExecutionMode(
+            BuiltinFunction builtinFunction,
+            ExecutionMode firstMode,
+            VisitorConfig visitorConfig
+    ) {
+        BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
+            return ExecutionMode.LOCAL;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.RDD) {
+            return ExecutionMode.RDD;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.DATAFRAME) {
+            return ExecutionMode.DATAFRAME;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
+            ExecutionMode firstArgumentExecutionMode = firstMode;
+            if (firstArgumentExecutionMode.isDataFrame()) {
+                return ExecutionMode.DATAFRAME;
+            }
+            if (firstArgumentExecutionMode.isRDDOrDataFrame()) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        if (
+            functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
+        ) {
+            ExecutionMode firstArgumentExecutionMode = firstMode;
+            if (
+                firstArgumentExecutionMode.isRDDOrDataFrame()
+                    && !firstArgumentExecutionMode.isDataFrame()
+            ) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        throw new OurBadException(
+                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
+        );
+    }
+
     // endregion
 
     @Override
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
-        visitDescendants(expression, expression.getStaticContext());
+        expression.getReturnExpr().accept(this, expression.getStaticContext());
         if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
             if (
                 expression.getReturnExpr()
@@ -373,10 +458,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
         expression.initHighestExecutionMode(this.visitorConfig);
         argument.setVariableStorageMode(
-            expression.getCountVariable().getVariableName(),
+            expression.getCountVariableName(),
             ExecutionMode.LOCAL
         );
-        this.visit(expression.getCountVariable(), expression.getCountVariable().getStaticContext());
         return argument;
     }
 
