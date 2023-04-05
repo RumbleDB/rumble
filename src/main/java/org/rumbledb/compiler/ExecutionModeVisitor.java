@@ -40,6 +40,8 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.control.SwitchCase;
+import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -497,11 +499,65 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             this.visit(expression.getDefaultCase().getReturnExpression(), null);
         }
-        expression.initHighestExecutionMode(this.visitorConfig);
-        // return the given context unchanged as defined variables go out of scope
+
+        ExecutionMode defaultMode = expression.getDefaultCase()
+            .getReturnExpression()
+            .getHighestExecutionMode(visitorConfig);
+
+        if (defaultMode.isUnset()) {
+            expression.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+
+        for (TypeswitchCase c : expression.getCases()) {
+            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
+            if (mode.isUnset()) {
+                expression.setHighestExecutionMode(ExecutionMode.UNSET);
+                return argument;
+            }
+            if (defaultMode.isRDD() && mode.isLocal()) {
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            }
+            if (defaultMode.isDataFrame() && !mode.isDataFrame()) {
+                expression.setHighestExecutionMode(mode);
+            }
+        }
+
+        expression.setHighestExecutionMode(defaultMode);
         return argument;
     }
     // endregion
+
+    @Override
+    public StaticContext visitSwitchExpression(SwitchExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        ExecutionMode defaultMode = expression.getDefaultExpression().getHighestExecutionMode(visitorConfig);
+
+        if (defaultMode.isUnset()) {
+            expression.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+
+        for (SwitchCase c : expression.getCases()) {
+            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
+            if (mode.isUnset()) {
+                expression.setHighestExecutionMode(ExecutionMode.UNSET);
+                return argument;
+            }
+            if (defaultMode.isRDD() && mode.isLocal()) {
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            }
+            if (defaultMode.isDataFrame() && !mode.isDataFrame()) {
+                expression.setHighestExecutionMode(mode);
+            }
+        }
+
+        expression.setHighestExecutionMode(defaultMode);
+        return argument;
+    }
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
