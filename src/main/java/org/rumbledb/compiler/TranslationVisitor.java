@@ -795,7 +795,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitCountClause(JsoniqParser.CountClauseContext ctx) {
         VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarRef(ctx.varRef());
-        return new CountClause(child, createMetadataFromContext(ctx));
+        return new CountClause(child.getVariableName(), createMetadataFromContext(ctx));
     }
     // endregion
 

@@ -179,7 +179,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
     public Node visitCountClause(CountClause expression, Node argument) {
         Clause result = new CountClause(
-                (VariableReferenceExpression) visit(expression.getCountVariable(), argument),
+                expression.getCountVariableName(),
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());

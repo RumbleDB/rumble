@@ -316,7 +316,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof CountClause) {
             return new CountClauseSparkIterator(
                     previousIterator,
-                    this.visit(((CountClause) clause).getCountVariable(), argument),
+                    ((CountClause) clause).getCountVariableName(),
                     clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );

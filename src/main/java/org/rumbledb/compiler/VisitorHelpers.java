@@ -323,9 +323,21 @@ public class VisitorHelpers {
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
+        if (conf.localExecutionOnly()) {
+            LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
+            visitor.visit(module, module.getStaticContext());
+            if (conf.isPrintIteratorTree()) {
+                printTree(module, conf);
+            }
+            if (module.numberOfUnsetExecutionModes() > 0) {
+                System.err.println(
+                    "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
+                );
+            }
+            return;
+        }
         ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf);
         visitor.visit(module, module.getStaticContext());
-
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = module.numberOfUnsetExecutionModes();
@@ -369,7 +381,6 @@ public class VisitorHelpers {
                 "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );
         }
-
     }
 
     private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {

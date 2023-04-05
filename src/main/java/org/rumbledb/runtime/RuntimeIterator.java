@@ -247,9 +247,23 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public boolean isRDDOrDataFrame() {
         if (this.highestExecutionMode == ExecutionMode.UNSET) {
-            throw new OurBadException("isRDD field in iterator without execution mode being set.");
+            throw new OurBadException("isRDDorDataFrame field in iterator without execution mode being set.");
         }
         return this.highestExecutionMode.isRDDOrDataFrame();
+    }
+
+    public boolean isRDD() {
+        if (this.highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("isRDD field in iterator without execution mode being set.");
+        }
+        return this.highestExecutionMode.isRDD();
+    }
+
+    public boolean isLocal() {
+        if (this.highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("isLocal field in iterator without execution mode being set.");
+        }
+        return this.highestExecutionMode.isLocal();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
