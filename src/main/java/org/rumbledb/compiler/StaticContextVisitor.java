@@ -286,8 +286,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-            clause.getCountVariable().getVariableName(),
-            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One),
+            clause.getCountVariableName(),
+            SequenceType.INTEGER,
             clause.getMetadata()
         );
         this.visit(clause.getNextClause(), result);

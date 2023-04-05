@@ -20,31 +20,26 @@
 
 package org.rumbledb.expressions.flowr;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 
 
 public class CountClause extends Clause {
-    private VariableReferenceExpression countClauseVar;
+    private Name variableName;
 
-    public CountClause(VariableReferenceExpression countClauseVar, ExceptionMetadata metadata) {
+    public CountClause(Name variableName, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
-        this.countClauseVar = countClauseVar;
+        this.variableName = variableName;
     }
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        if (this.countClauseVar != null) {
-            result.add(this.countClauseVar);
-        }
-        result.add(this.getPreviousClause());
-        return result;
+        return Collections.singletonList(this.getPreviousClause());
     }
 
     @Override
@@ -52,8 +47,8 @@ public class CountClause extends Clause {
         return visitor.visitCountClause(this, argument);
     }
 
-    public VariableReferenceExpression getCountVariable() {
-        return this.countClauseVar;
+    public Name getCountVariableName() {
+        return this.variableName;
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -61,7 +56,7 @@ public class CountClause extends Clause {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.countClauseVar) + ") ");
+        buffer.append(" (" + (this.variableName) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
@@ -75,8 +70,7 @@ public class CountClause extends Clause {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("count ");
-        this.countClauseVar.serializeToJSONiq(sb, 0);
+        sb.append("count $" + this.variableName);
     }
 
 }

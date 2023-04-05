@@ -458,10 +458,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
         expression.initHighestExecutionMode(this.visitorConfig);
         argument.setVariableStorageMode(
-            expression.getCountVariable().getVariableName(),
+            expression.getCountVariableName(),
             ExecutionMode.LOCAL
         );
-        this.visit(expression.getCountVariable(), expression.getCountVariable().getStaticContext());
         return argument;
     }
 

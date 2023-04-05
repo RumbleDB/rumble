@@ -39,6 +39,7 @@ import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -1960,6 +1961,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
+        checkAndUpdateVariableStaticType(
+            null,
+            SequenceType.INTEGER,
+            clause.getNextClause().getStaticContext(),
+            clause.getClass().getSimpleName(),
+            clause.getCountVariableName(),
+            clause.getMetadata()
+        );
         return argument;
     }
 
