@@ -1,13 +1,14 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 
-public class InsertIntoObjectPrimitive extends UpdatePrimitive {
+public class InsertIntoObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
 
 
-    public InsertIntoObjectPrimitive(ObjectItem targetObject, ObjectItem sourceObject) {
+    public InsertIntoObjectPrimitive(Item targetObject, Item sourceObject) {
         super(targetObject, sourceObject);
     }
 
@@ -44,4 +45,8 @@ public class InsertIntoObjectPrimitive extends UpdatePrimitive {
         return new UpdatePrimitiveSource(merged);
     }
 
+    @Override
+    public boolean isInsertObject() {
+        return true;
+    }
 }

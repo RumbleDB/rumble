@@ -4,9 +4,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 
-public class ReplaceInObjectPrimitive extends UpdatePrimitive {
+public class ReplaceInObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
 
-    public ReplaceInObjectPrimitive(ObjectItem targetObject, StringItem targetName, Item replacementItem) {
+    public ReplaceInObjectPrimitive(Item targetObject, Item targetName, Item replacementItem) {
         super(targetObject, targetName, replacementItem);
     }
 
@@ -31,4 +31,8 @@ public class ReplaceInObjectPrimitive extends UpdatePrimitive {
         }
     }
 
+    @Override
+    public boolean isReplaceObject() {
+        return true;
+    }
 }

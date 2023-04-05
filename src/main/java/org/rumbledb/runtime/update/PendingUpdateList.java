@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.ObjectItem;
@@ -11,6 +12,12 @@ import java.util.*;
 public class PendingUpdateList {
 
     private List<UpdatePrimitive> updatePrimitives;
+
+    private Map<UpdatePrimitiveTarget, UpdatePrimitiveSource> insertObjMap;
+    private Map<UpdatePrimitiveTarget, Map<UpdatePrimitiveSelector, UpdatePrimitiveSource>> insertArrayMap;
+    private Map<UpdatePrimitiveTarget, Map<UpdatePrimitiveSelector, UpdatePrimitiveSource>> delReplaceObjMap;
+    private Map<UpdatePrimitiveTarget, Map<UpdatePrimitiveSelector, UpdatePrimitiveSource>> delReplaceArrayMap;
+    private Map<UpdatePrimitiveTarget, Map<UpdatePrimitiveSelector, UpdatePrimitiveSource>> renameObjMap;
 
     public PendingUpdateList() {
         this.updatePrimitives = new ArrayList<>();
@@ -45,175 +52,6 @@ public class PendingUpdateList {
             up.apply();
         }
     }
-
-    // public static PendingUpdateList mergeUpdates(PendingUpdateList pul1, PendingUpdateList pul2) {
-    // PendingUpdateList result = new PendingUpdateList();
-    // HashMap<Item, List<UpdatePrimitive>> itemToUpdateMap = new HashMap<>();
-    // List<UpdatePrimitive> tempUps;
-    //
-    // for (UpdatePrimitive up : pul1.getUpdatePrimitives()) {
-    // result.addUpdatePrimitive(up);
-    // Item target = up.getTarget();
-    //
-    // if (!itemToUpdateMap.containsKey(target)) {
-    // tempUps = new ArrayList<>();
-    // } else {
-    // tempUps = itemToUpdateMap.get(target);
-    // }
-    // tempUps.add(up);
-    // itemToUpdateMap.put(target, tempUps);
-    // }
-    //
-    // for (UpdatePrimitive up : pul2.getUpdatePrimitives()) {
-    // result.addUpdatePrimitive(up);
-    // Item target = up.getTarget();
-    //
-    // if (!itemToUpdateMap.containsKey(target)) {
-    // tempUps = new ArrayList<>();
-    // } else {
-    // tempUps = itemToUpdateMap.get(target);
-    // }
-    // tempUps.add(up);
-    // itemToUpdateMap.put(target, tempUps);
-    // }
-    //
-    // for (Item target : itemToUpdateMap.keySet()) {
-    // List<UpdatePrimitive> targetUpdates = itemToUpdateMap.get(target);
-    //
-    // // object
-    // if (target.isObject()) {
-    // boolean hasDeletePrimitives = targetUpdates.stream()
-    // .anyMatch(u -> u instanceof DeleteFromObjectPrimitive);
-    // boolean hasInsertPrimitives = targetUpdates.stream()
-    // .anyMatch(u -> u instanceof InsertIntoObjectPrimitive);
-    //
-    // if (hasInsertPrimitives) {
-    // ObjectItem sourceObject =
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof InsertIntoObjectPrimitive)
-    // .map(u -> ((InsertIntoObjectPrimitive) u).getSourceObject())
-    // .reduce(new ObjectItem(), ObjectItem::mergeWith);
-    // result.addUpdatePrimitive(new InsertIntoObjectPrimitive((ObjectItem) target, sourceObject));
-    // }
-    //
-    // if (hasDeletePrimitives) {
-    // List<StringItem> names =
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof DeleteFromObjectPrimitive)
-    // .flatMap(u -> ((DeleteFromObjectPrimitive) u).getNamesToRemove().stream())
-    // .distinct()
-    // .collect(Collectors.toList());
-    // result.addUpdatePrimitive(new DeleteFromObjectPrimitive((ObjectItem) target, names));
-    // continue;
-    // }
-    //
-    // List<UpdatePrimitive> renamePrimitives =
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof RenameInObjectPrimitive)
-    // .collect(Collectors.toList());
-    // List<StringItem> uniqueRenameSelectors =
-    // renamePrimitives
-    // .stream()
-    // .map(u -> ((RenameInObjectPrimitive) u).getTargetName())
-    // .distinct()
-    // .collect(Collectors.toList());
-    //
-    // if (renamePrimitives.size() != uniqueRenameSelectors.size()) {
-    // // TODO Throw rename on same key error jerr:JNUP0010.
-    // }
-    //
-    // List<UpdatePrimitive> replacePrimitives =
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof ReplaceInObjectPrimitive)
-    // .collect(Collectors.toList());
-    // List<StringItem> uniqueReplaceSelectors =
-    // replacePrimitives
-    // .stream()
-    // .map(u -> ((ReplaceInObjectPrimitive) u).getTargetName())
-    // .distinct()
-    // .collect(Collectors.toList());
-    //
-    // if (replacePrimitives.size() != uniqueReplaceSelectors.size()) {
-    // // TODO Throw replace on same key error jerr:JNUP0009.
-    // }
-    //
-    // }
-    //
-    // // array
-    // if (target.isArray()) {
-    // boolean hasDeletePrimitives = targetUpdates.stream()
-    // .anyMatch(u -> u instanceof DeleteFromArrayPrimitive);
-    // boolean hasInsertPrimitives = targetUpdates.stream()
-    // .anyMatch(u -> u instanceof InsertIntoArrayPrimitive);
-    //
-    // if (hasInsertPrimitives) {
-    // HashMap<IntItem, List<Item>> locatorToInsertsMap = new HashMap<>();
-    //
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof InsertIntoArrayPrimitive)
-    // .map(u -> (InsertIntoArrayPrimitive) u)
-    // .forEach(u -> {
-    // List<Item> temp;
-    // if (!locatorToInsertsMap.containsKey(u.getPositionInt())) {
-    // temp = new ArrayList<>();
-    // } else {
-    // temp = locatorToInsertsMap.get(u.getPositionInt());
-    // }
-    // temp.addAll(u.getSourceSequence());
-    // locatorToInsertsMap.put(u.getPositionInt(), temp);
-    // });
-    //
-    // for (IntItem intItem : locatorToInsertsMap.keySet()) {
-    // result.addUpdatePrimitive(
-    // new InsertIntoArrayPrimitive(
-    // (ArrayItem) target,
-    // intItem,
-    // locatorToInsertsMap.get(intItem)
-    // )
-    // );
-    // }
-    // }
-    //
-    // if (hasDeletePrimitives) {
-    // List<IntItem> intItems =
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof DeleteFromArrayPrimitive)
-    // .map(u -> ((DeleteFromArrayPrimitive) u).getPositionInt())
-    // .distinct()
-    // .collect(Collectors.toList());
-    // for (IntItem intItem : intItems) {
-    // result.addUpdatePrimitive(new DeleteFromArrayPrimitive((ArrayItem) target, intItem));
-    // }
-    // continue;
-    // }
-    //
-    // List<UpdatePrimitive> replacePrimitives =
-    // targetUpdates
-    // .stream()
-    // .filter(u -> u instanceof ReplaceInArrayPrimitive)
-    // .collect(Collectors.toList());
-    // List<IntItem> uniqueReplaceSelectors =
-    // replacePrimitives
-    // .stream()
-    // .map(u -> ((ReplaceInArrayPrimitive) u).getPositionInt())
-    // .distinct()
-    // .collect(Collectors.toList());
-    //
-    // if (replacePrimitives.size() != uniqueReplaceSelectors.size()) {
-    // // TODO Throw replace on same key error jerr:JNUP0009.
-    // }
-    //
-    // }
-    // }
-    //
-    // return result;
-    // }
 
     public static PendingUpdateList mergeUpdates(PendingUpdateList pul1, PendingUpdateList pul2) {
         PendingUpdateList result = new PendingUpdateList();
@@ -313,8 +151,8 @@ public class PendingUpdateList {
             if (target.isObject()) {
                 UpdatePrimitiveSource deleteFromObjSrc = tempEnumMap.get(UpdatePrimitiveEnum.DELETE_FROM_OBJECT)
                     .get(placeholderSelector);
-                List<StringItem> delStrs = deleteFromObjSrc.getSourceAsListOfStrings();
-                Set<StringItem> delStrsSet = new HashSet<>(delStrs);
+                List<Item> delStrs = deleteFromObjSrc.getSourceAsListOfStrings();
+                Set<Item> delStrsSet = new HashSet<>(delStrs);
                 result.addUpdatePrimitive(
                     new DeleteFromObjectPrimitive(
                             target.getTargetAsObject(),
@@ -390,6 +228,141 @@ public class PendingUpdateList {
         }
 
         return result;
+    }
+
+    public static PendingUpdateList mergeUpdatesMaps(PendingUpdateList pul1, PendingUpdateList pul2) {
+        PendingUpdateList res = new PendingUpdateList();
+        Map<UpdatePrimitiveTarget, Map<UpdatePrimitiveSelector, UpdatePrimitiveSource>> resDelRepObjMap;
+        Map<UpdatePrimitiveSelector, UpdatePrimitiveSource> tempSelSrcMap;
+        Map<UpdatePrimitiveSelector, UpdatePrimitiveSource> tempSelSrcResMap;
+        UpdatePrimitiveSource tempSrc;
+
+        ////// OBJECTS
+
+        // DELETES & REPLACES
+
+        for (UpdatePrimitiveTarget target : pul1.delReplaceObjMap.keySet()) {
+            tempSelSrcMap = pul1.delReplaceObjMap.get(target);
+            tempSelSrcResMap = res.delReplaceObjMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+        }
+
+        for (UpdatePrimitiveTarget target : pul2.delReplaceObjMap.keySet()) {
+            tempSelSrcMap = pul2.delReplaceObjMap.get(target);
+            tempSelSrcResMap = res.delReplaceObjMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                if (tempSelSrcResMap.containsKey(selector)) {
+                    tempSrc = tempSelSrcResMap.get(selector);
+                    if (tempSrc != null) {
+                        // TODO implement jerr:NUP0009
+                        throw new OurBadException("MULTIPLE REPLACE OF SAME TARGET & SELECTOR");
+                    }
+                    continue;
+                }
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+        }
+
+        // INSERTS
+
+        res.insertObjMap.putAll(pul1.insertObjMap);
+
+        for (UpdatePrimitiveTarget target : pul2.insertObjMap.keySet()) {
+            tempSrc = pul2.insertObjMap.get(target);
+            if (res.insertObjMap.containsKey(target)) {
+                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc);
+            }
+            res.insertObjMap.put(target,tempSrc);
+        }
+
+        // RENAME
+
+        for (UpdatePrimitiveTarget target : pul1.renameObjMap.keySet()) {
+            tempSelSrcMap = pul1.renameObjMap.get(target);
+            tempSelSrcResMap = res.renameObjMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+        }
+
+        for (UpdatePrimitiveTarget target : pul2.renameObjMap.keySet()) {
+            tempSelSrcMap = pul2.renameObjMap.get(target);
+            tempSelSrcResMap = res.renameObjMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                if (tempSelSrcResMap.containsKey(selector)) {
+                    // TODO implement jerr:NUP0010
+                    throw new OurBadException("MULTIPLE RENAME OF SAME TARGET & SELECTOR");
+                }
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+        }
+
+        ////// ARRAYS
+
+        // DELETES & REPLACES
+
+        for (UpdatePrimitiveTarget target : pul1.delReplaceArrayMap.keySet()) {
+            tempSelSrcMap = pul1.delReplaceArrayMap.get(target);
+            tempSelSrcResMap = res.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.delReplaceArrayMap.put(target,tempSelSrcResMap);
+        }
+
+        for (UpdatePrimitiveTarget target : pul2.delReplaceArrayMap.keySet()) {
+            tempSelSrcMap = pul2.delReplaceArrayMap.get(target);
+            tempSelSrcResMap = res.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                if (tempSelSrcResMap.containsKey(selector)) {
+                    tempSrc = tempSelSrcResMap.get(selector);
+                    if (tempSrc != null) {
+                        // TODO implement jerr:NUP0009
+                        throw new OurBadException("MULTIPLE REPLACE OF SAME TARGET & SELECTOR");
+                    }
+                    continue;
+                }
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.delReplaceArrayMap.put(target,tempSelSrcResMap);
+        }
+
+        // INSERTS
+
+        for (UpdatePrimitiveTarget target : pul1.insertArrayMap.keySet()) {
+            tempSelSrcMap = pul1.insertArrayMap.get(target);
+            tempSelSrcResMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+            }
+            res.insertArrayMap.put(target,tempSelSrcResMap);
+        }
+
+        for (UpdatePrimitiveTarget target : pul2.insertArrayMap.keySet()) {
+            tempSelSrcMap = pul2.insertArrayMap.get(target);
+            tempSelSrcResMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
+
+            for (UpdatePrimitiveSelector selector : tempSelSrcMap.keySet()) {
+                tempSrc = tempSelSrcResMap.getOrDefault(selector, new UpdatePrimitiveSource(new ObjectItem()));
+                tempSelSrcResMap.put(selector, InsertIntoArrayPrimitive.mergeSources(tempSelSrcMap.get(selector), tempSrc));
+            }
+            res.insertArrayMap.put(target,tempSelSrcResMap);
+        }
+
+        return res;
     }
 
 }

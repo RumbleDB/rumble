@@ -7,9 +7,9 @@ import org.rumbledb.items.IntItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InsertIntoArrayPrimitive extends UpdatePrimitive {
+public class InsertIntoArrayPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
 
-    public InsertIntoArrayPrimitive(ArrayItem targetArray, IntItem positionInt, List<Item> sourceSequence) {
+    public InsertIntoArrayPrimitive(Item targetArray, Item positionInt, List<Item> sourceSequence) {
         super(targetArray, positionInt, sourceSequence);
         if (positionInt.getIntValue() < 0 || positionInt.getIntValue() >= targetArray.getSize()) {
             // TODO throw error or do nothing?
@@ -39,4 +39,8 @@ public class InsertIntoArrayPrimitive extends UpdatePrimitive {
         return new UpdatePrimitiveSource(merged);
     }
 
+    @Override
+    public boolean isInsertArray() {
+        return true;
+    }
 }

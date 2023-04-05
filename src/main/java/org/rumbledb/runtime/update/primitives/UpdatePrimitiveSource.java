@@ -35,12 +35,8 @@ public class UpdatePrimitiveSource {
         return this.source.size() == 1;
     }
 
-    public List<StringItem> getSourceAsListOfStrings() {
-        List<StringItem> result = new ArrayList<>();
-        for (Item item : this.source) {
-            result.add((StringItem) item);
-        }
-        return result;
+    public List<Item> getSourceAsListOfStrings() {
+        return new ArrayList<>(this.source);
     }
 
     public List<Item> getSourceAsListOfItems() {

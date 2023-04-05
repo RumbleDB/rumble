@@ -4,9 +4,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 
-public class RenameInObjectPrimitive extends UpdatePrimitive {
+public class RenameInObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
 
-    public RenameInObjectPrimitive(ObjectItem targetObject, StringItem targetName, StringItem replacementName) {
+    public RenameInObjectPrimitive(Item targetObject, Item targetName, Item replacementName) {
         super(targetObject, targetName, replacementName);
     }
 
@@ -33,4 +33,8 @@ public class RenameInObjectPrimitive extends UpdatePrimitive {
         // TODO: implement replace and rename methods for Array & Object to avoid deletion and append
     }
 
+    @Override
+    public boolean isRenameObject() {
+        return true;
+    }
 }

@@ -1,14 +1,15 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DeleteFromObjectPrimitive extends UpdatePrimitive {
+public class DeleteFromObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
 
-    public DeleteFromObjectPrimitive(ObjectItem targetObject, List<StringItem> namesToRemove) {
+    public DeleteFromObjectPrimitive(Item targetObject, List<Item> namesToRemove) {
         super(targetObject, namesToRemove);
     }
 
@@ -16,24 +17,28 @@ public class DeleteFromObjectPrimitive extends UpdatePrimitive {
         return target.getTargetAsObject();
     }
 
-    public List<StringItem> getNamesToRemove() {
+    public List<Item> getNamesToRemove() {
         return source.getSourceAsListOfStrings();
     }
 
     @Override
     public void apply() {
         for (
-            String str : this.getNamesToRemove().stream().map(StringItem::getStringValue).collect(Collectors.toList())
+            String str : this.getNamesToRemove().stream().map(Item::getStringValue).collect(Collectors.toList())
         ) {
             this.getTargetObject().removeItemByKey(str);
         }
     }
 
     public static UpdatePrimitiveSource mergeSources(UpdatePrimitiveSource first, UpdatePrimitiveSource second) {
-        List<StringItem> merged = first.getSourceAsListOfStrings();
+        List<Item> merged = first.getSourceAsListOfStrings();
         merged.addAll(second.getSourceAsListOfStrings());
         merged = merged.stream().distinct().collect(Collectors.toList());
         return new UpdatePrimitiveSource(merged);
     }
 
+    @Override
+    public boolean isDeleteObject() {
+        return true;
+    }
 }
