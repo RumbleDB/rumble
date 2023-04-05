@@ -186,7 +186,7 @@ public class JsonFileFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        Item result = nextItem;
+        Item result = this.nextItem;
         fetchNext();
         return result;
     }
