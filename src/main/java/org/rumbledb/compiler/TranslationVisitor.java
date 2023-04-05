@@ -850,10 +850,52 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
             ctx.op.get(0).getText()
         );
-        return new ComparisonExpression(
+        if (kind.isValueComparison() || this.configuration.optimizeGeneralComparisonToValueComparison()) {
+            return new ComparisonExpression(
+                    mainExpression,
+                    childExpression,
+                    kind,
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        Name variableNameLeft = Name.TEMP_VAR1;
+        Name variableNameRight = Name.TEMP_VAR2;
+
+        Clause firstClause = new ForClause(
+                variableNameLeft,
+                false,
+                null,
+                null,
                 mainExpression,
+                createMetadataFromContext(ctx)
+        );
+        Clause secondClause = new ForClause(
+                variableNameRight,
+                false,
+                null,
+                null,
                 childExpression,
-                kind,
+                createMetadataFromContext(ctx)
+        );
+        firstClause.chainWith(secondClause);
+        Expression valueComparison = new ComparisonExpression(
+                new VariableReferenceExpression(variableNameLeft, createMetadataFromContext(ctx)),
+                new VariableReferenceExpression(variableNameRight, createMetadataFromContext(ctx)),
+                kind.getCorrespondingValueComparison(),
+                createMetadataFromContext(ctx)
+        );
+        WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
+        secondClause.chainWith(whereClause);
+        ReturnClause returnClause = new ReturnClause(
+                new StringLiteralExpression("", null),
+                generateMetadata(ctx.start)
+        );
+        whereClause.chainWith(returnClause);
+        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
+        return new FunctionCallExpression(
+                Name.createVariableInDefaultFunctionNamespace("exists"),
+                Collections.singletonList(flworExpression),
                 createMetadataFromContext(ctx)
         );
     }
