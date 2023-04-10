@@ -5,32 +5,56 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 
-public class InsertIntoObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
+public class InsertIntoObjectPrimitive implements UpdatePrimitive {
+
+    private Item target;
+    private Item content;
 
 
-    public InsertIntoObjectPrimitive(Item targetObject, Item sourceObject) {
-        super(targetObject, sourceObject);
-    }
-
-    public ObjectItem getTargetObject() {
-        return target.getTargetAsObject();
-    }
-
-    public ObjectItem getSourceObject() {
-        return (ObjectItem) source.getSingletonSource();
+    public InsertIntoObjectPrimitive(Item targetObject, Item contentObject) {
+        if (!targetObject.isObject() || !contentObject.isObject()) {
+            // TODO: ERROR
+        }
+        this.target = targetObject;
+        this.content = contentObject;
     }
 
     @Override
     public void apply() {
-        for (String key : this.getSourceObject().getKeys()) {
-            this.getTargetObject().putItemByKey(key, this.getTargetObject().getItemByKey(key));
+        for (String key : this.content.getKeys()) {
+            this.target.putItemByKey(key, this.target.getItemByKey(key));
         }
     }
 
-    public static UpdatePrimitiveSource mergeSources(UpdatePrimitiveSource first, UpdatePrimitiveSource second) {
+    @Override
+    public boolean hasSelector() {
+        return false;
+    }
+
+    @Override
+    public Item getTarget() {
+        return target;
+    }
+
+    @Override
+    public Item getSelector() {
+        throw new OurBadException("INVALID SELECTOR GET IN INSERTINTOOBJECT PRIMITIVE");
+    }
+
+    @Override
+    public Item getContent() {
+        return content;
+    }
+
+    @Override
+    public boolean isInsertObject() {
+        return true;
+    }
+
+    public static Item mergeSources(Item first, Item second) {
         ObjectItem merged = new ObjectItem();
-        ObjectItem objFirst = (ObjectItem) first.getSingletonSource();
-        ObjectItem objSecond = (ObjectItem) second.getSingletonSource();
+        ObjectItem objFirst = (ObjectItem) first;
+        ObjectItem objSecond = (ObjectItem) second;
         try {
             for (String otherKey : objFirst.getKeys()) {
                 merged.putItemByKey(otherKey, objFirst.getItemByKey(otherKey));
@@ -42,11 +66,6 @@ public class InsertIntoObjectPrimitive extends UpdatePrimitive implements Update
             throw new OurBadException("SHOULD THROW SMTH ELSE");
             // TODO THROW jerr:JNUP0005 INSTEAD ON COLLISION
         }
-        return new UpdatePrimitiveSource(merged);
-    }
-
-    @Override
-    public boolean isInsertObject() {
-        return true;
+        return merged;
     }
 }

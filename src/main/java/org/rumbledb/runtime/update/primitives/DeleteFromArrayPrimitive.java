@@ -2,28 +2,47 @@ package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ArrayItem;
-import org.rumbledb.items.IntItem;
 
-public class DeleteFromArrayPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
+public class DeleteFromArrayPrimitive implements UpdatePrimitive {
+
+
+    private Item target;
+    private Item selector;
 
     public DeleteFromArrayPrimitive(Item targetArray, Item positionInt) {
-        super(targetArray, positionInt, positionInt);
+        if (!targetArray.isArray() || !positionInt.isNumeric()) {
+            // TODO ERROR
+        }
         if (positionInt.getIntValue() < 0 || positionInt.getIntValue() >= targetArray.getSize()) {
             // TODO throw error or do nothing?
         }
-    }
-
-    public ArrayItem getTargetArray() {
-        return target.getTargetAsArray();
-    }
-
-    public IntItem getPositionInt() {
-        return (IntItem) source.getSingletonSource();
+        this.target = targetArray;
+        this.selector = positionInt;
     }
 
     @Override
     public void apply() {
-        this.getTargetArray().removeItemAt(this.getPositionInt().getIntValue());
+        ((ArrayItem) this.target).removeItemAt(this.selector.getIntValue());
+    }
+
+    @Override
+    public boolean hasSelector() {
+        return true;
+    }
+
+    @Override
+    public Item getTarget() {
+        return target;
+    }
+
+    @Override
+    public Item getSelector() {
+        return selector;
+    }
+
+    @Override
+    public Item getContent() {
+        return null;
     }
 
     @Override

@@ -1,73 +1,54 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
 
 import java.util.List;
 
-public abstract class UpdatePrimitive implements UpdatePrimitiveInterface {
+public interface UpdatePrimitive {
 
-    protected UpdatePrimitiveTarget target;
-    protected UpdatePrimitiveSelector selector;
-    protected UpdatePrimitiveSource source;
+    void apply();
 
-    public UpdatePrimitive(
-            UpdatePrimitiveTarget target,
-            UpdatePrimitiveSelector selector,
-            UpdatePrimitiveSource source
-    ) {
-        this.target = target;
-        this.selector = selector;
-        this.source = source;
+    boolean hasSelector();
+
+    Item getTarget();
+
+    Item getSelector();
+
+    default Item getContent() {
+        throw new UnsupportedOperationException("Operation not defined");
     }
 
-    public UpdatePrimitive(Item target, Item selector, Item source) {
-        this(
-            new UpdatePrimitiveTarget(target),
-            new UpdatePrimitiveSelector(selector),
-            new UpdatePrimitiveSource(source)
-        );
+    default List<Item> getContentList() {
+        throw new UnsupportedOperationException("Operation not defined");
     }
 
-    public UpdatePrimitive(Item target, Item selector, List<? extends Item> source) {
-        this(
-            new UpdatePrimitiveTarget(target),
-            new UpdatePrimitiveSelector(selector),
-            new UpdatePrimitiveSource(source)
-        );
+    default boolean isDeleteObject() {
+        return false;
     }
 
-    public UpdatePrimitive(Item target, Item source) {
-        this(new UpdatePrimitiveTarget(target), null, new UpdatePrimitiveSource(source));
+    default boolean isDeleteArray() {
+        return false;
     }
 
-    public UpdatePrimitive(Item target, List<? extends Item> source) {
-        this(new UpdatePrimitiveTarget(target), null, new UpdatePrimitiveSource(source));
+    default boolean isInsertObject() {
+        return false;
     }
 
-    @Override
-    public abstract void apply();
-
-    @Override
-    public boolean hasSelector() {
-        return this.selector == null;
+    default boolean isInsertArray() {
+        return false;
     }
 
-    @Override
-    public UpdatePrimitiveTarget getTarget() {
-        return target;
+    default boolean isReplaceObject() {
+        return false;
     }
 
-    @Override
-    public UpdatePrimitiveSelector getSelector() {
-        if (!this.hasSelector()) {
-            throw new OurBadException("Invalid call to getSelector when selector is null");
-        }
-        return selector;
+    default boolean isReplaceArray() {
+        return false;
     }
 
-    @Override
-    public UpdatePrimitiveSource getSource() {
-        return source;
+    default boolean isRenameObject() {
+        return false;
     }
+
+
 }

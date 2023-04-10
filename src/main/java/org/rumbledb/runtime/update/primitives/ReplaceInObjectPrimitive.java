@@ -2,33 +2,51 @@ package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.StringItem;
 
-public class ReplaceInObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
+public class ReplaceInObjectPrimitive implements UpdatePrimitive {
+
+    private Item target;
+    private Item selector;
+    private Item content;
 
     public ReplaceInObjectPrimitive(Item targetObject, Item targetName, Item replacementItem) {
-        super(targetObject, targetName, replacementItem);
-    }
 
-    public ObjectItem getTargetObject() {
-        return target.getTargetAsObject();
-    }
+        if (!targetObject.isObject() || !targetName.isString()) {
+            // TODO ERROR
+        }
 
-    public StringItem getTargetName() {
-        return selector.getSelectorAsString();
-    }
-
-    public Item getReplacementItem() {
-        return source.getSingletonSource();
+        this.target = targetObject;
+        this.selector = targetName;
+        this.content = replacementItem;
     }
 
     @Override
     public void apply() {
-        String name = this.getTargetName().getStringValue();
-        if (this.getTargetObject().getKeys().contains(name)) {
-            this.getTargetObject().removeItemByKey(name);
-            this.getTargetObject().putItemByKey(name, this.getReplacementItem());
+        String name = this.getSelector().getStringValue();
+        if (this.getTarget().getKeys().contains(name)) {
+            ((ObjectItem) this.getTarget()).removeItemByKey(name);
+            this.getTarget().putItemByKey(name, this.getContent());
         }
+    }
+
+    @Override
+    public boolean hasSelector() {
+        return true;
+    }
+
+    @Override
+    public Item getTarget() {
+        return target;
+    }
+
+    @Override
+    public Item getSelector() {
+        return selector;
+    }
+
+    @Override
+    public Item getContent() {
+        return content;
     }
 
     @Override

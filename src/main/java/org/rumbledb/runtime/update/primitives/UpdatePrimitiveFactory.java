@@ -15,31 +15,31 @@ public class UpdatePrimitiveFactory {
         return instance;
     }
 
-    public UpdatePrimitiveInterface createDeleteFromArrayPrimitive(Item targetArray, Item selectorInt) {
+    public UpdatePrimitive createDeleteFromArrayPrimitive(Item targetArray, Item selectorInt) {
         return new DeleteFromArrayPrimitive(targetArray, selectorInt);
     }
 
-    public UpdatePrimitiveInterface createDeleteFromObjectPrimitive(Item targetObject, List<Item> selectorStrs) {
+    public UpdatePrimitive createDeleteFromObjectPrimitive(Item targetObject, List<Item> selectorStrs) {
         return new DeleteFromObjectPrimitive(targetObject, selectorStrs);
     }
 
-    public UpdatePrimitiveInterface createInsertIntoArrayPrimitive(Item targetArray, Item selectorInt, List<Item> contents ) {
+    public UpdatePrimitive createInsertIntoArrayPrimitive(Item targetArray, Item selectorInt, List<Item> contents ) {
         return new InsertIntoArrayPrimitive(targetArray, selectorInt, contents);
     }
 
-    public UpdatePrimitiveInterface createInsertIntoObjectPrimitive(Item targetObject, Item contentsObject) {
+    public UpdatePrimitive createInsertIntoObjectPrimitive(Item targetObject, Item contentsObject) {
         return new InsertIntoObjectPrimitive(targetObject, contentsObject);
     }
 
-    public UpdatePrimitiveInterface createReplaceInArrayPrimitive(Item targetArray, Item selectorInt, Item content) {
+    public UpdatePrimitive createReplaceInArrayPrimitive(Item targetArray, Item selectorInt, Item content) {
         return new ReplaceInArrayPrimitive(targetArray, selectorInt, content);
     }
 
-    public UpdatePrimitiveInterface createReplaceInObjectPrimitive(Item targetObject, Item selectorStr, Item content) {
+    public UpdatePrimitive createReplaceInObjectPrimitive(Item targetObject, Item selectorStr, Item content) {
         return new ReplaceInObjectPrimitive(targetObject, selectorStr, content);
     }
 
-    public UpdatePrimitiveInterface createRenameInObjectPrimitive(Item targetObject, Item selectorStr, Item content) {
+    public UpdatePrimitive createRenameInObjectPrimitive(Item targetObject, Item selectorStr, Item content) {
         return new RenameInObjectPrimitive(targetObject, selectorStr, content);
     }
 

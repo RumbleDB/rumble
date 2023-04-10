@@ -2,37 +2,54 @@ package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ArrayItem;
-import org.rumbledb.items.IntItem;
 
-public class ReplaceInArrayPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
+public class ReplaceInArrayPrimitive implements UpdatePrimitive {
+
+    private Item target;
+    private Item selector;
+    private Item content;
 
     public ReplaceInArrayPrimitive(Item targetArray, Item positionInt, Item replacementItem) {
-        super(targetArray, positionInt, replacementItem);
-    }
+        if (!targetArray.isArray() || !positionInt.isNumeric()) {
+            // TODO ERROR
+        }
 
-    public ArrayItem getTargetArray() {
-        return target.getTargetAsArray();
-    }
-
-    public IntItem getPositionInt() {
-        return selector.getSelectorAsInt();
-    }
-
-    public Item getReplacementItem() {
-        return source.getSingletonSource();
+        this.target = targetArray;
+        this.selector = positionInt;
+        this.content = replacementItem;
     }
 
     @Override
     public void apply() {
-        int index = this.getPositionInt().getIntValue() - 1;
-        if (index >= 0 || index < this.getTargetArray().getSize()) {
-            this.getTargetArray().removeItemAt(index);
-            if (index == this.getTargetArray().getSize()) {
-                this.getTargetArray().append(this.getReplacementItem());
+        int index = this.selector.getIntValue() - 1;
+        if (index >= 0 || index < this.target.getSize()) {
+            ((ArrayItem) this.target).removeItemAt(index);
+            if (index == this.target.getSize()) {
+                this.target.append(this.content);
             } else {
-                this.getTargetArray().putItemAt(this.getReplacementItem(), index);
+                ((ArrayItem) this.target).putItemAt(this.content, index);
             }
         }
+    }
+
+    @Override
+    public boolean hasSelector() {
+        return true;
+    }
+
+    @Override
+    public Item getTarget() {
+        return target;
+    }
+
+    @Override
+    public Item getSelector() {
+        return selector;
+    }
+
+    @Override
+    public Item getContent() {
+        return content;
     }
 
     @Override

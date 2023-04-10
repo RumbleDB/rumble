@@ -2,35 +2,53 @@ package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.StringItem;
 
-public class RenameInObjectPrimitive extends UpdatePrimitive implements UpdatePrimitiveInterface {
+public class RenameInObjectPrimitive implements UpdatePrimitive {
+
+    private Item target;
+    private Item selector;
+    private Item content;
 
     public RenameInObjectPrimitive(Item targetObject, Item targetName, Item replacementName) {
-        super(targetObject, targetName, replacementName);
-    }
 
-    public ObjectItem getTargetObject() {
-        return target.getTargetAsObject();
-    }
+        if (!targetObject.isObject() || !targetName.isString() || !replacementName.isString()) {
+            // TODO ERROR
+        }
 
-    public StringItem getTargetName() {
-        return selector.getSelectorAsString();
-    }
-
-    public StringItem getReplacementName() {
-        return (StringItem) source.getSingletonSource();
+        this.target = targetObject;
+        this.selector = targetName;
+        this.content = replacementName;
     }
 
     @Override
     public void apply() {
-        String name = this.getTargetName().getStringValue();
-        if (this.getTargetObject().getKeys().contains(name)) {
-            Item item = this.getTargetObject().getItemByKey(name);
-            this.getTargetObject().removeItemByKey(name);
-            this.getTargetObject().putItemByKey(this.getTargetName().getStringValue(), item);
+        String name = this.selector.getStringValue();
+        if (this.target.getKeys().contains(name)) {
+            Item item = this.target.getItemByKey(name);
+            ((ObjectItem) this.target).removeItemByKey(name);
+            this.target.putItemByKey(this.content.getStringValue(), item);
         }
         // TODO: implement replace and rename methods for Array & Object to avoid deletion and append
+    }
+
+    @Override
+    public boolean hasSelector() {
+        return true;
+    }
+
+    @Override
+    public Item getTarget() {
+        return target;
+    }
+
+    @Override
+    public Item getSelector() {
+        return selector;
+    }
+
+    @Override
+    public Item getContent() {
+        return content;
     }
 
     @Override
