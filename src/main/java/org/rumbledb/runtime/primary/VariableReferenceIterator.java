@@ -38,6 +38,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
 import java.util.List;
@@ -113,7 +114,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
                 "`" + escapedName + "`",
-                variableType
+                new SequenceType(variableType, Arity.One)
         );
         newContext.setSchema(fieldType);
         return newContext;

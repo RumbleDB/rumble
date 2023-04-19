@@ -41,6 +41,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -547,53 +549,56 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+        if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         ItemType resultType = null;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 &&
-                rightResult.getResultingType().isNumeric()
+                rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)
+            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 &&
-                leftResult.getResultingType().isNumeric()
+                leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 &&
-                rightResult.getResultingType().isNumeric()
+                rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)
+            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 &&
-                leftResult.getResultingType().isNumeric()
+                leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.integerItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
                 &&
-                rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.integerItem)
+                rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
         ) {
             if (this.multiplicativeOperator.equals(MultiplicativeExpression.MultiplicativeOperator.DIV)) {
                 resultType = BuiltinTypesCatalogue.decimalItem;
@@ -601,15 +606,33 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 resultType = BuiltinTypesCatalogue.integerItem;
             }
         } else if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
                 &&
-                rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
         ) {
             resultType = BuiltinTypesCatalogue.decimalItem;
         } else {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = null;
+
+        SequenceType.Arity resultingArity =
+            leftResult.getResultingType()
+                .getArity()
+                .multiplyWith(
+                    rightResult.getResultingType().getArity()
+                );
+
+        if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
+            throw new UnexpectedTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
         switch (this.multiplicativeOperator) {
             case MUL:
                 resultingQuery = "( "
@@ -617,21 +640,33 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     + " * "
                     + rightQuery
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        resultingQuery,
+                        new SequenceType(resultType, resultingArity)
+                );
             case DIV:
                 resultingQuery = "( "
                     + leftQuery
                     + " / "
                     + rightQuery
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        resultingQuery,
+                        new SequenceType(resultType, resultingArity)
+                );
             case MOD:
                 resultingQuery = "( "
                     + leftQuery
                     + " % "
                     + rightQuery
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        resultingQuery,
+                        new SequenceType(resultType, resultingArity)
+                );
             default:
                 return NativeClauseContext.NoNativeQuery;
         }

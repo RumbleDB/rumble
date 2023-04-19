@@ -32,6 +32,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -88,12 +89,10 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         )];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        NativeClauseContext newContext = new NativeClauseContext(
+        return new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
-                variableType
+                new SequenceType(variableType, SequenceType.Arity.One)
         );
-        newContext.setSchema(fieldType);
-        return newContext;
     }
 }
