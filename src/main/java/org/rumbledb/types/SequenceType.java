@@ -79,7 +79,7 @@ public class SequenceType implements Serializable {
     );
 
     public final static SequenceType BOOLEAN = new SequenceType(
-            BuiltinTypesCatalogue.stringItem,
+            BuiltinTypesCatalogue.booleanItem,
             Arity.One
     );
 
