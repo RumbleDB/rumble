@@ -1,11 +1,7 @@
 package org.rumbledb.runtime.update;
 
-import com.amazonaws.services.dynamodbv2.model.ItemCollectionMetrics;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.IntItem;
-import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.update.primitives.*;
 
 import java.util.*;
@@ -31,11 +27,80 @@ public class PendingUpdateList {
 //    }
 
 
-//    public void applyUpdates() {
-//        for (UpdatePrimitive up : this.updatePrimitives) {
-//            up.apply();
-//        }
-//    }
+    public void applyUpdates() {
+
+        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+
+        List<UpdatePrimitive> pul = new ArrayList<>();
+        Map<Item, Item> tempSelSrcMap;
+        Map<Item, List<Item>> tempSelSrcListMap;
+        Item tempSrc;
+        List<Item> tempSrcList;
+
+        ////// OBJECTS
+
+        // DELETES & REPLACES
+        for (Item target : delReplaceObjMap.keySet()) {
+            List<Item> toDel = new ArrayList<>();
+            tempSelSrcMap = delReplaceObjMap.get(target);
+            for (Item locator : tempSelSrcMap.keySet()) {
+                tempSrc = tempSelSrcMap.get(locator);
+                if (tempSrc == null) {
+                    toDel.add(locator);
+                } else {
+                    pul.add(factory.createReplaceInObjectPrimitive(target, locator, tempSrc));
+                }
+            }
+            pul.add(factory.createDeleteFromObjectPrimitive(target, toDel));
+        }
+
+        // INSERTS
+
+        for (Item target : insertObjMap.keySet()) {
+            pul.add(factory.createInsertIntoObjectPrimitive(target, insertObjMap.get(target)));
+        }
+
+        // RENAMES
+
+        for (Item target : renameObjMap.keySet()) {
+            tempSelSrcMap = renameObjMap.get(target);
+            for (Item locator : tempSelSrcMap.keySet()) {
+                pul.add(factory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator)));
+            }
+        }
+
+        ////// ARRAYS
+
+        // DELETES & REPLACES
+
+        for (Item target : delReplaceArrayMap.keySet()) {
+            tempSelSrcMap = delReplaceArrayMap.get(target);
+            for (Item locator : tempSelSrcMap.keySet()) {
+                tempSrc = tempSelSrcMap.get(locator);
+                if (tempSrc == null) {
+                    pul.add(factory.createDeleteFromArrayPrimitive(target, locator));
+                } else {
+                    pul.add(factory.createReplaceInArrayPrimitive(target, locator, tempSrc));
+                }
+            }
+        }
+
+        // INSERTS
+
+        for (Item target : insertArrayMap.keySet()) {
+            tempSelSrcListMap = insertArrayMap.get(target);
+            for (Item locator : tempSelSrcListMap.keySet()) {
+                pul.add(factory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator)));
+            }
+        }
+
+        ////// APPLY
+
+        for (UpdatePrimitive updatePrimitive : pul) {
+            updatePrimitive.apply();
+        }
+
+    }
 
     public static PendingUpdateList mergeUpdates(PendingUpdateList pul1, PendingUpdateList pul2) {
         PendingUpdateList res = new PendingUpdateList();
