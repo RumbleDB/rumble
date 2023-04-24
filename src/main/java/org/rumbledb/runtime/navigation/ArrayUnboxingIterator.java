@@ -36,6 +36,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -135,6 +136,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
+            if (!newContext.getResultingType().getArity().equals(Arity.One)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             ItemType newContextType = newContext.getResultingType().getItemType();
             if (!newContextType.isArrayItemType()) {
                 // let control to UDF when what we are unboxing is not an array

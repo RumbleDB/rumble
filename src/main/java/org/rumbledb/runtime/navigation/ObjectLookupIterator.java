@@ -267,11 +267,13 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-            if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = newContext.getSchema();
-            } else {
+            if (newContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
+            if (!newContext.getResultingType().getArity().equals(Arity.One)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            leftSchema = newContext.getSchema();
         }
 
 

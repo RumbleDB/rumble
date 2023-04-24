@@ -540,9 +540,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 return null;
             }
             // For now we are conservative and do not support arities other than one.
-            if(!nativeQuery.getResultingType().getArity().equals(Arity.One))
-            {
-            	return null;
+            if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
+                return null;
             }
             orderSql.append(orderSeparator);
             orderSeparator = ", ";

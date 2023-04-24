@@ -38,6 +38,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -163,7 +164,10 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
+            // if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
+            // return NativeClauseContext.NoNativeQuery;
+            // }
+            if (!newContext.getResultingType().getArity().equals(Arity.One)) {
                 return NativeClauseContext.NoNativeQuery;
             }
             // check if the key has variable dependencies inside the FLWOR expression
