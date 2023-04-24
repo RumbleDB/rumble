@@ -51,6 +51,7 @@ import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -537,6 +538,11 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
             if (nativeQuery == NativeClauseContext.NoNativeQuery) {
                 return null;
+            }
+            // For now we are conservative and do not support arities other than one.
+            if(!nativeQuery.getResultingType().getArity().equals(Arity.One))
+            {
+            	return null;
             }
             orderSql.append(orderSeparator);
             orderSeparator = ", ";
