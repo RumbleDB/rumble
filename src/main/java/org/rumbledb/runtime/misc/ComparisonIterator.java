@@ -511,9 +511,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             if (leftResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
-                new NativeClauseContext(leftResult, null, null)
-            );
+            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
             if (rightResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
