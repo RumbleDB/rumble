@@ -30,7 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -58,8 +58,11 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (childResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        if (!childResult.getResultingType().equals(SequenceType.BOOLEAN)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
 
         String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.BOOLEAN);
     }
 }

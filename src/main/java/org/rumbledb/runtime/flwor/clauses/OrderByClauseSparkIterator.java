@@ -50,6 +50,8 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -537,6 +539,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             if (nativeQuery == NativeClauseContext.NoNativeQuery) {
                 return null;
             }
+            // For now we are conservative and do not support arities other than one.
+            if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
+                return null;
+            }
             orderSql.append(orderSeparator);
             orderSeparator = ", ";
             // special check to avoid ordering by an integer constant in an ordering clause
@@ -544,8 +550,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
             // and jsoniq (order by a costant, so no actual ordering is performed)
             if (
-                (nativeQuery.getResultingType() == BuiltinTypesCatalogue.integerItem
-                    || nativeQuery.getResultingType() == BuiltinTypesCatalogue.intItem)
+                (nativeQuery.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                    || nativeQuery.getResultingType().isSubtypeOf(SequenceType.INT_QM))
                     && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');

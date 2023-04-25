@@ -43,6 +43,8 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -265,11 +267,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-            if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = newContext.getSchema();
-            } else {
+            if (newContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
+            leftSchema = newContext.getSchema();
         }
 
 
@@ -300,7 +301,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setSchema(field.dataType());
-            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+            newContext.setResultingType(
+                new SequenceType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()), Arity.One)
+            );
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 throw new UnexpectedStaticTypeException(

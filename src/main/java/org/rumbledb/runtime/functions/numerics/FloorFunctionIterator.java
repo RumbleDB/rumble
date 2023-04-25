@@ -29,7 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -105,7 +105,7 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!value.getResultingType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("
@@ -113,7 +113,7 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + value.getResultingQuery()
             + " ) AS FLOAT)"
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.FLOAT);
     }
 
 

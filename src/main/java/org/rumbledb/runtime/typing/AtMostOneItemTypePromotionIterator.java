@@ -125,7 +125,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!value.getResultingType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (
