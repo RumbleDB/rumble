@@ -22,6 +22,7 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.types.ArrayType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -36,7 +37,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -135,34 +135,33 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-        if (newContext != NativeClauseContext.NoNativeQuery) {
-            if (!newContext.getResultingType().getArity().equals(Arity.One)) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            ItemType newContextType = newContext.getResultingType().getItemType();
-            if (!newContextType.isArrayItemType()) {
-                // let control to UDF when what we are unboxing is not an array
-                return NativeClauseContext.NoNativeQuery;
-            }
-            newContext.setResultingType(
-                new SequenceType(
-                        newContextType.getArrayContentFacet(),
-                        SequenceType.Arity.ZeroOrMore
-                )
-            );
-
-            List<String> lateralViewPart = newContext.getLateralViewPart();
-            if (lateralViewPart.size() == 0) {
-                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
-            } else {
-                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
-                // previous
-                lateralViewPart.add(
-                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
-                );
-            }
-            newContext.setResultingQuery(""); // dealt by for clause
+        if (newContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
         }
+        ItemType newContextType = newContext.getResultingType().getItemType();
+        if (!newContextType.isArrayItemType()) {
+            // let control to UDF when what we are unboxing is not an array
+            return NativeClauseContext.NoNativeQuery;
+        }
+        newContext.setResultingType(
+            new SequenceType(
+                    newContextType.getArrayContentFacet(),
+                    SequenceType.Arity.ZeroOrMore
+            )
+        );
+
+        List<String> lateralViewPart = newContext.getLateralViewPart();
+        if (lateralViewPart.size() == 0) {
+            lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+        } else {
+            // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+            // previous
+            lateralViewPart.add(
+                "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+            );
+        }
+        newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
+        newContext.setResultingQuery(""); // dealt by for clause
         return newContext;
     }
 

@@ -38,7 +38,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -167,9 +166,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             // if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
             // return NativeClauseContext.NoNativeQuery;
             // }
-            if (!newContext.getResultingType().getArity().equals(Arity.One)) {
-                return NativeClauseContext.NoNativeQuery;
-            }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
@@ -204,6 +200,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                         SequenceType.Arity.OneOrZero
                 )
             );
+            newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
             newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
         }
         return newContext;

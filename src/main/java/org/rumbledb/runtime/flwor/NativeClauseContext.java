@@ -87,4 +87,19 @@ public class NativeClauseContext {
     public void setResultingType(SequenceType resultingType) {
         this.resultingType = resultingType;
     }
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("Native clause context.\n");
+        sb.append("Query: " + this.resultingQuery + "\n");
+        sb.append("Clause type: " + this.clauseType + "\n");
+        sb.append("Schema: " + this.schema.toString() + "\n");
+        sb.append("Context: " + this.context.toString() + "\n");
+        sb.append("Resulting type: " + this.resultingType + "\n");
+        sb.append("Lateral views:\n");
+        for (String s : this.lateralViewPart) {
+            sb.append(s + "\n");
+        }
+        return sb.toString();
+    }
 }
