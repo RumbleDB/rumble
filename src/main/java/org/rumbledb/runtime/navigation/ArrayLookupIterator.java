@@ -22,6 +22,7 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -188,12 +189,18 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             if (!(resultType.isArrayItemType())) {
                 return NativeClauseContext.NoNativeQuery;
             }
+
+            schema = newContext.getSchema();
+            if (!(schema instanceof ArrayType)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             newContext.setResultingType(
                 new SequenceType(
                         resultType.getArrayContentFacet(),
                         SequenceType.Arity.OneOrZero
                 )
             );
+            newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
             newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
         }
         return newContext;

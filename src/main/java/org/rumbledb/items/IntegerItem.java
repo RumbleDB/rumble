@@ -140,11 +140,7 @@ public class IntegerItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(
-                context,
-                this.value.toString(),
-                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-        );
+        return new NativeClauseContext(context, this.value.toString(), SequenceType.INTEGER);
     }
 
     public boolean isNumeric() {

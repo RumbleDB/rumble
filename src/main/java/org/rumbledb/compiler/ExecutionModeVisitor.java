@@ -502,7 +502,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         ExecutionMode defaultMode = expression.getDefaultCase()
             .getReturnExpression()
-            .getHighestExecutionMode(visitorConfig);
+            .getHighestExecutionMode(this.visitorConfig);
 
         if (defaultMode.isUnset()) {
             expression.setHighestExecutionMode(ExecutionMode.UNSET);
@@ -510,7 +510,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         for (TypeswitchCase c : expression.getCases()) {
-            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
+            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(this.visitorConfig);
             if (mode.isUnset()) {
                 expression.setHighestExecutionMode(ExecutionMode.UNSET);
                 return argument;
@@ -533,7 +533,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitSwitchExpression(SwitchExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        ExecutionMode defaultMode = expression.getDefaultExpression().getHighestExecutionMode(visitorConfig);
+        ExecutionMode defaultMode = expression.getDefaultExpression().getHighestExecutionMode(this.visitorConfig);
 
         if (defaultMode.isUnset()) {
             expression.setHighestExecutionMode(ExecutionMode.UNSET);
@@ -541,7 +541,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         for (SwitchCase c : expression.getCases()) {
-            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
+            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(this.visitorConfig);
             if (mode.isUnset()) {
                 expression.setHighestExecutionMode(ExecutionMode.UNSET);
                 return argument;

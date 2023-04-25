@@ -40,7 +40,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -530,7 +529,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                     && rightResult.getResultingType() != null
                     && leftResult.getResultingType().getItemType().isNumeric()
                     && rightResult.getResultingType().getItemType().isNumeric()
-                    || leftResult.getResultingType().getItemType() == rightResult.getResultingType().getItemType())
+                    || leftResult.getResultingType().getItemType().equals(rightResult.getResultingType().getItemType()))
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }

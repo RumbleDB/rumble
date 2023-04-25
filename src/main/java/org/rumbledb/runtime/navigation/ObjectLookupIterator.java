@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.types.ArrayType;
@@ -30,7 +35,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSelectorException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
@@ -41,14 +52,13 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
-import org.rumbledb.types.*;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Map;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
@@ -273,6 +283,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
+            leftSchema = newContext.getSchema();
         }
 
 
@@ -315,6 +326,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         SequenceType.Arity.OneOrZero
                 )
             );
+            newContext.setSchema(field.dataType());
         } else if (
             newContext.getResultingType().getItemType().isObjectItemType()
                 && (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(key)

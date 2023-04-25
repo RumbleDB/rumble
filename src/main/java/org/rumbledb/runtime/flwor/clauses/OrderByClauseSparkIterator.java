@@ -51,6 +51,7 @@ import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -551,12 +552,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
-            orderContext = orderIterator.getIterator().generateNativeQuery(orderContext);
+        	NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
             if (
                 orderContext == NativeClauseContext.NoNativeQuery
                     || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
             ) {
                 return NativeClauseContext.NoNativeQuery;
+            }
+            // For now we are conservative and do not support arities other than one.
+            if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
+                return null;
             }
             orderSql.append(orderSeparator);
             orderSeparator = ", ";
@@ -565,9 +570,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
             // and jsoniq (order by a constant, so no actual ordering is performed)
             if (
-                (orderContext.getResultingType().getItemType() == BuiltinTypesCatalogue.integerItem
-                    || orderContext.getResultingType().getItemType() == BuiltinTypesCatalogue.intItem)
-                    && orderContext.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
+                (nativeQuery.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                    || nativeQuery.getResultingType().isSubtypeOf(SequenceType.INT_QM))
+                    && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');
                 orderSql.append(orderContext.getResultingQuery());
