@@ -559,6 +559,35 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Add an item at index i, if it is an array.
+     *
+     * @param item an item.
+     * @param i an integer.
+     */
+    default void putItemAt(Item item, int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Add all items in items at index i, if it is an array.
+     *
+     * @param items a list of items.
+     * @param i an integer.
+     */
+    default void putItemsAt(List<Item> items, int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Remove the item at index i, if it is an array.
+     *
+     * @param i an integer.
+     */
+    default void removeItemAt(int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Adds a value pair, if it is an array item.
      *
      * @param value a value.
@@ -574,6 +603,15 @@ public interface Item extends Serializable, KryoSerializable {
      * @param value a value.
      */
     default void putItemByKey(String key, Item value) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Removes a key-value pair, if it is an object item.
+     *
+     * @param key a key.
+     */
+    default void removeItemByKey(String key) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

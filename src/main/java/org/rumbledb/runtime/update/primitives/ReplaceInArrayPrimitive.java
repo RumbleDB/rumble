@@ -23,11 +23,11 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
     public void apply() {
         int index = this.selector.getIntValue() - 1;
         if (index >= 0 || index < this.target.getSize()) {
-            ((ArrayItem) this.target).removeItemAt(index);
+            this.target.removeItemAt(index);
             if (index == this.target.getSize()) {
                 this.target.append(this.content);
             } else {
-                ((ArrayItem) this.target).putItemAt(this.content, index);
+                this.target.putItemAt(this.content, index);
             }
         }
     }

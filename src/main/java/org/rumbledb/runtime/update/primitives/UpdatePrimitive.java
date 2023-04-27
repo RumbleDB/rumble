@@ -12,7 +12,7 @@ public interface UpdatePrimitive {
 
     Item getTarget();
 
-    Item getSelector();
+    default Item getSelector() {throw new UnsupportedOperationException("Operation not defined");}
 
     default Item getContent() {
         throw new UnsupportedOperationException("Operation not defined");

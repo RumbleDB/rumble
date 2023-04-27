@@ -25,7 +25,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         String name = this.selector.getStringValue();
         if (this.target.getKeys().contains(name)) {
             Item item = this.target.getItemByKey(name);
-            ((ObjectItem) this.target).removeItemByKey(name);
+            this.target.removeItemByKey(name);
             this.target.putItemByKey(this.content.getStringValue(), item);
         }
         // TODO: implement replace and rename methods for Array & Object to avoid deletion and append

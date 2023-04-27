@@ -83,14 +83,17 @@ public class ArrayItem implements Item {
         this.arrayItems.add(value);
     }
 
+    @Override
     public void putItemAt(Item value, int i) {
         this.arrayItems.add(i, value);
     }
 
+    @Override
     public void putItemsAt(List<Item> values, int i) {
         this.arrayItems.addAll(i, values);
     }
 
+    @Override
     public void removeItemAt(int i) {
         this.arrayItems.remove(i);
     }

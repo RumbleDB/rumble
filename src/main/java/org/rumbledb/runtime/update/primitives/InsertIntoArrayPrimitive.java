@@ -28,7 +28,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
-        ((ArrayItem) this.target).putItemsAt(this.content, this.selector.getIntValue());
+        this.target.putItemsAt(this.content, this.selector.getIntValue());
     }
 
     @Override

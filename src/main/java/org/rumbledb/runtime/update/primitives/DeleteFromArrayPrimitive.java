@@ -22,7 +22,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
-        ((ArrayItem) this.target).removeItemAt(this.selector.getIntValue());
+        this.target.removeItemAt(this.selector.getIntValue());
     }
 
     @Override

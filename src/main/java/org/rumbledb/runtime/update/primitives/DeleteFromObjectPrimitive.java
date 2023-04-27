@@ -27,7 +27,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         for (
             String str : this.content.stream().map(Item::getStringValue).collect(Collectors.toList())
         ) {
-            ((ObjectItem) this.target).removeItemByKey(str);
+            this.target.removeItemByKey(str);
         }
     }
 
@@ -39,11 +39,6 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     @Override
     public Item getTarget() {
         return target;
-    }
-
-    @Override
-    public Item getSelector() {
-        throw new OurBadException("INVALID SELECTOR GET IN DELETEFROMOBJECT PRIMITIVE");
     }
 
     @Override
