@@ -220,10 +220,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
                 .getConstructor(
                     List.class,
-                    ExecutionMode.class,
-                    ExceptionMetadata.class
+                    RuntimeStaticContext.class
                 );
-            functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
+            functionCallIterator = constructor.newInstance(
+                arguments,
+                new RuntimeStaticContext(conf, builtinFunction.getSignature().getReturnType(), executionMode, metadata)
+            );
         } catch (ReflectiveOperationException ex) {
             RuntimeException e = new UnknownFunctionCallException(
                     identifier.getName(),
