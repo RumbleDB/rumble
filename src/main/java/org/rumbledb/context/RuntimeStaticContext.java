@@ -1,12 +1,16 @@
 package org.rumbledb.context;
 
+import java.io.Serializable;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
-public class RuntimeStaticContext {
+public class RuntimeStaticContext implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private RumbleRuntimeConfiguration configuration;
     private SequenceType staticType;
     private ExecutionMode executionMode;
