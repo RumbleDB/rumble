@@ -25,9 +25,11 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -43,6 +45,7 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -82,10 +85,9 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator leftChild,
             RuntimeTupleIterator rightChild,
             boolean isLeftOuterJoin,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(leftChild, executionMode, iteratorMetadata);
+        super(leftChild, staticContext);
         this.isLeftOuterJoin = isLeftOuterJoin;
         this.dataFrameContext = new DataFrameContext();
     }
@@ -119,7 +121,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeIterator predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
-            ExceptionMetadata metadata
+            ExceptionMetadata metadata,
+            RumbleRuntimeConfiguration conf
     ) {
         FlworDataFrame result = tryNativeQueryStatically(
             context,
@@ -204,11 +207,19 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             rightTupleSideEqualityCriteria,
+                            new RuntimeStaticContext(
+                                    conf,
+                                    SequenceType.ITEM_STAR,
+                                    ExecutionMode.LOCAL,
+                                    metadata
+                            )
+                    ),
+                    new RuntimeStaticContext(
+                            conf,
+                            SequenceType.ITEM_STAR,
                             ExecutionMode.LOCAL,
                             metadata
-                    ),
-                    ExecutionMode.LOCAL,
-                    metadata
+                    )
             );
         }
         if (leftTupleSideEqualityCriteria.size() == 1) {
@@ -217,11 +228,19 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             leftTupleSideEqualityCriteria,
+                            new RuntimeStaticContext(
+                                    conf,
+                                    SequenceType.ITEM_STAR,
+                                    ExecutionMode.LOCAL,
+                                    metadata
+                            )
+                    ),
+                    new RuntimeStaticContext(
+                            conf,
+                            SequenceType.ITEM_STAR,
                             ExecutionMode.LOCAL,
                             metadata
-                    ),
-                    ExecutionMode.LOCAL,
-                    metadata
+                    )
             );
         }
 
@@ -501,7 +520,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

@@ -28,8 +28,8 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -55,10 +55,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public ArrayLookupIterator(
             RuntimeIterator array,
             RuntimeIterator iterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(array, iterator), staticContext);
         this.iterator = array;
     }
 

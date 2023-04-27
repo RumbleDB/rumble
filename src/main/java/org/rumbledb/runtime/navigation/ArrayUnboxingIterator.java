@@ -25,9 +25,8 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.types.ArrayType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -53,10 +52,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     public ArrayUnboxingIterator(
             RuntimeIterator arrayIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(arrayIterator), staticContext);
         this.iterator = arrayIterator;
     }
 

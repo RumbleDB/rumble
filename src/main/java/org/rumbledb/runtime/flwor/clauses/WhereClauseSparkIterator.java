@@ -26,7 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
@@ -64,10 +64,9 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     public WhereClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator whereExpression,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.expression = whereExpression;
         this.expression.getVariableDependencies();
     }
@@ -350,7 +349,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 this.expression,
                 false,
                 null,
-                getMetadata()
+                getMetadata(),
+                getConfiguration()
             );
             return result;
         } catch (Exception e) {
@@ -480,7 +480,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         if (this.expression.isSparkJobNeeded()) {
             return true;
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

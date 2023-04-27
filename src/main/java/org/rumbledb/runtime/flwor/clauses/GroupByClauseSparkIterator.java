@@ -30,13 +30,12 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -71,10 +70,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     public GroupByClauseSparkIterator(
             RuntimeTupleIterator child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.groupingExpressions = groupingExpressions;
         this.dependencies = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
@@ -627,7 +625,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

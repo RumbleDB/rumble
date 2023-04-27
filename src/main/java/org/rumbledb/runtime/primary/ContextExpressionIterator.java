@@ -26,8 +26,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -45,8 +44,8 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private static final long serialVersionUID = 1L;
 
-    public ContextExpressionIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public ContextExpressionIterator(RuntimeStaticContext staticContext) {
+        super(null, staticContext);
     }
 
     @Override

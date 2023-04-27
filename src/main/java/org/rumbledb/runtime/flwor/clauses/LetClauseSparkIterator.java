@@ -29,8 +29,8 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -84,10 +84,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name variableName,
             SequenceType sequenceType,
             RuntimeIterator assignmentIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.assignmentIterator = assignmentIterator;
@@ -443,13 +442,20 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
+                        new RuntimeStaticContext(
+                                getConfiguration(),
+                                SequenceType.ITEM_STAR,
+                                ExecutionMode.LOCAL,
+                                getMetadata()
+                        )
+                ),
+                predicateIterator,
+                new RuntimeStaticContext(
+                        getConfiguration(),
                         SequenceType.ITEM_STAR,
                         ExecutionMode.LOCAL,
                         getMetadata()
-                ),
-                predicateIterator,
-                ExecutionMode.LOCAL,
-                getMetadata()
+                )
         );
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
@@ -853,7 +859,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (this.assignmentIterator.isSparkJobNeeded()) {
             return true;
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:
