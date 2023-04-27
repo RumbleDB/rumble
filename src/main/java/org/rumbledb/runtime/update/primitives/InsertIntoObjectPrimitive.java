@@ -1,9 +1,11 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DuplicateObjectKeyException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.ObjectItem;
+import org.rumbledb.exceptions.*;
+import org.rumbledb.items.ItemFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
@@ -21,8 +23,12 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
-        for (String key : this.content.getKeys()) {
-            this.target.putItemByKey(key, this.target.getItemByKey(key));
+        try {
+            for (String key : this.content.getKeys()) {
+                this.target.putItemByKey(key, this.target.getItemByKey(key));
+            }
+        } catch (DuplicateObjectKeyException e) {
+            throw new DuplicateKeyOnUpdateApplyException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -52,20 +58,21 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     }
 
     public static Item mergeSources(Item first, Item second) {
-        ObjectItem merged = new ObjectItem();
-        ObjectItem objFirst = (ObjectItem) first;
-        ObjectItem objSecond = (ObjectItem) second;
+        // TODO: ADD METADATA
+        Item res;
+
+        List<String> keys = new ArrayList<>(first.getKeys());
+        keys.addAll(second.getKeys());
+
+        List<Item> values = new ArrayList<>(first.getValues());
+        values.addAll(second.getValues());
+
         try {
-            for (String otherKey : objFirst.getKeys()) {
-                merged.putItemByKey(otherKey, objFirst.getItemByKey(otherKey));
-            }
-            for (String otherKey : objSecond.getKeys()) {
-                merged.putItemByKey(otherKey, objSecond.getItemByKey(otherKey));
-            }
+            res = ItemFactory.getInstance().createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
         } catch (DuplicateObjectKeyException e) {
-            throw new OurBadException("SHOULD THROW SMTH ELSE");
-            // TODO THROW jerr:JNUP0005 INSTEAD ON COLLISION
+            throw new DuplicateObjectInsertSourceException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
         }
-        return merged;
+
+        return res;
     }
 }

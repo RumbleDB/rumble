@@ -123,7 +123,12 @@ public enum ErrorCode {
     InvalidTimezoneValue("FODT0003"),
 
     InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
-    SimpleExpressionMustBeVacuousErrorCode("XUST0002");
+    SimpleExpressionMustBeVacuousErrorCode("XUST0002"),
+
+    DuplicateObjectInsertSourceErrorCode("JNUP0005"),
+    DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
+    TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
+    TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010");
 
 
 

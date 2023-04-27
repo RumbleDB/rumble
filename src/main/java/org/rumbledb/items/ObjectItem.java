@@ -160,19 +160,6 @@ public class ObjectItem implements Item {
         }
     }
 
-    public static ObjectItem mergeWith(ObjectItem obj1, ObjectItem obj2) {
-        ObjectItem result = new ObjectItem();
-
-        for (String otherKey : obj1.getKeys()) {
-            result.putItemByKey(otherKey, obj1.getItemByKey(otherKey));
-        }
-        for (String otherKey : obj2.getKeys()) {
-            result.putItemByKey(otherKey, obj2.getItemByKey(otherKey));
-        }
-        // TODO Raise jerr:JNUP0005 on collision
-        return result;
-    }
-
     @Override
     public boolean isObject() {
         return true;

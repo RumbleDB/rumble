@@ -1,8 +1,13 @@
 package org.rumbledb.runtime.update;
 
+import org.apache.hadoop.mapred.lib.DelegatingInputFormat;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.TooManyRenamesOnSameTargetSelectorException;
+import org.rumbledb.exceptions.TooManyReplacesOnSameTargetSelectorException;
 import org.rumbledb.runtime.update.primitives.*;
+import org.rumbledb.types.ItemType;
 
 import java.util.*;
 
@@ -15,17 +20,58 @@ public class PendingUpdateList {
     private Map<Item, Map<Item, Item>> renameObjMap;
 
     public PendingUpdateList() {
-
+        this.insertObjMap = new HashMap<>();
+        this.insertArrayMap = new HashMap<>();
+        this.delReplaceObjMap = new HashMap<>();
+        this.delReplaceArrayMap = new HashMap<>();
+        this.renameObjMap = new HashMap<>();
     }
 
-//    public void addUpdatePrimitive(UpdatePrimitive updatePrimitive) {
-//        this.updatePrimitives.add(updatePrimitive);
-//    }
-//
-//    public void addAllUpdatePrimitives(List<UpdatePrimitive> updatePrimitives) {
-//        this.updatePrimitives.addAll(updatePrimitives);
-//    }
+    public PendingUpdateList(UpdatePrimitive updatePrimitive) {
+        this();
+        this.addUpdatePrimitive(updatePrimitive);
+    }
 
+    public void addUpdatePrimitive(UpdatePrimitive updatePrimitive) {
+        Item target = updatePrimitive.getTarget();
+        if (updatePrimitive.isDeleteObject()) {
+            Map<Item, Item> locSrcMap = delReplaceObjMap.getOrDefault(target, new HashMap<>());
+            for (Item locator : updatePrimitive.getContentList()) {
+                locSrcMap.put(locator, null);
+            }
+            delReplaceObjMap.put(target, locSrcMap);
+
+        } else if (updatePrimitive.isReplaceObject()) {
+            Map<Item, Item> locSrcMap = delReplaceObjMap.getOrDefault(target, new HashMap<>());
+            locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
+            delReplaceObjMap.put(target, locSrcMap);
+
+        } else if (updatePrimitive.isInsertObject()) {
+            insertObjMap.put(target, updatePrimitive.getContent());
+
+        } else if (updatePrimitive.isRenameObject()) {
+            Map<Item, Item> locSrcMap = renameObjMap.getOrDefault(target, new HashMap<>());
+            locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
+            renameObjMap.put(target, locSrcMap);
+
+        } else if (updatePrimitive.isDeleteArray()) {
+            Map<Item, Item> locSrcMap = delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+            locSrcMap.put(updatePrimitive.getSelector(), null);
+            delReplaceArrayMap.put(target, locSrcMap);
+
+        } else if (updatePrimitive.isReplaceArray()) {
+            Map<Item, Item> locSrcMap = delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+            locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
+            delReplaceArrayMap.put(target, locSrcMap);
+
+        } else if (updatePrimitive.isInsertArray()) {
+            Map<Item, List<Item>> locSrcMap = insertArrayMap.getOrDefault(target, new HashMap<>());
+            locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContentList());
+            insertArrayMap.put(target, locSrcMap);
+        } else {
+            throw new OurBadException("Invalid UpdatePrimitive created");
+        }
+    }
 
     public void applyUpdates() {
 
@@ -133,8 +179,7 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     tempSrc = tempSelSrcResMap.get(selector);
                     if (tempSrc != null) {
-                        // TODO implement jerr:NUP0009
-                        throw new OurBadException("MULTIPLE REPLACE OF SAME TARGET & SELECTOR");
+                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), selector.getStringValue(), ExceptionMetadata.EMPTY_METADATA);
                     }
                     continue;
                 }
@@ -150,7 +195,7 @@ public class PendingUpdateList {
         for (Item target : pul2.insertObjMap.keySet()) {
             tempSrc = pul2.insertObjMap.get(target);
             if (res.insertObjMap.containsKey(target)) {
-//                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc);
+                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc);
             }
             res.insertObjMap.put(target,tempSrc);
         }
@@ -173,8 +218,7 @@ public class PendingUpdateList {
 
             for (Item selector : tempSelSrcMap.keySet()) {
                 if (tempSelSrcResMap.containsKey(selector)) {
-                    // TODO implement jerr:NUP0010
-                    throw new OurBadException("MULTIPLE RENAME OF SAME TARGET & SELECTOR");
+                    throw new TooManyRenamesOnSameTargetSelectorException(selector.getStringValue(), ExceptionMetadata.EMPTY_METADATA);
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
@@ -203,8 +247,7 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     tempSrc = tempSelSrcResMap.get(selector);
                     if (tempSrc != null) {
-                        // TODO implement jerr:NUP0009
-                        throw new OurBadException("MULTIPLE REPLACE OF SAME TARGET & SELECTOR");
+                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), Integer.toString(selector.getIntValue()), ExceptionMetadata.EMPTY_METADATA);
                     }
                     continue;
                 }
