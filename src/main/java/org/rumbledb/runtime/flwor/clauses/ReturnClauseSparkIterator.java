@@ -203,7 +203,12 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
 
         JavaRDD<Item> rdd = getRDDAux(context);
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, getStaticType().getItemType(), context, false);
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+            rdd,
+            expression.getStaticType().getItemType(),
+            context,
+            false
+        );
     }
 
     @Override

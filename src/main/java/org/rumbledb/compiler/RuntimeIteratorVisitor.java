@@ -55,6 +55,7 @@ import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
@@ -208,13 +209,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             expression.getReturnClause().getPreviousClause(),
             argument
         );
+        ReturnClause returnClause = expression.getReturnClause();
         RuntimeIterator runtimeIterator = new ReturnClauseSparkIterator(
                 previous,
                 this.visit(
-                    (expression.getReturnClause()).getReturnExpr(),
+                    returnClause.getReturnExpr(),
                     argument
                 ),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                returnClause.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
