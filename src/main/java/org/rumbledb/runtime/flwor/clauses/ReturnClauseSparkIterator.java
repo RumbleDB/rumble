@@ -200,7 +200,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             JSoundDataFrame result = new JSoundDataFrame(
                     nativeQueryResult,
-                    getStaticType().getItemType()
+                    this.expression.getStaticType().getItemType()
             );
             return result;
         }
