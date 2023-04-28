@@ -186,7 +186,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             );
         }
         if (nativeQueryResult != null) {
-            if (getStaticType().getItemType().isObjectItemType()) {
+            if (this.expression.getStaticType().getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
                 nativeQueryResult =
                     nativeQueryResult.sparkSession()
@@ -208,7 +208,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         JavaRDD<Item> rdd = getRDDAux(context);
         return ValidateTypeIterator.convertRDDToValidDataFrame(
             rdd,
-            expression.getStaticType().getItemType(),
+            this.expression.getStaticType().getItemType(),
             context,
             false
         );
