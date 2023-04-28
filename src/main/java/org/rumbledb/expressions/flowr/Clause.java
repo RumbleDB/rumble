@@ -171,9 +171,6 @@ public abstract class Clause extends Node {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
-        }
     }
 
     public StaticContext getStaticContext() {

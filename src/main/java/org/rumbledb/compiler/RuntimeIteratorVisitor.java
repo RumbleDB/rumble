@@ -25,6 +25,7 @@ import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -216,7 +217,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnExpr(),
                     argument
                 ),
-                returnClause.getReturnExpr().getStaticContextForRuntime(this.config, this.visitorConfig)
+                new RuntimeStaticContext(
+                        this.config,
+                        expression.getStaticSequenceType(),
+                        returnClause.getHighestExecutionMode(this.visitorConfig),
+                        returnClause.getMetadata()
+                )
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
