@@ -216,7 +216,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnExpr(),
                     argument
                 ),
-                returnClause.getStaticContextForRuntime(this.config, this.visitorConfig)
+                returnClause.getReturnExpr().getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
