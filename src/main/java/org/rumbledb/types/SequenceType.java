@@ -26,7 +26,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.util.Arrays;
