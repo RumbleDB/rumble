@@ -74,6 +74,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
+        if (this.staticContext.getStaticType() == null) {
+            throw new OurBadException(
+                    "Runtime iterator created without a static type! " + this.getClass().getCanonicalName()
+            );
+        }
         this.isOpen = false;
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {

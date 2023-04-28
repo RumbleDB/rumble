@@ -38,13 +38,13 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
             new String[] {
-            		"--variable:externalUnparsedString",
-            		"unparsed string",
-            		"--escape-backticks",
-            		"yes",
-            		"--native-execution",
-            		"no"
-    		}
+                "--variable:externalUnparsedString",
+                "unparsed string",
+                "--escape-backticks",
+                "yes",
+                "--native-execution",
+                "no"
+            }
     );
 
     public static final File nativeFlworRuntimeTestsDirectory = new File(
