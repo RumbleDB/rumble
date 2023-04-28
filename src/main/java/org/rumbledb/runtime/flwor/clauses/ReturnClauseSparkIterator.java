@@ -176,12 +176,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
         Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
-            df,
-            this.expression,
-            inputSchema,
-            context
-        );
+        Dataset<Row> nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expression,
+                inputSchema,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
             if (getStaticType().getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);

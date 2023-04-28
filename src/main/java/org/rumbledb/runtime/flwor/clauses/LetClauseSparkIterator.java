@@ -27,6 +27,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -206,7 +207,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     ? Collections.emptyList()
                     : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 this.outputTupleProjection,
-                false
+                false,
+                getConfiguration()
             );
 
             return new FlworDataFrame(result);
@@ -337,7 +339,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             context,
             Collections.singletonList(Name.CONTEXT_ITEM),
             null,
-            true
+            true,
+            getConfiguration()
         );
 
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
@@ -350,7 +353,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 ? Collections.emptyList()
                 : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
-            true
+            true,
+            getConfiguration()
         );
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
@@ -465,7 +469,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             context,
             new ArrayList<Name>(this.getOutputTupleVariableNames()),
             parentProjection,
-            false
+            false,
+            getConfiguration()
         );
 
         return new FlworDataFrame(inputDF);
@@ -578,7 +583,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
-            boolean hash
+            boolean hash,
+            RumbleRuntimeConfiguration conf
     ) {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
@@ -596,14 +602,17 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // if we can (depending on the expression) use let natively without UDF
 
         if (!hash) {
-            Dataset<Row> nativeQueryResult = tryNativeQuery(
-                dataFrame,
-                newVariableName,
-                newVariableExpression,
-                allColumns,
-                inputSchema,
-                context
-            );
+            Dataset<Row> nativeQueryResult = null;
+            if (conf.nativeExecution()) {
+                nativeQueryResult = tryNativeQuery(
+                    dataFrame,
+                    newVariableName,
+                    newVariableExpression,
+                    allColumns,
+                    inputSchema,
+                    context
+                );
+            }
 
             if (nativeQueryResult != null) {
                 return nativeQueryResult;

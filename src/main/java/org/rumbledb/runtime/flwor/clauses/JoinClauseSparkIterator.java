@@ -47,6 +47,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -254,7 +255,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 context,
                 variablesInRightInputTuple,
                 null,
-                true
+                true,
+                conf
             );
             leftInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 leftInputTuple,
@@ -264,7 +266,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 context,
                 variablesInLeftInputTuple,
                 null,
-                true
+                true,
+                conf
             );
         }
 

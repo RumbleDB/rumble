@@ -288,7 +288,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     context,
                     new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     null,
-                    false
+                    false,
+                    getConfiguration()
                 );
 
 
@@ -310,14 +311,17 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         String input = FlworDataFrameUtils.createTempView(df);
 
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
-            df,
-            variableAccessNames,
-            this.outputTupleProjection,
-            inputSchema,
-            context,
-            input
-        );
+        Dataset<Row> nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                variableAccessNames,
+                this.outputTupleProjection,
+                inputSchema,
+                context,
+                input
+            );
+        }
         if (nativeQueryResult != null) {
 
             return new FlworDataFrame(nativeQueryResult);

@@ -611,16 +611,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variableNamesToExclude
         );
 
-        FlworDataFrame nativeQueryResult = tryNativeQuery(
-            df,
-            this.variableName,
-            this.positionalVariableName,
-            this.allowingEmpty,
-            this.assignmentIterator,
-            allColumns,
-            inputSchema,
-            context
-        );
+        FlworDataFrame nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.variableName,
+                this.positionalVariableName,
+                this.allowingEmpty,
+                this.assignmentIterator,
+                allColumns,
+                inputSchema,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
             return nativeQueryResult;
         }

@@ -174,11 +174,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         FlworDataFrame df = this.child.getDataFrame(context);
         // StructType inputSchema = df.schema();
 
-        FlworDataFrame nativeQueryResult = tryNativeQuery(
-            df,
-            this.expression,
-            context
-        );
+        FlworDataFrame nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expression,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
             return nativeQueryResult;
         }

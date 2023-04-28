@@ -237,13 +237,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             null
         );
 
-        FlworDataFrame nativeQueryResult = tryNativeQuery(
-            df,
-            this.expressionsWithIterator,
-            allColumns,
-            inputSchema,
-            context
-        );
+        FlworDataFrame nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expressionsWithIterator,
+                allColumns,
+                inputSchema,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
             return nativeQueryResult;
         }
