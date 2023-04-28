@@ -25,7 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -57,10 +57,9 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     public GetTransformerFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -120,8 +119,12 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     transformerShortName,
                     transformer,
-                    ExecutionMode.DATAFRAME,
-                    getMetadata()
+                    new RuntimeStaticContext(
+                            getConfiguration(),
+                            SequenceType.OBJECTS,
+                            ExecutionMode.DATAFRAME,
+                            getMetadata()
+                    )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

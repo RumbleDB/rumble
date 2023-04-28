@@ -20,8 +20,7 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 
 import java.util.List;
 
@@ -31,10 +30,9 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
     protected DataFrameRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
+        super(children, staticContext);
     }
 
     @Override

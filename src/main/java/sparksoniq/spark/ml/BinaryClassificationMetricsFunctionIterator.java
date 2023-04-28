@@ -9,12 +9,14 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
 
@@ -24,10 +26,9 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
 
     public BinaryClassificationMetricsFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, metadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -55,19 +56,34 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         objectItem.putItemByKey("areaUnderPR", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderPR()));
         objectItem.putItemByKey("areaUnderROC", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderROC()));
         JavaRDD<Item> rdd = tupleToArrays(bcm.pr().toJavaRDD(), "recall", "precision");
-        RuntimeIterator it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        RuntimeIterator it = new ConstantRDDRuntimeIterator(
+                rdd,
+                new RuntimeStaticContext(getConfiguration(), SequenceType.OBJECTS, ExecutionMode.RDD, getMetadata())
+        );
         objectItem.putLazyItemByKey("pr", it, context, true);
         rdd = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD(), "threshold", "F-Measure");
-        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        it = new ConstantRDDRuntimeIterator(
+                rdd,
+                new RuntimeStaticContext(getConfiguration(), SequenceType.OBJECTS, ExecutionMode.RDD, getMetadata())
+        );
         objectItem.putLazyItemByKey("fMeasureByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.precisionByThreshold().toJavaRDD(), "threshold", "precision");
-        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        it = new ConstantRDDRuntimeIterator(
+                rdd,
+                new RuntimeStaticContext(getConfiguration(), SequenceType.OBJECTS, ExecutionMode.RDD, getMetadata())
+        );
         objectItem.putLazyItemByKey("precisionByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.recallByThreshold().toJavaRDD(), "threshold", "recall");
-        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        it = new ConstantRDDRuntimeIterator(
+                rdd,
+                new RuntimeStaticContext(getConfiguration(), SequenceType.OBJECTS, ExecutionMode.RDD, getMetadata())
+        );
         objectItem.putLazyItemByKey("recallByThreshold", it, context, true);
         rdd = tupleToArrays(bcm.roc().toJavaRDD(), "false positive rate", "true positive rate");
-        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        it = new ConstantRDDRuntimeIterator(
+                rdd,
+                new RuntimeStaticContext(getConfiguration(), SequenceType.OBJECTS, ExecutionMode.RDD, getMetadata())
+        );
         objectItem.putLazyItemByKey("roc", it, context, true);
 
         return objectItem;

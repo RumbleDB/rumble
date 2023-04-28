@@ -24,8 +24,7 @@ import java.util.Collections;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -39,10 +38,9 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public NotOperationIterator(
             RuntimeIterator child,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
     }
 

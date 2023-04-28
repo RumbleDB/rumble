@@ -27,10 +27,9 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -49,20 +48,16 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private SequenceType sequence;
     private Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
     public VariableReferenceIterator(
             Name variableName,
-            SequenceType seq,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.variableName = variableName;
-        this.sequence = seq;
     }
 
     @Override
@@ -157,10 +152,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public void resetLocal() {
         this.currentIndex = 0;
         this.items = null;
-    }
-
-    public SequenceType getSequence() {
-        return this.sequence;
     }
 
     public Name getVariableName() {

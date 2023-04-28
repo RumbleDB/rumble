@@ -68,7 +68,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
     private boolean optimizeGeneralComparisonToValueComparison;
-    private boolean localExecutionOnly;
+    private boolean parallelExecution;
+    private boolean dataFrameExecution;
+    private boolean nativeExecution;
     private boolean thirdFeature;
 
     private Map<String, String> shortcutMap;
@@ -395,10 +397,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.datesWithTimeZone = false;
         }
 
-        if (this.arguments.containsKey("local-execution-only")) {
-            this.localExecutionOnly = this.arguments.get("local-execution-only").equals("yes");
+        if (this.arguments.containsKey("parallel-execution")) {
+            this.parallelExecution = this.arguments.get("parallel-execution").equals("yes");
         } else {
-            this.localExecutionOnly = false;
+            this.parallelExecution = true;
+        }
+
+        if (this.arguments.containsKey("data-frame-execution")) {
+            this.dataFrameExecution = this.arguments.get("data-frame-execution").equals("yes");
+        } else {
+            this.dataFrameExecution = true;
+        }
+
+        if (this.arguments.containsKey("native-execution")) {
+            this.nativeExecution = this.arguments.get("native-execution").equals("yes");
+        } else {
+            this.nativeExecution = true;
         }
 
         if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
@@ -591,12 +605,28 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.datesWithTimeZone = b;
     }
 
-    public boolean localExecutionOnly() {
-        return this.localExecutionOnly;
+    public boolean parallelExecution() {
+        return this.parallelExecution;
     }
 
-    public void setLocalExecutionOnly(boolean b) {
-        this.localExecutionOnly = b;
+    public void setParallelExecution(boolean b) {
+        this.parallelExecution = b;
+    }
+
+    public boolean dataFrameExecution() {
+        return this.dataFrameExecution;
+    }
+
+    public void setDataFrameExecution(boolean b) {
+        this.dataFrameExecution = b;
+    }
+
+    public boolean nativeExecution() {
+        return this.nativeExecution;
+    }
+
+    public void setnativeExecution(boolean b) {
+        this.nativeExecution = b;
     }
 
     public boolean optimizeGeneralComparisonToValueComparison() {

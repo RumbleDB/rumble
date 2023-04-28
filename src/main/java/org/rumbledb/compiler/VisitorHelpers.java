@@ -313,7 +313,7 @@ public class VisitorHelpers {
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
-        if (conf.localExecutionOnly()) {
+        if (!conf.parallelExecution()) {
             LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
             visitor.visit(module, module.getStaticContext());
             if (conf.isPrintIteratorTree()) {

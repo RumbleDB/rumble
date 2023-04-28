@@ -22,10 +22,9 @@ package org.rumbledb.runtime.arithmetics;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -47,10 +46,9 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     public UnaryOperationIterator(
             RuntimeIterator child,
             boolean negated,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.negated = negated;
         this.item = null;

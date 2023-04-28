@@ -26,6 +26,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -41,6 +42,16 @@ public class SequenceType implements Serializable {
     public final static SequenceType ITEM_STAR = new SequenceType(
             BuiltinTypesCatalogue.item,
             Arity.ZeroOrMore
+    );
+
+    public final static SequenceType OBJECTS = new SequenceType(
+            BuiltinTypesCatalogue.objectItem,
+            Arity.ZeroOrMore
+    );
+
+    public final static SequenceType FUNCTION = new SequenceType(
+            BuiltinTypesCatalogue.anyFunctionItem,
+            Arity.One
     );
 
     public final static SequenceType ITEM = new SequenceType(

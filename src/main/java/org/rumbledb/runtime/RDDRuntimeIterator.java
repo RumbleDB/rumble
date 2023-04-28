@@ -23,9 +23,8 @@ package org.rumbledb.runtime;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 
 import java.util.List;
 
@@ -35,10 +34,9 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     protected RDDRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
+        super(children, staticContext);
     }
 
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {

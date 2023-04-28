@@ -23,9 +23,8 @@ package org.rumbledb.runtime.functions.input;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -40,10 +39,9 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     public ParallelizeFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 
     @Override
