@@ -4,15 +4,34 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
+import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class ReplaceExpressionIterator extends HybridRuntimeIterator {
-    protected ReplaceExpressionIterator(List<RuntimeIterator> children, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(children, executionMode, iteratorMetadata);
+
+    private RuntimeIterator mainIterator;
+    private RuntimeIterator locatorIterator;
+    private RuntimeIterator replacerIterator;
+    private PendingUpdateList pul;
+
+    public ReplaceExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator locatorIterator, RuntimeIterator replacerIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+        super(Arrays.asList(mainIterator, locatorIterator, replacerIterator), executionMode, iteratorMetadata);
+
+        this.mainIterator = mainIterator;
+        this.locatorIterator = locatorIterator;
+        this.replacerIterator = replacerIterator;
+        this.pul = null;
+        this.isUpdating = true;
     }
 
     @Override
@@ -43,5 +62,38 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected Item nextLocal() {
         return null;
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (this.pul == null) {
+            PendingUpdateList pul = new PendingUpdateList();
+            Item target;
+            Item locator;
+            Item content;
+
+            try {
+                target = this.mainIterator.materializeExactlyOneItem(context);
+                locator = this.locatorIterator.materializeExactlyOneItem(context);
+                content = this.replacerIterator.materializeExactlyOneItem(context);
+            } catch (NoItemException | MoreThanOneItemException e) {
+                throw new RuntimeException(e);
+            }
+
+            UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+            UpdatePrimitive up;
+            if (target.isObject()) {
+                up = factory.createReplaceInObjectPrimitive(target, locator, content);
+            } else if (target.isArray()) {
+                up = factory.createReplaceInArrayPrimitive(target, locator, content);
+            } else {
+                throw new OurBadException("Replace iterator cannot handle target items that are not objects or arrays");
+            }
+
+            pul.addUpdatePrimitive(up);
+            this.pul = pul;
+        }
+
+        return this.pul;
     }
 }

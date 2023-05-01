@@ -21,11 +21,13 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator mainIterator;
     private RuntimeIterator lookupIterator;
+    private PendingUpdateList pul;
 
     public DeleteExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator lookupIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(Arrays.asList(mainIterator, lookupIterator), executionMode, iteratorMetadata);
         this.mainIterator = mainIterator;
         this.lookupIterator = lookupIterator;
+        this.pul = null;
         this.isUpdating = true;
     }
 
@@ -60,30 +62,33 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public PendingUpdateList getPendingUpdateList(DynamicContext dynamicContext) {
-        PendingUpdateList pul = new PendingUpdateList();
-        Item main;
-        Item lookup;
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (this.pul == null) {
+            PendingUpdateList pul = new PendingUpdateList();
+            Item main;
+            Item lookup;
 
-        try {
-            main = this.mainIterator.materializeExactlyOneItem(dynamicContext);
-            lookup = this.lookupIterator.materializeExactlyOneItem(dynamicContext);
-        } catch (NoItemException | MoreThanOneItemException e) {
-            throw new RuntimeException(e);
+            try {
+                main = this.mainIterator.materializeExactlyOneItem(context);
+                lookup = this.lookupIterator.materializeExactlyOneItem(context);
+            } catch (NoItemException | MoreThanOneItemException e) {
+                throw new RuntimeException(e);
+            }
+
+            UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+            UpdatePrimitive up;
+            if (main.isObject()) {
+                up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup));
+            } else if (main.isArray()) {
+                up = factory.createDeleteFromArrayPrimitive(main, lookup);
+            } else {
+                throw new OurBadException("Delete iterator cannot handle main items that are not objects or arrays");
+            }
+
+            pul.addUpdatePrimitive(up);
+            this.pul = pul;
         }
 
-        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        UpdatePrimitive up;
-        if (main.isObject()) {
-            up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup));
-        } else if (main.isArray()) {
-            up = factory.createDeleteFromArrayPrimitive(main, lookup);
-        } else {
-            throw new OurBadException("Delete iterator cannot handle main items that are not objects or arrays");
-        }
-
-        pul.addUpdatePrimitive(up);
-
-        return pul;
+        return this.pul;
     }
 }
