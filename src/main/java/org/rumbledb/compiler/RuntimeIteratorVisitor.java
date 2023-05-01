@@ -66,6 +66,7 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -138,6 +139,9 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.expression.DeleteExpressionIterator;
+import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -335,6 +339,70 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
+    // endregion
+
+    // region updating
+
+    @Override
+    public RuntimeIterator visitDeleteExpression(DeleteExpression expression, RuntimeIterator argument) {
+
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator lookupIterator = this.visit(expression.getLocatorExpression(), argument);
+
+        RuntimeIterator runtimeIterator = new DeleteExpressionIterator(
+                mainIterator,
+                lookupIterator,
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitRenameExpression(RenameExpression expression, RuntimeIterator argument) {
+        return super.visitRenameExpression(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitReplaceExpression(ReplaceExpression expression, RuntimeIterator argument) {
+        return super.visitReplaceExpression(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitInsertExpression(InsertExpression expression, RuntimeIterator argument) {
+        return super.visitInsertExpression(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitAppendExpression(AppendExpression expression, RuntimeIterator argument) {
+        return super.visitAppendExpression(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitTransformExpression(TransformExpression expression, RuntimeIterator argument) {
+
+        List<RuntimeIterator> copyDeclIterators = new ArrayList<>();
+        for (Expression childExpr : expression.getCopySourceExpressions()) {
+            copyDeclIterators.add(this.visit(childExpr, argument));
+        }
+        RuntimeIterator modifyIterator = this.visit(expression.getModifyExpression(), argument);
+        RuntimeIterator returnIterator = this.visit(expression.getReturnExpression(), argument);
+
+        RuntimeIterator runtimeIterator = new TransformExpressionIterator(
+                copyDeclIterators,
+                modifyIterator,
+                returnIterator,
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+
+        return runtimeIterator;
+    }
+
+
     // endregion
 
     // region primary

@@ -64,6 +64,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
+    protected transient boolean isUpdating;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
@@ -75,6 +76,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, ExceptionMetadata metadata) {
         this.metadata = metadata;
         this.isOpen = false;
+        this.isUpdating = false;
         this.highestExecutionMode = executionMode;
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
@@ -275,13 +277,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isUpdating() {
-        throw new OurBadException(
-                "Updating classification is not implemented for the iterator " + getClass().getCanonicalName(),
-                getMetadata()
-        );
+        return this.isUpdating;
     }
 
-    public PendingUpdateList getPendingUpdateList() {
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         throw new OurBadException(
                 "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
@@ -392,6 +391,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(getClass().getSimpleName());
         buffer.append(" | ");
         buffer.append(this.highestExecutionMode);
+        buffer.append(" | ");
+        buffer.append(this.isUpdating ? "updating" : "simple");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
