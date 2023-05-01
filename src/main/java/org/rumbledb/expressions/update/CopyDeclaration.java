@@ -29,7 +29,12 @@ public class CopyDeclaration {
     }
 
     public SequenceType getSourceSequenceType() {
-        return sourceExpression.getStaticSequenceType();
+        if (this.sourceExpression != null && this.sourceExpression.getStaticSequenceType() != null) {
+            return this.sourceExpression.getStaticSequenceType();
+        }
+        return SequenceType.ITEM_STAR;
     }
+
+
 
 }

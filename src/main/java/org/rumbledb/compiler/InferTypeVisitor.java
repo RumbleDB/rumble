@@ -701,7 +701,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             visit(copyDecl.getSourceExpression(), argument);
             SequenceType declaredType = copyDecl.getSourceSequenceType();
@@ -2050,6 +2049,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
     }
+
+
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration expression, StaticContext argument) {
