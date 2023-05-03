@@ -7,4 +7,4 @@ let $g := $i.foo
 let $h := $g.bar
 let $j := $h[[1]]
 group by $j
-return count($j)
+return count($i)
