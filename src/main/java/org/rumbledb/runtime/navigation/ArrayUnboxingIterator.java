@@ -142,7 +142,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         ItemType newContextType = newContext.getResultingType().getItemType();
         if (!newContextType.isArrayItemType()) {
             // let control to UDF when what we are unboxing is not an array
-            if(getConfiguration().doStaticAnalysis()) {
+            if (getConfiguration().doStaticAnalysis()) {
                 throw new UnexpectedStaticTypeException(
                         "This is not a sequence of arrays,"
                             + " so that the lookup will always result in the empty sequence no matter what. "
@@ -152,9 +152,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 );
             }
             LogManager.getLogger("ArrayUnboxingIterator")
-            .warn(
-                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
-            );
+                .warn(
+                    "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+                );
             return NativeClauseContext.NoNativeQuery;
         }
         newContext.setResultingType(
@@ -206,7 +206,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 elementType
             );
         }
-        if(getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().doStaticAnalysis()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "
@@ -216,9 +216,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             );
         }
         LogManager.getLogger("ArrayUnboxingIterator")
-        .warn(
-            "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
-        );
+            .warn(
+                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+            );
         return JSoundDataFrame.emptyDataFrame();
     }
 }

@@ -279,21 +279,21 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         if (!(leftSchema instanceof StructType)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
-                if(getConfiguration().doStaticAnalysis()) {
-	                throw new UnexpectedStaticTypeException(
-	                        "You are trying to look up the value associated with the field "
-	                            + key
-	                            + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
-	                            + "Fortunately Rumble was able to catch this. This is probably an overlook? "
-	                            + "Please check your query and try again.",
-	                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-	                        getMetadata()
-	                );
+                if (getConfiguration().doStaticAnalysis()) {
+                    throw new UnexpectedStaticTypeException(
+                            "You are trying to look up the value associated with the field "
+                                + key
+                                + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
+                                + "Fortunately Rumble was able to catch this. This is probably an overlook? "
+                                + "Please check your query and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
                 }
                 LogManager.getLogger("ObjectLookupIterator")
-                .warn(
-                    "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                );
+                    .warn(
+                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+                    );
             }
             return NativeClauseContext.NoNativeQuery;
         }
@@ -313,18 +313,18 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")
-                .warn(
-                    "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-                );
-                if(getConfiguration().doStaticAnalysis()) {
-	                throw new UnexpectedStaticTypeException(
-	                        "There is no field with the name "
-	                            + key
-	                            + " so that the lookup will always result in the empty sequence no matter what. "
-	                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
-	                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-	                        getMetadata()
-	                );
+                    .warn(
+                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+                    );
+                if (getConfiguration().doStaticAnalysis()) {
+                    throw new UnexpectedStaticTypeException(
+                            "There is no field with the name "
+                                + key
+                                + " so that the lookup will always result in the empty sequence no matter what. "
+                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
                 }
             }
             return NativeClauseContext.NoNativeQuery;
@@ -371,9 +371,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
         }
         LogManager.getLogger("ObjectLookupIterator")
-        .warn(
-            "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
-        );
+            .warn(
+                "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+            );
         JSoundDataFrame result = JSoundDataFrame.emptyDataFrame();
         return result;
     }

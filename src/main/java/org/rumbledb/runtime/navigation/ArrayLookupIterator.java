@@ -188,7 +188,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
-                if(getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -198,15 +198,15 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     );
                 }
                 LogManager.getLogger("ArrayLookupIterator")
-                .warn(
-                    "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-                );
+                    .warn(
+                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+                    );
                 return NativeClauseContext.NoNativeQuery;
             }
 
             schema = newContext.getSchema();
             if (!(schema instanceof ArrayType)) {
-                if(getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -216,9 +216,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     );
                 }
                 LogManager.getLogger("ArrayLookupIterator")
-                .warn(
-                    "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-                );
+                    .warn(
+                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+                    );
                 return NativeClauseContext.NoNativeQuery;
             }
             newContext.setResultingType(
@@ -267,7 +267,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 elementType
             );
         }
-        if(getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().doStaticAnalysis()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "
@@ -277,9 +277,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             );
         }
         LogManager.getLogger("ArrayLookupIterator")
-        .warn(
-            "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-        );
+            .warn(
+                "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+            );
         return JSoundDataFrame.emptyDataFrame();
     }
 }
