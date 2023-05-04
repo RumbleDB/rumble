@@ -61,12 +61,14 @@ public class VisitorHelpers {
         }
     }
 
-    private static MainModule applyTypeIndependentOptimizations(MainModule module) {
+    private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
         // Annotate recursive functions as such
         new FunctionDependenciesVisitor().visit(result, null);
         // Inline non-recursive functions
-        result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+        if (conf.functionInlining()) {
+            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+        }
         return result;
     }
 
@@ -153,7 +155,7 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
-            mainModule = applyTypeIndependentOptimizations(mainModule);
+            mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);

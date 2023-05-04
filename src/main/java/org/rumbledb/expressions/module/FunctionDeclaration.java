@@ -79,6 +79,7 @@ public class FunctionDeclaration extends Node {
             buffer.append("  ");
         }
         buffer.append("FunctionDeclaration " + this.getFunctionIdentifier());
+        buffer.append(" | " + (this.recursive ? "recursive" : "non-recursive"));
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
