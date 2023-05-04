@@ -3,9 +3,8 @@ package org.rumbledb.runtime.control;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
@@ -28,10 +27,9 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.add(test);
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
             this.children.add(typeSwitchCase.getReturnIterator());

@@ -4,7 +4,7 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class NativeClauseContext {
     private DynamicContext context;
     private String resultingQuery;
     private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
-    private ItemType resultingType;
+    private SequenceType resultingType;
 
     private NativeClauseContext() {
     }
@@ -43,7 +43,7 @@ public class NativeClauseContext {
         this.resultingType = parent.resultingType;
     }
 
-    public NativeClauseContext(NativeClauseContext parent, String newResultingQuery, ItemType resultingType) {
+    public NativeClauseContext(NativeClauseContext parent, String newResultingQuery, SequenceType resultingType) {
         this.clauseType = parent.clauseType;
         this.schema = parent.schema;
         this.context = parent.context;
@@ -80,11 +80,26 @@ public class NativeClauseContext {
         return this.lateralViewPart;
     }
 
-    public ItemType getResultingType() {
+    public SequenceType getResultingType() {
         return this.resultingType;
     }
 
-    public void setResultingType(ItemType resultingType) {
+    public void setResultingType(SequenceType resultingType) {
         this.resultingType = resultingType;
+    }
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("Native clause context.\n");
+        sb.append("Query: " + this.resultingQuery + "\n");
+        sb.append("Clause type: " + this.clauseType + "\n");
+        sb.append("Schema: " + this.schema.toString() + "\n");
+        sb.append("Context: " + this.context.toString() + "\n");
+        sb.append("Resulting type: " + this.resultingType + "\n");
+        sb.append("Lateral views:\n");
+        for (String s : this.lateralViewPart) {
+            sb.append(s + "\n");
+        }
+        return sb.toString();
     }
 }

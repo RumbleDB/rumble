@@ -20,6 +20,9 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -31,14 +34,14 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Collections;
-import java.util.List;
-
 public class LetClause extends Clause {
 
     private final Name variableName;
     protected SequenceType sequenceType;
+    protected SequenceType staticType;
     protected Expression expression;
+
+    private boolean isReferenced;
 
     // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
@@ -56,6 +59,7 @@ public class LetClause extends Clause {
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
+        this.isReferenced = true;
     }
 
     public Name getVariableName() {
@@ -101,7 +105,14 @@ public class LetClause extends Clause {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.expression);
+        List<Node> result = new ArrayList<>();
+        if (this.expression != null) {
+            result.add(this.expression);
+        }
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
+        }
+        return result;
     }
 
     @Override
@@ -118,8 +129,10 @@ public class LetClause extends Clause {
             " ("
                 + (this.variableName)
                 + ", "
-                + this.getSequenceType().toString()
-                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ((this.getStaticType() != null) ? this.getStaticType().toString() : "(unset)")
+                + ((this.getStaticType() != null)
+                    ? (this.getStaticType().isResolved() ? " (resolved)" : " (unresolved)")
+                    : "")
                 + ") "
         );
         buffer.append(")");
@@ -142,5 +155,21 @@ public class LetClause extends Clause {
         sb.append(" := (");
         this.expression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
+    }
+
+    public SequenceType getStaticType() {
+        return this.staticType;
+    }
+
+    public void setStaticType(SequenceType staticType) {
+        this.staticType = staticType;
+    }
+
+    public boolean getReferenced() {
+        return this.isReferenced;
+    }
+
+    public void setReferenced(boolean isReferenced) {
+        this.isReferenced = false;
     }
 }

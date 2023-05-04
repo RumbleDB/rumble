@@ -22,6 +22,7 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -59,6 +60,18 @@ public class VisitorHelpers {
         if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
+    }
+
+    private static MainModule applyTypeDependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
+        List<AbstractNodeVisitor<Node>> optimizers = new ArrayList<>();
+        if (conf.optimizeGeneralComparisonToValueComparison()) {
+            optimizers.add(new ComparisonVisitor());
+        }
+        MainModule result = module;
+        for (AbstractNodeVisitor<?> optimizer : optimizers) {
+            result = (MainModule) optimizer.visit(result, null);
+        }
+        return result;
     }
 
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
@@ -140,6 +153,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -180,6 +194,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -298,9 +313,21 @@ public class VisitorHelpers {
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
+        if (!conf.parallelExecution()) {
+            LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
+            visitor.visit(module, module.getStaticContext());
+            if (conf.isPrintIteratorTree()) {
+                printTree(module, conf);
+            }
+            if (module.numberOfUnsetExecutionModes() > 0) {
+                System.err.println(
+                    "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
+                );
+            }
+            return;
+        }
         ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf);
         visitor.visit(module, module.getStaticContext());
-
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = module.numberOfUnsetExecutionModes();
@@ -344,7 +371,6 @@ public class VisitorHelpers {
                 "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );
         }
-
     }
 
     private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {

@@ -20,15 +20,16 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -37,7 +38,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.TypeMappings;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -54,10 +55,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     public ArrayUnboxingIterator(
             RuntimeIterator arrayIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(arrayIterator), staticContext);
         this.iterator = arrayIterator;
     }
 
@@ -136,27 +136,46 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-        if (newContext != NativeClauseContext.NoNativeQuery) {
-            DataType schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType)) {
-                // let control to UDF when what we are unboxing is not an array
-                return NativeClauseContext.NoNativeQuery;
-            }
-            ArrayType arraySchema = (ArrayType) schema;
-            newContext.setSchema(arraySchema.elementType());
-            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(arraySchema.elementType()));
-            List<String> lateralViewPart = newContext.getLateralViewPart();
-            if (lateralViewPart.size() == 0) {
-                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
-            } else {
-                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
-                // previous
-                lateralViewPart.add(
-                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+        if (newContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        ItemType newContextType = newContext.getResultingType().getItemType();
+        if (!newContextType.isArrayItemType()) {
+            // let control to UDF when what we are unboxing is not an array
+            if (getConfiguration().doStaticAnalysis()) {
+                throw new UnexpectedStaticTypeException(
+                        "This is not a sequence of arrays,"
+                            + " so that the lookup will always result in the empty sequence no matter what. "
+                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        getMetadata()
                 );
             }
-            newContext.setResultingQuery(""); // dealt by for clause
+            LogManager.getLogger("ArrayUnboxingIterator")
+                .warn(
+                    "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+                );
+            return NativeClauseContext.NoNativeQuery;
         }
+        newContext.setResultingType(
+            new SequenceType(
+                    newContextType.getArrayContentFacet(),
+                    SequenceType.Arity.ZeroOrMore
+            )
+        );
+
+        List<String> lateralViewPart = newContext.getLateralViewPart();
+        if (lateralViewPart.size() == 0) {
+            lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+        } else {
+            // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+            // previous
+            lateralViewPart.add(
+                "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+            );
+        }
+        newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
+        newContext.setResultingQuery(""); // dealt by for clause
         return newContext;
     }
 
@@ -187,6 +206,19 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 elementType
             );
         }
+        if (getConfiguration().doStaticAnalysis()) {
+            throw new UnexpectedStaticTypeException(
+                    "This is not a sequence of arrays,"
+                        + " so that the lookup will always result in the empty sequence no matter what. "
+                        + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    getMetadata()
+            );
+        }
+        LogManager.getLogger("ArrayUnboxingIterator")
+            .warn(
+                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+            );
         return JSoundDataFrame.emptyDataFrame();
     }
 }

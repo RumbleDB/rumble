@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -44,27 +45,30 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected HybridRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
-        fallbackToRDDIfDFNotImplemented(executionMode);
+        super(children, staticContext);
+        fallbackToRDDIfDFNotImplemented(getHighestExecutionMode());
     }
 
     protected boolean implementsDataFrames() {
         return false;
     }
 
+    protected boolean implementsLocal() {
+        return true;
+    }
+
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
         if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
+            this.staticContext.setExecutionMode(ExecutionMode.RDD);
         }
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!isRDDOrDataFrame()) {
+        if (!isRDDOrDataFrame() && implementsLocal()) {
             openLocal();
         }
     }
@@ -72,7 +76,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (!isRDDOrDataFrame()) {
+        if (!isRDDOrDataFrame() && implementsLocal()) {
             resetLocal();
             return;
         }
@@ -82,7 +86,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void close() {
         super.close();
-        if (!isRDDOrDataFrame()) {
+        if (!isRDDOrDataFrame() && implementsLocal()) {
             closeLocal();
             return;
         }
@@ -91,12 +95,20 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        if (!isRDDOrDataFrame()) {
+        if (isLocal() && implementsLocal()) {
             return hasNextLocal();
         }
         if (this.result == null) {
             this.currentResultIndex = 0;
-            JavaRDD<Item> rdd = this.getRDD(this.currentDynamicContextForLocalExecution);
+            JavaRDD<Item> rdd = null;
+            if (!isRDD() && implementsDataFrames()) {
+                rdd = dataFrameToRDDOfItems(
+                    this.getDataFrame(this.currentDynamicContextForLocalExecution),
+                    this.getMetadata()
+                );
+            } else {
+                rdd = this.getRDDAux(this.currentDynamicContextForLocalExecution);
+            }
             this.result = SparkSessionManager.collectRDDwithLimit(rdd, this.getMetadata());
             this.hasNext = !this.result.isEmpty();
         }
@@ -105,7 +117,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!isRDDOrDataFrame()) {
+        if (!isRDDOrDataFrame() && implementsLocal()) {
             return nextLocal();
         }
         if (!this.isOpen) {

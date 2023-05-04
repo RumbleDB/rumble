@@ -101,6 +101,20 @@ public abstract class Node {
         return this.highestExecutionMode;
     }
 
+    /**
+     * Gets the highest execution mode of this node, which determines
+     * whether evaluation will be done locally, with RDDs or with DataFrames.
+     *
+     * This method is used during the static analysis. It is meant to be
+     * overridden by subclasses that support higher execution modes. By
+     * default, the highest execution mode is assumed to be local.
+     *
+     * @return the highest execution mode.
+     */
+    public ExecutionMode getHighestExecutionMode() {
+        return this.highestExecutionMode;
+    }
+
     public int numberOfUnsetExecutionModes() {
         int result = 0;
         for (Node n : this.getChildren()) {

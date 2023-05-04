@@ -22,8 +22,7 @@ package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
@@ -33,8 +32,8 @@ public class NullRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private Item item;
 
-    public NullRuntimeIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public NullRuntimeIterator(RuntimeStaticContext staticContext) {
+        super(null, staticContext);
         this.item = ItemFactory.getInstance().createNullItem();
     }
 

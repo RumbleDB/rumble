@@ -795,7 +795,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitCountClause(JsoniqParser.CountClauseContext ctx) {
         VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarRef(ctx.varRef());
-        return new CountClause(child, createMetadataFromContext(ctx));
+        return new CountClause(child.getVariableName(), createMetadataFromContext(ctx));
     }
     // endregion
 
@@ -850,11 +850,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
             ctx.op.get(0).getText()
         );
-        if (kind.isValueComparison()) {
+        if (kind.isValueComparison() || this.configuration.optimizeGeneralComparisonToValueComparison()) {
             return new ComparisonExpression(
                     mainExpression,
                     childExpression,
-                    ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
+                    kind,
                     createMetadataFromContext(ctx)
             );
         }
@@ -1108,14 +1108,24 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.simpleMap_expr != null) {
             return this.visitSimpleMapExpr(ctx.simpleMap_expr);
         }
-        return this.visitValidateExpr(ctx.validate_expr);
+        if (ctx.validate_expr != null) {
+            return this.visitValidateExpr(ctx.validate_expr);
+        }
+        return this.visitAnnotateExpr(ctx.annotate_expr);
+    }
+
+    @Override
+    public Node visitAnnotateExpr(JsoniqParser.AnnotateExprContext ctx) {
+        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
+        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+        return new ValidateTypeExpression(mainExpr, false, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
         Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
         SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, sequenceType, createMetadataFromContext(ctx));
+        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
     }
     // endregion
 

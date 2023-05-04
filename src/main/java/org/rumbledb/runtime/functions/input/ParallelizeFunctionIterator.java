@@ -23,10 +23,9 @@ package org.rumbledb.runtime.functions.input;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.RDDRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -34,16 +33,15 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
+public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public ParallelizeFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 
     @Override
@@ -89,5 +87,30 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
             partitionsIterator.close();
         }
         return rdd;
+    }
+
+    @Override
+    protected void openLocal() {
+        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.children.get(0).close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.children.get(0).hasNext();
+    }
+
+    @Override
+    protected Item nextLocal() {
+        return this.children.get(0).next();
     }
 }

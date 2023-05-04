@@ -34,6 +34,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +69,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.parent = null;
         this.variableValues = new VariableValues();
         this.conf = conf;
-        this.namedFunctions = new NamedFunctions();
+        this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = new DateTime();
     }
@@ -156,6 +157,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 into.put(v, from.get(v));
             }
         }
+    }
+
+    public static Map<Name, DynamicContext.VariableDependency> copyVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> from
+    ) {
+        Map<Name, DynamicContext.VariableDependency> result = new HashMap<>();
+        for (Name v : from.keySet()) {
+            result.put(v, from.get(v));
+        }
+        return result;
     }
 
     @Override
