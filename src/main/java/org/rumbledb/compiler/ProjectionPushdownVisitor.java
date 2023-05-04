@@ -12,7 +12,7 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectionPushdownVisitor extends TypeIndependentNodeVisitor {
+public class ProjectionPushdownVisitor extends CloneVisitor {
 
     private final ProjectionPushdownDetectionVisitor projectionPushdownDetectionVisitor;
 

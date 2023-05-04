@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -23,7 +22,6 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -63,23 +61,20 @@ public class VisitorHelpers {
         }
     }
 
-    private static MainModule applyTypeIndependentOptimizations(MainModule module) {
-        List<TypeIndependentNodeVisitor> optimizers = new ArrayList<>();
+    private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
+        List<CloneVisitor> optimizers = new ArrayList<>();
         optimizers.add(new FunctionInliningVisitor());
         optimizers.add(new ProjectionPushdownVisitor());
         MainModule result = module;
-        for (AbstractNodeVisitor<?> optimizer : optimizers) {
+        for (CloneVisitor optimizer : optimizers) {
             result = (MainModule) optimizer.visit(result, null);
         }
         return result;
     }
 
     private static MainModule applyTypeDependentOptimizations(MainModule module) {
-        List<AbstractNodeVisitor<Node>> optimizers = Collections.singletonList(new ComparisonVisitor());
         MainModule result = module;
-        for (AbstractNodeVisitor<?> optimizer : optimizers) {
-            result = (MainModule) optimizer.visit(result, null);
-        }
+        result = (MainModule) new ComparisonVisitor().visit(result, null);
         return result;
     }
 
@@ -160,7 +155,7 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
-            mainModule = applyTypeIndependentOptimizations(mainModule);
+            mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
@@ -353,9 +348,11 @@ public class VisitorHelpers {
                 break;
             }
 
-            if (conf.isPrintIteratorTree()) {
-                printTree(module, conf);
-            }
+            /*
+             * if (conf.isPrintIteratorTree()) {
+             * printTree(module, conf);
+             * }
+             */
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(

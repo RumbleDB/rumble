@@ -116,5 +116,19 @@ public class FlworDataFrame implements Serializable {
         return FlworDataFrameUtils.createTempView(this.dataFrame);
     }
 
+    public void show() {
+        System.err.println("FLWOR DataFrame");
+        System.err.println("Columns");
+        for (FlworDataFrameColumn c : this.columns) {
+            System.err.println(c.toString());
+        }
+        System.err.println("Column types");
+        for (Name n : this.columnTypes.keySet()) {
+            System.err.println(n + " " + this.columnTypes.get(n));
+        }
+        System.err.println("Data Frame");
+        this.dataFrame.show();
+    }
+
 
 }

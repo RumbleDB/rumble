@@ -555,9 +555,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             new NativeClauseContext(leftResult, null, null)
         );
         if (rightResult == NativeClauseContext.NoNativeQuery) {
-        	return NativeClauseContext.NoNativeQuery;
-		}
-		if (!rightResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!rightResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
         ItemType resultType = null;

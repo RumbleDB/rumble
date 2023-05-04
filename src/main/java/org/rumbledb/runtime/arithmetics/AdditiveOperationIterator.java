@@ -435,7 +435,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             new NativeClauseContext(leftResult, null, null)
         );
         if (rightResult == NativeClauseContext.NoNativeQuery) {
-        	return NativeClauseContext.NoNativeQuery;
+            return NativeClauseContext.NoNativeQuery;
         }
         if (!rightResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;

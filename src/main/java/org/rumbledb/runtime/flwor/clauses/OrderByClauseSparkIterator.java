@@ -553,7 +553,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
-        	NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
+            NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
             if (
                 orderContext == NativeClauseContext.NoNativeQuery
                     || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
