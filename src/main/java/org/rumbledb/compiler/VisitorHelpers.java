@@ -348,9 +348,11 @@ public class VisitorHelpers {
                 break;
             }
 
-            if (conf.isPrintIteratorTree()) {
-                printTree(module, conf);
-            }
+            /*
+             * if (conf.isPrintIteratorTree()) {
+             * printTree(module, conf);
+             * }
+             */
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(

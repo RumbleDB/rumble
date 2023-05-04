@@ -9,6 +9,7 @@ import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -22,6 +23,7 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,6 +91,64 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return allArgumentsMatch;
     }
 
+    private void addCastCase(
+            List<TypeswitchCase> cases,
+            Expression expression,
+            SequenceType testType,
+            SequenceType targetType
+    ) {
+        if (testType.equals(targetType)) {
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(testType),
+                        expression
+                )
+            );
+        } else if (testType.getArity().isSubtypeOf(Arity.OneOrZero)) {
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(testType),
+                        new CastExpression(
+                                expression,
+                                targetType,
+                                expression.getMetadata()
+                        )
+                )
+            );
+        } else {
+            Name variableName = Name.createVariableInNoNamespace(
+                String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
+            );
+            Clause forClause = new ForClause(
+                    variableName,
+                    false,
+                    new SequenceType(testType.getItemType(), Arity.One),
+                    null,
+                    expression,
+                    expression.getMetadata()
+            );
+            Expression castExpression = new CastExpression(
+                    new VariableReferenceExpression(variableName, expression.getMetadata()),
+                    new SequenceType(targetType.getItemType(), Arity.One),
+                    expression.getMetadata()
+            );
+            ReturnClause returnClause = new ReturnClause(
+                    castExpression,
+                    expression.getMetadata()
+            );
+            forClause.chainWith(returnClause);
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(testType),
+                        new FlworExpression(returnClause, expression.getMetadata())
+                )
+            );
+        }
+    }
+
     private Expression createTypePromotion(
             Expression expression,
             SequenceType paramType
@@ -96,35 +156,29 @@ public class FunctionInliningVisitor extends CloneVisitor {
         // integer > decimal > double
         if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("double?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("double?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("double?")),
-                        expression
-                )
-            );
+            switch (paramType.getArity()) {
+                case One:
+                    addCastCase(cases, expression, SequenceType.INTEGER, SequenceType.DOUBLE);
+                    addCastCase(cases, expression, SequenceType.DECIMAL, SequenceType.DOUBLE);
+                    addCastCase(cases, expression, SequenceType.DOUBLE, SequenceType.DOUBLE);
+                    break;
+                case OneOrZero:
+                    addCastCase(cases, expression, SequenceType.INTEGER_QM, SequenceType.DOUBLE_QM);
+                    addCastCase(cases, expression, SequenceType.DECIMAL_QM, SequenceType.DOUBLE_QM);
+                    addCastCase(cases, expression, SequenceType.DOUBLE_QM, SequenceType.DOUBLE_QM);
+                    break;
+                case OneOrMore:
+                    addCastCase(cases, expression, SequenceType.INTEGER_PLUS, SequenceType.DOUBLE_PLUS);
+                    addCastCase(cases, expression, SequenceType.DECIMAL_PLUS, SequenceType.DOUBLE_PLUS);
+                    addCastCase(cases, expression, SequenceType.DOUBLE_PLUS, SequenceType.DOUBLE_PLUS);
+                    break;
+                case ZeroOrMore:
+                    addCastCase(cases, expression, SequenceType.INTEGER_STAR, SequenceType.DOUBLE_STAR);
+                    addCastCase(cases, expression, SequenceType.DECIMAL_STAR, SequenceType.DOUBLE_STAR);
+                    addCastCase(cases, expression, SequenceType.DOUBLE_STAR, SequenceType.DOUBLE_STAR);
+                    break;
+                case Zero:
+            }
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
@@ -144,24 +198,25 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         if (paramType.getItemType() == BuiltinTypesCatalogue.decimalItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("decimal?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                        expression
-                )
-            );
+            switch (paramType.getArity()) {
+                case One:
+                    addCastCase(cases, expression, SequenceType.INTEGER, SequenceType.DECIMAL);
+                    addCastCase(cases, expression, SequenceType.DECIMAL, SequenceType.DECIMAL);
+                    break;
+                case OneOrZero:
+                    addCastCase(cases, expression, SequenceType.INTEGER_QM, SequenceType.DECIMAL_QM);
+                    addCastCase(cases, expression, SequenceType.DECIMAL_QM, SequenceType.DECIMAL_QM);
+                    break;
+                case OneOrMore:
+                    addCastCase(cases, expression, SequenceType.INTEGER_PLUS, SequenceType.DECIMAL_PLUS);
+                    addCastCase(cases, expression, SequenceType.DECIMAL_PLUS, SequenceType.DECIMAL_PLUS);
+                    break;
+                case ZeroOrMore:
+                    addCastCase(cases, expression, SequenceType.INTEGER_STAR, SequenceType.DECIMAL_STAR);
+                    addCastCase(cases, expression, SequenceType.DECIMAL_STAR, SequenceType.DECIMAL_STAR);
+                    break;
+                case Zero:
+            }
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
@@ -182,24 +237,25 @@ public class FunctionInliningVisitor extends CloneVisitor {
         // anyURI > string
         if (paramType.getItemType() == BuiltinTypesCatalogue.stringItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("anyURI?")),
-                        new CastExpression(
-                                expression,
-                                SequenceType.createSequenceType("string?"),
-                                expression.getMetadata()
-                        )
-                )
-            );
-            cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("string?")),
-                        expression
-                )
-            );
+            switch (paramType.getArity()) {
+                case One:
+                    addCastCase(cases, expression, SequenceType.ANYURI, SequenceType.STRING);
+                    addCastCase(cases, expression, SequenceType.STRING, SequenceType.STRING);
+                    break;
+                case OneOrZero:
+                    addCastCase(cases, expression, SequenceType.ANYURI_QM, SequenceType.STRING_QM);
+                    addCastCase(cases, expression, SequenceType.STRING_QM, SequenceType.STRING_QM);
+                    break;
+                case OneOrMore:
+                    addCastCase(cases, expression, SequenceType.ANYURI_PLUS, SequenceType.STRING_PLUS);
+                    addCastCase(cases, expression, SequenceType.STRING_PLUS, SequenceType.STRING_PLUS);
+                    break;
+                case ZeroOrMore:
+                    addCastCase(cases, expression, SequenceType.ANYURI_STAR, SequenceType.STRING_STAR);
+                    addCastCase(cases, expression, SequenceType.STRING_STAR, SequenceType.STRING_STAR);
+                    break;
+                case Zero:
+            }
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
@@ -282,10 +338,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
             // if there is a name collision, use a temporary variable
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
-                Name columnName = new Name(
-                        "",
-                        "",
-                        String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
+                Name columnName = Name.createVariableInNoNamespace(
+                    String.format("param%s", UUID.randomUUID().toString().replaceAll("-", ""))
                 );
                 Clause expressionClause = new LetClause(
                         columnName,
