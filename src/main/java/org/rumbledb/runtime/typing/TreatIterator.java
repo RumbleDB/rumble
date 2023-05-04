@@ -11,8 +11,8 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -53,10 +53,9 @@ public class TreatIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
+        super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.errorCode = errorCode;
@@ -64,7 +63,7 @@ public class TreatIterator extends HybridRuntimeIterator {
             this.itemType = this.sequenceType.getItemType();
         }
         if (
-            !executionMode.equals(ExecutionMode.LOCAL)
+            !getHighestExecutionMode().equals(ExecutionMode.LOCAL)
                 && (sequenceType.isEmptySequence()
                     || sequenceType.getArity().equals(Arity.One)
                     || sequenceType.getArity().equals(Arity.OneOrZero))

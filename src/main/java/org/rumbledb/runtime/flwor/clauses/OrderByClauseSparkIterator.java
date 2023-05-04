@@ -30,14 +30,13 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoTypedValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -74,10 +73,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.expressionsWithIterator = expressionsWithIterator;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
@@ -233,13 +231,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             null
         );
 
-        FlworDataFrame nativeQueryResult = tryNativeQuery(
-            df,
-            this.expressionsWithIterator,
-            allColumns,
-            inputSchema,
-            context
-        );
+        FlworDataFrame nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expressionsWithIterator,
+                allColumns,
+                inputSchema,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
             return nativeQueryResult;
         }
@@ -656,7 +657,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 return true;
             }
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

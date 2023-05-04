@@ -286,6 +286,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                     expression.getMetadata()
             );
             result.setStaticContext(expression.getStaticContext());
+            result.setStaticSequenceType(expression.getStaticSequenceType());
             return result;
         } else {
             List<Expression> keys = expression.getKeys()

@@ -22,8 +22,7 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -40,10 +39,9 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public ExistsFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 
     @Override

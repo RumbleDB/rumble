@@ -25,9 +25,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -52,10 +51,9 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
         this.userDefinedFunctionCallIterator = null;

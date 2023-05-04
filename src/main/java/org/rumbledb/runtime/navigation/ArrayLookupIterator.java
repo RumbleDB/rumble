@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.types.ArrayType;
@@ -28,8 +29,9 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -55,10 +57,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public ArrayLookupIterator(
             RuntimeIterator array,
             RuntimeIterator iterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(array, iterator), staticContext);
         this.iterator = array;
     }
 
@@ -187,11 +188,37 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
+                if (getConfiguration().doStaticAnalysis()) {
+                    throw new UnexpectedStaticTypeException(
+                            "This is not a sequence of arrays,"
+                                + " so that the lookup will always result in the empty sequence no matter what. "
+                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
+                }
+                LogManager.getLogger("ArrayLookupIterator")
+                    .warn(
+                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+                    );
                 return NativeClauseContext.NoNativeQuery;
             }
 
             schema = newContext.getSchema();
             if (!(schema instanceof ArrayType)) {
+                if (getConfiguration().doStaticAnalysis()) {
+                    throw new UnexpectedStaticTypeException(
+                            "This is not a sequence of arrays,"
+                                + " so that the lookup will always result in the empty sequence no matter what. "
+                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
+                }
+                LogManager.getLogger("ArrayLookupIterator")
+                    .warn(
+                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+                    );
                 return NativeClauseContext.NoNativeQuery;
             }
             newContext.setResultingType(
@@ -240,6 +267,19 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 elementType
             );
         }
+        if (getConfiguration().doStaticAnalysis()) {
+            throw new UnexpectedStaticTypeException(
+                    "This is not a sequence of arrays,"
+                        + " so that the lookup will always result in the empty sequence no matter what. "
+                        + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    getMetadata()
+            );
+        }
+        LogManager.getLogger("ArrayLookupIterator")
+            .warn(
+                "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
+            );
         return JSoundDataFrame.emptyDataFrame();
     }
 }

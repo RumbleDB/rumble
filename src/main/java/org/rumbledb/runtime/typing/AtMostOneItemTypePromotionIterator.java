@@ -2,7 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -31,15 +31,14 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             RuntimeIterator iterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
+        super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        if (!executionMode.equals(ExecutionMode.LOCAL)) {
+        if (!getHighestExecutionMode().equals(ExecutionMode.LOCAL)) {
             throw new OurBadException(
                     "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
             );

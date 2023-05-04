@@ -11,13 +11,12 @@ import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.DatesWithTimezonesNotSupported;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -48,11 +47,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             RuntimeIterator instance,
             ItemType itemType,
             boolean isValidate,
-            ExecutionMode executionMode,
-            RumbleRuntimeConfiguration configuration,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(instance), executionMode, iteratorMetadata);
+        super(Collections.singletonList(instance), staticContext);
         this.itemType = itemType;
         this.isValidate = isValidate;
     }

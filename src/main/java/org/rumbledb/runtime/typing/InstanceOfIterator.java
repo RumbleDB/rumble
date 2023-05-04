@@ -23,8 +23,7 @@ package org.rumbledb.runtime.typing;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -47,10 +46,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     public InstanceOfIterator(
             RuntimeIterator child,
             SequenceType sequenceType,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }

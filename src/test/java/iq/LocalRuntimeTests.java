@@ -66,8 +66,8 @@ public class LocalRuntimeTests extends AnnotationsTestsBase {
                 "yes",
                 "--variable:externalUnparsedString",
                 "unparsed string",
-                "--local-execution-only",
-                "yes" }
+                "--parallel-execution",
+                "no" }
     ).setExternalVariableValue(
         Name.createVariableInNoNamespace("externalStringItem"),
         Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))

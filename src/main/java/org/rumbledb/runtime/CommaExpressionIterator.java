@@ -24,9 +24,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -47,10 +46,9 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(childIterators, executionMode, iteratorMetadata);
+        super(childIterators, staticContext);
     }
 
     @Override

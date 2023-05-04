@@ -34,11 +34,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -99,10 +98,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Name positionalVariableName,
             boolean allowingEmpty,
             RuntimeIterator assignmentIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.variableName = variableName;
         this.positionalVariableName = positionalVariableName;
         this.assignmentIterator = assignmentIterator;
@@ -503,7 +501,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateIterator,
             this.allowingEmpty,
             this.variableName,
-            getMetadata()
+            getMetadata(),
+            getConfiguration()
         );
     }
 
@@ -614,16 +613,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variableNamesToExclude
         );
 
-        FlworDataFrame nativeQueryResult = tryNativeQuery(
-            df,
-            this.variableName,
-            this.positionalVariableName,
-            this.allowingEmpty,
-            this.assignmentIterator,
-            allColumns,
-            inputSchema,
-            context
-        );
+        FlworDataFrame nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.variableName,
+                this.positionalVariableName,
+                this.allowingEmpty,
+                this.assignmentIterator,
+                allColumns,
+                inputSchema,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
             return nativeQueryResult;
         }
@@ -1392,7 +1394,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.assignmentIterator.isSparkJobNeeded()) {
             return true;
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

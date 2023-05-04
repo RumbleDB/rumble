@@ -43,6 +43,16 @@ public class SequenceType implements Serializable {
             Arity.ZeroOrMore
     );
 
+    public final static SequenceType OBJECTS = new SequenceType(
+            BuiltinTypesCatalogue.objectItem,
+            Arity.ZeroOrMore
+    );
+
+    public final static SequenceType FUNCTION = new SequenceType(
+            BuiltinTypesCatalogue.anyFunctionItem,
+            Arity.One
+    );
+
     public final static SequenceType ITEM = new SequenceType(
             BuiltinTypesCatalogue.item,
             Arity.One

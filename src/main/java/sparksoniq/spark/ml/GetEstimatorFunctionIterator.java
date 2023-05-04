@@ -25,7 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
@@ -55,10 +55,9 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     public GetEstimatorFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, metadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -111,8 +110,12 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
                     estimatorShortName,
                     estimator,
-                    ExecutionMode.LOCAL,
-                    getMetadata()
+                    new RuntimeStaticContext(
+                            getConfiguration(),
+                            SequenceType.FUNCTION,
+                            ExecutionMode.LOCAL,
+                            getMetadata()
+                    )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

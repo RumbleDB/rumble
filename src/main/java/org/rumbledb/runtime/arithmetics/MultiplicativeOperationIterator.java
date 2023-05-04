@@ -30,8 +30,8 @@ import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
@@ -59,10 +59,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.multiplicativeOperator = multiplicativeOperator;
