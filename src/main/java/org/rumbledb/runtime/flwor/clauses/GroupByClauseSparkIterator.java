@@ -573,6 +573,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append("`) as `");
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count`");
+                continue;
             }
             if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
                 // we cannot merge arrays natively in Spark, strangely.
