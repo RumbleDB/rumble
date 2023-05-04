@@ -34,7 +34,7 @@ jobs:
     - name: RuntimeTests
       run: mvn -Dtest=RuntimeTests test
     - name: RuntimeTestsNoParallelism
-      run: mvn -Dtest=RuntimeTestsNoParalelism test
+      run: mvn -Dtest=RuntimeTestsNoParalellism test
     - name: StaticTypeTests
       run: mvn -Dtest=StaticTypeTests test
     - name: JavaAPITest
