@@ -7,6 +7,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+// import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIdentifier> {
-
 
     /*
      * @Override
