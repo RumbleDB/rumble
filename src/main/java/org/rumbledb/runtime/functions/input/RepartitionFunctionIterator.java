@@ -23,8 +23,7 @@ package org.rumbledb.runtime.functions.input;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -41,10 +40,9 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
     public RepartitionFunctionIterator(
             List<RuntimeIterator> inputIterators,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(inputIterators, executionMode, iteratorMetadata);
+        super(inputIterators, staticContext);
         this.iterator = inputIterators.get(0);
     }
 

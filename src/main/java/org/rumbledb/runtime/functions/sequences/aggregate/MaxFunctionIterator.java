@@ -27,8 +27,8 @@ import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -73,10 +73,9 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public MaxFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = this.children.get(0);
         this.comparator = new ItemComparator(
                 false,

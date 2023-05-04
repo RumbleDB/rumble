@@ -29,11 +29,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -44,7 +43,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
-import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -67,19 +65,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private RuntimeIterator expression;
     private Item nextResult;
-    private SequenceType sequenceType;
 
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata,
-            SequenceType sequenceType
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(expression), executionMode, iteratorMetadata);
+        super(Collections.singletonList(expression), staticContext);
         this.child = child;
         this.expression = expression;
-        this.sequenceType = sequenceType;
         setInputAndOutputTupleVariableDependencies();
     }
 
@@ -182,14 +176,17 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
         Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
-            df,
-            this.expression,
-            inputSchema,
-            context
-        );
+        Dataset<Row> nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expression,
+                inputSchema,
+                context
+            );
+        }
         if (nativeQueryResult != null) {
-            if (this.sequenceType.getItemType().isObjectItemType()) {
+            if (this.expression.getStaticType().getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
                 nativeQueryResult =
                     nativeQueryResult.sparkSession()
@@ -203,13 +200,18 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             JSoundDataFrame result = new JSoundDataFrame(
                     nativeQueryResult,
-                    this.sequenceType.getItemType()
+                    this.expression.getStaticType().getItemType()
             );
             return result;
         }
 
         JavaRDD<Item> rdd = getRDDAux(context);
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, this.sequenceType.getItemType(), context);
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+            rdd,
+            this.expression.getStaticType().getItemType(),
+            context,
+            false
+        );
     }
 
     @Override

@@ -27,19 +27,16 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -60,12 +57,11 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     public CountClauseSparkIterator(
             RuntimeTupleIterator child,
-            RuntimeIterator variableReference,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            Name variableName,
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
-        this.variableName = ((VariableReferenceIterator) variableReference).getVariableName();
+        super(child, staticContext);
+        this.variableName = variableName;
         this.currentCountIndex = 1; // indices start at 1 in JSONiq
     }
 
@@ -244,7 +240,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

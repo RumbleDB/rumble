@@ -115,7 +115,7 @@ public class FrontendTests extends AnnotationsTestsBase {
                     AnnotationsTestsBase.configuration
                 );
 
-                testVariableTypes(testFile, mainModule);
+                testVariableTypes(mainModule);
             }
         }
     }
@@ -196,7 +196,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      * }
      */
 
-    private void testVariableTypes(File testFile, MainModule mainModule) {
+    private void testVariableTypes(MainModule mainModule) {
 
         List<Node> vars = mainModule
             .getDescendantsMatching(
@@ -218,7 +218,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         js.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.item)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
                     ||
                     ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
             )

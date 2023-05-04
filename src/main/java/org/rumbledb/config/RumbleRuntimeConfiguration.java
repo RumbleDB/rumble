@@ -67,6 +67,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
+    private boolean optimizeGeneralComparisonToValueComparison;
+    private boolean parallelExecution;
+    private boolean dataFrameExecution;
+    private boolean nativeExecution;
     private boolean thirdFeature;
 
     private Map<String, String> shortcutMap;
@@ -392,6 +396,32 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.datesWithTimeZone = false;
         }
+
+        if (this.arguments.containsKey("parallel-execution")) {
+            this.parallelExecution = this.arguments.get("parallel-execution").equals("yes");
+        } else {
+            this.parallelExecution = true;
+        }
+
+        if (this.arguments.containsKey("data-frame-execution")) {
+            this.dataFrameExecution = this.arguments.get("data-frame-execution").equals("yes");
+        } else {
+            this.dataFrameExecution = true;
+        }
+
+        if (this.arguments.containsKey("native-execution")) {
+            this.nativeExecution = this.arguments.get("native-execution").equals("yes");
+        } else {
+            this.nativeExecution = true;
+        }
+
+        if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
+            this.optimizeGeneralComparisonToValueComparison = this.arguments.get(
+                "optimize-general-comparison-to-value-comparison"
+            ).equals("yes");
+        } else {
+            this.optimizeGeneralComparisonToValueComparison = true;
+        }
     }
 
     public boolean getOverwrite() {
@@ -573,6 +603,38 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setDateWithTimezone(boolean b) {
         this.datesWithTimeZone = b;
+    }
+
+    public boolean parallelExecution() {
+        return this.parallelExecution;
+    }
+
+    public void setParallelExecution(boolean b) {
+        this.parallelExecution = b;
+    }
+
+    public boolean dataFrameExecution() {
+        return this.dataFrameExecution;
+    }
+
+    public void setDataFrameExecution(boolean b) {
+        this.dataFrameExecution = b;
+    }
+
+    public boolean nativeExecution() {
+        return this.nativeExecution;
+    }
+
+    public void setnativeExecution(boolean b) {
+        this.nativeExecution = b;
+    }
+
+    public boolean optimizeGeneralComparisonToValueComparison() {
+        return this.optimizeGeneralComparisonToValueComparison;
+    }
+
+    public void setOptimizeGeneralComparisonToValueComparison(boolean b) {
+        this.optimizeGeneralComparisonToValueComparison = b;
     }
 
     public boolean isLocal() {

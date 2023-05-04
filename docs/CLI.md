@@ -38,4 +38,5 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --context-item-input-format | N/A | context-item-input-format  |  text or json |  sets the input format to use
 for parsing the standard input (as text or as a serialized json value) |
 | --dates-with-timezone | N/A | dates-with-timezone  |  yes or no | activates timezone support for the type xs:date (deactivated by default) |
+| --optimize-general-comparison-to-value-comparison | N/A | optimize-general-comparison-to-valud-comparison  |  yes or no | activates automatic conversion of general comparisons to value comparisons when applicable |
 

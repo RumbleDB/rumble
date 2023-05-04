@@ -30,9 +30,8 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -40,7 +39,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
-import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -58,7 +56,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;
     private Item nextResult;
-    private SequenceType staticType;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
 
@@ -66,15 +63,12 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     public SimpleMapExpressionIterator(
             RuntimeIterator sequence,
             RuntimeIterator mapExpression,
-            ExecutionMode executionMode,
-            SequenceType staticType,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(sequence, mapExpression), executionMode, iteratorMetadata);
+        super(Arrays.asList(sequence, mapExpression), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = mapExpression;
         this.mapDynamicContext = null;
-        this.staticType = staticType;
     }
 
     @Override
@@ -184,12 +178,12 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             JavaRDD<Item> rdd = getRDDAux(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
-            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(this.staticType.getItemType());
+            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(getStaticType().getItemType());
             schema.printTreeString();
             Dataset<Row> result = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .createDataFrame(rowRDD, schema);
-            return new JSoundDataFrame(result, this.staticType.getItemType());
+            return new JSoundDataFrame(result, getStaticType().getItemType());
         }
         LogManager.getLogger("SimpleMapExpressionIterator")
             .info("Rumble was able to optimize a simple map expression to a native SQL query.");
@@ -205,7 +199,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 )
             );
         // execute query
-        return new JSoundDataFrame(result, this.staticType.getItemType());
+        return new JSoundDataFrame(result, getStaticType().getItemType());
     }
 
 

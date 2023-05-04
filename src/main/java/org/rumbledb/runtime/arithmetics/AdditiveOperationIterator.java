@@ -29,17 +29,18 @@ import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 
 public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -56,10 +57,9 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             boolean isMinus,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.isMinus = isMinus;
@@ -425,79 +425,113 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+        if (rightResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!rightResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
         ItemType resultType = null;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 &&
-                rightResult.getResultingType().isNumeric()
+                rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)
+            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 &&
-                leftResult.getResultingType().isNumeric()
+                leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 &&
-                rightResult.getResultingType().isNumeric()
+                rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)
+            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 &&
-                leftResult.getResultingType().isNumeric()
+                leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.integerItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
                 &&
-                rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.integerItem)
+                rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
         ) {
             resultType = BuiltinTypesCatalogue.integerItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
                 &&
-                rightResult.getResultingType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
         ) {
             resultType = BuiltinTypesCatalogue.decimalItem;
         } else {
             return NativeClauseContext.NoNativeQuery;
         }
 
+        SequenceType.Arity resultingArity =
+            leftResult.getResultingType()
+                .getArity()
+                .multiplyWith(
+                    rightResult.getResultingType().getArity()
+                );
+
+        if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
+            throw new UnexpectedTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
         if (this.isMinus) {
             String resultingQuery = "( "
                 + leftQuery
                 + " - "
                 + rightQuery
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    resultingQuery,
+                    new SequenceType(resultType, resultingArity)
+            );
         } else {
             String resultingQuery = "( "
                 + leftQuery
                 + " + "
                 + rightQuery
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    resultingQuery,
+                    new SequenceType(resultType, resultingArity)
+            );
         }
     }
 }
