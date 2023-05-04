@@ -22,7 +22,7 @@ package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -44,11 +44,10 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
 
     protected AtMostOneItemLocalRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.LOCAL) {
+        super(children, staticContext);
+        if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
             throw new OurBadException("At-most-one-item runtime iterators support only the local execution mode");
         }
     }

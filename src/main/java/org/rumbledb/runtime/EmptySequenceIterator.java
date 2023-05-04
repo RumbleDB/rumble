@@ -22,16 +22,15 @@ package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 
 public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
 
-    public EmptySequenceIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public EmptySequenceIterator(RuntimeStaticContext staticContext) {
+        super(null, staticContext);
     }
 
     @Override

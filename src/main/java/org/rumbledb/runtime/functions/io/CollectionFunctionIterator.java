@@ -2,9 +2,8 @@ package org.rumbledb.runtime.functions.io;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -18,10 +17,9 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
 
     public CollectionFunctionIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
+        super(children, staticContext);
     }
 
     // TODO: implement collection function

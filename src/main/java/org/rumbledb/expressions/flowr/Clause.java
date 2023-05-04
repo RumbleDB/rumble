@@ -21,6 +21,8 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -169,9 +171,6 @@ public abstract class Clause extends Node {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
-        }
     }
 
     public StaticContext getStaticContext() {
@@ -180,5 +179,16 @@ public abstract class Clause extends Node {
 
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
+    }
+
+    public RuntimeStaticContext getStaticContextForRuntime(
+            RumbleRuntimeConfiguration conf,
+            VisitorConfig visitorConfig
+    ) {
+        return new RuntimeStaticContext(
+                conf,
+                getHighestExecutionMode(visitorConfig),
+                getMetadata()
+        );
     }
 }

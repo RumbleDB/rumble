@@ -43,6 +43,16 @@ public class SequenceType implements Serializable {
             Arity.ZeroOrMore
     );
 
+    public final static SequenceType OBJECTS = new SequenceType(
+            BuiltinTypesCatalogue.objectItem,
+            Arity.ZeroOrMore
+    );
+
+    public final static SequenceType FUNCTION = new SequenceType(
+            BuiltinTypesCatalogue.anyFunctionItem,
+            Arity.One
+    );
+
     public final static SequenceType ITEM = new SequenceType(
             BuiltinTypesCatalogue.item,
             Arity.One
@@ -51,6 +61,66 @@ public class SequenceType implements Serializable {
     public final static SequenceType INTEGER = new SequenceType(
             BuiltinTypesCatalogue.integerItem,
             Arity.One
+    );
+
+    public final static SequenceType DECIMAL = new SequenceType(
+            BuiltinTypesCatalogue.decimalItem,
+            Arity.One
+    );
+
+    public final static SequenceType DOUBLE = new SequenceType(
+            BuiltinTypesCatalogue.doubleItem,
+            Arity.One
+    );
+
+    public final static SequenceType FLOAT = new SequenceType(
+            BuiltinTypesCatalogue.floatItem,
+            Arity.One
+    );
+
+    public final static SequenceType INT = new SequenceType(
+            BuiltinTypesCatalogue.intItem,
+            Arity.One
+    );
+
+    public final static SequenceType STRING = new SequenceType(
+            BuiltinTypesCatalogue.stringItem,
+            Arity.One
+    );
+
+    public final static SequenceType BOOLEAN = new SequenceType(
+            BuiltinTypesCatalogue.booleanItem,
+            Arity.One
+    );
+
+    public final static SequenceType INTEGER_QM = new SequenceType(
+            BuiltinTypesCatalogue.integerItem,
+            Arity.OneOrZero
+    );
+
+    public final static SequenceType DECIMAL_QM = new SequenceType(
+            BuiltinTypesCatalogue.decimalItem,
+            Arity.OneOrZero
+    );
+
+    public final static SequenceType DOUBLE_QM = new SequenceType(
+            BuiltinTypesCatalogue.doubleItem,
+            Arity.OneOrZero
+    );
+
+    public final static SequenceType FLOAT_QM = new SequenceType(
+            BuiltinTypesCatalogue.floatItem,
+            Arity.OneOrZero
+    );
+
+    public final static SequenceType INT_QM = new SequenceType(
+            BuiltinTypesCatalogue.intItem,
+            Arity.OneOrZero
+    );
+
+    public final static SequenceType STRING_QM = new SequenceType(
+            BuiltinTypesCatalogue.stringItem,
+            Arity.OneOrZero
     );
 
     public final static SequenceType EMPTY_SEQUENCE = new SequenceType();

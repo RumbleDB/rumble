@@ -26,12 +26,12 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -44,8 +44,8 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private static final long serialVersionUID = 1L;
 
-    public ContextExpressionIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public ContextExpressionIterator(RuntimeStaticContext staticContext) {
+        super(null, staticContext);
     }
 
     @Override
@@ -88,12 +88,10 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         )];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        NativeClauseContext newContext = new NativeClauseContext(
+        return new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
-                variableType
+                new SequenceType(variableType, SequenceType.Arity.One)
         );
-        newContext.setSchema(fieldType);
-        return newContext;
     }
 }
