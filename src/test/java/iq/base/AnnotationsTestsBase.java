@@ -20,7 +20,7 @@
 
 package iq.base;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
