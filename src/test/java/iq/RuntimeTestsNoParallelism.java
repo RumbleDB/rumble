@@ -47,7 +47,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class LocalRuntimeTests extends AnnotationsTestsBase {
+public class RuntimeTestsNoParallelism extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -85,19 +85,19 @@ public class LocalRuntimeTests extends AnnotationsTestsBase {
             )
         );
 
-    public LocalRuntimeTests(File testFile) {
+    public RuntimeTestsNoParallelism(File testFile) {
         this.testFile = testFile;
     }
 
     public static void readFileList(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> LocalRuntimeTests._testFiles.add(file));
+        FileManager.loadJiqFiles(dir).forEach(file -> RuntimeTestsNoParallelism._testFiles.add(file));
     }
 
     @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
-        LocalRuntimeTests.readFileList(LocalRuntimeTests.runtimeTestsDirectory);
-        LocalRuntimeTests._testFiles.forEach(file -> result.add(new Object[] { file }));
+        RuntimeTestsNoParallelism.readFileList(RuntimeTestsNoParallelism.runtimeTestsDirectory);
+        RuntimeTestsNoParallelism._testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
 
@@ -121,14 +121,14 @@ public class LocalRuntimeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = LocalRuntimeTests.configuration.getResultSizeCap();
+        SparkSessionManager.COLLECT_ITEM_LIMIT = RuntimeTestsNoParallelism.configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), LocalRuntimeTests.configuration);
+        testAnnotations(this.testFile.getAbsolutePath(), RuntimeTestsNoParallelism.configuration);
     }
 
     @Override
