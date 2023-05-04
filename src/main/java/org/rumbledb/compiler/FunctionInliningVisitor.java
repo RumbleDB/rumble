@@ -31,10 +31,7 @@ import java.util.UUID;
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
-    private final FunctionDependenciesVisitor functionDependenciesVisitor;
-
     public FunctionInliningVisitor() {
-        this.functionDependenciesVisitor = new FunctionDependenciesVisitor();
     }
 
     private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
@@ -225,7 +222,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
-        this.functionDependenciesVisitor.visit(mainModule, null);
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),

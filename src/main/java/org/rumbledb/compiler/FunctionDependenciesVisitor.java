@@ -7,7 +7,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.flowr.*;
+// import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -21,42 +21,44 @@ import java.util.Map;
 
 public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIdentifier> {
 
-    @Override
-    public FunctionIdentifier visitForClause(ForClause clause, FunctionIdentifier argument) {
-        return this.visit(clause.getExpression(), argument);
-    }
-
-    @Override
-    public FunctionIdentifier visitLetClause(LetClause clause, FunctionIdentifier argument) {
-        return this.visit(clause.getExpression(), argument);
-    }
-
-    @Override
-    public FunctionIdentifier visitGroupByClause(GroupByClause clause, FunctionIdentifier argument) {
-        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
-            if (variable.getExpression() != null) {
-                this.visit(variable.getExpression(), argument);
-            }
-        }
-        return argument;
-    }
-
-    public FunctionIdentifier visitOrderByClause(OrderByClause clause, FunctionIdentifier argument) {
-        for (OrderByClauseSortingKey orderClause : clause.getSortingKeys()) {
-            this.visit(orderClause.getExpression(), argument);
-        }
-        return argument;
-    }
-
-    @Override
-    public FunctionIdentifier visitFlowrExpression(FlworExpression expression, FunctionIdentifier argument) {
-        Clause clause = expression.getReturnClause().getFirstClause();
-        while (clause != null) {
-            this.visit(clause, argument);
-            clause = clause.getNextClause();
-        }
-        return argument;
-    }
+    /*
+     * @Override
+     * public FunctionIdentifier visitForClause(ForClause clause, FunctionIdentifier argument) {
+     * return this.visit(clause.getExpression(), argument);
+     * }
+     * 
+     * @Override
+     * public FunctionIdentifier visitLetClause(LetClause clause, FunctionIdentifier argument) {
+     * return this.visit(clause.getExpression(), argument);
+     * }
+     * 
+     * @Override
+     * public FunctionIdentifier visitGroupByClause(GroupByClause clause, FunctionIdentifier argument) {
+     * for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+     * if (variable.getExpression() != null) {
+     * this.visit(variable.getExpression(), argument);
+     * }
+     * }
+     * return argument;
+     * }
+     * 
+     * public FunctionIdentifier visitOrderByClause(OrderByClause clause, FunctionIdentifier argument) {
+     * for (OrderByClauseSortingKey orderClause : clause.getSortingKeys()) {
+     * this.visit(orderClause.getExpression(), argument);
+     * }
+     * return argument;
+     * }
+     * 
+     * @Override
+     * public FunctionIdentifier visitFlowrExpression(FlworExpression expression, FunctionIdentifier argument) {
+     * Clause clause = expression.getReturnClause().getFirstClause();
+     * while (clause != null) {
+     * this.visit(clause, argument);
+     * clause = clause.getNextClause();
+     * }
+     * return argument;
+     * }
+     */
 
     private final Map<FunctionIdentifier, List<FunctionIdentifier>> edges;
     private final Map<FunctionIdentifier, FunctionDeclaration> functionDeclarations;
@@ -75,8 +77,8 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
     }
 
     @Override
-    public FunctionIdentifier visitMainModule(MainModule expression, FunctionIdentifier argument) {
-        visitDescendants(expression, argument);
+    public FunctionIdentifier visitMainModule(MainModule expression, FunctionIdentifier encompassingFunction) {
+        visitDescendants(expression, encompassingFunction);
         Graph<FunctionIdentifier, DefaultEdge> directedGraph =
             new DefaultDirectedGraph<>(DefaultEdge.class);
         this.edges.keySet().forEach(directedGraph::addVertex);
@@ -100,7 +102,7 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
     }
 
     @Override
-    public FunctionIdentifier visitProlog(Prolog prolog, FunctionIdentifier argument) {
+    public FunctionIdentifier visitProlog(Prolog prolog, FunctionIdentifier encompassingFunction) {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, null);
         }
@@ -110,20 +112,26 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
         return null;
     }
 
-    public FunctionIdentifier visitFunctionDeclaration(FunctionDeclaration expression, FunctionIdentifier argument) {
+    public FunctionIdentifier visitFunctionDeclaration(
+            FunctionDeclaration expression,
+            FunctionIdentifier encompassingFunction
+    ) {
         FunctionIdentifier name = expression.getFunctionIdentifier();
         this.functionDeclarations.put(name, expression);
         createVertex(name);
         visit(expression.getExpression(), name);
-        return argument;
+        return encompassingFunction;
     }
 
-    public FunctionIdentifier visitFunctionCall(FunctionCallExpression expression, FunctionIdentifier argument) {
-        if (argument == null) {
+    public FunctionIdentifier visitFunctionCall(
+            FunctionCallExpression expression,
+            FunctionIdentifier encompassingFunction
+    ) {
+        if (encompassingFunction == null) {
             return defaultAction(expression, null);
         }
-        createEdge(argument, expression.getFunctionIdentifier());
-        visitDescendants(expression, argument);
-        return argument;
+        createEdge(encompassingFunction, expression.getFunctionIdentifier());
+        visitDescendants(expression, encompassingFunction);
+        return encompassingFunction;
     }
 }

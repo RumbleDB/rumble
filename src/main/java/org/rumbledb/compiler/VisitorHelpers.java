@@ -63,7 +63,10 @@ public class VisitorHelpers {
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module) {
         MainModule result = module;
-    	result = (MainModule) new FunctionInliningVisitor().visit(result,  null);
+        // Annotate recursive functions as such
+        new FunctionDependenciesVisitor().visit(result, null);
+        // Inline non-recursive functions
+        result = (MainModule) new FunctionInliningVisitor().visit(result, null);
         return result;
     }
 
