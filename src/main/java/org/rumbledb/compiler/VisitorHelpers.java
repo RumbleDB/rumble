@@ -22,7 +22,6 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -62,15 +61,20 @@ public class VisitorHelpers {
         }
     }
 
-    private static MainModule applyTypeDependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
-        List<AbstractNodeVisitor<Node>> optimizers = new ArrayList<>();
-        if (conf.optimizeGeneralComparisonToValueComparison()) {
-            optimizers.add(new ComparisonVisitor());
-        }
+    private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
-        for (AbstractNodeVisitor<?> optimizer : optimizers) {
-            result = (MainModule) optimizer.visit(result, null);
+        // Annotate recursive functions as such
+        new FunctionDependenciesVisitor().visit(result, null);
+        // Inline non-recursive functions
+        if (conf.functionInlining()) {
+            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
         }
+        return result;
+    }
+
+    private static MainModule applyTypeDependentOptimizations(MainModule module) {
+        MainModule result = module;
+        result = (MainModule) new ComparisonVisitor().visit(result, null);
         return result;
     }
 
@@ -151,9 +155,10 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
+            mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
-            mainModule = applyTypeDependentOptimizations(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -194,7 +199,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
-            mainModule = applyTypeDependentOptimizations(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -343,9 +348,11 @@ public class VisitorHelpers {
                 break;
             }
 
-            if (conf.isPrintIteratorTree()) {
-                printTree(module, conf);
-            }
+            /*
+             * if (conf.isPrintIteratorTree()) {
+             * printTree(module, conf);
+             * }
+             */
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(

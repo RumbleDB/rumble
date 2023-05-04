@@ -31,12 +31,10 @@ jobs:
       run: mvn spotless:check
     - name: FrontendTests
       run: mvn -Dtest=FrontendTests test
-    - name: Bugs
-      run: mvn -Dtest=Bugs test
     - name: RuntimeTests
       run: mvn -Dtest=RuntimeTests test
-    - name: LocalRuntimeTests
-      run: mvn -Dtest=LocalRuntimeTests test
+    - name: RuntimeTestsNoParallelism
+      run: mvn -Dtest=RuntimeTestsNoParallelism test
     - name: StaticTypeTests
       run: mvn -Dtest=StaticTypeTests test
     - name: JavaAPITest
@@ -96,5 +94,9 @@ jobs:
       run: mvn install -DskipTests -Dgpg.skip --quiet
     - name: Compile with Maven
       run: mvn clean compile assembly:single
+    - name: Bugs
+      run: mvn -Dtest=Bugs test
+    - name: RuntimeTestsNoInlining
+      run: mvn -Dtest=RuntimeTestsNoInlining test
     - name: NativeFLWORRuntimeTestsNativeDeactivated
       run: mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
