@@ -84,6 +84,7 @@ public class RuntimeTestsNoInlining extends AnnotationsTestsBase {
                 }
             )
         );
+
     public RuntimeTestsNoInlining(File testFile) {
         this.testFile = testFile;
     }
