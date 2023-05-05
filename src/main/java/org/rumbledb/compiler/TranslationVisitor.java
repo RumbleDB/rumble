@@ -1173,21 +1173,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
-        return new DeleteExpression(mainExpression, locatorExpression, locatorKind, createMetadataFromContext(ctx));
+        return new DeleteExpression(mainExpression, locatorExpression, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
         Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
         return new RenameExpression(
                 mainExpression,
                 locatorExpression,
                 nameExpression,
-                locatorKind,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1196,13 +1193,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
         Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
         Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        UpdateLocatorKind locatorKind = getLocatorKindFromUpdateLocatorContext(ctx.updateLocator());
         Expression newExpression = (Expression) this.visitExprSingle(ctx.replacer_expr);
         return new ReplaceExpression(
                 mainExpression,
                 locatorExpression,
                 newExpression,
-                locatorKind,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1251,18 +1246,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
         }
         return mainExpression;
-    }
-
-    public UpdateLocatorKind getLocatorKindFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
-        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
-            return UpdateLocatorKind.OBJECT_LOOKUP;
-        }
-        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
-            return UpdateLocatorKind.ARRAY_LOOKUP;
-        } else {
-            throw new OurBadException("Unrecognized locator found in update expression.");
-        }
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {

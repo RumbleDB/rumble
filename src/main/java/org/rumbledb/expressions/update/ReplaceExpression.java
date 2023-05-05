@@ -14,13 +14,11 @@ public class ReplaceExpression extends Expression {
     private Expression mainExpression;
     private Expression locatorExpression;
     private Expression replacerExpression;
-    private UpdateLocatorKind locatorKind;
 
     public ReplaceExpression(
             Expression mainExpression,
             Expression locatorExpression,
             Expression replacerExpression,
-            UpdateLocatorKind locatorKind,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -33,13 +31,9 @@ public class ReplaceExpression extends Expression {
         if (replacerExpression == null) {
             throw new OurBadException("New replacer expression cannot be null in a replace expression.");
         }
-        if (locatorKind == null) {
-            throw new OurBadException("Locator kind cannot be null in a replace expression.");
-        }
         this.mainExpression = mainExpression;
         this.locatorExpression = locatorExpression;
         this.replacerExpression = replacerExpression;
-        this.locatorKind = locatorKind;
     }
 
     @Override
@@ -57,10 +51,6 @@ public class ReplaceExpression extends Expression {
 
     public Expression getReplacerExpression() {
         return replacerExpression;
-    }
-
-    public UpdateLocatorKind getLocatorKind() {
-        return locatorKind;
     }
 
     @Override

@@ -13,12 +13,9 @@ public class DeleteExpression extends Expression {
 
     private Expression mainExpression;
     private Expression locatorExpression;
-    private UpdateLocatorKind locatorKind;
-
     public DeleteExpression(
             Expression mainExpression,
             Expression locatorExpression,
-            UpdateLocatorKind locatorKind,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -28,12 +25,8 @@ public class DeleteExpression extends Expression {
         if (locatorExpression == null) {
             throw new OurBadException("Locator expression cannot be null in a delete expression.");
         }
-        if (locatorKind == null) {
-            throw new OurBadException("Locator kind cannot be null in a delete expression.");
-        }
         this.mainExpression = mainExpression;
         this.locatorExpression = locatorExpression;
-        this.locatorKind = locatorKind;
     }
 
     @Override
@@ -49,9 +42,6 @@ public class DeleteExpression extends Expression {
         return locatorExpression;
     }
 
-    public UpdateLocatorKind getLocatorKind() {
-        return locatorKind;
-    }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {

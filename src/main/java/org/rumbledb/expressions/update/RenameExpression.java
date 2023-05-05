@@ -14,13 +14,11 @@ public class RenameExpression extends Expression {
     private Expression mainExpression;
     private Expression locatorExpression;
     private Expression nameExpression;
-    private UpdateLocatorKind locatorKind;
 
     public RenameExpression(
             Expression mainExpression,
             Expression locatorExpression,
             Expression nameExpression,
-            UpdateLocatorKind locatorKind,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -33,16 +31,9 @@ public class RenameExpression extends Expression {
         if (nameExpression == null) {
             throw new OurBadException("Name expression cannot be null in a rename expression.");
         }
-        if (locatorKind == null) {
-            throw new OurBadException("Locator kind cannot be null in a rename expression.");
-        }
-        if (!locatorKind.isObjectLookup()) {
-            throw new OurBadException("Locator kind must be Object Lookup");
-        }
         this.mainExpression = mainExpression;
         this.locatorExpression = locatorExpression;
         this.nameExpression = nameExpression;
-        this.locatorKind = locatorKind;
     }
 
     @Override
@@ -60,10 +51,6 @@ public class RenameExpression extends Expression {
 
     public Expression getNameExpression() {
         return nameExpression;
-    }
-
-    public UpdateLocatorKind getLocatorKind() {
-        return locatorKind;
     }
 
     @Override
