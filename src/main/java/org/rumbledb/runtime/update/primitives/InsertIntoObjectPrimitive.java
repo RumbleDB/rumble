@@ -25,7 +25,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public void apply() {
         try {
             for (String key : this.content.getKeys()) {
-                this.target.putItemByKey(key, this.target.getItemByKey(key));
+                this.target.putItemByKey(key, this.content.getItemByKey(key));
             }
         } catch (DuplicateObjectKeyException e) {
             throw new DuplicateKeyOnUpdateApplyException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);

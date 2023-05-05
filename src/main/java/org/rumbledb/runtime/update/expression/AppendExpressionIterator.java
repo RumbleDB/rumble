@@ -81,7 +81,7 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
             UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
             UpdatePrimitive up;
             if (target.isArray()) {
-                Item locator = ItemFactory.getInstance().createIntItem(target.getSize());
+                Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
                 up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content));
             } else {
                 throw new OurBadException("Append iterator cannot handle target items that are not arrays");
