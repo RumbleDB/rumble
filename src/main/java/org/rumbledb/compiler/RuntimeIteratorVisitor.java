@@ -190,6 +190,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else {
             RuntimeIterator runtimeIterator = new CommaExpressionIterator(
                     result,
+                    expression.isUpdating(),
                     expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );

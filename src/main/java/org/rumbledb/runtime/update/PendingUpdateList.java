@@ -6,6 +6,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TooManyRenamesOnSameTargetSelectorException;
 import org.rumbledb.exceptions.TooManyReplacesOnSameTargetSelectorException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.update.primitives.*;
 import org.rumbledb.types.ItemType;
 
@@ -74,8 +75,21 @@ public class PendingUpdateList {
     }
 
     public void applyUpdates() {
+//        int INS_ARR_IDX = 0;
+//        int DEL_ARR_IDX = 1;
+//        int REP_ARR_IDX = 2;
+//        int INS_OBJ_IDX = 3;
+//        int DEL_OBJ_IDX = 4;
+//        int REP_OBJ_IDX = 5;
+//        int REN_OBJ_IDX = 6;
 
-        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+        Map<Item, Integer> arrayOffsetMap = new HashMap<>();
+
+//        Map<Item, List<List<UpdatePrimitive>>> targetPULs = new HashMap<>();
+//        List<List<UpdatePrimitive>> tempPULs;
+
+        UpdatePrimitiveFactory upFactory = UpdatePrimitiveFactory.getInstance();
+        ItemFactory itemFactory = ItemFactory.getInstance();
 
         List<UpdatePrimitive> pul = new ArrayList<>();
         Map<Item, Item> tempSelSrcMap;
@@ -88,30 +102,37 @@ public class PendingUpdateList {
         // DELETES & REPLACES
         for (Item target : delReplaceObjMap.keySet()) {
             List<Item> toDel = new ArrayList<>();
+//            tempPULs = targetPULs.getOrDefault(target, new ArrayList<>(Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())));
             tempSelSrcMap = delReplaceObjMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
                 tempSrc = tempSelSrcMap.get(locator);
                 if (tempSrc == null) {
                     toDel.add(locator);
                 } else {
-                    pul.add(factory.createReplaceInObjectPrimitive(target, locator, tempSrc));
+                    pul.add(upFactory.createReplaceInObjectPrimitive(target, locator, tempSrc));
+//                    tempPULs.get(REP_OBJ_IDX).add(upFactory.createReplaceInObjectPrimitive(target, locator, tempSrc));
                 }
             }
-            pul.add(factory.createDeleteFromObjectPrimitive(target, toDel));
+            pul.add(upFactory.createDeleteFromObjectPrimitive(target, toDel));
+//            tempPULs.get(DEL_OBJ_IDX).add(upFactory.createDeleteFromObjectPrimitive(target, toDel));
         }
 
         // INSERTS
 
         for (Item target : insertObjMap.keySet()) {
-            pul.add(factory.createInsertIntoObjectPrimitive(target, insertObjMap.get(target)));
+//            tempPULs = targetPULs.getOrDefault(target, new ArrayList<>(Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())));
+            pul.add(upFactory.createInsertIntoObjectPrimitive(target, insertObjMap.get(target)));
+//            tempPULs.get(INS_OBJ_IDX).add(upFactory.createInsertIntoObjectPrimitive(target, insertObjMap.get(target)));
         }
 
         // RENAMES
 
         for (Item target : renameObjMap.keySet()) {
+//            tempPULs = targetPULs.getOrDefault(target, new ArrayList<>(Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())));
             tempSelSrcMap = renameObjMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
-                pul.add(factory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator)));
+                pul.add(upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator)));
+//                tempPULs.get(REN_OBJ_IDX).add(upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator)));
             }
         }
 
@@ -120,23 +141,36 @@ public class PendingUpdateList {
         // DELETES & REPLACES
 
         for (Item target : delReplaceArrayMap.keySet()) {
+            int num_del = 0;
+//            tempPULs = targetPULs.getOrDefault(target, new ArrayList<>(Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())));
             tempSelSrcMap = delReplaceArrayMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
                 tempSrc = tempSelSrcMap.get(locator);
+                Item updatedLocator = itemFactory.createIntItem(locator.getIntValue() - num_del);
                 if (tempSrc == null) {
-                    pul.add(factory.createDeleteFromArrayPrimitive(target, locator));
+                    pul.add(upFactory.createDeleteFromArrayPrimitive(target, updatedLocator));
+//                    tempPULs.get(DEL_ARR_IDX).add(upFactory.createDeleteFromArrayPrimitive(target, updatedLocator));
+                    num_del++;
                 } else {
-                    pul.add(factory.createReplaceInArrayPrimitive(target, locator, tempSrc));
+                    pul.add(upFactory.createReplaceInArrayPrimitive(target, updatedLocator, tempSrc));
+//                    tempPULs.get(REP_ARR_IDX).add(upFactory.createReplaceInArrayPrimitive(target, updatedLocator, tempSrc));
                 }
             }
+            arrayOffsetMap.put(target, num_del);
         }
 
         // INSERTS
 
         for (Item target : insertArrayMap.keySet()) {
+            int num_dels = arrayOffsetMap.getOrDefault(target, 0);
+            int num_ins = 0;
+//            tempPULs = targetPULs.getOrDefault(target, new ArrayList<>(Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())));
             tempSelSrcListMap = insertArrayMap.get(target);
             for (Item locator : tempSelSrcListMap.keySet()) {
-                pul.add(factory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator)));
+                Item updatedLocator = itemFactory.createIntItem(locator.getIntValue() + num_ins - num_dels);
+                pul.add(upFactory.createInsertIntoArrayPrimitive(target, updatedLocator, tempSelSrcListMap.get(locator)));
+                num_ins++;
+//                tempPULs.get(INS_ARR_IDX).add(upFactory.createInsertIntoArrayPrimitive(target, updatedLocator, tempSelSrcListMap.get(locator)));
             }
         }
 
@@ -145,6 +179,11 @@ public class PendingUpdateList {
         for (UpdatePrimitive updatePrimitive : pul) {
             updatePrimitive.apply();
         }
+//
+//        for (Item target : targetPULs.keySet()) {
+//            tempPULs = targetPULs.get(target);
+//
+//        }
 
     }
 
@@ -273,7 +312,7 @@ public class PendingUpdateList {
             tempSelSrcResListMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcListMap.keySet()) {
-                tempSrcList = tempSelSrcResListMap.getOrDefault(selector, null);
+                tempSrcList = tempSelSrcResListMap.getOrDefault(selector, new ArrayList<>());
                 tempSelSrcResListMap.put(selector, InsertIntoArrayPrimitive.mergeSources(tempSelSrcListMap.get(selector), tempSrcList));
             }
             res.insertArrayMap.put(target,tempSelSrcResListMap);

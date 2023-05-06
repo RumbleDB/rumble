@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 
+import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -39,12 +40,23 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     private Item nextResult;
     private int childIndex;
 
+
+    public CommaExpressionIterator(
+            List<RuntimeIterator> childIterators,
+            boolean isUpdating,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
+        super(childIterators, executionMode, iteratorMetadata);
+        this.isUpdating = isUpdating;
+    }
+
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(childIterators, executionMode, iteratorMetadata);
+        this(childIterators, false, executionMode, iteratorMetadata);
     }
 
     @Override
@@ -137,5 +149,18 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             return sparkContext.emptyRDD();
         }
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+
+        PendingUpdateList pul = new PendingUpdateList();
+        for (RuntimeIterator child : children) {
+            pul = PendingUpdateList.mergeUpdates(pul, child.getPendingUpdateList(context));
+        }
+        return pul;
     }
 }
