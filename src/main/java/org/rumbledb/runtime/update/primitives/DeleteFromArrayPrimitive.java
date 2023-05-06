@@ -41,6 +41,11 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
     }
 
     @Override
+    public int getIntSelector() {
+        return selector.getIntValue();
+    }
+
+    @Override
     public Item getContent() {
         return null;
     }

@@ -14,6 +14,8 @@ public interface UpdatePrimitive {
 
     default Item getSelector() {throw new UnsupportedOperationException("Operation not defined");}
 
+    default int getIntSelector() {throw new UnsupportedOperationException("Operation not defined");}
+
     default Item getContent() {
         throw new UnsupportedOperationException("Operation not defined");
     }

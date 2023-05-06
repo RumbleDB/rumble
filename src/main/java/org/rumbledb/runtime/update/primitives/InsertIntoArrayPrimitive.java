@@ -47,6 +47,11 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
     }
 
     @Override
+    public int getIntSelector() {
+        return selector.getIntValue();
+    }
+
+    @Override
     public List<Item> getContentList() {
         return content;
     }

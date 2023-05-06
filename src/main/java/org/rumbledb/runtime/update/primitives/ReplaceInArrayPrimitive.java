@@ -48,6 +48,11 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
     }
 
     @Override
+    public int getIntSelector() {
+        return selector.getIntValue();
+    }
+
+    @Override
     public Item getContent() {
         return content;
     }
