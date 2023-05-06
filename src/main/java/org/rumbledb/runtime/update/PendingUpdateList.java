@@ -237,7 +237,7 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcMap.keySet()) {
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+            res.renameObjMap.put(target,tempSelSrcResMap);
         }
 
         for (Item target : pul2.renameObjMap.keySet()) {
@@ -250,7 +250,7 @@ public class PendingUpdateList {
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+            res.renameObjMap.put(target,tempSelSrcResMap);
         }
 
         ////// ARRAYS
