@@ -1051,6 +1051,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     conditionIterator,
                     thenIterator,
                     elseIterator,
+                    expression.isUpdating(),
                     expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );

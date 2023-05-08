@@ -29,6 +29,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
@@ -40,6 +41,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
+            boolean isUpdating,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
@@ -47,6 +49,17 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
         this.children.add(condition);
         this.children.add(branch);
         this.children.add(elseBranch);
+        this.isUpdating = isUpdating;
+    }
+
+    public IfRuntimeIterator(
+            RuntimeIterator condition,
+            RuntimeIterator branch,
+            RuntimeIterator elseBranch,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
+        this(condition, branch, elseBranch, false, executionMode, iteratorMetadata);
     }
 
     @Override
@@ -110,5 +123,15 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
 
         return iterator.getDataFrame(dynamicContext);
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+
+        RuntimeIterator iterator = selectApplicableIterator(context);
+        return iterator.getPendingUpdateList(context);
     }
 }
