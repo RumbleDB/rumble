@@ -457,8 +457,8 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             );
         }
 
-        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
-        return ExpressionClassification.BASIC_UPDATING;
+        expression.setExpressionClassification(ExpressionClassification.SIMPLE);
+        return ExpressionClassification.SIMPLE;
     }
 
     // Endregion

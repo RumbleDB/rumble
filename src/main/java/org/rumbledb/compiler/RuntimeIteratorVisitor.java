@@ -144,10 +144,7 @@ import org.rumbledb.runtime.update.expression.*;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
@@ -219,6 +216,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     (expression.getReturnClause()).getReturnExpr(),
                     argument
                 ),
+                expression.isUpdating(),
                 expression.getReturnClause().getHighestExecutionMode(this.visitorConfig),
                 expression.getReturnClause().getMetadata(),
                 expression.getStaticSequenceType()
@@ -438,6 +436,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitTransformExpression(TransformExpression expression, RuntimeIterator argument) {
 
         List<RuntimeIterator> copyDeclIterators = new ArrayList<>();
+        Map<Name, RuntimeIterator> copyDeclMap = new HashMap<>();
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            copyDeclMap.put(copyDecl.getVariableName(), this.visit(copyDecl.getSourceExpression(), argument));
+        }
         for (Expression childExpr : expression.getCopySourceExpressions()) {
             copyDeclIterators.add(this.visit(childExpr, argument));
         }
@@ -445,7 +447,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator returnIterator = this.visit(expression.getReturnExpression(), argument);
 
         RuntimeIterator runtimeIterator = new TransformExpressionIterator(
-                copyDeclIterators,
+                copyDeclMap,
                 modifyIterator,
                 returnIterator,
                 expression.getHighestExecutionMode(this.visitorConfig),
