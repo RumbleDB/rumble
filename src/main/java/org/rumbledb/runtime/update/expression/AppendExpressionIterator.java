@@ -23,14 +23,12 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator arrayIterator;
     private RuntimeIterator toAppendIterator;
-    private PendingUpdateList pul;
 
     public AppendExpressionIterator(RuntimeIterator arrayIterator, RuntimeIterator toAppendIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(Arrays.asList(arrayIterator, toAppendIterator), executionMode, iteratorMetadata);
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
-        this.pul = null;
         this.isUpdating = true;
     }
 
@@ -66,31 +64,27 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (this.pul == null) {
-            PendingUpdateList pul = new PendingUpdateList();
-            Item target;
-            Item content;
+        PendingUpdateList pul = new PendingUpdateList();
+        Item target;
+        Item content;
 
-            try {
-                target = this.arrayIterator.materializeExactlyOneItem(context);
-                content = this.toAppendIterator.materializeExactlyOneItem(context);
-            } catch (NoItemException | MoreThanOneItemException e) {
-                throw new RuntimeException(e);
-            }
-
-            UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-            UpdatePrimitive up;
-            if (target.isArray()) {
-                Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
-                up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content));
-            } else {
-                throw new OurBadException("Append iterator cannot handle target items that are not arrays");
-            }
-
-            pul.addUpdatePrimitive(up);
-            this.pul = pul;
+        try {
+            target = this.arrayIterator.materializeExactlyOneItem(context);
+            content = this.toAppendIterator.materializeExactlyOneItem(context);
+        } catch (NoItemException | MoreThanOneItemException e) {
+            throw new RuntimeException(e);
         }
 
-        return this.pul;
+        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+        UpdatePrimitive up;
+        if (target.isArray()) {
+            Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
+            up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content));
+        } else {
+            throw new OurBadException("Append iterator cannot handle target items that are not arrays");
+        }
+
+        pul.addUpdatePrimitive(up);
+        return pul;
     }
 }

@@ -24,7 +24,6 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator mainIterator;
     private RuntimeIterator toInsertIterator;
     private RuntimeIterator positionIterator;
-    private PendingUpdateList pul;
 
     public InsertExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator toInsertIterator, RuntimeIterator positionIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(
@@ -38,7 +37,6 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         this.mainIterator = mainIterator;
         this.toInsertIterator = toInsertIterator;
         this.positionIterator = positionIterator;
-        this.pul = null;
         this.isUpdating = true;
     }
 
@@ -78,36 +76,32 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (this.pul == null) {
-            PendingUpdateList pul = new PendingUpdateList();
-            Item main;
-            Item content;
-            Item locator = null;
+        PendingUpdateList pul = new PendingUpdateList();
+        Item main;
+        Item content;
+        Item locator = null;
 
-            try {
-                main = this.mainIterator.materializeExactlyOneItem(context);
-                content = this.toInsertIterator.materializeExactlyOneItem(context);
-                if (this.hasPositionIterator()) {
-                    locator = this.positionIterator.materializeExactlyOneItem(context);
-                }
-            } catch (NoItemException | MoreThanOneItemException e) {
-                throw new RuntimeException(e);
+        try {
+            main = this.mainIterator.materializeExactlyOneItem(context);
+            content = this.toInsertIterator.materializeExactlyOneItem(context);
+            if (this.hasPositionIterator()) {
+                locator = this.positionIterator.materializeExactlyOneItem(context);
             }
-
-            UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-            UpdatePrimitive up;
-            if (main.isObject()) {
-                up = factory.createInsertIntoObjectPrimitive(main, content);
-            } else if (main.isArray()) {
-                up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
-            } else {
-                throw new OurBadException("Insert iterator cannot handle main items that are not objects or arrays");
-            }
-
-            pul.addUpdatePrimitive(up);
-            this.pul = pul;
+        } catch (NoItemException | MoreThanOneItemException e) {
+            throw new RuntimeException(e);
         }
 
-        return this.pul;
+        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+        UpdatePrimitive up;
+        if (main.isObject()) {
+            up = factory.createInsertIntoObjectPrimitive(main, content);
+        } else if (main.isArray()) {
+            up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
+        } else {
+            throw new OurBadException("Insert iterator cannot handle main items that are not objects or arrays");
+        }
+
+        pul.addUpdatePrimitive(up);
+        return pul;
     }
 }

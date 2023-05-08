@@ -22,7 +22,6 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator mainIterator;
     private RuntimeIterator locatorIterator;
     private RuntimeIterator replacerIterator;
-    private PendingUpdateList pul;
 
     public ReplaceExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator locatorIterator, RuntimeIterator replacerIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(Arrays.asList(mainIterator, locatorIterator, replacerIterator), executionMode, iteratorMetadata);
@@ -30,7 +29,6 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.replacerIterator = replacerIterator;
-        this.pul = null;
         this.isUpdating = true;
     }
 
@@ -66,34 +64,30 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (this.pul == null) {
-            PendingUpdateList pul = new PendingUpdateList();
-            Item target;
-            Item locator;
-            Item content;
+        PendingUpdateList pul = new PendingUpdateList();
+        Item target;
+        Item locator;
+        Item content;
 
-            try {
-                target = this.mainIterator.materializeExactlyOneItem(context);
-                locator = this.locatorIterator.materializeExactlyOneItem(context);
-                content = this.replacerIterator.materializeExactlyOneItem(context);
-            } catch (NoItemException | MoreThanOneItemException e) {
-                throw new RuntimeException(e);
-            }
-
-            UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-            UpdatePrimitive up;
-            if (target.isObject()) {
-                up = factory.createReplaceInObjectPrimitive(target, locator, content);
-            } else if (target.isArray()) {
-                up = factory.createReplaceInArrayPrimitive(target, locator, content);
-            } else {
-                throw new OurBadException("Replace iterator cannot handle target items that are not objects or arrays");
-            }
-
-            pul.addUpdatePrimitive(up);
-            this.pul = pul;
+        try {
+            target = this.mainIterator.materializeExactlyOneItem(context);
+            locator = this.locatorIterator.materializeExactlyOneItem(context);
+            content = this.replacerIterator.materializeExactlyOneItem(context);
+        } catch (NoItemException | MoreThanOneItemException e) {
+            throw new RuntimeException(e);
         }
 
-        return this.pul;
+        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+        UpdatePrimitive up;
+        if (target.isObject()) {
+            up = factory.createReplaceInObjectPrimitive(target, locator, content);
+        } else if (target.isArray()) {
+            up = factory.createReplaceInArrayPrimitive(target, locator, content);
+        } else {
+            throw new OurBadException("Replace iterator cannot handle target items that are not objects or arrays");
+        }
+
+        pul.addUpdatePrimitive(up);
+        return pul;
     }
 }
