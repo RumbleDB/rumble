@@ -54,6 +54,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
@@ -409,9 +410,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
         clause.setHighestExecutionMode(
-            (clause.getExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
+            (clause.getExpression().getHighestExecutionMode(this.visitorConfig).isRDDOrDataFrame()
                 || (clause.getPreviousClause() != null
-                    && clause.getPreviousClause().getHighestExecutionMode(visitorConfig).isDataFrame()))
+                    && clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()))
                         ? ExecutionMode.DATAFRAME
                         : ExecutionMode.LOCAL
         );
@@ -439,13 +440,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.setHighestExecutionMode(ExecutionMode.LOCAL);
         } else {
             clause.setHighestExecutionMode(
-                clause.getPreviousClause().getHighestExecutionMode(visitorConfig)
+                clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig)
             );
         }
 
         // if let clause is local, defined variables are stored according to the execution mode of the expression
         if (clause.getHighestExecutionMode(this.visitorConfig) == ExecutionMode.LOCAL) {
-            clause.setHighestExecutionMode(clause.getExpression().getHighestExecutionMode(visitorConfig));
+            clause.setHighestExecutionMode(clause.getExpression().getHighestExecutionMode(this.visitorConfig));
         } else {
             clause.setHighestExecutionMode(ExecutionMode.LOCAL);
         }
@@ -757,27 +758,27 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(conditionalExpression, argument);
-        if (conditionalExpression.getBranch().getHighestExecutionMode(visitorConfig).isLocal()) {
+        if (conditionalExpression.getBranch().getHighestExecutionMode(this.visitorConfig).isLocal()) {
             conditionalExpression.setHighestExecutionMode(null);
             return argument;
         }
-        if (conditionalExpression.getElseBranch().getHighestExecutionMode(visitorConfig).isLocal()) {
+        if (conditionalExpression.getElseBranch().getHighestExecutionMode(this.visitorConfig).isLocal()) {
             conditionalExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }
-        if (conditionalExpression.getBranch().getHighestExecutionMode(visitorConfig).isUnset()) {
+        if (conditionalExpression.getBranch().getHighestExecutionMode(this.visitorConfig).isUnset()) {
             conditionalExpression.setHighestExecutionMode(ExecutionMode.UNSET);
             return argument;
         }
-        if (conditionalExpression.getElseBranch().getHighestExecutionMode(visitorConfig).isUnset()) {
+        if (conditionalExpression.getElseBranch().getHighestExecutionMode(this.visitorConfig).isUnset()) {
             conditionalExpression.setHighestExecutionMode(ExecutionMode.UNSET);
             return argument;
         }
-        if (conditionalExpression.getBranch().getHighestExecutionMode(visitorConfig).isRDD()) {
+        if (conditionalExpression.getBranch().getHighestExecutionMode(this.visitorConfig).isRDD()) {
             conditionalExpression.setHighestExecutionMode(ExecutionMode.RDD);
             return argument;
         }
-        if (conditionalExpression.getElseBranch().getHighestExecutionMode(visitorConfig).isRDD()) {
+        if (conditionalExpression.getElseBranch().getHighestExecutionMode(this.visitorConfig).isRDD()) {
             conditionalExpression.setHighestExecutionMode(ExecutionMode.RDD);
             return argument;
         }
@@ -794,8 +795,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         for (Expression e : expression.getExpressions()) {
-            if (!e.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
-                e.setHighestExecutionMode(ExecutionMode.LOCAL);
+            if (!e.getHighestExecutionMode(this.visitorConfig).isRDDOrDataFrame()) {
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                 return argument;
             }
         }
@@ -805,17 +806,21 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitOrderByClause(OrderByClause expression, StaticContext argument) {
-        expression.setHighestExecutionMode(
-            expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig)
+    public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
+        for (OrderByClauseSortingKey s : clause.getSortingKeys()) {
+            visit(s.getExpression(), argument);
+        }
+        clause.setHighestExecutionMode(
+            clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig)
         );
         return argument;
     }
 
     @Override
-    public StaticContext visitWhereClause(WhereClause expression, StaticContext argument) {
-        expression.setHighestExecutionMode(
-            expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig)
+    public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
+        visit(clause.getWhereExpression(), argument);
+        clause.setHighestExecutionMode(
+            clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig)
         );
         return argument;
     }
@@ -823,21 +828,21 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(visitorConfig));
+        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
     @Override
     public StaticContext visitArrayLookupExpression(ArrayLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(visitorConfig));
+        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
     @Override
     public StaticContext visitObjectLookupExpression(ObjectLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(visitorConfig));
+        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
@@ -855,7 +860,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             }
         }
-        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(visitorConfig));
+        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
         if (!expression.getStaticContext().getRumbleConfiguration().getNativeSQLPredicates()) {
             if (expression.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
                 expression.setHighestExecutionMode(ExecutionMode.RDD);
@@ -877,7 +882,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }
-        expression.setHighestExecutionMode(expression.getArguments().get(0).getHighestExecutionMode(visitorConfig));
+        expression.setHighestExecutionMode(
+            expression.getArguments().get(0).getHighestExecutionMode(this.visitorConfig)
+        );
         if (expression.getHighestExecutionMode().equals(ExecutionMode.RDD)) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         }
@@ -895,7 +902,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && sequenceType.getArity() != SequenceType.Arity.One
                 && sequenceType.getArity() != SequenceType.Arity.OneOrZero
         ) {
-            expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(visitorConfig));
+            expression.setHighestExecutionMode(
+                expression.getMainExpression().getHighestExecutionMode(this.visitorConfig)
+            );
         }
         expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         return argument;
