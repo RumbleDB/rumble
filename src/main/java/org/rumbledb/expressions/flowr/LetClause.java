@@ -78,21 +78,6 @@ public class LetClause extends Clause {
         return this.expression;
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.previousClause == null)
-                ? ExecutionMode.LOCAL
-                : this.previousClause.getHighestExecutionMode(visitorConfig);
-
-        // if let clause is local, defined variables are stored according to the execution mode of the expression
-        if (this.highestExecutionMode == ExecutionMode.LOCAL) {
-            this.variableHighestStorageMode = this.expression.getHighestExecutionMode(visitorConfig);
-        } else {
-            this.variableHighestStorageMode = ExecutionMode.LOCAL;
-        }
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()

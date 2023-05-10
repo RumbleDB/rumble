@@ -101,12 +101,6 @@ public class VariableDeclaration extends Node {
         return visitor.visitVariableDeclaration(this, argument);
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -115,6 +109,11 @@ public class VariableDeclaration extends Node {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
+    }
+    
+    public void setVariableHighestStorageMode(ExecutionMode mode)
+    {
+    	this.variableHighestStorageMode = mode;
     }
 
     public void print(StringBuffer buffer, int indent) {

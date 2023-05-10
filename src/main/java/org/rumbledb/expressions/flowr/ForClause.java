@@ -90,18 +90,6 @@ public class ForClause extends Clause {
         return this.expression;
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-                || (this.previousClause != null
-                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
-                        ? ExecutionMode.DATAFRAME
-                        : ExecutionMode.LOCAL;
-
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -110,6 +98,11 @@ public class ForClause extends Clause {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
+    }
+    
+    public void setVariableHighestStorageMode(ExecutionMode mode)
+    {
+    	this.variableHighestStorageMode = mode;
     }
 
     @Override

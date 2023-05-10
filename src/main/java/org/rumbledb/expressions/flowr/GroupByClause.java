@@ -20,7 +20,6 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -44,11 +43,6 @@ public class GroupByClause extends Clause {
 
     public List<GroupByVariableDeclaration> getGroupVariables() {
         return this.variables;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
     }
 
     @Override

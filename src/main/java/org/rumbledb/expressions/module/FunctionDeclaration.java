@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.module;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -61,11 +60,6 @@ public class FunctionDeclaration extends Node {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFunctionDeclaration(this, argument);
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.functionExpression.getBody().getHighestExecutionMode(visitorConfig);
     }
 
     /**
