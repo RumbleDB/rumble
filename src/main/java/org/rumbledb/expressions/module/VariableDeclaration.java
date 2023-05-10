@@ -110,10 +110,9 @@ public class VariableDeclaration extends Node {
         }
         return this.variableHighestStorageMode;
     }
-    
-    public void setVariableHighestStorageMode(ExecutionMode mode)
-    {
-    	this.variableHighestStorageMode = mode;
+
+    public void setVariableHighestStorageMode(ExecutionMode mode) {
+        this.variableHighestStorageMode = mode;
     }
 
     public void print(StringBuffer buffer, int indent) {

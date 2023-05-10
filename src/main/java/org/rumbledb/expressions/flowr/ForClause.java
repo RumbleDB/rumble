@@ -99,10 +99,9 @@ public class ForClause extends Clause {
         }
         return this.variableHighestStorageMode;
     }
-    
-    public void setVariableHighestStorageMode(ExecutionMode mode)
-    {
-    	this.variableHighestStorageMode = mode;
+
+    public void setVariableHighestStorageMode(ExecutionMode mode) {
+        this.variableHighestStorageMode = mode;
     }
 
     @Override
