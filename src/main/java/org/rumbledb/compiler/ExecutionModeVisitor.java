@@ -900,7 +900,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
-        SequenceType sequenceType = expression.getsequenceType();
+        visitDescendants(expression, argument);
+        SequenceType sequenceType = expression.getSequenceType();
         if (
             !sequenceType.isEmptySequence()
                 && sequenceType.getArity() != SequenceType.Arity.One

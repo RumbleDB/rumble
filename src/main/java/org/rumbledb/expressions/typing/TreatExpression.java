@@ -33,10 +33,6 @@ public class TreatExpression extends Expression {
         this.sequenceType = sequenceType;
     }
 
-    public SequenceType getsequenceType() {
-        return this.sequenceType;
-    }
-
     public ErrorCode errorCodeThatShouldBeThrown() {
         return this.errorCode;
     }
