@@ -128,7 +128,7 @@ public class ForClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(
             " ("
-                + (this.variableName)
+                + ("$" + this.variableName)
                 + ", "
                 + this.getSequenceType().toString()
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
@@ -137,7 +137,8 @@ public class ForClause extends Clause {
                 + this.positionalVariableName
                 + ") "
         );
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

@@ -88,6 +88,10 @@ public class LetClause extends Clause {
         return this.variableHighestStorageMode;
     }
 
+    public void setVariableHighestExecutionMode(ExecutionMode newMode) {
+        this.variableHighestStorageMode = newMode;
+    }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
@@ -112,16 +116,17 @@ public class LetClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(
             " ("
-                + (this.variableName)
+                + ("$" + this.variableName)
                 + ", "
-                + ((this.getStaticType() != null) ? this.getStaticType().toString() : "(unset)")
-                + ((this.getStaticType() != null)
-                    ? (this.getStaticType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ((this.getSequenceType() != null) ? this.getSequenceType().toString() : "(unset)")
+                + ((this.getSequenceType() != null)
+                    ? (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
                     : "")
                 + ") "
         );
         buffer.append(")");
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

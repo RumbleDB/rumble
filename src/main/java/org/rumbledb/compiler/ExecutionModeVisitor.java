@@ -434,6 +434,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
+        argument.show();
         this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
 
         if (clause.getPreviousClause() == null) {
@@ -446,9 +447,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         // if let clause is local, defined variables are stored according to the execution mode of the expression
         if (clause.getHighestExecutionMode(this.visitorConfig) == ExecutionMode.LOCAL) {
-            clause.setHighestExecutionMode(clause.getExpression().getHighestExecutionMode(this.visitorConfig));
+            clause.setVariableHighestExecutionMode(clause.getExpression().getHighestExecutionMode(this.visitorConfig));
         } else {
-            clause.setHighestExecutionMode(ExecutionMode.LOCAL);
+            clause.setVariableHighestExecutionMode(ExecutionMode.LOCAL);
         }
 
         argument.setVariableStorageMode(
@@ -456,6 +457,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
 
+        argument.show();
         return argument;
     }
 

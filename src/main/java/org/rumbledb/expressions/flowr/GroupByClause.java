@@ -68,9 +68,13 @@ public class GroupByClause extends Clause {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (");
+        int i = 0;
         for (GroupByVariableDeclaration var : this.variables) {
-            buffer.append(var.getVariableName());
-            buffer.append(", ");
+            buffer.append("$" + var.getVariableName());
+            if (i < this.variables.size() - 1) {
+                buffer.append(", ");
+            }
+            ++i;
         }
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
