@@ -100,5 +100,5 @@ jobs:
       run: mvn -Dtest=RuntimeTestsNoInlining test
     - name: NativeFLWORRuntimeTestsNativeDeactivated
       run: mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
-    - name: NativeFLWORRuntimeTestsNativeDeactivated
+    - name: NativeFLWORRuntimeTestsDataFramesDeactivated
       run: mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
