@@ -146,7 +146,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        if ((isDataFrame() && implementsDataFrame()) || (isRDD() && implementsDataFrame() && !implementsRDD())) {
+        if ((isDataFrame() && implementsDataFrames()) || (isRDD() && implementsDataFrames() && !implementsRDD())) {
             JSoundDataFrame df = this.getDataFrame(context);
             return dataFrameToRDDOfItems(df, getMetadata());
         }
