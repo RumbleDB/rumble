@@ -21,7 +21,6 @@
 package org.rumbledb.expressions;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
@@ -70,23 +69,6 @@ public class CommaExpression extends Expression {
                 sb.append(", ");
             }
         }
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (this.expressions.isEmpty()) {
-            this.highestExecutionMode = ExecutionMode.LOCAL;
-            return;
-        }
-
-        for (Expression expression : this.expressions) {
-            if (!expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
-                this.highestExecutionMode = ExecutionMode.LOCAL;
-                return;
-            }
-        }
-
-        this.highestExecutionMode = ExecutionMode.RDD;
     }
 
     @Override
