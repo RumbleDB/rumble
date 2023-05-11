@@ -910,6 +910,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setHighestExecutionMode(
                 expression.getMainExpression().getHighestExecutionMode(this.visitorConfig)
             );
+            return argument;
         }
         expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         return argument;
