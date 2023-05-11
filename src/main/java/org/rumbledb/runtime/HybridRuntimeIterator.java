@@ -59,6 +59,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         return true;
     }
 
+    protected boolean implementsRDD() {
+        return true;
+    }
+
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
         if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
             this.staticContext.setExecutionMode(ExecutionMode.RDD);
