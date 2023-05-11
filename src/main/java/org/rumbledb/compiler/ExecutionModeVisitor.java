@@ -338,7 +338,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
-        expression.getReturnExpr().accept(this, expression.getStaticContext());
+        visit(expression.getReturnExpr(), expression.getReturnExpr().getStaticContext());
         if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
             if (
                 expression.getReturnExpr()
@@ -761,7 +761,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     ) {
         visitDescendants(conditionalExpression, argument);
         if (conditionalExpression.getBranch().getHighestExecutionMode(this.visitorConfig).isLocal()) {
-            conditionalExpression.setHighestExecutionMode(null);
+            conditionalExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }
         if (conditionalExpression.getElseBranch().getHighestExecutionMode(this.visitorConfig).isLocal()) {
