@@ -2084,7 +2084,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
-        expression.setStaticSequenceType(expression.getSequenceType());
+        SequenceType sourceType = expression.getMainExpression().getStaticSequenceType();
+        expression.setStaticSequenceType(expression.getSequenceType().refineArityIfSubtype(sourceType.getArity()));
         return argument;
     }
 

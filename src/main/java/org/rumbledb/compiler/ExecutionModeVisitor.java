@@ -434,7 +434,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        argument.show();
         this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
 
         if (clause.getPreviousClause() == null) {
@@ -457,7 +456,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
 
-        argument.show();
         return argument;
     }
 
@@ -623,7 +621,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
         visitDescendants(expression, null);
-        switch (expression.getSequenceType().getArity()) {
+        SequenceType targetType = expression.getStaticSequenceType();
+        switch (targetType.getArity()) {
             case Zero:
                 expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                 return argument;
@@ -635,8 +634,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             case OneOrMore:
                 if (
-                    expression.getSequenceType().getItemType().isObjectItemType()
-                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)
+                    targetType.getItemType().isObjectItemType()
+                        && targetType.getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
                     LogManager.getLogger("ExecutionModeVisitor")
                         .info(
@@ -659,8 +658,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             case ZeroOrMore:
                 if (
-                    expression.getSequenceType().getItemType().isObjectItemType()
-                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)
+                    targetType.getItemType().isObjectItemType()
+                        && targetType.getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
                     LogManager.getLogger("ExecutionModeVisitor")
                         .info(

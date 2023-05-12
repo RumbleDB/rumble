@@ -59,6 +59,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         return true;
     }
 
+    protected boolean implementsRDD() {
+        return true;
+    }
+
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
         if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
             this.staticContext.setExecutionMode(ExecutionMode.RDD);
@@ -142,15 +146,15 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        if (isDataFrame()) {
+        if ((isDataFrame() && implementsDataFrames()) || (isRDD() && implementsDataFrames() && !implementsRDD())) {
             JSoundDataFrame df = this.getDataFrame(context);
             return dataFrameToRDDOfItems(df, getMetadata());
-        } else if (isRDDOrDataFrame()) {
-            return getRDDAux(context);
-        } else {
-            List<Item> contents = this.materialize(context);
-            return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
+        if (isRDDOrDataFrame()) {
+            return getRDDAux(context);
+        }
+        List<Item> contents = this.materialize(context);
+        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
     }
 
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
