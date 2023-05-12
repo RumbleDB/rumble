@@ -20,9 +20,7 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.SequenceOfItems;
@@ -36,16 +34,19 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
 
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--variable:externalUnparsedString",
-                "unparsed string",
-                "--escape-backticks",
-                "yes",
-                "--data-frame-execution",
-                "no"
-            }
-    );
+    @Override
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--data-frame-execution",
+                    "no"
+                }
+        );
+    }
 
     public static final File nativeFlworRuntimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -64,12 +65,6 @@ public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
         readFileList(nativeFlworRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
-    }
-
-    @Test(timeout = 1000000)
-    public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), NativeFLWORRuntimeTestsDataFramesDeactivated.configuration);
     }
 
     @Override

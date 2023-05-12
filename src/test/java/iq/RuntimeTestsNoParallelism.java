@@ -175,16 +175,16 @@ public class RuntimeTestsNoParallelism extends AnnotationsTestsBase {
             while (
                 sequence.hasNext()
                     &&
-                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
-                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
+                    ((itemCount < AnnotationsTestsBase.defaultConfiguration.getResultSizeCap()
+                        && AnnotationsTestsBase.defaultConfiguration.getResultSizeCap() > 0)
                         ||
-                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
+                        AnnotationsTestsBase.defaultConfiguration.getResultSizeCap() == 0)
             ) {
                 sb.append(sequence.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
+            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.defaultConfiguration.getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT

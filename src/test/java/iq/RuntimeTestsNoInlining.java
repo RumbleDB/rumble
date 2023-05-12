@@ -128,7 +128,7 @@ public class RuntimeTestsNoInlining extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
+        testAnnotations(this.testFile.getAbsolutePath(), AnnotationsTestsBase.defaultConfiguration);
     }
 
     @Override
