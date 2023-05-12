@@ -110,3 +110,8 @@ jobs:
       run: mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
     - name: NativeFLWORRuntimeTestsParallelismDeactivated
       run: mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
+    - name: MLTests
+      run: mvn -Dtest=MLTests test
+    - name: MLTestsNativeDeactivated
+      run: mvn -Dtest=MLTestsNativeDeactivated test
+
