@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class NativeFLWORRuntimeTestsDataFramesParallelismDeactivated extends RuntimeTests {
+public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
             new String[] {
@@ -53,7 +53,7 @@ public class NativeFLWORRuntimeTestsDataFramesParallelismDeactivated extends Run
                 "/src/test/resources/test_files/runtime-native-flwor"
     );
 
-    public NativeFLWORRuntimeTestsDataFramesParallelismDeactivated(File testFile) {
+    public NativeFLWORRuntimeTestsParallelismDeactivated(File testFile) {
         super(testFile);
     }
 
@@ -71,7 +71,7 @@ public class NativeFLWORRuntimeTestsDataFramesParallelismDeactivated extends Run
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         testAnnotations(
             this.testFile.getAbsolutePath(),
-            NativeFLWORRuntimeTestsDataFramesParallelismDeactivated.configuration
+            NativeFLWORRuntimeTestsParallelismDeactivated.configuration
         );
     }
 
