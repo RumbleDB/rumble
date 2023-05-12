@@ -74,6 +74,10 @@ jobs:
       run: mvn -Dtest=SparkRuntimeTests test
     - name: SparkRuntimeTestsNativeDeactivated
       run: mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
+    - name: SparkRuntimeTestsDataFramesDeactivated
+      run: mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
+    - name: SparkRuntimeTestsParallelismDeactivated
+      run: mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
 
   tests3:
 
