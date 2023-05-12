@@ -69,7 +69,10 @@ public class NativeFLWORRuntimeTestsDataFramesParallelismDeactivated extends Run
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), NativeFLWORRuntimeTestsDataFramesParallelismDeactivated.configuration);
+        testAnnotations(
+            this.testFile.getAbsolutePath(),
+            NativeFLWORRuntimeTestsDataFramesParallelismDeactivated.configuration
+        );
     }
 
     @Override
