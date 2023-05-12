@@ -98,7 +98,7 @@ public class Bugs extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), AnnotationsTestsBase.defaultConfiguration);
+        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
     }
 
     @Override
@@ -145,16 +145,16 @@ public class Bugs extends AnnotationsTestsBase {
             while (
                 sequence.hasNext()
                     &&
-                    ((itemCount < AnnotationsTestsBase.defaultConfiguration.getResultSizeCap()
-                        && AnnotationsTestsBase.defaultConfiguration.getResultSizeCap() > 0)
+                    ((itemCount < getConfiguration().getResultSizeCap()
+                        && getConfiguration().getResultSizeCap() > 0)
                         ||
-                        AnnotationsTestsBase.defaultConfiguration.getResultSizeCap() == 0)
+                        getConfiguration().getResultSizeCap() == 0)
             ) {
                 sb.append(sequence.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.defaultConfiguration.getResultSizeCap()) {
+            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
