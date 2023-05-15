@@ -42,7 +42,9 @@ public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--parallel-execution",
-                    "no"
+                    "no",
+                    "--materialization-cap",
+                    "1000000"
                 }
         );
     }
