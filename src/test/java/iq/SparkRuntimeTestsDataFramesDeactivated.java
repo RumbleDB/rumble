@@ -65,17 +65,4 @@ public class SparkRuntimeTestsDataFramesDeactivated extends RuntimeTests {
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput = runIterators(sequence);
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
-        );
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
-    }
 }
