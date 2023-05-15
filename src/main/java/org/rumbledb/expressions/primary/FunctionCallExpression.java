@@ -82,7 +82,7 @@ public class FunctionCallExpression extends Expression {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
-        buffer.append(getClass().getSimpleName());
+        buffer.append(getClass().getSimpleName() + " (" + this.identifier + ")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(
             " | "
