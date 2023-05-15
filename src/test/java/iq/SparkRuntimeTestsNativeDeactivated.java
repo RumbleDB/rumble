@@ -42,7 +42,9 @@ public class SparkRuntimeTestsNativeDeactivated extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--native-execution",
-                    "no"
+                    "no",
+                    "--dates-with-timezone",
+                    "yes"
                 }
         );
     }
