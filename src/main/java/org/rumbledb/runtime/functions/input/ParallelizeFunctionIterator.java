@@ -46,7 +46,10 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(parameters, staticContext);
         this.sequenceIterator = this.children.get(0);
-        this.partitionsIterator = this.children.get(1);
+        this.partitionsIterator = null;
+        if (this.children.size() > 1) {
+            this.partitionsIterator = this.children.get(1);
+        }
     }
 
     @Override
