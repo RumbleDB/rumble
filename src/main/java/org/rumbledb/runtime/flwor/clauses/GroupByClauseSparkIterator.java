@@ -34,8 +34,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -182,7 +182,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     while (groupVariableExpression.hasNext()) {
                         Item resultItem = groupVariableExpression.next();
                         if (!resultItem.isAtomic()) {
-                            throw new NonAtomicKeyException(
+                            throw new UnexpectedTypeException(
                                     "Group by keys must be atomics",
                                     getMetadata()
                             );

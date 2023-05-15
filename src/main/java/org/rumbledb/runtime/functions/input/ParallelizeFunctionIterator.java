@@ -40,10 +40,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator sequenceIterator;
     private RuntimeIterator partitionsIterator;
 
-    public ParallelizeFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
         this.sequenceIterator = this.children.get(0);
         this.partitionsIterator = null;
@@ -63,7 +60,10 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
             Item partitions = getNumberOfPartitions(context);
             rdd = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
-                .parallelize(contents, partitions.getIntValue());
+                .parallelize(
+                    contents,
+                    partitions.getIntValue()
+                );
         }
         return rdd;
     }
