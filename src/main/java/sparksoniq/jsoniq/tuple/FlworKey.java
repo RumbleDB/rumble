@@ -114,11 +114,16 @@ public class FlworKey implements KryoSerializable {
      * Invariant - two Flworkeys have the same length
      *
      * @param flworKey "other" FlworKey to be compared against
+     * @param metadata
      * @return comparison value (-1=smaller, 0=equal, 1=larger) * index (of the expression that determines ordering)
      */
-    public int compareWithFlworKey(FlworKey flworKey, List<OrderByClauseAnnotatedChildIterator> expressions) {
+    public int compareWithFlworKey(
+            FlworKey flworKey,
+            List<OrderByClauseAnnotatedChildIterator> expressions,
+            ExceptionMetadata metadata
+    ) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
-            throw new OurBadException("Invalid sort key: Key sizes can't be different.");
+            throw new OurBadException("Invalid sort key: Key sizes can't be different.", metadata);
         }
 
         int result = 0;
@@ -136,7 +141,7 @@ public class FlworKey implements KryoSerializable {
                     ||
                     (item2 != null && !item2.isAtomic())
             ) {
-                throw new OurBadException("Non atomic key not allowed");
+                throw new OurBadException("Non atomic key not allowed", metadata);
             }
 
             EMPTY_ORDER emptyOrder = EMPTY_ORDER.LEAST;
@@ -178,7 +183,7 @@ public class FlworKey implements KryoSerializable {
                         item1,
                         item2,
                         ComparisonOperator.VC_EQ,
-                        ExceptionMetadata.EMPTY_METADATA
+                        metadata
                     );
                     if (comparison == Long.MIN_VALUE) {
                         throw new UnexpectedTypeException(
@@ -189,7 +194,7 @@ public class FlworKey implements KryoSerializable {
                                     + "\" and \""
                                     + item2.getDynamicType().toString()
                                     + "\"",
-                                ExceptionMetadata.EMPTY_METADATA
+                                metadata
                         );
                     }
                     result = (int) comparison;
@@ -239,7 +244,7 @@ public class FlworKey implements KryoSerializable {
                                     + "\" and \""
                                     + item2.getDynamicType().toString()
                                     + "\"",
-                                ExceptionMetadata.EMPTY_METADATA
+                                metadata
                         );
                     }
                     result = (int) comparison;
@@ -247,7 +252,7 @@ public class FlworKey implements KryoSerializable {
                 case NONE:
                     throw new OurBadException(
                             "Behavior of empty sequence ordering was not resolved",
-                            ExceptionMetadata.EMPTY_METADATA
+                            metadata
                     );
             }
 

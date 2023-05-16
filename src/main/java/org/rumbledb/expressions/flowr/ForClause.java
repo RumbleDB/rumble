@@ -90,18 +90,6 @@ public class ForClause extends Clause {
         return this.expression;
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-                || (this.previousClause != null
-                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
-                        ? ExecutionMode.DATAFRAME
-                        : ExecutionMode.LOCAL;
-
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -110,6 +98,10 @@ public class ForClause extends Clause {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
+    }
+
+    public void setVariableHighestStorageMode(ExecutionMode mode) {
+        this.variableHighestStorageMode = mode;
     }
 
     @Override
@@ -136,7 +128,7 @@ public class ForClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(
             " ("
-                + (this.variableName)
+                + ("$" + this.variableName)
                 + ", "
                 + this.getSequenceType().toString()
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
@@ -145,7 +137,8 @@ public class ForClause extends Clause {
                 + this.positionalVariableName
                 + ") "
         );
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

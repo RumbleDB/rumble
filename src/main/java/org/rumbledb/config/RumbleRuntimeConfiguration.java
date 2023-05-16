@@ -71,6 +71,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean parallelExecution;
     private boolean dataFrameExecution;
     private boolean nativeExecution;
+    private boolean functionInlining;
     private boolean thirdFeature;
 
     private Map<String, String> shortcutMap;
@@ -415,6 +416,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.nativeExecution = true;
         }
 
+        if (this.arguments.containsKey("function-inlining")) {
+            this.functionInlining = this.arguments.get("function-inlining").equals("yes");
+        } else {
+            this.functionInlining = true;
+        }
+
         if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
             this.optimizeGeneralComparisonToValueComparison = this.arguments.get(
                 "optimize-general-comparison-to-value-comparison"
@@ -627,6 +634,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setnativeExecution(boolean b) {
         this.nativeExecution = b;
+    }
+
+    public boolean functionInlining() {
+        return this.functionInlining;
+    }
+
+    public void setFunctionInlining(boolean b) {
+        this.functionInlining = b;
     }
 
     public boolean optimizeGeneralComparisonToValueComparison() {

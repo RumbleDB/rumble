@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -36,62 +37,68 @@ import java.util.List;
 public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator sequenceIterator;
+    private RuntimeIterator partitionsIterator;
 
-    public ParallelizeFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
+        this.sequenceIterator = this.children.get(0);
+        this.partitionsIterator = null;
+        if (this.children.size() > 1) {
+            this.partitionsIterator = this.children.get(1);
+        }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
-        RuntimeIterator sequenceIterator = this.children.get(0);
-        sequenceIterator.open(context);
-        while (sequenceIterator.hasNext()) {
-            contents.add(sequenceIterator.next());
-        }
-        sequenceIterator.close();
+        this.sequenceIterator.materialize(context, contents);
         if (this.children.size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
-            RuntimeIterator partitionsIterator = this.children.get(1);
-            partitionsIterator.open(context);
-            if (!partitionsIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
-                        getMetadata()
+            Item partitions = getNumberOfPartitions(context);
+            rdd = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .parallelize(
+                    contents,
+                    partitions.getIntValue()
                 );
-            }
-            Item partitions = partitionsIterator.next();
-            if (!partitions.isInteger()) {
-                throw new UnexpectedTypeException(
-                        "The second parameter of parallelize must be an integer, but a non-integer is supplied.",
-                        getMetadata()
-                );
-            }
-            try {
-                rdd = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(contents, partitions.getIntValue());
-            } catch (Exception e) {
-                if (!partitionsIterator.hasNext()) {
-                    throw new UnexpectedTypeException(
-                            "The second parameter of parallelize must be an integer.",
-                            getMetadata()
-                    );
-                }
-            }
-            partitionsIterator.close();
         }
         return rdd;
+    }
+
+    protected Item getNumberOfPartitions(DynamicContext context) {
+        Item partitions = null;
+        try {
+            partitions = this.partitionsIterator.materializeAtMostOneItemOrNull(context);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "The second parameter of parallelize must be an integer, but a sequence with more than one item is supplied.",
+                    getMetadata()
+            );
+        }
+        if (partitions == null) {
+            throw new UnexpectedTypeException(
+                    "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
+                    getMetadata()
+            );
+        }
+        if (!partitions.isInteger()) {
+            throw new UnexpectedTypeException(
+                    "The second parameter of parallelize must be an integer, but a non-integer is supplied.",
+                    getMetadata()
+            );
+        }
+        return partitions;
     }
 
     @Override
     protected void openLocal() {
         this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+        if (this.children.size() > 1) {
+            getNumberOfPartitions(this.currentDynamicContextForLocalExecution);
+        }
     }
 
     @Override

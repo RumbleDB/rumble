@@ -78,21 +78,6 @@ public class LetClause extends Clause {
         return this.expression;
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.previousClause == null)
-                ? ExecutionMode.LOCAL
-                : this.previousClause.getHighestExecutionMode(visitorConfig);
-
-        // if let clause is local, defined variables are stored according to the execution mode of the expression
-        if (this.highestExecutionMode == ExecutionMode.LOCAL) {
-            this.variableHighestStorageMode = this.expression.getHighestExecutionMode(visitorConfig);
-        } else {
-            this.variableHighestStorageMode = ExecutionMode.LOCAL;
-        }
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -101,6 +86,10 @@ public class LetClause extends Clause {
             throw new OurBadException("An variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
+    }
+
+    public void setVariableHighestExecutionMode(ExecutionMode newMode) {
+        this.variableHighestStorageMode = newMode;
     }
 
     @Override
@@ -127,22 +116,20 @@ public class LetClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(
             " ("
-                + (this.variableName)
+                + ("$" + this.variableName)
                 + ", "
-                + ((this.getStaticType() != null) ? this.getStaticType().toString() : "(unset)")
-                + ((this.getStaticType() != null)
-                    ? (this.getStaticType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ((this.getSequenceType() != null) ? this.getSequenceType().toString() : "(unset)")
+                + ((this.getSequenceType() != null)
+                    ? (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
                     : "")
                 + ") "
         );
         buffer.append(")");
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
-        }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
         }
     }
 
