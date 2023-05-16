@@ -182,8 +182,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 try {
                     Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
                     if (resultItem != null && !resultItem.isAtomic()) {
-                        throw new NoTypedValueException(
-                                "Order by keys must be atomics",
+                        throw new UnexpectedTypeException(
+                                "Keys in an order-by clause must be atomics.",
                                 expressionWithIterator.getIterator().getMetadata()
                         );
                     }
@@ -191,7 +191,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     results.add(resultItem);
                 } catch (MoreThanOneItemException e) {
                     throw new UnexpectedTypeException(
-                            "Order by keys must be at most one item",
+                            "Keys in an order-by clause must be at most one item.",
                             expressionWithIterator.getIterator().getMetadata()
                     );
                 }
