@@ -163,7 +163,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(this.expressionsWithIterator)
+                new FlworKeyComparator(this.expressionsWithIterator, getMetadata())
         );
 
         // assign current context as parent. re-use the same context object for efficiency
