@@ -22,13 +22,15 @@ package org.rumbledb.runtime.arithmetics;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -44,10 +46,9 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     public UnaryOperationIterator(
             RuntimeIterator child,
             boolean negated,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.negated = negated;
         this.item = null;
@@ -93,5 +94,30 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
                     this.item.serialize(),
                 getMetadata()
         );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.child.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String leftQuery = leftResult.getResultingQuery();
+        SequenceType resultType = leftResult.getResultingType();
+        if (this.negated) {
+            String resultingQuery = "( "
+                + " - "
+                + leftQuery
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+        } else {
+            String resultingQuery = "( "
+                + leftQuery
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+        }
     }
 }

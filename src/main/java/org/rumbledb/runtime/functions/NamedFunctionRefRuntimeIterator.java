@@ -23,9 +23,8 @@ package org.rumbledb.runtime.functions;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
@@ -37,10 +36,9 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
 
     public NamedFunctionRefRuntimeIterator(
             FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
     }
 

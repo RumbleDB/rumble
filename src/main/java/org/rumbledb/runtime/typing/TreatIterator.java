@@ -4,13 +4,15 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -24,11 +26,13 @@ import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
+import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
@@ -48,10 +52,9 @@ public class TreatIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
+        super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.errorCode = errorCode;
@@ -59,7 +62,7 @@ public class TreatIterator extends HybridRuntimeIterator {
             this.itemType = this.sequenceType.getItemType();
         }
         if (
-            !executionMode.equals(ExecutionMode.LOCAL)
+            !getHighestExecutionMode().equals(ExecutionMode.LOCAL)
                 && (sequenceType.isEmptySequence()
                     || sequenceType.getArity().equals(Arity.One)
                     || sequenceType.getArity().equals(Arity.OneOrZero))
@@ -221,6 +224,30 @@ public class TreatIterator extends HybridRuntimeIterator {
             return df;
         }
         throw errorToThrow("" + dataItemType);
+    }
+
+    /**
+     * Converts a homogeneous RDD of atomic values to a DataFrame
+     * 
+     * @param rdd the RDD containing the atomic values.
+     * @param itemType the dynamic type of these values.
+     * @return
+     */
+    public static JSoundDataFrame convertToDataFrame(JavaRDD<?> rdd, ItemType itemType) {
+        List<StructField> fields = Collections.singletonList(
+            DataTypes.createStructField(
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                TypeMappings.getDataFrameDataTypeFromItemType(itemType),
+                true
+            )
+        );
+        StructType schema = DataTypes.createStructType(fields);
+
+        JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i));
+
+        // apply the schema to row RDD
+        Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+        return new JSoundDataFrame(df, itemType);
     }
 
     private void checkEmptySequence(int size) {

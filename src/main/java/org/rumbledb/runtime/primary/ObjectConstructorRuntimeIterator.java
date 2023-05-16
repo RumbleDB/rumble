@@ -22,10 +22,9 @@ package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -45,10 +44,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(keys, executionMode, iteratorMetadata);
+        super(keys, staticContext);
         this.children.addAll(values);
         this.keys = keys;
         this.values = values;
@@ -56,10 +54,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.addAll(childExpressions);
         this.isMergedObject = true;
     }

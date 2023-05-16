@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.postfix;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -73,10 +72,5 @@ public class ObjectLookupExpression extends Expression {
 
     public Expression getMainExpression() {
         return this.mainExpression;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
     }
 }

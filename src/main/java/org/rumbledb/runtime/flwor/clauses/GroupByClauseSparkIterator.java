@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -29,16 +30,17 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -50,6 +52,7 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -69,10 +72,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     public GroupByClauseSparkIterator(
             RuntimeTupleIterator child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.groupingExpressions = groupingExpressions;
         this.dependencies = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
@@ -177,19 +179,27 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         );
                     }
 
-                    List<Item> newVariableResults = new ArrayList<>();
-                    groupVariableExpression.open(tupleContext);
-                    while (groupVariableExpression.hasNext()) {
-                        Item resultItem = groupVariableExpression.next();
+                    List<Item> newVariableResults = null;
+                    Item resultItem = null;
+                    try {
+                        resultItem = groupVariableExpression.materializeAtMostOneItemOrNull(tupleContext);
+                    } catch (MoreThanOneItemException e) {
+                        throw new UnexpectedTypeException(
+                                "Keys in a group-by clause must be at most one item.",
+                                getMetadata()
+                        );
+                    }
+                    if (resultItem != null) {
                         if (!resultItem.isAtomic()) {
-                            throw new NonAtomicKeyException(
-                                    "Group by keys must be atomics",
+                            throw new UnexpectedTypeException(
+                                    "Keys in a group-by clause must be atomics.",
                                     getMetadata()
                             );
                         }
-                        newVariableResults.add(resultItem);
+                        newVariableResults = Collections.singletonList(resultItem);
+                    } else {
+                        newVariableResults = Collections.emptyList();
                     }
-                    groupVariableExpression.close();
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
                     inputTuple.putValue(expression.getVariableName(), newVariableResults);
@@ -249,7 +259,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FlworDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -265,7 +275,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema;
         // String[] columnNamesArray;
         // List<String> columnNames;
@@ -288,7 +298,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     context,
                     new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     null,
-                    false
+                    false,
+                    getConfiguration()
                 );
 
 
@@ -310,17 +321,20 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         String input = FlworDataFrameUtils.createTempView(df);
 
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
-            df,
-            variableAccessNames,
-            this.outputTupleProjection,
-            inputSchema,
-            context,
-            input
-        );
+        Dataset<Row> nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                variableAccessNames,
+                this.outputTupleProjection,
+                inputSchema,
+                context,
+                input
+            );
+        }
         if (nativeQueryResult != null) {
 
-            return nativeQueryResult;
+            return new FlworDataFrame(nativeQueryResult);
         }
 
         Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
@@ -417,7 +431,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     appendedGroupingColumnsName
                 )
             );
-        return result;
+        return new FlworDataFrame(result);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
@@ -534,6 +548,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
             selectString.append(sep);
             sep = ", ";
+            if (groupingVariables.contains(entry.getKey())) {
+                // we are considering one of the grouping variables
+                selectString.append(entry.getKey().toString());
+                continue;
+            }
             if (FlworDataFrameUtils.isVariableAvailableAsCountOnly(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 selectString.append("sum(`");
@@ -543,7 +562,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count");
                 selectString.append("`");
-            } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
+                continue;
+            }
+            if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
                 if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
                     FlworDataFrameColumn dfColumnSequence = new FlworDataFrameColumn(
                             entry.getKey(),
@@ -554,38 +575,37 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     selectString.append(dfColumnSequence);
                     selectString.append(")) as ");
                     selectString.append(dfColumnCount);
-                } else {
-                    // we need a count
-                    selectString.append("count(`");
-                    selectString.append(entry.getKey().toString());
-                    selectString.append("`) as `");
-                    selectString.append(entry.getKey().toString());
-                    selectString.append(".count`");
+                    continue;
                 }
-            } else if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
+                // we need a count
+                selectString.append("count(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append(".count`");
+                continue;
+            }
+            if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
                 // we cannot merge arrays natively in Spark, strangely.
                 return null;
-            } else if (groupingVariables.contains(entry.getKey())) {
-                // we are considering one of the grouping variables
-                selectString.append(entry.getKey().toString());
-            } else {
-                // we collect all the values, if it is a binary object we just switch over to udf
-                FlworDataFrameColumn dfColumnSequence = new FlworDataFrameColumn(
-                        entry.getKey(),
-                        ColumnFormat.NATIVE_SEQUENCE
-                );
-                String columnName = entry.getKey().toString();
-                StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
-                if (field.dataType().equals(DataTypes.BinaryType)) {
-                    return null;
-                }
-                selectString.append("collect_list(");
-                selectString.append(columnName);
-                selectString.append(") as ");
-                selectString.append(dfColumnSequence);
             }
+            // we collect all the values, if it is a binary object we just switch over to udf
+            FlworDataFrameColumn dfColumnSequence = new FlworDataFrameColumn(
+                    entry.getKey(),
+                    ColumnFormat.NATIVE_SEQUENCE
+            );
+            String columnName = entry.getKey().toString();
+            StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
+            if (field.dataType().equals(DataTypes.BinaryType)) {
+                return null;
+            }
+            selectString.append("collect_list(");
+            selectString.append(columnName);
+            selectString.append(") as ");
+            selectString.append(dfColumnSequence);
         }
-        System.err.println("[INFO] Rumble was able to optimize a group by clause to a native SQL query.");
+        LogManager.getLogger("GroupByClauseSparkIterator")
+            .info("Rumble was able to optimize a group by clause to a native SQL query.");
         return dataFrame.sparkSession()
             .sql(
                 String.format(
@@ -624,7 +644,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-        switch (this.highestExecutionMode) {
+        switch (getHighestExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

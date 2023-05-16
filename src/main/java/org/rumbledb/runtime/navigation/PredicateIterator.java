@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -27,14 +28,16 @@ import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.logics.AndOperationIterator;
@@ -67,10 +70,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
     public PredicateIterator(
             RuntimeIterator sequence,
             RuntimeIterator filterExpression,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(sequence, filterExpression), executionMode, iteratorMetadata);
+        super(Arrays.asList(sequence, filterExpression), staticContext);
         this.iterator = sequence;
         this.filter = filterExpression;
         this.filterDynamicContext = null;
@@ -174,12 +176,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 this.filterDynamicContext.getVariableValues().setPosition(++this.position);
             }
 
-            this.filter.open(this.filterDynamicContext);
             Item fil = null;
-            if (this.filter.hasNext()) {
-                fil = this.filter.next();
+            try {
+                fil = this.filter.materializeAtMostOneItemOrNull(this.filterDynamicContext);
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
+                        this.filter.getMetadata()
+                );
             }
-            this.filter.close();
             // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
             if (fil != null && fil.isInt()) {
                 int index = fil.getIntValue();
@@ -245,11 +250,14 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 childDataFrame.getDataFrame().schema(),
                 context
         );
-        NativeClauseContext nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeQuery = NativeClauseContext.NoNativeQuery;
+        if (getConfiguration().nativeExecution()) {
+            nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+        }
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
                     childDataFrame.getDataFrame().schema(),
                     null,
                     null,
@@ -264,7 +272,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                         new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
                         DataTypes.BooleanType
                     );
-                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+                String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT * FROM %s WHERE predicate(%s) = 'true'",
@@ -279,13 +287,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
                     1L
                 );
                 String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
-                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
                     zippedChildDataFrame.getDataFrame().schema(),
                     null,
                     null,
                     null
                 );
-                List<String> originalcolumns = FlworDataFrameUtils.getColumnNames(
+                List<FlworDataFrameColumn> originalcolumns = FlworDataFrameUtils.getColumns(
                     childDataFrame.getDataFrame().schema(),
                     null,
                     null,
@@ -307,8 +315,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
                         ),
                         DataTypes.BooleanType
                     );
-                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-                String projection = FlworDataFrameUtils.getSQLProjection(originalcolumns, false);
+                String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
+                String projection = FlworDataFrameUtils.getSQLColumnProjection(originalcolumns, false);
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
@@ -320,9 +328,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 );
             }
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a predicate to a native SQL query."
-        );
+        LogManager.getLogger("PredicateIterator")
+            .info(
+                "Rumble was able to optimize a predicate to a native SQL query."
+            );
         String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         return childDataFrame.evaluateSQL(
             String.format(

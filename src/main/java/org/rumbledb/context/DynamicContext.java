@@ -24,6 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
@@ -32,6 +34,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +69,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.parent = null;
         this.variableValues = new VariableValues();
         this.conf = conf;
-        this.namedFunctions = new NamedFunctions();
+        this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = new DateTime();
     }
@@ -156,6 +159,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
     }
 
+    public static Map<Name, DynamicContext.VariableDependency> copyVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> from
+    ) {
+        Map<Name, DynamicContext.VariableDependency> result = new HashMap<>();
+        for (Name v : from.keySet()) {
+            result.put(v, from.get(v));
+        }
+        return result;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -216,9 +229,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public static void printDependencies(Map<Name, VariableDependency> exprDependency) {
-        System.err.println("[DEBUG] Variable dependencies:");
+        LogManager.getLogger("DynamicContext").debug("System.err Variable dependencies:");
         for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
-            System.err.println(e.getKey() + " : " + e.getValue());
+            LogManager.getLogger("DynamicContext").debug(e.getKey() + " : " + e.getValue());
         }
     }
 }

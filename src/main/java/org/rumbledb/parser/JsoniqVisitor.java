@@ -386,6 +386,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitValidateExpr(JsoniqParser.ValidateExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#annotateExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnnotateExpr(JsoniqParser.AnnotateExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#simpleMapExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

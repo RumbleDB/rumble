@@ -21,10 +21,8 @@
 package org.rumbledb.expressions.control;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -89,36 +87,6 @@ public class ConditionalExpression extends Expression {
 
         this.elseExpression.serializeToJSONiq(sb, indent + 1);
         sb.append(")\n");
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (this.thenExpression.getHighestExecutionMode(visitorConfig).isLocal()) {
-            this.highestExecutionMode = ExecutionMode.LOCAL;
-            return;
-        }
-        if (this.elseExpression.getHighestExecutionMode(visitorConfig).isLocal()) {
-            this.highestExecutionMode = ExecutionMode.LOCAL;
-            return;
-        }
-        if (this.thenExpression.getHighestExecutionMode(visitorConfig).isUnset()) {
-            this.highestExecutionMode = ExecutionMode.UNSET;
-            return;
-        }
-        if (this.elseExpression.getHighestExecutionMode(visitorConfig).isUnset()) {
-            this.highestExecutionMode = ExecutionMode.UNSET;
-            return;
-        }
-        if (this.thenExpression.getHighestExecutionMode(visitorConfig).isRDD()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        if (this.elseExpression.getHighestExecutionMode(visitorConfig).isRDD()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        this.highestExecutionMode = ExecutionMode.DATAFRAME;
-        return;
     }
 
     @Override

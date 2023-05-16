@@ -35,8 +35,10 @@ import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -51,6 +53,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -65,16 +68,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected transient boolean isOpen;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
-    private ExceptionMetadata metadata;
+    protected RuntimeStaticContext staticContext;
     protected URI staticURI;
     // private StaticContext staticContext;
 
-    protected ExecutionMode highestExecutionMode;
-
-    protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, ExceptionMetadata metadata) {
-        this.metadata = metadata;
+    protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+        this.staticContext = staticContext;
+        if (this.staticContext.getStaticType() == null) {
+            throw new OurBadException(
+                    "Runtime iterator created without a static type! " + this.getClass().getCanonicalName()
+            );
+        }
         this.isOpen = false;
-        this.highestExecutionMode = executionMode;
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
@@ -238,18 +243,40 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public ExceptionMetadata getMetadata() {
-        return this.metadata;
+        return this.staticContext.getMetadata();
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        return this.highestExecutionMode;
+        return this.staticContext.getExecutionMode();
+    }
+
+    public SequenceType getStaticType() {
+        return this.staticContext.getStaticType();
+    }
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return this.staticContext.getConfiguration();
     }
 
     public boolean isRDDOrDataFrame() {
-        if (this.highestExecutionMode == ExecutionMode.UNSET) {
+        if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
+            throw new OurBadException("isRDDorDataFrame field in iterator without execution mode being set.");
+        }
+        return this.staticContext.getExecutionMode().isRDDOrDataFrame();
+    }
+
+    public boolean isRDD() {
+        if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
-        return this.highestExecutionMode.isRDDOrDataFrame();
+        return this.staticContext.getExecutionMode().isRDD();
+    }
+
+    public boolean isLocal() {
+        if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
+            throw new OurBadException("isLocal field in iterator without execution mode being set.");
+        }
+        return this.staticContext.getExecutionMode().isLocal();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
@@ -260,10 +287,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isDataFrame() {
-        if (this.highestExecutionMode == ExecutionMode.UNSET) {
+        if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return this.highestExecutionMode.isDataFrame();
+        return this.staticContext.getExecutionMode().isDataFrame();
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {
@@ -376,7 +403,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | ");
-        buffer.append(this.highestExecutionMode);
+        buffer.append(this.staticContext.getExecutionMode());
+        buffer.append(" | ");
+        buffer.append(getStaticType());
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
@@ -446,7 +475,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 return true;
             }
         }
-        switch (this.highestExecutionMode) {
+        switch (this.staticContext.getExecutionMode()) {
             case DATAFRAME:
                 return true;
             case LOCAL:

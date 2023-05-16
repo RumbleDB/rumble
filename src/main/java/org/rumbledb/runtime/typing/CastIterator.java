@@ -5,8 +5,8 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
@@ -31,10 +31,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     public CastIterator(
             RuntimeIterator child,
             SequenceType sequenceType,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }

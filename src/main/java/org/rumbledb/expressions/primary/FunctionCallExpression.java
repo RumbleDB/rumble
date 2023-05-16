@@ -20,18 +20,10 @@
 
 package org.rumbledb.expressions.primary;
 
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.context.BuiltinFunction;
-import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -82,94 +74,6 @@ public class FunctionCallExpression extends Expression {
     }
 
     @Override
-    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
-    }
-
-    public void initFunctionCallHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (BuiltinFunctionCatalogue.exists(this.identifier)) {
-            if (this.isPartialApplication) {
-                throw new UnsupportedFeatureException(
-                        "Partial application on built-in functions are not supported.",
-                        this.getMetadata()
-                );
-            }
-            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(this.identifier);
-            if (builtinFunction == null) {
-                throw new UnknownFunctionCallException(
-                        this.identifier.getName(),
-                        this.identifier.getArity(),
-                        this.getMetadata()
-                );
-            }
-            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
-            return;
-        }
-
-        if (
-            getStaticContext().getUserDefinedFunctionsExecutionModes()
-                .exists(this.identifier)
-        ) {
-            if (this.isPartialApplication) {
-                this.highestExecutionMode = ExecutionMode.LOCAL;
-                return;
-            }
-            this.highestExecutionMode = getStaticContext().getUserDefinedFunctionsExecutionModes()
-                .getExecutionMode(this.identifier, getMetadata());
-            return;
-        }
-
-        if (!visitorConfig.suppressErrorsForCallingMissingFunctions()) {
-            throw new UnknownFunctionCallException(
-                    this.identifier.getName(),
-                    this.identifier.getArity(),
-                    this.getMetadata()
-            );
-        }
-    }
-
-    private ExecutionMode getBuiltInFunctionExecutionMode(
-            BuiltinFunction builtinFunction,
-            VisitorConfig visitorConfig
-    ) {
-        BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
-            return ExecutionMode.LOCAL;
-        }
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.RDD) {
-            return ExecutionMode.RDD;
-        }
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.DATAFRAME) {
-            return ExecutionMode.DATAFRAME;
-        }
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
-            if (firstArgumentExecutionMode.isDataFrame()) {
-                return ExecutionMode.DATAFRAME;
-            }
-            if (firstArgumentExecutionMode.isRDDOrDataFrame()) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
-        }
-        if (
-            functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
-        ) {
-            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
-            if (
-                firstArgumentExecutionMode.isRDDOrDataFrame()
-                    && !firstArgumentExecutionMode.isDataFrame()
-            ) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
-        }
-        throw new OurBadException(
-                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
-        );
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFunctionCall(this, argument);
     }
@@ -178,7 +82,7 @@ public class FunctionCallExpression extends Expression {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
-        buffer.append(getClass().getSimpleName());
+        buffer.append(getClass().getSimpleName() + " (" + this.identifier + ")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(
             " | "

@@ -61,6 +61,23 @@ public class VisitorHelpers {
         }
     }
 
+    private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
+        MainModule result = module;
+        // Annotate recursive functions as such
+        new FunctionDependenciesVisitor().visit(result, null);
+        // Inline non-recursive functions
+        if (conf.functionInlining()) {
+            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+        }
+        return result;
+    }
+
+    private static MainModule applyTypeDependentOptimizations(MainModule module) {
+        MainModule result = module;
+        result = (MainModule) new ComparisonVisitor().visit(result, null);
+        return result;
+    }
+
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
         System.err.println("***************");
         System.err.println("Expression tree");
@@ -138,8 +155,10 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
+            mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -180,6 +199,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
+            mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
@@ -298,9 +318,21 @@ public class VisitorHelpers {
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
+        if (!conf.parallelExecution()) {
+            LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
+            visitor.visit(module, module.getStaticContext());
+            if (conf.isPrintIteratorTree()) {
+                printTree(module, conf);
+            }
+            if (module.numberOfUnsetExecutionModes() > 0) {
+                System.err.println(
+                    "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
+                );
+            }
+            return;
+        }
         ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf);
         visitor.visit(module, module.getStaticContext());
-
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = module.numberOfUnsetExecutionModes();
@@ -316,9 +348,11 @@ public class VisitorHelpers {
                 break;
             }
 
-            if (conf.isPrintIteratorTree()) {
-                printTree(module, conf);
-            }
+            /*
+             * if (conf.isPrintIteratorTree()) {
+             * printTree(module, conf);
+             * }
+             */
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(
@@ -344,7 +378,6 @@ public class VisitorHelpers {
                 "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );
         }
-
     }
 
     private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {

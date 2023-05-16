@@ -24,7 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -55,10 +55,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
             List<RuntimeIterator> functionArguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.isPartialApplication = false;
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
@@ -152,6 +151,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         }
         this.functionCallIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
             this.functionItem,
+            getConfiguration(),
             this.isPartialApplication
                 ? ExecutionMode.LOCAL
                 : this.functionItem.getBodyIterator().getHighestExecutionMode(),

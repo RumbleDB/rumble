@@ -73,12 +73,10 @@ public class InScopeSchemaTypes implements Serializable, KryoSerializable {
         this.inScopeSchemaTypes = kryo.readObject(input, HashMap.class);
     }
 
-    public void importModuleTypes(InScopeSchemaTypes inScopeSchemaTypes, String targetNamespace) {
+    public void importModuleTypes(InScopeSchemaTypes inScopeSchemaTypes) {
         for (Name name : inScopeSchemaTypes.inScopeSchemaTypes.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                ItemType itemType = inScopeSchemaTypes.inScopeSchemaTypes.get(name);
-                this.inScopeSchemaTypes.put(name, itemType);
-            }
+            ItemType itemType = inScopeSchemaTypes.inScopeSchemaTypes.get(name);
+            this.inScopeSchemaTypes.put(name, itemType);
         }
     }
 
