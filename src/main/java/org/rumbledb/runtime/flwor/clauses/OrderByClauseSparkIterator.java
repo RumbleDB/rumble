@@ -378,6 +378,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 columnType = DataTypes.DoubleType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.floatItem.getName())) {
                 columnType = DataTypes.FloatType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.base64BinaryItem.getName())) {
+                columnType = DataTypes.BinaryType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.hexBinaryItem.getName())) {
+                columnType = DataTypes.BinaryType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
                 columnType = TypeMappings.decimalType;
             } else if (
