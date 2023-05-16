@@ -182,13 +182,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     List<Item> newVariableResults = null;
                     Item resultItem = null;
                     try {
-                    	resultItem = groupVariableExpression.materializeAtMostOneItemOrNull(tupleContext);
-                    } catch (MoreThanOneItemException e)
-                    {
-                    	throw new UnexpectedTypeException("Keys in a group-by clause must be at most one item.", getMetadata());
+                        resultItem = groupVariableExpression.materializeAtMostOneItemOrNull(tupleContext);
+                    } catch (MoreThanOneItemException e) {
+                        throw new UnexpectedTypeException(
+                                "Keys in a group-by clause must be at most one item.",
+                                getMetadata()
+                        );
                     }
-                    if(resultItem != null)
-                    {
+                    if (resultItem != null) {
                         if (!resultItem.isAtomic()) {
                             throw new UnexpectedTypeException(
                                     "Keys in a group-by clause must be atomics.",
@@ -197,7 +198,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         }
                         newVariableResults = Collections.singletonList(resultItem);
                     } else {
-                    	newVariableResults = Collections.emptyList();
+                        newVariableResults = Collections.emptyList();
                     }
 
                     // if a new variable is declared inside the group by clause, insert value in tuple

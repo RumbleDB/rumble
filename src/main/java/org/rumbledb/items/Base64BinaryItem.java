@@ -40,8 +40,8 @@ public class Base64BinaryItem implements Item {
     }
 
     public Base64BinaryItem(String stringValue) {
-        this.stringValue = stringValue;
         this.value = parseBase64BinaryString(stringValue);
+        this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
     }
 
     @Override
