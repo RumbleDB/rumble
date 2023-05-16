@@ -32,9 +32,8 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
+public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
 
-    @Override
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
@@ -42,19 +41,21 @@ public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
                     "unparsed string",
                     "--escape-backticks",
                     "yes",
-                    "--data-frame-execution",
-                    "no"
+                    "--parallel-execution",
+                    "no",
+                    "--materialization-cap",
+                    "1000000"
                 }
         );
     }
 
-    public static final File nativeFlworRuntimeTestsDirectory = new File(
+    public static final File sparkRuntimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/test/resources/test_files/runtime-native-flwor"
+                "/src/test/resources/test_files/runtime-spark"
     );
 
-    public NativeFLWORRuntimeTestsDataFramesDeactivated(File testFile) {
+    public SparkRuntimeTestsParallelismDeactivated(File testFile) {
         super(testFile);
     }
 
@@ -62,7 +63,7 @@ public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         _testFiles.clear();
-        readFileList(nativeFlworRuntimeTestsDirectory);
+        readFileList(sparkRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
@@ -77,5 +78,6 @@ public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
             "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
+        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 }
