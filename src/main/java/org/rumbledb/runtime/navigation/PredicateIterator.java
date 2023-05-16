@@ -29,6 +29,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
@@ -180,7 +181,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             try {
                 fil = this.filter.materializeAtMostOneItemOrNull(this.filterDynamicContext);
             } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
+                throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
                         this.filter.getMetadata()
                 );
