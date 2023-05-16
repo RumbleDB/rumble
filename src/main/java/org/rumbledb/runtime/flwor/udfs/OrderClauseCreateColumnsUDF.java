@@ -132,6 +132,10 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.results.add(nextItem.castToFloatValue());
                 } else if (typeName.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
                     this.results.add(nextItem.castToDecimalValue());
+                } else if (typeName.equals(BuiltinTypesCatalogue.base64BinaryItem.getName())) {
+                    this.results.add(nextItem.getBinaryValue());
+                } else if (typeName.equals(BuiltinTypesCatalogue.hexBinaryItem.getName())) {
+                    this.results.add(nextItem.getBinaryValue());
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.durationItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())

@@ -34,8 +34,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -51,6 +52,7 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -177,19 +179,27 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         );
                     }
 
-                    List<Item> newVariableResults = new ArrayList<>();
-                    groupVariableExpression.open(tupleContext);
-                    while (groupVariableExpression.hasNext()) {
-                        Item resultItem = groupVariableExpression.next();
+                    List<Item> newVariableResults = null;
+                    Item resultItem = null;
+                    try {
+                        resultItem = groupVariableExpression.materializeAtMostOneItemOrNull(tupleContext);
+                    } catch (MoreThanOneItemException e) {
+                        throw new UnexpectedTypeException(
+                                "Keys in a group-by clause must be at most one item.",
+                                getMetadata()
+                        );
+                    }
+                    if (resultItem != null) {
                         if (!resultItem.isAtomic()) {
-                            throw new NonAtomicKeyException(
-                                    "Group by keys must be atomics",
+                            throw new UnexpectedTypeException(
+                                    "Keys in a group-by clause must be atomics.",
                                     getMetadata()
                             );
                         }
-                        newVariableResults.add(resultItem);
+                        newVariableResults = Collections.singletonList(resultItem);
+                    } else {
+                        newVariableResults = Collections.emptyList();
                     }
-                    groupVariableExpression.close();
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
                     inputTuple.putValue(expression.getVariableName(), newVariableResults);

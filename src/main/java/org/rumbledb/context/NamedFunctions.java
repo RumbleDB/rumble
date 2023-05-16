@@ -49,7 +49,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
-    // two maps for User defined function are needed as execution mode is known at static analysis phase
+    // two maps for User defined function are needed as execution mode is known at
+    // static analysis phase
     // but functions items are fully known at runtimeIterator generation
     private HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
     private RumbleRuntimeConfiguration conf;
@@ -78,11 +79,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 arguments
             );
         }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
 
     }
 
@@ -176,12 +173,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
         }
         for (int i = 0; i < arguments.size(); i++) {
-            if (
-                !builtinFunction.getSignature()
-                    .getParameterTypes()
-                    .get(i)
-                    .equals(SequenceType.ITEM_STAR)
-            ) {
+            if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(SequenceType.ITEM_STAR)) {
                 SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
                 RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
                         conf,
@@ -218,20 +210,18 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         RuntimeIterator functionCallIterator;
         try {
             Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                .getConstructor(
-                    List.class,
-                    RuntimeStaticContext.class
-                );
+                .getConstructor(List.class, RuntimeStaticContext.class);
             functionCallIterator = constructor.newInstance(
                 arguments,
-                new RuntimeStaticContext(conf, builtinFunction.getSignature().getReturnType(), executionMode, metadata)
+                new RuntimeStaticContext(
+                        conf,
+                        builtinFunction.getSignature().getReturnType(),
+                        executionMode,
+                        metadata
+                )
             );
         } catch (ReflectiveOperationException ex) {
-            RuntimeException e = new UnknownFunctionCallException(
-                    identifier.getName(),
-                    arguments.size(),
-                    metadata
-            );
+            RuntimeException e = new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
             e.initCause(ex);
             throw e;
         }

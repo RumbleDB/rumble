@@ -21,16 +21,11 @@
 package org.rumbledb.expressions.postfix;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.IntegerLiteralExpression;
-import org.rumbledb.items.ItemFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,29 +72,6 @@ public class FilterExpression extends Expression {
 
     public Expression getMainExpression() {
         return this.mainExpression;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (this.predicateExpression instanceof IntegerLiteralExpression) {
-            String lexicalValue = ((IntegerLiteralExpression) this.predicateExpression).getLexicalValue();
-            if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
-                if (
-                    ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue() <= this.staticContext
-                        .getRumbleConfiguration()
-                        .getResultSizeCap()
-                ) {
-                    this.highestExecutionMode = ExecutionMode.LOCAL;
-                    return;
-                }
-            }
-        }
-        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
-        if (!this.staticContext.getRumbleConfiguration().getNativeSQLPredicates()) {
-            if (this.highestExecutionMode.equals(ExecutionMode.DATAFRAME)) {
-                this.highestExecutionMode = ExecutionMode.RDD;
-            }
-        }
     }
 
     @Override
