@@ -62,9 +62,6 @@ public class CountClause extends Clause {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
-        }
     }
 
     @Override

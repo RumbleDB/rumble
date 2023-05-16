@@ -405,6 +405,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
         buffer.append(this.staticContext.getExecutionMode());
         buffer.append(" | ");
+        buffer.append(getStaticType());
+        buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
         Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();

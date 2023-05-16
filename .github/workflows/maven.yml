@@ -31,12 +31,12 @@ jobs:
       run: mvn spotless:check
     - name: FrontendTests
       run: mvn -Dtest=FrontendTests test
-    - name: Bugs
-      run: mvn -Dtest=Bugs test
     - name: RuntimeTests
       run: mvn -Dtest=RuntimeTests test
-    - name: LocalRuntimeTests
-      run: mvn -Dtest=LocalRuntimeTests test
+    - name: RuntimeTestsNoParallelism
+      run: mvn -Dtest=RuntimeTestsNoParallelism test
+    - name: RuntimeTestsNoInlining
+      run: mvn -Dtest=RuntimeTestsNoInlining test
     - name: StaticTypeTests
       run: mvn -Dtest=StaticTypeTests test
     - name: JavaAPITest
@@ -72,8 +72,12 @@ jobs:
       run: mvn clean compile assembly:single
     - name: SparkRuntimeTests
       run: mvn -Dtest=SparkRuntimeTests test
-    - name: NativeFLWORRuntimeTests
-      run: mvn -Dtest=NativeFLWORRuntimeTests test
+    - name: SparkRuntimeTestsNativeDeactivated
+      run: mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
+    - name: SparkRuntimeTestsDataFramesDeactivated
+      run: mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
+    - name: SparkRuntimeTestsParallelismDeactivated
+      run: mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
 
   tests3:
 
@@ -96,5 +100,18 @@ jobs:
       run: mvn install -DskipTests -Dgpg.skip --quiet
     - name: Compile with Maven
       run: mvn clean compile assembly:single
+    - name: Bugs
+      run: mvn -Dtest=Bugs test
+    - name: NativeFLWORRuntimeTests
+      run: mvn -Dtest=NativeFLWORRuntimeTests test
     - name: NativeFLWORRuntimeTestsNativeDeactivated
       run: mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
+    - name: NativeFLWORRuntimeTestsDataFramesDeactivated
+      run: mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
+    - name: NativeFLWORRuntimeTestsParallelismDeactivated
+      run: mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
+    - name: MLTests
+      run: mvn -Dtest=MLTests test
+    - name: MLTestsNativeDeactivated
+      run: mvn -Dtest=MLTestsNativeDeactivated test
+

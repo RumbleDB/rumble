@@ -220,6 +220,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         return this.inScopeVariables;
     }
 
+    public void show() {
+        System.err.println(this);
+    }
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
