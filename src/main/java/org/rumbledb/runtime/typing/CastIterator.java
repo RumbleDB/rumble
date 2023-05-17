@@ -807,34 +807,27 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if(this.children.get(0).getStaticType().getArity() != Arity.One)
-        {
+        if (this.children.get(0).getStaticType().getArity() != Arity.One) {
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = " (CAST ("+value.getResultingQuery()+" AS ";
-        if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem))
-        {
-        	resultingQuery = resultingQuery + "INT";
+        String resultingQuery = " (CAST (" + value.getResultingQuery() + " AS ";
+        if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem)) {
+            resultingQuery = resultingQuery + "INT";
             System.err.println("Int");
-        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.integerItem))
-        {
-        	resultingQuery = resultingQuery + "DECIMAL(38,0)";
+        } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.integerItem)) {
+            resultingQuery = resultingQuery + "DECIMAL(38,0)";
             System.err.println("Int");
-        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.decimalItem))
-        {
-        	resultingQuery = resultingQuery + "DECIMAL(38,19)";
+        } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.decimalItem)) {
+            resultingQuery = resultingQuery + "DECIMAL(38,19)";
             System.err.println("Int");
-        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.doubleItem))
-        {
-        	resultingQuery = resultingQuery + "DOUBLE";
+        } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.doubleItem)) {
+            resultingQuery = resultingQuery + "DOUBLE";
             System.err.println("Int");
-        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.floatItem))
-        {
-        	resultingQuery = resultingQuery + "FLOAT";
+        } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+            resultingQuery = resultingQuery + "FLOAT";
             System.err.println("Int");
-        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem))
-        {
-        	resultingQuery = resultingQuery + "INT";
+        } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem)) {
+            resultingQuery = resultingQuery + "INT";
             System.err.println("Int");
         } else {
             return NativeClauseContext.NoNativeQuery;
@@ -844,7 +837,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 resultingQuery
-                );
+        );
     }
 }
 

@@ -632,8 +632,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMetadata()
             );
         }
-        if(expressionSequenceType.getArity().equals(Arity.One))
-        {
+        if (expressionSequenceType.getArity().equals(Arity.One)) {
             expression.setStaticSequenceType(new SequenceType(castedSequenceType.getItemType(), Arity.One));
             return argument;
         }
