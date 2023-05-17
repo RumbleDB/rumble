@@ -4,7 +4,6 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,6 @@ public class NativeClauseContext {
     private DynamicContext context;
     private String resultingQuery;
     private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
-    private SequenceType resultingType;
 
     private NativeClauseContext() {
     }
@@ -31,7 +29,6 @@ public class NativeClauseContext {
         this.context = context;
         this.resultingQuery = "";
         this.lateralViewPart = new ArrayList<>();
-        this.resultingType = null;
     }
 
     public NativeClauseContext(NativeClauseContext parent) {
@@ -40,16 +37,14 @@ public class NativeClauseContext {
         this.context = parent.context;
         this.resultingQuery = parent.resultingQuery;
         this.lateralViewPart = parent.lateralViewPart;
-        this.resultingType = parent.resultingType;
     }
 
-    public NativeClauseContext(NativeClauseContext parent, String newResultingQuery, SequenceType resultingType) {
+    public NativeClauseContext(NativeClauseContext parent, String newResultingQuery) {
         this.clauseType = parent.clauseType;
         this.schema = parent.schema;
         this.context = parent.context;
         this.resultingQuery = newResultingQuery;
         this.lateralViewPart = parent.lateralViewPart;
-        this.resultingType = resultingType;
     }
 
     public FLWOR_CLAUSES getClauseType() {
@@ -80,14 +75,6 @@ public class NativeClauseContext {
         return this.lateralViewPart;
     }
 
-    public SequenceType getResultingType() {
-        return this.resultingType;
-    }
-
-    public void setResultingType(SequenceType resultingType) {
-        this.resultingType = resultingType;
-    }
-
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Native clause context.\n");
@@ -95,7 +82,6 @@ public class NativeClauseContext {
         sb.append("Clause type: " + this.clauseType + "\n");
         sb.append("Schema: " + this.schema.toString() + "\n");
         sb.append("Context: " + this.context.toString() + "\n");
-        sb.append("Resulting type: " + this.resultingType + "\n");
         sb.append("Lateral views:\n");
         for (String s : this.lateralViewPart) {
             sb.append(s + "\n");

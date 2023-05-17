@@ -44,9 +44,6 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
-import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -254,14 +251,12 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             if (outerContextSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
-                        null,
-                        nativeClauseContext.getResultingType()
+                        null
                 );
             } else {
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        nativeClauseContext.getResultingType()
+                        SparkSessionManager.atomicJSONiqItemColumnName
                 );
             }
         } else {
@@ -306,9 +301,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setSchema(field.dataType());
-            newContext.setResultingType(
-                new SequenceType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()), Arity.One)
-            );
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")

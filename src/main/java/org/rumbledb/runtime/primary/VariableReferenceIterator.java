@@ -35,10 +35,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
-import org.rumbledb.types.TypeMappings;
 
 import java.util.List;
 import java.util.Map;
@@ -105,11 +101,9 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
-        ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
         NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
-                "`" + escapedName + "`",
-                new SequenceType(variableType, Arity.One)
+                "`" + escapedName + "`"
         );
         newContext.setSchema(fieldType);
         return newContext;

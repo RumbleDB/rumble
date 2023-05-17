@@ -25,7 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -51,8 +50,7 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "" + this.item.getIntValue(),
-                SequenceType.INTEGER
+                "CAST (" + item.getIntValue() + "D AS DECIMAL(38, 0))"
         );
     }
 }

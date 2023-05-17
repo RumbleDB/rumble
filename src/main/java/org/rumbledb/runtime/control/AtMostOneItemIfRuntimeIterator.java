@@ -70,13 +70,13 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!conditionResult.getResultingType().equals(SequenceType.BOOLEAN)) {
+        if (!this.children.get(0).getStaticType().equals(SequenceType.BOOLEAN)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!thenResult.getResultingType().equals(SequenceType.FLOAT)) {
+        if (!this.children.get(1).getStaticType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!elseResult.getResultingType().equals(SequenceType.FLOAT)) {
+        if (!this.children.get(2).getStaticType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
@@ -87,6 +87,6 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             + ", "
             + elseResult.getResultingQuery()
             + " ) )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.FLOAT);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery);
     }
 }

@@ -30,9 +30,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -87,11 +84,9 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
             SparkSessionManager.atomicJSONiqItemColumnName
         )];
         DataType fieldType = field.dataType();
-        ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
         return new NativeClauseContext(
                 nativeClauseContext,
-                "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
-                new SequenceType(variableType, SequenceType.Arity.One)
+                "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`"
         );
     }
 }
