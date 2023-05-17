@@ -12,6 +12,7 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -798,6 +799,52 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
         return true;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (value.equals(NativeClauseContext.NoNativeQuery)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(this.children.get(0).getStaticType().getArity() != Arity.One)
+        {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = " (CAST ("+value.getResultingQuery()+" AS ";
+        if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem))
+        {
+        	resultingQuery = resultingQuery + "INT";
+            System.err.println("Int");
+        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.integerItem))
+        {
+        	resultingQuery = resultingQuery + "DECIMAL(38,0)";
+            System.err.println("Int");
+        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.decimalItem))
+        {
+        	resultingQuery = resultingQuery + "DECIMAL(38,19)";
+            System.err.println("Int");
+        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.doubleItem))
+        {
+        	resultingQuery = resultingQuery + "DOUBLE";
+            System.err.println("Int");
+        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.floatItem))
+        {
+        	resultingQuery = resultingQuery + "FLOAT";
+            System.err.println("Int");
+        } else if(this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem))
+        {
+        	resultingQuery = resultingQuery + "INT";
+            System.err.println("Int");
+        } else {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        resultingQuery = resultingQuery + ")) ";
+        System.err.println("Return");
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingQuery
+                );
     }
 }
 

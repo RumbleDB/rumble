@@ -49,7 +49,7 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "CAST (" + this.item.getDecimalValue() + " AS DECIMAL(38, 19))"
+                "CAST (" + this.item.getDecimalValue() + "BD AS DECIMAL(38, 19))"
         );
     }
 }

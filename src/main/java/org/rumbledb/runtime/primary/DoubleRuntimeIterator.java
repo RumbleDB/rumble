@@ -48,7 +48,7 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "CAST (" + item.getDoubleValue() + "D AS DOUBLE)"
+                "CAST (" + this.item.getDoubleValue() + "D AS DOUBLE)"
         );
     }
 }

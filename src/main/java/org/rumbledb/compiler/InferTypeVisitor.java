@@ -91,6 +91,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -630,6 +631,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     + castedSequenceType,
                 expression.getMetadata()
             );
+        }
+        if(expressionSequenceType.getArity().equals(Arity.One))
+        {
+            expression.setStaticSequenceType(new SequenceType(castedSequenceType.getItemType(), Arity.One));
+            return argument;
         }
 
         expression.setStaticSequenceType(castedSequenceType);
