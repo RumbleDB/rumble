@@ -85,17 +85,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
-        if (this.nextItem.isBinary()) {
-            String itemType = this.nextItem.getDynamicType().toString();
-            throw new UnexpectedTypeException(
-                    "\""
-                        + itemType
-                        + "\": invalid type: can not compare for equality to type \""
-                        + itemType
-                        + "\"",
-                    expressionWithIterator.getIterator().getMetadata()
-            );
-        }
         this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

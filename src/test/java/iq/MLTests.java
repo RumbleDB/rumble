@@ -20,50 +20,47 @@
 
 package iq;
 
-
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
-
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @RunWith(Parameterized.class)
-public class RuntimeTestsNoInlining extends RuntimeTests {
+public class MLTests extends RuntimeTests {
 
-    public RuntimeTestsNoInlining(File testFile) {
+    public static final File sparkRuntimeTestsDirectory = new File(
+            System.getProperty("user.dir")
+                +
+                "/src/test/resources/test_files/RumbleML"
+    );
+
+    public MLTests(File testFile) {
         super(testFile);
     }
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
-                    "--print-iterator-tree",
-                    "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
-                    "--function-inlining",
-                    "no" }
-        ).setExternalVariableValue(
-            Name.createVariableInNoNamespace("externalStringItem"),
-            Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
-        )
-            .setExternalVariableValue(
-                Name.createVariableInNoNamespace("externalIntegerItems"),
-                Arrays.asList(
-                    new Item[] {
-                        ItemFactory.getInstance().createIntItem(1),
-                        ItemFactory.getInstance().createIntItem(2),
-                        ItemFactory.getInstance().createIntItem(3),
-                        ItemFactory.getInstance().createIntItem(4),
-                        ItemFactory.getInstance().createIntItem(5),
-                    }
-                )
-            );
+                    "--escape-backticks",
+                    "yes",
+                    "--native-execution",
+                    "no"
+                }
+        );
+    }
+
+    @Parameterized.Parameters(name = "{index}:{0}")
+    public static Collection<Object[]> testFiles() {
+        List<Object[]> result = new ArrayList<>();
+        _testFiles.clear();
+        readFileList(sparkRuntimeTestsDirectory);
+        _testFiles.forEach(file -> result.add(new Object[] { file }));
+        return result;
     }
 }

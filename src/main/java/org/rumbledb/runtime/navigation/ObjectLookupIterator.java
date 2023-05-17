@@ -237,11 +237,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
         if (outerContextSchema instanceof StructType) {
             StructType structSchema = (StructType) outerContextSchema;
-            if (
-                Arrays.stream(structSchema.fieldNames())
-                    .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
-            ) {
-                return NativeClauseContext.NoNativeQuery;
+            for (Name n : keyDependencies.keySet()) {
+                if (FlworDataFrameUtils.hasColumnForVariable(structSchema, n)) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
             }
         }
         // otherwise, we can directly resolve the key statically.

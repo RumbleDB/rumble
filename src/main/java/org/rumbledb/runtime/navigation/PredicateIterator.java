@@ -30,7 +30,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -174,12 +176,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 this.filterDynamicContext.getVariableValues().setPosition(++this.position);
             }
 
-            this.filter.open(this.filterDynamicContext);
             Item fil = null;
-            if (this.filter.hasNext()) {
-                fil = this.filter.next();
+            try {
+                fil = this.filter.materializeAtMostOneItemOrNull(this.filterDynamicContext);
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
+                        this.filter.getMetadata()
+                );
             }
-            this.filter.close();
             // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
             if (fil != null && fil.isInt()) {
                 int index = fil.getIntValue();

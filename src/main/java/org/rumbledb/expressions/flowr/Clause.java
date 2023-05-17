@@ -62,14 +62,6 @@ public abstract class Clause extends Node {
         return this.nextClause;
     }
 
-    /**
-     * This method is overridden in clauses such as for and let for special behavior
-     */
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
-    }
-
     public Clause getFirstClause() {
         Clause result = this;
         while (result.previousClause != null) {

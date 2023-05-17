@@ -25,6 +25,8 @@ import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +44,19 @@ public class SparkRuntimeTests extends RuntimeTests {
                 +
                 "/src/test/resources/test_files/runtime-spark"
     );
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--dates-with-timezone",
+                    "yes"
+                }
+        );
+    }
 
     public SparkRuntimeTests(File testFile) {
         super(testFile);

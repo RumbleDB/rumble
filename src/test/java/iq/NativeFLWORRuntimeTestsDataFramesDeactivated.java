@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
+public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
 
     @Override
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -42,7 +42,7 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
                     "unparsed string",
                     "--escape-backticks",
                     "yes",
-                    "--native-execution",
+                    "--data-frame-execution",
                     "no"
                 }
         );
@@ -54,7 +54,7 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
                 "/src/test/resources/test_files/runtime-native-flwor"
     );
 
-    public NativeFLWORRuntimeTestsNativeDeactivated(File testFile) {
+    public NativeFLWORRuntimeTestsDataFramesDeactivated(File testFile) {
         super(testFile);
     }
 

@@ -831,7 +831,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         RuntimeIterator runtimeIterator = new TreatIterator(
                 childExpression,
-                expression.getsequenceType(),
+                expression.getSequenceType(),
                 expression.errorCodeThatShouldBeThrown(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

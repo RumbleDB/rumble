@@ -32,9 +32,8 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
+public class SparkRuntimeTestsNativeDeactivated extends RuntimeTests {
 
-    @Override
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
@@ -43,18 +42,20 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--native-execution",
-                    "no"
+                    "no",
+                    "--dates-with-timezone",
+                    "yes"
                 }
         );
     }
 
-    public static final File nativeFlworRuntimeTestsDirectory = new File(
+    public static final File sparkRuntimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/test/resources/test_files/runtime-native-flwor"
+                "/src/test/resources/test_files/runtime-spark"
     );
 
-    public NativeFLWORRuntimeTestsNativeDeactivated(File testFile) {
+    public SparkRuntimeTestsNativeDeactivated(File testFile) {
         super(testFile);
     }
 
@@ -62,7 +63,7 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         _testFiles.clear();
-        readFileList(nativeFlworRuntimeTestsDirectory);
+        readFileList(sparkRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
@@ -77,5 +78,6 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
             "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
+        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 }

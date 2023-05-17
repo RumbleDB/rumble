@@ -391,6 +391,18 @@ public class SequenceType implements Serializable {
         return this;
     }
 
+    // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
+    public SequenceType refineArityIfSubtype(Arity otherArity) {
+        if (!isEmptySequence()) {
+            if (otherArity.isSubtypeOf(this.arity)) {
+                return new SequenceType(this.itemType, otherArity);
+            } else {
+                return this;
+            }
+        }
+        return this;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof SequenceType)) {

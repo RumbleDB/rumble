@@ -34,7 +34,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoTypedValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -157,7 +156,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(this.expressionsWithIterator)
+                new FlworKeyComparator(this.expressionsWithIterator, getMetadata())
         );
 
         // assign current context as parent. re-use the same context object for efficiency
@@ -176,8 +175,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 try {
                     Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
                     if (resultItem != null && !resultItem.isAtomic()) {
-                        throw new NoTypedValueException(
-                                "Order by keys must be atomics",
+                        throw new UnexpectedTypeException(
+                                "Keys in an order-by clause must be atomics.",
                                 expressionWithIterator.getIterator().getMetadata()
                         );
                     }
@@ -185,7 +184,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     results.add(resultItem);
                 } catch (MoreThanOneItemException e) {
                     throw new UnexpectedTypeException(
-                            "Order by keys must be at most one item",
+                            "Keys in an order-by clause must be at most one item.",
                             expressionWithIterator.getIterator().getMetadata()
                     );
                 }
@@ -372,6 +371,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 columnType = DataTypes.DoubleType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.floatItem.getName())) {
                 columnType = DataTypes.FloatType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.base64BinaryItem.getName())) {
+                columnType = DataTypes.BinaryType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.hexBinaryItem.getName())) {
+                columnType = DataTypes.BinaryType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
                 columnType = TypeMappings.decimalType;
             } else if (

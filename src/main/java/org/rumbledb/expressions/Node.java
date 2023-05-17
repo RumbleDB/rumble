@@ -49,29 +49,9 @@ public abstract class Node {
      * Initializes the highest execution mode of this node, which determines
      * whether evaluation will be done locally, with RDDs or with DataFrames.
      *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     * 
-     * This method is deprecated as the logic of execution mode
-     * initialization is being moved to the ExecutionModeVisitor
-     * which invokes setHighestExecutionMode.
-     *
-     * @param visitorConfig the configuration of the visitor.
+     * This method is used during the static analysis.
      */
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-    }
-
-    /**
-     * Initializes the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     */
-    public final void setHighestExecutionMode(ExecutionMode newMode) {
+    public void setHighestExecutionMode(ExecutionMode newMode) {
         this.highestExecutionMode = newMode;
     }
 
