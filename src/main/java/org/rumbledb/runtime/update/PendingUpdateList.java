@@ -20,13 +20,24 @@ public class PendingUpdateList {
     private Map<Item, Map<Item, Item>> delReplaceObjMap;
     private Map<Item, Map<Item, Item>> delReplaceArrayMap;
     private Map<Item, Map<Item, Item>> renameObjMap;
+    private Comparator<Item> targetComparator;
 
     public PendingUpdateList() {
-        this.insertObjMap = new HashMap<>();
-        this.insertArrayMap = new HashMap<>();
-        this.delReplaceObjMap = new HashMap<>();
-        this.delReplaceArrayMap = new HashMap<>();
-        this.renameObjMap = new HashMap<>();
+        this.targetComparator = (item1, item2) -> {
+            int hashCompare = Integer.compare(item1.hashCode(), item2.hashCode());
+            if (item1.hashCode() != item2.hashCode()) {
+                return hashCompare;
+            }
+            if (!item1.equals(item2)) {
+                return hashCompare;
+            }
+            return Integer.compare(System.identityHashCode(item1), System.identityHashCode(item2));
+        };
+        this.insertObjMap = new TreeMap<>(this.targetComparator);
+        this.insertArrayMap = new TreeMap<>(this.targetComparator);
+        this.delReplaceObjMap = new TreeMap<>(this.targetComparator);
+        this.delReplaceArrayMap = new TreeMap<>(this.targetComparator);
+        this.renameObjMap = new TreeMap<>(this.targetComparator);
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {

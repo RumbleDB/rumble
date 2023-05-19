@@ -183,7 +183,6 @@ public class ObjectItem implements Item {
         for (String s : getKeys()) {
             result += getItemByKey(s).hashCode();
         }
-        result += System.identityHashCode(this);
         return result;
     }
 
