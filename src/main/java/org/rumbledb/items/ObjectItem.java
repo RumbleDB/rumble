@@ -28,10 +28,8 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 public class ObjectItem implements Item {
 
@@ -152,6 +150,7 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
     }
 
+    @Override
     public void removeItemByKey(String s) {
         if (this.keys.contains(s)) {
             int index = this.keys.indexOf(s);
@@ -184,6 +183,7 @@ public class ObjectItem implements Item {
         for (String s : getKeys()) {
             result += getItemByKey(s).hashCode();
         }
+        result += System.identityHashCode(this);
         return result;
     }
 
@@ -196,5 +196,4 @@ public class ObjectItem implements Item {
     public boolean getEffectiveBooleanValue() {
         return true;
     }
-
 }

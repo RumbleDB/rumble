@@ -1,6 +1,17 @@
-(:JIQS: ShouldRun; Output="({ "b" : 1 }, { "b" : 2 }, { "b" : 3 }, { "b" : 4 })" :)
-for $a in ( {"a" : 1}, {"a" : 2}, {"a" : 3}, {"a" : 4} )
-return
-    copy json $je := $a
-    modify rename json $je.a as "b"
-    return $je
+(:JIQS: ShouldRun; Output="({ "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } }, { "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } })" :)
+copy json $je := for $i in (1 to 4)
+                 return
+                    if($i mod 2 eq 0)
+                    then
+                        {"b" : {"foo" : 1}}
+                    else
+                        {"a" : {"foo" : 1}}
+modify
+    for $l in $je
+    return
+        if($l.a)
+        then
+            rename json $l.a.foo as "bar"
+        else
+            replace json value of $l.b.foo with 2
+return $je
