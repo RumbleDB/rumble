@@ -1,6 +1,7 @@
-(:JIQS: ShouldRun; Output="{ "b" : 1 }" :)
-let $a := {"a" : 1}
-return
-    copy json $je := $a
-    modify rename json $je.a as "b"
-    return $je
+(:JIQS: ShouldRun; Output="{ "a" : { "b" : 1 } }" :)
+copy json $je := { "a" : {"foo" : 1}}
+modify
+    let $l := $je.a
+    return
+        rename json $l.foo as "b"
+return $je
