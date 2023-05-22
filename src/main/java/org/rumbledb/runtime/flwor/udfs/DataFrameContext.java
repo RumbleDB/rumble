@@ -37,6 +37,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.TypeMappings;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -251,6 +252,9 @@ public class DataFrameContext implements Serializable {
                 }
                 return items;
             }
+        }
+        if (itemType == null) {
+            itemType = TypeMappings.getItemTypeFromDataFrameDataType(dt);
         }
         Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, itemType);
         return Collections.singletonList(item);
