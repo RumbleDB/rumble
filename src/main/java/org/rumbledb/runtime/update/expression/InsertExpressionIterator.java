@@ -97,7 +97,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         } else if (main.isArray()) {
             up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
         } else {
-            throw new OurBadException("Insert iterator cannot handle main items that are not objects or arrays");
+            throw new InvalidUpdateTargetException("Insert expression target must be a single array or object", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

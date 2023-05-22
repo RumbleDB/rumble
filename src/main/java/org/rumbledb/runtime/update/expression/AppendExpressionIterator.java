@@ -3,10 +3,7 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -81,7 +78,7 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
             Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
             up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content));
         } else {
-            throw new OurBadException("Append iterator cannot handle target items that are not arrays");
+            throw new InvalidUpdateTargetException("Append expression target must be a single array", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

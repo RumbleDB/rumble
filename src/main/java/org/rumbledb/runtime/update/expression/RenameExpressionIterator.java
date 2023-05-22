@@ -83,7 +83,7 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
         if (target.isObject()) {
             up = factory.createRenameInObjectPrimitive(target, locator, content);
         } else {
-            throw new OurBadException("Rename iterator cannot handle target items that are not objects");
+            throw new InvalidUpdateTargetException("Rename expression target must be a single object", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

@@ -83,7 +83,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         } else if (target.isArray()) {
             up = factory.createReplaceInArrayPrimitive(target, locator, content);
         } else {
-            throw new OurBadException("Replace iterator cannot handle target items that are not objects or arrays");
+            throw new InvalidUpdateTargetException("Replace expression target must be a single array or object", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);

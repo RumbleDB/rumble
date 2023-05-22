@@ -3,10 +3,7 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -75,11 +72,14 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up;
         if (main.isObject()) {
+            if (!lookup.isString()) {
+                throw new CannotCastUpdateSelectorException("Delete expression selection cannot be cast to String type", this.getMetadata());
+            }
             up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup));
         } else if (main.isArray()) {
             up = factory.createDeleteFromArrayPrimitive(main, lookup);
         } else {
-            throw new OurBadException("Delete iterator cannot handle main items that are not objects or arrays");
+            throw new InvalidUpdateTargetException("Delete expression target must be a single array or object", this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);
