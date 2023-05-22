@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -69,7 +70,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         try {
             target = this.mainIterator.materializeExactlyOneItem(context);
             locator = this.locatorIterator.materializeExactlyOneItem(context);
-            content = this.replacerIterator.materializeExactlyOneItem(context);
+            content = (Item) SerializationUtils.clone(this.replacerIterator.materializeExactlyOneItem(context));
         } catch (NoItemException e) {
             throw new UpdateTargetIsEmptySeqException("Target of replace expression is empty", this.getMetadata());
         } catch (MoreThanOneItemException e) {

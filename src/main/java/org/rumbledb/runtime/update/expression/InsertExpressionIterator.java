@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -80,7 +81,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
         try {
             main = this.mainIterator.materializeExactlyOneItem(context);
-            content = this.toInsertIterator.materializeExactlyOneItem(context);
+            content = (Item) SerializationUtils.clone(this.toInsertIterator.materializeExactlyOneItem(context));
             if (this.hasPositionIterator()) {
                 locator = this.positionIterator.materializeExactlyOneItem(context);
             }
@@ -94,7 +95,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (main.isObject()) {
             if (!content.isObject()) {
-                throw new ObjectInsertContentIsNotObjectSeqException("Insert exoression content is not an object", this.getMetadata());
+                throw new ObjectInsertContentIsNotObjectSeqException("Insert expression content is not an object", this.getMetadata());
             }
             up = factory.createInsertIntoObjectPrimitive(main, content);
         } else if (main.isArray()) {
