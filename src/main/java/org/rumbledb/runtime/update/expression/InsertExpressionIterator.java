@@ -93,10 +93,13 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up;
         if (main.isObject()) {
+            if (!content.isObject()) {
+                throw new ObjectInsertContentIsNotObjectSeqException("Insert exoression content is not an object", this.getMetadata());
+            }
             up = factory.createInsertIntoObjectPrimitive(main, content);
         } else if (main.isArray()) {
             if (locator != null && !locator.isInt()) {
-                throw new CannotCastUpdateSelectorException("Insert expression selection cannot be cast to Int type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException("Insert expression selector cannot be cast to Int type", this.getMetadata());
             }
             up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
         } else {

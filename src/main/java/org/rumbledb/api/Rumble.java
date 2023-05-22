@@ -54,7 +54,7 @@ public class Rumble {
 
         if (iterator.isUpdating()) {
             PendingUpdateList pul = iterator.getPendingUpdateList(dynamicContext);
-            pul.applyUpdates();
+            pul.applyUpdates(iterator.getMetadata());
         }
 
         System.err.println("final iterator is: " + iterator.isUpdating());
@@ -82,7 +82,7 @@ public class Rumble {
 
         if (iterator.isUpdating()) {
             PendingUpdateList pul = iterator.getPendingUpdateList(dynamicContext);
-            pul.applyUpdates();
+            pul.applyUpdates(iterator.getMetadata());
         }
 
         System.err.println("final iterator is: " + iterator.isUpdating());
