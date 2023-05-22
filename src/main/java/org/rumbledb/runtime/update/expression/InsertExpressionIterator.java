@@ -3,10 +3,7 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -87,7 +84,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             if (this.hasPositionIterator()) {
                 locator = this.positionIterator.materializeExactlyOneItem(context);
             }
-        } catch (NoItemException | MoreThanOneItemException e) {
+        } catch (NoItemException e) {
+            throw new UpdateTargetIsEmptySeqException("Target of insert expression is empty", this.getMetadata());
+        } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
 
