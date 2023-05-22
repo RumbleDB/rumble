@@ -6,12 +6,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -70,11 +72,23 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         try {
             target = this.mainIterator.materializeExactlyOneItem(context);
             locator = this.locatorIterator.materializeExactlyOneItem(context);
-            content = (Item) SerializationUtils.clone(this.replacerIterator.materializeExactlyOneItem(context));
         } catch (NoItemException e) {
             throw new UpdateTargetIsEmptySeqException("Target of replace expression is empty", this.getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new RuntimeException(e);
+        }
+
+        List<Item> tempContent = this.replacerIterator.materialize(context);
+        if (tempContent.isEmpty()) {
+            content = ItemFactory.getInstance().createNullItem();
+        } else if (tempContent.size() == 1) {
+            content = (Item) SerializationUtils.clone(tempContent.get(0));
+        } else {
+            List<Item> copyContent = new ArrayList<>();
+            for (Item item : tempContent) {
+                copyContent.add((Item) SerializationUtils.clone(item));
+            }
+            content = ItemFactory.getInstance().createArrayItem(copyContent);
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
