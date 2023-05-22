@@ -125,9 +125,6 @@ public enum ErrorCode {
     InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
     SimpleExpressionMustBeVacuousErrorCode("XUST0002"),
 
-    DeleteTargetNotSequence("XUTY0007"),
-    ReplaceTargetBadNonEmptySequence("XUTY0008"),
-    RenameTargetBadNonEmptySequence("XUTY0012"),
     TransformBadCopySource("XUTY0013"),
 
 
