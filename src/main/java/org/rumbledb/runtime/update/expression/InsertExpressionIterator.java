@@ -95,6 +95,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         if (main.isObject()) {
             up = factory.createInsertIntoObjectPrimitive(main, content);
         } else if (main.isArray()) {
+            if (locator != null && !locator.isInt()) {
+                throw new CannotCastUpdateSelectorException("Insert expression selection cannot be cast to Int type", this.getMetadata());
+            }
             up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
         } else {
             throw new InvalidUpdateTargetException("Insert expression target must be a single array or object", this.getMetadata());

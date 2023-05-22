@@ -81,6 +81,9 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up;
         if (target.isObject()) {
+            if (!locator.isString()) {
+                throw new CannotCastUpdateSelectorException("Rename expression selection cannot be cast to String type", this.getMetadata());
+            }
             up = factory.createRenameInObjectPrimitive(target, locator, content);
         } else {
             throw new InvalidUpdateTargetException("Rename expression target must be a single object", this.getMetadata());
