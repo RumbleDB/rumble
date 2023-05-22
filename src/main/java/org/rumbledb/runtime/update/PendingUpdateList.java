@@ -218,7 +218,7 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     tempSrc = tempSelSrcResMap.get(selector);
                     if (tempSrc != null) {
-                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), selector.getStringValue(), ExceptionMetadata.EMPTY_METADATA);
+                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), selector.getStringValue(), metadata);
                     }
                     continue;
                 }
@@ -257,7 +257,7 @@ public class PendingUpdateList {
 
             for (Item selector : tempSelSrcMap.keySet()) {
                 if (tempSelSrcResMap.containsKey(selector)) {
-                    throw new TooManyRenamesOnSameTargetSelectorException(selector.getStringValue(), ExceptionMetadata.EMPTY_METADATA);
+                    throw new TooManyRenamesOnSameTargetSelectorException(selector.getStringValue(), metadata);
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
@@ -286,7 +286,7 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     tempSrc = tempSelSrcResMap.get(selector);
                     if (tempSrc != null) {
-                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), Integer.toString(selector.getIntValue()), ExceptionMetadata.EMPTY_METADATA);
+                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), Integer.toString(selector.getIntValue()), metadata);
                     }
                     continue;
                 }
