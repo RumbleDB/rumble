@@ -57,8 +57,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         return true;
     }
 
-    public static Item mergeSources(Item first, Item second) {
-        // TODO: ADD METADATA
+    public static Item mergeSources(Item first, Item second, ExceptionMetadata metadata) {
         Item res;
 
         List<String> keys = new ArrayList<>(first.getKeys());
@@ -68,9 +67,9 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         values.addAll(second.getValues());
 
         try {
-            res = ItemFactory.getInstance().createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+            res = ItemFactory.getInstance().createObjectItem(keys, values, metadata);
         } catch (DuplicateObjectKeyException e) {
-            throw new DuplicateObjectInsertSourceException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            throw new DuplicateObjectInsertSourceException(e.getMessage(), metadata);
         }
 
         return res;

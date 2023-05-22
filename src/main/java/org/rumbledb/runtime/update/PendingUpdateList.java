@@ -187,7 +187,7 @@ public class PendingUpdateList {
 
     }
 
-    public static PendingUpdateList mergeUpdates(PendingUpdateList pul1, PendingUpdateList pul2) {
+    public static PendingUpdateList mergeUpdates(PendingUpdateList pul1, PendingUpdateList pul2, ExceptionMetadata metadata) {
         PendingUpdateList res = new PendingUpdateList();
         Map<Item, Item> tempSelSrcMap;
         Map<Item, List<Item>> tempSelSrcListMap;
@@ -234,7 +234,7 @@ public class PendingUpdateList {
         for (Item target : pul2.insertObjMap.keySet()) {
             tempSrc = pul2.insertObjMap.get(target);
             if (res.insertObjMap.containsKey(target)) {
-                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc);
+                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc, metadata);
             }
             res.insertObjMap.put(target,tempSrc);
         }

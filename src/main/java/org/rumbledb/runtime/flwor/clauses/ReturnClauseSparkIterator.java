@@ -402,7 +402,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                 // from new tuple
 
-                result = PendingUpdateList.mergeUpdates(result, this.expression.getPendingUpdateList(this.tupleContext));
+                result = PendingUpdateList.mergeUpdates(result, this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
 
             }
             this.child.close();
@@ -428,7 +428,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 // from new tuple
 
                 PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
-                result = PendingUpdateList.mergeUpdates(result, intermediateResult);
+                result = PendingUpdateList.mergeUpdates(result, intermediateResult, this.getMetadata());
             }
         }
         return result;

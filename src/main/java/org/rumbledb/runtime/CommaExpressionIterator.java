@@ -159,7 +159,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
         PendingUpdateList pul = new PendingUpdateList();
         for (RuntimeIterator child : children) {
-            pul = PendingUpdateList.mergeUpdates(pul, child.getPendingUpdateList(context));
+            pul = PendingUpdateList.mergeUpdates(pul, child.getPendingUpdateList(context), this.getMetadata());
         }
         return pul;
     }
