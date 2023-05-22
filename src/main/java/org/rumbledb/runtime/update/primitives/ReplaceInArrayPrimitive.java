@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ArrayItem;
 
 public class ReplaceInArrayPrimitive implements UpdatePrimitive {
@@ -9,9 +11,9 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
     private Item selector;
     private Item content;
 
-    public ReplaceInArrayPrimitive(Item targetArray, Item positionInt, Item replacementItem) {
-        if (!targetArray.isArray() || !positionInt.isNumeric()) {
-            // TODO ERROR
+    public ReplaceInArrayPrimitive(Item targetArray, Item positionInt, Item replacementItem, ExceptionMetadata metadata) {
+        if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
+            throw new CannotResolveUpdateSelectorException("Cannot replace item at index out of range of target array", metadata);
         }
 
         this.target = targetArray;

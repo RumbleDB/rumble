@@ -75,12 +75,12 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
             if (!lookup.isString()) {
                 throw new CannotCastUpdateSelectorException("Delete expression selection cannot be cast to String type", this.getMetadata());
             }
-            up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup));
+            up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup), this.getMetadata());
         } else if (main.isArray()) {
             if (!lookup.isInt()) {
                 throw new CannotCastUpdateSelectorException("Delete expression selection cannot be cast to Int type", this.getMetadata());
             }
-            up = factory.createDeleteFromArrayPrimitive(main, lookup);
+            up = factory.createDeleteFromArrayPrimitive(main, lookup, this.getMetadata());
         } else {
             throw new InvalidUpdateTargetException("Delete expression target must be a single array or object", this.getMetadata());
         }

@@ -86,7 +86,7 @@ public class PendingUpdateList {
         }
     }
 
-    public void applyUpdates() {
+    public void applyUpdates(ExceptionMetadata metadata) {
         UpdatePrimitiveFactory upFactory = UpdatePrimitiveFactory.getInstance();
 
         Map<Item, List<UpdatePrimitive>> targetArrayPULs = new HashMap<>();
@@ -108,10 +108,10 @@ public class PendingUpdateList {
                 if (tempSrc == null) {
                     toDel.add(locator);
                 } else {
-                    objectPUL.add(upFactory.createReplaceInObjectPrimitive(target, locator, tempSrc));
+                    objectPUL.add(upFactory.createReplaceInObjectPrimitive(target, locator, tempSrc, metadata));
                 }
             }
-            objectPUL.add(upFactory.createDeleteFromObjectPrimitive(target, toDel));
+            objectPUL.add(upFactory.createDeleteFromObjectPrimitive(target, toDel, metadata));
         }
 
         // INSERTS
@@ -125,7 +125,7 @@ public class PendingUpdateList {
         for (Item target : renameObjMap.keySet()) {
             tempSelSrcMap = renameObjMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
-                objectPUL.add(upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator)));
+                objectPUL.add(upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator), metadata));
             }
         }
 
@@ -140,9 +140,9 @@ public class PendingUpdateList {
                 UpdatePrimitive up;
                 tempSrc = tempSelSrcMap.get(locator);
                 if (tempSrc == null) {
-                    up = upFactory.createDeleteFromArrayPrimitive(target, locator);
+                    up = upFactory.createDeleteFromArrayPrimitive(target, locator, metadata);
                 } else {
-                    up = upFactory.createReplaceInArrayPrimitive(target, locator, tempSrc);
+                    up = upFactory.createReplaceInArrayPrimitive(target, locator, tempSrc, metadata);
                 }
                 int index = Collections.binarySearch(tempArrayPULs, up, Comparator.comparing(UpdatePrimitive::getIntSelector));
                 if (index < 0) {

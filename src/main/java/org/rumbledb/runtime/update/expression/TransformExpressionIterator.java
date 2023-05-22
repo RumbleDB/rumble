@@ -40,14 +40,14 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         PendingUpdateList pul = getPendingUpdateList(context);
-        pul.applyUpdates();
+        pul.applyUpdates(this.getMetadata());
         return returnIterator.getRDD(context);
     }
 
     @Override
     protected void openLocal() {
         PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
-        pul.applyUpdates();
+        pul.applyUpdates(this.getMetadata());
         returnIterator.open(this.currentDynamicContextForLocalExecution);
     }
 
@@ -59,7 +59,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
-        pul.applyUpdates();
+        pul.applyUpdates(this.getMetadata());
         returnIterator.reset(this.currentDynamicContextForLocalExecution);
     }
 
