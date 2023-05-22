@@ -125,10 +125,23 @@ public enum ErrorCode {
     InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
     SimpleExpressionMustBeVacuousErrorCode("XUST0002"),
 
+    DeleteTargetNotSequence("XUTY0007"),
+    ReplaceTargetBadNonEmptySequence("XUTY0008"),
+    RenameTargetBadNonEmptySequence("XUTY0012"),
+    TransformBadCopySource("XUTY0013"),
+
+
+    TransformModifiesNonCopiedValue("XUDY0014"),
+    UpdateTargetIsEmptySeqErrorCode("XUDY0027"),
+
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
+    CannotCastUpdateSelectorErrorCode("JNUP0007"),
+    InvalidUpdateTargetErrorCode("JNUP0008"),
     TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
-    TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010");
+    TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
+    CannotResolveUpdateSelectorErrorCode("JNUP0016"),
+    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019");
 
 
 
