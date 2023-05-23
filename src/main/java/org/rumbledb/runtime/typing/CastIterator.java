@@ -258,7 +258,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return result;
                 }
                 if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-                    result = ItemFactory.getInstance().createIntItem(item.castToIntValue());
+                    result = ItemFactory.getInstance().createIntItem(result.castToIntValue());
                     if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
                         return result;
                     }
