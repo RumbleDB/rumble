@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.primary;
 
 import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -80,10 +79,6 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, Name.CONTEXT_ITEM)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        StructField field = structSchema.fields()[structSchema.fieldIndex(
-            SparkSessionManager.atomicJSONiqItemColumnName
-        )];
-        DataType fieldType = field.dataType();
         return new NativeClauseContext(
                 nativeClauseContext,
                 "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`"

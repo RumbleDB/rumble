@@ -39,8 +39,6 @@ import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -561,7 +559,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (!this.rightIterator.getStaticType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        ItemType resultType = null;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
@@ -572,7 +569,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             if (!this.rightIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
-            resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
             this.rightIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 &&
@@ -581,7 +577,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             if (!this.leftIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
-            resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
             this.leftIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)
                 &&
@@ -590,7 +585,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             if (!this.rightIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
-            resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
             this.rightIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)
                 &&
@@ -599,23 +593,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             if (!this.leftIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
-            resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
             this.leftIterator.getStaticType().isSubtypeOf(SequenceType.INTEGER_QM)
                 &&
                 this.rightIterator.getStaticType().isSubtypeOf(SequenceType.INTEGER_QM)
         ) {
-            if (this.multiplicativeOperator.equals(MultiplicativeExpression.MultiplicativeOperator.DIV)) {
-                resultType = BuiltinTypesCatalogue.decimalItem;
-            } else {
-                resultType = BuiltinTypesCatalogue.integerItem;
-            }
         } else if (
             this.leftIterator.getStaticType().isSubtypeOf(SequenceType.DECIMAL_QM)
                 &&
                 this.rightIterator.getStaticType().isSubtypeOf(SequenceType.DECIMAL_QM)
         ) {
-            resultType = BuiltinTypesCatalogue.decimalItem;
         } else {
             return NativeClauseContext.NoNativeQuery;
         }

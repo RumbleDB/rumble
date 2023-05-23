@@ -812,30 +812,138 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         String resultingQuery = "";
         if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.booleanItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "BOOLEAN" + ")) ";
             System.err.println("Boolean");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.byteItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "BYTE" + ")) ";
             System.err.println("Byte");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.shortItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "SHORT" + ")) ";
             System.err.println("Short");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.intItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "INT" + ")) ";
             System.err.println("Int");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.longItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "LONG" + ")) ";
             System.err.println("Long");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.integerItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "DECIMAL(38,0)" + ")) ";
             System.err.println("Integer");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.decimalItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "DECIMAL(38,19)" + ")) ";
             System.err.println("Decimal");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.doubleItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "DOUBLE" + ")) ";
             System.err.println("Double");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.booleanItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.doubleItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    && !this.children.get(0)
+                        .getStaticType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "FLOAT" + ")) ";
             System.err.println("Float");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.stringItem)) {
@@ -845,12 +953,26 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "STRING" + ")) ";
             System.err.println("anyURI");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.dateItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             if (getConfiguration().dateWithTimezone()) {
                 return NativeClauseContext.NoNativeQuery;
             }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "DATE" + ")) ";
             System.err.println("Date");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            if (
+                !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeItem)
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "TIMESTAMP" + ")) ";
             System.err.println("Timestamp");
             /*
@@ -858,9 +980,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
              * resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "BINARY" + ")) ";
              * System.err.println("HexBinary");
              */
-        } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.nullItem)) {
-            resultingQuery = " NULL ";
-            System.err.println("Null");
         } else {
             return NativeClauseContext.NoNativeQuery;
         }
