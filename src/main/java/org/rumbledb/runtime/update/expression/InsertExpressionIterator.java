@@ -99,7 +99,10 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             }
             up = factory.createInsertIntoObjectPrimitive(main, content);
         } else if (main.isArray()) {
-            if (locator != null && !locator.isInt()) {
+            if (locator == null) {
+                throw new CannotCastUpdateSelectorException("Insert expression selector is null", this.getMetadata());
+            }
+            if (!locator.isInt()) {
                 throw new CannotCastUpdateSelectorException("Insert expression selector cannot be cast to Int type", this.getMetadata());
             }
             up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
