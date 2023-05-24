@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "boolean" : true, "boolean2" : false, "boolean3" : false, "boolean4" : false, "boolean5" : false, "boolean6" : true, "boolean7" : true, "boolean8" : true, "boolean9" : true, "boolean10" : true, "byte" : 12, "byte2" : 1, "byte3" : 0, "byte4" : 1, "byte5" : 2, "byte6" : 3, "short" : 12345, "short2" : 1, "short3" : 0, "short4" : 1, "short5" : 2, "short6" : 3, "int" : 12345, "int2" : 122345, "int3" : 1, "int4" : 0, "int5" : 1, "int6" : 2, "int7" : 3, "long" : 12345, "long2" : 12345, "long3" : 123546789000000, "long4" : 1, "long5" : 0, "long6" : 1, "long7" : 2, "long8" : 3, "integer" : 1235467890000001230498761230948, "integer2" : 12345, "integer3" : 1, "integer4" : 0, "integer5" : 1, "integer6" : 2, "integer7" : 3, "decimal" : 12354678900000.01230498761230948, "decimal2" : 12, "decimal3" : 12345, "decimal4" : 12345, "decimal5" : 12354678900000, "decimal6" : 1, "decimal7" : 0, "decimal8" : 1, "decimal9" : 2, "double" : 1.2354678900000012E13, "float" : 1.23546789E13, "string" : "123465789", "anyURI" : "123465789", "date" : "2023-05-12", "dateTimeStamp" : "2023-05-12T12:34:56.000+0", "hexBinary" : "1ABF", "null" : null }, { "boolean" : true, "boolean2" : false, "boolean3" : false, "boolean4" : false, "boolean5" : false, "boolean6" : true, "boolean7" : true, "boolean8" : true, "boolean9" : true, "boolean10" : true, "byte" : 12, "byte2" : 1, "byte3" : 0, "byte4" : 1, "byte5" : 2, "byte6" : 3, "short" : 12345, "short2" : 1, "short3" : 0, "short4" : 1, "short5" : 2, "short6" : 3, "int" : 12345, "int2" : 122345, "int3" : 1, "int4" : 0, "int5" : 1, "int6" : 2, "int7" : 3, "long" : 12345, "long2" : 12345, "long3" : 123546789000000, "long4" : 1, "long5" : 0, "long6" : 1, "long7" : 2, "long8" : 3, "integer" : 1235467890000001230498761230948, "integer2" : 12345, "integer3" : 1, "integer4" : 0, "integer5" : 1, "integer6" : 2, "integer7" : 3, "decimal" : 12354678900000.01230498761230948, "decimal2" : 12, "decimal3" : 12345, "decimal4" : 12345, "decimal5" : 12354678900000, "decimal6" : 1, "decimal7" : 0, "decimal8" : 1, "decimal9" : 2, "double" : 1.2354678900000012E13, "float" : 1.23546789E13, "string" : "123465789", "anyURI" : "123465789", "date" : "2023-05-12", "dateTimeStamp" : "2023-05-12T12:34:56.000+0", "hexBinary" : "1ABF", "null" : null })" :)
+(:JIQS: ShouldRun; Output="({ "boolean" : true, "boolean2" : false, "boolean3" : false, "boolean4" : false, "boolean5" : false, "boolean6" : true, "boolean7" : true, "boolean8" : true, "boolean9" : true, "boolean10" : true, "byte" : 12, "byte2" : 1, "byte3" : 0, "byte4" : 1, "byte5" : 2, "byte6" : 3, "short" : 12345, "short2" : 1, "short3" : 0, "short4" : 1, "short5" : 2, "short6" : 3, "int" : 12345, "int2" : 122345, "int3" : 1, "int4" : 0, "int5" : 1, "int6" : 2, "int7" : 3, "long" : 12345, "long2" : 12345, "long3" : 123546789000000, "long4" : 1, "long5" : 0, "long6" : 1, "long7" : 2, "long8" : 3, "integer" : 1235467890000001230498761230948, "integer2" : 12345, "integer3" : 1, "integer4" : 0, "integer5" : 1, "integer6" : 2, "integer7" : 3, "decimal" : 12354678900000.01230498761230948, "decimal2" : 12, "decimal3" : 12345, "decimal4" : 12345, "decimal5" : 12354678900000, "decimal6" : 1, "decimal7" : 0, "decimal8" : 1, "decimal9" : 2, "double" : 1.2354678900000012E13, "double2" : 0, "double3" : 12, "double4" : 12345, "double5" : 12345, "double6" : 12345, "double7" : 1.2354678900000012E30, "double8" : 1.2354678900000012E13, "double9" : 1, "double10" : 0, "float" : 1.23546789E13, "float2" : 0, "float3" : 12, "float4" : 12345, "float5" : 12345, "float6" : 12345, "float7" : 1.23546786E30, "float8" : 1.23546789E13, "float9" : 1, "float10" : 0, "string" : "123465789", "anyURI" : "123465789", "date" : "2023-05-12", "dateTimeStamp" : "2023-05-12T12:34:56.000+0", "hexBinary" : "1ABF", "null" : null }, { "boolean" : true, "boolean2" : false, "boolean3" : false, "boolean4" : false, "boolean5" : false, "boolean6" : true, "boolean7" : true, "boolean8" : true, "boolean9" : true, "boolean10" : true, "byte" : 12, "byte2" : 1, "byte3" : 0, "byte4" : 1, "byte5" : 2, "byte6" : 3, "short" : 12345, "short2" : 1, "short3" : 0, "short4" : 1, "short5" : 2, "short6" : 3, "int" : 12345, "int2" : 122345, "int3" : 1, "int4" : 0, "int5" : 1, "int6" : 2, "int7" : 3, "long" : 12345, "long2" : 12345, "long3" : 123546789000000, "long4" : 1, "long5" : 0, "long6" : 1, "long7" : 2, "long8" : 3, "integer" : 1235467890000001230498761230948, "integer2" : 12345, "integer3" : 1, "integer4" : 0, "integer5" : 1, "integer6" : 2, "integer7" : 3, "decimal" : 12354678900000.01230498761230948, "decimal2" : 12, "decimal3" : 12345, "decimal4" : 12345, "decimal5" : 12354678900000, "decimal6" : 1, "decimal7" : 0, "decimal8" : 1, "decimal9" : 2, "double" : 1.2354678900000012E13, "double2" : 0, "double3" : 12, "double4" : 12345, "double5" : 12345, "double6" : 12345, "double7" : 1.2354678900000012E30, "double8" : 1.2354678900000012E13, "double9" : 1, "double10" : 0, "float" : 1.23546789E13, "float2" : 0, "float3" : 12, "float4" : 12345, "float5" : 12345, "float6" : 12345, "float7" : 1.23546786E30, "float8" : 1.23546789E13, "float9" : 1, "float10" : 0, "string" : "123465789", "anyURI" : "123465789", "date" : "2023-05-12", "dateTimeStamp" : "2023-05-12T12:34:56.000+0", "hexBinary" : "1ABF", "null" : null })" :)
 for $i in parallelize((1 to 2), 10)
 let $boolean := boolean("false")
 let $boolean := boolean(anyURI("false"))
@@ -56,7 +56,25 @@ let $decimal7 := decimal(false)
 let $decimal8 := decimal(double(1))
 let $decimal9 := decimal(float(2))
 let $double := double($decimal)
+let $double2 := double("1234.345e-2345")
+let $double3 := double($byte)
+let $double4 := double($short)
+let $double5 := double($int)
+let $double6 := double($long)
+let $double7 := double($integer)
+let $double8 := double($decimal)
+let $double9 := double(true)
+let $double10 := double(false)
 let $float := float($decimal)
+let $float2 := float("1234.345e-2345")
+let $float3 := float($byte)
+let $float4 := float($short)
+let $float5 := float($int)
+let $float6 := float($long)
+let $float7 := float($integer)
+let $float8 := float($decimal)
+let $float9 := float(true)
+let $float10 := float(false)
 let $string := string(123465789)
 let $anyURI := anyURI(123465789)
 let $date := date("2023-05-12")
@@ -118,7 +136,25 @@ return {
   "decimal8" : $decimal8,
   "decimal9" : $decimal9,
   "double" : $double,
+  "double2" : $double2,
+  "double3" : $double3,
+  "double4" : $double4,
+  "double5" : $double5,
+  "double6" : $double6,
+  "double7" : $double7,
+  "double8" : $double8,
+  "double9" : $double9,
+  "double10" : $double10,
   "float" : $float,
+  "float2" : $float2,
+  "float3" : $float3,
+  "float4" : $float4,
+  "float5" : $float5,
+  "float6" : $float6,
+  "float7" : $float7,
+  "float8" : $float8,
+  "float9" : $float9,
+  "float10" : $float10,
   "string": $string,
   "anyURI" : $anyURI,
   "date" : $date,
