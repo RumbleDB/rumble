@@ -950,6 +950,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "STRING" + ")) ";
             System.err.println("String");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)) {
+            if (
+                    !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
+                ) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "STRING" + ")) ";
             System.err.println("anyURI");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.dateItem)) {
@@ -957,6 +963,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
                     && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem)
                     && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeStampItem)
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -970,6 +977,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
                     && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem)
                     && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeItem)
+                    && !this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeStampItem)
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }
