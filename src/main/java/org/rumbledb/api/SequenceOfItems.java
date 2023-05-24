@@ -7,6 +7,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -84,11 +85,11 @@ public class SequenceOfItems {
         try {
             return this.iterator.hasNext();
         } catch (NumberFormatException e) {
-            RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
             ex.initCause(e);
             throw ex;
         } catch (UnsupportedOperationException e) {
-            RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
             ex.initCause(e);
             throw ex;
         }

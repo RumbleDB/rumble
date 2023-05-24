@@ -47,7 +47,7 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                item.getBooleanValue() ? "(TRUE)" : "(FALSE)"
+                this.item.getBooleanValue() ? "(TRUE)" : "(FALSE)"
         );
     }
 }

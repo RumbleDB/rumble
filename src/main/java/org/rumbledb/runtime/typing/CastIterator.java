@@ -144,8 +144,18 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     if (StringUtils.isNumeric(item.getStringValue())) {
                         result = ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
                     } else {
-                        result = ItemFactory.getInstance()
-                            .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
+                        switch (item.getStringValue()) {
+                            case "true":
+                            case "1":
+                                result = ItemFactory.getInstance().createBooleanItem(true);
+                                break;
+                            case "false":
+                            case "0":
+                                result = ItemFactory.getInstance().createBooleanItem(false);
+                                break;
+                            default:
+                                return null;
+                        }
                     }
                 } else if (item.isInt()) {
                     result = ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
