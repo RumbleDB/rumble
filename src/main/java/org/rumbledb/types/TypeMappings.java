@@ -103,7 +103,7 @@ public class TypeMappings {
             return BuiltinTypesCatalogue.dateItem;
         }
         if (DataTypes.TimestampType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateTimeItem;
+            return BuiltinTypesCatalogue.dateTimeStampItem;
         }
         if (DataTypes.BinaryType.equals(dataType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;

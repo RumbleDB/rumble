@@ -68,11 +68,16 @@ public class DateTimeStampItem implements Item {
             String zoneString = "Z";
             return value + zoneString;
         }
-        String zoneString = this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
-                ? ""
-                : value.substring(value.length() - 6);
-        value = value.substring(0, value.length() - this.value.getZone().toString().length());
+        if(this.value.getZone().toString().equals(DateTimeZone.getDefault().toString()))
+        {
+            value = value.substring(0, value.length() - 6);
+            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+            String zoneString = "";
+            return value + zoneString;
+        }
+        value = value.substring(0, value.length() - 6);
         value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        String zoneString = value.substring(value.length() - 6);
         return value + zoneString;
     }
 

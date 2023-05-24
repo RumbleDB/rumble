@@ -463,7 +463,7 @@ public class ItemParser implements Serializable {
             }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant.toEpochMilli());
-            Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
+            Item item = ItemFactory.getInstance().createDateTimeStampItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 return item;
             } else {
