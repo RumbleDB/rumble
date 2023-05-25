@@ -437,18 +437,19 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        StaticContext innerContext = expression.getStaticContext();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-            this.visit(copyDecl.getSourceExpression(), null);
+            this.visit(copyDecl.getSourceExpression(), copyDecl.getSourceExpression().getStaticContext());
             // first pass.
-            argument.setVariableStorageMode(
+            innerContext.setVariableStorageMode(
                 copyDecl.getVariableName(),
                 expression.getVariableHighestStorageMode(this.visitorConfig)
             );
         }
         expression.initHighestExecutionMode(this.visitorConfig);
 
-        this.visit(expression.getModifyExpression(), argument);
-        this.visit(expression.getReturnExpression(), argument);
+        this.visit(expression.getModifyExpression(), innerContext);
+        this.visit(expression.getReturnExpression(), innerContext);
 
         return argument;
     }

@@ -54,6 +54,9 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         returnIterator.close();
+        for (Name copyVar : copyDeclMap.keySet()) {
+            this.currentDynamicContextForLocalExecution.getVariableValues().removeVariable(copyVar);
+        }
     }
 
     @Override

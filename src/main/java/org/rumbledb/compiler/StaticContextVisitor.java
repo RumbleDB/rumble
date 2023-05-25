@@ -332,20 +332,31 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        StaticContext result = argument;
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-            this.visit(copyDecl.getSourceExpression(), argument);
-            // first pass.
-            argument.addVariable(
-                copyDecl.getVariableName(),
-                copyDecl.getSourceSequenceType(),
-                expression.getMetadata()
-            );
+            result = this.visitCopyDecl(copyDecl, result, argument);
         }
 
-        this.visit(expression.getModifyExpression(), argument);
-        this.visit(expression.getReturnExpression(), argument);
+        result = this.visit(expression.getModifyExpression(), result);
+        result = this.visit(expression.getReturnExpression(), result);
+
+        expression.setStaticContext(result);
 
         return argument;
+    }
+
+    private StaticContext visitCopyDecl(CopyDeclaration copyDeclaration, StaticContext argument, StaticContext copyContext) {
+        this.visit(copyDeclaration.getSourceExpression(), copyContext);
+
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+                copyDeclaration.getVariableName(),
+                copyDeclaration.getSourceSequenceType(),
+                copyDeclaration.getSourceExpression().getMetadata()
+        );
+        copyDeclaration.getSourceSequenceType().resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
+
+        return result;
     }
 
     @Override
