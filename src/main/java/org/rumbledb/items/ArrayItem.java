@@ -35,14 +35,18 @@ public class ArrayItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> arrayItems;
 
+    private int mutabilityLevel;
+
     public ArrayItem() {
         super();
         this.arrayItems = new ArrayList<>();
+        this.mutabilityLevel = 0;
     }
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
+        this.mutabilityLevel = 0;
     }
 
     public boolean equals(Object otherItem) {
@@ -136,5 +140,18 @@ public class ArrayItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return true;
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (Item item : arrayItems) {
+            item.setMutabilityLevel(mutabilityLevel);
+        }
     }
 }

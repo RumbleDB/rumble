@@ -15,6 +15,7 @@ public class TransformExpression extends Expression {
     private List<CopyDeclaration> copyDeclarations;
     private Expression modifyExpression;
     private Expression returnExpression;
+    private int mutabilityLevel;
 
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -31,6 +32,7 @@ public class TransformExpression extends Expression {
         this.copyDeclarations = copyDeclarations;
         this.modifyExpression = modifyExpression;
         this.returnExpression = returnExpression;
+        this.mutabilityLevel = 0;
     }
 
     public List<CopyDeclaration> getCopyDeclarations() {
@@ -98,5 +100,13 @@ public class TransformExpression extends Expression {
         sb.append("\n return ");
         this.returnExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
+    }
+
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
     }
 }

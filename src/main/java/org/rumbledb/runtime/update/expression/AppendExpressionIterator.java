@@ -14,7 +14,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+
 
 public class AppendExpressionIterator extends HybridRuntimeIterator {
 
@@ -76,6 +76,9 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (target.isArray()) {
             Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
+            if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
+                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+            }
             up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content));
         } else {
             throw new InvalidUpdateTargetException("Append expression target must be a single array", this.getMetadata());

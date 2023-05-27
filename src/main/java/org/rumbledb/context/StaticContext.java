@@ -60,6 +60,8 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private static final Map<String, String> defaultBindings;
 
+    private int currentMutabilityLevel;
+
     static {
         defaultBindings = new HashMap<>();
         defaultBindings.put("local", Name.LOCAL_NS);
@@ -83,6 +85,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = 0;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -95,6 +98,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentMutabilityLevel = 0;
     }
 
     public StaticContext(StaticContext parent) {
@@ -105,6 +109,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.currentMutabilityLevel;
     }
 
     public StaticContext getParent() {
@@ -418,5 +423,13 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public int getCurrentMutabilityLevel() {
+        return currentMutabilityLevel;
+    }
+
+    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
+        this.currentMutabilityLevel = currentMutabilityLevel;
     }
 }

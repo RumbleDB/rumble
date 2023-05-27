@@ -38,10 +38,13 @@ public class ObjectItem implements Item {
     private List<Item> values;
     private List<String> keys;
 
+    private int mutabilityLevel;
+
     public ObjectItem() {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
+        this.mutabilityLevel = 0;
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -49,6 +52,7 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
+        this.mutabilityLevel = 0;
     }
 
     public boolean equals(Object otherItem) {
@@ -111,6 +115,7 @@ public class ObjectItem implements Item {
 
         this.keys = keyList;
         this.values = valueList;
+        this.mutabilityLevel = 0;
     }
 
     @Override
@@ -194,5 +199,17 @@ public class ObjectItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return true;
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (Item item : values) {
+            item.setMutabilityLevel(mutabilityLevel);
+        }
     }
 }

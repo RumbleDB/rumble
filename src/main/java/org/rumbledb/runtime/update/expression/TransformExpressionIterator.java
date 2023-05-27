@@ -24,7 +24,9 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator modifyIterator;
     private RuntimeIterator returnIterator;
 
-    public TransformExpressionIterator(Map<Name, RuntimeIterator> copyDeclMap, RuntimeIterator modifyIterator, RuntimeIterator returnIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    private int mutabilityLevel;
+
+    public TransformExpressionIterator(Map<Name, RuntimeIterator> copyDeclMap, RuntimeIterator modifyIterator, RuntimeIterator returnIterator, ExecutionMode executionMode, int mutabilityLevel, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
         this.children.addAll(copyDeclMap.values());
         this.children.add(modifyIterator);
@@ -33,7 +35,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;
         this.returnIterator = returnIterator;
-//        this.updateContext = null;
+        this.mutabilityLevel = mutabilityLevel;
         this.isUpdating = false;
     }
 
@@ -79,6 +81,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         bindCopyDeclarations(context);
+        context.setCurrentMutabilityLevel(this.mutabilityLevel);
         return modifyIterator.getPendingUpdateList(context);
     }
 
@@ -87,8 +90,11 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator copyIterator = copyDeclMap.get(copyVar);
             List<Item> toCopy = copyIterator.materialize(context);
             List<Item> copy = new ArrayList<>();
+            Item temp;
             for (Item item : toCopy) {
-                copy.add((Item) SerializationUtils.clone(item));
+                temp = (Item) SerializationUtils.clone(item);
+                temp.setMutabilityLevel(this.mutabilityLevel);
+                copy.add(temp);
             }
             context.getVariableValues().addVariableValue(copyVar, copy);
         }

@@ -97,6 +97,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             if (!content.isObject()) {
                 throw new ObjectInsertContentIsNotObjectSeqException("Insert expression content is not an object", this.getMetadata());
             }
+            if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
+                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+            }
             up = factory.createInsertIntoObjectPrimitive(main, content);
         } else if (main.isArray()) {
             if (locator == null) {
@@ -104,6 +107,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             }
             if (!locator.isInt()) {
                 throw new CannotCastUpdateSelectorException("Insert expression selector cannot be cast to Int type", this.getMetadata());
+            }
+            if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
+                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
             }
             up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
         } else {

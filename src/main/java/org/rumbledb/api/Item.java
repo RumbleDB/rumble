@@ -687,6 +687,23 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the mutability level of the item.
+     *
+     * @return int representing nestedness of the item inside transform expressions.
+     */
+    default int getMutabilityLevel() {
+        return 0;
+    }
+
+    /**
+     * Returns the mutability level of the item.
+     *
+     * @return int representing nestedness of the item inside transform expressions.
+     */
+    default void setMutabilityLevel(int mutabilityLevel) {
+    }
+
+    /**
      * Tests for logical equality. The semantics are that of the eq operator.
      *
      * @param other another item.

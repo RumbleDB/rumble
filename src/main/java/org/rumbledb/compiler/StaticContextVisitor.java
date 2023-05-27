@@ -332,6 +332,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() + 1);
         StaticContext result = argument;
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             result = this.visitCopyDecl(copyDecl, result, argument);
@@ -341,7 +342,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         result = this.visit(expression.getReturnExpression(), result);
 
         expression.setStaticContext(result);
+        expression.setMutabilityLevel(result.getCurrentMutabilityLevel());
 
+        argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() - 1);
         return argument;
     }
 

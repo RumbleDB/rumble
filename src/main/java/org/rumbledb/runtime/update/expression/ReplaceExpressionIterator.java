@@ -97,10 +97,16 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             if (!locator.isString()) {
                 throw new CannotCastUpdateSelectorException("Replace expression selection cannot be cast to String type", this.getMetadata());
             }
+            if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
+                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+            }
             up = factory.createReplaceInObjectPrimitive(target, locator, content, this.getMetadata());
         } else if (target.isArray()) {
             if (!locator.isInt()) {
                 throw new CannotCastUpdateSelectorException("Replace expression selection cannot be cast to Int type", this.getMetadata());
+            }
+            if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
+                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
             }
             up = factory.createReplaceInArrayPrimitive(target, locator, content, this.getMetadata());
         } else {
