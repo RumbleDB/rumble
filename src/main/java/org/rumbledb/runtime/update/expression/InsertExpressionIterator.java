@@ -104,6 +104,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
@@ -120,6 +123,9 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         "Insert expression selector cannot be cast to Int type",
                         this.getMetadata()
                 );
+            }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(

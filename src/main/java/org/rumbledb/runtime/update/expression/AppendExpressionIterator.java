@@ -81,6 +81,9 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (target.isArray()) {
             Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
+            if (target.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
