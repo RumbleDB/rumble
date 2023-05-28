@@ -81,6 +81,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta store
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables delta store
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");

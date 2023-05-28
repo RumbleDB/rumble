@@ -126,6 +126,8 @@ public class SparkSessionManager {
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+            this.configuration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
