@@ -1,8 +1,10 @@
 package org.rumbledb.runtime.functions.input;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -10,6 +12,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
@@ -38,6 +41,8 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
                 .read()
                 .format("delta")
                 .load(uri.toString());
-        return new JSoundDataFrame(dataFrame);
+        JSoundDataFrame res = new JSoundDataFrame(dataFrame);
+        res.getItemType().setMutabilityLevel(0);
+        return res;
     }
 }
