@@ -32,6 +32,7 @@ public class ObjectItemType implements ItemType {
     private List<Item> enumeration;
     final private ItemType baseType;
     private int typeTreeDepth;
+    private int mutabilityLevel;
 
     ObjectItemType(
             Name name,
@@ -47,6 +48,7 @@ public class ObjectItemType implements ItemType {
         this.content = content == null ? Collections.emptyMap() : content;
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
+        this.mutabilityLevel = -1;
         if (this.baseType.isResolved()) {
             processBaseType();
             if (areContentTypesResolved()) {
@@ -370,6 +372,19 @@ public class ObjectItemType implements ItemType {
                     "If the base type is closed, it is not possible to re-open it.",
                     ExceptionMetadata.EMPTY_METADATA
             );
+        }
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (FieldDescriptor descriptor : this.content.values()) {
+            descriptor.getType().setMutabilityLevel(mutabilityLevel);
         }
     }
 }

@@ -433,6 +433,21 @@ public interface ItemType extends Serializable {
 
     /**
      *
+     * @return mutability level of this current type
+     */
+    default int getMutabilityLevel() {
+        return -1;
+    }
+
+    /**
+     *
+     * @param mutabilityLevel mutability level to set
+     */
+    default void setMutabilityLevel(int mutabilityLevel) {
+    }
+
+    /**
+     *
      * @return a String that uniquely identify an item type
      */
     default String getIdentifierString() {
