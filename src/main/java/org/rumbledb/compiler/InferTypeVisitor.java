@@ -448,6 +448,29 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        // handle 'delta-file' function
+        if (
+                functionName.equals(Name.createVariableInDefaultFunctionNamespace("delta-file"))
+                        && args.size() > 0
+                        && args.get(0) instanceof StringLiteralExpression
+        ) {
+            String path = ((StringLiteralExpression) args.get(0)).getValue();
+            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+            }
+            StructType s = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .read()
+                    .format("delta")
+                    .load(uri.toString())
+                    .schema();
+            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
+            // TODO : check if arity is correct
+            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+            return true;
+        }
+
         // handle 'round' function
         if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("round"))) {
             // set output type to the same of the first argument (special handling of numeric)
