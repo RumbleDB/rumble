@@ -40,13 +40,13 @@ public class ArrayItem implements Item {
     public ArrayItem() {
         super();
         this.arrayItems = new ArrayList<>();
-        this.mutabilityLevel = 0;
+        this.mutabilityLevel = -1;
     }
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
-        this.mutabilityLevel = 0;
+        this.mutabilityLevel = -1;
     }
 
     public boolean equals(Object otherItem) {

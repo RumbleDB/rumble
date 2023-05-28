@@ -44,7 +44,7 @@ public class ObjectItem implements Item {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
-        this.mutabilityLevel = 0;
+        this.mutabilityLevel = -1;
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -52,7 +52,7 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
-        this.mutabilityLevel = 0;
+        this.mutabilityLevel = -1;
     }
 
     public boolean equals(Object otherItem) {
@@ -115,7 +115,7 @@ public class ObjectItem implements Item {
 
         this.keys = keyList;
         this.values = valueList;
-        this.mutabilityLevel = 0;
+        this.mutabilityLevel = -1;
     }
 
     @Override
