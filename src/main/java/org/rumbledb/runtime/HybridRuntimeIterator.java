@@ -144,8 +144,8 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
         JavaRDD<Row> rowRDD = df.javaRDD();
         JavaRDD<Item> result = rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
-//        int mutabilityLevel = df.getItemType().getMutabilityLevel();
-//        result.foreach(item -> item.setMutabilityLevel(mutabilityLevel));
+        // int mutabilityLevel = df.getItemType().getMutabilityLevel();
+        // result.foreach(item -> item.setMutabilityLevel(mutabilityLevel));
         return result;
     }
 
@@ -202,7 +202,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
                 res.setMutabilityLevel(this.getDataFrame(context).getItemType().getMutabilityLevel());
             }
             return res;
-//            return collectedItems.get(0);
+            // return collectedItems.get(0);
         }
         if (collectedItems.size() == 0) {
             throw new NoItemException();

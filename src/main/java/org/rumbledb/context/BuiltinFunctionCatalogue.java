@@ -129,7 +129,6 @@ import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
-import org.rumbledb.runtime.update.expression.DeleteExpressionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -499,11 +498,11 @@ public class BuiltinFunctionCatalogue {
      * function that parses a delta file
      */
     static final BuiltinFunction delta_file = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "delta-file"),
-            "string",
-            "item*",
-            DeltaFileFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        new Name(Name.JN_NS, "jn", "delta-file"),
+        "string",
+        "item*",
+        DeltaFileFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
     /**
      * function that parses a csv file

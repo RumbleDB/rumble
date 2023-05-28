@@ -45,9 +45,9 @@ public class RowToItemMapper implements Function<Row, Item> {
     @Override
     public Item call(Row row) throws Exception {
         Item result = ItemParser.getItemFromRow(row, this.metadata, this.itemType);
-//        if (this.itemType != null) {
-//            result.setMutabilityLevel(this.itemType.getMutabilityLevel());
-//        }
+        // if (this.itemType != null) {
+        // result.setMutabilityLevel(this.itemType.getMutabilityLevel());
+        // }
         return result;
     }
 }
