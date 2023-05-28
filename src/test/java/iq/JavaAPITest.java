@@ -20,19 +20,33 @@
 
 package iq;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.DataFrameWriter;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
+import org.rumbledb.exceptions.CliException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.optimizations.Profiler;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JavaAPITest {
 
@@ -48,6 +62,8 @@ public class JavaAPITest {
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
         sparkConfiguration.set("spark.driver.bindAddress", "127.0.0.1");
+        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
 
     }
@@ -122,4 +138,27 @@ public class JavaAPITest {
             Assert.assertTrue(value.getIntValue() == i);
         }
     }
+
+//    @Test(timeout = 1000000)
+//    public void testDeltaWrite() throws Throwable {
+//        RumbleRuntimeConfiguration config = RumbleRuntimeConfiguration.getDefaultConfiguration();
+//        config.setOutputFormat("delta");
+//        config.setOutputPath("file:///home/davidl/Documents/Thesis/rumble/sample_json_delta");
+//        config.setQueryPath("file:///home/davidl/Documents/Thesis/rumble/test.jq");
+//        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(config);
+//
+//        executor.runQuery();
+//
+//    }
+//
+//    @Test(timeout = 1000000)
+//    public void testDeltaRead() throws Throwable {
+//        RumbleRuntimeConfiguration config = RumbleRuntimeConfiguration.getDefaultConfiguration();
+//        config.setOutputFormat("json");
+//        config.setOutputPath("file:///home/davidl/Documents/Thesis/rumble/test_res_json.json");
+//        config.setQueryPath("file:///home/davidl/Documents/Thesis/rumble/delta_file_query.jq");
+//        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(config);
+//        executor.runQuery();
+//
+//    }
 }
