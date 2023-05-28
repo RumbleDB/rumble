@@ -3,7 +3,6 @@ package org.rumbledb.runtime.update.primitives;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.ObjectItem;
 
 public class RenameInObjectPrimitive implements UpdatePrimitive {
 
@@ -11,10 +10,18 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     private Item selector;
     private Item content;
 
-    public RenameInObjectPrimitive(Item targetObject, Item targetName, Item replacementName, ExceptionMetadata metadata) {
+    public RenameInObjectPrimitive(
+            Item targetObject,
+            Item targetName,
+            Item replacementName,
+            ExceptionMetadata metadata
+    ) {
 
         if (targetObject.getItemByKey(targetName.getStringValue()) == null) {
-            throw new CannotResolveUpdateSelectorException("Cannot rename key that does not exist in target object", metadata);
+            throw new CannotResolveUpdateSelectorException(
+                    "Cannot rename key that does not exist in target object",
+                    metadata
+            );
         }
 
 

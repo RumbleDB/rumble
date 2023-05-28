@@ -23,7 +23,13 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator locatorIterator;
     private RuntimeIterator replacerIterator;
 
-    public ReplaceExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator locatorIterator, RuntimeIterator replacerIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public ReplaceExpressionIterator(
+            RuntimeIterator mainIterator,
+            RuntimeIterator locatorIterator,
+            RuntimeIterator replacerIterator,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(mainIterator, locatorIterator, replacerIterator), executionMode, iteratorMetadata);
 
         this.mainIterator = mainIterator;
@@ -95,22 +101,37 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (target.isObject()) {
             if (!locator.isString()) {
-                throw new CannotCastUpdateSelectorException("Replace expression selection cannot be cast to String type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Replace expression selection cannot be cast to String type",
+                        this.getMetadata()
+                );
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createReplaceInObjectPrimitive(target, locator, content, this.getMetadata());
         } else if (target.isArray()) {
             if (!locator.isInt()) {
-                throw new CannotCastUpdateSelectorException("Replace expression selection cannot be cast to Int type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Replace expression selection cannot be cast to Int type",
+                        this.getMetadata()
+                );
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createReplaceInArrayPrimitive(target, locator, content, this.getMetadata());
         } else {
-            throw new InvalidUpdateTargetException("Replace expression target must be a single array or object", this.getMetadata());
+            throw new InvalidUpdateTargetException(
+                    "Replace expression target must be a single array or object",
+                    this.getMetadata()
+            );
         }
 
         pul.addUpdatePrimitive(up);

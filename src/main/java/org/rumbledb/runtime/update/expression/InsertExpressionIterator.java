@@ -12,10 +12,8 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 public class InsertExpressionIterator extends HybridRuntimeIterator {
 
@@ -23,13 +21,19 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator toInsertIterator;
     private RuntimeIterator positionIterator;
 
-    public InsertExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator toInsertIterator, RuntimeIterator positionIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public InsertExpressionIterator(
+            RuntimeIterator mainIterator,
+            RuntimeIterator toInsertIterator,
+            RuntimeIterator positionIterator,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(
-                positionIterator == null
-                        ? Arrays.asList(mainIterator, toInsertIterator)
-                        : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
-                executionMode,
-                iteratorMetadata
+            positionIterator == null
+                ? Arrays.asList(mainIterator, toInsertIterator)
+                : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
+            executionMode,
+            iteratorMetadata
         );
 
         this.mainIterator = mainIterator;
@@ -95,10 +99,16 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (main.isObject()) {
             if (!content.isObject()) {
-                throw new ObjectInsertContentIsNotObjectSeqException("Insert expression content is not an object", this.getMetadata());
+                throw new ObjectInsertContentIsNotObjectSeqException(
+                        "Insert expression content is not an object",
+                        this.getMetadata()
+                );
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createInsertIntoObjectPrimitive(main, content);
         } else if (main.isArray()) {
@@ -106,14 +116,23 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                 throw new CannotCastUpdateSelectorException("Insert expression selector is null", this.getMetadata());
             }
             if (!locator.isInt()) {
-                throw new CannotCastUpdateSelectorException("Insert expression selector cannot be cast to Int type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Insert expression selector cannot be cast to Int type",
+                        this.getMetadata()
+                );
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
         } else {
-            throw new InvalidUpdateTargetException("Insert expression target must be a single array or object", this.getMetadata());
+            throw new InvalidUpdateTargetException(
+                    "Insert expression target must be a single array or object",
+                    this.getMetadata()
+            );
         }
 
         pul.addUpdatePrimitive(up);

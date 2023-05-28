@@ -5,7 +5,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -13,8 +12,6 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class RenameExpressionIterator extends HybridRuntimeIterator {
 
@@ -22,7 +19,13 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator locatorIterator;
     private RuntimeIterator nameIterator;
 
-    public RenameExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator locatorIterator, RuntimeIterator nameIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public RenameExpressionIterator(
+            RuntimeIterator mainIterator,
+            RuntimeIterator locatorIterator,
+            RuntimeIterator nameIterator,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(mainIterator, locatorIterator, nameIterator), executionMode, iteratorMetadata);
 
         this.mainIterator = mainIterator;
@@ -82,14 +85,23 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (target.isObject()) {
             if (!locator.isString()) {
-                throw new CannotCastUpdateSelectorException("Rename expression selection cannot be cast to String type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Rename expression selection cannot be cast to String type",
+                        this.getMetadata()
+                );
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createRenameInObjectPrimitive(target, locator, content, this.getMetadata());
         } else {
-            throw new InvalidUpdateTargetException("Rename expression target must be a single object", this.getMetadata());
+            throw new InvalidUpdateTargetException(
+                    "Rename expression target must be a single object",
+                    this.getMetadata()
+            );
         }
 
         pul.addUpdatePrimitive(up);

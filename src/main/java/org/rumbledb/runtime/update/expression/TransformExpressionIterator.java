@@ -3,13 +3,10 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.commons.lang.SerializationUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -26,7 +23,14 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     private int mutabilityLevel;
 
-    public TransformExpressionIterator(Map<Name, RuntimeIterator> copyDeclMap, RuntimeIterator modifyIterator, RuntimeIterator returnIterator, ExecutionMode executionMode, int mutabilityLevel, ExceptionMetadata iteratorMetadata) {
+    public TransformExpressionIterator(
+            Map<Name, RuntimeIterator> copyDeclMap,
+            RuntimeIterator modifyIterator,
+            RuntimeIterator returnIterator,
+            ExecutionMode executionMode,
+            int mutabilityLevel,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(null, executionMode, iteratorMetadata);
         this.children.addAll(copyDeclMap.values());
         this.children.add(modifyIterator);

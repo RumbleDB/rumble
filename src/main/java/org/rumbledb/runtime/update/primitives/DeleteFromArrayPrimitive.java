@@ -3,7 +3,6 @@ package org.rumbledb.runtime.update.primitives;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.ArrayItem;
 
 public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
@@ -13,7 +12,10 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
     public DeleteFromArrayPrimitive(Item targetArray, Item positionInt, ExceptionMetadata metadata) {
         if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
-            throw new CannotResolveUpdateSelectorException("Cannot delete item at index out of range of target array", metadata);
+            throw new CannotResolveUpdateSelectorException(
+                    "Cannot delete item at index out of range of target array",
+                    metadata
+            );
         }
         this.target = targetArray;
         this.selector = positionInt;

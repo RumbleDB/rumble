@@ -21,7 +21,12 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator arrayIterator;
     private RuntimeIterator toAppendIterator;
 
-    public AppendExpressionIterator(RuntimeIterator arrayIterator, RuntimeIterator toAppendIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public AppendExpressionIterator(
+            RuntimeIterator arrayIterator,
+            RuntimeIterator toAppendIterator,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(arrayIterator, toAppendIterator), executionMode, iteratorMetadata);
 
         this.arrayIterator = arrayIterator;
@@ -77,11 +82,17 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
         if (target.isArray()) {
             Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content));
         } else {
-            throw new InvalidUpdateTargetException("Append expression target must be a single array", this.getMetadata());
+            throw new InvalidUpdateTargetException(
+                    "Append expression target must be a single array",
+                    this.getMetadata()
+            );
         }
 
         pul.addUpdatePrimitive(up);

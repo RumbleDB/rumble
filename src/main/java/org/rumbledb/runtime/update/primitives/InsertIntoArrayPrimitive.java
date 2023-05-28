@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.items.ArrayItem;
 
 import java.util.ArrayList;
 import java.util.List;

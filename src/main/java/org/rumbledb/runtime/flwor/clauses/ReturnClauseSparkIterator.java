@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -399,10 +398,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
                 this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
+                                                                                                  // variables
                 // from new tuple
 
-                result = PendingUpdateList.mergeUpdates(result, this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
+                result = PendingUpdateList.mergeUpdates(
+                    result,
+                    this.expression.getPendingUpdateList(this.tupleContext),
+                    this.getMetadata()
+                );
 
             }
             this.child.close();

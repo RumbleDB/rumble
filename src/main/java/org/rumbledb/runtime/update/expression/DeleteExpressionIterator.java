@@ -19,7 +19,12 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator mainIterator;
     private RuntimeIterator lookupIterator;
 
-    public DeleteExpressionIterator(RuntimeIterator mainIterator, RuntimeIterator lookupIterator, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public DeleteExpressionIterator(
+            RuntimeIterator mainIterator,
+            RuntimeIterator lookupIterator,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(mainIterator, lookupIterator), executionMode, iteratorMetadata);
         this.mainIterator = mainIterator;
         this.lookupIterator = lookupIterator;
@@ -73,22 +78,37 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (main.isObject()) {
             if (!lookup.isString()) {
-                throw new CannotCastUpdateSelectorException("Delete expression selection cannot be cast to String type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Delete expression selection cannot be cast to String type",
+                        this.getMetadata()
+                );
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup), this.getMetadata());
         } else if (main.isArray()) {
             if (!lookup.isInt()) {
-                throw new CannotCastUpdateSelectorException("Delete expression selection cannot be cast to Int type", this.getMetadata());
+                throw new CannotCastUpdateSelectorException(
+                        "Delete expression selection cannot be cast to Int type",
+                        this.getMetadata()
+                );
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
-                throw new TransformModifiesNonCopiedValueException("Attempt to modify currently immutable target", this.getMetadata());
+                throw new TransformModifiesNonCopiedValueException(
+                        "Attempt to modify currently immutable target",
+                        this.getMetadata()
+                );
             }
             up = factory.createDeleteFromArrayPrimitive(main, lookup, this.getMetadata());
         } else {
-            throw new InvalidUpdateTargetException("Delete expression target must be a single array or object", this.getMetadata());
+            throw new InvalidUpdateTargetException(
+                    "Delete expression target must be a single array or object",
+                    this.getMetadata()
+            );
         }
 
         pul.addUpdatePrimitive(up);

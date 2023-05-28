@@ -41,15 +41,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
-import org.rumbledb.expressions.update.CopyDeclaration;
-import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -116,22 +113,22 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return defaultAction(expression, argument);
     }
 
-//    @Override
-//    public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
-//
-//        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-//            Expression child = copyDecl.getSourceExpression();
-//            this.visit(child, argument);
-//            RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
-//            iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
-//        }
-//
-//        this.visit(expression.getModifyExpression(), argument);
-//
-//        this.visit(expression.getReturnExpression(), argument);
-//
-//        return argument;
-//    }
+    // @Override
+    // public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
+    //
+    // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+    // Expression child = copyDecl.getSourceExpression();
+    // this.visit(child, argument);
+    // RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
+    // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
+    // }
+    //
+    // this.visit(expression.getModifyExpression(), argument);
+    //
+    // this.visit(expression.getReturnExpression(), argument);
+    //
+    // return argument;
+    // }
 
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {

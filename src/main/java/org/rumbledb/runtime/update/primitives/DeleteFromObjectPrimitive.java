@@ -3,8 +3,6 @@ package org.rumbledb.runtime.update.primitives;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.ObjectItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +17,14 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
         for (Item item : namesToRemove) {
             if (targetObject.getItemByKey(item.getStringValue()) == null) {
-                throw new CannotResolveUpdateSelectorException("Cannot delete key that does not exist in target object", metadata);
+                throw new CannotResolveUpdateSelectorException(
+                        "Cannot delete key that does not exist in target object",
+                        metadata
+                );
             }
         }
 
-            this.target = targetObject;
+        this.target = targetObject;
         this.content = namesToRemove;
     }
 

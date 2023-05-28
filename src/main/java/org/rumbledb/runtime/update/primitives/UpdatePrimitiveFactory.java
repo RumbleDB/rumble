@@ -16,11 +16,19 @@ public class UpdatePrimitiveFactory {
         return instance;
     }
 
-    public UpdatePrimitive createDeleteFromArrayPrimitive(Item targetArray, Item selectorInt, ExceptionMetadata metadata) {
+    public UpdatePrimitive createDeleteFromArrayPrimitive(
+            Item targetArray,
+            Item selectorInt,
+            ExceptionMetadata metadata
+    ) {
         return new DeleteFromArrayPrimitive(targetArray, selectorInt, metadata);
     }
 
-    public UpdatePrimitive createDeleteFromObjectPrimitive(Item targetObject, List<Item> selectorStrs, ExceptionMetadata metadata) {
+    public UpdatePrimitive createDeleteFromObjectPrimitive(
+            Item targetObject,
+            List<Item> selectorStrs,
+            ExceptionMetadata metadata
+    ) {
         return new DeleteFromObjectPrimitive(targetObject, selectorStrs, metadata);
     }
 
@@ -32,15 +40,30 @@ public class UpdatePrimitiveFactory {
         return new InsertIntoObjectPrimitive(targetObject, contentsObject);
     }
 
-    public UpdatePrimitive createReplaceInArrayPrimitive(Item targetArray, Item selectorInt, Item content, ExceptionMetadata metadata) {
+    public UpdatePrimitive createReplaceInArrayPrimitive(
+            Item targetArray,
+            Item selectorInt,
+            Item content,
+            ExceptionMetadata metadata
+    ) {
         return new ReplaceInArrayPrimitive(targetArray, selectorInt, content, metadata);
     }
 
-    public UpdatePrimitive createReplaceInObjectPrimitive(Item targetObject, Item selectorStr, Item content, ExceptionMetadata metadata) {
+    public UpdatePrimitive createReplaceInObjectPrimitive(
+            Item targetObject,
+            Item selectorStr,
+            Item content,
+            ExceptionMetadata metadata
+    ) {
         return new ReplaceInObjectPrimitive(targetObject, selectorStr, content, metadata);
     }
 
-    public UpdatePrimitive createRenameInObjectPrimitive(Item targetObject, Item selectorStr, Item content, ExceptionMetadata metadata) {
+    public UpdatePrimitive createRenameInObjectPrimitive(
+            Item targetObject,
+            Item selectorStr,
+            Item content,
+            ExceptionMetadata metadata
+    ) {
         return new RenameInObjectPrimitive(targetObject, selectorStr, content, metadata);
     }
 

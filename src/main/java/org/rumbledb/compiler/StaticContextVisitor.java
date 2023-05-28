@@ -348,16 +348,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private StaticContext visitCopyDecl(CopyDeclaration copyDeclaration, StaticContext argument, StaticContext copyContext) {
+    private StaticContext visitCopyDecl(
+            CopyDeclaration copyDeclaration,
+            StaticContext argument,
+            StaticContext copyContext
+    ) {
         this.visit(copyDeclaration.getSourceExpression(), copyContext);
 
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-                copyDeclaration.getVariableName(),
-                copyDeclaration.getSourceSequenceType(),
-                copyDeclaration.getSourceExpression().getMetadata()
+            copyDeclaration.getVariableName(),
+            copyDeclaration.getSourceSequenceType(),
+            copyDeclaration.getSourceExpression().getMetadata()
         );
-        copyDeclaration.getSourceSequenceType().resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
+        copyDeclaration.getSourceSequenceType()
+            .resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
 
         return result;
     }

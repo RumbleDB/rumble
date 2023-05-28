@@ -139,7 +139,6 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.expression.*;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -401,7 +400,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
         RuntimeIterator toInsertIterator = this.visit(expression.getToInsertExpression(), argument);
-        RuntimeIterator positionIterator = expression.hasPositionExpression() ? this.visit(expression.getPositionExpression(), argument) : null;
+        RuntimeIterator positionIterator = expression.hasPositionExpression()
+            ? this.visit(expression.getPositionExpression(), argument)
+            : null;
 
         RuntimeIterator runtimeIterator = new InsertExpressionIterator(
                 mainIterator,

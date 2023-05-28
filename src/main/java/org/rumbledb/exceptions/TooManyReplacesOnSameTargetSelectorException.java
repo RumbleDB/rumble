@@ -6,11 +6,15 @@ public class TooManyReplacesOnSameTargetSelectorException extends RumbleExceptio
 
     private static final long serialVersionUID = 1L;
 
-    public TooManyReplacesOnSameTargetSelectorException(String targetInfo, String selectorInfo, ExceptionMetadata metadata) {
+    public TooManyReplacesOnSameTargetSelectorException(
+            String targetInfo,
+            String selectorInfo,
+            ExceptionMetadata metadata
+    ) {
         super(
-                "Dynamic Updating error; Too many replaces on " + targetInfo + " at: " + selectorInfo + ".",
-                ErrorCode.TooManyReplacesOnSameTargetSelectorErrorCode,
-                metadata
+            "Dynamic Updating error; Too many replaces on " + targetInfo + " at: " + selectorInfo + ".",
+            ErrorCode.TooManyReplacesOnSameTargetSelectorErrorCode,
+            metadata
         );
     }
 }

@@ -205,6 +205,7 @@ public class ObjectItem implements Item {
     public int getMutabilityLevel() {
         return this.mutabilityLevel;
     }
+
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;

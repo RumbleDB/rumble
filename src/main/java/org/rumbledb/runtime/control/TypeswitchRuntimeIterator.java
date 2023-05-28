@@ -203,10 +203,10 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             if (localMatchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
                     context.getVariableValues()
-                            .addVariableValue(
-                                    typeSwitchCase.getVariableName(),
-                                    Collections.singletonList(this.testValue)
-                            );
+                        .addVariableValue(
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
+                        );
                 }
 
                 return localMatchingIterator.getPendingUpdateList(context);
@@ -215,10 +215,10 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
         if (this.defaultCase.getVariableName() != null) {
             context.getVariableValues()
-                    .addVariableValue(
-                            this.defaultCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                    );
+                .addVariableValue(
+                    this.defaultCase.getVariableName(),
+                    Collections.singletonList(this.testValue)
+                );
         }
 
         return this.defaultCase.getReturnIterator().getPendingUpdateList(context);

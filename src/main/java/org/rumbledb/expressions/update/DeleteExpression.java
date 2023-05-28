@@ -13,6 +13,7 @@ public class DeleteExpression extends Expression {
 
     private Expression mainExpression;
     private Expression locatorExpression;
+
     public DeleteExpression(
             Expression mainExpression,
             Expression locatorExpression,

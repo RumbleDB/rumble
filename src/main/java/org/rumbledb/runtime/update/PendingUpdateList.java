@@ -1,15 +1,11 @@
 package org.rumbledb.runtime.update;
 
-import org.apache.hadoop.mapred.lib.DelegatingInputFormat;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TooManyRenamesOnSameTargetSelectorException;
 import org.rumbledb.exceptions.TooManyReplacesOnSameTargetSelectorException;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.update.primitives.*;
-import org.rumbledb.types.ItemType;
-import shapeless.ops.zipper;
 
 import java.util.*;
 
@@ -125,7 +121,9 @@ public class PendingUpdateList {
         for (Item target : renameObjMap.keySet()) {
             tempSelSrcMap = renameObjMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
-                objectPUL.add(upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator), metadata));
+                objectPUL.add(
+                    upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator), metadata)
+                );
             }
         }
 
@@ -144,7 +142,11 @@ public class PendingUpdateList {
                 } else {
                     up = upFactory.createReplaceInArrayPrimitive(target, locator, tempSrc, metadata);
                 }
-                int index = Collections.binarySearch(tempArrayPULs, up, Comparator.comparing(UpdatePrimitive::getIntSelector));
+                int index = Collections.binarySearch(
+                    tempArrayPULs,
+                    up,
+                    Comparator.comparing(UpdatePrimitive::getIntSelector)
+                );
                 if (index < 0) {
                     index = -index - 1;
                 }
@@ -161,7 +163,11 @@ public class PendingUpdateList {
             tempSelSrcListMap = insertArrayMap.get(target);
             for (Item locator : tempSelSrcListMap.keySet()) {
                 up = upFactory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator));
-                int index = Collections.binarySearch(tempArrayPULs, up, Comparator.comparing(UpdatePrimitive::getIntSelector));
+                int index = Collections.binarySearch(
+                    tempArrayPULs,
+                    up,
+                    Comparator.comparing(UpdatePrimitive::getIntSelector)
+                );
                 if (index < 0) {
                     index = -index - 1;
                 }
@@ -187,7 +193,11 @@ public class PendingUpdateList {
 
     }
 
-    public static PendingUpdateList mergeUpdates(PendingUpdateList pul1, PendingUpdateList pul2, ExceptionMetadata metadata) {
+    public static PendingUpdateList mergeUpdates(
+            PendingUpdateList pul1,
+            PendingUpdateList pul2,
+            ExceptionMetadata metadata
+    ) {
         PendingUpdateList res = new PendingUpdateList();
         Map<Item, Item> tempSelSrcMap;
         Map<Item, List<Item>> tempSelSrcListMap;
@@ -207,7 +217,7 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcMap.keySet()) {
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+            res.delReplaceObjMap.put(target, tempSelSrcResMap);
         }
 
         for (Item target : pul2.delReplaceObjMap.keySet()) {
@@ -218,13 +228,17 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     tempSrc = tempSelSrcResMap.get(selector);
                     if (tempSrc != null) {
-                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), selector.getStringValue(), metadata);
+                        throw new TooManyReplacesOnSameTargetSelectorException(
+                                target.getDynamicType().getName().toString(),
+                                selector.getStringValue(),
+                                metadata
+                        );
                     }
                     continue;
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceObjMap.put(target,tempSelSrcResMap);
+            res.delReplaceObjMap.put(target, tempSelSrcResMap);
         }
 
         // INSERTS
@@ -236,7 +250,7 @@ public class PendingUpdateList {
             if (res.insertObjMap.containsKey(target)) {
                 tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc, metadata);
             }
-            res.insertObjMap.put(target,tempSrc);
+            res.insertObjMap.put(target, tempSrc);
         }
 
         // RENAME
@@ -248,7 +262,7 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcMap.keySet()) {
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.renameObjMap.put(target,tempSelSrcResMap);
+            res.renameObjMap.put(target, tempSelSrcResMap);
         }
 
         for (Item target : pul2.renameObjMap.keySet()) {
@@ -261,7 +275,7 @@ public class PendingUpdateList {
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.renameObjMap.put(target,tempSelSrcResMap);
+            res.renameObjMap.put(target, tempSelSrcResMap);
         }
 
         ////// ARRAYS
@@ -275,7 +289,7 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcMap.keySet()) {
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceArrayMap.put(target,tempSelSrcResMap);
+            res.delReplaceArrayMap.put(target, tempSelSrcResMap);
         }
 
         for (Item target : pul2.delReplaceArrayMap.keySet()) {
@@ -286,13 +300,17 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     tempSrc = tempSelSrcResMap.get(selector);
                     if (tempSrc != null) {
-                        throw new TooManyReplacesOnSameTargetSelectorException(target.getDynamicType().getName().toString(), Integer.toString(selector.getIntValue()), metadata);
+                        throw new TooManyReplacesOnSameTargetSelectorException(
+                                target.getDynamicType().getName().toString(),
+                                Integer.toString(selector.getIntValue()),
+                                metadata
+                        );
                     }
                     continue;
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceArrayMap.put(target,tempSelSrcResMap);
+            res.delReplaceArrayMap.put(target, tempSelSrcResMap);
         }
 
         // INSERTS
@@ -304,7 +322,7 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcListMap.keySet()) {
                 tempSelSrcResListMap.put(selector, tempSelSrcListMap.get(selector));
             }
-            res.insertArrayMap.put(target,tempSelSrcResListMap);
+            res.insertArrayMap.put(target, tempSelSrcResListMap);
         }
 
         for (Item target : pul2.insertArrayMap.keySet()) {
@@ -313,9 +331,12 @@ public class PendingUpdateList {
 
             for (Item selector : tempSelSrcListMap.keySet()) {
                 tempSrcList = tempSelSrcResListMap.getOrDefault(selector, new ArrayList<>());
-                tempSelSrcResListMap.put(selector, InsertIntoArrayPrimitive.mergeSources( tempSrcList, tempSelSrcListMap.get(selector)));
+                tempSelSrcResListMap.put(
+                    selector,
+                    InsertIntoArrayPrimitive.mergeSources(tempSrcList, tempSelSrcListMap.get(selector))
+                );
             }
-            res.insertArrayMap.put(target,tempSelSrcResListMap);
+            res.insertArrayMap.put(target, tempSelSrcResListMap);
         }
 
         return res;

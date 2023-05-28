@@ -8,9 +8,9 @@ public class TooManyRenamesOnSameTargetSelectorException extends RumbleException
 
     public TooManyRenamesOnSameTargetSelectorException(String keyInfo, ExceptionMetadata metadata) {
         super(
-                "Dynamic Updating error; Too many renames on same object at key: " + keyInfo + ".",
-                ErrorCode.TooManyRenamesOnSameTargetSelectorErrorCode,
-                metadata
+            "Dynamic Updating error; Too many renames on same object at key: " + keyInfo + ".",
+            ErrorCode.TooManyRenamesOnSameTargetSelectorErrorCode,
+            metadata
         );
     }
 

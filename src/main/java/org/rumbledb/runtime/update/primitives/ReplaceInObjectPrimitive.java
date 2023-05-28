@@ -3,7 +3,6 @@ package org.rumbledb.runtime.update.primitives;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.ObjectItem;
 
 public class ReplaceInObjectPrimitive implements UpdatePrimitive {
 
@@ -11,10 +10,18 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
     private Item selector;
     private Item content;
 
-    public ReplaceInObjectPrimitive(Item targetObject, Item targetName, Item replacementItem, ExceptionMetadata metadata) {
+    public ReplaceInObjectPrimitive(
+            Item targetObject,
+            Item targetName,
+            Item replacementItem,
+            ExceptionMetadata metadata
+    ) {
 
         if (targetObject.getItemByKey(targetName.getStringValue()) == null) {
-            throw new CannotResolveUpdateSelectorException("Cannot delete key that does not exist in target object", metadata);
+            throw new CannotResolveUpdateSelectorException(
+                    "Cannot delete key that does not exist in target object",
+                    metadata
+            );
         }
 
         this.target = targetObject;
