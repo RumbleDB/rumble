@@ -2,6 +2,7 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
 import org.rumbledb.exceptions.SimpleExpressionMustBeVacuousException;
+import org.rumbledb.exceptions.UpdatingFunctionHasReturnTypeException;
 import org.rumbledb.expressions.*;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -10,7 +11,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.update.*;
+import org.rumbledb.types.FunctionSignature;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -264,8 +267,46 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             FunctionCallExpression expression,
             ExpressionClassification argument
     ) {
-        // TODO: Make vacuous if call to fn:error?
-        return super.visitFunctionCall(expression, argument);
+        ExpressionClassification currArgResult;
+        for (Expression argExpr : expression.getArguments()) {
+            if (argExpr == null) {
+                continue;
+            }
+            currArgResult = this.visit(argExpr, argument);
+            if (currArgResult.isUpdating()) {
+                throw new InvalidUpdatingExpressionPositionException("Arguments to function calls cannot be updating", argExpr.getMetadata());
+            }
+        }
+        FunctionSignature funcSig = expression.getStaticContext().getFunctionSignature(expression.getFunctionIdentifier());
+        ExpressionClassification result = funcSig.isUpdating() ? ExpressionClassification.UPDATING : ExpressionClassification.SIMPLE;
+        expression.setExpressionClassification(result);
+        // TODO: Make vacuous if call to fn:error? Not present!
+        return result;
+    }
+
+    @Override
+    public ExpressionClassification visitInlineFunctionExpr(InlineFunctionExpression expression, ExpressionClassification argument) {
+        ExpressionClassification bodyResult = this.visit(expression.getBody(), argument);
+
+        if (expression.isUpdating()) {
+            if (expression.getActualReturnType() != null) {
+                throw new UpdatingFunctionHasReturnTypeException("An updating function cannot have a return type", expression.getMetadata());
+            }
+            if (!expression.isExternal() && !(bodyResult.isUpdating() || bodyResult.isVacuous())) {
+                throw new SimpleExpressionMustBeVacuousException("Top level expression of updating function must be updating or vacuous", expression.getMetadata());
+            }
+            // TODO CHECK IF EXTERNAL ERROR XUDY0019
+            expression.setExpressionClassification(ExpressionClassification.UPDATING);
+        } else {
+            if (!expression.isExternal() && !bodyResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException("Body of simple inline function must be simple", expression.getMetadata());
+            }
+            // TODO CHECK IF EXTERNAL ERROR XUDY0018
+            expression.setExpressionClassification(ExpressionClassification.SIMPLE);
+        }
+
+
+        return expression.getExpressionClassification();
     }
 
     // Endregion

@@ -131,6 +131,8 @@ public enum ErrorCode {
     TransformModifiesNonCopiedValue("XUDY0014"),
     UpdateTargetIsEmptySeqErrorCode("XUDY0027"),
 
+    UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
+
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
     CannotCastUpdateSelectorErrorCode("JNUP0007"),
