@@ -41,12 +41,16 @@ public class InlineFunctionExpression extends Expression {
     private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
     private final Expression body;
+    private final boolean isUpdating;
+    private final boolean isExternal;
 
     public InlineFunctionExpression(
             Name name,
             Map<Name, SequenceType> params,
             SequenceType returnType,
             Expression body,
+            boolean isUpdating,
+            boolean isExternal,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -55,6 +59,18 @@ public class InlineFunctionExpression extends Expression {
         this.returnType = returnType;
         this.body = body;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
+        this.isUpdating = isUpdating;
+        this.isExternal = isExternal;
+    }
+
+    public InlineFunctionExpression(
+            Name name,
+            Map<Name, SequenceType> params,
+            SequenceType returnType,
+            Expression body,
+            ExceptionMetadata metadata
+    ) {
+        this(name, params, returnType, body, false, false, metadata);
     }
 
     public Name getName() {
@@ -79,6 +95,15 @@ public class InlineFunctionExpression extends Expression {
 
     public Expression getBody() {
         return this.body;
+    }
+
+    @Override
+    public boolean isUpdating() {
+        return this.isUpdating;
+    }
+
+    public boolean isExternal() {
+        return this.isExternal;
     }
 
     @Override
@@ -147,8 +172,9 @@ public class InlineFunctionExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
+        String updating = this.isUpdating ? "updating" : "";
         if (this.name != null) {
-            sb.append("declare function " + this.name.toString() + "(");
+            sb.append("declare " + updating + " function " + this.name.toString() + "(");
         } else {
             sb.append("function (");
         }

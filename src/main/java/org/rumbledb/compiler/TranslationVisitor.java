@@ -458,11 +458,16 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
         }
 
+        boolean isUpdating = ctx.is_updating != null;
+        boolean isExternal = ctx.is_external != null;
+
         return new InlineFunctionExpression(
                 name,
                 fnParams,
                 fnReturnType,
                 bodyExpression,
+                isUpdating,
+                isExternal,
                 createMetadataFromContext(ctx)
         );
     }
