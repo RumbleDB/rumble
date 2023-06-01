@@ -167,7 +167,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getFunctionIdentifier(),
             new FunctionSignature(
                     new ArrayList<>(expression.getParams().values()),
-                    expression.getReturnType()
+                    expression.getReturnType(),
+                    expression.isUpdating()
             )
         );
         return argument;
