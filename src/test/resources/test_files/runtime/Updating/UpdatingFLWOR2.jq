@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="({ "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } }, { "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } })" :)
-copy json $je := for $i in (1 to 4)
+copy $je := for $i in (1 to 4)
                  return
                     if($i mod 2 eq 0)
                     then
@@ -11,7 +11,7 @@ modify
     return
         if($l.a)
         then
-            rename json $l.a.foo as "bar"
+            rename $l.a.foo as "bar"
         else
-            replace json value of $l.b.foo with 2
+            replace value of $l.b.foo with 2
 return $je
