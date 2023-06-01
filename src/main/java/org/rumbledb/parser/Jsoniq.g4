@@ -59,9 +59,9 @@ varDecl                 : Kdeclare Kvariable varRef (Kas sequenceType)? ((':=' e
 
 contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
-functionDecl            : Kdeclare 'function' fn_name=qname '(' paramList? ')'
+functionDecl            : Kdeclare (is_updating=Kupdating)? 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' (fn_body=expr)? '}' | 'external');
+                          ('{' (fn_body=expr)? '}' | is_external='external');
 
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -351,6 +351,7 @@ keyWords                : Kjsoniq
                         | Kvalue
                         | Kwith
                         | Kposition
+                        | Kupdating
                         ;
 
 ///////////////////////// literals
@@ -480,6 +481,8 @@ Kvalue                  : 'value';
 Kwith                   : 'with';
 
 Kposition               : 'position';
+
+Kupdating               : 'updating';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
