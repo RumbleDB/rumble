@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -85,8 +85,9 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         bindCopyDeclarations(context);
-        context.setCurrentMutabilityLevel(this.mutabilityLevel);
-        return modifyIterator.getPendingUpdateList(context);
+        DynamicContext newCtx = new DynamicContext(context);
+        newCtx.setCurrentMutabilityLevel(this.mutabilityLevel);
+        return modifyIterator.getPendingUpdateList(newCtx);
     }
 
     private void bindCopyDeclarations(DynamicContext context) {
@@ -96,7 +97,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             List<Item> copy = new ArrayList<>();
             Item temp;
             for (Item item : toCopy) {
-                temp = (Item) SerializationUtils.clone(item);
+                temp = SerializationUtils.clone(item);
                 temp.setMutabilityLevel(this.mutabilityLevel);
                 copy.add(temp);
             }
