@@ -108,7 +108,7 @@ public abstract class Expression extends Node {
      * @return Expression Classification of the expression.
      */
     public ExpressionClassification getExpressionClassification() {
-        return expressionClassification;
+        return this.expressionClassification;
     }
 
     /**

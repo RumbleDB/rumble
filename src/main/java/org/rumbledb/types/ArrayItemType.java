@@ -276,6 +276,6 @@ public class ArrayItemType implements ItemType {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
-        content.setMutabilityLevel(mutabilityLevel);
+        this.content.setMutabilityLevel(mutabilityLevel);
     }
 }

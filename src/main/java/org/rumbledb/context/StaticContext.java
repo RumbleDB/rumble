@@ -426,7 +426,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public int getCurrentMutabilityLevel() {
-        return currentMutabilityLevel;
+        return this.currentMutabilityLevel;
     }
 
     public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
