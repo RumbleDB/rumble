@@ -1,5 +1,9 @@
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
 import org.rumbledb.exceptions.SimpleExpressionMustBeVacuousException;
 import org.rumbledb.exceptions.UpdatingFunctionHasReturnTypeException;
@@ -262,6 +266,18 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     // Region Primary
 
+    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
+        BuiltinFunction function = null;
+        FunctionSignature signature = null;
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        if (function != null) {
+            signature = function.getSignature();
+        } else {
+            signature = staticContext.getFunctionSignature(identifier);
+        }
+        return signature;
+    }
+
     @Override
     public ExpressionClassification visitFunctionCall(
             FunctionCallExpression expression,
@@ -277,7 +293,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
                 throw new InvalidUpdatingExpressionPositionException("Arguments to function calls cannot be updating", argExpr.getMetadata());
             }
         }
-        FunctionSignature funcSig = expression.getStaticContext().getFunctionSignature(expression.getFunctionIdentifier());
+        FunctionSignature funcSig = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         ExpressionClassification result = funcSig.isUpdating() ? ExpressionClassification.UPDATING : ExpressionClassification.SIMPLE;
         expression.setExpressionClassification(result);
         // TODO: Make vacuous if call to fn:error? Not present!
