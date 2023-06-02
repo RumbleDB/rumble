@@ -375,7 +375,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             returnType = expression.getBody().getStaticSequenceType();
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
-        FunctionSignature signature = new FunctionSignature(params, returnType);
+        FunctionSignature signature = new FunctionSignature(params, returnType, expression.isUpdating());
         expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         return argument;
     }
@@ -516,7 +516,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         if (expression.isPartialApplication()) {
-            FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
+            FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType(), expression.isUpdating());
             expression.setStaticSequenceType(
                 new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature))
             );
@@ -1750,7 +1750,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (isPartialApplication) {
             FunctionSignature newSignature = new FunctionSignature(
                     partialFormalParameterTypes,
-                    signature.getReturnType()
+                    signature.getReturnType(),
+                    expression.isUpdating()
             );
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(newSignature)));
             return argument;
