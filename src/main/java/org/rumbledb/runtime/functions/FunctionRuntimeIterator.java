@@ -46,6 +46,7 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             SequenceType returnType,
             RuntimeIterator bodyIterator,
             ExecutionMode executionMode,
+            boolean isUpdating,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
@@ -53,6 +54,7 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
         this.bodyIterator = bodyIterator;
+        this.isUpdating = isUpdating;
     }
 
     @Override
@@ -63,7 +65,8 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 this.paramNameToSequenceTypes,
                 this.returnType,
                 dynamicContext.getModuleContext(),
-                bodyIteratorCopy
+                bodyIteratorCopy,
+                this.isUpdating
         );
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;

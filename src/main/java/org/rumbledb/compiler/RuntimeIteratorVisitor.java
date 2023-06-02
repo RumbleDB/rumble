@@ -631,6 +631,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 returnType,
                 bodyIterator,
                 expression.getHighestExecutionMode(this.visitorConfig),
+                expression.isUpdating(),
                 expression.getMetadata()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -671,6 +672,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     identifier,
                     arguments,
                     expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.isUpdating(),
                     iteratorMetadata
             );
         }

@@ -31,6 +31,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.util.List;
 import java.util.Map;
@@ -53,12 +54,14 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
             ExecutionMode executionMode,
+            boolean isUpdating,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
         this.userDefinedFunctionCallIterator = null;
+        this.isUpdating = isUpdating;
     }
 
     protected boolean implementsDataFrames() {
@@ -161,5 +164,20 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             result.putAll(iterator.getVariableDependencies());
         }
         return result;
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+        this.userDefinedFunctionCallIterator = context.getNamedFunctions()
+                .getUserDefinedFunctionCallIterator(
+                        this.functionIdentifier,
+                        this.getHighestExecutionMode(),
+                        getMetadata(),
+                        this.functionArguments
+                );
+        return this.userDefinedFunctionCallIterator.getPendingUpdateList(context);
     }
 }
