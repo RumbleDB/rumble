@@ -140,9 +140,9 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
+            populateExpressionClassifications(mainModule, configuration);
             inferTypes(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);
-            populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
