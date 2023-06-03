@@ -35,17 +35,23 @@ public class ArrayItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> arrayItems;
     private int mutabilityLevel;
+    private int topLevelID;
+    private String pathIn;
 
     public ArrayItem() {
         super();
         this.arrayItems = new ArrayList<>();
         this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
     }
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
         this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
     }
 
     public boolean equals(Object otherItem) {
@@ -154,5 +160,25 @@ public class ArrayItem implements Item {
         for (Item item : this.arrayItems) {
             item.setMutabilityLevel(mutabilityLevel);
         }
+    }
+
+    @Override
+    public int getTopLevelID() {
+        return this.topLevelID;
+    }
+
+    @Override
+    public void setTopLevelID(int topLevelID) {
+        this.topLevelID = topLevelID;
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.pathIn;
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.pathIn = pathIn;
     }
 }

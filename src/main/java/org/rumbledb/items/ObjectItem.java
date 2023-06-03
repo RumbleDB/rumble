@@ -38,12 +38,16 @@ public class ObjectItem implements Item {
     private List<Item> values;
     private List<String> keys;
     private int mutabilityLevel;
+    private int topLevelID;
+    private String pathIn;
 
     public ObjectItem() {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
         this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -52,6 +56,8 @@ public class ObjectItem implements Item {
         this.keys = keys;
         this.values = values;
         this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
     }
 
     public boolean equals(Object otherItem) {
@@ -115,6 +121,8 @@ public class ObjectItem implements Item {
         this.keys = keyList;
         this.values = valueList;
         this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
     }
 
     @Override
@@ -213,5 +221,25 @@ public class ObjectItem implements Item {
         for (Item item : this.values) {
             item.setMutabilityLevel(mutabilityLevel);
         }
+    }
+
+    @Override
+    public int getTopLevelID() {
+        return this.topLevelID;
+    }
+
+    @Override
+    public void setTopLevelID(int topLevelID) {
+        this.topLevelID = topLevelID;
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.pathIn;
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.pathIn = pathIn;
     }
 }

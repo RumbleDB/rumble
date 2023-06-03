@@ -16,6 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
 public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
 
@@ -46,6 +47,9 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             .format("delta")
             .load(uri.toString());
         dataFrame = dataFrame.withColumn("mutabilityLevel", lit(0));
+        dataFrame = dataFrame.withColumn("rowID", monotonically_increasing_id());
+        dataFrame = dataFrame.withColumn("pathIn", lit(""));
+        // TODO: Make unique DeltaTable code
         return new JSoundDataFrame(dataFrame);
     }
 }
