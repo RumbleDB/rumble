@@ -32,7 +32,6 @@ public class ArrayItemType implements ItemType {
     private ItemType content;
     private List<Item> enumeration;
     private Integer minLength, maxLength;
-    private int mutabilityLevel;
 
     ArrayItemType(
             Name name,
@@ -51,7 +50,6 @@ public class ArrayItemType implements ItemType {
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.enumeration = enumeration;
-        this.mutabilityLevel = -1;
         if (this.baseType.isResolved()) {
             processBaseType();
             if (this.content.isResolved()) {
@@ -268,14 +266,4 @@ public class ArrayItemType implements ItemType {
         return this.content.isCompatibleWithDataFrames(configuration);
     }
 
-    @Override
-    public int getMutabilityLevel() {
-        return this.mutabilityLevel;
-    }
-
-    @Override
-    public void setMutabilityLevel(int mutabilityLevel) {
-        this.mutabilityLevel = mutabilityLevel;
-        this.content.setMutabilityLevel(mutabilityLevel);
-    }
 }
