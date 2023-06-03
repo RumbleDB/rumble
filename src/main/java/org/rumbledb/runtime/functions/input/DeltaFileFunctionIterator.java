@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.input;
 
+import io.delta.tables.DeltaTable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
@@ -13,6 +14,8 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
 import java.util.List;
+
+import static org.apache.spark.sql.functions.lit;
 
 public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
 
@@ -36,13 +39,13 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
+//        DeltaTable deltaTable = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), uri.toString());
         Dataset<Row> dataFrame = SparkSessionManager.getInstance()
             .getOrCreateSession()
             .read()
             .format("delta")
             .load(uri.toString());
-        JSoundDataFrame res = new JSoundDataFrame(dataFrame);
-        res.getItemType().setMutabilityLevel(0);
-        return res;
+        dataFrame = dataFrame.withColumn("mutabilityLevel", lit(0));
+        return new JSoundDataFrame(dataFrame);
     }
 }

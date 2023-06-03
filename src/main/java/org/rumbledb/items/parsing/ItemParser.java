@@ -272,11 +272,19 @@ public class ItemParser implements Serializable {
             }
         }
 
+        int mutabilityLevel = -1;
+
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
+
+            if (fieldName.equals("mutabilityLevel")) {
+                mutabilityLevel = row.getInt(i);
+                continue;
+            }
+
             if (content != null) {
                 FieldDescriptor descriptor = content.get(fieldName);
                 if (descriptor != null) {
@@ -304,7 +312,10 @@ public class ItemParser implements Serializable {
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        res.setMutabilityLevel(mutabilityLevel);
+
+        return res;
     }
 
     public static Item convertValueToItem(

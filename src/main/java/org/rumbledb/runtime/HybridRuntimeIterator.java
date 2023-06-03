@@ -143,10 +143,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
         JavaRDD<Row> rowRDD = df.javaRDD();
-        JavaRDD<Item> result = rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
-        // int mutabilityLevel = df.getItemType().getMutabilityLevel();
-        // result.foreach(item -> item.setMutabilityLevel(mutabilityLevel));
-        return result;
+        return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
     }
 
     public void materialize(DynamicContext context, List<Item> result) {
@@ -196,13 +193,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         JavaRDD<Item> items = this.getRDD(context);
         List<Item> collectedItems = items.take(2);
         if (collectedItems.size() == 1) {
-            Item res = collectedItems.get(0);
-            // TODO: Refactor this to occur inside dataframe to RDD?
-            if (isDataFrame()) {
-                res.setMutabilityLevel(this.getDataFrame(context).getItemType().getMutabilityLevel());
-            }
-            return res;
-            // return collectedItems.get(0);
+            return collectedItems.get(0);
         }
         if (collectedItems.size() == 0) {
             throw new NoItemException();
