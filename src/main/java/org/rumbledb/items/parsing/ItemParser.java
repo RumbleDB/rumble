@@ -273,7 +273,7 @@ public class ItemParser implements Serializable {
         }
 
         int mutabilityLevel = -1;
-        int topLevelID = -1;
+        long topLevelID = -1;
         String pathIn = "null";
 
         for (int i = 0; i < fields.length; ++i) {
@@ -287,7 +287,7 @@ public class ItemParser implements Serializable {
                 continue;
             }
             if (fieldName.equals("rowID")) {
-                topLevelID = row.getInt(i);
+                topLevelID = row.getLong(i);
                 continue;
             }
             if (fieldName.equals("pathIn")) {

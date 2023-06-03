@@ -38,7 +38,7 @@ public class ObjectItem implements Item {
     private List<Item> values;
     private List<String> keys;
     private int mutabilityLevel;
-    private int topLevelID;
+    private long topLevelID;
     private String pathIn;
 
     public ObjectItem() {
@@ -224,12 +224,12 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public int getTopLevelID() {
+    public long getTopLevelID() {
         return this.topLevelID;
     }
 
     @Override
-    public void setTopLevelID(int topLevelID) {
+    public void setTopLevelID(long topLevelID) {
         this.topLevelID = topLevelID;
     }
 

@@ -35,7 +35,7 @@ public class ArrayItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> arrayItems;
     private int mutabilityLevel;
-    private int topLevelID;
+    private long topLevelID;
     private String pathIn;
 
     public ArrayItem() {
@@ -163,12 +163,12 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public int getTopLevelID() {
+    public long getTopLevelID() {
         return this.topLevelID;
     }
 
     @Override
-    public void setTopLevelID(int topLevelID) {
+    public void setTopLevelID(long topLevelID) {
         this.topLevelID = topLevelID;
     }
 

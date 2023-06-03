@@ -708,7 +708,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return int representing the rowID of the item within a DeltaFile.
      */
-    default int getTopLevelID() {
+    default long getTopLevelID() {
         return -1;
     }
 
@@ -717,7 +717,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @param topLevelID new top level ID.
      */
-    default void setTopLevelID(int topLevelID) {
+    default void setTopLevelID(long topLevelID) {
     }
 
     /**
