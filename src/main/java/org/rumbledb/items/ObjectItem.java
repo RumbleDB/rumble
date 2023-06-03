@@ -37,7 +37,6 @@ public class ObjectItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> values;
     private List<String> keys;
-
     private int mutabilityLevel;
 
     public ObjectItem() {
@@ -173,6 +172,7 @@ public class ObjectItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.keys);
         kryo.writeObject(output, this.values);
+        output.writeInt(this.mutabilityLevel);
     }
 
     @SuppressWarnings("unchecked")
@@ -180,6 +180,7 @@ public class ObjectItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.keys = kryo.readObject(input, ArrayList.class);
         this.values = kryo.readObject(input, ArrayList.class);
+        this.mutabilityLevel = input.readInt();
     }
 
     public int hashCode() {

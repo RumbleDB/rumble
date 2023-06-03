@@ -34,7 +34,6 @@ public class ArrayItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private List<Item> arrayItems;
-
     private int mutabilityLevel;
 
     public ArrayItem() {
@@ -115,12 +114,14 @@ public class ArrayItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.arrayItems);
+        output.writeInt(this.mutabilityLevel);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
         this.arrayItems = kryo.readObject(input, ArrayList.class);
+        this.mutabilityLevel = input.readInt();
     }
 
     public int hashCode() {
