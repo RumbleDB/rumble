@@ -74,6 +74,7 @@ public enum ErrorCode {
     OurBadErrorCode("RBST0004"),
     ClusterConnectionErrorCode("RBDY0005"),
     DatesWithTimezonesNotSupported("RBDY0006"),
+    CannotModifyImmutableValue("RBDY0007"),
 
     UnexpectedStaticType("RBTY0001"),
 
@@ -140,10 +141,8 @@ public enum ErrorCode {
     TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
     TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
     CannotResolveUpdateSelectorErrorCode("JNUP0016"),
-    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
+    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019");
 
-    // TODO: Rename to a real error code
-    CannotModifyImmutableValue("NeedToRename");
 
 
 
