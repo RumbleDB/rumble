@@ -30,7 +30,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null) {
+        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
             this.applyItem();
         } else {
             this.applyDelta();
