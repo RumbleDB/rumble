@@ -45,7 +45,7 @@ public class ArrayItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
-        this.location = null;
+        this.location = "null";
     }
 
     public ArrayItem(List<Item> arrayItems) {
@@ -54,7 +54,7 @@ public class ArrayItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
-        this.location = null;
+        this.location = "null";
     }
 
     public boolean equals(Object otherItem) {
