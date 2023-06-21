@@ -8,6 +8,10 @@ public interface UpdatePrimitive {
 
     void apply();
 
+    void applyItem();
+
+    void applyDelta();
+
     boolean hasSelector();
 
     Item getTarget();

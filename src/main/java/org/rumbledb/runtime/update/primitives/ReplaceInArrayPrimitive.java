@@ -1,8 +1,12 @@
 package org.rumbledb.runtime.update.primitives;
 
+import io.delta.tables.DeltaTable;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.spark.SparkSessionManager;
 
 public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
@@ -30,6 +34,15 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
+        if (this.target.getTableLocation() == null) {
+            this.applyItem();
+        } else {
+            this.applyDelta();
+        }
+    }
+
+    @Override
+    public void applyItem() {
         int index = this.selector.getIntValue() - 1;
         if (index >= 0 || index < this.target.getSize()) {
             this.target.removeItemAt(index);
@@ -39,6 +52,26 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
                 this.target.putItemAt(this.content, index);
             }
         }
+    }
+
+    @Override
+    public void applyDelta() {
+        // TODO: Sort out diff types of content Item
+        // TODO: Find out name of array column
+        // ASSUME pathIn CONTAINS ARRAYFIELD NAME
+        // PERHAPS CASE OF REPLACING ARRAY WITH 1 ITEM SHOULD CREATE NEW ARRAYCOL WITH CORRECTED TYPE IF TYPE CHANGES
+
+        String pathIn = this.target.getPathIn();
+        String location = this.target.getTableLocation();
+        long rowID = this.target.getTopLevelID();
+
+        String setField = pathIn + " = ";
+        this.applyItem();
+        setField = setField + this.target.getSparkSQLValue();
+
+        String query = "UPDATE delta.`" + location + "` SET " + setField + " rowID == " + rowID;
+
+        SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }
 
     @Override

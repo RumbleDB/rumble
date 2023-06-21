@@ -1,8 +1,11 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.apache.spark.sql.AnalysisException;
 import org.rumbledb.api.Item;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class InsertIntoArrayPrimitive implements UpdatePrimitive {
@@ -27,7 +30,36 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
+        if (this.target.getTableLocation() == null) {
+            this.applyItem();
+        } else {
+            this.applyDelta();
+        }
+    }
+
+    @Override
+    public void applyItem() {
         this.target.putItemsAt(this.content, this.selector.getIntValue() - 1);
+    }
+
+    @Override
+    public void applyDelta() {
+        // TODO: Properly discern ItemType to SQLType
+        // TODO: Sort out types for value item
+        // ASSUMES ArrayType ONLY CONTAINS 1 TYPE AND INSERTION OF A DIFF TYPE IS INVALID
+        // TODO: perhaps check for homogenous typing of array w/o relying on SQL error
+
+        String pathIn = this.target.getPathIn();
+        String location = this.target.getTableLocation();
+        long rowID = this.target.getTopLevelID();
+
+        String setClause = pathIn + " = ";
+        this.applyItem();
+        setClause = setClause + this.target.getSparkSQLValue();
+
+        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClause + "WHERE rowID == " + rowID;
+
+        SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldQuery);
     }
 
     @Override

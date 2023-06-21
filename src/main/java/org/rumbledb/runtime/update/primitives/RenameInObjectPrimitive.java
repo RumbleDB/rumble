@@ -1,8 +1,15 @@
 package org.rumbledb.runtime.update.primitives;
 
+import io.delta.tables.DeltaTable;
+import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.spark.SparkSessionManager;
+
+import static org.apache.spark.sql.functions.col;
 
 public class RenameInObjectPrimitive implements UpdatePrimitive {
 
@@ -32,6 +39,15 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public void apply() {
+        if (this.target.getTableLocation() == null) {
+            this.applyItem();
+        } else {
+            this.applyDelta();
+        }
+    }
+
+    @Override
+    public void applyItem() {
         String name = this.selector.getStringValue();
         if (this.target.getKeys().contains(name)) {
             Item item = this.target.getItemByKey(name);
@@ -39,6 +55,33 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             this.target.putItemByKey(this.content.getStringValue(), item);
         }
         // TODO: implement replace and rename methods for Array & Object to avoid deletion and append
+    }
+
+    @Override
+    public void applyDelta() {
+        String pathIn = this.target.getPathIn();
+        String oldName = this.selector.getStringValue();
+        String fullOldPath = pathIn + "." + oldName;
+        String fullNewPath = pathIn + "." + this.content.getStringValue();
+        String location = this.target.getTableLocation();
+        long rowID = this.target.getTopLevelID();
+
+        String setOldFieldClause = fullOldPath + " = NULL";
+        String setNewFieldClause = fullNewPath + " = " + this.target.getItemByKey(oldName).getSparkSQLValue();
+        String type = SparkSessionManager.getInstance().getOrCreateSession().sql("DESC (SELECT " + fullOldPath + " FROM delta.`" + location + "`)").filter(col("col_name").equalTo(oldName)).select("data_type").collectAsList().get(0).getString(0);
+
+        String insertNewColumnQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + fullNewPath + " " + type + ");";
+        String setFieldsQuery = "UPDATE delta.`" + location + "` SET " + setOldFieldClause + ", " + setNewFieldClause + "WHERE rowID == " + rowID;
+
+        // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
+        try {
+            SparkSessionManager.getInstance().getOrCreateSession().sql(insertNewColumnQuery);
+        } catch (Exception e) {
+            if (!(e instanceof AnalysisException)) {
+                throw e;
+            }
+        }
+        SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldsQuery);
     }
 
     @Override
