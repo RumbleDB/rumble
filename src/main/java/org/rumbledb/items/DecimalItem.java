@@ -142,4 +142,9 @@ public class DecimalItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
 }

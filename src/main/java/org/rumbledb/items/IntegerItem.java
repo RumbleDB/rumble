@@ -149,4 +149,9 @@ public class IntegerItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
 }

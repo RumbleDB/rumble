@@ -37,6 +37,7 @@ public class ArrayItem implements Item {
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
+    private String location;
 
     public ArrayItem() {
         super();
@@ -44,6 +45,7 @@ public class ArrayItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
+        this.location = null;
     }
 
     public ArrayItem(List<Item> arrayItems) {
@@ -52,6 +54,7 @@ public class ArrayItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
+        this.location = null;
     }
 
     public boolean equals(Object otherItem) {
@@ -121,6 +124,9 @@ public class ArrayItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.arrayItems);
         output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        kryo.writeObject(output, this.pathIn);
+        kryo.writeObject(output, this.location);
     }
 
     @SuppressWarnings("unchecked")
@@ -128,6 +134,9 @@ public class ArrayItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.arrayItems = kryo.readObject(input, ArrayList.class);
         this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = kryo.readObject(input, String.class);
+        this.location = kryo.readObject(input, String.class);
     }
 
     public int hashCode() {
@@ -180,5 +189,27 @@ public class ArrayItem implements Item {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.location;
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.location = location;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("array(");
+        for (Item item : this.arrayItems) {
+            sb.append(item.getSparkSQLValue());
+            sb.append(", ");
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }

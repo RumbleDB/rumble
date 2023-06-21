@@ -93,4 +93,9 @@ public class NullItem implements Item {
     public String getStringValue() {
         return "null";
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return "NULL";
+    }
 }

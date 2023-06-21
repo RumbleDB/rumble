@@ -738,6 +738,33 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the location of the DeltaFile for the item.
+     *
+     * @return String representing the location of the DeltaFile for the item.
+     */
+    default String getTableLocation() {
+        return null;
+    }
+
+
+    /**
+     * Sets the location of the DeltaFile for the item to a supplied value.
+     *
+     * @param location new location of the DeltaFile for the item.
+     */
+    default void setTableLocation(String location) {
+    }
+
+    /**
+     * Returns the SparkSQL value of the item for use in a query.
+     *
+     * @return String representing the SparkSQL value of the item.
+     */
+    default String getSparkSQLValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Tests for physical equality. The semantics are that of the eq operator.
      *
      * @param other another item.

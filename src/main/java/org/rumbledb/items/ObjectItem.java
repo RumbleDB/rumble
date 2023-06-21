@@ -40,6 +40,7 @@ public class ObjectItem implements Item {
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
+    private String location;
 
     public ObjectItem() {
         super();
@@ -48,6 +49,7 @@ public class ObjectItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
+        this.location = null;
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -58,6 +60,7 @@ public class ObjectItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
+        this.location = null;
     }
 
     public boolean equals(Object otherItem) {
@@ -123,6 +126,7 @@ public class ObjectItem implements Item {
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
+        this.location = null;
     }
 
     @Override
@@ -181,6 +185,9 @@ public class ObjectItem implements Item {
         kryo.writeObject(output, this.keys);
         kryo.writeObject(output, this.values);
         output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        kryo.writeObject(output, this.pathIn);
+        kryo.writeObject(output, this.location);
     }
 
     @SuppressWarnings("unchecked")
@@ -189,6 +196,9 @@ public class ObjectItem implements Item {
         this.keys = kryo.readObject(input, ArrayList.class);
         this.values = kryo.readObject(input, ArrayList.class);
         this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = kryo.readObject(input, String.class);
+        this.location = kryo.readObject(input, String.class);
     }
 
     public int hashCode() {
@@ -241,5 +251,29 @@ public class ObjectItem implements Item {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.location;
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.location = location;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("named_struct(");
+        for (int i = 0; i < this.keys.size(); i++) {
+            sb.append(this.keys.get(i));
+            sb.append(", ");
+            sb.append(this.values.get(i).getSparkSQLValue());
+            sb.append(", ");
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }
