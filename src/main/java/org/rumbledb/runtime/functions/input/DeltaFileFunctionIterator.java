@@ -41,6 +41,9 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
 //        DeltaTable deltaTable = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), uri.toString());
+        SparkSessionManager.getInstance().getOrCreateSession().read().format("delta").load(uri.toString())
+                .withColumn("rowID", monotonically_increasing_id())
+                .write().format("delta").mode("overwrite").option("overwriteSchema", true).save(uri.toString());
         Dataset<Row> dataFrame = SparkSessionManager.getInstance()
             .getOrCreateSession()
             .read()
@@ -49,6 +52,7 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
         dataFrame = dataFrame.withColumn("mutabilityLevel", lit(0));
         dataFrame = dataFrame.withColumn("rowID", monotonically_increasing_id());
         dataFrame = dataFrame.withColumn("pathIn", lit(""));
+        dataFrame = dataFrame.withColumn("tableLocation", lit(uri.toString()));
         // TODO: Make unique DeltaTable code
         return new JSoundDataFrame(dataFrame);
     }

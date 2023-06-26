@@ -275,6 +275,7 @@ public class ItemParser implements Serializable {
         int mutabilityLevel = -1;
         long topLevelID = -1;
         String pathIn = "null";
+        String tableLocation = "null";
 
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
@@ -292,6 +293,10 @@ public class ItemParser implements Serializable {
             }
             if (fieldName.equals("pathIn")) {
                 pathIn = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals("tableLocation")) {
+                tableLocation = row.getString(i);
                 continue;
             }
 
@@ -326,6 +331,7 @@ public class ItemParser implements Serializable {
         res.setMutabilityLevel(mutabilityLevel);
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
+        res.setTableLocation(tableLocation);
 
         return res;
     }

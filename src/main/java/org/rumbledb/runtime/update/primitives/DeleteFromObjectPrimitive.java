@@ -79,7 +79,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
 
-        List<String> setFieldsToNulls = this.content.stream().map(i -> pathIn + "." + i.getStringValue() + " = NULL").collect(Collectors.toList());
+        List<String> setFieldsToNulls = this.content.stream().map(i -> pathIn + i.getStringValue() + " = NULL").collect(Collectors.toList());
         String concatSetNulls = String.join(", ", setFieldsToNulls);
 
         String query = "UPDATE delta.`" + location + "` SET " + concatSetNulls + " WHERE rowID == " + rowID;
