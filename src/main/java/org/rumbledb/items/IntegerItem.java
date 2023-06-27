@@ -154,4 +154,10 @@ public class IntegerItem implements Item {
     public String getSparkSQLValue() {
         return String.valueOf(this.value);
     }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "INTEGER";
+    }
 }

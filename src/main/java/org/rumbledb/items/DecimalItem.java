@@ -147,4 +147,10 @@ public class DecimalItem implements Item {
     public String getSparkSQLValue() {
         return this.value.stripTrailingZeros().toPlainString();
     }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DECIMAL";
+    }
 }

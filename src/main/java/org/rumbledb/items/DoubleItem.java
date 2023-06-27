@@ -195,4 +195,10 @@ public class DoubleItem implements Item {
         }
         return this.getSparkSQLValue();
     }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DOUBLE";
+    }
 }

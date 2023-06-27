@@ -212,4 +212,17 @@ public class ArrayItem implements Item {
         sb.append(")");
         return sb.toString();
     }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Is it okay to assume first elem type is same as rest?
+        StringBuilder sb = new StringBuilder();
+        sb.append("ARRAY<");
+        if (this.getSize() <= 0) {
+            // TODO: Throw error? No empty arrays?
+        }
+        sb.append(this.getItemAt(0).getSparkSQLType());
+        sb.append(">");
+        return sb.toString();
+    }
 }

@@ -271,9 +271,27 @@ public class ObjectItem implements Item {
             sb.append(this.keys.get(i));
             sb.append(", ");
             sb.append(this.values.get(i).getSparkSQLValue());
-            sb.append(", ");
+            if (i + 1 < this.keys.size()) {
+                sb.append(", ");
+            }
         }
         sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("STRUCT<");
+        for (int i = 0; i < this.keys.size(); i++) {
+            sb.append(this.keys.get(i));
+            sb.append(": ");
+            sb.append(this.values.get(i).getSparkSQLType());
+            if (i + 1 < this.keys.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(">");
         return sb.toString();
     }
 }

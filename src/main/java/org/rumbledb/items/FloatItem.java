@@ -199,4 +199,10 @@ public class FloatItem implements Item {
         }
         return this.getStringValue();
     }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "FLOAT";
+    }
 }
