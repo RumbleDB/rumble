@@ -337,8 +337,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 type = fieldDescriptor.getType();
             }
             if (type.isObjectItemType()) {
+                // TODO: Find another way to check if delta dataframe -- e.g. flag and mutability level
+                // TODO: implement keyword vars to stop ust using strs
+                String sql;
+                if (childDataFrame.getKeys().contains("tableLocation")) {
+                    sql = String.format("SELECT `%s`.*, rowID, mutabilityLevel, CONCAT(pathIn, '%s.') AS pathIn, tableLocation FROM %s", key, key, object);
+                } else {
+                    sql = String.format("SELECT `%s`.* FROM %s", key, object);
+                }
                 JSoundDataFrame result = childDataFrame.evaluateSQL(
-                    String.format("SELECT `%s`.* FROM %s", key, object),
+                    sql,
                     type
                 );
                 return result;
