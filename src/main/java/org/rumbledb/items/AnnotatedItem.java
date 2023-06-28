@@ -371,4 +371,14 @@ public class AnnotatedItem implements Item {
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return this.itemToAnnotate.generateNativeQuery(context);
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.itemToAnnotate.getSparkSQLValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        return this.itemToAnnotate.getSparkSQLType();
+    }
 }
