@@ -22,6 +22,8 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -40,10 +42,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.FieldDescriptor;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.TypeMappings;
+import org.rumbledb.types.*;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -342,24 +341,30 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 String sql;
                 if (childDataFrame.getKeys().contains("tableLocation")) {
                     sql = String.format("SELECT `%s`.*, rowID, mutabilityLevel, CONCAT(pathIn, '%s.') AS pathIn, tableLocation FROM %s", key, key, object);
+
                 } else {
                     sql = String.format("SELECT `%s`.* FROM %s", key, object);
                 }
                 JSoundDataFrame result = childDataFrame.evaluateSQL(
-                    sql,
-                    type
+                        sql,
+                        type
                 );
                 return result;
             } else {
-                JSoundDataFrame result = childDataFrame.evaluateSQL(
-                    String.format(
-                        "SELECT `%s` AS `%s` FROM %s",
-                        key,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        object
-                    ),
-                    type
-                );
+                String sql;
+                JSoundDataFrame result;
+                if (childDataFrame.getKeys().contains("tableLocation")) {
+                    sql = String.format("SELECT `%s` AS `%s`, rowID, mutabilityLevel, CONCAT(pathIn, '%s') AS pathIn, tableLocation FROM %s", key, SparkSessionManager.atomicJSONiqItemColumnName, key, object);
+                    Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                    ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
+                    result = new JSoundDataFrame(df, deltaItemType);
+                } else {
+                    sql = String.format("SELECT `%s` AS `%s` FROM %s", key, SparkSessionManager.atomicJSONiqItemColumnName, object);
+                    result = childDataFrame.evaluateSQL(
+                            sql,
+                            type
+                    );
+                }
                 return result;
             }
         }

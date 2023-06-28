@@ -261,6 +261,31 @@ public class ItemParser implements Serializable {
             return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
         }
 
+        if (fields.length == 5 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName) && fieldnames[4].equals("tableLocation")) {
+            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType());
+            // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
+            for (int i = 0; i < fields.length; ++i) {
+                String fieldName = fields[i].name();
+
+                if (fieldName.equals("mutabilityLevel")) {
+                    res.setMutabilityLevel(row.getInt(i));
+                    continue;
+                }
+                if (fieldName.equals("rowID")) {
+                    res.setTopLevelID(row.getLong(i));
+                    continue;
+                }
+                if (fieldName.equals("pathIn")) {
+                    res.setPathIn(row.getString(i));
+                    continue;
+                }
+                if (fieldName.equals("tableLocation")) {
+                    res.setTableLocation(row.getString(i));
+                }
+            }
+            return res;
+        }
+
         Map<String, FieldDescriptor> content = null;
 
         if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
