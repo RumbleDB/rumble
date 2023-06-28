@@ -84,9 +84,9 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
 
-        String setField = pathIn + "." + this.selector.getStringValue() + " = " + this.content.getSparkSQLValue();
+        String setField = pathIn + this.selector.getStringValue() + " = " + this.content.getSparkSQLValue();
 
-        String query = "UPDATE delta.`" + location + "` SET " + setField + " rowID == " + rowID;
+        String query = "UPDATE delta.`" + location + "` SET " + setField + " WHERE rowID == " + rowID;
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }

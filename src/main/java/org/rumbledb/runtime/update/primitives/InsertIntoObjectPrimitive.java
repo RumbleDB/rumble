@@ -61,8 +61,8 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         List<String> keys = this.content.getKeys();
         List<Item> values = this.content.getValues();
         for (int i = 0; i < keys.size(); i++) {
-            columnsClauseList.add(pathIn + "." + keys.get(i) + " " + values.get(i).getDynamicType());
-            setClauseList.add(pathIn + "." + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
+            columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
+            setClauseList.add(pathIn + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
         }
 
 //        String columnsClause = String.join(", ", columnsClauseList);
@@ -72,7 +72,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         List<String> insertColumnQueries = columnsClauseList.stream().map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");").collect(Collectors.toList());
 
 //        String insertColumnQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + columnsClause + ");";
-        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + "WHERE rowID == " + rowID;
+        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + " WHERE rowID == " + rowID;
 
         SparkSessionManager manager = SparkSessionManager.getInstance();
 

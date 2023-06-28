@@ -61,8 +61,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     public void applyDelta() {
         String pathIn = this.target.getPathIn();
         String oldName = this.selector.getStringValue();
-        String fullOldPath = pathIn + "." + oldName;
-        String fullNewPath = pathIn + "." + this.content.getStringValue();
+        String fullOldPath = pathIn + oldName;
+        String fullNewPath = pathIn + this.content.getStringValue();
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
 
@@ -71,7 +71,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         String type = SparkSessionManager.getInstance().getOrCreateSession().sql("DESC (SELECT " + fullOldPath + " FROM delta.`" + location + "`)").filter(col("col_name").equalTo(oldName)).select("data_type").collectAsList().get(0).getString(0);
 
         String insertNewColumnQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + fullNewPath + " " + type + ");";
-        String setFieldsQuery = "UPDATE delta.`" + location + "` SET " + setOldFieldClause + ", " + setNewFieldClause + "WHERE rowID == " + rowID;
+        String setFieldsQuery = "UPDATE delta.`" + location + "` SET " + setOldFieldClause + ", " + setNewFieldClause + " WHERE rowID == " + rowID;
 
         // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
         try {
