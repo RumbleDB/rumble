@@ -205,9 +205,12 @@ public class ArrayItem implements Item {
     public String getSparkSQLValue() {
         StringBuilder sb = new StringBuilder();
         sb.append("array(");
-        for (Item item : this.arrayItems) {
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
             sb.append(item.getSparkSQLValue());
-            sb.append(", ");
+            if (i + 1 < this.arrayItems.size()) {
+                sb.append(", ");
+            }
         }
         sb.append(")");
         return sb.toString();
