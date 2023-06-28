@@ -57,7 +57,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
         this.applyItem();
         setClause = setClause + this.target.getSparkSQLValue();
 
-        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClause + "WHERE rowID == " + rowID;
+        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldQuery);
     }

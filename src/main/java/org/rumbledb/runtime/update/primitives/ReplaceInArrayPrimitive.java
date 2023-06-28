@@ -69,7 +69,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         this.applyItem();
         setField = setField + this.target.getSparkSQLValue();
 
-        String query = "UPDATE delta.`" + location + "` SET " + setField + " rowID == " + rowID;
+        String query = "UPDATE delta.`" + location + "` SET " + setField + " WHERE rowID == " + rowID;
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }
