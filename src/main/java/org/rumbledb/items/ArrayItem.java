@@ -217,6 +217,22 @@ public class ArrayItem implements Item {
     }
 
     @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        StringBuilder sb = new StringBuilder();
+        ItemType elementType = itemType.getArrayContentFacet();
+        sb.append("array(");
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            sb.append(item.getSparkSQLValue(elementType));
+            if (i + 1 < this.arrayItems.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
     public String getSparkSQLType() {
         // TODO: Is it okay to assume first elem type is same as rest?
         StringBuilder sb = new StringBuilder();

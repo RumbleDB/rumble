@@ -765,6 +765,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the SparkSQL value of the item for use in a query.
+     *
+     * @return String representing the SparkSQL value of the item.
+     */
+    default String getSparkSQLValue(ItemType itemType) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the SparkSQL type of the item for use in a query.
      *
      * @return String representing the SparkSQL type of the item.

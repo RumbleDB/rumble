@@ -201,6 +201,17 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
     public String getSparkSQLType() {
         // TODO: Make enum?
         return "FLOAT";

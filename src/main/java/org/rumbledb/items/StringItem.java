@@ -159,6 +159,11 @@ public class StringItem implements Item {
     }
 
     @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return "\"" + this.value + "\"";
+    }
+
+    @Override
     public String getSparkSQLType() {
         return "STRING";
     }

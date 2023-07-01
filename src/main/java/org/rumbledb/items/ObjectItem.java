@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 import java.util.*;
@@ -275,6 +276,42 @@ public class ObjectItem implements Item {
                 sb.append(", ");
             }
         }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        StringBuilder sb = new StringBuilder();
+
+        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
+        String[] keys = content.keySet().toArray(new String[0]);
+
+        sb.append("named_struct(");
+
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            FieldDescriptor field = content.get(key);
+            int keyIndex = this.keys.indexOf(key);
+
+            sb.append("\"");
+            sb.append(key);
+            sb.append("\"");
+            sb.append(", ");
+
+            if (keyIndex == -1) {
+                if (!field.isRequired()) {
+                    sb.append("NULL");
+                }
+            } else {
+                sb.append(this.values.get(keyIndex).getSparkSQLValue(field.getType()));
+            }
+
+            if (i + 1 < keys.length) {
+                sb.append(", ");
+            }
+        }
+
         sb.append(")");
         return sb.toString();
     }

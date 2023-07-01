@@ -193,7 +193,18 @@ public class DoubleItem implements Item {
         if (Double.isInfinite(this.value) && this.value < 0) {
             return "-INF";
         }
-        return this.getSparkSQLValue();
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        return this.getStringValue();
     }
 
     @Override
