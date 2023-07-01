@@ -19,6 +19,7 @@ public class PendingUpdateList {
     private Comparator<Item> targetComparator;
 
     public PendingUpdateList() {
+        // TODO: diff comparator for delta
         this.targetComparator = (item1, item2) -> {
             int hashCompare = Integer.compare(item1.hashCode(), item2.hashCode());
             if (item1.hashCode() != item2.hashCode()) {
@@ -107,7 +108,9 @@ public class PendingUpdateList {
                     objectPUL.add(upFactory.createReplaceInObjectPrimitive(target, locator, tempSrc, metadata));
                 }
             }
-            objectPUL.add(upFactory.createDeleteFromObjectPrimitive(target, toDel, metadata));
+            if (!toDel.isEmpty()) {
+                objectPUL.add(upFactory.createDeleteFromObjectPrimitive(target, toDel, metadata));
+            }
         }
 
         // INSERTS
