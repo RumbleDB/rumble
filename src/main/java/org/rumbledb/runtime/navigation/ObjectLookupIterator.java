@@ -340,7 +340,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 // TODO: implement keyword vars to stop ust using strs
                 String sql;
                 if (childDataFrame.getKeys().contains("tableLocation")) {
-                    sql = String.format("SELECT `%s`.*, rowID, mutabilityLevel, CONCAT(pathIn, '%s.') AS pathIn, tableLocation FROM %s", key, key, object);
+                    sql = String.format("SELECT `%s`.*, rowID, mutabilityLevel, CONCAT(pathIn, '.%s') AS pathIn, tableLocation FROM %s", key, key, object);
 
                 } else {
                     sql = String.format("SELECT `%s`.* FROM %s", key, object);
@@ -354,7 +354,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 String sql;
                 JSoundDataFrame result;
                 if (childDataFrame.getKeys().contains("tableLocation")) {
-                    sql = String.format("SELECT `%s` AS `%s`, rowID, mutabilityLevel, CONCAT(pathIn, '%s') AS pathIn, tableLocation FROM %s", key, SparkSessionManager.atomicJSONiqItemColumnName, key, object);
+                    sql = String.format("SELECT `%s` AS `%s`, rowID, mutabilityLevel, CONCAT(pathIn, '.%s') AS pathIn, tableLocation FROM %s", key, SparkSessionManager.atomicJSONiqItemColumnName, key, object);
                     Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
                     ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
                     result = new JSoundDataFrame(df, deltaItemType);
