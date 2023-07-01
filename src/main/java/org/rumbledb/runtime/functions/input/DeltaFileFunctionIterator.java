@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.input;
 
-import io.delta.tables.DeltaTable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
@@ -40,10 +39,19 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
-//        DeltaTable deltaTable = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), uri.toString());
-        SparkSessionManager.getInstance().getOrCreateSession().read().format("delta").load(uri.toString())
-                .withColumn("rowID", monotonically_increasing_id())
-                .write().format("delta").mode("overwrite").option("overwriteSchema", true).save(uri.toString());
+        // DeltaTable deltaTable = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(),
+        // uri.toString());
+        SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .read()
+            .format("delta")
+            .load(uri.toString())
+            .withColumn("rowID", monotonically_increasing_id())
+            .write()
+            .format("delta")
+            .mode("overwrite")
+            .option("overwriteSchema", true)
+            .save(uri.toString());
         Dataset<Row> dataFrame = SparkSessionManager.getInstance()
             .getOrCreateSession()
             .read()

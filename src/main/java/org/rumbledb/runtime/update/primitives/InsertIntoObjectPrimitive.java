@@ -1,24 +1,15 @@
 package org.rumbledb.runtime.update.primitives;
 
-import com.amazonaws.services.dynamodbv2.xspec.S;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.AnalysisException;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.RowToItemMapper;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.apache.spark.sql.functions.col;
 
 public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
@@ -77,7 +68,9 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
             String setClauses = String.join(", ", setClauseList);
 
-            List<String> insertColumnQueries = columnsClauseList.stream().map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");").collect(Collectors.toList());
+            List<String> insertColumnQueries = columnsClauseList.stream()
+                .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
+                .collect(Collectors.toList());
 
             String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + " WHERE rowID == " + rowID;
 

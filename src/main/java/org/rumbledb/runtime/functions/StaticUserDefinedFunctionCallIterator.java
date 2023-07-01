@@ -172,12 +172,12 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             return new PendingUpdateList();
         }
         this.userDefinedFunctionCallIterator = context.getNamedFunctions()
-                .getUserDefinedFunctionCallIterator(
-                        this.functionIdentifier,
-                        this.getHighestExecutionMode(),
-                        getMetadata(),
-                        this.functionArguments
-                );
+            .getUserDefinedFunctionCallIterator(
+                this.functionIdentifier,
+                this.getHighestExecutionMode(),
+                getMetadata(),
+                this.functionArguments
+            );
         return this.userDefinedFunctionCallIterator.getPendingUpdateList(context);
     }
 }

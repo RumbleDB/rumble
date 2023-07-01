@@ -1,9 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
-import io.delta.tables.DeltaTable;
 import org.apache.spark.sql.AnalysisException;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -72,10 +69,30 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
 
             String setOldFieldClause = fullOldPath + " = NULL";
             String setNewFieldClause = fullNewPath + " = " + this.target.getItemByKey(oldName).getSparkSQLValue();
-            String type = SparkSessionManager.getInstance().getOrCreateSession().sql("DESC (SELECT " + fullOldPath + " FROM delta.`" + location + "`)").filter(col("col_name").equalTo(oldName)).select("data_type").collectAsList().get(0).getString(0);
+            String type = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .sql("DESC (SELECT " + fullOldPath + " FROM delta.`" + location + "`)")
+                .filter(col("col_name").equalTo(oldName))
+                .select("data_type")
+                .collectAsList()
+                .get(0)
+                .getString(0);
 
-            String insertNewColumnQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + fullNewPath + " " + type + ");";
-            String setFieldsQuery = "UPDATE delta.`" + location + "` SET " + setOldFieldClause + ", " + setNewFieldClause + " WHERE rowID == " + rowID;
+            String insertNewColumnQuery = "ALTER TABLE delta.`"
+                + location
+                + "` ADD COLUMNS ("
+                + fullNewPath
+                + " "
+                + type
+                + ");";
+            String setFieldsQuery = "UPDATE delta.`"
+                + location
+                + "` SET "
+                + setOldFieldClause
+                + ", "
+                + setNewFieldClause
+                + " WHERE rowID == "
+                + rowID;
 
             // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
             try {

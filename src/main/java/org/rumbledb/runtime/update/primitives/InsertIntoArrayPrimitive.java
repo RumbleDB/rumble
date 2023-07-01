@@ -1,11 +1,9 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.apache.spark.sql.AnalysisException;
 import org.rumbledb.api.Item;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class InsertIntoArrayPrimitive implements UpdatePrimitive {

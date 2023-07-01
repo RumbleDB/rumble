@@ -81,11 +81,21 @@ public interface UpdatePrimitive {
         String postIndexingPathIn = pathIn.substring(startOfArrayIndexing);
         List<String> fields = Arrays.asList(postIndexingPathIn.split("\\."));
 
-        String selectArrayQuery = "SELECT " + preIndexingPathIn + " AS `" + SparkSessionManager.atomicJSONiqItemColumnName + "` FROM delta.`" + location + "` WHERE rowID == " + rowID;
+        String selectArrayQuery = "SELECT "
+            + preIndexingPathIn
+            + " AS `"
+            + SparkSessionManager.atomicJSONiqItemColumnName
+            + "` FROM delta.`"
+            + location
+            + "` WHERE rowID == "
+            + rowID;
 
         Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-        ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema()).getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+        ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
+            .getObjectContentFacet()
+            .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            .getType();
 
         JavaRDD<Row> rowRDD = arrayDF.javaRDD();
         JavaRDD<Item> itemRDD = rowRDD.map(new RowToItemMapper(ExceptionMetadata.EMPTY_METADATA, arrayType));
@@ -110,7 +120,9 @@ public interface UpdatePrimitive {
             innerItem.removeItemByKey(finalSelector);
             innerItem.putItemByKey(finalSelector, this.getTarget());
         } else if (innerItem.isArray()) {
-            int finalIndex = Integer.parseInt(finalSelector.substring(finalSelector.indexOf("[") + 1, finalSelector.indexOf("]")));
+            int finalIndex = Integer.parseInt(
+                finalSelector.substring(finalSelector.indexOf("[") + 1, finalSelector.indexOf("]"))
+            );
             innerItem.removeItemAt(finalIndex);
             innerItem.putItemAt(this.getTarget(), finalIndex);
         }
@@ -118,12 +130,14 @@ public interface UpdatePrimitive {
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
         String query = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
 
-        // TODO: Perhaps an if here to update schema if required but need to sort out new name of array column -- RenameInObj and InsertIntoObj
-//        if (this.isSchemaUpdating()) {
-//            String newName = "NEEDS A NEW NAME";
-//            String insertColumnsQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + arrayType.getSparkSQLType() + ");";
-//            SparkSessionManager.getInstance().getOrCreateSession().sql(insertColumnsQuery);
-//        }
+        // TODO: Perhaps an if here to update schema if required but need to sort out new name of array column --
+        // RenameInObj and InsertIntoObj
+        // if (this.isSchemaUpdating()) {
+        // String newName = "NEEDS A NEW NAME";
+        // String insertColumnsQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" +
+        // arrayType.getSparkSQLType() + ");";
+        // SparkSessionManager.getInstance().getOrCreateSession().sql(insertColumnsQuery);
+        // }
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }

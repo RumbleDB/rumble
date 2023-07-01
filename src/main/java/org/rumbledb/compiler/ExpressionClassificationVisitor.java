@@ -291,7 +291,10 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             }
             currArgResult = this.visit(argExpr, argument);
             if (currArgResult.isUpdating()) {
-                throw new InvalidUpdatingExpressionPositionException("Arguments to function calls cannot be updating", argExpr.getMetadata());
+                throw new InvalidUpdatingExpressionPositionException(
+                        "Arguments to function calls cannot be updating",
+                        argExpr.getMetadata()
+                );
             }
         }
         FunctionSignature funcSig;
@@ -300,28 +303,42 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         } catch (UnknownFunctionCallException e) {
             throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
         }
-        ExpressionClassification result = funcSig.isUpdating() ? ExpressionClassification.UPDATING : ExpressionClassification.SIMPLE;
+        ExpressionClassification result = funcSig.isUpdating()
+            ? ExpressionClassification.UPDATING
+            : ExpressionClassification.SIMPLE;
         expression.setExpressionClassification(result);
         // TODO: Make vacuous if call to fn:error? Not present!
         return result;
     }
 
     @Override
-    public ExpressionClassification visitInlineFunctionExpr(InlineFunctionExpression expression, ExpressionClassification argument) {
+    public ExpressionClassification visitInlineFunctionExpr(
+            InlineFunctionExpression expression,
+            ExpressionClassification argument
+    ) {
         ExpressionClassification bodyResult = this.visit(expression.getBody(), argument);
 
         if (expression.isUpdating()) {
             if (expression.getActualReturnType() != null) {
-                throw new UpdatingFunctionHasReturnTypeException("An updating function cannot have a return type", expression.getMetadata());
+                throw new UpdatingFunctionHasReturnTypeException(
+                        "An updating function cannot have a return type",
+                        expression.getMetadata()
+                );
             }
             if (!expression.isExternal() && !(bodyResult.isUpdating() || bodyResult.isVacuous())) {
-                throw new SimpleExpressionMustBeVacuousException("Top level expression of updating function must be updating or vacuous", expression.getMetadata());
+                throw new SimpleExpressionMustBeVacuousException(
+                        "Top level expression of updating function must be updating or vacuous",
+                        expression.getMetadata()
+                );
             }
             // TODO CHECK IF EXTERNAL ERROR XUDY0019
             expression.setExpressionClassification(ExpressionClassification.UPDATING);
         } else {
             if (!expression.isExternal() && !bodyResult.isSimple()) {
-                throw new InvalidUpdatingExpressionPositionException("Body of simple inline function must be simple", expression.getMetadata());
+                throw new InvalidUpdatingExpressionPositionException(
+                        "Body of simple inline function must be simple",
+                        expression.getMetadata()
+                );
             }
             // TODO CHECK IF EXTERNAL ERROR XUDY0018
             expression.setExpressionClassification(ExpressionClassification.SIMPLE);
