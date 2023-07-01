@@ -1,18 +1,18 @@
 package org.rumbledb.runtime.update.primitives;
 
 import io.delta.tables.DeltaTable;
-import org.apache.spark.sql.Column;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.*;
@@ -55,36 +55,23 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         }
     }
 
-    public void applyDF(DeltaTable deltaTable, Dataset<Row> dataframe, String targetName) {
-//        String pathIn = this.target.getPathIn();
-//        List<String> fieldsToDel = this.content.stream().map(i -> pathIn + "." + i.getStringValue()).collect(Collectors.toList());
-//        Map<String, Column> colMap = new HashMap<>();
-//        Map<String, String> matchMap = new HashMap<>();
-//        for (String field : fieldsToDel) {
-//            colMap.put(targetName, when(col("rowID").equalTo(this.target.getTopLevelID()), col(targetName).withField(field, lit(null))).otherwise(col(targetName)));
-//            matchMap.put(targetName + "." + field, "updates." + "." + field);
-//        }
-//
-//        dataframe = dataframe.withColumns(colMap);
-//
-//        deltaTable.as("original").merge(
-//                dataframe.as("updates"),
-//                ("original.rowID = updates.rowID")
-//        ).whenMatched().updateExpr(matchMap).execute();
-    }
-
     @Override
     public void applyDelta() {
-        String pathIn = this.target.getPathIn();
+        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
+        int startOfArrayIndexing = pathIn.indexOf("[");
 
-        List<String> setFieldsToNulls = this.content.stream().map(i -> pathIn + i.getStringValue() + " = NULL").collect(Collectors.toList());
-        String concatSetNulls = String.join(", ", setFieldsToNulls);
+        if (startOfArrayIndexing == -1) {
+            List<String> setFieldsToNulls = this.content.stream().map(i -> pathIn + i.getStringValue() + " = NULL").collect(Collectors.toList());
+            String concatSetNulls = String.join(", ", setFieldsToNulls);
 
-        String query = "UPDATE delta.`" + location + "` SET " + concatSetNulls + " WHERE rowID == " + rowID;
+            String query = "UPDATE delta.`" + location + "` SET " + concatSetNulls + " WHERE rowID == " + rowID;
 
-        SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+        } else {
+            this.arrayIndexingApplyDelta();
+        }
     }
 
     @Override

@@ -49,17 +49,22 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
         // ASSUMES ArrayType ONLY CONTAINS 1 TYPE AND INSERTION OF A DIFF TYPE IS INVALID
         // TODO: perhaps check for homogenous typing of array w/o relying on SQL error
 
-        String pathIn = this.target.getPathIn();
+        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
+        int startOfArrayIndexing = pathIn.indexOf("[");
 
-        String setClause = pathIn + " = ";
-        this.applyItem();
-        setClause = setClause + this.target.getSparkSQLValue();
+        if (startOfArrayIndexing == -1) {
+            String setClause = pathIn + " = ";
+            this.applyItem();
+            setClause = setClause + this.target.getSparkSQLValue();
 
-        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
+            String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
 
-        SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldQuery);
+            SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldQuery);
+        } else {
+            this.arrayIndexingApplyDelta();
+        }
     }
 
     @Override

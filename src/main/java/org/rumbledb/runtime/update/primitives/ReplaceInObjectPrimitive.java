@@ -1,14 +1,19 @@
 package org.rumbledb.runtime.update.primitives;
 
 import io.delta.tables.DeltaTable;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,36 +64,26 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
         }
     }
 
-    public void applyDF(DeltaTable deltaTable, Dataset<Row> dataframe, String targetName) {
-//        String pathIn = this.target.getPathIn();
-//        String fieldToRep = pathIn + "." + this.selector.getStringValue();
-//
-//        dataframe = dataframe.withColumn(targetName, when(col("rowID").equalTo(this.target.getTopLevelID()), col(targetName).withField(fieldToRep, lit(this.content))).otherwise(col(targetName)));
-//
-//        deltaTable.as("original").merge(
-//                dataframe.as("updates"),
-//                ("original.rowID = updates.rowID")
-//        ).whenMatched().updateExpr(
-//                new HashMap<String, String>() {{
-//                    put(targetName + "." + fieldToRep, "updates." + fieldToRep);
-//                }}
-//        ).execute();
-    }
-
     @Override
     public void applyDelta() {
         // TODO: Sort out diff types of content Item
         // PERHAPS CHANGE OF TYPE SHOULD CREATE NEW COLUMN?
 
-        String pathIn = this.target.getPathIn();
+        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
+        int startOfArrayIndexing = pathIn.indexOf("[");
 
-        String setField = pathIn + this.selector.getStringValue() + " = " + this.content.getSparkSQLValue();
+        if (startOfArrayIndexing == -1) {
 
-        String query = "UPDATE delta.`" + location + "` SET " + setField + " WHERE rowID == " + rowID;
+            String setField = pathIn + this.selector.getStringValue() + " = " + this.content.getSparkSQLValue();
 
-        SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            String query = "UPDATE delta.`" + location + "` SET " + setField + " WHERE rowID == " + rowID;
+
+            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+        } else {
+            this.arrayIndexingApplyDelta();
+        }
     }
 
     @Override

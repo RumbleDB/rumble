@@ -1,13 +1,20 @@
 package org.rumbledb.runtime.update.primitives;
 
 import com.amazonaws.services.dynamodbv2.xspec.S;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,42 +59,45 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         // TODO: Properly discern ItemType to SQLType
         // TODO: Sort out types for value item
 
-        String pathIn = this.target.getPathIn();
+        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
+        int startOfArrayIndexing = pathIn.indexOf("[");
 
-        List<String> columnsClauseList = new ArrayList<>();
-        List<String> setClauseList = new ArrayList<>();
-        List<String> keys = this.content.getKeys();
-        List<Item> values = this.content.getValues();
-        for (int i = 0; i < keys.size(); i++) {
-            columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
-            setClauseList.add(pathIn + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
-        }
+        if (startOfArrayIndexing == -1) {
 
-//        String columnsClause = String.join(", ", columnsClauseList);
-        String setClauses = String.join(", ", setClauseList);
+            List<String> columnsClauseList = new ArrayList<>();
+            List<String> setClauseList = new ArrayList<>();
+            List<String> keys = this.content.getKeys();
+            List<Item> values = this.content.getValues();
+            for (int i = 0; i < keys.size(); i++) {
+                columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
+                setClauseList.add(pathIn + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
+            }
 
-        // Perhaps try to insert each -- check if exists and ignore if it does
-        List<String> insertColumnQueries = columnsClauseList.stream().map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");").collect(Collectors.toList());
+            String setClauses = String.join(", ", setClauseList);
 
-//        String insertColumnQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + columnsClause + ");";
-        String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + " WHERE rowID == " + rowID;
+            List<String> insertColumnQueries = columnsClauseList.stream().map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");").collect(Collectors.toList());
 
-        SparkSessionManager manager = SparkSessionManager.getInstance();
+            String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + " WHERE rowID == " + rowID;
 
-        // SKIP CREATING NEW COL FOR COL THAT ALREADY EXISTS
-        for (String insertColumnQueryAlt : insertColumnQueries) {
-            try {
-                manager.getOrCreateSession().sql(insertColumnQueryAlt);
-            } catch (Exception e) {
-                if (!(e instanceof AnalysisException)) {
-                    throw e;
+            SparkSessionManager manager = SparkSessionManager.getInstance();
+
+            // SKIP CREATING NEW COL FOR COL THAT ALREADY EXISTS
+            for (String insertColumnQueryAlt : insertColumnQueries) {
+                try {
+                    manager.getOrCreateSession().sql(insertColumnQueryAlt);
+                } catch (Exception e) {
+                    if (!(e instanceof AnalysisException)) {
+                        throw e;
+                    }
                 }
             }
+            manager.getOrCreateSession().sql(setFieldQuery);
+        } else {
+            this.arrayIndexingApplyDelta();
+            // TODO: Add new column for changed array and do the null trick -- do not forget the nullable etc
         }
-//        manager.getOrCreateSession().sql(insertColumnQuery);
-        manager.getOrCreateSession().sql(setFieldQuery);
     }
 
     @Override
