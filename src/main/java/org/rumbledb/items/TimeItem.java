@@ -31,10 +31,14 @@ public class TimeItem implements Item {
 
     TimeItem(String dateTimeString) {
         this.value = DateTimeItem.parseDateTime(dateTimeString, BuiltinTypesCatalogue.timeItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
+        if (doesLexicalValueHaveNoTimeZone(dateTimeString)) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
         }
+    }
+
+    private static boolean doesLexicalValueHaveNoTimeZone(String dateTimeString) {
+        return DateTimeItem.TIME_NOTIMEZONE_PATTERN.matcher(dateTimeString).matches();
     }
 
     @Override
