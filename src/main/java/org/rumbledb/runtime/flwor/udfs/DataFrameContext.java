@@ -129,10 +129,9 @@ public class DataFrameContext implements Serializable {
             }
             if (!column.isCount()) {
                 List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
-                for(Item j : i)
-                {
-                	System.err.println(j.getDynamicType());
-                	System.err.println(j.serialize());
+                for (Item j : i) {
+                    System.err.println(j.getDynamicType());
+                    System.err.println(j.serialize());
                 }
                 this.context.getVariableValues()
                     .addVariableValue(

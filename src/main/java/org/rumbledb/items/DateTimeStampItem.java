@@ -61,15 +61,13 @@ public class DateTimeStampItem implements Item {
     @Override
     public String getStringValue() {
         String value = this.value.toString();
-        if(this.value.getZone() == DateTimeZone.UTC)
-        {
+        if (this.value.getZone() == DateTimeZone.UTC) {
             value = value.substring(0, value.length() - 1);
             value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
             String zoneString = "Z";
             return value + zoneString;
         }
-        if(this.value.getZone().toString().equals(DateTimeZone.getDefault().toString()))
-        {
+        if (this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())) {
             value = value.substring(0, value.length() - 6);
             value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
             String zoneString = "";

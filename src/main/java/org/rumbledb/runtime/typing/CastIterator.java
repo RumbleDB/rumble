@@ -957,21 +957,20 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "FLOAT" + ")) ";
             System.err.println("Float");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.stringItem)) {
-        	if(this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeStampItem))
-        	{
-        		resultingQuery = " (date_format(" + value.getResultingQuery() + ", \"yyyy-MM-dd'T'HH:mm:ss.SZZZZZ\")) ";
-        	} else if(this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem))
-        	{
-        		if (getConfiguration().dateWithTimezone()) {
+            if (this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+                resultingQuery = " (date_format(" + value.getResultingQuery() + ", \"yyyy-MM-dd'T'HH:mm:ss.SZZZZZ\")) ";
+            } else if (this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem)) {
+                if (getConfiguration().dateWithTimezone()) {
                     return NativeClauseContext.NoNativeQuery;
                 }
-        		resultingQuery = " (date_format(" + value.getResultingQuery() + ", 'yyyy-MM-dd')) ";
-        	} else if(this.children.get(0).getStaticType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem))
-        	{
-        		resultingQuery = " (format_number(" + value.getResultingQuery() + ", '#.###################')) ";
-        	} else {
-        		resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "STRING" + ")) ";
-        	}
+                resultingQuery = " (date_format(" + value.getResultingQuery() + ", 'yyyy-MM-dd')) ";
+            } else if (
+                this.children.get(0).getStaticType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+            ) {
+                resultingQuery = " (format_number(" + value.getResultingQuery() + ", '#.###################')) ";
+            } else {
+                resultingQuery = " (CAST (" + value.getResultingQuery() + " AS " + "STRING" + ")) ";
+            }
             System.err.println("String");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)) {
             if (

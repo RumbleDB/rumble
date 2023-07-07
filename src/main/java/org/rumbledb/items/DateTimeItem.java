@@ -95,17 +95,16 @@ public class DateTimeItem implements Item {
 
     @Override
     public String getStringValue() {
-    	String value = this.value.toString();
-        if(this.value.getZone() == DateTimeZone.UTC)
-        {
+        String value = this.value.toString();
+        if (this.value.getZone() == DateTimeZone.UTC) {
             value = value.substring(0, value.length() - 1);
             value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
             String zoneString = "Z";
             return value + zoneString;
         }
         String zoneString = this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
-                ? ""
-                : value.substring(value.length() - 6);
+            ? ""
+            : value.substring(value.length() - 6);
         value = value.substring(0, value.length() - this.value.getZone().toString().length());
         value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
         return value + (this.hasTimeZone ? zoneString : "");
