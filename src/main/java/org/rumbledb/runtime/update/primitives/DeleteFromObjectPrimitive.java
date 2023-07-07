@@ -50,7 +50,8 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyDelta() {
-        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
+        String tempPathIn = this.target.getPathIn() + ".";
+        String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
