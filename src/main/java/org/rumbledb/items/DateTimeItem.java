@@ -106,19 +106,21 @@ public class DateTimeItem implements Item {
 
     @Override
     public String getStringValue() {
-        String value = this.value.toString();
-        if (this.value.getZone() == DateTimeZone.UTC) {
-            value = value.substring(0, value.length() - 1);
+        String originalValue = this.value.toString();
+        if (!hasTimeZone()) {
+            String value = originalValue.substring(0, originalValue.length() - 1);
             value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-            String zoneString = "Z";
-            return value + (this.hasTimeZone ? zoneString : "");
+            return value;
         }
-        String zoneString = this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
-            ? ""
-            : value.substring(value.length() - 6);
-        value = value.substring(0, value.length() - this.value.getZone().toString().length());
+        if (this.value.getZone() == DateTimeZone.UTC) {
+            String value = originalValue.substring(0, originalValue.length() - 1);
+            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+            return value + "Z";
+        }
+        String zoneString = originalValue.substring(originalValue.length() - 6);
+        String value = originalValue.substring(0, originalValue.length() - 6);
         value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + (this.hasTimeZone ? zoneString : "");
+        return value + zoneString;
     }
 
     @Override
