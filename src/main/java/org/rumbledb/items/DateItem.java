@@ -26,6 +26,10 @@ public class DateItem implements Item {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
+        if (!hasTimeZone) {
+            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+        }
+
     }
 
     DateItem(String dateTimeString) {

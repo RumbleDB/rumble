@@ -27,6 +27,9 @@ public class TimeItem implements Item {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
+        if (!hasTimeZone) {
+            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+        }
     }
 
     TimeItem(String dateTimeString) {
@@ -87,12 +90,24 @@ public class TimeItem implements Item {
 
     @Override
     public String getStringValue() {
-        String value = this.value.toString();
-        String zoneString = this.value.getZone() == DateTimeZone.UTC ? "Z" : value.substring(value.length() - 6);
-        value = value.substring(0, value.length() - zoneString.length());
+        String originalValue = this.value.toString();
+        if (!hasTimeZone()) {
+            String value = originalValue.substring(0, originalValue.length() - 1);
+            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+            value = value.substring(value.indexOf("T") + 1);;
+            return value;
+        }
+        if (this.value.getZone() == DateTimeZone.UTC) {
+            String value = originalValue.substring(0, originalValue.length() - 1);
+            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+            value = value.substring(value.indexOf("T") + 1);;
+            return value + "Z";
+        }
+        String zoneString = originalValue.substring(originalValue.length() - 6);
+        String value = originalValue.substring(0, originalValue.length() - 6);
         value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(dateTimeSeparatorIndex + 1) + (this.hasTimeZone ? zoneString : "");
+        value = value.substring(value.indexOf("T") + 1);;
+        return value + zoneString;
     }
 
     @Override
