@@ -1,9 +1,13 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.col;
@@ -56,7 +60,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyDelta() {
-        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
+        String tempPathIn = this.target.getPathIn() + ".";
+        String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
@@ -131,5 +136,54 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     @Override
     public boolean isRenameObject() {
         return true;
+    }
+
+    @Override
+    public boolean updatesSchemaDelta() {
+        return true;
+    }
+
+    @Override
+    public void arrayIndexingUpdateSchemaDelta() {
+        String tempPathIn = this.target.getPathIn() + ".";
+        String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
+        String location = this.target.getTableLocation();
+        long rowID = this.target.getTopLevelID();
+
+        String selectColQuery = "SELECT "
+                + pathIn + this.selector.getStringValue()
+                + " AS `"
+                + SparkSessionManager.atomicJSONiqItemColumnName
+                + "` FROM delta.`"
+                + location
+                + "` WHERE rowID == "
+                + rowID;
+
+        Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
+
+        ItemType colType = ItemTypeFactory.createItemType(colDF.schema())
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType();
+
+        String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
+        String fullNewPath = pathInSchema + this.content.getStringValue();
+
+        String insertNewColumnQuery = "ALTER TABLE delta.`"
+                + location
+                + "` ADD COLUMNS ("
+                + fullNewPath
+                + " "
+                + colType.getSparkSQLType()
+                + ");";
+
+        // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
+        try {
+            SparkSessionManager.getInstance().getOrCreateSession().sql(insertNewColumnQuery);
+        } catch (Exception e) {
+            if (!(e instanceof AnalysisException)) {
+                throw e;
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -69,6 +70,14 @@ public interface UpdatePrimitive {
         return false;
     }
 
+    default boolean updatesSchemaDelta() {
+        return false;
+    }
+
+    default void arrayIndexingUpdateSchemaDelta() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
     default void arrayIndexingApplyDelta() {
         Item target = this.getTarget();
 
@@ -80,6 +89,18 @@ public interface UpdatePrimitive {
         String preIndexingPathIn = pathIn.substring(0, startOfArrayIndexing);
         String postIndexingPathIn = pathIn.substring(startOfArrayIndexing);
         List<String> fields = Arrays.asList(postIndexingPathIn.split("\\."));
+
+        // TODO: Perhaps an if here to update schema if required but need to sort out new name of array column --
+        if (this.updatesSchemaDelta()) {
+            this.arrayIndexingUpdateSchemaDelta();
+        }
+        // RenameInObj and InsertIntoObj
+        // if (this.isSchemaUpdating()) {
+        // String newName = "NEEDS A NEW NAME";
+        // String insertColumnsQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" +
+        // arrayType.getSparkSQLType() + ");";
+        // SparkSessionManager.getInstance().getOrCreateSession().sql(insertColumnsQuery);
+        // }
 
         String selectArrayQuery = "SELECT "
             + preIndexingPathIn
@@ -129,15 +150,6 @@ public interface UpdatePrimitive {
 
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
         String query = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
-
-        // TODO: Perhaps an if here to update schema if required but need to sort out new name of array column --
-        // RenameInObj and InsertIntoObj
-        // if (this.isSchemaUpdating()) {
-        // String newName = "NEEDS A NEW NAME";
-        // String insertColumnsQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" +
-        // arrayType.getSparkSQLType() + ");";
-        // SparkSessionManager.getInstance().getOrCreateSession().sql(insertColumnsQuery);
-        // }
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }

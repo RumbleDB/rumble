@@ -50,7 +50,8 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         // TODO: Properly discern ItemType to SQLType
         // TODO: Sort out types for value item
 
-        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
+        String tempPathIn = this.target.getPathIn() + ".";
+        String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
@@ -77,9 +78,9 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
             SparkSessionManager manager = SparkSessionManager.getInstance();
 
             // SKIP CREATING NEW COL FOR COL THAT ALREADY EXISTS
-            for (String insertColumnQueryAlt : insertColumnQueries) {
+            for (String insertColumnQuery : insertColumnQueries) {
                 try {
-                    manager.getOrCreateSession().sql(insertColumnQueryAlt);
+                    manager.getOrCreateSession().sql(insertColumnQuery);
                 } catch (Exception e) {
                     if (!(e instanceof AnalysisException)) {
                         throw e;
@@ -116,6 +117,44 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     @Override
     public boolean isInsertObject() {
         return true;
+    }
+
+    @Override
+    public boolean updatesSchemaDelta() {
+        return true;
+    }
+
+    @Override
+    public void arrayIndexingUpdateSchemaDelta() {
+        String tempPathIn = this.target.getPathIn() + ".";
+        String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
+        String location = this.target.getTableLocation();
+
+        String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
+
+        List<String> columnsClauseList = new ArrayList<>();
+        List<String> keys = this.content.getKeys();
+        List<Item> values = this.content.getValues();
+        for (int i = 0; i < keys.size(); i++) {
+            columnsClauseList.add(pathInSchema + keys.get(i) + " " + values.get(i).getSparkSQLType());
+        }
+
+        List<String> insertColumnQueries = columnsClauseList.stream()
+                .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
+                .collect(Collectors.toList());
+
+        SparkSessionManager manager = SparkSessionManager.getInstance();
+
+        // SKIP CREATING NEW COL FOR COL THAT ALREADY EXISTS
+        for (String insertColumnQuery : insertColumnQueries) {
+            try {
+                manager.getOrCreateSession().sql(insertColumnQuery);
+            } catch (Exception e) {
+                if (!(e instanceof AnalysisException)) {
+                    throw e;
+                }
+            }
+        }
     }
 
     public static Item mergeSources(Item first, Item second, ExceptionMetadata metadata) {
