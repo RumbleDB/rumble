@@ -551,9 +551,10 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
-            new NativeClauseContext(leftResult, null, null)
-        );
+        if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -619,6 +620,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = null;
+
         SequenceType.Arity resultingArity =
             leftResult.getResultingType()
                 .getArity()
@@ -644,7 +646,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     + rightQuery
                     + " )";
                 return new NativeClauseContext(
-                        rightResult,
+                        nativeClauseContext,
                         resultingQuery,
                         new SequenceType(resultType, resultingArity)
                 );
@@ -655,7 +657,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     + rightQuery
                     + " )";
                 return new NativeClauseContext(
-                        rightResult,
+                        nativeClauseContext,
                         resultingQuery,
                         new SequenceType(resultType, resultingArity)
                 );
@@ -666,7 +668,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     + rightQuery
                     + " )";
                 return new NativeClauseContext(
-                        rightResult,
+                        nativeClauseContext,
                         resultingQuery,
                         new SequenceType(resultType, resultingArity)
                 );
