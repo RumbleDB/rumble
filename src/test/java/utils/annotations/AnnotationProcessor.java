@@ -26,6 +26,8 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Credit to Andrei Barsan, teammate from ACD ;)
@@ -33,6 +35,9 @@ import java.util.Optional;
 public class AnnotationProcessor {
 
     public static final String OUTPUT_KEY = "Output";
+    public static final String UPDATE_DIM_KEY = "UpdateDim";
+    public static final String UPDATE_TABLE_KEY = "UpdateTable";
+    public static final String DELETE_TABLE = "DeleteTable";
     public static final String ERROR_MESSAGE = "ErrorCode";
     public static final String ERROR_METADATA = "ErrorMetadata";
     public static final String SHOULD_PARSE = "ShouldParse";
@@ -68,6 +73,11 @@ public class AnnotationProcessor {
         Optional<Boolean> shouldCompile = Optional.empty();
         Optional<Boolean> shouldRun = Optional.empty();
 
+        Optional<Boolean> deleteTable = Optional.of(false);
+
+        Optional<Integer> updateDim1 = Optional.empty();
+        Optional<Integer> updateDim2 = Optional.empty();
+
         Map<String, String> parameters = new HashMap<>();
         for (String token : annotationTokens) {
             if (token.equals(SHOULD_PARSE)) {
@@ -84,6 +94,8 @@ public class AnnotationProcessor {
                 shouldRun = Optional.of(true);
             } else if (token.equals(SHOULD_CRASH)) {
                 shouldRun = Optional.of(false);
+            } else if (token.equals(DELETE_TABLE)) {
+                deleteTable = Optional.of(true);
             } else if (token.contains("=")) {
 
                 String[] tokenParts = token.split("=", 2);
@@ -93,6 +105,12 @@ public class AnnotationProcessor {
                 if (value.startsWith("\"")) {
                     value = value.substring(1, value.length() - 1);
                 }
+                if (key.equals(UPDATE_DIM_KEY)) {
+                    String[] dimsArr = value.substring(1, value.length() - 1).split(",");
+                    updateDim1 = Optional.of(Integer.parseInt(dimsArr[0]));
+                    updateDim2 = Optional.of(Integer.parseInt(dimsArr[1]));
+                }
+
                 value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
                 parameters.put(key, value);
             }
@@ -107,7 +125,11 @@ public class AnnotationProcessor {
 
         if (shouldRun.isPresent()) {
             if (shouldRun.get())
-                return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
+                if (updateDim1.isPresent() && updateDim2.isPresent()) {
+                    return new UpdatingRunnableTestAnnotation(parameters.get(OUTPUT_KEY), parameters.get(UPDATE_TABLE_KEY), updateDim1.get(), updateDim2.get(), deleteTable.get());
+                } else {
+                    return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
+                }
             else
                 return new UnrunnableTestAnnotation(
                         parameters.get(ERROR_MESSAGE),
@@ -134,10 +156,34 @@ public class AnnotationProcessor {
             );
     }
 
+    public static String getUpdateDimensionAnnotation(Reader reader) throws IOException, AnnotationParseException {
+        String annotationText = readAnnotationText(reader);
+        if (annotationText.isEmpty()) {
+            throw new AnnotationParseException(annotationText, "Found empty annotation.");
+        }
+        String[] annotationTokens = annotationText.split("\\s*;\\s*");
+        for (String token : annotationTokens) {
+             if (token.contains(UPDATE_DIM_KEY)) {
+
+                String[] tokenParts = token.split("=", 2);
+                String value = tokenParts[1].trim();
+                if (!value.matches("\\[\\d+,\\d+]")) {
+                    throw new AnnotationParseException(annotationText, "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\"");
+                }
+                return value;
+            }
+        }
+        throw new AnnotationParseException(annotationText, "No UpdateDim key found.");
+    }
+
     public static abstract class TestAnnotation {
         protected String expectedOutput = "";
         protected String errorCode = "";
         protected String errorMetadata = "";
+        protected String deltaTablePath = "";
+        protected int updatingDim1 = -1;
+        protected int updatingDim2 = -1;
+        protected boolean shouldDeleteTable = false;
 
         public TestAnnotation() {
         }
@@ -152,6 +198,22 @@ public class AnnotationProcessor {
 
         public String getErrorMetadata() {
             return this.errorMetadata;
+        }
+
+        public String getDeltaTablePath() {
+            return this.deltaTablePath;
+        }
+
+        public int getUpdatingDim1() {
+            return this.updatingDim1;
+        }
+
+        public int getUpdatingDim2() {
+            return this.updatingDim2;
+        }
+
+        public boolean shouldDeleteTable() {
+            return this.shouldDeleteTable;
         }
 
         public abstract boolean shouldParse();
@@ -171,6 +233,34 @@ public class AnnotationProcessor {
 
         public String getOutput() {
             return this.expectedOutput;
+        }
+
+        @Override
+        public boolean shouldParse() {
+            return true;
+        }
+
+        @Override
+        public boolean shouldCompile() {
+            return true;
+        }
+
+        @Override
+        public boolean shouldRun() {
+            return true;
+        }
+    }
+
+    public static class UpdatingRunnableTestAnnotation extends TestAnnotation {
+        public UpdatingRunnableTestAnnotation(String expectedOut, String deltaTablePath, int dim1, int dim2, boolean shouldDeleteTable) {
+            super();
+            this.expectedOutput = expectedOut;
+            this.errorCode = null;
+            this.errorMetadata = null;
+            this.deltaTablePath = deltaTablePath;
+            this.updatingDim1 = dim1;
+            this.updatingDim2 = dim2;
+            this.shouldDeleteTable = shouldDeleteTable;
         }
 
         @Override
