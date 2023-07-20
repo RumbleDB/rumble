@@ -53,7 +53,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/test/resources/test_files/runtime-delta-updates/simple-updates"
+                "/src/test/resources/test_files/runtime-delta-updates"
     );
     public static final String javaVersion =
         System.getProperty("java.version");
@@ -158,26 +158,26 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     }
 
     private boolean checkTableCreation(String path) throws IOException {
-
-        if (this.currentAnnotation.getUpdatingDim2() == 0) {
-            URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                    this.currentAnnotation.getDeltaTablePath(),
-                    DeltaUpdateRuntimeTests.createDeltaConfiguration,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
-            URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                    path,
-                    DeltaUpdateRuntimeTests.createDeltaConfiguration,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
-
-            DeltaUpdateRuntimeTests.createDeltaConfiguration.setOutputPath(tableURI.getPath());
-            DeltaUpdateRuntimeTests.createDeltaConfiguration.setQueryPath(queryURI.getPath());
-            JsoniqQueryExecutor executor = new JsoniqQueryExecutor(DeltaUpdateRuntimeTests.createDeltaConfiguration);
-            executor.runQuery();
-            return true;
+        if (this.currentAnnotation.getUpdatingDim2() != 0) {
+            return false;
         }
-        return false;
+
+        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                this.currentAnnotation.getDeltaTablePath(),
+                DeltaUpdateRuntimeTests.createDeltaConfiguration,
+                ExceptionMetadata.EMPTY_METADATA
+        );
+        URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                path,
+                DeltaUpdateRuntimeTests.createDeltaConfiguration,
+                ExceptionMetadata.EMPTY_METADATA
+        );
+
+        DeltaUpdateRuntimeTests.createDeltaConfiguration.setOutputPath(tableURI.getPath());
+        DeltaUpdateRuntimeTests.createDeltaConfiguration.setQueryPath(queryURI.getPath());
+        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(DeltaUpdateRuntimeTests.createDeltaConfiguration);
+        executor.runQuery();
+        return true;
     }
 
     private boolean checkTableDeletion() {
