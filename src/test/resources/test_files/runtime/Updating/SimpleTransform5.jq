@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="{ "bool_array" : [ true ], "float" : 4.2, "float_array" : [ 4.2 ], "int64" : 42, "int64_array" : [ 42 ], "object" : { "bool" : true, "float" : 4.2, "int64" : 42, "object" : { "bool" : true }, "string" : "hello" }, "object_array" : [ { "bool" : true, "float" : 4.2, "int64" : 42, "object" : { "bool" : true }, "string" : "hello" } ], "string" : "hello", "string_array" : [ "hello" ], "bool" : true }" :)
+(:JIQS: ShouldRun; Output="{ "bool_array" : [ true ], "float" : 4.2, "float_array" : [ 4.2 ], "int64" : 42, "int64_array" : [ 42 ], "object" : { "bool" : true, "float" : 4.2, "int64" : 42, "object" : { "bool" : true }, "string" : "hello" }, "object_array" : [ { "bool" : true, "float" : 4.2, "int64" : 42, "object" : { "bool" : true }, "string" : "hello" } ], "string_array" : [ "hello" ], "string" : "null" }" :)
 copy $je := delta-file("../../../queries/sample_json_delta")
-modify replace value of $je.bool with true
+modify replace value of $je.string with "null"
 return $je
