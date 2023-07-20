@@ -151,31 +151,32 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         long rowID = this.target.getTopLevelID();
 
         String selectColQuery = "SELECT "
-                + pathIn + this.selector.getStringValue()
-                + " AS `"
-                + SparkSessionManager.atomicJSONiqItemColumnName
-                + "` FROM delta.`"
-                + location
-                + "` WHERE rowID == "
-                + rowID;
+            + pathIn
+            + this.selector.getStringValue()
+            + " AS `"
+            + SparkSessionManager.atomicJSONiqItemColumnName
+            + "` FROM delta.`"
+            + location
+            + "` WHERE rowID == "
+            + rowID;
 
         Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
 
         ItemType colType = ItemTypeFactory.createItemType(colDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                .getType();
+            .getObjectContentFacet()
+            .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            .getType();
 
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
         String fullNewPath = pathInSchema + this.content.getStringValue();
 
         String insertNewColumnQuery = "ALTER TABLE delta.`"
-                + location
-                + "` ADD COLUMNS ("
-                + fullNewPath
-                + " "
-                + colType.getSparkSQLType()
-                + ");";
+            + location
+            + "` ADD COLUMNS ("
+            + fullNewPath
+            + " "
+            + colType.getSparkSQLType()
+            + ");";
 
         // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
         try {

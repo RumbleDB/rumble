@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.primitives;
 
-import io.delta.tables.DeltaTable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -56,24 +55,24 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
         String location = this.target.getTableLocation();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
-//        DeltaTable dt = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), location);
+        // DeltaTable dt = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), location);
 
         if (startOfArrayIndexing == -1) {
             String selectArrayQuery = "SELECT "
-                    + pathIn
-                    + " AS `"
-                    + SparkSessionManager.atomicJSONiqItemColumnName
-                    + "` FROM delta.`"
-                    + location
-                    + "` WHERE rowID == "
-                    + rowID;
+                + pathIn
+                + " AS `"
+                + SparkSessionManager.atomicJSONiqItemColumnName
+                + "` FROM delta.`"
+                + location
+                + "` WHERE rowID == "
+                + rowID;
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                    .getType();
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType();
 
             String setClause = pathIn + " = ";
             this.applyItem();

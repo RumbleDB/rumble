@@ -26,8 +26,6 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Credit to Andrei Barsan, teammate from ACD ;)
@@ -126,7 +124,13 @@ public class AnnotationProcessor {
         if (shouldRun.isPresent()) {
             if (shouldRun.get())
                 if (updateDim1.isPresent() && updateDim2.isPresent()) {
-                    return new UpdatingRunnableTestAnnotation(parameters.get(OUTPUT_KEY), parameters.get(UPDATE_TABLE_KEY), updateDim1.get(), updateDim2.get(), deleteTable.get());
+                    return new UpdatingRunnableTestAnnotation(
+                            parameters.get(OUTPUT_KEY),
+                            parameters.get(UPDATE_TABLE_KEY),
+                            updateDim1.get(),
+                            updateDim2.get(),
+                            deleteTable.get()
+                    );
                 } else {
                     return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
                 }
@@ -163,12 +167,15 @@ public class AnnotationProcessor {
         }
         String[] annotationTokens = annotationText.split("\\s*;\\s*");
         for (String token : annotationTokens) {
-             if (token.contains(UPDATE_DIM_KEY)) {
+            if (token.contains(UPDATE_DIM_KEY)) {
 
                 String[] tokenParts = token.split("=", 2);
                 String value = tokenParts[1].trim();
                 if (!value.matches("\\[\\d+,\\d+]")) {
-                    throw new AnnotationParseException(annotationText, "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\"");
+                    throw new AnnotationParseException(
+                            annotationText,
+                            "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\""
+                    );
                 }
                 return value;
             }
@@ -252,7 +259,13 @@ public class AnnotationProcessor {
     }
 
     public static class UpdatingRunnableTestAnnotation extends RunnableTestAnnotation {
-        public UpdatingRunnableTestAnnotation(String expectedOut, String deltaTablePath, int dim1, int dim2, boolean shouldDeleteTable) {
+        public UpdatingRunnableTestAnnotation(
+                String expectedOut,
+                String deltaTablePath,
+                int dim1,
+                int dim2,
+                boolean shouldDeleteTable
+        ) {
             super(expectedOut);
             this.deltaTablePath = deltaTablePath;
             this.updatingDim1 = dim1;

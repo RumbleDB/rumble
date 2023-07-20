@@ -62,12 +62,12 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
     protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                    "--print-iterator-tree",
-                    "yes",
-                    "--output-format",
-                    "delta",
-                    "--show-error-info",
-                    "yes"
+                "--print-iterator-tree",
+                "yes",
+                "--output-format",
+                "delta",
+                "--show-error-info",
+                "yes"
             }
     );
 
@@ -106,7 +106,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             innerMap = DeltaUpdateRuntimeTests._testFilesMap.get(i);
             for (int j : innerMap.keySet()) {
                 curr = innerMap.get(j);
-                result.add(new Object[]{ curr });
+                result.add(new Object[] { curr });
             }
         }
         return result;
@@ -145,7 +145,9 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         try {
-            this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(this.testFile.getAbsolutePath()));
+            this.currentAnnotation = AnnotationProcessor.readAnnotation(
+                new FileReader(this.testFile.getAbsolutePath())
+            );
         } catch (AnnotationParseException e) {
             e.printStackTrace();
             Assert.fail();
@@ -163,14 +165,14 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         }
 
         URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                this.currentAnnotation.getDeltaTablePath(),
-                DeltaUpdateRuntimeTests.createDeltaConfiguration,
-                ExceptionMetadata.EMPTY_METADATA
+            this.currentAnnotation.getDeltaTablePath(),
+            DeltaUpdateRuntimeTests.createDeltaConfiguration,
+            ExceptionMetadata.EMPTY_METADATA
         );
         URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                path,
-                DeltaUpdateRuntimeTests.createDeltaConfiguration,
-                ExceptionMetadata.EMPTY_METADATA
+            path,
+            DeltaUpdateRuntimeTests.createDeltaConfiguration,
+            ExceptionMetadata.EMPTY_METADATA
         );
 
         DeltaUpdateRuntimeTests.createDeltaConfiguration.setOutputPath(tableURI.getPath());
@@ -185,9 +187,9 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             return false;
         }
         URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                this.currentAnnotation.getDeltaTablePath(),
-                DeltaUpdateRuntimeTests.createDeltaConfiguration,
-                ExceptionMetadata.EMPTY_METADATA
+            this.currentAnnotation.getDeltaTablePath(),
+            DeltaUpdateRuntimeTests.createDeltaConfiguration,
+            ExceptionMetadata.EMPTY_METADATA
         );
 
         try {

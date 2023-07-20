@@ -140,8 +140,8 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         }
 
         List<String> insertColumnQueries = columnsClauseList.stream()
-                .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
-                .collect(Collectors.toList());
+            .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
+            .collect(Collectors.toList());
 
         SparkSessionManager manager = SparkSessionManager.getInstance();
 

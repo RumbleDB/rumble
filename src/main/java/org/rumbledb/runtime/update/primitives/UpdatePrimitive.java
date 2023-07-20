@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
