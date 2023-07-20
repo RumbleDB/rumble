@@ -1,8 +1,12 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 
@@ -65,10 +69,25 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
+            String selectArrayQuery = "SELECT "
+                    + pathIn
+                    + " AS `"
+                    + SparkSessionManager.atomicJSONiqItemColumnName
+                    + "` FROM delta.`"
+                    + location
+                    + "` WHERE rowID == "
+                    + rowID;
+
+            Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
+
+            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
 
             String setField = pathIn + " = ";
             this.applyItem();
-            setField = setField + this.target.getSparkSQLValue();
+            setField = setField + this.target.getSparkSQLValue(arrayType);
 
             String query = "UPDATE delta.`" + location + "` SET " + setField + " WHERE rowID == " + rowID;
 
