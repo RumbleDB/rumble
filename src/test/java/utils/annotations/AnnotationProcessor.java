@@ -251,12 +251,9 @@ public class AnnotationProcessor {
         }
     }
 
-    public static class UpdatingRunnableTestAnnotation extends TestAnnotation {
+    public static class UpdatingRunnableTestAnnotation extends RunnableTestAnnotation {
         public UpdatingRunnableTestAnnotation(String expectedOut, String deltaTablePath, int dim1, int dim2, boolean shouldDeleteTable) {
-            super();
-            this.expectedOutput = expectedOut;
-            this.errorCode = null;
-            this.errorMetadata = null;
+            super(expectedOut);
             this.deltaTablePath = deltaTablePath;
             this.updatingDim1 = dim1;
             this.updatingDim2 = dim2;
