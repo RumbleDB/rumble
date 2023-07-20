@@ -94,13 +94,6 @@ public interface UpdatePrimitive {
         if (this.updatesSchemaDelta()) {
             this.arrayIndexingUpdateSchemaDelta();
         }
-        // RenameInObj and InsertIntoObj
-        // if (this.isSchemaUpdating()) {
-        // String newName = "NEEDS A NEW NAME";
-        // String insertColumnsQuery = "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" +
-        // arrayType.getSparkSQLType() + ");";
-        // SparkSessionManager.getInstance().getOrCreateSession().sql(insertColumnsQuery);
-        // }
 
         String selectArrayQuery = "SELECT "
             + preIndexingPathIn
