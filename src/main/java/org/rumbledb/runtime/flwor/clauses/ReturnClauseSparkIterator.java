@@ -391,7 +391,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         PendingUpdateList result = new PendingUpdateList();
 
-        if (!isRDDOrDataFrame()) {
+        if (!expression.isRDDOrDataFrame()) {
             this.child.open(context);
             this.tupleContext = new DynamicContext(context); // assign current context
 
