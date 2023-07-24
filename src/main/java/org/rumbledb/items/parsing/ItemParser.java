@@ -266,14 +266,11 @@ public class ItemParser implements Serializable {
                 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
                 && fieldnames[4].equals("tableLocation")
         ) {
-            Item res = convertValueToItem(
-                row,
-                0,
-                null,
-                fields[0].dataType(),
-                metadata,
-                itemType.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType()
-            );
+            ItemType resType = null;
+            if (itemType != null) {
+                resType = itemType.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+            }
+            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
             // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
             for (int i = 0; i < fields.length; ++i) {
                 String fieldName = fields[i].name();
