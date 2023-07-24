@@ -21,6 +21,22 @@ public class PendingUpdateList {
     public PendingUpdateList() {
         // TODO: diff comparator for delta
         this.targetComparator = (item1, item2) -> {
+            boolean itemIsDelta1 = item1.getTableLocation() != null && !item1.getTableLocation().equals("null");
+            boolean itemIsDelta2 = item2.getTableLocation() != null && !item2.getTableLocation().equals("null");
+            if (itemIsDelta1 && itemIsDelta2) {
+                int tableComp = item1.getTableLocation().compareTo(item2.getTableLocation());
+                if (tableComp != 0) {
+                    return tableComp;
+                }
+                int rowComp = Long.compare(item1.getTopLevelID(), item2.getTopLevelID());
+                if (rowComp != 0) {
+                    return rowComp;
+                }
+                return item1.getPathIn().compareTo(item2.getPathIn());
+            } else if (itemIsDelta1 || itemIsDelta2) {
+                //TODO: what to compare when one is delta and one is not? Never occurs?
+                return 0;
+            }
             int hashCompare = Integer.compare(item1.hashCode(), item2.hashCode());
             if (item1.hashCode() != item2.hashCode()) {
                 return hashCompare;
