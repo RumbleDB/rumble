@@ -35,6 +35,7 @@ public class AnnotationProcessor {
     public static final String OUTPUT_KEY = "Output";
     public static final String UPDATE_DIM_KEY = "UpdateDim";
     public static final String UPDATE_TABLE_KEY = "UpdateTable";
+    public static final String CREATE_TABLE = "CreateTable";
     public static final String DELETE_TABLE = "DeleteTable";
     public static final String ERROR_MESSAGE = "ErrorCode";
     public static final String ERROR_METADATA = "ErrorMetadata";
@@ -72,6 +73,7 @@ public class AnnotationProcessor {
         Optional<Boolean> shouldRun = Optional.empty();
 
         Optional<Boolean> deleteTable = Optional.of(false);
+        Optional<Boolean> createTable = Optional.of(false);
 
         Optional<Integer> updateDim1 = Optional.empty();
         Optional<Integer> updateDim2 = Optional.empty();
@@ -94,6 +96,8 @@ public class AnnotationProcessor {
                 shouldRun = Optional.of(false);
             } else if (token.equals(DELETE_TABLE)) {
                 deleteTable = Optional.of(true);
+            } else if (token.equals(CREATE_TABLE)) {
+                createTable = Optional.of(true);
             } else if (token.contains("=")) {
 
                 String[] tokenParts = token.split("=", 2);
@@ -129,7 +133,8 @@ public class AnnotationProcessor {
                             parameters.get(UPDATE_TABLE_KEY),
                             updateDim1.get(),
                             updateDim2.get(),
-                            deleteTable.get()
+                            deleteTable.get(),
+                            createTable.get()
                     );
                 } else {
                     return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
@@ -191,6 +196,7 @@ public class AnnotationProcessor {
         protected int updatingDim1 = -1;
         protected int updatingDim2 = -1;
         protected boolean shouldDeleteTable = false;
+        protected boolean shouldCreateTable = false;
 
         public TestAnnotation() {
         }
@@ -221,6 +227,10 @@ public class AnnotationProcessor {
 
         public boolean shouldDeleteTable() {
             return this.shouldDeleteTable;
+        }
+
+        public boolean shouldCreateTable() {
+            return this.shouldCreateTable;
         }
 
         public abstract boolean shouldParse();
@@ -264,13 +274,15 @@ public class AnnotationProcessor {
                 String deltaTablePath,
                 int dim1,
                 int dim2,
-                boolean shouldDeleteTable
+                boolean shouldDeleteTable,
+                boolean shouldCreateTable
         ) {
             super(expectedOut);
             this.deltaTablePath = deltaTablePath;
             this.updatingDim1 = dim1;
             this.updatingDim2 = dim2;
             this.shouldDeleteTable = shouldDeleteTable;
+            this.shouldCreateTable = shouldCreateTable;
         }
 
         @Override
