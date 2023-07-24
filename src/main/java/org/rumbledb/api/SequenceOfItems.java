@@ -7,6 +7,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -51,7 +52,9 @@ public class SequenceOfItems {
      * Opens the iterator.
      */
     public void open() {
-        this.iterator.open(this.dynamicContext);
+        if (!this.isUpdating()) {
+            this.iterator.open(this.dynamicContext);
+        }
         this.isOpen = true;
     }
 
@@ -68,7 +71,9 @@ public class SequenceOfItems {
      * Closes the iterator.
      */
     public void close() {
-        this.iterator.close();
+        if (!this.isUpdating()) {
+            this.iterator.close();
+        }
         this.isOpen = false;
     }
 
@@ -78,6 +83,9 @@ public class SequenceOfItems {
      * @return true if there are more items, false otherwise.
      */
     public boolean hasNext() {
+        if (this.isUpdating()) {
+            return false;
+        }
         return this.iterator.hasNext();
     }
 
@@ -88,6 +96,9 @@ public class SequenceOfItems {
      * @return the next item.
      */
     public Item next() {
+        if (this.isUpdating()) {
+            return ItemFactory.getInstance().createNullItem();
+        }
         return this.iterator.next();
     }
 
@@ -116,6 +127,9 @@ public class SequenceOfItems {
      * @return an RDD of Items.
      */
     public JavaRDD<Item> getAsRDD() {
+        if (this.isUpdating()) {
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+        }
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
@@ -129,10 +143,22 @@ public class SequenceOfItems {
      * @return a data frame.
      */
     public Dataset<Row> getAsDataFrame() {
+        if (this.isUpdating()) {
+            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+        }
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         return this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
+    }
+
+    /**
+     * Returns whether the iterator is updating
+     *
+     * @return true if updating; otherwise false.
+     */
+    public boolean isUpdating() {
+        return this.iterator.isUpdating();
     }
 
     /*
@@ -176,6 +202,9 @@ public class SequenceOfItems {
 
     public long populateListWithWarningOnlyIfCapReached(List<Item> resultList) {
         if (this.availableAsRDD()) {
+            if (this.isUpdating()) {
+                return -1;
+            }
             JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
             return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
         } else {
