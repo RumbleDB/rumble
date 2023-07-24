@@ -71,6 +71,17 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             }
     );
 
+    protected static final RumbleRuntimeConfiguration deleteDeltaConfiguration = new RumbleRuntimeConfiguration(
+            new String[] {
+                    "--print-iterator-tree",
+                    "yes",
+                    "--output-format",
+                    "delta",
+                    "--show-error-info",
+                    "yes"
+            }
+    );
+
     protected static Map<Integer, Map<Integer, File>> _testFilesMap;
 
     protected final File testFile;
@@ -159,8 +170,8 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         }
     }
 
-    private boolean checkTableCreation(String path) throws IOException {
-        if (this.currentAnnotation.getUpdatingDim2() != 0) {
+    private boolean checkTableCreation(String path) throws IOException, InterruptedException {
+        if (!this.currentAnnotation.shouldCreateTable()) {
             return false;
         }
 
@@ -188,7 +199,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         }
         URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             this.currentAnnotation.getDeltaTablePath(),
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
+            DeltaUpdateRuntimeTests.deleteDeltaConfiguration,
             ExceptionMetadata.EMPTY_METADATA
         );
 
