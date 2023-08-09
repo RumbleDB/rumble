@@ -2,3 +2,5 @@
 copy $users := []
 modify insert {"userID" : "U07", "name" : "Annabel Lee"} into $users
 return $users[]
+
+(: no position index specified :)

@@ -133,7 +133,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
+            up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content), this.getMetadata());
         } else {
             throw new InvalidUpdateTargetException(
                     "Insert expression target must be a single array or object",

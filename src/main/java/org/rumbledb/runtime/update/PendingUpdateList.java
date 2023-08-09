@@ -181,7 +181,7 @@ public class PendingUpdateList {
             tempArrayPULs = targetArrayPULs.getOrDefault(target, new ArrayList<>());
             tempSelSrcListMap = this.insertArrayMap.get(target);
             for (Item locator : tempSelSrcListMap.keySet()) {
-                up = upFactory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator));
+                up = upFactory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator), metadata);
                 int index = Collections.binarySearch(
                     tempArrayPULs,
                     up,

@@ -3,6 +3,8 @@ package org.rumbledb.runtime.update.primitives;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -16,12 +18,12 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
     private Item selector;
     private List<Item> content;
 
-    public InsertIntoArrayPrimitive(Item targetArray, Item positionInt, List<Item> sourceSequence) {
-        if (!targetArray.isArray() || !positionInt.isNumeric()) {
-            // TODO ERROR
-        }
-        if (positionInt.getIntValue() < 0 || positionInt.getIntValue() >= targetArray.getSize()) {
-            // TODO throw error or do nothing?
+    public InsertIntoArrayPrimitive(Item targetArray, Item positionInt, List<Item> sourceSequence, ExceptionMetadata metadata) {
+        if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize() + 1) {
+            throw new CannotResolveUpdateSelectorException(
+                    "Cannot insert item at index out of range of target array",
+                    metadata
+            );
         }
 
         this.target = targetArray;

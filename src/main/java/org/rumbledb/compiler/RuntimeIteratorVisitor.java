@@ -441,9 +441,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             copyDeclMap.put(copyDecl.getVariableName(), this.visit(copyDecl.getSourceExpression(), argument));
         }
-        for (Expression childExpr : expression.getCopySourceExpressions()) {
-            copyDeclIterators.add(this.visit(childExpr, argument));
-        }
         RuntimeIterator modifyIterator = this.visit(expression.getModifyExpression(), argument);
         RuntimeIterator returnIterator = this.visit(expression.getReturnExpression(), argument);
 
