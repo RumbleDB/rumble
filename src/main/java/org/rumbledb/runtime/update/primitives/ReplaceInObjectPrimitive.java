@@ -23,7 +23,7 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
 
         if (targetObject.getItemByKey(targetName.getStringValue()) == null) {
             throw new CannotResolveUpdateSelectorException(
-                    "Cannot delete key that does not exist in target object",
+                    "Cannot replace key that does not exist in target object",
                     metadata
             );
         }
