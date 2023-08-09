@@ -212,108 +212,83 @@ public class PendingUpdateList {
 
     }
 
-    public static PendingUpdateList mergeUpdates(
-            PendingUpdateList pul1,
-            PendingUpdateList pul2,
+    public void mergeUpdates(
+            PendingUpdateList otherPul,
             ExceptionMetadata metadata
     ) {
-        PendingUpdateList res = new PendingUpdateList();
         Map<Item, Item> tempSelSrcMap;
         Map<Item, List<Item>> tempSelSrcListMap;
         Map<Item, Item> tempSelSrcResMap;
         Map<Item, List<Item>> tempSelSrcResListMap;
         Item tempSrc;
+        Item tempSrcRes;
         List<Item> tempSrcList;
 
         ////// OBJECTS
 
         // DELETES & REPLACES
-
-        for (Item target : pul1.delReplaceObjMap.keySet()) {
-            tempSelSrcMap = pul1.delReplaceObjMap.get(target);
-            tempSelSrcResMap = res.delReplaceObjMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcMap.keySet()) {
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
-            }
-            res.delReplaceObjMap.put(target, tempSelSrcResMap);
-        }
-
-        for (Item target : pul2.delReplaceObjMap.keySet()) {
-            tempSelSrcMap = pul2.delReplaceObjMap.get(target);
-            tempSelSrcResMap = res.delReplaceObjMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.delReplaceObjMap.keySet()) {
+            tempSelSrcMap = otherPul.delReplaceObjMap.get(target);
+            tempSelSrcResMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
-                if (tempSelSrcResMap.containsKey(selector)) {
-                    tempSrc = tempSelSrcResMap.get(selector);
-                    if (tempSrc != null) {
+                tempSrc = tempSelSrcMap.get(selector);
+                tempSrcRes = tempSelSrcResMap.get(selector);
+                if (tempSrc == null) {
+                    boolean hasRename = this.renameObjMap.containsKey(target) && this.renameObjMap.get(target).containsKey(selector);
+                    if (hasRename) {
+                        this.renameObjMap.get(target).remove(selector);
+                    }
+                } else {
+                    if (tempSelSrcResMap.containsKey(selector) && tempSrcRes != null) {
                         throw new TooManyReplacesOnSameTargetSelectorException(
                                 target.getDynamicType().getName().toString(),
                                 selector.getStringValue(),
                                 metadata
                         );
+                    } else if (tempSelSrcResMap.containsKey(selector)) {
+                        continue;
                     }
-                    continue;
                 }
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+                tempSelSrcResMap.put(selector, tempSrc);
+
             }
-            res.delReplaceObjMap.put(target, tempSelSrcResMap);
+            this.delReplaceObjMap.put(target, tempSelSrcResMap);
         }
 
         // INSERTS
-
-        res.insertObjMap.putAll(pul1.insertObjMap);
-
-        for (Item target : pul2.insertObjMap.keySet()) {
-            tempSrc = pul2.insertObjMap.get(target);
-            if (res.insertObjMap.containsKey(target)) {
-                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc, metadata);
+        for (Item target : otherPul.insertObjMap.keySet()) {
+            tempSrc = otherPul.insertObjMap.get(target);
+            if (this.insertObjMap.containsKey(target)) {
+                tempSrc = InsertIntoObjectPrimitive.mergeSources(this.insertObjMap.get(target), tempSrc, metadata);
             }
-            res.insertObjMap.put(target, tempSrc);
+            this.insertObjMap.put(target, tempSrc);
         }
 
         // RENAME
-
-        for (Item target : pul1.renameObjMap.keySet()) {
-            tempSelSrcMap = pul1.renameObjMap.get(target);
-            tempSelSrcResMap = res.renameObjMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcMap.keySet()) {
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
-            }
-            res.renameObjMap.put(target, tempSelSrcResMap);
-        }
-
-        for (Item target : pul2.renameObjMap.keySet()) {
-            tempSelSrcMap = pul2.renameObjMap.get(target);
-            tempSelSrcResMap = res.renameObjMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.renameObjMap.keySet()) {
+            tempSelSrcMap = otherPul.renameObjMap.get(target);
+            tempSelSrcResMap = this.renameObjMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     throw new TooManyRenamesOnSameTargetSelectorException(selector.getStringValue(), metadata);
                 }
+                boolean isDelete = this.delReplaceObjMap.containsKey(target) && this.delReplaceObjMap.get(target).containsKey(selector) && this.delReplaceObjMap.get(target).get(selector) == null;
+                if (isDelete) {
+                    continue;
+                }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.renameObjMap.put(target, tempSelSrcResMap);
+            this.renameObjMap.put(target, tempSelSrcResMap);
         }
 
         ////// ARRAYS
 
         // DELETES & REPLACES
-
-        for (Item target : pul1.delReplaceArrayMap.keySet()) {
-            tempSelSrcMap = pul1.delReplaceArrayMap.get(target);
-            tempSelSrcResMap = res.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcMap.keySet()) {
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
-            }
-            res.delReplaceArrayMap.put(target, tempSelSrcResMap);
-        }
-
-        for (Item target : pul2.delReplaceArrayMap.keySet()) {
-            tempSelSrcMap = pul2.delReplaceArrayMap.get(target);
-            tempSelSrcResMap = res.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.delReplaceArrayMap.keySet()) {
+            tempSelSrcMap = otherPul.delReplaceArrayMap.get(target);
+            tempSelSrcResMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
                 if (tempSelSrcResMap.containsKey(selector)) {
@@ -329,36 +304,23 @@ public class PendingUpdateList {
                 }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.delReplaceArrayMap.put(target, tempSelSrcResMap);
+            this.delReplaceArrayMap.put(target, tempSelSrcResMap);
         }
 
         // INSERTS
-
-        for (Item target : pul1.insertArrayMap.keySet()) {
-            tempSelSrcListMap = pul1.insertArrayMap.get(target);
-            tempSelSrcResListMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcListMap.keySet()) {
-                tempSelSrcResListMap.put(selector, tempSelSrcListMap.get(selector));
-            }
-            res.insertArrayMap.put(target, tempSelSrcResListMap);
-        }
-
-        for (Item target : pul2.insertArrayMap.keySet()) {
-            tempSelSrcListMap = pul2.insertArrayMap.get(target);
-            tempSelSrcResListMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.insertArrayMap.keySet()) {
+            tempSelSrcListMap = otherPul.insertArrayMap.get(target);
+            tempSelSrcResListMap = this.insertArrayMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcListMap.keySet()) {
                 tempSrcList = tempSelSrcResListMap.getOrDefault(selector, new ArrayList<>());
                 tempSelSrcResListMap.put(
-                    selector,
-                    InsertIntoArrayPrimitive.mergeSources(tempSrcList, tempSelSrcListMap.get(selector))
+                        selector,
+                        InsertIntoArrayPrimitive.mergeSources(tempSrcList, tempSelSrcListMap.get(selector))
                 );
             }
-            res.insertArrayMap.put(target, tempSelSrcResListMap);
+            this.insertArrayMap.put(target, tempSelSrcResListMap);
         }
-
-        return res;
     }
 
 }
