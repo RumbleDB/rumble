@@ -234,24 +234,24 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcMap.keySet()) {
                 tempSrc = tempSelSrcMap.get(selector);
                 tempSrcRes = tempSelSrcResMap.get(selector);
+                boolean srcResMapHasSel = tempSelSrcResMap.containsKey(selector);
                 if (tempSrc == null) {
                     boolean hasRename = this.renameObjMap.containsKey(target) && this.renameObjMap.get(target).containsKey(selector);
                     if (hasRename) {
                         this.renameObjMap.get(target).remove(selector);
                     }
                 } else {
-                    if (tempSelSrcResMap.containsKey(selector) && tempSrcRes != null) {
+                    if (srcResMapHasSel && tempSrcRes != null) {
                         throw new TooManyReplacesOnSameTargetSelectorException(
                                 target.getDynamicType().getName().toString(),
                                 selector.getStringValue(),
                                 metadata
                         );
-                    } else if (tempSelSrcResMap.containsKey(selector)) {
+                    } else if (srcResMapHasSel) {
                         continue;
                     }
                 }
                 tempSelSrcResMap.put(selector, tempSrc);
-
             }
             this.delReplaceObjMap.put(target, tempSelSrcResMap);
         }
@@ -291,18 +291,21 @@ public class PendingUpdateList {
             tempSelSrcResMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
-                if (tempSelSrcResMap.containsKey(selector)) {
-                    tempSrc = tempSelSrcResMap.get(selector);
-                    if (tempSrc != null) {
+                tempSrc = tempSelSrcMap.get(selector);
+                tempSrcRes = tempSelSrcResMap.get(selector);
+                boolean srcResMapHasSel = tempSelSrcResMap.containsKey(selector);
+                if (tempSrc != null && srcResMapHasSel) {
+                    if (tempSrcRes == null) {
+                        continue;
+                    } else {
                         throw new TooManyReplacesOnSameTargetSelectorException(
                                 target.getDynamicType().getName().toString(),
                                 Integer.toString(selector.getIntValue()),
                                 metadata
                         );
                     }
-                    continue;
                 }
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+                tempSelSrcResMap.put(selector, tempSrc);
             }
             this.delReplaceArrayMap.put(target, tempSelSrcResMap);
         }
