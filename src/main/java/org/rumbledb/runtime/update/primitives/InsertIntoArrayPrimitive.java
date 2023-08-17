@@ -18,7 +18,12 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
     private Item selector;
     private List<Item> content;
 
-    public InsertIntoArrayPrimitive(Item targetArray, Item positionInt, List<Item> sourceSequence, ExceptionMetadata metadata) {
+    public InsertIntoArrayPrimitive(
+            Item targetArray,
+            Item positionInt,
+            List<Item> sourceSequence,
+            ExceptionMetadata metadata
+    ) {
         if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize() + 1) {
             throw new CannotResolveUpdateSelectorException(
                     "Cannot insert item at index out of range of target array",

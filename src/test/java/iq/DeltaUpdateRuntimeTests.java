@@ -73,12 +73,12 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
     protected static final RumbleRuntimeConfiguration deleteDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                    "--print-iterator-tree",
-                    "yes",
-                    "--output-format",
-                    "delta",
-                    "--show-error-info",
-                    "yes"
+                "--print-iterator-tree",
+                "yes",
+                "--output-format",
+                "delta",
+                "--show-error-info",
+                "yes"
             }
     );
 

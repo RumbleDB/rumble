@@ -91,7 +91,12 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            up = factory.createInsertIntoArrayPrimitive(target, locator, Collections.singletonList(content), this.getMetadata());
+            up = factory.createInsertIntoArrayPrimitive(
+                target,
+                locator,
+                Collections.singletonList(content),
+                this.getMetadata()
+            );
         } else {
             throw new InvalidUpdateTargetException(
                     "Append expression target must be a single array",

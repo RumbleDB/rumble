@@ -35,7 +35,7 @@ public class PendingUpdateList {
                 }
                 return item1.getPathIn().compareTo(item2.getPathIn());
             } else if (itemIsDelta1 || itemIsDelta2) {
-                //TODO: what to compare when one is delta and one is not? Never occurs?
+                // TODO: what to compare when one is delta and one is not? Never occurs?
                 return 0;
             }
             int hashCompare = Integer.compare(item1.hashCode(), item2.hashCode());
@@ -179,7 +179,12 @@ public class PendingUpdateList {
             tempSelPULsMap = targetArrayPULs.getOrDefault(target, new TreeMap<>(this.arraySelectorComparator));
             tempSelSrcListMap = this.insertArrayMap.get(target);
             for (Item locator : tempSelSrcListMap.keySet()) {
-                up = upFactory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator), metadata);
+                up = upFactory.createInsertIntoArrayPrimitive(
+                    target,
+                    locator,
+                    tempSelSrcListMap.get(locator),
+                    metadata
+                );
                 tempArrayPULs = tempSelPULsMap.getOrDefault(locator, new ArrayList<>());
                 tempArrayPULs.add(up);
                 tempSelPULsMap.put(locator, tempArrayPULs);
@@ -230,7 +235,8 @@ public class PendingUpdateList {
                 tempSrcRes = tempSelSrcResMap.get(selector);
                 boolean srcResMapHasSel = tempSelSrcResMap.containsKey(selector);
                 if (tempSrc == null) {
-                    boolean hasRename = this.renameObjMap.containsKey(target) && this.renameObjMap.get(target).containsKey(selector);
+                    boolean hasRename = this.renameObjMap.containsKey(target)
+                        && this.renameObjMap.get(target).containsKey(selector);
                     if (hasRename) {
                         this.renameObjMap.get(target).remove(selector);
                     }
@@ -268,7 +274,9 @@ public class PendingUpdateList {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     throw new TooManyRenamesOnSameTargetSelectorException(selector.getStringValue(), metadata);
                 }
-                boolean isDelete = this.delReplaceObjMap.containsKey(target) && this.delReplaceObjMap.get(target).containsKey(selector) && this.delReplaceObjMap.get(target).get(selector) == null;
+                boolean isDelete = this.delReplaceObjMap.containsKey(target)
+                    && this.delReplaceObjMap.get(target).containsKey(selector)
+                    && this.delReplaceObjMap.get(target).get(selector) == null;
                 if (isDelete) {
                     continue;
                 }
@@ -312,8 +320,8 @@ public class PendingUpdateList {
             for (Item selector : tempSelSrcListMap.keySet()) {
                 tempSrcList = tempSelSrcResListMap.getOrDefault(selector, new ArrayList<>());
                 tempSelSrcResListMap.put(
-                        selector,
-                        InsertIntoArrayPrimitive.mergeSources(tempSrcList, tempSelSrcListMap.get(selector))
+                    selector,
+                    InsertIntoArrayPrimitive.mergeSources(tempSrcList, tempSelSrcListMap.get(selector))
                 );
             }
             this.insertArrayMap.put(target, tempSelSrcResListMap);

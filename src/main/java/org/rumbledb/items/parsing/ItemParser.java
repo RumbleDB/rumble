@@ -268,7 +268,9 @@ public class ItemParser implements Serializable {
         ) {
             ItemType resType = null;
             if (itemType != null) {
-                resType = itemType.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+                resType = itemType.getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
             }
             Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
             // TODO: refactor to not need to loop and check strings -- Indexes perhaps?

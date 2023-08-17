@@ -190,33 +190,33 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 elementType
             );
         } else if (
-                childDataFrame.getItemType()
-                        .getObjectContentFacet()
-                        .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                        .getType()
-                        .isArrayItemType()
-                        && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
+            childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType()
+                .isArrayItemType()
+                && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
         ) {
             ItemType elementType = childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                    .getType()
-                    .getArrayContentFacet();
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType()
+                .getArrayContentFacet();
             String sql;
             JSoundDataFrame res;
-            //TODO: SORT OUT INDEXING DURING UNBOXING
+            // TODO: SORT OUT INDEXING DURING UNBOXING
             if (elementType.isObjectItemType()) {
                 sql = String.format(
-                        "SELECT col.*, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        array
+                    "SELECT col.*, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    array
                 );
                 res = childDataFrame.evaluateSQL(sql, elementType);
             } else {
                 sql = String.format(
-                        "SELECT col, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        array
+                    "SELECT col, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
                 ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());

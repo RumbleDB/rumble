@@ -20,7 +20,11 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public InsertIntoObjectPrimitive(Item targetObject, Item contentObject, ExceptionMetadata metadata) {
         for (String key : contentObject.getKeys()) {
             if (targetObject.getItemByKey(key) != null) {
-                throw new DuplicateKeyOnUpdateApplyException("cannot insert a key already present in an object", metadata);            }
+                throw new DuplicateKeyOnUpdateApplyException(
+                        "cannot insert a key already present in an object",
+                        metadata
+                );
+            }
         }
         this.target = targetObject;
         this.content = contentObject;

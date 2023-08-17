@@ -6,7 +6,8 @@ package org.rumbledb.expressions;
  * A BASIC_UPDATING expression is classified as 1 of 5 expressions in the update package, that can alter the state of
  * an existing node.
  *
- * An UPDATING expression is classified as a BASIC_UPDATING expression or any expression (excluding a TransformExpression) that
+ * An UPDATING expression is classified as a BASIC_UPDATING expression or any expression (excluding a
+ * TransformExpression) that
  * directly contains an UPDATING expression and that can alter the state of an existing node.
  *
  * A SIMPLE expression is classified as an expression that is not an updating expression.
