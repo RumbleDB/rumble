@@ -168,6 +168,9 @@ public class SequenceOfItems {
      */
     public long populateList(List<Item> resultList) {
         resultList.clear();
+        if (this.isUpdating()) {
+            return -1;
+        }
         this.iterator.open(this.dynamicContext);
         Item result = null;
         if (this.iterator.hasNext()) {
