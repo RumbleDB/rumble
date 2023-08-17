@@ -113,7 +113,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            up = factory.createInsertIntoObjectPrimitive(main, content);
+            up = factory.createInsertIntoObjectPrimitive(main, content, this.getMetadata());
         } else if (main.isArray()) {
             if (locator == null) {
                 throw new CannotCastUpdateSelectorException("Insert expression selector is null", this.getMetadata());
