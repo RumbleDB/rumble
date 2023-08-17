@@ -166,6 +166,8 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        boolean isObject = childDataFrame.getItemType().isObjectItemType();
+        boolean hasAtomicJSONiqItem = isObject && childDataFrame.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
@@ -190,7 +192,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 elementType
             );
         } else if (
-            childDataFrame.getItemType()
+            hasAtomicJSONiqItem && childDataFrame.getItemType()
                 .getObjectContentFacet()
                 .get(SparkSessionManager.atomicJSONiqItemColumnName)
                 .getType()

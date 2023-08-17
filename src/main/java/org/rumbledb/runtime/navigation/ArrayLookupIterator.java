@@ -201,6 +201,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        boolean isObject = childDataFrame.getItemType().isObjectItemType();
+        boolean hasAtomicJSONiqItem = isObject && childDataFrame.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
@@ -230,8 +232,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 ),
                 elementType
             );
-        } else if (
-            childDataFrame.getItemType()
+        } else if (hasAtomicJSONiqItem &&
+                    childDataFrame.getItemType()
                 .getObjectContentFacet()
                 .get(SparkSessionManager.atomicJSONiqItemColumnName)
                 .getType()
