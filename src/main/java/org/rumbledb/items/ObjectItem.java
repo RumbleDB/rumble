@@ -242,6 +242,9 @@ public class ObjectItem implements Item {
     @Override
     public void setTopLevelID(long topLevelID) {
         this.topLevelID = topLevelID;
+        for (Item item : this.values) {
+            item.setTopLevelID(topLevelID);
+        }
     }
 
     @Override
@@ -252,6 +255,11 @@ public class ObjectItem implements Item {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
+        for (int i = 0; i < this.keys.size(); i++) {
+            String key = this.keys.get(i);
+            Item item = this.values.get(i);
+            item.setPathIn(pathIn + "." + key);
+        }
     }
 
     @Override
@@ -262,6 +270,9 @@ public class ObjectItem implements Item {
     @Override
     public void setTableLocation(String location) {
         this.location = location;
+        for (Item item : this.values) {
+            item.setTableLocation(location);
+        }
     }
 
     @Override
@@ -269,7 +280,9 @@ public class ObjectItem implements Item {
         StringBuilder sb = new StringBuilder();
         sb.append("named_struct(");
         for (int i = 0; i < this.keys.size(); i++) {
+            sb.append("\"");
             sb.append(this.keys.get(i));
+            sb.append("\"");
             sb.append(", ");
             sb.append(this.values.get(i).getSparkSQLValue());
             if (i + 1 < this.keys.size()) {

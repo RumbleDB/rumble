@@ -179,6 +179,9 @@ public class ArrayItem implements Item {
     @Override
     public void setTopLevelID(long topLevelID) {
         this.topLevelID = topLevelID;
+        for (Item item : this.arrayItems) {
+            item.setTopLevelID(topLevelID);
+        }
     }
 
     @Override
@@ -189,6 +192,10 @@ public class ArrayItem implements Item {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            item.setPathIn(pathIn + "[" + i + "]");
+        }
     }
 
     @Override
@@ -199,6 +206,9 @@ public class ArrayItem implements Item {
     @Override
     public void setTableLocation(String location) {
         this.location = location;
+        for (Item item : this.arrayItems) {
+            item.setTableLocation(location);
+        }
     }
 
     @Override
