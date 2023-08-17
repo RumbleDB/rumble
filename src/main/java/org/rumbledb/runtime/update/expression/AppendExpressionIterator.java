@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -72,7 +73,7 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
         try {
             target = this.arrayIterator.materializeExactlyOneItem(context);
-            content = this.toAppendIterator.materializeExactlyOneItem(context);
+            content = SerializationUtils.clone(this.toAppendIterator.materializeExactlyOneItem(context));
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }
