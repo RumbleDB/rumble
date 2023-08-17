@@ -90,10 +90,4 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         return true;
     }
 
-    public static List<Item> mergeSources(List<Item> first, List<Item> second) {
-        List<Item> merged = new ArrayList<>(first);
-        merged.addAll(second);
-        merged = merged.stream().distinct().collect(Collectors.toList());
-        return merged;
-    }
 }
