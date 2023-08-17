@@ -17,6 +17,7 @@ public class PendingUpdateList {
     private Map<Item, Map<Item, Item>> delReplaceArrayMap;
     private Map<Item, Map<Item, Item>> renameObjMap;
     private Comparator<Item> targetComparator;
+    private Comparator<Item> arraySelectorComparator;
 
     public PendingUpdateList() {
         // TODO: diff comparator for delta
@@ -46,6 +47,7 @@ public class PendingUpdateList {
             }
             return Integer.compare(System.identityHashCode(item1), System.identityHashCode(item2));
         };
+        this.arraySelectorComparator = Comparator.comparingInt(Item::getIntValue).reversed();
         this.insertObjMap = new TreeMap<>(this.targetComparator);
         this.insertArrayMap = new TreeMap<>(this.targetComparator);
         this.delReplaceObjMap = new TreeMap<>(this.targetComparator);
@@ -102,7 +104,9 @@ public class PendingUpdateList {
     public void applyUpdates(ExceptionMetadata metadata) {
         UpdatePrimitiveFactory upFactory = UpdatePrimitiveFactory.getInstance();
 
-        Map<Item, List<UpdatePrimitive>> targetArrayPULs = new HashMap<>();
+        // new TreeMap<>(this.targetComparator) sometimes causes null on apply?
+        Map<Item, Map<Item, List<UpdatePrimitive>>> targetArrayPULs = new HashMap<>();
+        Map<Item, List<UpdatePrimitive>> tempSelPULsMap;
         List<UpdatePrimitive> tempArrayPULs;
 
         List<UpdatePrimitive> objectPUL = new ArrayList<>();
@@ -132,7 +136,7 @@ public class PendingUpdateList {
         // INSERTS
 
         for (Item target : this.insertObjMap.keySet()) {
-            objectPUL.add(upFactory.createInsertIntoObjectPrimitive(target, this.insertObjMap.get(target)));
+            objectPUL.add(upFactory.createInsertIntoObjectPrimitive(target, this.insertObjMap.get(target), metadata));
         }
 
         // RENAMES
@@ -151,7 +155,7 @@ public class PendingUpdateList {
         // DELETES & REPLACES
 
         for (Item target : this.delReplaceArrayMap.keySet()) {
-            tempArrayPULs = targetArrayPULs.getOrDefault(target, new ArrayList<>());
+            tempSelPULsMap = targetArrayPULs.getOrDefault(target, new TreeMap<>(this.arraySelectorComparator));
             tempSelSrcMap = this.delReplaceArrayMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
                 UpdatePrimitive up;
@@ -161,38 +165,26 @@ public class PendingUpdateList {
                 } else {
                     up = upFactory.createReplaceInArrayPrimitive(target, locator, tempSrc, metadata);
                 }
-                int index = Collections.binarySearch(
-                    tempArrayPULs,
-                    up,
-                    Comparator.comparing(UpdatePrimitive::getIntSelector)
-                );
-                if (index < 0) {
-                    index = -index - 1;
-                }
-                tempArrayPULs.add(index, up);
+                tempArrayPULs = tempSelPULsMap.getOrDefault(locator, new ArrayList<>());
+                tempArrayPULs.add(up);
+                tempSelPULsMap.put(locator, tempArrayPULs);
             }
-            targetArrayPULs.put(target, tempArrayPULs);
+            targetArrayPULs.put(target, tempSelPULsMap);
         }
 
         // INSERTS
 
         for (Item target : this.insertArrayMap.keySet()) {
             UpdatePrimitive up;
-            tempArrayPULs = targetArrayPULs.getOrDefault(target, new ArrayList<>());
+            tempSelPULsMap = targetArrayPULs.getOrDefault(target, new TreeMap<>(this.arraySelectorComparator));
             tempSelSrcListMap = this.insertArrayMap.get(target);
             for (Item locator : tempSelSrcListMap.keySet()) {
                 up = upFactory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator), metadata);
-                int index = Collections.binarySearch(
-                    tempArrayPULs,
-                    up,
-                    Comparator.comparing(UpdatePrimitive::getIntSelector)
-                );
-                if (index < 0) {
-                    index = -index - 1;
-                }
-                tempArrayPULs.add(index, up);
+                tempArrayPULs = tempSelPULsMap.getOrDefault(locator, new ArrayList<>());
+                tempArrayPULs.add(up);
+                tempSelPULsMap.put(locator, tempArrayPULs);
             }
-            targetArrayPULs.put(target, tempArrayPULs);
+            targetArrayPULs.put(target, tempSelPULsMap);
         }
 
         ////// APPLY OBJECTS
@@ -202,11 +194,13 @@ public class PendingUpdateList {
         }
 
         ////// APPLY ARRAYS
-
         for (Item target : targetArrayPULs.keySet()) {
-            tempArrayPULs = targetArrayPULs.get(target);
-            for (int i = tempArrayPULs.size() - 1; i >= 0; i--) {
-                tempArrayPULs.get(i).apply();
+            tempSelPULsMap = targetArrayPULs.get(target);
+            for (Item selector : tempSelPULsMap.keySet()) {
+                tempArrayPULs = tempSelPULsMap.get(selector);
+                for (UpdatePrimitive up : tempArrayPULs) {
+                    up.apply();
+                }
             }
         }
 
