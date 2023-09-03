@@ -34,6 +34,11 @@ nativeflworruntime-test:
   script:
     - mvn -Dtest=NativeFLWORRuntimeTests test
 
+updatedeltaruntime-test:
+  stage: test
+  script:
+    - mvn -Dtest=DeltaUpdateRuntimeTests test
+
 statictyping-test:
   stage: test
   script:
