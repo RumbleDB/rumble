@@ -748,8 +748,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         visit(expression.getModifyExpression(), argument);
         visit(expression.getReturnExpression(), argument);
-
-        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        expression.setStaticSequenceType(expression.getReturnExpression().getStaticSequenceType());
 
         return argument;
     }
