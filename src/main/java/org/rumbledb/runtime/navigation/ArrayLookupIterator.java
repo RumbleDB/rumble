@@ -202,7 +202,10 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
-        boolean hasAtomicJSONiqItem = isObject && childDataFrame.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+        boolean hasAtomicJSONiqItem = isObject
+            && childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
@@ -232,12 +235,14 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 ),
                 elementType
             );
-        } else if (hasAtomicJSONiqItem &&
-                    childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                .getType()
-                .isArrayItemType()
+        } else if (
+            hasAtomicJSONiqItem
+                &&
+                childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType()
+                    .isArrayItemType()
                 && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
         ) {
             ItemType elementType = childDataFrame.getItemType()

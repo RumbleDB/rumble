@@ -20,24 +20,18 @@
 
 package iq;
 
-import io.delta.tables.DeltaTable;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.delta.DeltaLog;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.util.HashMap;
 import java.util.List;
 
 import static org.apache.spark.sql.functions.*;
