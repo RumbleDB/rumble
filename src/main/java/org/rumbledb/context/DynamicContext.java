@@ -47,6 +47,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
     private DateTime currentDateTime;
+    private int currentMutabilityLevel;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -58,6 +59,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
         this.currentDateTime = new DateTime();
+        this.currentMutabilityLevel = 0;
     }
 
     /**
@@ -72,6 +74,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = new DateTime();
+        this.currentMutabilityLevel = 0;
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -83,6 +86,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
     }
 
     public DynamicContext(
@@ -102,6 +106,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 dataFrameVariableValues
         );
         this.namedFunctions = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -128,6 +133,14 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
         this.variableValues = kryo.readObject(input, VariableValues.class);
+    }
+
+    public int getCurrentMutabilityLevel() {
+        return this.currentMutabilityLevel;
+    }
+
+    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
+        this.currentMutabilityLevel = currentMutabilityLevel;
     }
 
     public enum VariableDependency {

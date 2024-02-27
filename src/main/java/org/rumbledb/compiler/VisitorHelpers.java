@@ -23,6 +23,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -160,6 +161,7 @@ public class VisitorHelpers {
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
+            populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -201,6 +203,8 @@ public class VisitorHelpers {
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
+            // TODO populate expression classifications here?
+            // populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -386,6 +390,19 @@ public class VisitorHelpers {
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(module, module.getStaticContext());
+
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+    }
+
+    private static void populateExpressionClassifications(Module module, RumbleRuntimeConfiguration conf) {
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+
+        ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
+        visitor.visit(module, ExpressionClassification.SIMPLE);
 
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);

@@ -113,6 +113,23 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return defaultAction(expression, argument);
     }
 
+    // @Override
+    // public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
+    //
+    // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+    // Expression child = copyDecl.getSourceExpression();
+    // this.visit(child, argument);
+    // RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
+    // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
+    // }
+    //
+    // this.visit(expression.getModifyExpression(), argument);
+    //
+    // this.visit(expression.getReturnExpression(), argument);
+    //
+    // return argument;
+    // }
+
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();

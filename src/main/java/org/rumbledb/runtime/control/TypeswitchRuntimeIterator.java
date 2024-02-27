@@ -9,6 +9,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
 import java.util.Collections;
@@ -28,6 +29,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
+            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
@@ -40,8 +42,19 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
+        this.isUpdating = isUpdating;
         this.matchingIterator = null;
     }
+
+    public TypeswitchRuntimeIterator(
+            RuntimeIterator test,
+            List<TypeswitchRuntimeIteratorCase> cases,
+            TypeswitchRuntimeIteratorCase defaultCase,
+            RuntimeStaticContext staticContext
+    ) {
+        this(test, cases, defaultCase, false, staticContext);
+    }
+
 
     @Override
     public void openLocal() {
@@ -175,6 +188,37 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+        this.testValue = this.testField.materializeFirstItemOrNull(context);
+        RuntimeIterator localMatchingIterator;
+
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+            localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
+            if (localMatchingIterator != null) {
+                if (typeSwitchCase.getVariableName() != null) {
+                    context.getVariableValues()
+                        .addVariableValue(
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
+                        );
+                }
+                return localMatchingIterator.getPendingUpdateList(context);
+            }
+        }
+
+        if (this.defaultCase.getVariableName() != null) {
+            context.getVariableValues()
+                .addVariableValue(
+                    this.defaultCase.getVariableName(),
+                    Collections.singletonList(this.testValue)
+                );
+        }
+        return this.defaultCase.getReturnIterator().getPendingUpdateList(context);
+    }
+
     protected boolean implementsDataFrames() {
         return true;
     }
@@ -194,7 +238,6 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
                             Collections.singletonList(this.testValue)
                         );
                 }
-
                 return localMatchingIterator.getDataFrame(context);
             }
         }
