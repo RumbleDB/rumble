@@ -19,7 +19,8 @@ import java.util.List;
 
 public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator mainIterator;
+    private static final long serialVersionUID = 1L;
+	private RuntimeIterator mainIterator;
     private RuntimeIterator locatorIterator;
     private RuntimeIterator replacerIterator;
 

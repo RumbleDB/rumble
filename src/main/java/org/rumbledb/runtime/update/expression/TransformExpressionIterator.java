@@ -16,7 +16,8 @@ import java.util.Map;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
 
-    private Map<Name, RuntimeIterator> copyDeclMap;
+    private static final long serialVersionUID = 1L;
+	private Map<Name, RuntimeIterator> copyDeclMap;
     private RuntimeIterator modifyIterator;
     private RuntimeIterator returnIterator;
 

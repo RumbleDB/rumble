@@ -16,7 +16,8 @@ import java.util.Collections;
 
 public class DeleteExpressionIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator mainIterator;
+    private static final long serialVersionUID = 1L;
+	private RuntimeIterator mainIterator;
     private RuntimeIterator lookupIterator;
 
     public DeleteExpressionIterator(
