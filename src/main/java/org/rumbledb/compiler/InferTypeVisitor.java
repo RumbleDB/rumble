@@ -23,6 +23,7 @@ import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -38,6 +39,7 @@ import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -395,7 +397,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
         try {
             FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
@@ -461,6 +462,25 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+            if (expression.isPartialApplication()) {
+                throw new UnsupportedFeatureException(
+                        "Partial application on built-in functions are not supported.",
+                        expression.getMetadata()
+                );
+            }
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                expression.getFunctionIdentifier()
+            );
+            if (builtinFunction == null) {
+                throw new UnknownFunctionCallException(
+                        expression.getFunctionIdentifier().getName(),
+                        expression.getFunctionIdentifier().getArity(),
+                        expression.getMetadata()
+                );
+            }
+        }
         FunctionSignature signature = null;
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
@@ -1823,7 +1843,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
-        visitDescendants(expression, argument);
+        expression.getExpression().accept(this, argument);
         SequenceType declaredType = expression.getActualSequenceType();
         SequenceType inferredType = SequenceType.ITEM_STAR;
         if (declaredType == null) {
@@ -1971,15 +1991,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // finally if there was a for clause we need to change the arity of the variables binded so far in the flowr
         // expression, from ? to * and from 1 to +
         // excluding the grouping variables
-        StaticContext firstClauseStaticContext = expression.getFirstClause().getStaticContext();
-        nextClause.getStaticContext().incrementArities(firstClauseStaticContext, groupingVars);
+        StaticContext nextClauseStaticContext = expression.getNextClause().getStaticContext();
+        nextClause.getStaticContext().incrementArities(nextClauseStaticContext, groupingVars);
         return argument;
     }
 
     @Override
     public StaticContext visitOrderByClause(OrderByClause expression, StaticContext argument) {
-        visitDescendants(expression, argument);
         for (OrderByClauseSortingKey orderClause : expression.getSortingKeys()) {
+            visit(orderClause.getExpression(), argument);
             SequenceType orderType = orderClause.getExpression().getStaticSequenceType();
             basicChecks(orderType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
             if (orderType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
@@ -2009,6 +2029,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
+        checkAndUpdateVariableStaticType(
+            null,
+            SequenceType.INTEGER,
+            clause.getNextClause().getStaticContext(),
+            clause.getClass().getSimpleName(),
+            clause.getCountVariableName(),
+            clause.getMetadata()
+        );
         return argument;
     }
 
@@ -2121,7 +2154,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
-        expression.setStaticSequenceType(expression.getSequenceType());
+        SequenceType sourceType = expression.getMainExpression().getStaticSequenceType();
+        expression.setStaticSequenceType(expression.getSequenceType().refineArityIfSubtype(sourceType.getArity()));
         return argument;
     }
 

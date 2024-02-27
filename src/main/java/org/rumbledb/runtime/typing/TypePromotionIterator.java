@@ -4,11 +4,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -39,10 +38,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
+        super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;

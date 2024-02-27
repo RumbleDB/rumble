@@ -23,9 +23,8 @@ package org.rumbledb.runtime.control;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -42,10 +41,9 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
             boolean isUpdating,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.add(condition);
         this.children.add(branch);
         this.children.add(elseBranch);
@@ -56,10 +54,9 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        this(condition, branch, elseBranch, false, executionMode, iteratorMetadata);
+        this(condition, branch, elseBranch, false, staticContext);
     }
 
     @Override

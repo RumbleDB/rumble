@@ -4,6 +4,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -25,15 +26,13 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator mainIterator,
             RuntimeIterator toInsertIterator,
             RuntimeIterator positionIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
         super(
             positionIterator == null
                 ? Arrays.asList(mainIterator, toInsertIterator)
                 : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
-            executionMode,
-            iteratorMetadata
+            staticContext
         );
 
         this.mainIterator = mainIterator;

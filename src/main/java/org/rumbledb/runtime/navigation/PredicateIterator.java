@@ -28,10 +28,11 @@ import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -69,10 +70,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
     public PredicateIterator(
             RuntimeIterator sequence,
             RuntimeIterator filterExpression,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(sequence, filterExpression), executionMode, iteratorMetadata);
+        super(Arrays.asList(sequence, filterExpression), staticContext);
         this.iterator = sequence;
         this.filter = filterExpression;
         this.filterDynamicContext = null;
@@ -176,12 +176,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 this.filterDynamicContext.getVariableValues().setPosition(++this.position);
             }
 
-            this.filter.open(this.filterDynamicContext);
             Item fil = null;
-            if (this.filter.hasNext()) {
-                fil = this.filter.next();
+            try {
+                fil = this.filter.materializeAtMostOneItemOrNull(this.filterDynamicContext);
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
+                        this.filter.getMetadata()
+                );
             }
-            this.filter.close();
             // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
             if (fil != null && fil.isInt()) {
                 int index = fil.getIntValue();
@@ -247,7 +250,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 childDataFrame.getDataFrame().schema(),
                 context
         );
-        NativeClauseContext nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeQuery = NativeClauseContext.NoNativeQuery;
+        if (getConfiguration().nativeExecution()) {
+            nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+        }
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());

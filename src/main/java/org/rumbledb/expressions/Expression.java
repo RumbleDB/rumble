@@ -21,6 +21,9 @@
 package org.rumbledb.expressions;
 
 
+import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.SequenceType;
@@ -66,6 +69,18 @@ public abstract class Expression extends Node {
      */
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
+    }
+
+    public RuntimeStaticContext getStaticContextForRuntime(
+            RumbleRuntimeConfiguration conf,
+            VisitorConfig visitorConfig
+    ) {
+        return new RuntimeStaticContext(
+                conf,
+                getStaticSequenceType(),
+                getHighestExecutionMode(visitorConfig),
+                getMetadata()
+        );
     }
 
     /**

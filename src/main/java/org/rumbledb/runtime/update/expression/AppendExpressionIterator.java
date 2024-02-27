@@ -3,6 +3,7 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -24,10 +25,9 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
     public AppendExpressionIterator(
             RuntimeIterator arrayIterator,
             RuntimeIterator toAppendIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator, toAppendIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext);
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;

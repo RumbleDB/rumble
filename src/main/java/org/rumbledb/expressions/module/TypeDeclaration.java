@@ -21,10 +21,8 @@
 package org.rumbledb.expressions.module;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.ItemType;
 
@@ -50,11 +48,6 @@ public class TypeDeclaration extends Node {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitTypeDeclaration(this, argument);
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     /**

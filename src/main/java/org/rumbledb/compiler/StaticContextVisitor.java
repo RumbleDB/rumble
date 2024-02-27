@@ -41,6 +41,10 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -108,13 +112,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
         }
         argument.importModuleContext(
-            this.importedModuleContexts.get(libraryModule.getNamespace()),
-            libraryModule.getNamespace()
+            this.importedModuleContexts.get(libraryModule.getNamespace())
         );
         argument.getInScopeSchemaTypes()
             .importModuleTypes(
-                this.importedModuleContexts.get(libraryModule.getNamespace()).getInScopeSchemaTypes(),
-                libraryModule.getNamespace()
+                this.importedModuleContexts.get(libraryModule.getNamespace()).getInScopeSchemaTypes()
             );
         return argument;
     }
@@ -195,11 +197,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
-        StaticContext result = argument;
-        while (clause != null) {
-            result = this.visit(clause, result);
-            clause = clause.getNextClause();
-        }
+        this.visit(clause, argument);
         return argument;
     }
 
@@ -224,7 +222,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 clause.getMetadata()
             );
         }
-        return result;
+        this.visit(clause.getNextClause(), result);
+        return argument;
     }
 
     @Override
@@ -238,18 +237,27 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getMetadata()
         );
         clause.getSequenceType().resolve(result, clause.getMetadata());
+        this.visit(clause.getNextClause(), result);
+        return argument;
+    }
 
-        return result;
+    @Override
+    public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
+        this.visit(clause.getWhereExpression(), argument);
+
+        StaticContext result = new StaticContext(argument);
+        this.visit(clause.getNextClause(), result);
+        return argument;
     }
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
-        StaticContext groupByClauseContext = new StaticContext(argument);
+        StaticContext result = new StaticContext(argument);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
                 this.visit(variable.getExpression(), argument);
-                groupByClauseContext.addVariable(
+                result.addVariable(
                     variable.getVariableName(),
                     variable.getActualSequenceType(),
                     clause.getMetadata()
@@ -261,19 +269,37 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
         }
-        return groupByClauseContext;
+        this.visit(clause.getNextClause(), result);
+        return argument;
     }
 
     @Override
-    public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
+    public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
+        for (OrderByClauseSortingKey s : clause.getSortingKeys()) {
+            this.visit(s.getExpression(), argument);
+        }
+
+        StaticContext result = new StaticContext(argument);
+        this.visit(clause.getNextClause(), result);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-            expression.getCountVariable().getVariableName(),
-            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One),
-            expression.getMetadata()
+            clause.getCountVariableName(),
+            SequenceType.INTEGER,
+            clause.getMetadata()
         );
-        this.visit(expression.getCountVariable(), result);
-        return result;
+        this.visit(clause.getNextClause(), result);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitReturnClause(ReturnClause clause, StaticContext argument) {
+        this.visit(clause.getReturnExpr(), argument);
+        return argument;
     }
 
     // endregion

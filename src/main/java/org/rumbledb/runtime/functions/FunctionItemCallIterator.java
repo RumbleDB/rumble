@@ -25,7 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -65,10 +65,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public FunctionItemCallIterator(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
                 this.isPartialApplication = true;
@@ -135,6 +134,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
+                    RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
+                            getConfiguration(),
+                            sequenceType,
+                            executionMode,
+                            this.functionArguments.get(i).getMetadata()
+                    );
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
@@ -144,8 +149,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                                 this.functionArguments.get(i),
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                                executionMode,
-                                getMetadata()
+                                runtimeStaticContext
                         );
                         this.functionArguments.set(i, typePromotionIterator);
                     } else {
@@ -153,8 +157,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                                 this.functionArguments.get(i),
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                                executionMode,
-                                getMetadata()
+                                runtimeStaticContext
                         );
                         this.functionArguments.set(i, typePromotionIterator);
                     }
@@ -237,7 +240,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return new ConstantRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
+        return new ConstantRuntimeIterator(
+                partiallyAppliedFunction,
+                new RuntimeStaticContext(getConfiguration(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata())
+        );
     }
 
     private void populateDynamicContextWithArguments(DynamicContext context) {

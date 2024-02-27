@@ -3,12 +3,10 @@ package org.rumbledb.expressions.typing;
 import java.util.Collections;
 import java.util.List;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
@@ -35,36 +33,8 @@ public class TreatExpression extends Expression {
         this.sequenceType = sequenceType;
     }
 
-    public SequenceType getsequenceType() {
-        return this.sequenceType;
-    }
-
     public ErrorCode errorCodeThatShouldBeThrown() {
         return this.errorCode;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(
-            this.sequenceType,
-            this.mainExpression,
-            visitorConfig
-        );
-    }
-
-    private static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
-            SequenceType sequenceType,
-            Expression expression,
-            VisitorConfig visitorConfig
-    ) {
-        if (
-            !sequenceType.isEmptySequence()
-                && sequenceType.getArity() != SequenceType.Arity.One
-                && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-        ) {
-            return expression.getHighestExecutionMode(visitorConfig);
-        }
-        return ExecutionMode.LOCAL;
     }
 
     @Override

@@ -1579,7 +1579,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitCountClause(XQueryParser.CountClauseContext ctx) {
         VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarName(ctx.varName());
-        return new CountClause(child, createMetadataFromContext(ctx));
+        return new CountClause(child.getVariableName(), createMetadataFromContext(ctx));
     }
 
     // endregion

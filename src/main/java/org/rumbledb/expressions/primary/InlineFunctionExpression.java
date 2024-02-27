@@ -141,7 +141,7 @@ public class InlineFunctionExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append("Body:\n");
-        this.body.print(buffer, indent + 2);
+        this.body.print(buffer, indent + 4);
     }
 
     @Override

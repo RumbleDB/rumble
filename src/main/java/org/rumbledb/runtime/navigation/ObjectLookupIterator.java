@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.types.DataType;
@@ -28,9 +29,9 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -43,6 +44,8 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -63,10 +66,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public ObjectLookupIterator(
             RuntimeIterator object,
             RuntimeIterator lookupIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(object, lookupIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
     }
 
@@ -230,11 +232,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
         if (outerContextSchema instanceof StructType) {
             StructType structSchema = (StructType) outerContextSchema;
-            if (
-                Arrays.stream(structSchema.fieldNames())
-                    .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
-            ) {
-                return NativeClauseContext.NoNativeQuery;
+            for (Name n : keyDependencies.keySet()) {
+                if (FlworDataFrameUtils.hasColumnForVariable(structSchema, n)) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
             }
         }
         // otherwise, we can directly resolve the key statically.
@@ -265,11 +266,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-            if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = newContext.getSchema();
-            } else {
+            if (newContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
+            leftSchema = newContext.getSchema();
         }
 
 
@@ -278,15 +278,21 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         if (!(leftSchema instanceof StructType)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
-                throw new UnexpectedStaticTypeException(
-                        "You are trying to look up the value associated with the field "
-                            + key
-                            + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
-                            + "Fortunately Rumble was able to catch this. This is probably an overlook? "
-                            + "Please check your query and try again.",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        getMetadata()
-                );
+                if (getConfiguration().doStaticAnalysis()) {
+                    throw new UnexpectedStaticTypeException(
+                            "You are trying to look up the value associated with the field "
+                                + key
+                                + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
+                                + "Fortunately Rumble was able to catch this. This is probably an overlook? "
+                                + "Please check your query and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
+                }
+                LogManager.getLogger("ObjectLookupIterator")
+                    .warn(
+                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+                    );
             }
             return NativeClauseContext.NoNativeQuery;
         }
@@ -300,17 +306,25 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setSchema(field.dataType());
-            newContext.setResultingType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+            newContext.setResultingType(
+                new SequenceType(TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()), Arity.One)
+            );
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
-                throw new UnexpectedStaticTypeException(
-                        "There is no field with the name "
-                            + key
-                            + " so that the lookup will always result in the empty sequence no matter what. "
-                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        getMetadata()
-                );
+                LogManager.getLogger("ObjectLookupIterator")
+                    .warn(
+                        "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+                    );
+                if (getConfiguration().doStaticAnalysis()) {
+                    throw new UnexpectedStaticTypeException(
+                            "There is no field with the name "
+                                + key
+                                + " so that the lookup will always result in the empty sequence no matter what. "
+                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
+                }
             }
             return NativeClauseContext.NoNativeQuery;
         }
@@ -355,6 +369,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 return result;
             }
         }
+        LogManager.getLogger("ObjectLookupIterator")
+            .warn(
+                "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
+            );
         JSoundDataFrame result = JSoundDataFrame.emptyDataFrame();
         return result;
     }

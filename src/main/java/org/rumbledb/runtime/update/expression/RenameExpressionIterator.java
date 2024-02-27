@@ -3,6 +3,7 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -23,10 +24,9 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator mainIterator,
             RuntimeIterator locatorIterator,
             RuntimeIterator nameIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, locatorIterator, nameIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(mainIterator, locatorIterator, nameIterator), staticContext);
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;

@@ -112,7 +112,9 @@ public class TypeMappings {
             return BuiltinTypesCatalogue.objectItem;
         }
         if (dataType instanceof ArrayType) {
-            return BuiltinTypesCatalogue.arrayItem;
+            ArrayType arrayType = (ArrayType) dataType;
+            ItemType itemType = getItemTypeFromDataFrameDataType(arrayType.elementType());
+            return new ArrayItemType(null, BuiltinTypesCatalogue.arrayItem, itemType, null, null, null);
         }
         if (dataType instanceof StructType) {
             return BuiltinTypesCatalogue.objectItem;

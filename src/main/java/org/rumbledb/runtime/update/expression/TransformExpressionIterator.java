@@ -5,6 +5,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -27,11 +28,10 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             Map<Name, RuntimeIterator> copyDeclMap,
             RuntimeIterator modifyIterator,
             RuntimeIterator returnIterator,
-            ExecutionMode executionMode,
-            int mutabilityLevel,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext,
+            int mutabilityLevel
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.addAll(copyDeclMap.values());
         this.children.add(modifyIterator);
         this.children.add(returnIterator);

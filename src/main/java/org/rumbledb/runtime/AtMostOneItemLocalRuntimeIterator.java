@@ -20,9 +20,10 @@
 
 package org.rumbledb.runtime;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -31,10 +32,14 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+
+import sparksoniq.spark.SparkSessionManager;
+
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
@@ -44,13 +49,21 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
 
     protected AtMostOneItemLocalRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.LOCAL) {
+        super(children, staticContext);
+        if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
             throw new OurBadException("At-most-one-item runtime iterators support only the local execution mode");
         }
+    }
+
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        Item i = materializeFirstItemOrNull(context);
+        List<Item> result = new ArrayList<>();
+        if (i != null) {
+            result.add(i);
+        }
+        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(result);
     }
 
     public abstract Item materializeFirstItemOrNull(

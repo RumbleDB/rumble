@@ -11,7 +11,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
@@ -24,6 +24,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -48,10 +49,9 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     public ApplyEstimatorRuntimeIterator(
             String estimatorShortName,
             Estimator<?> estimator,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, metadata);
+        super(null, staticContext);
         this.estimatorShortName = estimatorShortName;
         this.estimator = estimator;
     }
@@ -346,8 +346,12 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
-                ExecutionMode.DATAFRAME,
-                getMetadata()
+                new RuntimeStaticContext(
+                        getConfiguration(),
+                        new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One),
+                        ExecutionMode.DATAFRAME,
+                        getMetadata()
+                )
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(
