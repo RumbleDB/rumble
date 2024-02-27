@@ -17,8 +17,6 @@ public class TransformExpression extends Expression {
     private Expression returnExpression;
     private int mutabilityLevel;
 
-    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
-
     public TransformExpression(
             List<CopyDeclaration> copyDeclarations,
             Expression modifyExpression,
@@ -52,16 +50,6 @@ public class TransformExpression extends Expression {
 
     public Expression getReturnExpression() {
         return returnExpression;
-    }
-
-    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET
-        ) {
-            throw new OurBadException("A copy variable storage mode is accessed without being set.");
-        }
-        return this.variableHighestStorageMode;
     }
 
     @Override
