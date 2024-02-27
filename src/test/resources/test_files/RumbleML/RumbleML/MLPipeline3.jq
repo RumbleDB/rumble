@@ -33,4 +33,4 @@ for $i in $trained_est2(
     $my-new-test-data,
     {"featuresCol": "features2", "predictionCol": "ocol1"}
 )
-return $i
+return local:round($i)
