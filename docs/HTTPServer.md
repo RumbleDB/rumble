@@ -38,7 +38,7 @@ With the HTTP server running, if you have installed Python and Jupyter notebooks
 
     !pip install rumbledb
     %load_ext rumbledb
-    %env RUMBLEDB_SERVER=http://locahost:8001/jsoniq
+    %env RUMBLEDB_SERVER=http://localhost:8001/jsoniq
 
 Where, of course, you need to adapt the port (8001) to the one you picked previously.
 
