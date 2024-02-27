@@ -107,7 +107,7 @@ You can try a few more queries.
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     
-This is it. RumbleDB is step and ready to go locally. You can now move on to a JSONiq tutorial. A RumbleDB tutorial will also follow soon.
+This is it. RumbleDB is setup and ready to go locally. You can now move on to a JSONiq tutorial. A RumbleDB tutorial will also follow soon.
 
 ## Running on a cluster
 
