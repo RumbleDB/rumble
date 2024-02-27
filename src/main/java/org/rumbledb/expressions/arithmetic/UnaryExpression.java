@@ -70,6 +70,7 @@ public class UnaryExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.negated ? "-" : "+") + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
