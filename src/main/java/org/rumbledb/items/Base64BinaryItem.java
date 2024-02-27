@@ -3,8 +3,8 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.net.util.Base64;
+import org.apache.commons.lang3.StringUtils;
+import java.util.Base64;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -41,7 +41,7 @@ public class Base64BinaryItem implements Item {
 
     public Base64BinaryItem(String stringValue) {
         this.value = parseBase64BinaryString(stringValue);
-        this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
+        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
 
     @Override
@@ -113,7 +113,7 @@ public class Base64BinaryItem implements Item {
     public void read(Kryo kryo, Input input) {
         int bytesLength = input.readInt();
         this.value = input.readBytes(bytesLength);
-        this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
+        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
 
     @Override
