@@ -1,8 +1,6 @@
 package org.rumbledb.expressions.update;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.*;
 
