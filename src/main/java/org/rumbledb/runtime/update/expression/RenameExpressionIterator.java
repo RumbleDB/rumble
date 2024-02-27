@@ -16,7 +16,7 @@ import java.util.Arrays;
 public class RenameExpressionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-	private RuntimeIterator mainIterator;
+    private RuntimeIterator mainIterator;
     private RuntimeIterator locatorIterator;
     private RuntimeIterator nameIterator;
 

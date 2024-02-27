@@ -19,7 +19,7 @@ import java.util.Collections;
 public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-	private RuntimeIterator arrayIterator;
+    private RuntimeIterator arrayIterator;
     private RuntimeIterator toAppendIterator;
 
     public AppendExpressionIterator(

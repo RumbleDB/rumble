@@ -18,7 +18,7 @@ import java.util.Collections;
 public class InsertExpressionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-	private RuntimeIterator mainIterator;
+    private RuntimeIterator mainIterator;
     private RuntimeIterator toInsertIterator;
     private RuntimeIterator positionIterator;
 
