@@ -696,9 +696,9 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the mutability level of the item.
+     * Sets the mutability level of the item.
      *
-     * @return an int representing nestedness of the item inside transform expressions.
+     * @param int the new mutability level.
      */
     default void setMutabilityLevel(int mutabilityLevel) {
     }
