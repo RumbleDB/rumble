@@ -52,6 +52,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -66,6 +67,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
+    protected transient boolean isUpdating;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
@@ -80,6 +82,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             );
         }
         this.isOpen = false;
+        this.isUpdating = false;
+
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
@@ -300,6 +304,17 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    public boolean isUpdating() {
+        return this.isUpdating;
+    }
+
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        throw new OurBadException(
+                "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
+    }
+
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
@@ -406,6 +421,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(this.staticContext.getExecutionMode());
         buffer.append(" | ");
         buffer.append(getStaticType());
+        buffer.append(" | ");
+        buffer.append(this.isUpdating ? "updating" : "simple");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
