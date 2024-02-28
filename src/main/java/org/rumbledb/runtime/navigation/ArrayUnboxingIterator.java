@@ -136,8 +136,29 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-        if (newContext == NativeClauseContext.NoNativeQuery) {
-            return NativeClauseContext.NoNativeQuery;
+        if (newContext != NativeClauseContext.NoNativeQuery) {
+            ItemType newContextType = newContext.getResultingType().getItemType();
+            if (!newContextType.isArrayItemType()) {
+                // let control to UDF when what we are unboxing is not an array
+                return NativeClauseContext.NoNativeQuery;
+            }
+            newContext.setResultingType(
+                new SequenceType(
+                        newContextType.getArrayContentFacet(),
+                        SequenceType.Arity.ZeroOrMore
+                )
+            );
+            List<String> lateralViewPart = newContext.getLateralViewPart();
+            if (lateralViewPart.size() == 0) {
+                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+            } else {
+                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+                // previous
+                lateralViewPart.add(
+                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+                );
+            }
+            newContext.setResultingQuery(""); // dealt by for clause
         }
         ItemType newContextType = newContext.getResultingType().getItemType();
         if (!newContextType.isArrayItemType()) {
@@ -177,6 +198,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
         newContext.setResultingQuery(""); // dealt by for clause
         return newContext;
+    }
+
+    public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
+        return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {

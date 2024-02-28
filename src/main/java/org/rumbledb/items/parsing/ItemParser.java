@@ -271,7 +271,7 @@ public class ItemParser implements Serializable {
                 );
             }
         }
-
+        // array
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
@@ -299,8 +299,20 @@ public class ItemParser implements Serializable {
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
                         && fieldType.equals(DataTypes.NullType))
             ) {
-                keys.add(fieldName);
-                values.add(newItem);
+                // don't return array for single sequence item
+                if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
+                    if (newItem.getSize() == 0) {
+                        values.add(null);
+                    } else if (newItem.getSize() == 1) {
+                        values.add(newItem.getItemAt(0));
+                    } else {
+                        values.add(newItem);
+                    }
+                    keys.add(fieldName.substring(0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
+                } else {
+                    keys.add(fieldName);
+                    values.add(newItem);
+                }
             }
         }
 

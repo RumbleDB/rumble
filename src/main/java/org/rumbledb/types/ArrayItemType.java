@@ -58,6 +58,17 @@ public class ArrayItemType implements ItemType {
         }
     }
 
+    public static ItemType arrayOf(ItemType itemType) {
+        return new ArrayItemType(
+                new Name(Name.JS_NS, "js", "array"),
+                BuiltinTypesCatalogue.arrayItem,
+                itemType,
+                null,
+                null,
+                null
+        );
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof ItemType)) {

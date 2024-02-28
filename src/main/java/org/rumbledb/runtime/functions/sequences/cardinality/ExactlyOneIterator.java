@@ -65,8 +65,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        return value;
+        return this.children.get(0).generateNativeQuery(nativeClauseContext);
     }
 
 }

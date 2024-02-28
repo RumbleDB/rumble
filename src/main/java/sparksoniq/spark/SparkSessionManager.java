@@ -89,6 +89,8 @@ public class SparkSessionManager {
     public static String countColumnName = "5af0c0c8-e84c-482a-82ce-1887565cf448";
     public static String rightHandSideHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
     public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String sparkSqlVariableName = "73706172-6b73-716c-7661-726961626c65";
+    public static String sequenceColumnName = "56415249-4142-4c45-5345-5155454e4345";
 
     private SparkSessionManager() {
     }
