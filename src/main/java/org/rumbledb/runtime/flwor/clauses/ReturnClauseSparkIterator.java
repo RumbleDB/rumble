@@ -46,6 +46,9 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
+
+import org.rumbledb.runtime.update.PendingUpdateList;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -72,12 +75,22 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
+            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
         this.child = child;
         this.expression = expression;
+        this.isUpdating = isUpdating;
         setInputAndOutputTupleVariableDependencies();
+    }
+
+    public ReturnClauseSparkIterator(
+            RuntimeTupleIterator child,
+            RuntimeIterator expression,
+            RuntimeStaticContext staticContext
+    ) {
+        this(child, expression, false, staticContext);
     }
 
     @Override
@@ -563,5 +576,58 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         nativeClauseContext.setView(resultingQuery);
         resultColumnName = "`" + resultColumnName + "`";
         return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);
+    }
+
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+        PendingUpdateList result = new PendingUpdateList();
+
+        if (!isRDDOrDataFrame()) {
+            this.child.open(context);
+            this.tupleContext = new DynamicContext(context); // assign current context
+
+            while (this.child.hasNext()) {
+                FlworTuple tuple = this.child.next();
+                this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
+                                                                                                  // variables
+                // from new tuple
+
+                result = PendingUpdateList.mergeUpdates(
+                    result,
+                    this.expression.getPendingUpdateList(this.tupleContext),
+                    this.getMetadata()
+                );
+
+            }
+            this.child.close();
+            return result;
+
+            // execution reaches here when there are no more results
+        }
+
+        RuntimeIterator expression = this.children.get(0);
+        if (expression.isRDDOrDataFrame()) {
+            if (this.child.isDataFrame())
+                throw new JobWithinAJobException(
+                        "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata()
+                );
+            // context
+            this.child.open(context);
+            while (this.child.hasNext()) {
+                FlworTuple tuple = this.child.next();
+                // We need a fresh context every time, because the evaluation of RDD is lazy.
+                DynamicContext dynamicContext = new DynamicContext(context);
+                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                // from new tuple
+
+                PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
+                result = PendingUpdateList.mergeUpdates(result, intermediateResult, this.getMetadata());
+            }
+        }
+        return result;
     }
 }

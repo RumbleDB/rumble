@@ -84,6 +84,7 @@ public class FunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName() + " (" + this.identifier + ")");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(
             " | "
                 + (this.staticSequenceType == null

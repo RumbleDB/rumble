@@ -445,7 +445,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     public Node visitTreatExpression(TreatExpression expression, Node argument) {
         TreatExpression result = new TreatExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
-                expression.getsequenceType(),
+                expression.getSequenceType(),
                 expression.errorCodeThatShouldBeThrown(),
                 expression.getMetadata()
         );

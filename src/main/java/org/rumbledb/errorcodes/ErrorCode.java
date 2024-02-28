@@ -120,7 +120,25 @@ public enum ErrorCode {
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
     ArithmeticOverflowOrUnderflow("FODT0002"),
-    InvalidTimezoneValue("FODT0003");
+    InvalidTimezoneValue("FODT0003"),
+
+    InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
+    SimpleExpressionMustBeVacuousErrorCode("XUST0002"),
+
+    TransformBadCopySource("XUTY0013"),
+
+
+    TransformModifiesNonCopiedValue("XUDY0014"),
+    UpdateTargetIsEmptySeqErrorCode("XUDY0027"),
+
+    DuplicateObjectInsertSourceErrorCode("JNUP0005"),
+    DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
+    CannotCastUpdateSelectorErrorCode("JNUP0007"),
+    InvalidUpdateTargetErrorCode("JNUP0008"),
+    TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
+    TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
+    CannotResolveUpdateSelectorErrorCode("JNUP0016"),
+    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019");
 
 
 

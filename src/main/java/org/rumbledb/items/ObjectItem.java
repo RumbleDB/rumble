@@ -28,10 +28,8 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 public class ObjectItem implements Item {
 
@@ -40,10 +38,13 @@ public class ObjectItem implements Item {
     private List<Item> values;
     private List<String> keys;
 
+    private int mutabilityLevel;
+
     public ObjectItem() {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
+        this.mutabilityLevel = 0;
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -51,6 +52,7 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
+        this.mutabilityLevel = 0;
     }
 
     public boolean equals(Object otherItem) {
@@ -113,6 +115,7 @@ public class ObjectItem implements Item {
 
         this.keys = keyList;
         this.values = valueList;
+        this.mutabilityLevel = 0;
     }
 
     @Override
@@ -153,6 +156,15 @@ public class ObjectItem implements Item {
     }
 
     @Override
+    public void removeItemByKey(String s) {
+        if (this.keys.contains(s)) {
+            int index = this.keys.indexOf(s);
+            this.values.remove(index);
+            this.keys.remove(index);
+        }
+    }
+
+    @Override
     public boolean isObject() {
         return true;
     }
@@ -189,4 +201,16 @@ public class ObjectItem implements Item {
         return true;
     }
 
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (Item item : values) {
+            item.setMutabilityLevel(mutabilityLevel);
+        }
+    }
 }
