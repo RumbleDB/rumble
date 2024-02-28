@@ -32,9 +32,11 @@ public class ProjectionPushdownDetectionVisitor
 
     @Override
     protected ReferenceMap defaultAction(Node node, ReferenceMap argument) {
-        ReferenceMap result = new ReferenceMap();
-        node.getChildren().stream().map(child -> visit(child, argument)).forEach(result::add);
-        result.add(argument);
+        ReferenceMap result = new ReferenceMap(argument);
+        for (Node child : node.getChildren()) {
+            ReferenceMap map = visit(child, argument);
+            result.add(map);
+        }
         return result;
     }
 
@@ -44,54 +46,59 @@ public class ProjectionPushdownDetectionVisitor
             clause.setReferenced(false);
             return argument;
         }
+        ReferenceMap result = new ReferenceMap(argument);
         ReferenceMap letReferenceMap = argument.getReferenceMap(clause.getVariableName());
         ReferenceMap resultMap = this.visit(clause.getExpression(), letReferenceMap);
-        argument.drop(clause.getVariableName());
-        argument.add(resultMap);
-        return argument;
+        result.drop(clause.getVariableName());
+        result.add(resultMap);
+        return result;
     }
 
     @Override
     public ReferenceMap visitGroupByClause(GroupByClause clause, ReferenceMap argument) {
+        ReferenceMap result = new ReferenceMap(argument);
         clause.getGroupVariables()
             .stream()
             .filter(expr -> expr.getExpression() != null)
             .map(expr -> visit(expr.getExpression(), new ReferenceMap()))
-            .forEach(argument::add);
+            .forEach(result::add);
         // drop variables that are introduced in the group by clause
         clause.getGroupVariables()
             .stream()
             .filter(expr -> expr.getExpression() != null)
             .map(GroupByVariableDeclaration::getVariableName)
-            .forEach(argument::drop);
+            .forEach(result::drop);
         // add variables that are referenced in the group by clause
         clause.getGroupVariables()
             .stream()
             .filter(expr -> expr.getExpression() == null)
             .map(GroupByVariableDeclaration::getVariableName)
-            .forEach(variable -> argument.add(variable, new ReferenceMap()));
-        return argument;
+            .forEach(variable -> result.add(variable, new ReferenceMap()));
+        return result;
     }
 
     @Override
     public ReferenceMap visitWhereClause(WhereClause expression, ReferenceMap argument) {
-        argument.add(visit(expression.getWhereExpression(), new ReferenceMap()));
-        return argument;
+        ReferenceMap result = new ReferenceMap(argument);
+        result.add(visit(expression.getWhereExpression(), new ReferenceMap()));
+        return result;
     }
 
     @Override
     public ReferenceMap visitCountClause(CountClause expression, ReferenceMap argument) {
-        argument.drop(expression.getCountVariableName());
-        return argument;
+        ReferenceMap result = new ReferenceMap(argument);
+        result.drop(expression.getCountVariableName());
+        return result;
     }
 
     public ReferenceMap visitOrderByClause(OrderByClause clause, ReferenceMap argument) {
+        ReferenceMap result = new ReferenceMap(argument);
         clause.getSortingKeys()
             .stream()
             .map(OrderByClauseSortingKey::getExpression)
             .map(expr -> visit(expr, new ReferenceMap()))
-            .forEach(argument::add);
-        return argument;
+            .forEach(result::add);
+        return result;
     }
 
     @Override
@@ -101,7 +108,7 @@ public class ProjectionPushdownDetectionVisitor
             argument = this.visit(clause, argument);
             clause = clause.getPreviousClause();
         }
-        return argument;
+        return new ReferenceMap(argument);
     }
 
     @Override
@@ -191,16 +198,25 @@ public class ProjectionPushdownDetectionVisitor
             this.map = new HashMap<>();
         }
 
-        public void add(ReferenceMap object) {
-            object.map.forEach(this::add);
+        public ReferenceMap(ReferenceMap other) {
+            this.map = new HashMap<>();
+            for (Map.Entry<Name, ReferenceMap> m : other.map.entrySet()) {
+                this.map.put(m.getKey(), m.getValue());
+            }
         }
 
-        public void add(Name name, ReferenceMap object) {
+        public void add(ReferenceMap object) {
+            for (Map.Entry<Name, ReferenceMap> m : object.map.entrySet()) {
+                add(m.getKey(), m.getValue());
+            }
+        }
+
+        private void add(Name name, ReferenceMap object) {
             if (!this.map.containsKey(name)) {
                 this.map.put(name, object);
             } else {
                 ReferenceMap reference = this.map.get(name);
-                if (object.isEmpty() || reference.map.size() == 0) {
+                if (object.isEmpty() || reference.isEmpty()) {
                     // if either this or the other is empty, then all fields are required
                     reference.map.clear();
                 } else if (object.containsKey(name)) {
