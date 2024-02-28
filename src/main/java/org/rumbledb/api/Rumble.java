@@ -8,6 +8,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
 /**
@@ -50,6 +51,14 @@ public class Rumble {
             mainModule,
             this.configuration
         );
+
+        if (iterator.isUpdating()) {
+            PendingUpdateList pul = iterator.getPendingUpdateList(dynamicContext);
+            pul.applyUpdates(iterator.getMetadata());
+        }
+
+        System.err.println("final iterator is: " + iterator.isUpdating());
+
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 
@@ -70,6 +79,14 @@ public class Rumble {
             mainModule,
             this.configuration
         );
+
+        if (iterator.isUpdating()) {
+            PendingUpdateList pul = iterator.getPendingUpdateList(dynamicContext);
+            pul.applyUpdates(iterator.getMetadata());
+        }
+
+        System.err.println("final iterator is: " + iterator.isUpdating());
+
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 

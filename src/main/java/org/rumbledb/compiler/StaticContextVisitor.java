@@ -58,6 +58,8 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -352,6 +354,43 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             variableDeclaration.getMetadata()
         );
         return argument;
+    }
+
+    @Override
+    public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() + 1);
+        StaticContext result = argument;
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            result = this.visitCopyDecl(copyDecl, result, argument);
+        }
+
+        result = this.visit(expression.getModifyExpression(), result);
+        result = this.visit(expression.getReturnExpression(), result);
+
+        expression.setStaticContext(result);
+        expression.setMutabilityLevel(result.getCurrentMutabilityLevel());
+
+        argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() - 1);
+        return argument;
+    }
+
+    private StaticContext visitCopyDecl(
+            CopyDeclaration copyDeclaration,
+            StaticContext argument,
+            StaticContext copyContext
+    ) {
+        this.visit(copyDeclaration.getSourceExpression(), copyContext);
+
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+            copyDeclaration.getVariableName(),
+            copyDeclaration.getSourceSequenceType(),
+            copyDeclaration.getSourceExpression().getMetadata()
+        );
+        copyDeclaration.getSourceSequenceType()
+            .resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
+
+        return result;
     }
 
     @Override

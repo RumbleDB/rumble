@@ -64,6 +64,8 @@ import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.TransformExpression;
 
 
 /**
@@ -511,6 +513,18 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression));
+        return null;
+    }
+
+    @Override
+    public Void visitTransformExpression(TransformExpression expression, Void argument) {
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            visit(copyDecl.getSourceExpression(), null);
+            addInputVariableDependencies(expression, getInputVariableDependencies(copyDecl.getSourceExpression()));
+        }
+        visit(expression.getModifyExpression(), null);
+        visit(expression.getReturnExpression(), null);
+
         return null;
     }
 }
