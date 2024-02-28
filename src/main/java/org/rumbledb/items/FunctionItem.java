@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -230,21 +231,24 @@ public class FunctionItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
-        kryo.writeObject(output, this.signature.getParameterTypes());
-        kryo.writeObject(output, this.signature.getReturnType());
-        // kryo.writeObject(output, this.bodyIterator);
-        kryo.writeObject(output, this.localVariablesInClosure);
-        kryo.writeObject(output, this.RDDVariablesInClosure);
-        kryo.writeObject(output, this.dataFrameVariablesInClosure);
-        kryo.writeObject(output, this.dynamicModuleContext);
+        try {
+            byte[] data = SerializationUtils.serialize(this.signature);
+            output.writeInt(data.length);
+            output.writeBytes(data);
+        } catch (Exception e) {
+            throw new OurBadException(
+                    "Error serializing signature:" + e.getMessage()
+            );
+        }
+
+        // kryo.writeObject(output, this.localVariablesInClosure);
+        // kryo.writeObject(output, this.RDDVariablesInClosure);
+        // kryo.writeObject(output, this.dataFrameVariablesInClosure);
+        // kryo.writeObject(output, this.dynamicModuleContext);
 
         // convert RuntimeIterator to byte[] data
         try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this.bodyIterator);
-            oos.flush();
-            byte[] data = bos.toByteArray();
+            byte[] data = SerializationUtils.serialize(this.bodyIterator);
             output.writeInt(data.length);
             output.writeBytes(data);
         } catch (Exception e) {
@@ -259,21 +263,26 @@ public class FunctionItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
-        List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
-        SequenceType returnType = kryo.readObject(input, SequenceType.class);
-        this.signature = new FunctionSignature(parameters, returnType);
+        try {
+            int dataLength = input.readInt();
+            byte[] data = input.readBytes(dataLength);
+            this.signature = SerializationUtils.deserialize(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OurBadException(
+                    "Error deserializing parameter types:" + e.getMessage()
+            );
+        }
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
+        // this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
+        // this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
+        // this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
+        // this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
 
         try {
             int dataLength = input.readInt();
             byte[] data = input.readBytes(dataLength);
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIterator = (RuntimeIterator) ois.readObject();
+            this.bodyIterator = SerializationUtils.deserialize(data);
         } catch (Exception e) {
             throw new OurBadException(
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
