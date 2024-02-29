@@ -231,19 +231,18 @@ public class FunctionItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
-        try {
-            byte[] data = SerializationUtils.serialize(this.signature);
-            output.writeInt(data.length);
-            output.writeBytes(data);
-        } catch (Exception e) {
+        kryo.writeObject(output, this.signature);
+        kryo.writeObject(output, this.localVariablesInClosure);
+        if (!this.RDDVariablesInClosure.isEmpty()) {
             throw new OurBadException(
-                    "Error serializing signature:" + e.getMessage()
+                    "We do not support serializing RDDs in function closures."
             );
         }
-
-        // kryo.writeObject(output, this.localVariablesInClosure);
-        // kryo.writeObject(output, this.RDDVariablesInClosure);
-        // kryo.writeObject(output, this.dataFrameVariablesInClosure);
+        if (!this.dataFrameVariablesInClosure.isEmpty()) {
+            throw new OurBadException(
+                    "We do not support serializing DataFrames in function closures."
+            );
+        }
         // kryo.writeObject(output, this.dynamicModuleContext);
 
         // convert RuntimeIterator to byte[] data
@@ -263,21 +262,12 @@ public class FunctionItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
-        try {
-            int dataLength = input.readInt();
-            byte[] data = input.readBytes(dataLength);
-            this.signature = SerializationUtils.deserialize(data);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new OurBadException(
-                    "Error deserializing parameter types:" + e.getMessage()
-            );
-        }
-        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        // this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
-        // this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        // this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.signature = kryo.readObject(input, FunctionSignature.class);
+        this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.RDDVariablesInClosure = new HashMap<>();
+        this.dataFrameVariablesInClosure = new HashMap<>();
         // this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
+        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
 
         try {
             int dataLength = input.readInt();
