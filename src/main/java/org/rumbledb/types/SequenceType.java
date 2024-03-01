@@ -745,14 +745,14 @@ public class SequenceType implements Serializable, KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        // kryo.writeObject(output, this.itemType);
+        kryo.writeClassAndObject(output, this.itemType);
         kryo.writeObject(output, this.arity);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        // this.itemType = kryo.readObject(input, ItemType.class);
+        this.itemType = (ItemType) kryo.readClassAndObject(input);
         this.arity = kryo.readObject(input, Arity.class);
     }
 

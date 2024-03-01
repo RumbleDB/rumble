@@ -80,6 +80,7 @@ import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemItemType;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -130,6 +131,7 @@ public class FlworDataFrameUtils {
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
+        kryo.register(ItemItemType.class);
 
         kryo.register(ArrayList.class);
 

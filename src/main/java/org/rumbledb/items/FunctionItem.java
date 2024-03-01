@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -246,15 +245,17 @@ public class FunctionItem implements Item {
         // kryo.writeObject(output, this.dynamicModuleContext);
 
         // convert RuntimeIterator to byte[] data
-        try {
-            byte[] data = SerializationUtils.serialize(this.bodyIterator);
-            output.writeInt(data.length);
-            output.writeBytes(data);
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
-            );
-        }
+        /*
+         * try {
+         * byte[] data = SerializationUtils.serialize(this.bodyIterator);
+         * output.writeInt(data.length);
+         * output.writeBytes(data);
+         * } catch (Exception e) {
+         * throw new OurBadException(
+         * "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
+         * );
+         * }
+         */
     }
 
     @SuppressWarnings("unchecked")
@@ -269,15 +270,17 @@ public class FunctionItem implements Item {
         // this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
 
-        try {
-            int dataLength = input.readInt();
-            byte[] data = input.readBytes(dataLength);
-            this.bodyIterator = SerializationUtils.deserialize(data);
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
-            );
-        }
+        /*
+         * try {
+         * int dataLength = input.readInt();
+         * byte[] data = input.readBytes(dataLength);
+         * this.bodyIterator = SerializationUtils.deserialize(data);
+         * } catch (Exception e) {
+         * throw new OurBadException(
+         * "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
+         * );
+         * }
+         */
     }
 
     @Override
