@@ -3,6 +3,7 @@ package org.rumbledb.types;
 import org.rumbledb.api.Item;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -188,6 +189,7 @@ public class Facets {
         facets.maxExclusive = maxExclusive;
         facets.totalDigits = totalDigits;
         facets.fractionDigits = fractionDigits;
+        facets.constraints = new ArrayList<>();
         return facets;
     }
 }

@@ -81,6 +81,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.DerivedAtomicItemType;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemItemType;
 import org.rumbledb.types.ItemType;
@@ -137,6 +138,7 @@ public class FlworDataFrameUtils {
         kryo.register(ItemType.class);
         kryo.register(ItemItemType.class);
         kryo.register(AtomicItemType.class);
+        kryo.register(DerivedAtomicItemType.class);
 
         kryo.register(ArrayList.class);
 
