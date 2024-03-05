@@ -22,19 +22,35 @@ package org.rumbledb.exceptions;
 
 import java.io.Serializable;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 /**
  * Metadata for error reporting (line and column number)
  *
  * @author Stefan Irimescu, Ghislain Fourny
  */
-public class ExceptionMetadata implements Serializable {
+public class ExceptionMetadata implements Serializable, KryoSerializable {
+
+    private String location;
+    private int tokenLineNumber;
+    private int tokenColumnNumber;
+    private String code;
 
     private static final long serialVersionUID = 1L;
-    private final String location;
-    private final int tokenLineNumber;
-    private final int tokenColumnNumber;
-    private final String code;
     public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 1, 0, "");
+
+    /**
+     * Builds a new empty metadata object (for serialization and deserialization only)
+     */
+    public ExceptionMetadata() {
+        this.location = "";
+        this.tokenLineNumber = -1;
+        this.tokenColumnNumber = -1;
+        this.code = "";
+    }
 
     /**
      * Builds a new metadata object
@@ -118,4 +134,20 @@ public class ExceptionMetadata implements Serializable {
             + getTokenColumnNumber()
             + ":";
     }
+
+    @Override
+	public void write(Kryo kryo, Output output) {
+    	kryo.writeObject(output, this.location);
+    	kryo.writeObject(output, this.tokenLineNumber);
+    	kryo.writeObject(output, this.tokenColumnNumber);
+    	kryo.writeObject(output, this.code);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+    	this.location = kryo.readObject(input, String.class);
+    	this.tokenLineNumber= kryo.readObject(input, Integer.class);
+    	this.tokenColumnNumber = kryo.readObject(input, Integer.class);
+    	this.code = kryo.readObject(input, String.class);
+	}
 }

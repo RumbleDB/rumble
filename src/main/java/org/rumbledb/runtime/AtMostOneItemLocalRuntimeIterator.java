@@ -33,6 +33,10 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -46,6 +50,11 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
 
     private static final long serialVersionUID = 1L;
     private Item result;
+
+    protected AtMostOneItemLocalRuntimeIterator() {
+        super();
+        this.result = null;
+    }
 
     protected AtMostOneItemLocalRuntimeIterator(
             List<RuntimeIterator> children,
@@ -185,5 +194,15 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
                     item.getDynamicType().toString(),
                 getMetadata()
         );
+    }
+
+    @Override
+	public void write(Kryo kryo, Output output) {
+    	super.write(kryo, output);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+    	super.read(kryo, input);
     }
 }

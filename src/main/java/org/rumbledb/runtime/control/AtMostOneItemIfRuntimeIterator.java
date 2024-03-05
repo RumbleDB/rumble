@@ -24,11 +24,16 @@ import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -88,5 +93,15 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             + elseResult.getResultingQuery()
             + " ) )";
         return new NativeClauseContext(nativeClauseContext, resultingQuery);
+    }
+
+    @Override
+	public void write(Kryo kryo, Output output) {
+    	super.write(kryo, output);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+    	super.read(kryo, input);
     }
 }

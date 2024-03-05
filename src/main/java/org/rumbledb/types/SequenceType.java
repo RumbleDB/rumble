@@ -749,7 +749,6 @@ public class SequenceType implements Serializable, KryoSerializable {
         kryo.writeObject(output, this.arity);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
         this.itemType = (ItemType) kryo.readClassAndObject(input);

@@ -57,10 +57,9 @@ import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 public class FunctionItem implements Item {
 
     private static final long serialVersionUID = 1L;
+
     private FunctionIdentifier identifier;
     private List<Name> parameterNames;
-
-    // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
     private DynamicContext dynamicModuleContext;
@@ -242,20 +241,8 @@ public class FunctionItem implements Item {
                     "We do not support serializing DataFrames in function closures."
             );
         }
-        // kryo.writeObject(output, this.dynamicModuleContext);
-
-        // convert RuntimeIterator to byte[] data
-        /*
-         * try {
-         * byte[] data = SerializationUtils.serialize(this.bodyIterator);
-         * output.writeInt(data.length);
-         * output.writeBytes(data);
-         * } catch (Exception e) {
-         * throw new OurBadException(
-         * "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
-         * );
-         * }
-         */
+        kryo.writeObject(output, this.dynamicModuleContext);
+        kryo.writeClassAndObject(output, this.bodyIterator);
     }
 
     @SuppressWarnings("unchecked")
@@ -267,20 +254,8 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
-        // this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
-        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-
-        /*
-         * try {
-         * int dataLength = input.readInt();
-         * byte[] data = input.readBytes(dataLength);
-         * this.bodyIterator = SerializationUtils.deserialize(data);
-         * } catch (Exception e) {
-         * throw new OurBadException(
-         * "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
-         * );
-         * }
-         */
+        this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
+        this.bodyIterator = (RuntimeIterator) kryo.readClassAndObject(input);
     }
 
     @Override
