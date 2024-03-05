@@ -134,7 +134,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = kryo.readObject(input, RumbleRuntimeConfiguration.class);
         this.variableValues = kryo.readObject(input, VariableValues.class);
         this.namedFunctions = new NamedFunctions(this.conf);
-        this.inScopeSchemaTypes= kryo.readObject(input, InScopeSchemaTypes.class);
+        this.inScopeSchemaTypes = kryo.readObject(input, InScopeSchemaTypes.class);
         this.currentDateTime = new DateTime(kryo.readObject(input, Long.class));
     }
 

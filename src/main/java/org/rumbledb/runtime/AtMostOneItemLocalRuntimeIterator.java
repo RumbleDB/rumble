@@ -197,12 +197,12 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-	public void write(Kryo kryo, Output output) {
-    	super.write(kryo, output);
+    public void write(Kryo kryo, Output output) {
+        super.write(kryo, output);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-    	super.read(kryo, input);
+        super.read(kryo, input);
     }
 }

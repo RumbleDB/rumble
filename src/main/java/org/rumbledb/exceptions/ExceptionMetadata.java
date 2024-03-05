@@ -136,18 +136,18 @@ public class ExceptionMetadata implements Serializable, KryoSerializable {
     }
 
     @Override
-	public void write(Kryo kryo, Output output) {
-    	kryo.writeObject(output, this.location);
-    	kryo.writeObject(output, this.tokenLineNumber);
-    	kryo.writeObject(output, this.tokenColumnNumber);
-    	kryo.writeObject(output, this.code);
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.location);
+        kryo.writeObject(output, this.tokenLineNumber);
+        kryo.writeObject(output, this.tokenColumnNumber);
+        kryo.writeObject(output, this.code);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-    	this.location = kryo.readObject(input, String.class);
-    	this.tokenLineNumber= kryo.readObject(input, Integer.class);
-    	this.tokenColumnNumber = kryo.readObject(input, Integer.class);
-    	this.code = kryo.readObject(input, String.class);
-	}
+        this.location = kryo.readObject(input, String.class);
+        this.tokenLineNumber = kryo.readObject(input, Integer.class);
+        this.tokenColumnNumber = kryo.readObject(input, Integer.class);
+        this.code = kryo.readObject(input, String.class);
+    }
 }

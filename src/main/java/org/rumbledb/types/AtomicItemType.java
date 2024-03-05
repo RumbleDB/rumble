@@ -553,12 +553,11 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-	public void write(Kryo kryo, Output output) {
+    public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.name);
         kryo.writeObject(output, this.allowedFacets.size());
-        for(FacetTypes f : this.allowedFacets)
-        {
-        	kryo.writeObject(output, f);
+        for (FacetTypes f : this.allowedFacets) {
+            kryo.writeObject(output, f);
         }
     }
 
@@ -567,10 +566,9 @@ public class AtomicItemType implements ItemType {
         this.name = kryo.readObject(input, Name.class);
         int n = kryo.readObject(input, Integer.class);
         this.allowedFacets = new HashSet<>(n);
-        for(int i = 0; i < n; ++i)
-        {
-        	FacetTypes t = kryo.readObject(input, FacetTypes.class);
-        	this.allowedFacets.add(t);
+        for (int i = 0; i < n; ++i) {
+            FacetTypes t = kryo.readObject(input, FacetTypes.class);
+            this.allowedFacets.add(t);
         }
     }
 }

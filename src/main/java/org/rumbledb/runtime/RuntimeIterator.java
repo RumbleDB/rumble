@@ -73,10 +73,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     // private StaticContext staticContext;
 
     public RuntimeIterator() {
-    	this.hasNext = false;
-    	this.isOpen = false;
-    	this.children = null;
-    	this.currentDynamicContextForLocalExecution = null;
+        this.hasNext = false;
+        this.isOpen = false;
+        this.children = null;
+        this.currentDynamicContextForLocalExecution = null;
         this.staticContext = null;
         this.staticURI = null;
     }

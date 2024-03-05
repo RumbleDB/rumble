@@ -74,20 +74,20 @@ public class RuntimeStaticContext implements Serializable, KryoSerializable {
         return this.metadata;
     }
 
-	@Override
-	public void write(Kryo kryo, Output output) {
-		kryo.writeObject(output, this.configuration);
-		kryo.writeObject(output, this.staticType);
-		kryo.writeObject(output, this.executionMode);
-		kryo.writeObject(output, this.metadata);
-	}
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.configuration);
+        kryo.writeObject(output, this.staticType);
+        kryo.writeObject(output, this.executionMode);
+        kryo.writeObject(output, this.metadata);
+    }
 
-	@Override
-	public void read(Kryo kryo, Input input) {
-		this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
-		this.staticType = kryo.readObject(input, SequenceType.class);
-		this.executionMode = kryo.readObject(input, ExecutionMode.class);
-		this.metadata = kryo.readObject(input, ExceptionMetadata.class);
-	}
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
+        this.staticType = kryo.readObject(input, SequenceType.class);
+        this.executionMode = kryo.readObject(input, ExecutionMode.class);
+        this.metadata = kryo.readObject(input, ExceptionMetadata.class);
+    }
 
 }

@@ -55,7 +55,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public VariableReferenceIterator() {
         super();
         this.variableName = null;
-        this.items= null;
+        this.items = null;
         this.currentIndex = 0;
     }
 
@@ -170,14 +170,14 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-	public void write(Kryo kryo, Output output) {
-    	super.write(kryo, output);
+    public void write(Kryo kryo, Output output) {
+        super.write(kryo, output);
         kryo.writeObject(output, this.variableName);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-    	super.read(kryo, input);
+        super.read(kryo, input);
         this.variableName = kryo.readObject(input, Name.class);
     }
 }

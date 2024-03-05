@@ -24,7 +24,6 @@ import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -96,12 +95,12 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     @Override
-	public void write(Kryo kryo, Output output) {
-    	super.write(kryo, output);
+    public void write(Kryo kryo, Output output) {
+        super.write(kryo, output);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-    	super.read(kryo, input);
+        super.read(kryo, input);
     }
 }
