@@ -62,7 +62,7 @@ public class Facets {
     private Item minInclusive, maxInclusive;
     private Item minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private List<String> constraints = Collections.emptyList();
+    private List<String> constraints = new ArrayList<>();
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
 
@@ -189,7 +189,6 @@ public class Facets {
         facets.maxExclusive = maxExclusive;
         facets.totalDigits = totalDigits;
         facets.fractionDigits = fractionDigits;
-        facets.constraints = new ArrayList<>();
         return facets;
     }
 }
