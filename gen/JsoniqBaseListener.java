@@ -344,30 +344,6 @@ public class JsoniqBaseListener implements JsoniqListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterInitialClause(JsoniqParser.InitialClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitInitialClause(JsoniqParser.InitialClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterIntermediateClause(JsoniqParser.IntermediateClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitIntermediateClause(JsoniqParser.IntermediateClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterForClause(JsoniqParser.ForClauseContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -591,30 +567,6 @@ public class JsoniqBaseListener implements JsoniqListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCatchClause(JsoniqParser.CatchClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterSwitchCaseOperand(JsoniqParser.SwitchCaseOperandContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitSwitchCaseOperand(JsoniqParser.SwitchCaseOperandContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCatchErrorList(JsoniqParser.CatchErrorListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCatchErrorList(JsoniqParser.CatchErrorListContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -1292,25 +1244,13 @@ public class JsoniqBaseListener implements JsoniqListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFlworStatement(JsoniqParser.FlworStatementContext ctx) { }
+	@Override public void enterFlowrStatement(JsoniqParser.FlowrStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitFlworStatement(JsoniqParser.FlworStatementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterReturnStatement(JsoniqParser.ReturnStatementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitReturnStatement(JsoniqParser.ReturnStatementContext ctx) { }
+	@Override public void exitFlowrStatement(JsoniqParser.FlowrStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -1364,13 +1304,25 @@ public class JsoniqBaseListener implements JsoniqListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTypeswitchStatement(JsoniqParser.TypeswitchStatementContext ctx) { }
+	@Override public void enterCatchCaseStatement(JsoniqParser.CatchCaseStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitTypeswitchStatement(JsoniqParser.TypeswitchStatementContext ctx) { }
+	@Override public void exitCatchCaseStatement(JsoniqParser.CatchCaseStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -1388,13 +1340,25 @@ public class JsoniqBaseListener implements JsoniqListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTypeDeclaration(JsoniqParser.TypeDeclarationContext ctx) { }
+	@Override public void enterAnnotation(JsoniqParser.AnnotationContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitTypeDeclaration(JsoniqParser.TypeDeclarationContext ctx) { }
+	@Override public void exitAnnotation(JsoniqParser.AnnotationContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterAnnotations(JsoniqParser.AnnotationsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAnnotations(JsoniqParser.AnnotationsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -1407,6 +1371,18 @@ public class JsoniqBaseListener implements JsoniqListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterVarDeclOther(JsoniqParser.VarDeclOtherContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVarDeclOther(JsoniqParser.VarDeclOtherContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

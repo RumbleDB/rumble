@@ -51,8 +51,8 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -66,7 +66,15 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.typing.*;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -314,5 +322,15 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitProgram(Program expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
+    public T visitStatementsAndOptionalExpr(StatementsAndOptionalExpr expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitStatementsAndExpr(StatementsAndExpr expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 }

@@ -102,6 +102,10 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -195,7 +199,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         // We override with a context item declaration if not present already.
-        Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
+        Program program = (Program) this.visitProgram(ctx.program());
         if (!prolog.hasContextItemDeclaration()) {
             if (
                 this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)
@@ -214,10 +218,20 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
         }
 
-        MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
+
+    // region program
+    @Override
+    public Node visitProgram(JsoniqParser.ProgramContext ctx) {
+        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) this
+            .visitStatementsAndOptionalExpr(ctx.statementsAndOptionalExpr());
+        return new Program(statementsAndOptionalExpr, createMetadataFromContext(ctx));
+    }
+
+    // end region
 
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
@@ -450,10 +464,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
+        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) this
+            .visitStatementsAndOptionalExpr(ctx.fn_body);
         Expression bodyExpression = null;
-        if (ctx.fn_body != null) {
+        if (statementsAndOptionalExpr.getExpression() != null) {
             // TODO: Introduce StatementsAndOptionalExpr
-            bodyExpression = (Expression) this.visitExpr(ctx.fn_body.expr());
+            bodyExpression = statementsAndOptionalExpr.getExpression();
         } else {
             bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
         }
@@ -1548,10 +1564,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
+        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) this
+            .visitStatementsAndOptionalExpr(ctx.fn_body);
         Expression expr = null;
-        if (ctx.fn_body != null) {
+        if (statementsAndOptionalExpr.getExpression() != null) {
             // TODO: Introduce StatementsAndOptionalExpr
-            expr = (Expression) this.visitExpr(ctx.fn_body.expr());
+            expr = statementsAndOptionalExpr.getExpression();
         } else {
             expr = new CommaExpression(createMetadataFromContext(ctx));
         }
@@ -1779,6 +1797,85 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
     }
+
+    // region scripting
+    @Override
+    public Node visitStatements(JsoniqParser.StatementsContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext stmt : ctx.statement()) {
+            statements.add((Statement) this.visitStatement(stmt));
+        }
+        return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitStatementsAndExpr(JsoniqParser.StatementsAndExprContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext stmt : ctx.statements().statement()) {
+            statements.add((Statement) this.visitStatement(stmt));
+        }
+        Expression expression = (Expression) this.visitExpr(ctx.expr());
+        return new StatementsAndExpr(statements, expression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitStatementsAndOptionalExpr(JsoniqParser.StatementsAndOptionalExprContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext stmt : ctx.statements().statement()) {
+            statements.add((Statement) this.visitStatement(stmt));
+        }
+        if (ctx.expr() != null) {
+            Expression expression = (Expression) this.visitExpr(ctx.expr());
+            return new StatementsAndOptionalExpr(statements, expression, createMetadataFromContext(ctx));
+        }
+        return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitStatement(JsoniqParser.StatementContext ctx) {
+        ParseTree content = ctx.children.get(0);
+        if (content instanceof JsoniqParser.ApplyStatementContext) {
+            return this.visitApplyStatement((JsoniqParser.ApplyStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.AssignStatementContext) {
+            return this.visitAssignStatement((JsoniqParser.AssignStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.BlockStatementContext) {
+            return this.visitBlockStatement((JsoniqParser.BlockStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.BreakStatementContext) {
+            return this.visitBreakStatement((JsoniqParser.BreakStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.ContinueStatementContext) {
+            return this.visitContinueStatement((JsoniqParser.ContinueStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.ExitStatementContext) {
+            return this.visitExitStatement((JsoniqParser.ExitStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.FlowrStatementContext) {
+            return this.visitFlowrStatement((JsoniqParser.FlowrStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.IfStatementContext) {
+            return this.visitIfStatement((JsoniqParser.IfStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.SwitchStatementContext) {
+            return this.visitSwitchStatement((JsoniqParser.SwitchStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.TryCatchStatementContext) {
+            return this.visitTryCatchStatement((JsoniqParser.TryCatchStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.TypeSwitchStatementContext) {
+            return this.visitTypeSwitchStatement((JsoniqParser.TypeSwitchStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.VarDeclStatementContext) {
+            return this.visitVarDeclStatement((JsoniqParser.VarDeclStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.WhileStatementContext) {
+            return this.visitWhileStatement((JsoniqParser.WhileStatementContext) content);
+        }
+        throw new OurBadException("Unrecognized Statement.");
+    }
+    // end region
 
     public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
         bindNamespace(

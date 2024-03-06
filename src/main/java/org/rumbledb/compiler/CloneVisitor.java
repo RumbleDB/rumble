@@ -8,19 +8,68 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.control.*;
-import org.rumbledb.expressions.flowr.*;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
+import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.*;
-import org.rumbledb.expressions.postfix.*;
-import org.rumbledb.expressions.primary.*;
-import org.rumbledb.expressions.typing.*;
+import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
+import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CloneVisitor extends AbstractNodeVisitor<Node> {
@@ -33,7 +82,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     public Node visitMainModule(MainModule module, Node argument) {
         MainModule result = new MainModule(
                 (Prolog) visit(module.getProlog(), module.getProlog()),
-                (Expression) visit(module.getExpression(), argument),
+                (Program) visit(module.getProgram(), argument),
                 module.getMetadata()
         );
         result.setStaticContext(module.getStaticContext());
@@ -67,6 +116,30 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         expression.getImportedModules().clear();
         expression.getImportedModules().addAll(libraryModules);
         return expression;
+    }
+
+    @Override
+    public Node visitProgram(Program program, Node argument) {
+        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) visit(
+            program.getStatementsAndOptionalExpr(),
+            argument
+        );
+        return new Program(statementsAndOptionalExpr, statementsAndOptionalExpr.getMetadata());
+    }
+
+    @Override
+    public Node visitStatementsAndOptionalExpr(StatementsAndOptionalExpr statementsAndOptionalExpr, Node argument) {
+        List<Statement> statements = new ArrayList<>();
+        statementsAndOptionalExpr.getStatements().forEach(statement -> {
+            statements.add((Statement) visit(statement, argument));
+        });
+        List<Expression> expressions = Collections.singletonList(
+            (Expression) visit(statementsAndOptionalExpr.getExpression(), argument)
+        );
+        CommaExpression optionalExpr = new CommaExpression(expressions, statementsAndOptionalExpr.getMetadata());
+        optionalExpr.setStaticContext(statementsAndOptionalExpr.getStaticContext());
+        optionalExpr.setStaticSequenceType(statementsAndOptionalExpr.getExpression().getStaticSequenceType());
+        return new StatementsAndOptionalExpr(statements, optionalExpr, statementsAndOptionalExpr.getMetadata());
     }
 
     @Override

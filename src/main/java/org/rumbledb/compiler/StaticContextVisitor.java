@@ -20,11 +20,6 @@
 
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
@@ -37,9 +32,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
@@ -53,6 +48,8 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -62,6 +59,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -88,6 +90,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
+        }
+        if (node instanceof StatementsAndOptionalExpr) {
+            ((StatementsAndOptionalExpr) node).setStaticContext(argument);
+        }
+        if (node instanceof StatementsAndExpr) {
+            ((StatementsAndExpr) node).setStaticContext(argument);
         }
         if (node instanceof Clause) {
             ((Clause) node).setStaticContext(argument);

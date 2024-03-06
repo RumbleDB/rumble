@@ -20,20 +20,15 @@
 
 package org.rumbledb.compiler;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
 import org.apache.log4j.LogManager;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -49,9 +44,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
@@ -73,6 +68,7 @@ import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.items.ItemFactory;
@@ -81,6 +77,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -615,6 +616,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         visitDescendants(prolog, argument);
         prolog.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitProgram(Program program, StaticContext argument) {
+        visitDescendants(program, argument);
+        program.setHighestExecutionMode(ExecutionMode.LOCAL);
         return argument;
     }
 

@@ -281,26 +281,6 @@ public interface JsoniqListener extends ParseTreeListener {
 	 */
 	void exitFlowrExpr(JsoniqParser.FlowrExprContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#initialClause}.
-	 * @param ctx the parse tree
-	 */
-	void enterInitialClause(JsoniqParser.InitialClauseContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#initialClause}.
-	 * @param ctx the parse tree
-	 */
-	void exitInitialClause(JsoniqParser.InitialClauseContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#intermediateClause}.
-	 * @param ctx the parse tree
-	 */
-	void enterIntermediateClause(JsoniqParser.IntermediateClauseContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#intermediateClause}.
-	 * @param ctx the parse tree
-	 */
-	void exitIntermediateClause(JsoniqParser.IntermediateClauseContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JsoniqParser#forClause}.
 	 * @param ctx the parse tree
 	 */
@@ -490,26 +470,6 @@ public interface JsoniqListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCatchClause(JsoniqParser.CatchClauseContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#switchCaseOperand}.
-	 * @param ctx the parse tree
-	 */
-	void enterSwitchCaseOperand(JsoniqParser.SwitchCaseOperandContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#switchCaseOperand}.
-	 * @param ctx the parse tree
-	 */
-	void exitSwitchCaseOperand(JsoniqParser.SwitchCaseOperandContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#catchErrorList}.
-	 * @param ctx the parse tree
-	 */
-	void enterCatchErrorList(JsoniqParser.CatchErrorListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#catchErrorList}.
-	 * @param ctx the parse tree
-	 */
-	void exitCatchErrorList(JsoniqParser.CatchErrorListContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JsoniqParser#orExpr}.
 	 * @param ctx the parse tree
@@ -1071,25 +1031,15 @@ public interface JsoniqListener extends ParseTreeListener {
 	 */
 	void exitExitStatement(JsoniqParser.ExitStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#flworStatement}.
+	 * Enter a parse tree produced by {@link JsoniqParser#flowrStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterFlworStatement(JsoniqParser.FlworStatementContext ctx);
+	void enterFlowrStatement(JsoniqParser.FlowrStatementContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#flworStatement}.
+	 * Exit a parse tree produced by {@link JsoniqParser#flowrStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitFlworStatement(JsoniqParser.FlworStatementContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#returnStatement}.
-	 * @param ctx the parse tree
-	 */
-	void enterReturnStatement(JsoniqParser.ReturnStatementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#returnStatement}.
-	 * @param ctx the parse tree
-	 */
-	void exitReturnStatement(JsoniqParser.ReturnStatementContext ctx);
+	void exitFlowrStatement(JsoniqParser.FlowrStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JsoniqParser#ifStatement}.
 	 * @param ctx the parse tree
@@ -1131,15 +1081,25 @@ public interface JsoniqListener extends ParseTreeListener {
 	 */
 	void exitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#typeswitchStatement}.
+	 * Enter a parse tree produced by {@link JsoniqParser#catchCaseStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterTypeswitchStatement(JsoniqParser.TypeswitchStatementContext ctx);
+	void enterCatchCaseStatement(JsoniqParser.CatchCaseStatementContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#typeswitchStatement}.
+	 * Exit a parse tree produced by {@link JsoniqParser#catchCaseStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitTypeswitchStatement(JsoniqParser.TypeswitchStatementContext ctx);
+	void exitCatchCaseStatement(JsoniqParser.CatchCaseStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JsoniqParser#typeSwitchStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JsoniqParser#typeSwitchStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JsoniqParser#caseStatement}.
 	 * @param ctx the parse tree
@@ -1151,15 +1111,25 @@ public interface JsoniqListener extends ParseTreeListener {
 	 */
 	void exitCaseStatement(JsoniqParser.CaseStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JsoniqParser#typeDeclaration}.
+	 * Enter a parse tree produced by {@link JsoniqParser#annotation}.
 	 * @param ctx the parse tree
 	 */
-	void enterTypeDeclaration(JsoniqParser.TypeDeclarationContext ctx);
+	void enterAnnotation(JsoniqParser.AnnotationContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link JsoniqParser#typeDeclaration}.
+	 * Exit a parse tree produced by {@link JsoniqParser#annotation}.
 	 * @param ctx the parse tree
 	 */
-	void exitTypeDeclaration(JsoniqParser.TypeDeclarationContext ctx);
+	void exitAnnotation(JsoniqParser.AnnotationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JsoniqParser#annotations}.
+	 * @param ctx the parse tree
+	 */
+	void enterAnnotations(JsoniqParser.AnnotationsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JsoniqParser#annotations}.
+	 * @param ctx the parse tree
+	 */
+	void exitAnnotations(JsoniqParser.AnnotationsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JsoniqParser#varDeclStatement}.
 	 * @param ctx the parse tree
@@ -1170,6 +1140,16 @@ public interface JsoniqListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JsoniqParser#varDeclOther}.
+	 * @param ctx the parse tree
+	 */
+	void enterVarDeclOther(JsoniqParser.VarDeclOtherContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JsoniqParser#varDeclOther}.
+	 * @param ctx the parse tree
+	 */
+	void exitVarDeclOther(JsoniqParser.VarDeclOtherContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JsoniqParser#whileStatement}.
 	 * @param ctx the parse tree

@@ -10,7 +10,7 @@ moduleAndThisIsIt       : module EOF;
 module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
-mainModule              : prolog expr | prolog program;
+mainModule              : prolog program;
 
 libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 

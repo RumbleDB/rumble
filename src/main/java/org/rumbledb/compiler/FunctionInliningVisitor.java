@@ -19,6 +19,7 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -280,7 +281,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
     public Node visitMainModule(MainModule mainModule, Node argument) {
         MainModule result = new MainModule(
                 mainModule.getProlog(),
-                (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),
+                (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
                 mainModule.getMetadata()
         );
         result.setStaticContext(mainModule.getStaticContext());
