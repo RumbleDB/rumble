@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.9.3
+// Generated from /Users/dbuzatu/ETH/Thesis/rumble/src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.13.1
 
 // Java header
 package org.rumbledb.parser;
@@ -176,6 +176,18 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFlowrExpr(JsoniqParser.FlowrExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#initialClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInitialClause(JsoniqParser.InitialClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#intermediateClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntermediateClause(JsoniqParser.IntermediateClauseContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#forClause}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -289,6 +301,18 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCatchClause(JsoniqParser.CatchClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#switchCaseOperand}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSwitchCaseOperand(JsoniqParser.SwitchCaseOperandContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#catchErrorList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCatchErrorList(JsoniqParser.CatchErrorListContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#orExpr}.
 	 * @param ctx the parse tree
@@ -626,11 +650,17 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExitStatement(JsoniqParser.ExitStatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#flowrStatement}.
+	 * Visit a parse tree produced by {@link JsoniqParser#flworStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFlowrStatement(JsoniqParser.FlowrStatementContext ctx);
+	T visitFlworStatement(JsoniqParser.FlworStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#returnStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReturnStatement(JsoniqParser.ReturnStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#ifStatement}.
 	 * @param ctx the parse tree
@@ -656,17 +686,11 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#catchCaseStatement}.
+	 * Visit a parse tree produced by {@link JsoniqParser#typeswitchStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCatchCaseStatement(JsoniqParser.CatchCaseStatementContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#typeSwitchStatement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx);
+	T visitTypeswitchStatement(JsoniqParser.TypeswitchStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#caseStatement}.
 	 * @param ctx the parse tree
@@ -674,29 +698,17 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCaseStatement(JsoniqParser.CaseStatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#annotation}.
+	 * Visit a parse tree produced by {@link JsoniqParser#typeDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAnnotation(JsoniqParser.AnnotationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#annotations}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAnnotations(JsoniqParser.AnnotationsContext ctx);
+	T visitTypeDeclaration(JsoniqParser.TypeDeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#varDeclStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#varDeclOther}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVarDeclOther(JsoniqParser.VarDeclOtherContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#whileStatement}.
 	 * @param ctx the parse tree

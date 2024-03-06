@@ -20,21 +20,6 @@
 
 package org.rumbledb.compiler;
 
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -136,6 +121,21 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 
 /**
@@ -452,7 +452,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         Expression bodyExpression = null;
         if (ctx.fn_body != null) {
-            bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
+            // TODO: Introduce StatementsAndOptionalExpr
+            bodyExpression = (Expression) this.visitExpr(ctx.fn_body.expr());
         } else {
             bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
         }
@@ -540,17 +541,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.OrExprContext) {
-            return this.visitOrExpr((JsoniqParser.OrExprContext) content);
+        if (content instanceof JsoniqParser.ExprSimpleContext) {
+            return this.visitExprSimple((JsoniqParser.ExprSimpleContext) content);
         }
         if (content instanceof JsoniqParser.FlowrExprContext) {
             return this.visitFlowrExpr((JsoniqParser.FlowrExprContext) content);
         }
         if (content instanceof JsoniqParser.IfExprContext) {
             return this.visitIfExpr((JsoniqParser.IfExprContext) content);
-        }
-        if (content instanceof JsoniqParser.QuantifiedExprContext) {
-            return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
         }
         if (content instanceof JsoniqParser.SwitchExprContext) {
             return this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
@@ -561,8 +559,41 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (content instanceof JsoniqParser.TryCatchExprContext) {
             return this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
         }
-        throw new OurBadException("Unrecognized ExprSingle.");
+        throw new OurBadException("Unrecognized ExprSingle:" + content.getClass().getName());
     }
+    // endregion
+
+    // begin region ExprSimple
+    @Override
+    public Node visitExprSimple(JsoniqParser.ExprSimpleContext ctx) {
+        ParseTree content = ctx.children.get(0);
+        if (content instanceof JsoniqParser.OrExprContext) {
+            return this.visitOrExpr((JsoniqParser.OrExprContext) content);
+        }
+        if (content instanceof JsoniqParser.QuantifiedExprContext) {
+            return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteExprContext) {
+            return this.visitDeleteExpr((JsoniqParser.DeleteExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertExprContext) {
+            return this.visitInsertExpr((JsoniqParser.InsertExprContext) content);
+        }
+        if (content instanceof JsoniqParser.ReplaceExprContext) {
+            return this.visitReplaceExpr((JsoniqParser.ReplaceExprContext) content);
+        }
+        if (content instanceof JsoniqParser.RenameExprContext) {
+            return this.visitRenameExpr((JsoniqParser.RenameExprContext) content);
+        }
+        if (content instanceof JsoniqParser.AppendExprContext) {
+            return this.visitAppendExpr((JsoniqParser.AppendExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TransformExprContext) {
+            return this.visitTransformExpr((JsoniqParser.TransformExprContext) content);
+        }
+        throw new OurBadException("Unrecognized ExprSimple.");
+    }
+
     // endregion
 
     // region Flowr
@@ -1519,7 +1550,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         Expression expr = null;
         if (ctx.fn_body != null) {
-            expr = (Expression) this.visitExpr(ctx.fn_body);
+            // TODO: Introduce StatementsAndOptionalExpr
+            expr = (Expression) this.visitExpr(ctx.fn_body.expr());
         } else {
             expr = new CommaExpression(createMetadataFromContext(ctx));
         }
