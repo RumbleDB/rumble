@@ -108,6 +108,8 @@ import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
@@ -1928,6 +1930,48 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitExitStatement(JsoniqParser.ExitStatementContext ctx) {
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new ExitStatement(exprSingle, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitFlowrStatement(JsoniqParser.FlowrStatementContext ctx) {
+        Clause clause;
+        // Check for start clause. Only for or let allowed.
+        if (ctx.start_for == null) {
+            clause = (Clause) this.visitLetClause(ctx.start_let);
+        } else {
+            clause = (Clause) this.visitForClause(ctx.start_for);
+        }
+        Clause lastFlowrClause = clause.getLastClause();
+        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
+            if (child instanceof JsoniqParser.ForClauseContext) {
+                clause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
+            } else if (child instanceof JsoniqParser.LetClauseContext) {
+                clause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
+            } else if (child instanceof JsoniqParser.WhereClauseContext) {
+                clause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
+            } else if (child instanceof JsoniqParser.GroupByClauseContext) {
+                clause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
+            } else if (child instanceof JsoniqParser.OrderByClauseContext) {
+                clause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
+            } else if (child instanceof JsoniqParser.CountClauseContext) {
+                clause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
+            } else {
+                throw new UnsupportedFeatureException(
+                        "FLOWR clause not implemented yet",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            lastFlowrClause.chainWith(clause.getFirstClause());
+            lastFlowrClause = clause.getLastClause();
+        }
+        Statement returnStatement = (Statement) this.visitStatement(ctx.returnStmt);
+        ReturnStatementClause returnStatementClause = new ReturnStatementClause(
+                returnStatement,
+                generateMetadata(ctx.getStop())
+        );
+        lastFlowrClause.chainWith(returnStatementClause);
+        returnStatementClause = returnStatementClause.detachInitialLetClausesForStatements();
+        return new FlowrStatement(returnStatementClause, createMetadataFromContext(ctx));
     }
 
     // end loops
