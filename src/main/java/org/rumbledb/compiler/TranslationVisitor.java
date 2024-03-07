@@ -106,6 +106,8 @@ import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -1992,6 +1994,33 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Statement elseBranch = (Statement) this.visitStatement(ctx.else_branch);
         return new ConditionalStatement(condition, branch, elseBranch, createMetadataFromContext(ctx));
     }
+
+    @Override
+    public Node visitSwitchStatement(JsoniqParser.SwitchStatementContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.condExpr);
+        List<SwitchCaseStatement> cases = new ArrayList<>();
+        for (JsoniqParser.SwitchCaseStatementContext stmt : ctx.cases) {
+            List<Expression> conditionExpressions = new ArrayList<>();
+            stmt.cond.forEach(exprSingle -> {
+                conditionExpressions.add((Expression) this.visitExprSingle(exprSingle));
+            });
+            // TODO: Test this behaviour with return!
+            // Verify return statement
+            ParseTree caseTree = stmt.children.get(stmt.children.size() - 1);
+            checkForUnsupportedStatement(caseTree);
+            SwitchCaseStatement swCase = new SwitchCaseStatement(
+                    conditionExpressions,
+                    (Statement) this.visitStatement(stmt.ret)
+            );
+            cases.add(swCase);
+        }
+        // Verify default statement
+        ParseTree defaultTree = ctx.children.get(ctx.children.size() - 1);
+        checkForUnsupportedStatement(defaultTree);
+        Statement defaultCase = (Statement) this.visitStatement(ctx.def);
+        return new SwitchStatement(condition, cases, defaultCase, createMetadataFromContext(ctx));
+    }
+
 
     public void checkForUnsupportedStatement(ParseTree content) {
         if (content instanceof JsoniqParser.BreakStatementContext) {

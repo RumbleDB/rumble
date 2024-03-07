@@ -1,8 +1,8 @@
 package org.rumbledb.expressions.scripting.control;
 
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,25 +11,20 @@ import java.util.List;
  * be direct children of the SwitchStatement.
  */
 public class SwitchCaseStatement {
-    private final List<Statement> conditionStatements;
+    private final List<Expression> conditionExpressions;
     private final Statement returnStatement;
 
-    public SwitchCaseStatement(List<Statement> conditionStatements, Statement returnStatement) {
-        this.conditionStatements = conditionStatements;
+    public SwitchCaseStatement(List<Expression> conditionExpressions, Statement returnStatement) {
+        this.conditionExpressions = conditionExpressions;
         this.returnStatement = returnStatement;
     }
 
-    public List<Statement> getAllStatements() {
-        List<Statement> result = new ArrayList<>(this.conditionStatements);
-        result.add(this.returnStatement);
-        return result;
-    }
-
-    public List<Statement> getConditionStatements() {
-        return this.conditionStatements;
+    public List<Expression> getConditionExpressions() {
+        return this.conditionExpressions;
     }
 
     public Statement getReturnStatement() {
         return this.returnStatement;
     }
+
 }
