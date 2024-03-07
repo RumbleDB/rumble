@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.types.SequenceType;
 
 import java.util.Arrays;
@@ -41,8 +42,10 @@ public class InlineFunctionExpression extends Expression {
     private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
     private final Expression body;
+    private final List<Annotation> annotations;
 
     public InlineFunctionExpression(
+            List<Annotation> annotations,
             Name name,
             Map<Name, SequenceType> params,
             SequenceType returnType,
@@ -54,6 +57,7 @@ public class InlineFunctionExpression extends Expression {
         this.params = params;
         this.returnType = returnType;
         this.body = body;
+        this.annotations = annotations;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
     }
 
@@ -79,6 +83,10 @@ public class InlineFunctionExpression extends Expression {
 
     public Expression getBody() {
         return this.body;
+    }
+
+    public List<Annotation> getAnnotations() {
+        return annotations;
     }
 
     @Override

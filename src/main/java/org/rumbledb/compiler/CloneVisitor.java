@@ -404,6 +404,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
     public Node visitInlineFunctionExpr(InlineFunctionExpression expression, Node argument) {
         InlineFunctionExpression result = new InlineFunctionExpression(
+                expression.getAnnotations(),
                 expression.getName(),
                 expression.getParams(),
                 expression.getReturnType(),

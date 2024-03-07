@@ -482,6 +482,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
 
         return new InlineFunctionExpression(
+                null, // TODO: add annotations to grammar of XQuery.
                 name,
                 fnParams,
                 fnReturnType,
@@ -1385,6 +1386,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
 
         return new InlineFunctionExpression(
+                null, // TODO: add annotations to grammar of XQuery.
                 null,
                 fnParams,
                 fnReturnType,

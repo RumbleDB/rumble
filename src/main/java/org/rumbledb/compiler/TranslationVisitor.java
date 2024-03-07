@@ -103,6 +103,7 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
@@ -435,6 +436,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
         Name name = parseName(ctx.qname(), true, false);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
@@ -475,6 +477,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         return new InlineFunctionExpression(
+                annotations,
                 name,
                 fnParams,
                 fnReturnType,
@@ -1536,6 +1539,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
@@ -1575,6 +1579,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         return new InlineFunctionExpression(
+                annotations,
                 null,
                 fnParams,
                 fnReturnType,
@@ -1977,6 +1982,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 token.getCharPositionInLine(),
                 this.code
         );
+    }
+
+    private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
+        List<Annotation> parsedAnnotations = new ArrayList<>();
+        annotations.annotation().forEach(annotationContext -> {
+            JsoniqParser.QnameContext qnameContext = annotationContext.qname();
+            Name name = parseName(qnameContext, false, false);
+            List<Expression> literals = new ArrayList<>();
+            ExceptionMetadata metadata = createMetadataFromContext(annotationContext);
+            annotationContext.Literal().forEach(literal -> {
+                literals.add(getLiteralExpressionFromToken(literal.getText(), metadata));
+            });
+            parsedAnnotations.add(new Annotation(name, literals));
+        });
+
+        return parsedAnnotations;
     }
 
 }
