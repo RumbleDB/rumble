@@ -105,6 +105,7 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -1975,6 +1976,35 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     // end loops
+
+    // control
+
+    @Override
+    public Node visitIfStatement(JsoniqParser.IfStatementContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.test_expr);
+        // Verify and set branch.
+        ParseTree branchContent = ctx.children.get(5);
+        checkForUnsupportedStatement(branchContent);
+        Statement branch = (Statement) this.visitStatement(ctx.branch);
+        // Verify and set else branch.
+        ParseTree elseBranchContent = ctx.children.get(7);
+        checkForUnsupportedStatement(elseBranchContent);
+        Statement elseBranch = (Statement) this.visitStatement(ctx.else_branch);
+        return new ConditionalStatement(condition, branch, elseBranch, createMetadataFromContext(ctx));
+    }
+
+    public void checkForUnsupportedStatement(ParseTree content) {
+        if (content instanceof JsoniqParser.BreakStatementContext) {
+            throw new OurBadException("Break statement is not supported in an if branch!");
+        } else if (content instanceof JsoniqParser.ContinueStatementContext) {
+            throw new OurBadException("Continue statement is not supported in an if branch!");
+        } else if (content instanceof JsoniqParser.ExitStatementContext) {
+            throw new OurBadException("Exit statement is not supported in an if branch!");
+        }
+    }
+
+
+    // end control
 
     // end region
 
