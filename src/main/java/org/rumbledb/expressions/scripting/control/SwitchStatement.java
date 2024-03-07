@@ -36,7 +36,8 @@ public class SwitchStatement extends Statement {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
         for (SwitchCaseStatement swc : this.cases) {
-            result.addAll(swc.getAllStatements());
+            result.addAll(swc.getConditionExpressions());
+            result.add(swc.getReturnStatement());
         }
         result.add(this.defaultStatement);
         return result;
@@ -51,9 +52,9 @@ public class SwitchStatement extends Statement {
         for (SwitchCaseStatement swc : this.cases) {
             indentIt(sb, indent + 1);
             sb.append("case (");
-            for (int i = 0; i < swc.getAllStatements().size(); i++) {
-                swc.getAllStatements().get(i).serializeToJSONiq(sb, 0);
-                if (i == swc.getAllStatements().size() - 1) {
+            for (int i = 0; i < swc.getConditionExpressions().size(); i++) {
+                swc.getConditionExpressions().get(i).serializeToJSONiq(sb, 0);
+                if (i == swc.getConditionExpressions().size() - 1) {
                     sb.append(") ");
                 } else {
                     sb.append(", ");
