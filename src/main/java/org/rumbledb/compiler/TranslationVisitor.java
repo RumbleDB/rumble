@@ -104,6 +104,8 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
@@ -1880,6 +1882,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         throw new OurBadException("Unrecognized Statement.");
     }
+
+    @Override
+    public Node visitApplyStatement(JsoniqParser.ApplyStatementContext ctx) {
+        Expression exprSimple = (Expression) this.visitExprSimple(ctx.exprSimple());
+        return new ApplyStatement(exprSimple, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
+        Name paramName = parseName(ctx.qname(), false, false);
+        Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+        return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
+    }
+
+
     // end region
 
     public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
