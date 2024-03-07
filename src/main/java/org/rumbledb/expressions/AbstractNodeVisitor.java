@@ -68,6 +68,7 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -374,6 +375,13 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitFlowrStatement(FlowrStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitConditionalStatement(
+            ConditionalStatement expression,
+            T argument
+    ) {
         return defaultAction(expression, argument);
     }
 
