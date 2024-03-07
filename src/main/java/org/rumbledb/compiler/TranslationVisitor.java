@@ -104,6 +104,10 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
@@ -1883,6 +1887,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         throw new OurBadException("Unrecognized Statement.");
     }
 
+    // mutation
     @Override
     public Node visitApplyStatement(JsoniqParser.ApplyStatementContext ctx) {
         Expression exprSimple = (Expression) this.visitExprSimple(ctx.exprSimple());
@@ -1895,7 +1900,37 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
+    // end mutation
 
+    // block
+    @Override
+    public Node visitBlockStatement(JsoniqParser.BlockStatementContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext statement : ctx.statements().statement()) {
+            statements.add((Statement) this.visitStatement(statement));
+        }
+        return new BlockStatement(statements, createMetadataFromContext(ctx));
+    }
+    // end block
+
+    // loops
+    @Override
+    public Node visitBreakStatement(JsoniqParser.BreakStatementContext ctx) {
+        return new BreakStatement(createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitContinueStatement(JsoniqParser.ContinueStatementContext ctx) {
+        return new ContinueStatement(createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitExitStatement(JsoniqParser.ExitStatementContext ctx) {
+        Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+        return new ExitStatement(exprSingle, createMetadataFromContext(ctx));
+    }
+
+    // end loops
 
     // end region
 

@@ -8,7 +8,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.List;
 
 public class ContinueStatement extends Statement {
-    protected ContinueStatement(ExceptionMetadata metadata) {
+    public ContinueStatement(ExceptionMetadata metadata) {
         super(metadata);
     }
 

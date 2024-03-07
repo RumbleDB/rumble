@@ -9,7 +9,7 @@ import java.util.List;
 
 public class BreakStatement extends Statement {
 
-    protected BreakStatement(ExceptionMetadata metadata) {
+    public BreakStatement(ExceptionMetadata metadata) {
         super(metadata);
     }
 
