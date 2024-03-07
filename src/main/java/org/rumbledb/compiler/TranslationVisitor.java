@@ -109,6 +109,8 @@ import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -2044,6 +2046,37 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 tryBlock,
                 catchBlockStatements,
                 catchAllBlockStatement,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.cond);
+        List<TypeSwitchStatementCase> cases = new ArrayList<>();
+        for (JsoniqParser.CaseStatementContext stmt : ctx.cases) {
+            List<SequenceType> union = new ArrayList<>();
+            Name variableName = null;
+            if (stmt.var_ref != null) {
+                variableName = ((VariableReferenceExpression) this.visitVarRef(stmt.var_ref)).getVariableName();
+            }
+            if (stmt.union != null && !stmt.union.isEmpty()) {
+                stmt.union.forEach(sequenceTypeContext -> {
+                    union.add(this.processSequenceType(sequenceTypeContext));
+                });
+            }
+            Statement returnStatement = (Statement) this.visitStatement(stmt.ret);
+            cases.add(new TypeSwitchStatementCase(variableName, union, returnStatement));
+        }
+        Name defaultVariableName = null;
+        if (ctx.var_ref != null) {
+            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        }
+        Statement defaultStatement = (Statement) this.visitStatement(ctx.def);
+        return new TypeSwitchStatement(
+                condition,
+                cases,
+                new TypeSwitchStatementCase(defaultVariableName, defaultStatement),
                 createMetadataFromContext(ctx)
         );
     }
