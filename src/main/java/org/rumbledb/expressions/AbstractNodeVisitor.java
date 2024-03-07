@@ -66,8 +66,9 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
@@ -338,5 +339,10 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitApplyStatement(ApplyStatement expression, T argument) {
         return defaultAction(expression, argument);
     }
+
+    public T visitAssignStatement(AssignStatement assignStatement, T argument) {
+        return defaultAction(assignStatement, argument);
+    }
+
 
 }
