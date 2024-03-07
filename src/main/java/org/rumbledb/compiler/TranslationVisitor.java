@@ -116,6 +116,7 @@ import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
@@ -1979,6 +1980,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         returnStatementClause = returnStatementClause.detachInitialLetClausesForStatements();
         return new FlowrStatement(returnStatementClause, createMetadataFromContext(ctx));
     }
+
+    @Override
+    public Node visitWhileStatement(JsoniqParser.WhileStatementContext ctx) {
+        Expression testCondition = (Expression) this.visitExpr(ctx.test_expr);
+        Statement statement = (Statement) this.visitStatement(ctx.stmt);
+        return new WhileStatement(testCondition, statement, createMetadataFromContext(ctx));
+    }
+
 
     // end loops
 
