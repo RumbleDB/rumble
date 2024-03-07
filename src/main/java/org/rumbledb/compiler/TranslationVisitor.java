@@ -108,6 +108,7 @@ import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -2020,6 +2021,33 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Statement defaultCase = (Statement) this.visitStatement(ctx.def);
         return new SwitchStatement(condition, cases, defaultCase, createMetadataFromContext(ctx));
     }
+
+    @Override
+    public Node visitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx) {
+        BlockStatement tryBlock = (BlockStatement) this.visitBlockStatement(ctx.try_block);
+        Map<String, BlockStatement> catchBlockStatements = new HashMap<>();
+        BlockStatement catchAllBlockStatement = null;
+        for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
+            BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
+            for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
+                Name name = parseName(qnameCtx, false, false);
+                if (!catchBlockStatements.containsKey(name.getLocalName())) {
+                    catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
+                }
+            }
+            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
+            if (doesCatchAll && catchAllBlockStatement == null) {
+                catchAllBlockStatement = catchBlockStatement;
+            }
+        }
+        return new TryCatchStatement(
+                tryBlock,
+                catchBlockStatements,
+                catchAllBlockStatement,
+                createMetadataFromContext(ctx)
+        );
+    }
+
 
 
     public void checkForUnsupportedStatement(ParseTree content) {
