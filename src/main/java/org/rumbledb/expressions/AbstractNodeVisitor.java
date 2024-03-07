@@ -69,6 +69,7 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
@@ -356,6 +357,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitContinueStatement(ContinueStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitExitStatement(ExitStatement expression, T argument) {
         return defaultAction(expression, argument);
     }
 
