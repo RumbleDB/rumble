@@ -69,8 +69,10 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
-import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
@@ -344,16 +346,16 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitAssignStatement(AssignStatement assignStatement, T argument) {
-        return defaultAction(assignStatement, argument);
+    public T visitAssignStatement(AssignStatement expression, T argument) {
+        return defaultAction(expression, argument);
     }
 
-    public T visitBlockStatement(BlockStatement blockStatement, T argument) {
-        return defaultAction(blockStatement, argument);
+    public T visitBlockStatement(BlockStatement expression, T argument) {
+        return defaultAction(expression, argument);
     }
 
-    public T visitBreakStatement(BreakStatement breakStatement, T argument) {
-        return defaultAction(breakStatement, argument);
+    public T visitBreakStatement(BreakStatement expression, T argument) {
+        return defaultAction(expression, argument);
     }
 
     public T visitContinueStatement(ContinueStatement expression, T argument) {
@@ -361,6 +363,17 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitExitStatement(ExitStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitReturnStatementClause(
+            ReturnStatementClause expression,
+            T argument
+    ) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitFlowrStatement(FlowrStatement expression, T argument) {
         return defaultAction(expression, argument);
     }
 
