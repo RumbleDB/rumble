@@ -22,6 +22,7 @@ package org.rumbledb.compiler;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.api.Item;
@@ -111,6 +112,7 @@ import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -2100,8 +2102,70 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
     }
 
-
     // end control
+
+    // declaration
+
+    @Override
+    public Node visitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx) {
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
+        SequenceType seq = null;
+        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Expression exprSingle = null;
+        Map<Name, Pair<SequenceType, Expression>> otherVariables = new HashMap<>();
+
+        if (ctx.sequenceType() != null) {
+            seq = this.processSequenceType(ctx.sequenceType());
+        }
+        if (ctx.exprSingle() != null) {
+            exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+            if (seq != null) {
+                exprSingle = new TreatExpression(
+                        exprSingle,
+                        seq,
+                        ErrorCode.UnexpectedTypeErrorCode,
+                        exprSingle.getMetadata()
+                );
+            }
+        }
+        if (ctx.other_vars != null) {
+            JsoniqParser.VarDeclOtherContext otherCtx = ctx.other_vars;
+            for (int i = 0; i < otherCtx.varRef().size(); ++i) {
+                Name varOtherName = ((VariableReferenceExpression) this.visitVarRef(otherCtx.varRef(i)))
+                    .getVariableName();
+                SequenceType varOtherSeq = null;
+                Expression varOtherExpr = null;
+
+                if (otherCtx.sequenceType(i) != null) {
+                    varOtherSeq = this.processSequenceType(otherCtx.sequenceType(i));
+                }
+                if (otherCtx.exprSingle(i) != null) {
+                    varOtherExpr = (Expression) this.visitExprSingle(otherCtx.exprSingle(i));
+                    if (varOtherSeq != null) {
+                        varOtherExpr = new TreatExpression(
+                                varOtherExpr,
+                                varOtherSeq,
+                                ErrorCode.UnexpectedTypeErrorCode,
+                                varOtherExpr.getMetadata()
+                        );
+                    }
+                }
+                if (!otherVariables.containsKey(varOtherName)) {
+                    otherVariables.put(varOtherName, new Pair<>(varOtherSeq, varOtherExpr));
+                }
+            }
+        }
+        return new VariableDeclStatement(
+                annotations,
+                var,
+                seq,
+                exprSingle,
+                otherVariables,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    // end declaration
 
     // end region
 

@@ -6,6 +6,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
 
@@ -14,12 +15,14 @@ import java.util.List;
 import java.util.Map;
 
 public class VariableDeclStatement extends Statement {
+    private final List<Annotation> annotations;
     private final Name variableName;
     private final SequenceType variableSequenceType;
     private final Expression variableExpression;
     private final Map<Name, Pair<SequenceType, Expression>> otherVariables;
 
     public VariableDeclStatement(
+            List<Annotation> annotations,
             Name variableName,
             SequenceType variableSequenceType,
             Expression variableExpression,
@@ -27,6 +30,7 @@ public class VariableDeclStatement extends Statement {
             ExceptionMetadata metadata
     ) {
         super(metadata);
+        this.annotations = annotations;
         this.variableName = variableName;
         this.variableSequenceType = variableSequenceType;
         this.variableExpression = variableExpression;
@@ -103,5 +107,9 @@ public class VariableDeclStatement extends Statement {
 
     public Map<Name, Pair<SequenceType, Expression>> getOtherVariables() {
         return otherVariables;
+    }
+
+    public List<Annotation> getAnnotations() {
+        return annotations;
     }
 }
