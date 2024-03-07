@@ -71,6 +71,7 @@ import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
@@ -392,6 +393,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTryCatchStatement(TryCatchStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTypeSwitchStatement(TypeSwitchStatement expression, T argument) {
         return defaultAction(expression, argument);
     }
 
