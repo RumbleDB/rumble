@@ -2048,8 +2048,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         );
     }
 
-
-
     public void checkForUnsupportedStatement(ParseTree content) {
         if (content instanceof JsoniqParser.BreakStatementContext) {
             throw new OurBadException("Break statement is not supported in an if branch!");
