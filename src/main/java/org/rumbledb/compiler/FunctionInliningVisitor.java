@@ -20,6 +20,7 @@ import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -308,12 +309,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
             return result;
         }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
-        Expression body = (Expression) visit(inlineFunction.getBody(), argument);
+        StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
+        Expression bodyExpression = body.getExpression();
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         if (expression.getArguments().size() == 0 || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
                 return new TreatExpression(
-                        body,
+                        bodyExpression,
                         inlineFunction.getReturnType(),
                         ErrorCode.UnexpectedTypeErrorCode,
                         expression.getMetadata()
@@ -321,8 +323,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             }
             return body;
         }
-        body.setStaticSequenceType(inlineFunction.getReturnType());
-        ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
+        bodyExpression.setStaticSequenceType(inlineFunction.getReturnType());
+        ReturnClause returnClause = new ReturnClause(bodyExpression, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
         for (int i = 0; i < expression.getArguments().size(); i++) {

@@ -33,7 +33,12 @@ public class StatementsAndOptionalExpr extends Node {
         } else {
             this.statements = statements;
         }
-        this.expression = expression;
+        // An empty expression should be a comma expression to avoid null pointer exceptions.
+        if (expression == null) {
+            this.expression = new CommaExpression(metadata);
+        } else {
+            this.expression = expression;
+        }
     }
 
     @Override

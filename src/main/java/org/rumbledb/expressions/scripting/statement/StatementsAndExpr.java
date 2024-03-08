@@ -2,6 +2,7 @@ package org.rumbledb.expressions.scripting.statement;
 
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -21,6 +22,9 @@ public class StatementsAndExpr extends Node {
             this.statements = new ArrayList<>();
         } else {
             this.statements = statements;
+        }
+        if (expression == null) {
+            throw new OurBadException("Expression cannot be null when statements and expression are needed.");
         }
         this.expression = expression;
     }

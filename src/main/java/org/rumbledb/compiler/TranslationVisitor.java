@@ -484,22 +484,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) this
+        StatementsAndOptionalExpr funcBody = (StatementsAndOptionalExpr) this
             .visitStatementsAndOptionalExpr(ctx.fn_body);
-        Expression bodyExpression = null;
-        if (statementsAndOptionalExpr.getExpression() != null) {
-            // TODO: Introduce StatementsAndOptionalExpr
-            bodyExpression = statementsAndOptionalExpr.getExpression();
-        } else {
-            bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
-        }
 
         return new InlineFunctionExpression(
                 annotations,
                 name,
                 fnParams,
                 fnReturnType,
-                bodyExpression,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1710,22 +1703,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) this
+        StatementsAndOptionalExpr funcBody = (StatementsAndOptionalExpr) this
             .visitStatementsAndOptionalExpr(ctx.fn_body);
-        Expression expr = null;
-        if (statementsAndOptionalExpr.getExpression() != null) {
-            // TODO: Introduce StatementsAndOptionalExpr
-            expr = statementsAndOptionalExpr.getExpression();
-        } else {
-            expr = new CommaExpression(createMetadataFromContext(ctx));
-        }
 
         return new InlineFunctionExpression(
                 annotations,
                 null,
                 fnParams,
                 fnReturnType,
-                expr,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }

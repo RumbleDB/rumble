@@ -66,7 +66,6 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,13 +132,17 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         statementsAndOptionalExpr.getStatements().forEach(statement -> {
             statements.add((Statement) visit(statement, argument));
         });
-        List<Expression> expressions = Collections.singletonList(
-            (Expression) visit(statementsAndOptionalExpr.getExpression(), argument)
-        );
-        CommaExpression optionalExpr = new CommaExpression(expressions, statementsAndOptionalExpr.getMetadata());
-        optionalExpr.setStaticContext(statementsAndOptionalExpr.getStaticContext());
+        Expression optionalExpr = (Expression) visit(statementsAndOptionalExpr.getExpression(), argument);
+        optionalExpr.setStaticContext(statementsAndOptionalExpr.getExpression().getStaticContext());
         optionalExpr.setStaticSequenceType(statementsAndOptionalExpr.getExpression().getStaticSequenceType());
-        return new StatementsAndOptionalExpr(statements, optionalExpr, statementsAndOptionalExpr.getMetadata());
+        StatementsAndOptionalExpr result = new StatementsAndOptionalExpr(
+                statements,
+                optionalExpr,
+                statementsAndOptionalExpr.getMetadata()
+        );
+        result.setStaticContext(statementsAndOptionalExpr.getStaticContext());
+        return result;
+
     }
 
     @Override
@@ -408,7 +411,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getName(),
                 expression.getParams(),
                 expression.getReturnType(),
-                (Expression) visit(expression.getBody(), argument),
+                (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

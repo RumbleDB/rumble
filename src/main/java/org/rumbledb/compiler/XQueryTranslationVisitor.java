@@ -480,13 +480,19 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         } else {
             bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
         }
+        // TODO: Add statements to XQuery
+        StatementsAndOptionalExpr funcBody = new StatementsAndOptionalExpr(
+                null,
+                bodyExpression,
+                createMetadataFromContext(ctx)
+        );
 
         return new InlineFunctionExpression(
                 null, // TODO: add annotations to grammar of XQuery.
                 name,
                 fnParams,
                 fnReturnType,
-                bodyExpression,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1384,13 +1390,15 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         } else {
             expr = new CommaExpression(createMetadataFromContext(ctx));
         }
+        // TODO: Add statements to XQuery
+        StatementsAndOptionalExpr funcBody = new StatementsAndOptionalExpr(null, expr, createMetadataFromContext(ctx));
 
         return new InlineFunctionExpression(
                 null, // TODO: add annotations to grammar of XQuery.
                 null,
                 fnParams,
                 fnReturnType,
-                expr,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }
