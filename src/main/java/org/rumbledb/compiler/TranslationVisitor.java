@@ -130,6 +130,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.*;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -1194,6 +1195,130 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
         return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
     }
+    // endregion
+
+    // region update
+
+    @Override
+    public Node visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
+        Expression toInsertExpr;
+        Expression posExpr = null;
+        if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
+            List<Expression> keys = new ArrayList<>();
+            List<Expression> values = new ArrayList<>();
+            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+                if (currentPair.lhs != null) {
+                    keys.add((Expression) this.visitExprSingle(currentPair.lhs));
+                } else {
+                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                }
+                values.add((Expression) this.visitExprSingle(currentPair.rhs));
+            }
+            toInsertExpr = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+        } else if (ctx.to_insert_expr != null) {
+            toInsertExpr = (Expression) this.visitExprSingle(ctx.to_insert_expr);
+            if (ctx.pos_expr != null) {
+                posExpr = (Expression) this.visitExprSingle(ctx.pos_expr);
+            }
+        } else {
+            throw new OurBadException("Unrecognised expression to insert in Insert Expression");
+        }
+        Expression mainExpr = (Expression) this.visitExprSingle(ctx.main_expr);
+
+        return new InsertExpression(mainExpr, toInsertExpr, posExpr, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        return new DeleteExpression(mainExpression, locatorExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
+        return new RenameExpression(
+                mainExpression,
+                locatorExpression,
+                nameExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression newExpression = (Expression) this.visitExprSingle(ctx.replacer_expr);
+        return new ReplaceExpression(
+                mainExpression,
+                locatorExpression,
+                newExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
+        List<CopyDeclaration> copyDecls = ctx.copyDecl()
+            .stream()
+            .map(copyDeclCtx -> {
+                Name var = ((VariableReferenceExpression) this.visitVarRef(copyDeclCtx.var_ref)).getVariableName();
+                Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
+                return new CopyDeclaration(var, expr);
+            })
+            .collect(Collectors.toList());
+        Expression modifyExpression = (Expression) this.visitExprSingle(ctx.mod_expr);
+        Expression returnExpression = (Expression) this.visitExprSingle(ctx.ret_expr);
+        return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
+        Expression arrayExpression = (Expression) this.visitExprSingle(ctx.array_expr);
+        Expression toAppendExpression = (Expression) this.visitExprSingle(ctx.to_append_expr);
+        return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
+    }
+
+    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
+            if (child instanceof JsoniqParser.ObjectLookupContext) {
+                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
+                mainExpression = new ObjectLookupExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromContext(ctx)
+                );
+            } else if (child instanceof JsoniqParser.ArrayLookupContext) {
+                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
+                mainExpression = new ArrayLookupExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromContext(ctx)
+                );
+            } else {
+                throw new OurBadException("Unrecognized locator expression found in update expression.");
+            }
+        }
+        return mainExpression;
+    }
+
+    public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
+        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
+            return (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) locatorExprCtx);
+        }
+        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
+            return (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) locatorExprCtx);
+        } else {
+            throw new OurBadException("Unrecognized locator found in update expression.");
+        }
+    }
+
     // endregion
 
     // region postfix

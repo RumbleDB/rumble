@@ -89,6 +89,12 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -299,6 +305,34 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitCastExpression(CastExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
+
+    // region update
+
+    public T visitDeleteExpression(DeleteExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitRenameExpression(RenameExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitReplaceExpression(ReplaceExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitInsertExpression(InsertExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAppendExpression(AppendExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTransformExpression(TransformExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     // endregion
 
     // region control

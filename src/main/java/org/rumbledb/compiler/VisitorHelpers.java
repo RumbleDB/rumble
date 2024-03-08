@@ -1,12 +1,5 @@
 package org.rumbledb.compiler;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -23,6 +16,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -33,6 +27,13 @@ import org.rumbledb.parser.XQueryLexer;
 import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VisitorHelpers {
 
@@ -160,6 +161,7 @@ public class VisitorHelpers {
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
+            populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -201,6 +203,8 @@ public class VisitorHelpers {
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
+            // TODO populate expression classifications here?
+            // populateExpressionClassifications(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -386,6 +390,19 @@ public class VisitorHelpers {
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(module, module.getStaticContext());
+
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+    }
+
+    private static void populateExpressionClassifications(Module module, RumbleRuntimeConfiguration conf) {
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+
+        ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
+        visitor.visit(module, ExpressionClassification.SIMPLE);
 
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);

@@ -38,12 +38,16 @@ import org.rumbledb.types.SequenceType.Arity;
  *
  * An expression is associated with a static context containing information such as
  * the in-scope variables.
+ *
+ * An expression has a classification, largely denoting it as UPDATING or SIMPLE.
  */
 public abstract class Expression extends Node {
 
     protected StaticContext staticContext;
 
     protected SequenceType staticSequenceType;
+
+    protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
@@ -113,6 +117,43 @@ public abstract class Expression extends Node {
         this.staticSequenceType = staticSequenceType;
     }
 
+    /**
+     * Gets the inferred expression classification of this node, for use ...
+     *
+     * @return Expression Classification of the expression.
+     */
+    public ExpressionClassification getExpressionClassification() {
+        return expressionClassification;
+    }
+
+    /**
+     * Sets the inferred expression classification of this node, for use ...
+     *
+     * @param expressionClassification the statically inferred expression classification.
+     */
+    public void setExpressionClassification(ExpressionClassification expressionClassification) {
+        this.expressionClassification = expressionClassification;
+    }
+
+    /**
+     * Tells whether this node is an updating expression or not.
+     *
+     * @return true if yes, false otherwise.
+     */
+    public boolean isUpdating() {
+        return this.expressionClassification.isUpdating();
+    }
+
+    /**
+     * Tells whether this node has an unset expression classification.
+     *
+     * @return true if yes, false otherwise.
+     */
+    public boolean isUnset() {
+        return this.expressionClassification.isUnset();
+    }
+
+
     @Override
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
@@ -120,6 +161,7 @@ public abstract class Expression extends Node {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(
             " | "
                 + (this.staticSequenceType == null
