@@ -26,6 +26,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidExpressionClassification;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -48,6 +49,8 @@ public abstract class Expression extends Node {
     protected SequenceType staticSequenceType;
 
     protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
+
+    protected boolean isSequential;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
@@ -151,6 +154,57 @@ public abstract class Expression extends Node {
      */
     public boolean isUnset() {
         return this.expressionClassification.isUnset();
+    }
+
+    /**
+     * Sets the sequential property of the expression. An expression can only
+     * be one of the following:
+     * - non-updating sequential,
+     * - non-updating non-sequential,
+     * - updating non-sequential.
+     *
+     * @param isSequential a boolean value defining if the expression is
+     *        sequential or not.
+     * @throws InvalidExpressionClassification if the expression is both
+     *         updating and sequential.
+     */
+    public void setSequential(boolean isSequential) {
+        if (this.isUpdating() && isSequential) {
+            throw new InvalidExpressionClassification(
+                    "An expression cannot "
+                        +
+                        "be both updating and sequential!",
+                    getMetadata()
+            );
+        }
+        this.isSequential = isSequential;
+    }
+
+    /**
+     * Returns true if this node is simple and non-sequential.
+     *
+     * @return true if simple and non-sequential, false otherwise.
+     */
+    public boolean isSimpleNonSequential() {
+        return this.expressionClassification.isSimple() && !this.isSequential;
+    }
+
+    /**
+     * Returns true if this node is simple and sequential.
+     *
+     * @return true if simple and sequential, false otherwise.
+     */
+    public boolean isSimpleSequential() {
+        return this.expressionClassification.isSimple() && this.isSequential;
+    }
+
+    /**
+     * Returns true if this node is updating and non-sequential.
+     *
+     * @return true if updating and non-sequential, false otherwise.
+     */
+    public boolean isUpdatingNonSequential() {
+        return isUpdating() && !this.isSequential;
     }
 
 

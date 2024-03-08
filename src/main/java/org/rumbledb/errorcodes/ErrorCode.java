@@ -138,7 +138,9 @@ public enum ErrorCode {
     TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
     TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
     CannotResolveUpdateSelectorErrorCode("JNUP0016"),
-    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019");
+    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
+
+    InvalidExpressionClassification("SCCL0001");
 
 
 
