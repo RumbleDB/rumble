@@ -2,15 +2,34 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
 import org.rumbledb.exceptions.SimpleExpressionMustBeVacuousException;
-import org.rumbledb.expressions.*;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.ExpressionClassification;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
-import org.rumbledb.expressions.flowr.*;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
-import org.rumbledb.expressions.update.*;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -479,6 +498,15 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
                     "Initialising expression in variable declaration must be Simple",
                     expression.getMetadata()
             );
+        }
+        return ExpressionClassification.SIMPLE;
+    }
+
+    @Override
+    public ExpressionClassification visitBlockExpr(BlockExpression expression, ExpressionClassification argument) {
+        ExpressionClassification result = this.visit(expression.getStatementsAndExpr().getExpression(), argument);
+        if (result.isUpdating()) {
+            return ExpressionClassification.UPDATING;
         }
         return ExpressionClassification.SIMPLE;
     }

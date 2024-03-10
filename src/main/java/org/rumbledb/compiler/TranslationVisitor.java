@@ -105,6 +105,7 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
@@ -130,7 +131,13 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
-import org.rumbledb.expressions.update.*;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -1434,6 +1441,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (child instanceof JsoniqParser.FunctionItemExprContext) {
             return this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
         }
+        if (child instanceof JsoniqParser.BlockExprContext) {
+            return this.visitBlockExpr((JsoniqParser.BlockExprContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",
                 createMetadataFromContext(ctx)
@@ -2032,6 +2042,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             statements.add((Statement) this.visitStatement(statement));
         }
         return new BlockStatement(statements, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitBlockExpr(JsoniqParser.BlockExprContext ctx) {
+        StatementsAndExpr statementsAndExpr = (StatementsAndExpr) this.visitStatementsAndExpr(ctx.statementsAndExpr());
+        return new BlockExpression(statementsAndExpr, createMetadataFromContext(ctx));
     }
     // end block
 
