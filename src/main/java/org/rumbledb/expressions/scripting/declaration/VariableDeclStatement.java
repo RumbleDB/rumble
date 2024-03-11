@@ -14,12 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
+
 public class VariableDeclStatement extends Statement {
+    // Default is True for statement variable declaration.
+    private final boolean DEFAULT_ASSIGNABLE = true;
     private final List<Annotation> annotations;
     private final Name variableName;
     private final SequenceType variableSequenceType;
     private final Expression variableExpression;
     private final Map<Name, Pair<SequenceType, Expression>> otherVariables;
+    private final boolean isAssignable;
 
     public VariableDeclStatement(
             List<Annotation> annotations,
@@ -35,6 +40,12 @@ public class VariableDeclStatement extends Statement {
         this.variableSequenceType = variableSequenceType;
         this.variableExpression = variableExpression;
         this.otherVariables = otherVariables;
+        if (this.annotations != null) {
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE); // default is true for
+                                                                                            // variable statements
+        } else {
+            this.isAssignable = this.DEFAULT_ASSIGNABLE;
+        }
     }
 
     @Override
@@ -111,5 +122,9 @@ public class VariableDeclStatement extends Statement {
 
     public List<Annotation> getAnnotations() {
         return annotations;
+    }
+
+    public boolean isAssignable() {
+        return isAssignable;
     }
 }

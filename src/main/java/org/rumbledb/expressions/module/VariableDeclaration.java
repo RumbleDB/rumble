@@ -36,18 +36,17 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.ASSIGNABLE;
-import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.BUILT_IN_ANNOTATION;
-import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_ASSIGNABLE;
+import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
 public class VariableDeclaration extends Node {
-
+    // Default is false for variable declaration.
+    private final boolean DEFAULT_ASSIGNABLE = false;
     private final Name variableName;
     private final boolean external;
     protected SequenceType sequenceType;
     protected Expression expression;
     private final List<Annotation> annotations;
-    private boolean isAssignable = false;
+    private final boolean isAssignable;
 
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -69,22 +68,9 @@ public class VariableDeclaration extends Node {
             throw new OurBadException("If a variable is not external, an expression must be provided.");
         }
         if (this.annotations != null) {
-            checkAssignable();
-        }
-    }
-
-    private void checkAssignable() {
-        // TODO: Is breaking early safe?
-        for (Annotation annotation : this.annotations) {
-            if (annotation.getAnnotationName().getPrefix().equals(BUILT_IN_ANNOTATION)) {
-                if (annotation.getAnnotationName().getLocalName().equals(ASSIGNABLE)) {
-                    isAssignable = true;
-                    break;
-                } else if (annotation.getAnnotationName().getLocalName().equals(NON_ASSIGNABLE)) {
-                    isAssignable = false;
-                    break;
-                }
-            }
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE);
+        } else {
+            this.isAssignable = this.DEFAULT_ASSIGNABLE;
         }
     }
 
