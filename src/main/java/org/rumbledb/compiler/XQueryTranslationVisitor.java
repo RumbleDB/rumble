@@ -404,7 +404,8 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             }
         }
 
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+        // TODO: add annotations.
+        return new VariableDeclaration(var, external, seq, expr, null, createMetadataFromContext(ctx));
     }
 
     private void processAnnotations(XQueryParser.AnnotationsContext annotations) {

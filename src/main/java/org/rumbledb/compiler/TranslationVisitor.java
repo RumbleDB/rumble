@@ -238,6 +238,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                             true,
                             SequenceType.ITEM,
                             null,
+                            null,
                             createMetadataFromContext(ctx)
                     )
                 );
@@ -1901,6 +1902,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
         // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
         // but it is actually treated as if it was item*
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
         SequenceType seq = null;
         boolean external;
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
@@ -1916,7 +1918,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
         }
 
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+        return new VariableDeclaration(var, external, seq, expr, annotations, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1938,7 +1940,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
         }
 
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+        return new VariableDeclaration(var, external, seq, expr, null, createMetadataFromContext(ctx));
     }
 
     // region scripting
