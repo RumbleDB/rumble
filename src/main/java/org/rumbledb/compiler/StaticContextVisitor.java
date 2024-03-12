@@ -24,6 +24,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -48,6 +49,8 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
@@ -98,6 +101,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (node instanceof StatementsAndExpr) {
             ((StatementsAndExpr) node).setStaticContext(argument);
+        }
+        if (node instanceof Statement) {
+            ((Statement) node).setStaticContext(argument);
         }
         if (node instanceof Clause) {
             ((Clause) node).setStaticContext(argument);
@@ -450,6 +456,39 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitInstanceOfExpression(InstanceOfExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.getSequenceType().resolve(argument, expression.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitVariableDeclStatement(
+            VariableDeclStatement variableDeclStatement,
+            StaticContext argument
+    ) {
+        if (argument.hasVariable(variableDeclStatement.getVariableName())) {
+            // We have two variables with the same name! Throw error.
+            throw new VariableAlreadyExistsException(
+                    variableDeclStatement.getVariableName(),
+                    variableDeclStatement.getMetadata()
+            );
+        }
+        if (variableDeclStatement.getVariableExpression() != null) {
+            this.visit(variableDeclStatement.getVariableExpression(), argument);
+        }
+        argument.addVariable(
+            variableDeclStatement.getVariableName(),
+            variableDeclStatement.getActualSequenceType(),
+            variableDeclStatement.getMetadata()
+        );
+        variableDeclStatement.getOtherVariables().forEach((otherVarName, otherVarExpr) -> {
+            if (argument.hasVariable(otherVarName)) {
+                // We have two variables with the same name! Throw error.
+                throw new VariableAlreadyExistsException(otherVarName, variableDeclStatement.getMetadata());
+            }
+            if (otherVarExpr.b != null) {
+                this.visit(otherVarExpr.b, argument);
+            }
+            argument.addVariable(otherVarName, otherVarExpr.a, variableDeclStatement.getMetadata());
+        });
         return argument;
     }
 
