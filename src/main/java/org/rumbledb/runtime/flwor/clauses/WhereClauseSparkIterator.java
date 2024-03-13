@@ -442,7 +442,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .info(
                 "Rumble was able to optimize a where clause to a native SQL query: "
                     + String.format(
-                        "select * from %s where %s",
+                        "select * from %s where true and %s",
                         input,
                         nativeQuery.getResultingQuery()
                     )
