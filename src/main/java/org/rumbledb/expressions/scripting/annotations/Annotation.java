@@ -6,7 +6,6 @@ import org.rumbledb.expressions.Expression;
 import java.util.List;
 
 import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.ASSIGNABLE;
-import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.BUILT_IN_ANNOTATION;
 import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_ASSIGNABLE;
 
 public class Annotation {
@@ -30,14 +29,12 @@ public class Annotation {
         // TODO: Is breaking early safe?
         boolean isAssignable = defaultAssignable;
         for (Annotation annotation : annotations) {
-            if (annotation.getAnnotationName().getPrefix().equals(BUILT_IN_ANNOTATION)) {
-                if (annotation.getAnnotationName().getLocalName().equals(ASSIGNABLE)) {
-                    isAssignable = true;
-                    break;
-                } else if (annotation.getAnnotationName().getLocalName().equals(NON_ASSIGNABLE)) {
-                    isAssignable = false;
-                    break;
-                }
+            if (annotation.getAnnotationName().equals(ASSIGNABLE)) {
+                isAssignable = true;
+                break;
+            } else if (annotation.getAnnotationName().equals(NON_ASSIGNABLE)) {
+                isAssignable = false;
+                break;
             }
         }
         return isAssignable;

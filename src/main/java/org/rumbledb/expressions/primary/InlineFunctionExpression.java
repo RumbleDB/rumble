@@ -25,6 +25,7 @@ import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidExpressionClassification;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -32,9 +33,13 @@ import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_SEQUENTIAL;
+import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.SEQUENTIAL;
 
 public class InlineFunctionExpression extends Expression {
 
@@ -60,6 +65,30 @@ public class InlineFunctionExpression extends Expression {
         this.body = body;
         this.annotations = annotations;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
+        if (annotations != null) {
+            this.setSequentialFromAnnotations();
+        }
+    }
+
+    private void setSequentialFromAnnotations() {
+        boolean foundSeqAnnotation = false;
+        boolean foundNonSeqAnnotation = false;
+        for (Annotation annotation : this.annotations) {
+            if (annotation.getAnnotationName().equals(SEQUENTIAL)) {
+
+                foundSeqAnnotation = true;
+            }
+            if (annotation.getAnnotationName().equals(NON_SEQUENTIAL)) {
+                foundNonSeqAnnotation = true;
+            }
+        }
+        if (foundSeqAnnotation && foundNonSeqAnnotation) {
+            throw new InvalidExpressionClassification(
+                    "A function cannot be declared as both sequential and non-sequential!",
+                    this.getMetadata()
+            );
+        }
+        this.setSequential(foundSeqAnnotation);
     }
 
     public Name getName() {
@@ -90,6 +119,7 @@ public class InlineFunctionExpression extends Expression {
         return this.body.getExpression();
     }
 
+    @Nullable
     public List<Annotation> getAnnotations() {
         return annotations;
     }

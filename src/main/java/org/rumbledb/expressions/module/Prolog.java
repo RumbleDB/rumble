@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.module;
 
 
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -121,6 +122,24 @@ public class Prolog extends Node {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitProlog(this, argument);
+    }
+
+    public static FunctionDeclaration getFunctionDeclarationFromProlog(
+            Prolog prolog,
+            FunctionIdentifier functionIdentifier
+    ) {
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
+                return declaration;
+            }
+        }
+        for (LibraryModule module : prolog.getImportedModules()) {
+            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 }
 

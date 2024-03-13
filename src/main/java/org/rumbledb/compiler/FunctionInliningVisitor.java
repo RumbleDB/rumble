@@ -1,6 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
@@ -13,7 +12,6 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -32,25 +30,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
+
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
     public FunctionInliningVisitor() {
-    }
-
-    private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
-        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
-            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
-                return declaration;
-            }
-        }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
@@ -309,6 +294,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             return result;
         }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
+        // TODO: Update with statements
         StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
         Expression bodyExpression = body.getExpression();
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
