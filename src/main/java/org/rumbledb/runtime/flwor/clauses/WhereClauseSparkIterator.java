@@ -452,7 +452,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "select * from %s where %s",
+                            // Spark SQL but confusing where (FALSE) with a table and column name.
+                            "select * from %s where true and %s",
                             input,
                             nativeQuery.getResultingQuery()
                         )
