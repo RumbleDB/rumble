@@ -2405,12 +2405,16 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         annotations.annotation().forEach(annotationContext -> {
             JsoniqParser.QnameContext qnameContext = annotationContext.qname();
             Name name = parseName(qnameContext, false, false);
-            List<Expression> literals = new ArrayList<>();
-            ExceptionMetadata metadata = createMetadataFromContext(annotationContext);
-            annotationContext.Literal().forEach(literal -> {
-                literals.add(getLiteralExpressionFromToken(literal.getText(), metadata));
-            });
-            parsedAnnotations.add(new Annotation(name, literals));
+            if (!annotationContext.Literal().isEmpty()) {
+                throw new OurBadException("Literals are currently not supported in annotations!");
+            }
+            parsedAnnotations.add(new Annotation(name, null));
+            // List<Expression> literals = new ArrayList<>();
+            // ExceptionMetadata metadata = createMetadataFromContext(annotationContext);
+            // annotationContext.Literal().forEach(literal -> {
+            // literals.add(getLiteralExpressionFromToken(literal.getText(), metadata));
+            // });
+            // parsedAnnotations.add(new Annotation(name, literals));
         });
 
         return parsedAnnotations;
