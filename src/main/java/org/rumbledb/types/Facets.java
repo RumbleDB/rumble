@@ -2,7 +2,6 @@ package org.rumbledb.types;
 
 import org.rumbledb.api.Item;
 
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 
