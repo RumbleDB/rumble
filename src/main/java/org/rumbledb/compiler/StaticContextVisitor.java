@@ -49,6 +49,8 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
@@ -95,12 +97,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
-        }
-        if (node instanceof StatementsAndOptionalExpr) {
-            ((StatementsAndOptionalExpr) node).setStaticContext(argument);
-        }
-        if (node instanceof StatementsAndExpr) {
-            ((StatementsAndExpr) node).setStaticContext(argument);
         }
         if (node instanceof Statement) {
             ((Statement) node).setStaticContext(argument);
@@ -464,32 +460,77 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             VariableDeclStatement variableDeclStatement,
             StaticContext argument
     ) {
-        if (argument.hasVariable(variableDeclStatement.getVariableName())) {
-            // We have two variables with the same name! Throw error.
-            throw new VariableAlreadyExistsException(
-                    variableDeclStatement.getVariableName(),
-                    variableDeclStatement.getMetadata()
-            );
-        }
         if (variableDeclStatement.getVariableExpression() != null) {
             this.visit(variableDeclStatement.getVariableExpression(), argument);
         }
-        argument.addVariable(
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
             variableDeclStatement.getVariableName(),
             variableDeclStatement.getActualSequenceType(),
             variableDeclStatement.getMetadata()
         );
         variableDeclStatement.getOtherVariables().forEach((otherVarName, otherVarExpr) -> {
-            if (argument.hasVariable(otherVarName)) {
-                // We have two variables with the same name! Throw error.
+            if (result.hasVariableInScopeOnly(otherVarName)) {
+                // We have two variables with the same name in the same expression scope! Throw error.
                 throw new VariableAlreadyExistsException(otherVarName, variableDeclStatement.getMetadata());
             }
             if (otherVarExpr.b != null) {
                 this.visit(otherVarExpr.b, argument);
             }
-            argument.addVariable(otherVarName, otherVarExpr.a, variableDeclStatement.getMetadata());
+            result.addVariable(otherVarName, otherVarExpr.a, variableDeclStatement.getMetadata());
         });
+        return result;
+    }
+
+    @Override
+    public StaticContext visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, StaticContext argument) {
+        StaticContext currentContext = argument;
+        for (Statement statement : statementsAndExpr.getStatements()) {
+            currentContext = this.visit(statement, currentContext);
+        }
+        currentContext = this.visit(statementsAndExpr.getExpression(), currentContext);
+        statementsAndExpr.setStaticContext(currentContext);
         return argument;
     }
 
+    @Override
+    public StaticContext visitStatementsAndOptionalExpr(
+            StatementsAndOptionalExpr statementsAndExpr,
+            StaticContext argument
+    ) {
+        StaticContext currentContext = argument;
+        for (Statement statement : statementsAndExpr.getStatements()) {
+            currentContext = this.visit(statement, currentContext);
+        }
+        if (statementsAndExpr.getExpression() != null) {
+            currentContext = this.visit(statementsAndExpr.getExpression(), currentContext);
+        }
+        statementsAndExpr.setStaticContext(currentContext);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTypeSwitchStatement(TypeSwitchStatement statement, StaticContext argument) {
+        this.visit(statement.getTestCondition(), argument);
+        for (TypeSwitchStatementCase tssc : statement.getCases()) {
+            StaticContext caseContext = new StaticContext(argument);
+            Name variableName = tssc.getVariableName();
+            if (variableName != null) {
+                caseContext.addVariable(variableName, null, statement.getMetadata());
+            }
+            this.visit(tssc.getReturnStatement(), caseContext);
+            for (SequenceType sequenceType : tssc.getUnion()) {
+                sequenceType.resolve(argument, statement.getMetadata());
+            }
+        }
+        Name defaultCaseVariableName = statement.getDefaultCase().getVariableName();
+        if (defaultCaseVariableName == null) {
+            this.visit(statement.getDefaultCase().getReturnStatement(), argument);
+        } else {
+            StaticContext defaultCaseStaticContext = new StaticContext(argument);
+            defaultCaseStaticContext.addVariable(defaultCaseVariableName, null, statement.getMetadata());
+            this.visit(statement.getDefaultCase().getReturnStatement(), defaultCaseStaticContext);
+        }
+        return argument;
+    }
 }

@@ -20,6 +20,10 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -29,11 +33,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -72,6 +71,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("xs", Name.XS_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
+        defaultBindings.put("an", Name.AN_NS);
     }
 
     private RumbleRuntimeConfiguration configuration;
@@ -274,6 +274,10 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.hasVariable(variableName);
         }
         return false;
+    }
+
+    public boolean hasVariableInScopeOnly(Name variableName) {
+        return this.inScopeVariables.containsKey(variableName);
     }
 
     public boolean bindNamespace(String prefix, String namespace) {
