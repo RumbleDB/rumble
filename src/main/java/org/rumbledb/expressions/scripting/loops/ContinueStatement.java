@@ -8,6 +8,8 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.List;
 
 public class ContinueStatement extends Statement {
+    private Statement continueStatement;
+
     public ContinueStatement(ExceptionMetadata metadata) {
         super(metadata);
     }
@@ -24,6 +26,17 @@ public class ContinueStatement extends Statement {
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
+        this.continueStatement.serializeToJSONiq(sb, indent);
+    }
 
+    /**
+     * @return the Statement that must be interrupted.
+     */
+    public Statement getContinueStatement() {
+        return continueStatement;
+    }
+
+    public void setContinueStatement(Statement continueStatement) {
+        this.continueStatement = continueStatement;
     }
 }

@@ -180,22 +180,8 @@ public abstract class Expression extends Node {
         this.isSequential = isSequential;
     }
 
-    /**
-     * Returns true if this node is simple and non-sequential.
-     *
-     * @return true if simple and non-sequential, false otherwise.
-     */
-    public boolean isSimpleNonSequential() {
-        return this.expressionClassification.isSimple() && !this.isSequential;
-    }
-
-    /**
-     * Returns true if this node is simple and sequential.
-     *
-     * @return true if simple and sequential, false otherwise.
-     */
-    public boolean isSimpleSequential() {
-        return this.expressionClassification.isSimple() && this.isSequential;
+    public boolean isSequential() {
+        return this.isSequential;
     }
 
     /**

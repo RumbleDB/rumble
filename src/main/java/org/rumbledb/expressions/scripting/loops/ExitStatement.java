@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExitStatement extends Statement {
+    private Expression exitControlledExpression;
     private final Expression exitExpression;
 
     public ExitStatement(Expression exitExpression, ExceptionMetadata metadata) {
@@ -31,9 +32,22 @@ public class ExitStatement extends Statement {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         this.exitExpression.serializeToJSONiq(sb, 0);
+        sb.append("Expression controlled by exit statement:\n");
+        this.exitControlledExpression.serializeToJSONiq(sb, 0);
     }
 
     public Expression getExitExpression() {
         return exitExpression;
+    }
+
+    /**
+     * @return the Statement that should be exited.
+     */
+    public Expression getExitControlledExpression() {
+        return exitControlledExpression;
+    }
+
+    public void setExitControlledExpression(Expression exitControlledExpression) {
+        this.exitControlledExpression = exitControlledExpression;
     }
 }

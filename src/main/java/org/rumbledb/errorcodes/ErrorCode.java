@@ -140,7 +140,8 @@ public enum ErrorCode {
     CannotResolveUpdateSelectorErrorCode("JNUP0016"),
     ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
 
-    InvalidExpressionClassification("SCCL0001");
+    InvalidExpressionClassification("SCCL0001"),
+    InvalidComposability("SCCP0001");
 
 
 

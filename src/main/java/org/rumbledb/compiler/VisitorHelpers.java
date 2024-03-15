@@ -6,6 +6,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
+import org.rumbledb.compiler.wrapper.BlockExpressionMetadata;
+import org.rumbledb.compiler.wrapper.SequentialDescendant;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -162,6 +164,8 @@ public class VisitorHelpers {
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             populateExpressionClassifications(mainModule, configuration);
+            populateSequentialClassifications(mainModule, configuration);
+            verifyComposabilityConstraints(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -406,6 +410,39 @@ public class VisitorHelpers {
 
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
+        }
+    }
+
+    private static void populateSequentialClassifications(
+            MainModule mainModule,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        if (configuration.isPrintIteratorTree()) {
+            printTree(mainModule, configuration);
+        }
+
+        SequentialClassificationVisitor visitor = new SequentialClassificationVisitor();
+        visitor.visit(mainModule, new SequentialDescendant(false, null));
+
+        if (configuration.isPrintIteratorTree()) {
+            printTree(mainModule, configuration);
+        }
+    }
+
+
+    private static void verifyComposabilityConstraints(
+            MainModule mainModule,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        if (configuration.isPrintIteratorTree()) {
+            printTree(mainModule, configuration);
+        }
+
+        ComposabilityVisitor visitor = new ComposabilityVisitor();
+        visitor.visit(mainModule, new BlockExpressionMetadata(null, null));
+
+        if (configuration.isPrintIteratorTree()) {
+            printTree(mainModule, configuration);
         }
     }
 

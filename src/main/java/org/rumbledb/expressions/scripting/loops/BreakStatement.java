@@ -8,6 +8,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.List;
 
 public class BreakStatement extends Statement {
+    private Statement stoppingStatement;
 
     public BreakStatement(ExceptionMetadata metadata) {
         super(metadata);
@@ -25,6 +26,17 @@ public class BreakStatement extends Statement {
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
+        this.stoppingStatement.serializeToJSONiq(sb, indent);
+    }
 
+    /**
+     * @return the Statement that the break must stop at runtime.
+     */
+    public Statement getStoppingStatement() {
+        return stoppingStatement;
+    }
+
+    public void setStoppingStatement(Statement stoppingStatement) {
+        this.stoppingStatement = stoppingStatement;
     }
 }
