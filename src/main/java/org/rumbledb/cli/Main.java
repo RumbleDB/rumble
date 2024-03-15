@@ -25,8 +25,10 @@ import java.net.ConnectException;
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.server.RumbleServer;
 import org.rumbledb.shell.RumbleJLineShell;
 
@@ -81,29 +83,22 @@ public class Main {
     }
 
     private static void handleException(Throwable ex, boolean showErrorInfo) {
+        ex = unboxException(ex);
         if (ex != null) {
-            if (ex instanceof SparkException) {
-                Throwable sparkExceptionCause = ex.getCause();
-                if (sparkExceptionCause != null) {
-                    handleException(sparkExceptionCause, showErrorInfo);
-                } else {
-                    if (showErrorInfo) {
-                        ex.printStackTrace();
-                    }
-                    handleException(
-                        new OurBadException(
-                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
-                                    + ex.getMessage()
-                        ),
-                        showErrorInfo
-                    );
-                }
-            } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
+            if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
                 System.exit(42);
+            } else if (ex instanceof NumberFormatException) {
+                handleException(
+                    new UnexpectedTypeException(
+                            "A cast failed. However, since this happened in a native Spark SQL execution, we cannot show you where. You can get more information on this type error by retrying with --native-execution no.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    ),
+                    showErrorInfo
+                );
             } else if (ex instanceof OutOfMemoryError) {
                 System.err.println(
                     "⚠️  Java went out of memory."
@@ -172,6 +167,29 @@ public class Main {
                 System.exit(-42);
             }
         }
+    }
+
+    public static Throwable unboxException(Throwable ex) {
+        if (ex != null) {
+            if (ex instanceof SparkException) {
+                Throwable sparkExceptionCause = ex.getCause();
+                if (sparkExceptionCause != null) {
+                    return sparkExceptionCause;
+                }
+                return new OurBadException(
+                        "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                            + ex.getMessage()
+                );
+            }
+            if (ex instanceof NumberFormatException) {
+                return new UnexpectedTypeException(
+                        "A cast failed. However, since this happened in a native Spark SQL execution, we cannot show you where. You can get more information on this type error by retrying with --native-execution no.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            return ex;
+        }
+        return new OurBadException("A null exception was returned.");
     }
 
     private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {

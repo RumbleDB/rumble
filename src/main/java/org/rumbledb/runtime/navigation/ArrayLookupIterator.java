@@ -39,7 +39,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -186,7 +185,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             initLookupPosition(newContext.getContext());
 
-            ItemType resultType = newContext.getResultingType().getItemType();
+            ItemType resultType = this.iterator.getStaticType().getItemType();
             if (!(resultType.isArrayItemType())) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
@@ -221,12 +220,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     );
                 return NativeClauseContext.NoNativeQuery;
             }
-            newContext.setResultingType(
-                new SequenceType(
-                        resultType.getArrayContentFacet(),
-                        SequenceType.Arity.OneOrZero
-                )
-            );
             newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
             newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
         }

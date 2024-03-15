@@ -544,7 +544,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 return null;
             }
             // For now we are conservative and do not support arities other than one.
-            if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
+            if (!orderIterator.getIterator().getStaticType().getArity().equals(Arity.One)) {
                 return null;
             }
             orderSql.append(orderSeparator);
@@ -554,8 +554,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
             // and jsoniq (order by a costant, so no actual ordering is performed)
             if (
-                (nativeQuery.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
-                    || nativeQuery.getResultingType().isSubtypeOf(SequenceType.INT_QM))
+                (orderIterator.getIterator().getStaticType().isSubtypeOf(SequenceType.INTEGER_QM)
+                    || orderIterator.getIterator().getStaticType().isSubtypeOf(SequenceType.INT_QM))
                     && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');

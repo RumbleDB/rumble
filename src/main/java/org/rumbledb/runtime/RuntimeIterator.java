@@ -74,6 +74,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected URI staticURI;
     // private StaticContext staticContext;
 
+    public RuntimeIterator() {
+        this.hasNext = false;
+        this.isOpen = false;
+        this.children = null;
+        this.currentDynamicContextForLocalExecution = null;
+        this.staticContext = null;
+        this.staticURI = null;
+    }
+
     protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
@@ -224,6 +233,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     @Override
     public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.staticContext);
         kryo.writeObject(output, this.children);
         // TODO serializer other fields
     }
@@ -234,6 +244,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.hasNext = false;
         this.isOpen = false;
         this.currentDynamicContextForLocalExecution = null;
+        this.staticContext = kryo.readObject(input, RuntimeStaticContext.class);
         this.children = kryo.readObject(input, ArrayList.class);
         // TODO serializer other fields
     }

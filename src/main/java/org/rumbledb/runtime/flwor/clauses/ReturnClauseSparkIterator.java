@@ -120,6 +120,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             return result;
         }
         Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        df.show();
+        df.printSchema();
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,

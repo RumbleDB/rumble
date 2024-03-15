@@ -66,14 +66,14 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!leftResult.getResultingType().equals(SequenceType.BOOLEAN)) {
+        if (!this.leftIterator.getStaticType().equals(SequenceType.BOOLEAN)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!rightResult.getResultingType().equals(SequenceType.BOOLEAN)) {
+        if (!this.leftIterator.getStaticType().equals(SequenceType.BOOLEAN)) {
             return NativeClauseContext.NoNativeQuery;
         }
 
         String resultingQuery = "( " + leftResult.getResultingQuery() + " OR " + rightResult.getResultingQuery() + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.BOOLEAN);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery);
     }
 }

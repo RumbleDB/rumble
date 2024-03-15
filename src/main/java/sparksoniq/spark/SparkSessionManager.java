@@ -126,6 +126,7 @@ public class SparkSessionManager {
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            this.configuration.set("spark.sql.ansi.enabled", "true"); // enables throwing errors in SPark SQL
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }

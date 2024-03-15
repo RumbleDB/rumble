@@ -2,7 +2,7 @@ package org.rumbledb.types;
 
 import org.rumbledb.api.Item;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,7 +61,7 @@ public class Facets {
     private Item minInclusive, maxInclusive;
     private Item minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private List<String> constraints = Collections.emptyList();
+    private List<String> constraints = new ArrayList<>();
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
 

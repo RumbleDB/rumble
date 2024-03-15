@@ -27,7 +27,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 
 public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -48,8 +47,7 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                '"' + this.item.getStringValue() + '"',
-                SequenceType.STRING
+                '"' + this.item.getStringValue() + '"'
         );
     }
 }

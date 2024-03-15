@@ -25,7 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -49,8 +48,7 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "" + this.item.getDoubleValue(),
-                SequenceType.DOUBLE
+                "CAST (" + this.item.getDoubleValue() + "D AS DOUBLE)"
         );
     }
 }
