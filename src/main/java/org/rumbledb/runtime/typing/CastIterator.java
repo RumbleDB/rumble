@@ -958,12 +958,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             System.err.println("Float");
         } else if (this.sequenceType.getItemType().equals(BuiltinTypesCatalogue.stringItem)) {
             if (this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-                resultingQuery = " (date_format(" + value.getResultingQuery() + ", \"yyyy-MM-dd'T'HH:mm:ss.SZZZZZ\")) ";
+                return NativeClauseContext.NoNativeQuery;
+                // resultingQuery = " (date_format(" + value.getResultingQuery() + ", \"yyyy-MM-dd'T'HH:mm:ss.SZZZZZ\"))
+                // ";
             } else if (this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.dateItem)) {
                 if (getConfiguration().dateWithTimezone()) {
                     return NativeClauseContext.NoNativeQuery;
                 }
-                resultingQuery = " (date_format(" + value.getResultingQuery() + ", 'yyyy-MM-dd')) ";
+                return NativeClauseContext.NoNativeQuery;
+                // resultingQuery = " (date_format(" + value.getResultingQuery() + ", 'yyyy-MM-dd')) ";
             } else if (
                 this.children.get(0).getStaticType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
             ) {
