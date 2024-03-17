@@ -814,6 +814,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression exprSingle = (Expression) visit(statement.getApplyExpression(), argument);
         ApplyStatement result = new ApplyStatement(exprSingle, statement.getMetadata());
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -822,6 +823,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression exprSingle = (Expression) visit(statement.getAssignExpression(), argument);
         AssignStatement result = new AssignStatement(exprSingle, statement.getName(), statement.getMetadata());
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -833,6 +835,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         });
         BlockStatement result = new BlockStatement(statements, statement.getMetadata());
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -841,6 +844,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression exprSingle = (Expression) visit(statement.getExitExpression(), argument);
         ExitStatement result = new ExitStatement(exprSingle, statement.getMetadata());
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -858,6 +862,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         }
         FlowrStatement resultStatement = new FlowrStatement((ReturnStatementClause) newClause, statement.getMetadata());
         resultStatement.setStaticContext(statement.getStaticContext());
+        resultStatement.setStaticSequenceType(statement.getStaticSequenceType());
         return resultStatement;
     }
 
@@ -885,6 +890,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 statement.getMetadata()
         );
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -907,6 +913,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 statement.getMetadata()
         );
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -949,6 +956,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 statement.getMetadata()
         );
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 
@@ -958,6 +966,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Statement body = (Statement) visit(statement.getStatement(), argument);
         WhileStatement result = new WhileStatement(testExpr, body, statement.getMetadata());
         result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         return result;
     }
 

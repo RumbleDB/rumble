@@ -1,13 +1,5 @@
 package org.rumbledb.compiler;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -78,13 +70,28 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
-import org.rumbledb.expressions.update.*;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -92,8 +99,15 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-
 import sparksoniq.spark.SparkSessionManager;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -2159,5 +2173,172 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    // endregion
+    //
+    // // begin scripting
+    @Override
+    public StaticContext visitBlockStatement(BlockStatement statement, StaticContext argument) {
+        visitDescendants(statement, statement.getStaticContext());
+
+        SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
+
+        for (Statement childStatement : statement.getBlockStatements()) {
+            SequenceType childStatementStaticSequenceType = childStatement.getStaticSequenceType();
+
+            // if a child expression has no inferred type throw an error
+            if (childStatementStaticSequenceType == null) {
+                throwStaticTypeException(
+                    "A child expression of a BlockStatement has no inferred type",
+                    statement.getMetadata()
+                );
+            }
+
+            // if the child expression is an EMPTY_SEQUENCE it does not affect the comma expression type
+            if (!childStatementStaticSequenceType.isEmptySequence()) {
+                if (inferredType.isEmptySequence()) {
+                    inferredType = childStatementStaticSequenceType;
+                } else {
+                    ItemType resultingItemType = inferredType.getItemType()
+                        .findLeastCommonSuperTypeWith(childStatementStaticSequenceType.getItemType());
+                    SequenceType.Arity resultingArity =
+                        ((inferredType.getArity() == SequenceType.Arity.OneOrZero
+                            || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
+                            &&
+                            (childStatementStaticSequenceType.getArity() == SequenceType.Arity.OneOrZero
+                                || childStatementStaticSequenceType.getArity() == SequenceType.Arity.ZeroOrMore))
+                                    ? SequenceType.Arity.ZeroOrMore
+                                    : SequenceType.Arity.OneOrMore;
+                    inferredType = new SequenceType(resultingItemType, resultingArity);
+                }
+            }
+        }
+
+        statement.setStaticSequenceType(inferredType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitApplyStatement(ApplyStatement statement, StaticContext argument) {
+        visit(statement.getApplyExpression(), statement.getStaticContext());
+        statement.setStaticSequenceType(statement.getApplyExpression().getStaticSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
+        visit(statement.getAssignExpression(), statement.getStaticContext());
+        statement.setStaticSequenceType(statement.getAssignExpression().getStaticSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitBreakStatement(BreakStatement statement, StaticContext argument) {
+        statement.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitContinueStatement(ContinueStatement statement, StaticContext argument) {
+        statement.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitWhileStatement(WhileStatement statement, StaticContext argument) {
+        visitDescendants(statement, statement.getStaticContext());
+        statement.setStaticSequenceType(statement.getStatement().getStaticSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
+        Clause clause = statement.getReturnStatementClause().getFirstClause();
+        SequenceType.Arity forArities = SequenceType.Arity.One; // One is arity multiplication's neutral element
+        SequenceType forType;
+
+        while (clause != null) {
+            try {
+                this.visit(clause, clause.getStaticContext());
+            } catch (UnexpectedStaticTypeException e) {
+                if (
+                    forArities.equals(SequenceType.Arity.Zero)
+                        &&
+                        clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)
+                ) {
+                    clause = clause.getNextClause();
+                    continue;
+                }
+                throw e;
+            }
+            // if there are for clauses we need to consider their arities for the returning expression
+            if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
+                forType = ((ForClause) clause).getExpression().getStaticSequenceType();
+                // if forType is the empty sequence that means that allowing empty is set otherwise we would have thrown
+                // an error
+                // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities
+                // count as arity.One
+                if (!forType.isEmptySequence()) {
+                    forArities = forType.getArity().multiplyWith(forArities);
+                } else if (!((ForClause) clause).isAllowEmpty()) {
+                    forArities = SequenceType.Arity.Zero;
+                }
+            } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
+                // where clause could reject all tuples so arity change from + => * and 1 => ?
+                if (forArities == SequenceType.Arity.One) {
+                    forArities = SequenceType.Arity.OneOrZero;
+                } else if (forArities == SequenceType.Arity.OneOrMore) {
+                    forArities = SequenceType.Arity.ZeroOrMore;
+                }
+            }
+            clause = clause.getNextClause();
+        }
+
+        SequenceType returnType = statement.getReturnStatementClause().getReturnStatement().getStaticSequenceType();
+        basicChecks(returnType, statement.getClass().getSimpleName(), true, true, statement.getMetadata());
+        returnType = new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
+        statement.setStaticSequenceType(returnType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitConditionalStatement(ConditionalStatement statement, StaticContext argument) {
+        visitDescendants(statement, argument);
+
+        SequenceType ifType = statement.getCondition().getStaticSequenceType();
+        SequenceType thenType = statement.getBranch().getStaticSequenceType();
+        SequenceType elseType = statement.getElseBranch().getStaticSequenceType();
+
+        if (ifType == null || thenType == null || elseType == null) {
+            throw new OurBadException(
+                    "A child expression of a ConditionalStatement has no inferred type",
+                    statement.getMetadata()
+            );
+        }
+
+        if (!ifType.hasEffectiveBooleanValue()) {
+            throwStaticTypeException(
+                "The condition in the 'if' must have effective boolean value, found inferred type: "
+                    + ifType
+                    + " (which has not effective boolean value)",
+                statement.getMetadata()
+            );
+        }
+
+        // if the if branch is false at static time (i.e. subtype of null?) we only use else branch
+        SequenceType resultingType = ifType.isSubtypeOf(SequenceType.createSequenceType("null?"))
+            ? elseType
+            : thenType.leastCommonSupertypeWith(elseType);
+
+        if (resultingType.isEmptySequence()) {
+            throwStaticTypeException(
+                "Inferred type is empty sequence and this is not a CommaExpression",
+                ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                statement.getMetadata()
+            );
+        }
+
+        statement.setStaticSequenceType(resultingType);
+        return argument;
+    }
     // endregion
 }

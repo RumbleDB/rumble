@@ -78,6 +78,13 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
                     new SequentialDescendant(argument.isSequential(), node)
                 )
             );
+        node.getVariableDeclarations()
+            .forEach(
+                variableDeclaration -> visit(
+                    variableDeclaration,
+                    new SequentialDescendant(argument.isSequential(), node)
+                )
+            );
         return argument;
     }
 
@@ -172,6 +179,13 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
                     }
                 }
             });
+            this.visit(inlineFunctionExpression.getBody().getExpression(), argument);
+            if (inlineFunctionExpression.getBody().getExpression().isSequential()) {
+                throw new InvalidComposability(
+                        "The body of a non-sequential function can only contain non-sequential expressions. Only exit statements are allowed in non-sequential functions!",
+                        expression.getMetadata()
+                );
+            }
         }
         return new SequentialDescendant(inlineFunctionExpression.isSequential(), argument.getParent());
     }

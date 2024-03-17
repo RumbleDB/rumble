@@ -52,6 +52,9 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
@@ -531,6 +534,27 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             defaultCaseStaticContext.addVariable(defaultCaseVariableName, null, statement.getMetadata());
             this.visit(statement.getDefaultCase().getReturnStatement(), defaultCaseStaticContext);
         }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
+        visit(statement.getAssignExpression(), argument);
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(statement.getName(), SequenceType.ITEM_STAR, statement.getMetadata());
+        return result;
+    }
+
+    @Override
+    public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
+        Clause clause = statement.getReturnStatementClause().getFirstClause();
+        this.visit(clause, argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitReturnStatementClause(ReturnStatementClause clause, StaticContext argument) {
+        this.visit(clause.getReturnStatement(), argument);
         return argument;
     }
 }

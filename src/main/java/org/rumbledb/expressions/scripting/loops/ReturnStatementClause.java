@@ -32,7 +32,9 @@ public class ReturnStatementClause extends Clause {
         if (this.returnStatement != null) {
             result.add(this.returnStatement);
         }
-        result.add(this.getPreviousClause());
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
+        }
         return result;
     }
 

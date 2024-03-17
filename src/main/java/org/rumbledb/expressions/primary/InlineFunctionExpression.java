@@ -25,7 +25,7 @@ import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidExpressionClassification;
+import org.rumbledb.exceptions.InvalidComposability;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -83,7 +83,7 @@ public class InlineFunctionExpression extends Expression {
             }
         }
         if (foundSeqAnnotation && foundNonSeqAnnotation) {
-            throw new InvalidExpressionClassification(
+            throw new InvalidComposability(
                     "A function cannot be declared as both sequential and non-sequential!",
                     this.getMetadata()
             );

@@ -5,6 +5,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ContinueStatement extends Statement {
@@ -21,7 +22,7 @@ public class ContinueStatement extends Statement {
 
     @Override
     public List<Node> getChildren() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override

@@ -41,6 +41,20 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
 
     @Override
     public BlockExpressionMetadata visitProlog(Prolog expression, BlockExpressionMetadata argument) {
+        expression.getFunctionDeclarations()
+            .forEach(
+                functionDeclaration -> visit(
+                    functionDeclaration,
+                    new BlockExpressionMetadata(expression, null)
+                )
+            );
+        expression.getVariableDeclarations()
+            .forEach(
+                variableDeclaration -> visit(
+                    variableDeclaration,
+                    new BlockExpressionMetadata(expression, null)
+                )
+            );
         boolean containsOtherThanNonUpdatingNonSeq = expression.getVariableDeclarations()
             .stream()
             .anyMatch(varDecl -> {
@@ -181,12 +195,15 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
             ConditionalStatement expression,
             BlockExpressionMetadata argument
     ) {
+        visit(expression.getCondition(), argument);
         if (expression.getCondition().isUpdating()) {
             throw new InvalidComposability(
                     "If statement expects non-updating conditional expression",
                     expression.getMetadata()
             );
         }
+        visit(expression.getBranch(), argument);
+        visit(expression.getElseBranch(), argument);
         return argument;
     }
 
@@ -201,6 +218,10 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
             VariableDeclaration expression,
             BlockExpressionMetadata argument
     ) {
+        if (expression.external()) {
+            // TODO: see if external should have different behavior.
+            return argument;
+        }
         if (expression.getExpression().isUpdating() || expression.getExpression().isSequential()) {
             throw new InvalidComposability(
                     "Variable declaration must contain non-updating and non-sequential expression in its assignment!",

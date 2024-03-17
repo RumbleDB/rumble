@@ -69,6 +69,8 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
@@ -944,4 +946,75 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
+    public StaticContext visitReturnStatementClause(ReturnStatementClause statement, StaticContext argument) {
+        visit(statement.getReturnStatement(), statement.getReturnStatement().getStaticContext());
+        if (statement.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            // TODO: handle sequence type for statement
+            // if (
+            // statement.getReturnStatement()
+            // .getStaticSequenceType()
+            // .getItemType()
+            // .isCompatibleWithDataFrames(this.configuration)
+            // ) {
+            // statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
+            // return argument;
+            // } else {
+            statement.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+            // }
+        }
+        if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isRDD()) {
+            statement.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            // TODO: handle sequence type for statement
+            // if (
+            // statement.getReturnStatement()
+            // .getStaticSequenceType()
+            // .getItemType()
+            // .isCompatibleWithDataFrames(this.configuration)
+            // ) {
+            // statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
+            // return argument;
+            // } else {
+            statement.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+            // }
+        }
+        if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isUnset()) {
+            statement.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+        if (statement.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isUnset()) {
+            statement.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+        statement.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
+
+    // region FLWOR
+    @Override
+    public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
+        Clause clause = statement.getReturnStatementClause().getFirstClause();
+        while (clause != null) {
+            if (clause.getNextClause() != null) {
+                this.visit(clause, clause.getNextClause().getStaticContext());
+            } else {
+                this.visit(clause, null);
+            }
+            clause = clause.getNextClause();
+        }
+        // TODO: resolve return item count
+        // if (statement.alwaysReturnsAtMostOneItem()) {
+        statement.setHighestExecutionMode(ExecutionMode.LOCAL);
+        // } else {
+        // statement.setHighestExecutionMode(
+        // statement.getReturnStatementClause().getHighestExecutionMode(this.visitorConfig)
+        // );
+        // }
+        return argument;
+    }
 }
