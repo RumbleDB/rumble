@@ -72,6 +72,11 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
@@ -897,6 +902,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             : SequenceType.Arity.One;
     }
 
+    private boolean checkSwitchType(List<Expression> expressions, SequenceType testType, ExceptionMetadata metadata) {
+        boolean addToReturnType = false;
+        for (Expression caseExpression : expressions) {
+            // test the case expression
+            checkSwitchType(caseExpression.getStaticSequenceType(), metadata);
+            // if has overlap with the test condition will add the return type to the possible ones
+            if (caseExpression.getStaticSequenceType().hasOverlapWith(testType)) {
+                addToReturnType = true;
+            }
+        }
+        return addToReturnType;
+    }
+
     @Override
     public StaticContext visitMultiplicativeExpr(MultiplicativeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -1342,15 +1360,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         for (SwitchCase switchCase : expression.getCases()) {
-            boolean addToReturnType = false;
-            for (Expression caseExpression : switchCase.getConditionExpressions()) {
-                // test the case expression
-                checkSwitchType(caseExpression.getStaticSequenceType(), expression.getMetadata());
-                // if has overlap with the test condition will add the return type to the possible ones
-                if (caseExpression.getStaticSequenceType().hasOverlapWith(testType)) {
-                    addToReturnType = true;
-                }
-            }
+            boolean addToReturnType = checkSwitchType(
+                switchCase.getConditionExpressions(),
+                testType,
+                expression.getMetadata()
+            );
             SequenceType caseReturnType = switchCase.getReturnExpression().getStaticSequenceType();
             if (caseReturnType == null) {
                 throw new OurBadException(
@@ -2340,5 +2354,117 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         statement.setStaticSequenceType(resultingType);
         return argument;
     }
+
+    // TODO: Refactor where code can be reused
+    @Override
+    public StaticContext visitSwitchStatement(SwitchStatement statement, StaticContext argument) {
+        visitDescendants(statement, argument);
+        SequenceType testType = statement.getTestCondition().getStaticSequenceType();
+        checkSwitchType(testType, statement.getMetadata());
+
+        SequenceType returnType = statement.getDefaultStatement().getStaticSequenceType();
+        if (returnType == null) {
+            throw new OurBadException(
+                    "A child statement of a SwitchExpression has no inferred type",
+                    statement.getMetadata()
+            );
+        }
+
+        for (SwitchCaseStatement switchCase : statement.getCases()) {
+            boolean addToReturnType = checkSwitchType(
+                switchCase.getConditionExpressions(),
+                testType,
+                statement.getMetadata()
+            );
+            SequenceType caseReturnType = switchCase.getReturnStatement().getStaticSequenceType();
+            if (caseReturnType == null) {
+                throw new OurBadException(
+                        "A child statement of a SwitchStatement has no inferred type",
+                        statement.getMetadata()
+                );
+            }
+            if (addToReturnType) {
+                returnType = returnType.leastCommonSupertypeWith(caseReturnType);
+            }
+        }
+
+        statement.setStaticSequenceType(returnType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTryCatchStatement(TryCatchStatement statement, StaticContext argument) {
+        visitDescendants(statement, argument);
+        SequenceType inferredType = null;
+
+        for (Node childNode : statement.getChildren()) {
+            SequenceType childType = ((BlockStatement) childNode).getStaticSequenceType();
+            if (childType == null) {
+                throw new OurBadException(
+                        "A child statement of a TryCatchStatement has no inferred type",
+                        statement.getMetadata()
+                );
+            }
+
+            if (inferredType == null) {
+                inferredType = childType;
+            } else {
+                inferredType = inferredType.leastCommonSupertypeWith(childType);
+            }
+        }
+
+        if (inferredType.isEmptySequence()) {
+            throwStaticTypeException(
+                "Inferred type is empty sequence and this is not a CommaExpression",
+                ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                statement.getMetadata()
+            );
+        }
+        statement.setStaticSequenceType(inferredType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTypeSwitchStatement(TypeSwitchStatement statement, StaticContext argument) {
+        visit(statement.getTestCondition(), argument);
+        SequenceType inferredType = null;
+
+        SequenceType conditionType = statement.getTestCondition().getStaticSequenceType();
+        basicChecks(conditionType, statement.getClass().getSimpleName(), true, false, statement.getMetadata());
+
+        for (TypeSwitchStatementCase typeswitchCase : statement.getCases()) {
+            Name variableName = typeswitchCase.getVariableName();
+            Statement returnStatement = typeswitchCase.getReturnStatement();
+            // if we bind a variable we add the static type of it in the context of the return expression
+            if (variableName != null) {
+                SequenceType variableType = null;
+                for (SequenceType st : typeswitchCase.getUnion()) {
+                    variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
+                }
+                returnStatement.getStaticContext().replaceVariableSequenceType(variableName, variableType);
+            }
+
+            visit(returnStatement, argument);
+            SequenceType caseType = returnStatement.getStaticSequenceType();
+            basicChecks(caseType, statement.getClass().getSimpleName(), true, false, statement.getMetadata());
+            inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
+        }
+
+        Name variableName = statement.getDefaultCase().getVariableName();
+        Statement returnStatement = statement.getDefaultCase().getReturnStatement();
+        // if we bind a variable in the default case, we infer testCondition type
+        if (variableName != null) {
+            returnStatement.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
+        }
+        visit(returnStatement, argument);
+        SequenceType defaultType = returnStatement.getStaticSequenceType();
+        basicChecks(defaultType, statement.getClass().getSimpleName(), true, false, statement.getMetadata());
+        inferredType = inferredType.leastCommonSupertypeWith(defaultType);
+
+        basicChecks(inferredType, statement.getClass().getSimpleName(), false, true, statement.getMetadata());
+        statement.setStaticSequenceType(inferredType);
+        return argument;
+    }
+
     // endregion
 }

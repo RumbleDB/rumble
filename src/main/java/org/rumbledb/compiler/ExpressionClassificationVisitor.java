@@ -23,6 +23,7 @@ import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.DeleteExpression;
@@ -145,8 +146,14 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitGroupByClause(GroupByClause expression, ExpressionClassification argument) {
-        // TODO: Add check for updating?
-        return super.visitGroupByClause(expression, argument);
+        ExpressionClassification result = this.visitDescendants(expression, argument);
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expressions in Group By Clause cannot be updating",
+                    expression.getMetadata()
+            );
+        }
+        return result;
     }
 
     @Override
@@ -509,5 +516,16 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             return ExpressionClassification.UPDATING;
         }
         return ExpressionClassification.SIMPLE;
+    }
+
+    @Override
+    public ExpressionClassification visitReturnStatementClause(
+            ReturnStatementClause statementClause,
+            ExpressionClassification argument
+    ) {
+        if (statementClause.getReturnStatement() == null) {
+            return argument;
+        }
+        return this.visitDescendants(statementClause, argument);
     }
 }

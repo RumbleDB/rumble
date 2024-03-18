@@ -1,4 +1,7 @@
-(:JIQS: ShouldNotCompile; ErrorCode="SCCP0001"; ErrorMetadata="LINE:2:COLUMN:0:" :)
-declare %an:sequential %an:nonsequential function foo() { 1 };
+(:JIQS: ShouldCompile :)
+declare %an:sequential function bar() { 1 };
+declare %an:nonsequential function foo() {
+    bar();
+ };
 
-(: it is a static error to have both sequential and nonsequential annotations :)
+(: declared nonsequential with sequential body is valid as it is a non-updating apply statement :)

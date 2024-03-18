@@ -5,6 +5,6 @@ for $l in $je
     where replace json value of $l[[1]] with 1
     return
         {
-            break loop;
+            continue loop;
             replace json value of $l[[1]] with 1;
         }

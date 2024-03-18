@@ -45,7 +45,9 @@ public class ComposabilityTests extends AnnotationsTestsBase {
         initializeTests(composabilityTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
+            // if (testFile.getAbsolutePath().contains("FLWORStatement1")) {
             testAnnotations(testFile.getAbsolutePath(), getConfiguration());
+            // }
         }
     }
 }

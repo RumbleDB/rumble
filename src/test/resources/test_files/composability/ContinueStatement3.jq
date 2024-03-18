@@ -14,6 +14,6 @@ while ($c < 100) {
     $a := $b;
     $b := $c;
     $c := $a + $b;
-    break loop;
+    continue loop;
   }
 }

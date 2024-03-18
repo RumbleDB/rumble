@@ -1,7 +1,6 @@
 (:JIQS: ShouldCompile :)
-declare %an:sequential function bar() { 1 };
 declare %an:nonsequential function foo() {
-    bar();
+    copy json $je := {"a" : 1}
+    modify delete json $je.b
+    return $je
  };
-
-(: declared nonsequential with sequential body is valid as it is a non-updating apply statement :)

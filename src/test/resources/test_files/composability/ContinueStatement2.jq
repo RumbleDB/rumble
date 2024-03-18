@@ -7,13 +7,9 @@ $x := 1 + 1;
 while ($c < 100) {
   $fibseq := ($fibseq, $c);
   $a := $b;
+  if (true) then {
+    continue loop;
+  } else {();}
   $b := $c;
   $c := $a + $b;
-  while ($c < 100) {
-    $fibseq := ($fibseq, $c);
-    $a := $b;
-    $b := $c;
-    $c := $a + $b;
-    break loop;
-  }
 }

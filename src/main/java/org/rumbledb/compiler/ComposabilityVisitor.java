@@ -3,17 +3,12 @@ package org.rumbledb.compiler;
 import org.rumbledb.compiler.wrapper.BlockExpressionMetadata;
 import org.rumbledb.exceptions.InvalidComposability;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.Clause;
-import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
-import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
@@ -154,37 +149,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     public BlockExpressionMetadata visitFlowrStatement(FlowrStatement expression, BlockExpressionMetadata argument) {
         Clause itClause = expression.getReturnStatementClause().getFirstClause();
         while (itClause != null) {
-            if (itClause instanceof OrderByClause) {
-                itClause.getChildren().forEach(expr -> {
-                    if (((Expression) expr).isUpdating()) {
-                        throw new InvalidComposability(
-                                "FLWOR statement expects non-updating expressions in order-by, group-by, where and count clauses",
-                                expression.getMetadata()
-                        );
-                    }
-                }
-                );
-            }
-            if (itClause instanceof GroupByClause) {
-                itClause.getChildren().forEach(expr -> {
-                    if (((Expression) expr).isUpdating()) {
-                        throw new InvalidComposability(
-                                "FLWOR statement expects non-updating expressions in order-by, group-by, where and count clauses",
-                                expression.getMetadata()
-                        );
-                    }
-
-                });
-            }
-            if (itClause instanceof WhereClause) {
-                if (((WhereClause) itClause).getWhereExpression().isUpdating()) {
-                    throw new InvalidComposability(
-                            "FLWOR statement expects non-updating expressions in order-by, group-by, where and count clauses",
-                            expression.getMetadata()
-                    );
-                }
-            }
-            // TODO: Check count clause
+            this.visit(itClause, new BlockExpressionMetadata(argument.getInnerMostBlock(), expression));
             itClause = itClause.getNextClause();
         }
         return new BlockExpressionMetadata(argument.getInnerMostBlock(), expression);
@@ -204,12 +169,6 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
         }
         visit(expression.getBranch(), argument);
         visit(expression.getElseBranch(), argument);
-        return argument;
-    }
-
-    @Override
-    public BlockExpressionMetadata visitSwitchStatement(SwitchStatement expression, BlockExpressionMetadata argument) {
-
         return argument;
     }
 
@@ -267,4 +226,6 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
         }
         return argument;
     }
+
+    // TODO: Switch, typeswitch, trycatch outside of master's thesis.
 }

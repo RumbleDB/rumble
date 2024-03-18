@@ -1,15 +1,10 @@
 (:JIQS: ShouldCompile :)
-variable $a as xs:integer := 0;
-variable $b as xs:integer := 1;
-variable $c as xs:integer := $a + $b;
-variable $fibseq as xs:integer* := ($a, $b);
-$x := 1 + 1;
-while ($c < 100) {
-  $fibseq := ($fibseq, $c);
-  $a := $b;
-  if (true) then {
-    break loop;
-  } else {();}
-  $b := $c;
-  $c := $a + $b;
-}
+$je := for $i in (1 to 4)
+       return [$i mod 2];
+for $l in $je
+    where replace json value of $l[[1]] with 1
+    return
+        {
+            break loop;
+            replace json value of $l[[1]] with 1;
+        }

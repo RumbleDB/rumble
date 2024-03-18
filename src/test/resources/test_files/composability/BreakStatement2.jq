@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotCompile; ErrorCode="SCCP0001"; ErrorMetadata="LINE:13:COLUMN:0:" :)
+(:JIQS: ShouldCompile :)
 variable $a as xs:integer := 0;
 variable $b as xs:integer := 1;
 variable $c as xs:integer := $a + $b;
@@ -7,9 +7,9 @@ $x := 1 + 1;
 while ($c < 100) {
   $fibseq := ($fibseq, $c);
   $a := $b;
+  if (true) then {
+    break loop;
+  } else {();}
   $b := $c;
   $c := $a + $b;
 }
-break loop;
-
-(: break not allowed outside of while or flwor :)
