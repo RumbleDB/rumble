@@ -80,10 +80,9 @@ annotation                  : '%' name=qname ('(' Literal (',' Literal)* ')')? ;
 
 annotations                 : annotation* ;
 
-varDeclStatement            : annotations Kvariable var_ref=varRef (Kas sequenceType)? (':=' expr_val=exprSingle)?
-                            other_vars=varDeclOther ';' ;
+varDeclStatement            : annotations Kvariable varDeclForStatement (',' varDeclForStatement)* ';' ;
 
-varDeclOther                : (',' var_ref=varRef (Kas sequenceType)? (':=' expr_vals+=exprSingle)?)* ;
+varDeclForStatement         : var_ref=varRef (Kas sequenceType)? (':=' expr_vals+=exprSingle)? ;
 
 whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 

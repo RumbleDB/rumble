@@ -77,6 +77,8 @@ import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
@@ -2192,7 +2194,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // // begin scripting
     @Override
     public StaticContext visitBlockStatement(BlockStatement statement, StaticContext argument) {
-        visitDescendants(statement, statement.getStaticContext());
+        visitDescendants(statement, argument);
 
         SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
 
@@ -2233,14 +2235,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitApplyStatement(ApplyStatement statement, StaticContext argument) {
-        visit(statement.getApplyExpression(), statement.getStaticContext());
+        visit(statement.getApplyExpression(), argument);
         statement.setStaticSequenceType(statement.getApplyExpression().getStaticSequenceType());
         return argument;
     }
 
     @Override
     public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
-        visit(statement.getAssignExpression(), statement.getStaticContext());
+        visit(statement.getAssignExpression(), argument);
         statement.setStaticSequenceType(statement.getAssignExpression().getStaticSequenceType());
         return argument;
     }
@@ -2259,7 +2261,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitWhileStatement(WhileStatement statement, StaticContext argument) {
-        visitDescendants(statement, statement.getStaticContext());
+        visitDescendants(statement, argument);
         statement.setStaticSequenceType(statement.getStatement().getStaticSequenceType());
         return argument;
     }
@@ -2466,5 +2468,71 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
+    public StaticContext visitVariableDeclStatement(VariableDeclStatement statement, StaticContext argument) {
+        visitDescendants(statement, argument);
+        SequenceType declaredType = statement.getActualSequenceType();
+        SequenceType inferredType = SequenceType.ITEM_STAR;
+        if (declaredType == null) {
+            if (statement.getVariableExpression() != null) {
+                inferredType = statement.getVariableExpression().getStaticSequenceType();
+            }
+        } else {
+            inferredType = declaredType;
+        }
+        checkAndUpdateVariableStaticType(
+            declaredType,
+            inferredType,
+            statement.getStaticContext(),
+            statement.getClass().getSimpleName(),
+            statement.getVariableName(),
+            statement.getMetadata()
+        );
+        statement.setStaticSequenceType(
+            statement.getStaticContext().getVariableSequenceType(statement.getVariableName())
+        );
+        return argument;
+    }
+
+    // TODO: Verify if this makes sense at runtime
+    @Override
+    public StaticContext visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, StaticContext argument) {
+        visitDescendants(statement, argument);
+        SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
+
+        for (VariableDeclStatement childVariable : statement.getVariables()) {
+            SequenceType childVariableInferredType = childVariable.getStaticSequenceType();
+
+            // if a child expression has no inferred type throw an error
+            if (childVariableInferredType == null) {
+                throwStaticTypeException(
+                    "A child variable of a CommaVariableDeclarationStatement has no inferred type",
+                    childVariable.getMetadata()
+                );
+            }
+
+            // if the child expression is an EMPTY_SEQUENCE it does not affect the comma expression type
+            if (!childVariableInferredType.isEmptySequence()) {
+                if (inferredType.isEmptySequence()) {
+                    inferredType = childVariableInferredType;
+                } else {
+                    ItemType resultingItemType = inferredType.getItemType()
+                        .findLeastCommonSuperTypeWith(childVariableInferredType.getItemType());
+                    SequenceType.Arity resultingArity =
+                        ((inferredType.getArity() == SequenceType.Arity.OneOrZero
+                            || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
+                            &&
+                            (childVariableInferredType.getArity() == SequenceType.Arity.OneOrZero
+                                || childVariableInferredType.getArity() == SequenceType.Arity.ZeroOrMore))
+                                    ? SequenceType.Arity.ZeroOrMore
+                                    : SequenceType.Arity.OneOrMore;
+                    inferredType = new SequenceType(resultingItemType, resultingArity);
+                }
+            }
+        }
+
+        statement.setStaticSequenceType(inferredType);
+        return argument;
+    }
     // endregion
 }

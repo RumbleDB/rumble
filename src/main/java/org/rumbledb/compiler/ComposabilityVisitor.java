@@ -108,29 +108,26 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
                     expression.getMetadata()
             );
         }
+        if (!expression.getStaticContext().getIsAssignable(expression.getName())) {
+            throw new InvalidComposability(
+                    "Assign statement expects an assignable variable",
+                    expression.getMetadata()
+            );
+        }
         return argument;
     }
 
     @Override
     public BlockExpressionMetadata visitVariableDeclStatement(
-            VariableDeclStatement expression,
+            VariableDeclStatement statement,
             BlockExpressionMetadata argument
     ) {
-        if (expression.getVariableExpression().isUpdating()) {
+        if (statement.getVariableExpression() != null && statement.getVariableExpression().isUpdating()) {
             throw new InvalidComposability(
                     "Variable declaration statements expects non-updating operands",
-                    expression.getMetadata()
+                    statement.getMetadata()
             );
         }
-        expression.getOtherVariables().forEach((key, value) -> {
-            if (value.b.isUpdating()) {
-                throw new InvalidComposability(
-                        "Variable declaration statements expects non-updating operands",
-                        expression.getMetadata()
-                );
-            }
-        }
-        );
         return argument;
     }
 

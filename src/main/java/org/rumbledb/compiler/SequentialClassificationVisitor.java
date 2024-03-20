@@ -1,6 +1,7 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.compiler.wrapper.SequentialDescendant;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.InvalidComposability;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -121,8 +122,13 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
 
     @Override
     public SequentialDescendant visitAssignStatement(AssignStatement statement, SequentialDescendant argument) {
-        // TODO: Currently always true. Should check expression's variable scope.
-        return new SequentialDescendant(true, argument.getParent(), argument.getProlog());
+        StaticContext statementContext = statement.getStaticContext();
+        int variableBlockLevel = statementContext.getVariableBlockLevel(statement.getName());
+        if (variableBlockLevel > statementContext.getBlockLevel()) {
+            // Variable is defined outside of this block
+            return new SequentialDescendant(true, argument.getParent(), argument.getProlog());
+        }
+        return new SequentialDescendant(false, argument.getParent(), argument.getProlog());
     }
 
     @Override

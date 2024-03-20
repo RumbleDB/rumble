@@ -596,13 +596,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             visit(statement.getVariableExpression(), null);
             addInputVariableDependencies(statement, getInputVariableDependencies(statement.getVariableExpression()));
         }
-        // Add other variable expressions
-        statement.getOtherVariables().forEach((name, props) -> {
-            if (props.b != null) {
-                visit(props.b, null);
-                addInputVariableDependencies(statement, getInputVariableDependencies(props.b));
-            }
-        });
         return null;
     }
 }

@@ -73,6 +73,7 @@ import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
@@ -447,5 +448,9 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitBlockExpr(BlockExpression expression, T argument) {
         return defaultAction(expression, argument);
+    }
+
+    public T visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, T argument) {
+        return defaultAction(statement, argument);
     }
 }

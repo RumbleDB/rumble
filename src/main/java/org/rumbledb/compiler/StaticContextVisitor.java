@@ -49,8 +49,11 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
@@ -174,6 +177,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
+        // add a block level to function declaration body
+        functionDeclarationContext.increaseBlockLevel();
         expression.setStaticContext(functionDeclarationContext);
         populateFunctionDeclarationStaticContext(functionDeclarationContext, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
@@ -192,6 +197,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
+        // add a block level to function declaration body
+        functionDeclarationContext.increaseBlockLevel();
         for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
             functionDeclarationContext.addVariable(
                 entry.getKey(),
@@ -220,7 +227,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // TODO visit at...
         this.visit(clause.getExpression(), argument);
 
-        StaticContext result = new StaticContext(argument);
+        StaticContext result = new StaticContext(argument);// add a block level to function declaration body
+        result.increaseBlockLevel();
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -244,6 +252,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(clause.getExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
+        result.increaseBlockLevel();
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -259,6 +268,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(clause.getWhereExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
+        result.increaseBlockLevel();
         this.visit(clause.getNextClause(), result);
         return argument;
     }
@@ -266,6 +276,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
+        result.increaseBlockLevel();
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
@@ -293,6 +304,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         StaticContext result = new StaticContext(argument);
+        result.increaseBlockLevel();
         this.visit(clause.getNextClause(), result);
         return argument;
     }
@@ -300,6 +312,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
+        result.increaseBlockLevel();
         result.addVariable(
             clause.getCountVariableName(),
             SequenceType.INTEGER,
@@ -323,6 +336,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getTestCondition(), argument);
         for (TypeswitchCase c : expression.getCases()) {
             StaticContext caseContext = new StaticContext(argument);
+            caseContext.increaseBlockLevel();
             Name variableName = c.getVariableName();
             if (variableName != null) {
                 caseContext.addVariable(
@@ -343,6 +357,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             // add variable to child context to visit default return expression
             StaticContext defaultCaseStaticContext = new StaticContext(argument);
+            defaultCaseStaticContext.increaseBlockLevel();
             defaultCaseStaticContext.addVariable(
                 defaultCaseVariableName,
                 null,
@@ -364,8 +379,19 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         argument.addVariable(
             variableDeclaration.getVariableName(),
             variableDeclaration.getActualSequenceType(),
-            variableDeclaration.getMetadata()
+            variableDeclaration.getMetadata(),
+            variableDeclaration.isAssignable()
         );
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, StaticContext argument) {
+        StaticContext currentContext = new StaticContext(argument);
+        for (VariableDeclStatement variableDeclStatement : statement.getVariables()) {
+            currentContext = this.visit(variableDeclStatement, currentContext);
+        }
+        statement.setStaticContext(currentContext);
         return argument;
     }
 
@@ -373,6 +399,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
         argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() + 1);
         StaticContext result = argument;
+        // TODO: Verify block level
+        result.increaseBlockLevel();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             result = this.visitCopyDecl(copyDecl, result, argument);
         }
@@ -466,23 +494,41 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (variableDeclStatement.getVariableExpression() != null) {
             this.visit(variableDeclStatement.getVariableExpression(), argument);
         }
+        if (argument.hasVariableInScopeOnly(variableDeclStatement.getVariableName())) {
+            throw new VariableAlreadyExistsException(
+                    variableDeclStatement.getVariableName(),
+                    variableDeclStatement.getMetadata()
+            );
+        }
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             variableDeclStatement.getVariableName(),
             variableDeclStatement.getActualSequenceType(),
-            variableDeclStatement.getMetadata()
+            variableDeclStatement.getMetadata(),
+            variableDeclStatement.isAssignable()
         );
-        variableDeclStatement.getOtherVariables().forEach((otherVarName, otherVarExpr) -> {
-            if (result.hasVariableInScopeOnly(otherVarName)) {
-                // We have two variables with the same name in the same expression scope! Throw error.
-                throw new VariableAlreadyExistsException(otherVarName, variableDeclStatement.getMetadata());
-            }
-            if (otherVarExpr.b != null) {
-                this.visit(otherVarExpr.b, argument);
-            }
-            result.addVariable(otherVarName, otherVarExpr.a, variableDeclStatement.getMetadata());
-        });
+        variableDeclStatement.setStaticContext(result);
         return result;
+    }
+
+    @Override
+    public StaticContext visitProgram(Program program, StaticContext argument) {
+        StaticContext currentContext = new StaticContext(argument);
+        currentContext.increaseBlockLevel();
+        visitDescendants(program, currentContext);
+        return currentContext;
+    }
+
+    @Override
+    public StaticContext visitBlockStatement(
+            BlockStatement statement,
+            StaticContext argument
+    ) {
+        StaticContext currentContext = argument;
+        for (Statement child : statement.getBlockStatements()) {
+            currentContext = this.visit(child, currentContext);
+        }
+        return argument;
     }
 
     @Override
@@ -491,24 +537,24 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         for (Statement statement : statementsAndExpr.getStatements()) {
             currentContext = this.visit(statement, currentContext);
         }
-        currentContext = this.visit(statementsAndExpr.getExpression(), currentContext);
-        statementsAndExpr.setStaticContext(currentContext);
+        this.visit(statementsAndExpr.getExpression(), currentContext);
+        statementsAndExpr.setStaticContext(argument);
         return argument;
     }
 
     @Override
     public StaticContext visitStatementsAndOptionalExpr(
-            StatementsAndOptionalExpr statementsAndExpr,
+            StatementsAndOptionalExpr statementsAndOptionalExpr,
             StaticContext argument
     ) {
         StaticContext currentContext = argument;
-        for (Statement statement : statementsAndExpr.getStatements()) {
+        for (Statement statement : statementsAndOptionalExpr.getStatements()) {
             currentContext = this.visit(statement, currentContext);
         }
-        if (statementsAndExpr.getExpression() != null) {
-            currentContext = this.visit(statementsAndExpr.getExpression(), currentContext);
+        if (statementsAndOptionalExpr.getExpression() != null) {
+            this.visit(statementsAndOptionalExpr.getExpression(), currentContext);
         }
-        statementsAndExpr.setStaticContext(currentContext);
+        statementsAndOptionalExpr.setStaticContext(argument);
         return argument;
     }
 
@@ -517,6 +563,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(statement.getTestCondition(), argument);
         for (TypeSwitchStatementCase tssc : statement.getCases()) {
             StaticContext caseContext = new StaticContext(argument);
+            caseContext.increaseBlockLevel();
             Name variableName = tssc.getVariableName();
             if (variableName != null) {
                 caseContext.addVariable(variableName, null, statement.getMetadata());
@@ -531,6 +578,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(statement.getDefaultCase().getReturnStatement(), argument);
         } else {
             StaticContext defaultCaseStaticContext = new StaticContext(argument);
+            defaultCaseStaticContext.increaseBlockLevel();
             defaultCaseStaticContext.addVariable(defaultCaseVariableName, null, statement.getMetadata());
             this.visit(statement.getDefaultCase().getReturnStatement(), defaultCaseStaticContext);
         }
@@ -540,9 +588,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
         visit(statement.getAssignExpression(), argument);
-        StaticContext result = new StaticContext(argument);
-        result.addVariable(statement.getName(), SequenceType.ITEM_STAR, statement.getMetadata());
-        return result;
+        if (!argument.isInScope(statement.getName())) {
+            throw new UndeclaredVariableException(
+                    "Uninitialized variable reference: " + statement.getName(),
+                    statement.getMetadata()
+            );
+        }
+        return argument;
     }
 
     @Override

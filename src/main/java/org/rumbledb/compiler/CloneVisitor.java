@@ -1,7 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.antlr.v4.runtime.misc.Pair;
-import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -64,6 +62,7 @@ import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
@@ -79,7 +78,6 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
-import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -970,21 +968,43 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
 
+
+    @Override
+    public Node visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, Node argument) {
+        List<VariableDeclStatement> variables = new ArrayList<>();
+        statement.getVariables().forEach(variable -> {
+            variables.add((VariableDeclStatement) visit(variable, argument));
+        });
+        CommaVariableDeclStatement result = new CommaVariableDeclStatement(variables, statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        return result;
+    }
+
     @Override
     public Node visitVariableDeclStatement(VariableDeclStatement statement, Node argument) {
-        Map<Name, Pair<SequenceType, Expression>> otherVariables = new HashMap<>();
-        statement.getOtherVariables()
-            .forEach(
-                (key, value) -> otherVariables.put(key, new Pair<>(value.a, (Expression) visit(value.b, argument)))
+        if (statement.getVariableExpression() != null) {
+            VariableDeclStatement result = new VariableDeclStatement(
+                    statement.getAnnotations(),
+                    statement.getVariableName(),
+                    statement.getActualSequenceType(),
+                    (Expression) visit(statement.getVariableExpression(), argument),
+                    statement.getMetadata()
             );
-        return new VariableDeclStatement(
+            result.setStaticContext(statement.getStaticContext());
+            result.setStaticSequenceType(statement.getSequenceType());
+            return result;
+        }
+        VariableDeclStatement result = new VariableDeclStatement(
                 statement.getAnnotations(),
                 statement.getVariableName(),
                 statement.getActualSequenceType(),
-                (Expression) visit(statement.getVariableExpression(), argument),
-                otherVariables,
+                null,
                 statement.getMetadata()
         );
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getSequenceType());
+        return result;
     }
 
     // end region scripting

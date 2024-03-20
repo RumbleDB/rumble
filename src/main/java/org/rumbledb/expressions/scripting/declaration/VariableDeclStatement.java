@@ -1,6 +1,5 @@
 package org.rumbledb.expressions.scripting.declaration;
 
-import org.antlr.v4.runtime.misc.Pair;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -12,10 +11,11 @@ import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
+// TODO: Update specification document to reflect this definition:
+// A variable decl statement will be visible to subsequent comma declarations.
 public class VariableDeclStatement extends Statement {
     // Default is True for statement variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = true;
@@ -23,7 +23,6 @@ public class VariableDeclStatement extends Statement {
     private final Name variableName;
     private final SequenceType variableSequenceType;
     private final Expression variableExpression;
-    private final Map<Name, Pair<SequenceType, Expression>> otherVariables;
     private final boolean isAssignable;
 
     public VariableDeclStatement(
@@ -31,7 +30,6 @@ public class VariableDeclStatement extends Statement {
             Name variableName,
             SequenceType variableSequenceType,
             Expression variableExpression,
-            Map<Name, Pair<SequenceType, Expression>> otherVariables,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -39,7 +37,6 @@ public class VariableDeclStatement extends Statement {
         this.variableName = variableName;
         this.variableSequenceType = variableSequenceType;
         this.variableExpression = variableExpression;
-        this.otherVariables = otherVariables;
         if (this.annotations != null) {
             this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE); // default is true for
                                                                                             // variable statements
@@ -59,13 +56,6 @@ public class VariableDeclStatement extends Statement {
         if (this.variableExpression != null) {
             result.add(this.variableExpression);
         }
-        if (this.otherVariables != null) {
-            this.otherVariables.values().forEach(otherExpressions -> {
-                if (otherExpressions.b != null) {
-                    result.add(otherExpressions.b);
-                }
-            });
-        }
         return result;
     }
 
@@ -78,27 +68,11 @@ public class VariableDeclStatement extends Statement {
         }
         sb.append(" ");
         this.variableExpression.serializeToJSONiq(sb, 0);
-        sb.append(", ");
-        if (this.otherVariables != null) {
-            this.otherVariables.forEach((key, value) -> {
-                sb.append("$ ").append(key).append(" ");
-                if (value.a != null) {
-                    sb.append("as ").append(value.a);
-                }
-                sb.append(" ");
-                value.b.serializeToJSONiq(sb, 0);
-                sb.append(", ");
-            });
-        }
     }
 
     // TODO: VariableStorageMode!
 
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public SequenceType getVariableSequenceType() {
+    public SequenceType getSequenceType() {
         if (this.variableSequenceType != null) {
             return this.variableSequenceType;
         }
@@ -108,16 +82,16 @@ public class VariableDeclStatement extends Statement {
         return SequenceType.ITEM_STAR;
     }
 
+    public Name getVariableName() {
+        return this.variableName;
+    }
+
     public SequenceType getActualSequenceType() {
         return this.variableSequenceType;
     }
 
     public Expression getVariableExpression() {
         return this.variableExpression;
-    }
-
-    public Map<Name, Pair<SequenceType, Expression>> getOtherVariables() {
-        return otherVariables;
     }
 
     public List<Annotation> getAnnotations() {
