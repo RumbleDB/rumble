@@ -1,5 +1,5 @@
 (:JIQS: ShouldNotCompile; ErrorCode="SCCP0001"; ErrorMetadata="LINE:11:COLUMN:0:" :)
-$je := for $i in (1 to 4)
+variable $je := for $i in (1 to 4)
        return [$i mod 2];
 for $l in $je
     return {
