@@ -8,6 +8,7 @@ import org.rumbledb.types.SequenceType;
 public abstract class Statement extends Node {
     protected StaticContext staticContext;
     protected SequenceType staticSequenceType;
+    protected boolean isSequential;
 
     protected Statement(ExceptionMetadata metadata) {
         super(metadata);
@@ -28,5 +29,13 @@ public abstract class Statement extends Node {
 
     public SequenceType getStaticSequenceType() {
         return this.staticSequenceType;
+    }
+
+    public boolean isSequential() {
+        return this.isSequential;
+    }
+
+    public void setSequential(boolean isSequential) {
+        this.isSequential = isSequential;
     }
 }

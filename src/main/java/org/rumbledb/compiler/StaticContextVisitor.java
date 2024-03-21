@@ -392,7 +392,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             currentContext = this.visit(variableDeclStatement, currentContext);
         }
         statement.setStaticContext(currentContext);
-        return argument;
+        return currentContext;
     }
 
     @Override

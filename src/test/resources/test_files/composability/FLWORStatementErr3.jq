@@ -8,4 +8,4 @@ for $l in $je
         replace json value of $l[[1]] with 1;
 
 
-(: The expressions in the window-start, window-end, order-by, group-by, where and count clauses must be non-sequential. :)
+(: The expressions in the order-by, group-by and where clauses must be non-updating. :)

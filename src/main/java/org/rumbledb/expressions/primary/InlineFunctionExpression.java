@@ -49,6 +49,7 @@ public class InlineFunctionExpression extends Expression {
     private final SequenceType returnType;
     private final StatementsAndOptionalExpr body;
     private final List<Annotation> annotations;
+    private boolean hasSequentialPropertyAnnotation;
 
     public InlineFunctionExpression(
             List<Annotation> annotations,
@@ -67,6 +68,8 @@ public class InlineFunctionExpression extends Expression {
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
         if (annotations != null) {
             this.setSequentialFromAnnotations();
+        } else {
+            this.hasSequentialPropertyAnnotation = false;
         }
     }
 
@@ -75,11 +78,12 @@ public class InlineFunctionExpression extends Expression {
         boolean foundNonSeqAnnotation = false;
         for (Annotation annotation : this.annotations) {
             if (annotation.getAnnotationName().equals(SEQUENTIAL)) {
-
                 foundSeqAnnotation = true;
+                this.hasSequentialPropertyAnnotation = true;
             }
             if (annotation.getAnnotationName().equals(NON_SEQUENTIAL)) {
                 foundNonSeqAnnotation = true;
+                this.hasSequentialPropertyAnnotation = true;
             }
         }
         if (foundSeqAnnotation && foundNonSeqAnnotation) {
@@ -217,6 +221,10 @@ public class InlineFunctionExpression extends Expression {
             indentIt(sb, indent);
             sb.append("}\n");
         }
+    }
+
+    public boolean hasSequentialPropertyAnnotation() {
+        return hasSequentialPropertyAnnotation;
     }
 }
 

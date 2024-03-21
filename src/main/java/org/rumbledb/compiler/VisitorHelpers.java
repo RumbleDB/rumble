@@ -422,7 +422,7 @@ public class VisitorHelpers {
         }
 
         SequentialClassificationVisitor visitor = new SequentialClassificationVisitor();
-        visitor.visit(mainModule, new SequentialDescendant(false, null, null));
+        visitor.visit(mainModule, new SequentialDescendant(false, false, null));
 
         if (configuration.isPrintIteratorTree()) {
             printTree(mainModule, configuration);
