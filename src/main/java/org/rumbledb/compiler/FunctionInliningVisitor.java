@@ -300,12 +300,14 @@ public class FunctionInliningVisitor extends CloneVisitor {
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         if (expression.getArguments().size() == 0 || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
-                return new TreatExpression(
+                TreatExpression result = new TreatExpression(
                         bodyExpression,
                         inlineFunction.getReturnType(),
                         ErrorCode.UnexpectedTypeErrorCode,
                         expression.getMetadata()
                 );
+                result.setSequential(inlineFunction.isSequential());
+                return result;
             }
             return body;
         }

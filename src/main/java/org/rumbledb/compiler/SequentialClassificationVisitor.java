@@ -21,6 +21,7 @@ import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.typing.TreatExpression;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
 
@@ -40,6 +41,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
             if (node instanceof FlowrStatement || node instanceof WhileStatement) {
                 // If child is sequential because it has interrupt, not sequential.
                 ((Statement) node).setSequential(result.isSequential() && !result.hasInterruptStatement());
+                return new SequentialDescendant(false, false, argument.getProlog());
             } else {
                 ((Statement) node).setSequential(result.isSequential());
             }
@@ -54,7 +56,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
          * a break or continue, it should not propagate the sequential property to the parent.
          */
         SequentialDescendant result = new SequentialDescendant(false, false, argument.getProlog());;
-        for (Node child : node.getDescendants()) {
+        for (Node child : node.getChildren()) {
             SequentialDescendant childResult = visit(child, argument);
             if (childResult.isSequential() && !childResult.hasInterruptStatement()) {
                 result = childResult;
@@ -142,7 +144,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
     @Override
     public SequentialDescendant visitApplyStatement(ApplyStatement statement, SequentialDescendant argument) {
         return new SequentialDescendant(
-                statement.getApplyExpression().isUpdating(),
+                statement.getApplyExpression().isUpdating() || statement.getApplyExpression().isSequential(),
                 false,
                 argument.getProlog()
         );
@@ -236,13 +238,18 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
             result = this.visit(clause, result);
             clause = clause.getNextClause();
         }
-        SequentialDescendant returnStatementResult = visit(
-            statement.getReturnStatementClause().getReturnStatement(),
-            argument
-        );
-        if (returnStatementResult.isSequential() && returnStatementResult.hasInterruptStatement()) {
-            return result;
+        if (result.isSequential() && result.hasInterruptStatement()) {
+            return new SequentialDescendant(false, false, argument.getProlog());
         }
-        return returnStatementResult;
+        return result;
+    }
+
+    @Override
+    public SequentialDescendant visitTreatExpression(TreatExpression expression, SequentialDescendant argument) {
+        SequentialDescendant result = visit(expression.getMainExpression(), argument);
+        if (expression.isSequential()) {
+            return new SequentialDescendant(true, false, argument.getProlog());
+        }
+        return result;
     }
 }
