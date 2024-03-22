@@ -524,11 +524,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             BlockStatement statement,
             StaticContext argument
     ) {
-        StaticContext currentContext = argument;
+        StaticContext currentContext = new StaticContext(argument);
+        currentContext.increaseBlockLevel();
         for (Statement child : statement.getBlockStatements()) {
             currentContext = this.visit(child, currentContext);
         }
-        return argument;
+        return currentContext;
     }
 
     @Override

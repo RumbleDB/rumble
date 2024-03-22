@@ -81,6 +81,7 @@ import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
@@ -2255,6 +2256,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitContinueStatement(ContinueStatement statement, StaticContext argument) {
+        statement.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitExitStatement(ExitStatement statement, StaticContext argument) {
+        visit(statement.getExitExpression(), argument);
         statement.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;
     }

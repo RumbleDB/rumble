@@ -47,6 +47,7 @@ public class ExitStatement extends Statement {
         return exitControlledExpression;
     }
 
+    // TODO: Set this field in composability visitor
     public void setExitControlledExpression(Expression exitControlledExpression) {
         this.exitControlledExpression = exitControlledExpression;
     }

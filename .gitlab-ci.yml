@@ -44,3 +44,12 @@ spotless-test:
   script:
     - mvn spotless:check
 
+composability-test:
+  stage: test
+  script:
+    - mvn -Dtest=ComposabilityTests test
+
+sequential-classification-test:
+  stage: test
+  script:
+    - mvn -Dtest=SequentialClassificationTests test
