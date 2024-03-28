@@ -10,7 +10,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatementsAndOptionalExpr extends Node {
+public class StatementsAndOptionalExpr extends Expression {
     protected StaticContext staticContext;
     private final List<Statement> statements;
     private final Expression expression;

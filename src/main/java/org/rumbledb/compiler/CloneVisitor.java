@@ -71,6 +71,7 @@ import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
@@ -146,18 +147,41 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         statementsAndOptionalExpr.getStatements().forEach(statement -> {
             statements.add((Statement) visit(statement, argument));
         });
-        Expression optionalExpr = (Expression) visit(statementsAndOptionalExpr.getExpression(), argument);
-        optionalExpr.setStaticContext(statementsAndOptionalExpr.getExpression().getStaticContext());
-        optionalExpr.setStaticSequenceType(statementsAndOptionalExpr.getExpression().getStaticSequenceType());
+        Expression optionalExpr = null;
+        if (statementsAndOptionalExpr.getExpression() != null) {
+            optionalExpr = (Expression) visit(statementsAndOptionalExpr.getExpression(), argument);
+            optionalExpr.setStaticContext(statementsAndOptionalExpr.getExpression().getStaticContext());
+            optionalExpr.setStaticSequenceType(statementsAndOptionalExpr.getExpression().getStaticSequenceType());
+        }
         StatementsAndOptionalExpr result = new StatementsAndOptionalExpr(
                 statements,
                 optionalExpr,
                 statementsAndOptionalExpr.getMetadata()
         );
         result.setStaticContext(statementsAndOptionalExpr.getStaticContext());
+        result.setStaticSequenceType(statementsAndOptionalExpr.getStaticSequenceType());
         return result;
-
     }
+
+    @Override
+    public Node visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, Node argument) {
+        List<Statement> statements = new ArrayList<>();
+        statementsAndExpr.getStatements().forEach(statement -> {
+            statements.add((Statement) visit(statement, argument));
+        });
+        Expression expression = (Expression) visit(statementsAndExpr.getExpression(), argument);
+        expression.setStaticContext(statementsAndExpr.getExpression().getStaticContext());
+        expression.setStaticSequenceType(statementsAndExpr.getExpression().getStaticSequenceType());
+        StatementsAndExpr result = new StatementsAndExpr(
+                statements,
+                expression,
+                statementsAndExpr.getMetadata()
+        );
+        result.setStaticContext(statementsAndExpr.getStaticContext());
+        result.setStaticSequenceType(statementsAndExpr.getStaticSequenceType());
+        return result;
+    }
+
 
     @Override
     public Node visitCommaExpression(CommaExpression expression, Node argument) {
@@ -1007,6 +1031,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         result.setStaticSequenceType(statement.getSequenceType());
         return result;
     }
+
+
 
     // end region scripting
 }

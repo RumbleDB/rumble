@@ -169,14 +169,15 @@ public abstract class Expression extends Node {
      *         updating and sequential.
      */
     public void setSequential(boolean isSequential) {
-        if (this.isUpdating() && isSequential) {
-            throw new InvalidExpressionClassification(
-                    "An expression cannot "
-                        +
-                        "be both updating and sequential!",
-                    getMetadata()
-            );
-        }
+        // TODO: Verify this.
+        // if (this.isUpdating() && isSequential) {
+        // throw new InvalidExpressionClassification(
+        // "An expression cannot "
+        // +
+        // "be both updating and sequential!",
+        // getMetadata()
+        // );
+        // }
         this.isSequential = isSequential;
     }
 

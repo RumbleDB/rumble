@@ -119,10 +119,6 @@ public class InlineFunctionExpression extends Expression {
         return this.body;
     }
 
-    public Expression getExpression() {
-        return this.body.getExpression();
-    }
-
     @Nullable
     public List<Annotation> getAnnotations() {
         return annotations;

@@ -294,14 +294,12 @@ public class FunctionInliningVisitor extends CloneVisitor {
             return result;
         }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
-        // TODO: Update with statements
         StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
-        Expression bodyExpression = body.getExpression();
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
-        if (expression.getArguments().size() == 0 || allArgumentsMatch(expression, paramNames)) {
+        if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
                 TreatExpression result = new TreatExpression(
-                        bodyExpression,
+                        body,
                         inlineFunction.getReturnType(),
                         ErrorCode.UnexpectedTypeErrorCode,
                         expression.getMetadata()
@@ -311,8 +309,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             }
             return body;
         }
-        bodyExpression.setStaticSequenceType(inlineFunction.getReturnType());
-        ReturnClause returnClause = new ReturnClause(bodyExpression, expression.getMetadata());
+        body.setStaticSequenceType(inlineFunction.getReturnType());
+        ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
         for (int i = 0; i < expression.getArguments().size(); i++) {

@@ -24,6 +24,8 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.DeleteExpression;
@@ -42,10 +44,20 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     protected ExpressionClassification defaultAction(Node node, ExpressionClassification argument) {
         ExpressionClassification expressionClassification = this.visitDescendants(node, argument);
 
-        if (!(node instanceof Expression)) {
+        if (
+            !(node instanceof Expression)
+        ) {
             return expressionClassification;
         }
 
+        if (node instanceof StatementsAndExpr) {
+            ((StatementsAndExpr) node).setExpressionClassification(expressionClassification);
+            return expressionClassification;
+        }
+        if (node instanceof StatementsAndOptionalExpr) {
+            ((StatementsAndOptionalExpr) node).setExpressionClassification(expressionClassification);
+            return expressionClassification;
+        }
         if (expressionClassification.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Operand of expression is Updating when it should be Simple or Vacuous",
@@ -182,7 +194,6 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitCountClause(CountClause expression, ExpressionClassification argument) {
-        // TODO: Add check for updating?
         return super.visitCountClause(expression, argument);
     }
 

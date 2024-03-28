@@ -71,6 +71,9 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
@@ -949,39 +952,41 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitReturnStatementClause(ReturnStatementClause statement, StaticContext argument) {
         visit(statement.getReturnStatement(), statement.getReturnStatement().getStaticContext());
-        if (statement.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            // TODO: handle sequence type for statement
-            // if (
-            // statement.getReturnStatement()
-            // .getStaticSequenceType()
-            // .getItemType()
-            // .isCompatibleWithDataFrames(this.configuration)
-            // ) {
-            // statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
-            // return argument;
-            // } else {
-            statement.setHighestExecutionMode(ExecutionMode.RDD);
+        // Sequential statement can only be executed locally.
+        if (statement.getReturnStatement().isSequential()) {
+            statement.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
-            // }
+        }
+        // If we have non-sequential statement, we can follow the rules of return clause
+        if (statement.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            if (
+                statement.getReturnStatement()
+                    .getStaticSequenceType()
+                    .getItemType()
+                    .isCompatibleWithDataFrames(this.configuration)
+            ) {
+                statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
+            } else {
+                statement.setHighestExecutionMode(ExecutionMode.RDD);
+            }
+            return argument;
         }
         if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isRDD()) {
             statement.setHighestExecutionMode(ExecutionMode.RDD);
             return argument;
         }
         if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            // TODO: handle sequence type for statement
-            // if (
-            // statement.getReturnStatement()
-            // .getStaticSequenceType()
-            // .getItemType()
-            // .isCompatibleWithDataFrames(this.configuration)
-            // ) {
-            // statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
-            // return argument;
-            // } else {
-            statement.setHighestExecutionMode(ExecutionMode.RDD);
+            if (
+                statement.getReturnStatement()
+                    .getStaticSequenceType()
+                    .getItemType()
+                    .isCompatibleWithDataFrames(this.configuration)
+            ) {
+                statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
+            } else {
+                statement.setHighestExecutionMode(ExecutionMode.RDD);
+            }
             return argument;
-            // }
         }
         if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isUnset()) {
             statement.setHighestExecutionMode(ExecutionMode.UNSET);
@@ -1007,14 +1012,74 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             clause = clause.getNextClause();
         }
-        // TODO: resolve return item count
-        // if (statement.alwaysReturnsAtMostOneItem()) {
-        statement.setHighestExecutionMode(ExecutionMode.LOCAL);
-        // } else {
-        // statement.setHighestExecutionMode(
-        // statement.getReturnStatementClause().getHighestExecutionMode(this.visitorConfig)
-        // );
-        // }
+        statement.setHighestExecutionMode(
+            statement.getReturnStatementClause().getHighestExecutionMode(this.visitorConfig)
+        );
         return argument;
     }
+
+    @Override
+    public StaticContext visitStatementsAndOptionalExpr(
+            StatementsAndOptionalExpr statementsAndOptionalExpr,
+            StaticContext argument
+    ) {
+        boolean hasOnlyRDDOrDataFrameStatement = true;
+        visitDescendants(statementsAndOptionalExpr, statementsAndOptionalExpr.getStaticContext());
+        if (statementsAndOptionalExpr.getStatements().isEmpty() && statementsAndOptionalExpr.getExpression() == null) {
+            statementsAndOptionalExpr.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+        for (Statement statement : statementsAndOptionalExpr.getStatements()) {
+            if (!statement.getHighestExecutionMode(this.visitorConfig).isRDDOrDataFrame()) {
+                hasOnlyRDDOrDataFrameStatement = false;
+                break;
+            }
+        }
+        if (!hasOnlyRDDOrDataFrameStatement) {
+            statementsAndOptionalExpr.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+        if (
+            statementsAndOptionalExpr.getExpression() != null
+                && !statementsAndOptionalExpr.getExpression()
+                    .getHighestExecutionMode(this.visitorConfig)
+                    .isRDDOrDataFrame()
+        ) {
+            statementsAndOptionalExpr.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
+
+        statementsAndOptionalExpr.setHighestExecutionMode(
+            statementsAndOptionalExpr.getExpression().getHighestExecutionMode()
+        );
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, StaticContext argument) {
+        boolean hasOnlyRDDOrDataFrameStatement = true;
+        visitDescendants(statementsAndExpr, statementsAndExpr.getStaticContext());
+        if (statementsAndExpr.getStatements().isEmpty()) {
+            statementsAndExpr.setHighestExecutionMode(
+                statementsAndExpr.getExpression().getHighestExecutionMode(this.visitorConfig)
+            );
+            return argument;
+        }
+        for (Statement statement : statementsAndExpr.getStatements()) {
+            if (!statement.getHighestExecutionMode(this.visitorConfig).isRDDOrDataFrame()) {
+                hasOnlyRDDOrDataFrameStatement = false;
+                break;
+            }
+        }
+        if (!hasOnlyRDDOrDataFrameStatement) {
+            if (!statementsAndExpr.getExpression().getHighestExecutionMode(this.visitorConfig).isRDDOrDataFrame()) {
+                statementsAndExpr.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            }
+        }
+
+        statementsAndExpr.setHighestExecutionMode(ExecutionMode.RDD);
+        return argument;
+    }
+
 }

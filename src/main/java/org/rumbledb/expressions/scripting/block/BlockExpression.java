@@ -4,6 +4,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 
 import java.util.Collections;
@@ -34,6 +35,14 @@ public class BlockExpression extends Expression {
     }
 
     public StatementsAndExpr getStatementsAndExpr() {
-        return statementsAndExpr;
+        return this.statementsAndExpr;
+    }
+
+    public List<Statement> getStatements() {
+        return this.statementsAndExpr.getStatements();
+    }
+
+    public Expression getExpression() {
+        return this.statementsAndExpr.getExpression();
     }
 }

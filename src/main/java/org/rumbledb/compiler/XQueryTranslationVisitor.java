@@ -488,6 +488,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 createMetadataFromContext(ctx)
         );
 
+
         return new InlineFunctionExpression(
                 null, // TODO: add annotations to grammar of XQuery.
                 name,
@@ -1393,7 +1394,6 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         // TODO: Add statements to XQuery
         StatementsAndOptionalExpr funcBody = new StatementsAndOptionalExpr(null, expr, createMetadataFromContext(ctx));
-
         return new InlineFunctionExpression(
                 null, // TODO: add annotations to grammar of XQuery.
                 null,
