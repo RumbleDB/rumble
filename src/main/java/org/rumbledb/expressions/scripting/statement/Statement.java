@@ -1,5 +1,8 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
@@ -37,5 +40,17 @@ public abstract class Statement extends Node {
 
     public void setSequential(boolean isSequential) {
         this.isSequential = isSequential;
+    }
+
+    public RuntimeStaticContext getStaticContextForRuntime(
+            RumbleRuntimeConfiguration conf,
+            VisitorConfig visitorConfig
+    ) {
+        return new RuntimeStaticContext(
+                conf,
+                getStaticSequenceType(),
+                getHighestExecutionMode(visitorConfig),
+                getMetadata()
+        );
     }
 }

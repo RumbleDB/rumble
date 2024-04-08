@@ -1,9 +1,5 @@
 package org.rumbledb.context;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
@@ -58,6 +54,7 @@ import org.rumbledb.runtime.functions.input.RepartitionFunctionIterator;
 import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
+import org.rumbledb.runtime.functions.io.DebugFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
@@ -77,7 +74,15 @@ import org.rumbledb.runtime.functions.numerics.exponential.Log10FunctionIterator
 import org.rumbledb.runtime.functions.numerics.exponential.LogFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.PowFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.SqrtFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.trigonometric.*;
+import org.rumbledb.runtime.functions.numerics.trigonometric.ACosFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.ASinFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.ATan2FunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.ATanFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.CosFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.CoshFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.SinFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.SinhFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectAccumulateFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantPairsFunctionIterator;
@@ -134,11 +139,14 @@ import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
-
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 
 public class BuiltinFunctionCatalogue {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtinFunctions;
@@ -2657,6 +2665,17 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
+    static final BuiltinFunction print_variable_values = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "print_vars"
+        ),
+        "null?",
+        DebugFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
     static {
         builtinFunctions = new HashMap<>();
 
@@ -2859,6 +2878,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(repartition.getIdentifier(), repartition);
         builtinFunctions.put(binary_classification_metrics1.getIdentifier(), binary_classification_metrics1);
         builtinFunctions.put(binary_classification_metrics2.getIdentifier(), binary_classification_metrics2);
+        builtinFunctions.put(print_variable_values.getIdentifier(), print_variable_values);
     }
 
 

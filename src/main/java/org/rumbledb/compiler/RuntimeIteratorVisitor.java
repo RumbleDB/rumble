@@ -30,9 +30,6 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expressions.flowr.SimpleMapExpression;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -50,13 +47,14 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
@@ -65,16 +63,11 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.typing.ValidateTypeExpression;
-import org.rumbledb.expressions.update.*;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -88,6 +81,25 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -98,19 +110,19 @@ import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
 import org.rumbledb.runtime.control.AtMostOneItemIfRuntimeIterator;
 import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
+import org.rumbledb.runtime.control.TryCatchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
-import org.rumbledb.runtime.control.TryCatchRuntimeIterator;
 import org.rumbledb.runtime.flwor.clauses.CountClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.ReturnClauseSparkIterator;
-import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.flwor.clauses.WhereClauseSparkIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
@@ -126,11 +138,6 @@ import org.rumbledb.runtime.navigation.ArrayUnboxingIterator;
 import org.rumbledb.runtime.navigation.ObjectLookupIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.navigation.SequenceLookupIterator;
-import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.runtime.typing.CastableIterator;
-import org.rumbledb.runtime.typing.InstanceOfIterator;
-import org.rumbledb.runtime.typing.TreatIterator;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -141,11 +148,29 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.runtime.update.expression.*;
+import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
+import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
+import org.rumbledb.runtime.scripting.loops.WhileStatementIterator;
+import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.typing.CastableIterator;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.update.expression.AppendExpressionIterator;
+import org.rumbledb.runtime.update.expression.DeleteExpressionIterator;
+import org.rumbledb.runtime.update.expression.InsertExpressionIterator;
+import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
+import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
+import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
@@ -1091,4 +1116,94 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
     }
 
+    @Override
+    public RuntimeIterator visitWhileStatement(WhileStatement statement, RuntimeIterator argument) {
+        RuntimeIterator testConditionIterator = this.visit(statement.getTestCondition(), argument);
+        RuntimeIterator statementIterator = this.visit(statement.getStatement(), argument);
+        return new WhileStatementIterator(
+                testConditionIterator,
+                statementIterator,
+                statement.isSequential(),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitAssignStatement(AssignStatement statement, RuntimeIterator argument) {
+        return new AssignStatementIterator(
+                this.visit(statement.getAssignExpression(), argument),
+                statement.getName(),
+                statement.isSequential(),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+
+    @Override
+    public RuntimeIterator visitBlockStatement(BlockStatement statement, RuntimeIterator argument) {
+        List<RuntimeIterator> result = new ArrayList<>();
+        for (Statement stmt : statement.getBlockStatements()) {
+            RuntimeIterator childIterator = this.visit(stmt, argument);
+            if (childIterator != null) {
+                result.add(childIterator);
+            }
+        }
+        return new StatementsOnlyIterator(
+                result,
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, RuntimeIterator argument) {
+        List<RuntimeIterator> result = new ArrayList<>();
+        for (Statement statement : statementsAndExpr.getStatements()) {
+            RuntimeIterator childIterator = this.visit(statement, argument);
+            if (childIterator != null) {
+                result.add(childIterator);
+            }
+        }
+        RuntimeIterator exprIterator = this.visit(statementsAndExpr.getExpression(), argument);
+        // if (result.isEmpty()) {
+        // return exprIterator;
+        // }
+        return new StatementsWithExprIterator(
+                result,
+                exprIterator,
+                statementsAndExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitStatementsAndOptionalExpr(
+            StatementsAndOptionalExpr statementsAndOptionalExpr,
+            RuntimeIterator argument
+    ) {
+        List<RuntimeIterator> result = new ArrayList<>();
+        RuntimeIterator exprIterator = null;
+        for (Statement statement : statementsAndOptionalExpr.getStatements()) {
+            RuntimeIterator childIterator = this.visit(statement, argument);
+            if (childIterator != null) {
+                result.add(childIterator);
+            }
+        }
+        if (statementsAndOptionalExpr.getExpression() != null) {
+            exprIterator = this.visit(statementsAndOptionalExpr.getExpression(), argument);
+        }
+        // if (result.isEmpty()) {
+        // return exprIterator;
+        // }
+        if (exprIterator != null) {
+            return new StatementsWithExprIterator(
+                    result,
+                    exprIterator,
+                    statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+
+        }
+        return new StatementsOnlyIterator(
+                result,
+                statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
 }
