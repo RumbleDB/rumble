@@ -2,28 +2,28 @@ package org.rumbledb.runtime.functions.io;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.util.List;
 
 public class DebugFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    private final Name localVariable;
 
     public DebugFunctionIterator(
             List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext,
-            Name localVariable
+            RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.localVariable = localVariable;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        System.out.println(context.getVariableValues().getLocalVariableValue(this.localVariable, this.getMetadata()));
+        VariableReferenceIterator varReference = (VariableReferenceIterator) this.children.get(0);
+        System.out.println(
+            context.getVariableValues().getLocalVariableValue(varReference.getVariableName(), this.getMetadata())
+        );
         return null;
     }
 }

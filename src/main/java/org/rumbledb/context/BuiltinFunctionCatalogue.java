@@ -2671,6 +2671,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "print_vars"
         ),
+        "item*",
         "null?",
         DebugFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
