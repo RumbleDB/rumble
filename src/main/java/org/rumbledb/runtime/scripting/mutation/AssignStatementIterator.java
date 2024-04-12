@@ -8,6 +8,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.Collections;
+import java.util.List;
 
 public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     private final RuntimeIterator assignExpression;
@@ -28,10 +29,14 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        List<Item> exprItems = this.assignExpression.materialize(context);
+        // we expect exactly one item for the value.
+        assert exprItems.size() == 1;
+        // Check sequence type
         context.getVariableValues()
             .addVariableValue(
                 this.variableName,
-                this.assignExpression.materialize(context)
+                exprItems
             );
         return null;
     }

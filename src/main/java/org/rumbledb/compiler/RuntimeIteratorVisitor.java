@@ -83,6 +83,7 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
@@ -151,6 +152,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
 import org.rumbledb.runtime.scripting.loops.WhileStatementIterator;
+import org.rumbledb.runtime.scripting.mutation.ApplyStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
@@ -1133,6 +1135,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new AssignStatementIterator(
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
+                statement.isSequential(),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitApplyStatement(ApplyStatement statement, RuntimeIterator argument) {
+        return new ApplyStatementIterator(
+                this.visit(statement.getApplyExpression(), argument),
                 statement.isSequential(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
