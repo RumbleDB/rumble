@@ -446,14 +446,30 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public void bindToVariableInDynamicContext(
             DynamicContext targetContext,
             Name variable,
-            DynamicContext executionContext
+            DynamicContext executionContext,
+            boolean isLocalDeclaration
     ) {
         if (this.isDataFrame()) {
-            targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
+            if (isLocalDeclaration) {
+                targetContext.getVariableValues()
+                    .addVariableValueFromDeclaration(variable, this.getDataFrame(executionContext));
+            } else {
+                targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
+            }
         } else if (this.isRDDOrDataFrame()) {
-            targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
+            if (isLocalDeclaration) {
+                targetContext.getVariableValues()
+                    .addVariableValueFromDeclaration(variable, this.getRDD(executionContext));
+            } else {
+                targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
+            }
         } else {
-            targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
+            if (isLocalDeclaration) {
+                targetContext.getVariableValues()
+                    .addVariableValueFromDeclaration(variable, this.materialize(executionContext));
+            } else {
+                targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
+            }
         }
     }
 

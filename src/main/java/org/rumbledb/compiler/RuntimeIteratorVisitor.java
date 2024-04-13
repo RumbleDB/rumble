@@ -82,6 +82,7 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
@@ -151,6 +152,7 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
+import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.loops.WhileStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.ApplyStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
@@ -169,6 +171,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1126,6 +1129,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 testConditionIterator,
                 statementIterator,
                 statement.isSequential(),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitVariableDeclStatement(VariableDeclStatement statement, RuntimeIterator argument) {
+        Name varName = statement.getVariableName();
+        List<RuntimeIterator> exprIterator = null;
+        if (statement.getVariableExpression() != null) {
+            exprIterator = Collections.singletonList(this.visit(statement.getVariableExpression(), argument));
+        }
+        return new VariableDeclStatementIterator(
+                varName,
+                exprIterator,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }

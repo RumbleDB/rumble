@@ -26,9 +26,15 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        int beforeExecutionVariablesStackSize = context.getVariableValues().getVariableDeclarationOverwritesSize();
         while (this.testConditionIterator.getEffectiveBooleanValue(context)) {
             // TODO: for now, materialize just one item
             this.bodyIterator.materializeFirstItemOrNull(context);
+        }
+        int afterExecutionVariablesStackSize = context.getVariableValues().getVariableDeclarationOverwritesSize();
+        while (afterExecutionVariablesStackSize - beforeExecutionVariablesStackSize > 0) {
+            context.getVariableValues().popRedeclaredVariables();
+            --afterExecutionVariablesStackSize;
         }
         return null;
     }

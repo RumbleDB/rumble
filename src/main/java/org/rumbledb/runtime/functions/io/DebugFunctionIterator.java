@@ -21,8 +21,15 @@ public class DebugFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         VariableReferenceIterator varReference = (VariableReferenceIterator) this.children.get(0);
+        List<Item> varValue = context.getVariableValues()
+            .getLocalVariableValue(varReference.getVariableName(), this.getMetadata());
+        StringBuilder sb = new StringBuilder();
+        sb.append(" ");
+        for (Item item : varValue) {
+            sb.append(item.serialize());
+        }
         System.out.println(
-            context.getVariableValues().getLocalVariableValue(varReference.getVariableName(), this.getMetadata())
+            "Variable: " + varReference.getVariableName() + sb
         );
         return null;
     }

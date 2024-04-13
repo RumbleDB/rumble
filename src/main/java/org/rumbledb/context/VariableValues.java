@@ -34,7 +34,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
-
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -46,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 public class VariableValues implements Serializable, KryoSerializable {
 
@@ -54,6 +54,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     private Map<Name, Item> localVariableCounts;
     private Map<Name, JavaRDD<Item>> rddVariableValues;
     private Map<Name, JSoundDataFrame> dataFrameVariableValues;
+    private Stack<VariableMapAndPrevValue> variableDeclarationOverwrites;
     private boolean nestedQuery;
     private VariableValues parent;
 
@@ -64,6 +65,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.nestedQuery = false;
+        this.variableDeclarationOverwrites = new Stack<>();
     }
 
     public VariableValues(VariableValues parent) {
@@ -76,6 +78,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.nestedQuery = false;
+        this.variableDeclarationOverwrites = new Stack<>();
     }
 
     public VariableValues(
@@ -93,6 +96,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
         this.nestedQuery = false;
+        this.variableDeclarationOverwrites = new Stack<>();
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
@@ -171,6 +175,36 @@ public class VariableValues implements Serializable, KryoSerializable {
 
     public void addVariableValue(Name varName, JSoundDataFrame value) {
         this.dataFrameVariableValues.put(varName, value);
+    }
+
+    public void addVariableValueFromDeclaration(Name varName, List<Item> value) {
+        if (this.localVariableValues.containsKey(varName)) {
+            // Redeclaration of existing local variable
+            this.variableDeclarationOverwrites.push(
+                new VariableMapAndPrevValue(varName, this.localVariableValues.get(varName))
+            );
+        }
+        this.addVariableValue(varName, value);
+    }
+
+    public void addVariableValueFromDeclaration(Name varName, JavaRDD<Item> value) {
+        if (this.rddVariableValues.containsKey(varName)) {
+            // Redeclaration of existing local variable
+            this.variableDeclarationOverwrites.push(
+                new VariableMapAndPrevValue(varName, this.rddVariableValues.get(varName))
+            );
+        }
+        this.addVariableValue(varName, value);
+    }
+
+    public void addVariableValueFromDeclaration(Name varName, JSoundDataFrame value) {
+        if (this.dataFrameVariableValues.containsKey(varName)) {
+            // Redeclaration of existing local variable
+            this.variableDeclarationOverwrites.push(
+                new VariableMapAndPrevValue(varName, this.dataFrameVariableValues.get(varName))
+            );
+        }
+        this.addVariableValue(varName, value);
     }
 
     public void addVariableCount(Name varName, Item count) {
@@ -388,6 +422,24 @@ public class VariableValues implements Serializable, KryoSerializable {
             JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
             this.dataFrameVariableValues.put(name, items);
         }
+    }
+
+    public void popRedeclaredVariables() {
+        if (this.variableDeclarationOverwrites.isEmpty()) {
+            throw new OurBadException("Popping redeclaration stack with no values left");
+        }
+        VariableMapAndPrevValue prevValue = this.variableDeclarationOverwrites.pop();
+        if (prevValue.isListItem()) {
+            this.addVariableValue(prevValue.getVariableName(), prevValue.getValueReferenceListItem());
+        } else if (prevValue.isRDD()) {
+            this.addVariableValue(prevValue.getVariableName(), prevValue.getValueReferenceRDD());
+        } else if (prevValue.isDF()) {
+            this.addVariableValue(prevValue.getVariableName(), prevValue.getValueReferenceDF());
+        }
+    }
+
+    public int getVariableDeclarationOverwritesSize() {
+        return this.variableDeclarationOverwrites.size();
     }
 }
 

@@ -38,8 +38,6 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
-import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
-import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -140,7 +138,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
             RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            iterator.bindToVariableInDynamicContext(argument, name, argument);
+            iterator.bindToVariableInDynamicContext(argument, name, argument, false);
             return argument;
         }
 
@@ -324,7 +322,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
             RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            iterator.bindToVariableInDynamicContext(argument, name, argument);
+            iterator.bindToVariableInDynamicContext(argument, name, argument, false);
             return argument;
         }
 
@@ -367,26 +365,5 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
         }
         return generatedContext;
-    }
-
-    @Override
-    public DynamicContext visitVariableDeclStatement(
-            VariableDeclStatement variableDeclStatement,
-            DynamicContext argument
-    ) {
-        Name name = variableDeclStatement.getVariableName();
-        Expression expression = variableDeclStatement.getVariableExpression();
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-        iterator.bindToVariableInDynamicContext(argument, name, argument);
-        return argument;
-    }
-
-    @Override
-    public DynamicContext visitCommaVariableDeclStatement(
-            CommaVariableDeclStatement commaVariableDeclStatement,
-            DynamicContext argument
-    ) {
-        visitDescendants(commaVariableDeclStatement, argument);
-        return argument;
     }
 }

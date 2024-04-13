@@ -25,8 +25,10 @@ public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.exprIterator.materialize(context);
-        // Immediately apply pul
-        this.exprIterator.getPendingUpdateList(context).applyUpdates(this.getMetadata());
+        // Immediately apply pul if applicable
+        if (this.exprIterator.isUpdating()) {
+            this.exprIterator.getPendingUpdateList(context).applyUpdates(this.getMetadata());
+        }
         return null;
     }
 

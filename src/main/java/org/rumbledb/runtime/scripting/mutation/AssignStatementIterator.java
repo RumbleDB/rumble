@@ -30,8 +30,6 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         List<Item> exprItems = this.assignExpression.materialize(context);
-        // we expect exactly one item for the value.
-        assert exprItems.size() == 1;
         // Check sequence type
         context.getVariableValues()
             .addVariableValue(
