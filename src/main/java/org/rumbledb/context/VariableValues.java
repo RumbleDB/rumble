@@ -424,7 +424,15 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
     }
 
-    public void popRedeclaredVariables() {
+    public void popRedeclaredVariablesInCurrentContext(int beforeExecutionVariablesStackSize) {
+        int afterExecutionVariablesStackSize = this.getVariableDeclarationOverwritesSize();
+        while (afterExecutionVariablesStackSize - beforeExecutionVariablesStackSize > 0) {
+            popRedeclaredVariables();
+            --afterExecutionVariablesStackSize;
+        }
+    }
+
+    private void popRedeclaredVariables() {
         if (this.variableDeclarationOverwrites.isEmpty()) {
             throw new OurBadException("Popping redeclaration stack with no values left");
         }
