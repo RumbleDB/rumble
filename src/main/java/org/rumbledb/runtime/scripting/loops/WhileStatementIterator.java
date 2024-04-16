@@ -3,6 +3,8 @@ package org.rumbledb.runtime.scripting.loops;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -28,9 +30,17 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext context) {
         int beforeExecutionVariablesStackSize = context.getVariableValues().getVariableDeclarationOverwritesSize();
         while (this.testConditionIterator.getEffectiveBooleanValue(context)) {
-            this.bodyIterator.materialize(context);
+            try {
+                this.bodyIterator.materialize(context);
+            } catch (BreakStatementException breakStatementException) {
+                this.bodyIterator.close();
+                break;
+            } catch (ContinueStatementException continueStatementException) {
+                this.bodyIterator.close();
+            }
         }
         context.getVariableValues().popRedeclaredVariablesInCurrentContext(beforeExecutionVariablesStackSize);
+
         return null;
     }
 }

@@ -84,6 +84,8 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
@@ -155,6 +157,8 @@ import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
 import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
+import org.rumbledb.runtime.scripting.loops.BreakStatementIterator;
+import org.rumbledb.runtime.scripting.loops.ContinueStatementIterator;
 import org.rumbledb.runtime.scripting.loops.WhileStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.ApplyStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
@@ -1181,6 +1185,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 statement.isSequential(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+    }
+
+    @Override
+    public RuntimeIterator visitBreakStatement(BreakStatement statement, RuntimeIterator argument) {
+        return new BreakStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
+    }
+
+    @Override
+    public RuntimeIterator visitContinueStatement(ContinueStatement statement, RuntimeIterator argument) {
+        return new ContinueStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
 
