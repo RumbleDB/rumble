@@ -82,6 +82,7 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
@@ -152,6 +153,7 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
+import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.loops.WhileStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.ApplyStatementIterator;
@@ -1143,6 +1145,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new VariableDeclStatementIterator(
                 varName,
                 exprIterator,
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitCommaVariableDeclStatement(
+            CommaVariableDeclStatement statement,
+            RuntimeIterator argument
+    ) {
+        List<RuntimeIterator> children = new ArrayList<>();
+        for (VariableDeclStatement varDecl : statement.getVariables()) {
+            children.add(this.visit(varDecl, argument));
+        }
+        return new CommaVariableDeclStatementIterator(
+                children,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }

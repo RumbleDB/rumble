@@ -25,8 +25,8 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator exprIterator = this.children.get(0);
-        if (exprIterator != null) {
+        if (this.children != null && !this.children.isEmpty()) {
+            RuntimeIterator exprIterator = this.children.get(0);
             exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext, true);
         } else {
             dynamicContext.getVariableValues()
