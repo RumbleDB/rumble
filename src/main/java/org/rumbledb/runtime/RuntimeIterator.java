@@ -31,6 +31,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -323,13 +325,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
-        List<Item> result = new ArrayList<>();
-        this.open(context);
-        while (this.hasNext()) {
-            result.add(this.next());
+        try {
+            List<Item> result = new ArrayList<>();
+            this.open(context);
+            while (this.hasNext()) {
+                result.add(this.next());
+            }
+            return result;
+        } catch (BreakStatementException | ContinueStatementException controlException) {
+            throw controlException;
+        } finally {
+            this.close();
         }
-        this.close();
-        return result;
     }
 
     public void materialize(DynamicContext context, List<Item> result) {

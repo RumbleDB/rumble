@@ -33,13 +33,13 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             try {
                 this.bodyIterator.materialize(context);
             } catch (BreakStatementException breakStatementException) {
-                this.bodyIterator.close();
                 break;
-            } catch (ContinueStatementException continueStatementException) {
-                this.bodyIterator.close();
+            } catch (ContinueStatementException ignored) {
+            } finally {
+                context.getVariableValues().popRedeclaredVariablesInCurrentContext(beforeExecutionVariablesStackSize);
             }
         }
-        context.getVariableValues().popRedeclaredVariablesInCurrentContext(beforeExecutionVariablesStackSize);
+
 
         return null;
     }
