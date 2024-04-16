@@ -2,7 +2,7 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.compiler.wrapper.SequentialDescendant;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.InvalidComposability;
+import org.rumbledb.exceptions.InvalidSequentialChildInNonSequentialParent;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -205,7 +205,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
                  * However, we allow exit statement!
                  */
                 // TODO: Should this be metadata of expression or prolog?
-                throw new InvalidComposability(
+                throw new InvalidSequentialChildInNonSequentialParent(
                         "The body of a non-sequential function can only contain non-sequential expressions. Only exit statements are allowed in non-sequential functions!",
                         inlineFunctionExpression.getMetadata()
                 );

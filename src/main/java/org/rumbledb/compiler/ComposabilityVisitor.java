@@ -1,7 +1,11 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.compiler.wrapper.BlockExpressionMetadata;
-import org.rumbledb.exceptions.InvalidComposability;
+import org.rumbledb.exceptions.InvalidAssignableVariableComposability;
+import org.rumbledb.exceptions.InvalidComposabilityUpdatingAndSequentialExpression;
+import org.rumbledb.exceptions.InvalidControlStatementComposability;
+import org.rumbledb.exceptions.InvalidUpdatingExpressionCondition;
+import org.rumbledb.exceptions.InvalidUpdatingExpressionOperand;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.module.MainModule;
@@ -59,7 +63,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
                 return false;
             });
         if (containsOtherThanNonUpdatingNonSeq) {
-            throw new InvalidComposability(
+            throw new InvalidComposabilityUpdatingAndSequentialExpression(
                     "We cannot support variable declaration which does not contain non-updating, non-sequential expressions.",
                     expression.getMetadata()
             );
@@ -103,13 +107,13 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     @Override
     public BlockExpressionMetadata visitAssignStatement(AssignStatement expression, BlockExpressionMetadata argument) {
         if (expression.getAssignExpression().isUpdating()) {
-            throw new InvalidComposability(
+            throw new InvalidUpdatingExpressionOperand(
                     "Assign statement expects a non-updating operand.",
                     expression.getMetadata()
             );
         }
         if (!expression.getStaticContext().getIsAssignable(expression.getName())) {
-            throw new InvalidComposability(
+            throw new InvalidAssignableVariableComposability(
                     "Assign statement expects an assignable variable",
                     expression.getMetadata()
             );
@@ -123,7 +127,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
             BlockExpressionMetadata argument
     ) {
         if (statement.getVariableExpression() != null && statement.getVariableExpression().isUpdating()) {
-            throw new InvalidComposability(
+            throw new InvalidUpdatingExpressionOperand(
                     "Variable declaration statements expects non-updating operands",
                     statement.getMetadata()
             );
@@ -134,7 +138,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     @Override
     public BlockExpressionMetadata visitWhileStatement(WhileStatement expression, BlockExpressionMetadata argument) {
         if (expression.getTestCondition().isUpdating()) {
-            throw new InvalidComposability(
+            throw new InvalidUpdatingExpressionCondition(
                     "While statement expects non-updating test condition",
                     expression.getMetadata()
             );
@@ -159,7 +163,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     ) {
         visit(expression.getCondition(), argument);
         if (expression.getCondition().isUpdating()) {
-            throw new InvalidComposability(
+            throw new InvalidUpdatingExpressionCondition(
                     "If statement expects non-updating conditional expression",
                     expression.getMetadata()
             );
@@ -179,7 +183,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
             return argument;
         }
         if (expression.getExpression().isUpdating() || expression.getExpression().isSequential()) {
-            throw new InvalidComposability(
+            throw new InvalidComposabilityUpdatingAndSequentialExpression(
                     "Variable declaration must contain non-updating and non-sequential expression in its assignment!",
                     expression.getMetadata()
             );
@@ -191,7 +195,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     public BlockExpressionMetadata visitBreakStatement(BreakStatement expression, BlockExpressionMetadata argument) {
         if (argument.getInnerMostLoopStatement() == null) {
             // There is no enclosing while or flwor statement
-            throw new InvalidComposability(
+            throw new InvalidControlStatementComposability(
                     "Break statements must be enclosed in while or flwor statements!",
                     expression.getMetadata()
             );
@@ -211,7 +215,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     ) {
         if (argument.getInnerMostLoopStatement() == null) {
             // There is no enclosing while or flwor statement
-            throw new InvalidComposability(
+            throw new InvalidControlStatementComposability(
                     "Break statements must be enclosed in while or flwor statements!",
                     expression.getMetadata()
             );

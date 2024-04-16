@@ -141,7 +141,13 @@ public enum ErrorCode {
     ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
 
     InvalidExpressionClassification("SCCL0001"),
-    InvalidComposability("SCCP0001");
+    InvalidComposabilityUpdatingAndSequentialExpression("SCCP0001"),
+    InvalidUpdatingExpressionOperand("SCCP0002"),
+
+    InvalidUpdatingExpressionCondition("SCCP0003"),
+    InvalidControlStatementComposability("SCCP0004"),
+    InvalidAssignableVariableComposability("SCCP0005"),
+    InvalidSequentialChildInNonSequentialParent("SCCP0006");
 
 
 
