@@ -81,11 +81,13 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
@@ -153,12 +155,14 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.runtime.scripting.ProgramIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
 import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.loops.BreakStatementIterator;
 import org.rumbledb.runtime.scripting.loops.ContinueStatementIterator;
+import org.rumbledb.runtime.scripting.loops.ExitStatementIterator;
 import org.rumbledb.runtime.scripting.loops.WhileStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.ApplyStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
@@ -1197,6 +1201,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new ContinueStatementIterator(statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
+    @Override
+    public RuntimeIterator visitExitStatement(ExitStatement statement, RuntimeIterator argument) {
+        return new ExitStatementIterator(
+                this.visit(statement.getExitExpression(), argument),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
 
     @Override
     public RuntimeIterator visitBlockStatement(BlockStatement statement, RuntimeIterator argument) {
@@ -1263,6 +1274,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new StatementsOnlyIterator(
                 result,
                 statementsAndOptionalExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitProgram(Program program, RuntimeIterator argument) {
+        return new ProgramIterator(
+                this.visit(program.getStatementsAndOptionalExpr(), argument),
+                program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig)
         );
     }
 }
