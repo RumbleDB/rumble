@@ -2,6 +2,7 @@ package org.rumbledb.api;
 
 import java.util.List;
 
+import org.apache.spark.SparkRuntimeException;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -207,6 +208,14 @@ public class SequenceOfItems {
                 RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
                 ex.initCause(e);
                 throw ex;
+            } catch (SparkRuntimeException e) {
+                if (e.getMessage().contains("CAST_INVALID_INPUT")) {
+                    RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                    ex.initCause(e);
+                    throw ex;
+                } else {
+                    throw e;
+                }
             } catch (UnsupportedOperationException e) {
                 RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
                 ex.initCause(e);

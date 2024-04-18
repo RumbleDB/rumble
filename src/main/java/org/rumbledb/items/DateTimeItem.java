@@ -79,7 +79,6 @@ public class DateTimeItem implements Item {
     DateTimeItem(String dateTimeString) {
         this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
         if (doesLexicalValueHaveNoTimeZone(dateTimeString)) {
-            System.err.println("No time zone.");
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
         }

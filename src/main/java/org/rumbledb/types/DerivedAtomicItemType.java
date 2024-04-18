@@ -642,7 +642,6 @@ public class DerivedAtomicItemType implements ItemType {
         // kryo.writeObject(output, this.explicitTimezone);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
         this.name = kryo.readObject(input, Name.class);

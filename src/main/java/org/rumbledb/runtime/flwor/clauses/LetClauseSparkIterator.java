@@ -833,15 +833,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             );
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String input = FlworDataFrameUtils.createTempView(dataFrame);
-        System.err.println(
-            String.format(
-                "select %s %s as `%s` from %s",
-                selectSQL,
-                nativeQuery.getResultingQuery(),
-                newVariableName,
-                input
-            )
-        );
         return dataFrame.sparkSession()
             .sql(
                 String.format(
