@@ -2494,14 +2494,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitVariableDeclStatement(VariableDeclStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
         SequenceType declaredType = statement.getActualSequenceType();
-        SequenceType inferredType = SequenceType.ITEM_STAR;
-        if (declaredType == null) {
-            if (statement.getVariableExpression() != null) {
-                inferredType = statement.getVariableExpression().getStaticSequenceType();
-            }
-        } else {
-            inferredType = declaredType;
-        }
+        SequenceType inferredType = getInferredSequenceType(statement, declaredType);
         checkAndUpdateVariableStaticType(
             declaredType,
             inferredType,
@@ -2516,21 +2509,26 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    // TODO: Verify if this makes sense at runtime
+    private static SequenceType getInferredSequenceType(VariableDeclStatement statement, SequenceType declaredType) {
+        SequenceType inferredType = SequenceType.ITEM_STAR;
+        if (declaredType == null) {
+            if (statement.getVariableExpression() != null) {
+                inferredType = statement.getVariableExpression().getStaticSequenceType();
+            }
+        } else {
+            if (statement.getVariableExpression() != null) {
+                inferredType = statement.getVariableExpression().getStaticSequenceType();
+            } else {
+                inferredType = declaredType;
+            }
+        }
+        return inferredType;
+    }
+
     @Override
     public StaticContext visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
-        SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
-
-        for (VariableDeclStatement childVariable : statement.getVariables()) {
-            inferredType = getSequenceTypeFromChildren(
-                inferredType,
-                childVariable.getStaticSequenceType(),
-                childVariable.getMetadata()
-            );
-        }
-
-        statement.setStaticSequenceType(inferredType);
+        statement.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;
     }
 
@@ -2540,16 +2538,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
-        for (Statement statement : statementsAndOptionalExpr.getStatements()) {
-            visit(statement, argument);
-            inferredType = getSequenceTypeFromChildren(
-                inferredType,
-                statement.getStaticSequenceType(),
-                statement.getMetadata()
-            );
-        }
+        visitDescendants(statementsAndOptionalExpr, argument);
         if (statementsAndOptionalExpr.getExpression() != null) {
-            visit(statementsAndOptionalExpr.getExpression(), argument);
             inferredType = getSequenceTypeFromChildren(
                 inferredType,
                 statementsAndOptionalExpr.getExpression().getStaticSequenceType(),
@@ -2562,18 +2552,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, StaticContext argument) {
-        SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
-        for (Statement statement : statementsAndExpr.getStatements()) {
-            visit(statement, argument);
-            inferredType = getSequenceTypeFromChildren(
-                inferredType,
-                statement.getStaticSequenceType(),
-                statement.getMetadata()
-            );
-        }
-        visit(statementsAndExpr.getExpression(), argument);
-        inferredType = getSequenceTypeFromChildren(
-            inferredType,
+        visitDescendants(statementsAndExpr, argument);
+        SequenceType inferredType = getSequenceTypeFromChildren(
+            SequenceType.EMPTY_SEQUENCE,
             statementsAndExpr.getExpression().getStaticSequenceType(),
             statementsAndExpr.getExpression().getMetadata()
         );

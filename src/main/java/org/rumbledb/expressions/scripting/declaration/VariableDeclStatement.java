@@ -2,6 +2,7 @@ package org.rumbledb.expressions.scripting.declaration;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidVariableDeclarationException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -43,6 +44,12 @@ public class VariableDeclStatement extends Statement {
             // variable statements
         } else {
             this.isAssignable = this.DEFAULT_ASSIGNABLE;
+        }
+        if (!this.isAssignable && this.variableExpression == null) {
+            throw new InvalidVariableDeclarationException(
+                    "Variable declaration is redundant: marked as '%an:unassignable' without initializing expression! This makes the variable unusable as it cannot be changed by Assign statements!",
+                    metadata
+            );
         }
     }
 

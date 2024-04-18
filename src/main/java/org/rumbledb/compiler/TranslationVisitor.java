@@ -1916,7 +1916,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
-
         return new VariableDeclaration(var, external, seq, expr, annotations, createMetadataFromContext(ctx));
     }
 
