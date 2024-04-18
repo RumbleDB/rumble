@@ -89,6 +89,14 @@ public class SequenceOfItems {
             RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
             ex.initCause(e);
             throw ex;
+        } catch (SparkRuntimeException e) {
+            if (e.getMessage().contains("CAST_INVALID_INPUT")) {
+                RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                ex.initCause(e);
+                throw ex;
+            } else {
+                throw e;
+            }
         } catch (UnsupportedOperationException e) {
             RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
             ex.initCause(e);
@@ -140,6 +148,14 @@ public class SequenceOfItems {
             RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
             ex.initCause(e);
             throw ex;
+        } catch (SparkRuntimeException e) {
+            if (e.getMessage().contains("CAST_INVALID_INPUT")) {
+                RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                ex.initCause(e);
+                throw ex;
+            } else {
+                throw e;
+            }
         } catch (UnsupportedOperationException e) {
             RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
             ex.initCause(e);
