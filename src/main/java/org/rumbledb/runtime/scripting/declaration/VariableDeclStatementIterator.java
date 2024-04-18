@@ -27,10 +27,10 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         if (this.children != null && !this.children.isEmpty()) {
             RuntimeIterator exprIterator = this.children.get(0);
-            exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext, true);
+            exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
         } else {
             dynamicContext.getVariableValues()
-                .addVariableValueFromDeclaration(this.variableName, Collections.singletonList(new NullItem()));
+                .addVariableValue(this.variableName, Collections.singletonList(new NullItem()));
         }
         return null;
     }

@@ -177,36 +177,6 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.dataFrameVariableValues.put(varName, value);
     }
 
-    public void addVariableValueFromDeclaration(Name varName, List<Item> value) {
-        if (this.localVariableValues.containsKey(varName)) {
-            // Redeclaration of existing local variable
-            this.variableDeclarationOverwrites.push(
-                new VariableMapAndPrevValue(varName, this.localVariableValues.get(varName))
-            );
-        }
-        this.addVariableValue(varName, value);
-    }
-
-    public void addVariableValueFromDeclaration(Name varName, JavaRDD<Item> value) {
-        if (this.rddVariableValues.containsKey(varName)) {
-            // Redeclaration of existing local variable
-            this.variableDeclarationOverwrites.push(
-                new VariableMapAndPrevValue(varName, this.rddVariableValues.get(varName))
-            );
-        }
-        this.addVariableValue(varName, value);
-    }
-
-    public void addVariableValueFromDeclaration(Name varName, JSoundDataFrame value) {
-        if (this.dataFrameVariableValues.containsKey(varName)) {
-            // Redeclaration of existing local variable
-            this.variableDeclarationOverwrites.push(
-                new VariableMapAndPrevValue(varName, this.dataFrameVariableValues.get(varName))
-            );
-        }
-        this.addVariableValue(varName, value);
-    }
-
     public void addVariableCount(Name varName, Item count) {
         this.localVariableCounts.put(varName, count);
     }
@@ -424,30 +394,37 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
     }
 
-    public void popRedeclaredVariablesInCurrentContext(int beforeExecutionVariablesStackSize) {
-        int afterExecutionVariablesStackSize = this.getVariableDeclarationOverwritesSize();
-        while (afterExecutionVariablesStackSize - beforeExecutionVariablesStackSize > 0) {
-            popRedeclaredVariables();
-            --afterExecutionVariablesStackSize;
+    private VariableValues findNodeWithVariableDeclaration(Name varName) {
+        VariableValues nodeWithVariableDecl = this;
+        // Invariant: there is a node among the current node or its parents that contains the variable
+        while (nodeWithVariableDecl != null && !containsLocally(nodeWithVariableDecl, varName)) {
+            nodeWithVariableDecl = nodeWithVariableDecl.parent;
         }
+        if (nodeWithVariableDecl == null) {
+            throw new OurBadException("Changing undeclared variable value is not supported.");
+        }
+        return nodeWithVariableDecl;
     }
 
-    private void popRedeclaredVariables() {
-        if (this.variableDeclarationOverwrites.isEmpty()) {
-            throw new OurBadException("Popping redeclaration stack with no values left");
-        }
-        VariableMapAndPrevValue prevValue = this.variableDeclarationOverwrites.pop();
-        if (prevValue.isListItem()) {
-            this.addVariableValue(prevValue.getVariableName(), prevValue.getValueReferenceListItem());
-        } else if (prevValue.isRDD()) {
-            this.addVariableValue(prevValue.getVariableName(), prevValue.getValueReferenceRDD());
-        } else if (prevValue.isDF()) {
-            this.addVariableValue(prevValue.getVariableName(), prevValue.getValueReferenceDF());
-        }
+    private boolean containsLocally(VariableValues variableValues, Name varName) {
+        return variableValues.localVariableValues.containsKey(varName)
+            || variableValues.rddVariableValues.containsKey(varName)
+            || variableValues.dataFrameVariableValues.containsKey(varName);
     }
 
-    public int getVariableDeclarationOverwritesSize() {
-        return this.variableDeclarationOverwrites.size();
+    public void changeVariableValue(Name varName, List<Item> value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.localVariableValues.put(varName, value);
+    }
+
+    public void changeVariableValue(Name varName, JavaRDD<Item> value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.rddVariableValues.put(varName, value);
+    }
+
+    public void changeVariableValue(Name varName, JSoundDataFrame value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.dataFrameVariableValues.put(varName, value);
     }
 }
 

@@ -138,7 +138,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
             RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            iterator.bindToVariableInDynamicContext(argument, name, argument, false);
+            iterator.bindToVariableInDynamicContext(argument, name, argument);
             return argument;
         }
 
@@ -322,7 +322,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
             RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            iterator.bindToVariableInDynamicContext(argument, name, argument, false);
+            iterator.bindToVariableInDynamicContext(argument, name, argument);
             return argument;
         }
 

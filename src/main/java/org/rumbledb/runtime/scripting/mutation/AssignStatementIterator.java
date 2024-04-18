@@ -32,7 +32,7 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         List<Item> exprItems = this.assignExpression.materialize(context);
         // Check sequence type
         context.getVariableValues()
-            .addVariableValue(
+            .changeVariableValue(
                 this.variableName,
                 exprItems
             );
