@@ -6,6 +6,6 @@ public class InvalidControlStatementComposability extends SemanticException {
     private static final long serialVersionUID = 1L;
 
     public InvalidControlStatementComposability(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.InvalidComposabilityUpdatingAndSequentialExpression, metadata);
+        super(message, ErrorCode.InvalidControlStatementComposability, metadata);
     }
 }

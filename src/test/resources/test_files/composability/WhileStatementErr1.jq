@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotCompile; ErrorCode="SCCP0001"; ErrorMetadata="LINE:8:COLUMN:0:" :)
+(:JIQS: ShouldNotCompile; ErrorCode="SCCP0003"; ErrorMetadata="LINE:8:COLUMN:0:" :)
 variable $a as xs:integer := 0;
 variable $b as xs:integer := 1;
 variable $c as xs:integer := $a + $b;

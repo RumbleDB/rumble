@@ -147,8 +147,8 @@ public enum ErrorCode {
     InvalidUpdatingExpressionCondition("SCCP0003"),
     InvalidControlStatementComposability("SCCP0004"),
     InvalidAssignableVariableComposability("SCCP0005"),
-    InvalidSequentialChildInNonSequentialParent("SCCP0006");
-
+    InvalidSequentialChildInNonSequentialParent("SCCP0006"),
+    InvalidAnnotation("XQAN0001");
 
 
     private String code;

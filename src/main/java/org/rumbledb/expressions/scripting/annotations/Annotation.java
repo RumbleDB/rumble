@@ -1,6 +1,8 @@
 package org.rumbledb.expressions.scripting.annotations;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAnnotationException;
 import org.rumbledb.expressions.Expression;
 
 import java.util.List;
@@ -25,16 +27,27 @@ public class Annotation {
         return literals;
     }
 
-    public static boolean checkAssignable(List<Annotation> annotations, boolean defaultAssignable) {
-        // TODO: Is breaking early safe?
+    public static boolean checkAssignable(
+            List<Annotation> annotations,
+            boolean defaultAssignable,
+            ExceptionMetadata exceptionMetadata
+    ) {
         boolean isAssignable = defaultAssignable;
+        boolean hasAssignableAnnotation = false;
+        boolean hasNonAssignableAnnotation = false;
         for (Annotation annotation : annotations) {
             if (annotation.getAnnotationName().equals(ASSIGNABLE)) {
                 isAssignable = true;
-                break;
+                hasAssignableAnnotation = true;
             } else if (annotation.getAnnotationName().equals(NON_ASSIGNABLE)) {
                 isAssignable = false;
-                break;
+                hasNonAssignableAnnotation = true;
+            }
+            if (hasAssignableAnnotation && hasNonAssignableAnnotation) {
+                throw new InvalidAnnotationException(
+                        "Both %an:assignable and %an:nonassignable annotations cannot be used for the same declaration",
+                        exceptionMetadata
+                );
             }
         }
         return isAssignable;

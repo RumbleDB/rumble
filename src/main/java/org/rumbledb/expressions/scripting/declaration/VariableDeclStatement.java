@@ -38,8 +38,9 @@ public class VariableDeclStatement extends Statement {
         this.variableSequenceType = variableSequenceType;
         this.variableExpression = variableExpression;
         if (this.annotations != null) {
-            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE); // default is true for
-                                                                                            // variable statements
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata); // default is true
+                                                                                                      // for
+            // variable statements
         } else {
             this.isAssignable = this.DEFAULT_ASSIGNABLE;
         }

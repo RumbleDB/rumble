@@ -6,6 +6,6 @@ public class InvalidSequentialChildInNonSequentialParent extends SemanticExcepti
     private static final long serialVersionUID = 1L;
 
     public InvalidSequentialChildInNonSequentialParent(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.InvalidComposabilityUpdatingAndSequentialExpression, metadata);
+        super(message, ErrorCode.InvalidSequentialChildInNonSequentialParent, metadata);
     }
 }

@@ -68,7 +68,7 @@ public class VariableDeclaration extends Node {
             throw new OurBadException("If a variable is not external, an expression must be provided.");
         }
         if (this.annotations != null) {
-            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE);
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata);
         } else {
             this.isAssignable = this.DEFAULT_ASSIGNABLE;
         }
