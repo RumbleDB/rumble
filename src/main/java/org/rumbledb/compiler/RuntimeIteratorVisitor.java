@@ -83,6 +83,7 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
@@ -158,6 +159,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.ProgramIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
+import org.rumbledb.runtime.scripting.control.ConditionalStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.loops.BreakStatementIterator;
@@ -1283,5 +1285,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(program.getStatementsAndOptionalExpr(), argument),
                 program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+    }
+
+    @Override
+    public RuntimeIterator visitConditionalStatement(ConditionalStatement statement, RuntimeIterator argument) {
+        RuntimeIterator conditionIterator = this.visit(statement.getCondition(), argument);
+        RuntimeIterator thenIterator = this.visit(statement.getBranch(), argument);
+        RuntimeIterator elseIterator = this.visit(statement.getElseBranch(), argument);
+        List<RuntimeIterator> result = new ArrayList<>();
+        result.add(conditionIterator);
+        result.add(thenIterator);
+        result.add(elseIterator);
+        RuntimeIterator runtimeIterator = new ConditionalStatementIterator(
+                result,
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
+        runtimeIterator.setStaticContext(statement.getStaticContext());
+        return runtimeIterator;
     }
 }
