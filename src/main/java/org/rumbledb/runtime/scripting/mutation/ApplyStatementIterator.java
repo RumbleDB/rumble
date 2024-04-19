@@ -10,7 +10,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import java.util.Collections;
 
 public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    private RuntimeIterator exprIterator;
+    private final RuntimeIterator exprIterator;
 
     public ApplyStatementIterator(
             RuntimeIterator exprIterator,

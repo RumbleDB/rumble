@@ -6,6 +6,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -146,6 +147,11 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator exprIterator = this.children.get(this.children.size() - 1);
+        if (!exprIterator.isDataFrame()) {
+            throw new OurBadException(
+                    "DataFrame was expected however the expression is not been identified as DataFrame"
+            );
+        }
         return exprIterator.getDataFrame(dynamicContext);
     }
 
