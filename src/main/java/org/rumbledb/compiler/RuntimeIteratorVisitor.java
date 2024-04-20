@@ -84,6 +84,7 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
@@ -160,6 +161,7 @@ import org.rumbledb.runtime.scripting.ProgramIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
 import org.rumbledb.runtime.scripting.control.ConditionalStatementIterator;
+import org.rumbledb.runtime.scripting.control.TryCatchStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.loops.BreakStatementIterator;
@@ -1209,6 +1211,32 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(statement.getExitExpression(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+    }
+
+    @Override
+    public RuntimeIterator visitTryCatchStatement(TryCatchStatement statement, RuntimeIterator argument) {
+        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (String code : statement.getErrorsCaught()) {
+            cases.put(
+                code,
+                this.visit(statement.getBlockStatementCatching(code), argument)
+            );
+        }
+        if (statement.getCatchAllStatement() == null) {
+            return new TryCatchStatementIterator(
+                    this.visit(statement.getTryStatement(), argument),
+                    cases,
+                    null,
+                    statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            return new TryCatchStatementIterator(
+                    this.visit(statement.getTryStatement(), argument),
+                    cases,
+                    this.visit(statement.getCatchAllStatement(), argument),
+                    statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
     }
 
     @Override

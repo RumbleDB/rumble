@@ -30,6 +30,11 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private void startLocal(DynamicContext dynamicContext) {
+        // Case exists for when an empty bracket is provided for some statement
+        if (this.children.isEmpty()) {
+            this.hasNext = false;
+            return;
+        }
         this.childIndex = 0;
         this.currentChild = this.children.get(this.childIndex);
         this.currentDynamicContextForLocalExecution = dynamicContext;
