@@ -84,6 +84,8 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
@@ -161,6 +163,7 @@ import org.rumbledb.runtime.scripting.ProgramIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
 import org.rumbledb.runtime.scripting.block.StatementsWithExprIterator;
 import org.rumbledb.runtime.scripting.control.ConditionalStatementIterator;
+import org.rumbledb.runtime.scripting.control.SwitchStatementIterator;
 import org.rumbledb.runtime.scripting.control.TryCatchStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
@@ -1252,6 +1255,26 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 result,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+    }
+
+    @Override
+    public RuntimeIterator visitSwitchStatement(SwitchStatement statement, RuntimeIterator argument) {
+        Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (SwitchCaseStatement caseExpression : statement.getCases()) {
+            RuntimeIterator caseExpr = this.visit(caseExpression.getReturnStatement(), argument);
+            for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
+                RuntimeIterator condition = this.visit(conditionExpr, argument);
+                cases.put(condition, caseExpr);
+            }
+        }
+        RuntimeIterator runtimeIterator = new SwitchStatementIterator(
+                this.visit(statement.getTestCondition(), argument),
+                cases,
+                this.visit(statement.getDefaultStatement(), argument),
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(statement.getStaticContext());
+        return runtimeIterator;
     }
 
     @Override
