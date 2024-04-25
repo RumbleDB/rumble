@@ -94,6 +94,8 @@ import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
@@ -170,6 +172,7 @@ import org.rumbledb.runtime.scripting.control.TryCatchStatementIterator;
 import org.rumbledb.runtime.scripting.control.TypeSwitchStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.CommaVariableDeclStatementIterator;
 import org.rumbledb.runtime.scripting.declaration.VariableDeclStatementIterator;
+import org.rumbledb.runtime.scripting.flwor.ReturnStatementClauseIterator;
 import org.rumbledb.runtime.scripting.loops.BreakStatementIterator;
 import org.rumbledb.runtime.scripting.loops.ContinueStatementIterator;
 import org.rumbledb.runtime.scripting.loops.ExitStatementIterator;
@@ -1383,6 +1386,30 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
+        runtimeIterator.setStaticContext(statement.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitFlowrStatement(FlowrStatement statement, RuntimeIterator argument) {
+        RuntimeTupleIterator previous = this.visitFlowrClause(
+            statement.getReturnStatementClause().getPreviousClause(),
+            argument
+        );
+        ReturnStatementClause returnClause = statement.getReturnStatementClause();
+        RuntimeIterator runtimeIterator = new ReturnStatementClauseIterator(
+                previous,
+                this.visit(
+                    returnClause.getReturnStatement(),
+                    argument
+                ),
+                new RuntimeStaticContext(
+                        this.config,
+                        statement.getStaticSequenceType(),
+                        returnClause.getHighestExecutionMode(this.visitorConfig),
+                        returnClause.getMetadata()
+                )
+        );
         runtimeIterator.setStaticContext(statement.getStaticContext());
         return runtimeIterator;
     }

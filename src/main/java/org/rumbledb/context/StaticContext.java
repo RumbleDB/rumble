@@ -443,7 +443,8 @@ public class StaticContext implements Serializable, KryoSerializable {
                         varToExclude.contains(entry.getKey())
                             ? entry.getValue().getSequenceType()
                             : entry.getValue().getSequenceType().incrementArity(),
-                        entry.getValue().getMetadata()
+                        entry.getValue().getMetadata(),
+                        entry.getValue().isAssignable()
                     );
                 }
             }

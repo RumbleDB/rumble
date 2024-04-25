@@ -40,29 +40,26 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
         this.currentDynamicContextForLocalExecution = dynamicContext;
         this.currentChild.open(this.currentDynamicContextForLocalExecution);
 
-        iterateCurrentChildren();
+        iterateChildren();
     }
 
-    public void iterateCurrentChildren() {
-        if (this.currentChild == null) {
-            this.hasNext = false;
-            return;
-        }
-
-        if (!this.currentChild.hasNext()) {
-            this.currentChild.close();
-            if (++this.childIndex == this.children.size()) {
-                this.currentChild = null;
+    public void iterateChildren() {
+        while (this.currentChild != null) {
+            if (!this.currentChild.hasNext()) {
+                this.currentChild.close();
+                if (++this.childIndex == this.children.size()) {
+                    this.currentChild = null;
+                } else {
+                    this.currentChild = this.children.get(this.childIndex);
+                    this.currentChild.open(this.currentDynamicContextForLocalExecution);
+                }
             } else {
-                this.currentChild = this.children.get(this.childIndex);
-                this.currentChild.open(this.currentDynamicContextForLocalExecution);
+                // We have a statement with next. Result is ignored
+                this.currentChild.next();
             }
-        } else {
-            // We have a statement with next. Result is ignored
-            this.currentChild.next();
         }
 
-        this.hasNext = this.currentChild != null;
+        this.hasNext = false;
     }
 
     @Override
@@ -85,7 +82,7 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            iterateCurrentChildren();
+            iterateChildren();
             // Always return null
             return ItemFactory.getInstance().createNullItem();
         }

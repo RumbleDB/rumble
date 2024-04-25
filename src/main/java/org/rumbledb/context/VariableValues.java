@@ -406,7 +406,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         return nodeWithVariableDecl;
     }
 
-    private boolean containsLocally(VariableValues variableValues, Name varName) {
+    public boolean containsLocally(VariableValues variableValues, Name varName) {
         return variableValues.localVariableValues.containsKey(varName)
             || variableValues.rddVariableValues.containsKey(varName)
             || variableValues.dataFrameVariableValues.containsKey(varName);

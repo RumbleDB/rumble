@@ -2333,8 +2333,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         SequenceType returnType = statement.getReturnStatementClause().getReturnStatement().getStaticSequenceType();
         basicChecks(returnType, statement.getClass().getSimpleName(), true, true, statement.getMetadata());
-        returnType = new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
-        statement.setStaticSequenceType(returnType);
+        statement.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;
     }
 

@@ -952,42 +952,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitReturnStatementClause(ReturnStatementClause statement, StaticContext argument) {
         visit(statement.getReturnStatement(), statement.getReturnStatement().getStaticContext());
-        // Sequential statement can only be executed locally.
-        if (statement.getReturnStatement().isSequential()) {
-            statement.setHighestExecutionMode(ExecutionMode.LOCAL);
-            return argument;
-        }
-        // If we have non-sequential statement, we can follow the rules of return clause
-        if (statement.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            if (
-                statement.getReturnStatement()
-                    .getStaticSequenceType()
-                    .getItemType()
-                    .isCompatibleWithDataFrames(this.configuration)
-            ) {
-                statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
-            } else {
-                statement.setHighestExecutionMode(ExecutionMode.RDD);
-            }
-            return argument;
-        }
-        if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isRDD()) {
-            statement.setHighestExecutionMode(ExecutionMode.RDD);
-            return argument;
-        }
-        if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            if (
-                statement.getReturnStatement()
-                    .getStaticSequenceType()
-                    .getItemType()
-                    .isCompatibleWithDataFrames(this.configuration)
-            ) {
-                statement.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
-            } else {
-                statement.setHighestExecutionMode(ExecutionMode.RDD);
-            }
-            return argument;
-        }
         if (statement.getReturnStatement().getHighestExecutionMode(this.visitorConfig).isUnset()) {
             statement.setHighestExecutionMode(ExecutionMode.UNSET);
             return argument;
