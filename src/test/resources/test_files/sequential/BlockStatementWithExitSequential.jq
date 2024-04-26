@@ -1,3 +1,4 @@
+(:JIQS: ShouldCompile :)
 variable $log := json-file("log.json");
 variable $username := "username";
 variable $entry := {

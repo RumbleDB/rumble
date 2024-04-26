@@ -3,6 +3,7 @@ package org.rumbledb.compiler;
 import org.rumbledb.compiler.wrapper.SequentialDescendant;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.InvalidSequentialChildInNonSequentialParent;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -100,7 +101,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
 
     @Override
     public SequentialDescendant visitProgram(Program node, SequentialDescendant argument) {
-        return visit(node.getStatementsAndOptionalExpr(), new SequentialDescendant(argument));
+        return visit(node.getStatementsAndOptionalExpr(), argument);
     }
 
     @Override
@@ -173,21 +174,31 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
             SequentialDescendant argument
     ) {
         InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) expression.getExpression();
+        ExitStatement exitStatementInstance = null;
         boolean isFunctionSequential = false;
         boolean hasNonExitStatementSequentialChild = false;
-        // Visit each statement to check if it is sequential and non Exit statement.
+        // Visit each statement to check if it is sequential and non-exit statement.
         for (Statement statement : inlineFunctionExpression.getBody().getStatements()) {
             SequentialDescendant result = this.visit(
                 statement,
                 new SequentialDescendant(false, false, argument.getProlog())
             );
             isFunctionSequential = isFunctionSequential || result.isSequential();
-            if (result.isSequential() && !(statement instanceof ExitStatement)) {
+            if (statement instanceof ExitStatement) {
+                exitStatementInstance = (ExitStatement) statement;
+            } else if (result.isSequential()) {
                 hasNonExitStatementSequentialChild = true;
             }
         }
         isFunctionSequential = isFunctionSequential
             || this.visit(inlineFunctionExpression.getBody().getExpression(), argument).isSequential();
+        if (exitStatementInstance != null) {
+            if (exitStatementInstance.getExitExpression().isUpdating()) {
+                // TODO: Outside of master's scope.
+                throw new OurBadException("Updating expressions in exit statements are unsupported!");
+            }
+
+        }
         hasNonExitStatementSequentialChild = hasNonExitStatementSequentialChild
             || inlineFunctionExpression.getBody().getExpression().isSequential();
         if (!inlineFunctionExpression.hasSequentialPropertyAnnotation()) {
@@ -197,19 +208,15 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
              * sequential
              */
             inlineFunctionExpression.setSequential(isFunctionSequential);
-        } else {
-            if (!inlineFunctionExpression.isSequential() && hasNonExitStatementSequentialChild) {
-                /*
-                 * We have a declared non-sequential function.
-                 * Statements must be non-sequential.
-                 * However, we allow exit statement!
-                 */
-                // TODO: Should this be metadata of expression or prolog?
-                throw new InvalidSequentialChildInNonSequentialParent(
-                        "The body of a non-sequential function can only contain non-sequential expressions. Only exit statements are allowed in non-sequential functions!",
-                        inlineFunctionExpression.getMetadata()
-                );
-            }
+        } else if (!inlineFunctionExpression.isSequential() && hasNonExitStatementSequentialChild) {
+            /*
+             * We have a declared non-sequential function.
+             * Statements must be non-sequential, and we have a non-exit sequential statement
+             */
+            throw new InvalidSequentialChildInNonSequentialParent(
+                    "The body of a non-sequential function can only contain non-sequential expressions. Only exit statements are allowed in non-sequential functions!",
+                    inlineFunctionExpression.getMetadata()
+            );
         }
         return new SequentialDescendant(
                 inlineFunctionExpression.isSequential(),
