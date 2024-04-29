@@ -182,6 +182,13 @@ public class VariableValues implements Serializable, KryoSerializable {
     }
 
     public List<Item> getLocalVariableValue(Name varName, ExceptionMetadata metadata) {
+        if (this.localVariableValues.containsKey(varName) && this.localVariableValues.get(varName) == null) {
+            // Referencing an uninitialized local variable is illegal
+            throw new RumbleException(
+                    "Runtime error retrieving variable " + varName + " value",
+                    metadata
+            );
+        }
         if (this.localVariableValues.containsKey(varName)) {
             return this.localVariableValues.get(varName);
         }

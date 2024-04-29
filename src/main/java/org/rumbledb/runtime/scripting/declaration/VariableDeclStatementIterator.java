@@ -6,11 +6,9 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
-import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.Collections;
 import java.util.List;
 
 public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -35,8 +33,9 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
             RuntimeIterator exprIterator = this.children.get(0);
             exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
         } else {
+            // Casting needed to distinguish between local and RDD variables.
             dynamicContext.getVariableValues()
-                .addVariableValue(this.variableName, Collections.singletonList(new NullItem()));
+                .addVariableValue(this.variableName, (List<Item>) null);
         }
         return null;
     }
