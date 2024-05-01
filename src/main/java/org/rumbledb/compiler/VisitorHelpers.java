@@ -421,8 +421,8 @@ public class VisitorHelpers {
             printTree(mainModule, configuration);
         }
 
-        SequentialClassificationVisitor visitor = new SequentialClassificationVisitor();
-        visitor.visit(mainModule, new SequentialDescendant(false, false, null));
+        SequentialClassificationVisitor visitor = new SequentialClassificationVisitor(mainModule.getProlog());
+        visitor.visit(mainModule, new SequentialDescendant(false, false));
 
         if (configuration.isPrintIteratorTree()) {
             printTree(mainModule, configuration);
