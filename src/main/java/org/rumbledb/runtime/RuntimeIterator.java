@@ -68,7 +68,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
-    protected transient boolean isUpdating;
+    protected boolean isUpdating;
     protected transient boolean isSequential;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;

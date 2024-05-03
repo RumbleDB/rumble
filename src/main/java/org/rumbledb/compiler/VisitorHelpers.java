@@ -69,9 +69,9 @@ public class VisitorHelpers {
         // Annotate recursive functions as such
         new FunctionDependenciesVisitor().visit(result, null);
         // Inline non-recursive functions
-        if (conf.functionInlining()) {
-            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
-        }
+        // if (conf.functionInlining()) {
+        // result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+        // }
         return result;
     }
 

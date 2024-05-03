@@ -16,29 +16,27 @@ import java.util.List;
 public class ProgramIterator extends HybridRuntimeIterator {
     private final RuntimeIterator statementsAndExprIterator;
     private PendingUpdateList pendingUpdateList;
-    private int nextLocalResult;
-    private List<Item> localResult;
-    private JavaRDD<Item> rddResult;
-    private JSoundDataFrame dataFrameResult;
+    private int nextExitStatementResult;
+    private List<Item> exitStatementLocalResult;
 
     private boolean encounteredExitStatement;
 
     public ProgramIterator(RuntimeIterator statementsAndExprIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(statementsAndExprIterator), staticContext);
         this.encounteredExitStatement = false;
-        this.nextLocalResult = 0;
-        this.localResult = null;
-        this.rddResult = null;
-        this.dataFrameResult = null;
+        this.nextExitStatementResult = 0;
+        this.exitStatementLocalResult = null;
         this.statementsAndExprIterator = statementsAndExprIterator;
     }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        if (!encounteredExitStatement) {
+        try {
             return this.statementsAndExprIterator.getRDD(context);
+        } catch (ExitStatementException exitStatementException) {
+            setPULFromExitStatement(exitStatementException);
+            return exitStatementException.getRddResult();
         }
-        return this.rddResult;
     }
 
     @Override
@@ -46,7 +44,8 @@ public class ProgramIterator extends HybridRuntimeIterator {
         try {
             this.statementsAndExprIterator.open(this.currentDynamicContextForLocalExecution);
         } catch (ExitStatementException exitStatementException) {
-            setResultFieldsFromExitStatement(exitStatementException);
+            setPULFromExitStatement(exitStatementException);
+            this.exitStatementLocalResult = exitStatementException.getLocalResult();
         }
     }
 
@@ -65,7 +64,7 @@ public class ProgramIterator extends HybridRuntimeIterator {
         if (!this.encounteredExitStatement) {
             return this.statementsAndExprIterator.hasNext();
         }
-        return this.nextLocalResult < this.localResult.size();
+        return this.nextExitStatementResult < this.exitStatementLocalResult.size();
     }
 
     @Override
@@ -75,22 +74,17 @@ public class ProgramIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        if (!encounteredExitStatement) {
+        try {
             return this.statementsAndExprIterator.getDataFrame(dynamicContext);
+        } catch (ExitStatementException exitStatementException) {
+            setPULFromExitStatement(exitStatementException);
+            return exitStatementException.getDataFrameResult();
         }
-        return this.dataFrameResult;
     }
 
-    private void setResultFieldsFromExitStatement(ExitStatementException exitStatementException) {
+    private void setPULFromExitStatement(ExitStatementException exitStatementException) {
         this.encounteredExitStatement = true;
         this.pendingUpdateList = exitStatementException.getPendingUpdateList();
-        if (exitStatementException.hasLocalResult()) {
-            this.localResult = exitStatementException.getLocalResult();
-        } else if (exitStatementException.hasRDDResult()) {
-            this.rddResult = exitStatementException.getRddResult();
-        } else if (exitStatementException.hasDataFrameResult()) {
-            this.dataFrameResult = exitStatementException.getDataFrameResult();
-        }
     }
 
     @Override
@@ -100,12 +94,13 @@ public class ProgramIterator extends HybridRuntimeIterator {
                 return this.statementsAndExprIterator.next();
             } catch (ExitStatementException exitStatementException) {
                 // Encountering an exit statement sets the result and PUL for this iterator.
-                setResultFieldsFromExitStatement(exitStatementException);
+                setPULFromExitStatement(exitStatementException);
+                this.exitStatementLocalResult = exitStatementException.getLocalResult();
             }
         }
         // If we encountered an exit with local result, return the next item.
-        if (this.localResult != null) {
-            return this.localResult.get(this.nextLocalResult++);
+        if (this.exitStatementLocalResult != null) {
+            return this.exitStatementLocalResult.get(this.nextExitStatementResult++);
         }
         return null;
     }

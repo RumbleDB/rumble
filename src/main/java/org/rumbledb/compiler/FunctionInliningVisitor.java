@@ -280,7 +280,12 @@ public class FunctionInliningVisitor extends CloneVisitor {
             (Prolog) argument,
             expression.getFunctionIdentifier()
         );
-        if (expression.isPartialApplication() || targetFunction == null || targetFunction.isRecursive()) {
+        if (
+            expression.isPartialApplication()
+                || targetFunction == null
+                || targetFunction.isRecursive()
+                || targetFunction.getExpression().isSequential()
+        ) {
             List<Expression> arguments = new ArrayList<>();
             for (Expression arg : expression.getArguments()) {
                 arguments.add(arg == null ? null : (Expression) visit(arg, argument));

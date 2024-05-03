@@ -25,6 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -34,6 +35,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.util.List;
 
@@ -52,6 +54,14 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     private boolean isPartialApplication;
     private Item nextResult;
 
+    // Exit statement fields
+    private boolean encounteredExitStatement;
+    private PendingUpdateList pendingUpdateList;
+    private List<Item> exitStatementLocalResult;
+    private JavaRDD<Item> rddResult;
+    private JSoundDataFrame dataFrameResult;
+    private int nextExitStatementResult;
+
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
             List<RuntimeIterator> functionArguments,
@@ -59,6 +69,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     ) {
         super(null, staticContext);
         this.isPartialApplication = false;
+        this.nextExitStatementResult = 0;
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
                 this.children.add(arg);
@@ -81,6 +92,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         } catch (InvalidRumbleMLParamException e) {
             String m = e.getMLMessage();
             throw new InvalidRumbleMLParamException(m, getMetadata());
+        } catch (ExitStatementException exitStatementException) {
+            this.encounteredExitStatement = true;
+            this.exitStatementLocalResult = exitStatementException.getLocalResult();
         }
         setNextResult();
     }
@@ -108,19 +122,26 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     public void setNextResult() {
         this.nextResult = null;
-        if (this.functionCallIterator.hasNext()) {
+        if (!this.encounteredExitStatement && this.functionCallIterator.hasNext()) {
             try {
                 this.nextResult = this.functionCallIterator.next();
             } catch (InvalidRumbleMLParamException e) {
                 String m = e.getMLMessage();
                 throw new InvalidRumbleMLParamException(m, getMetadata());
+            } catch (ExitStatementException exitStatementException) {
+                this.encounteredExitStatement = true;
+                this.exitStatementLocalResult = exitStatementException.getLocalResult();
             }
         }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
+        if (this.encounteredExitStatement) {
+            if (this.nextExitStatementResult < this.exitStatementLocalResult.size()) {
+                this.nextResult = this.exitStatementLocalResult.get(this.nextExitStatementResult++);
+                this.hasNext = true;
+            } else {
+                this.hasNext = false;
+            }
         } else {
-            this.hasNext = true;
+            this.hasNext = this.nextResult != null;
         }
     }
 
@@ -181,8 +202,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
-        return this.functionCallIterator.getRDD(dynamicContext);
+        try {
+            setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
+            return this.functionCallIterator.getRDD(dynamicContext);
+        } catch (ExitStatementException exitStatementException) {
+            return exitStatementException.getRddResult();
+        }
     }
 
     @Override
@@ -193,6 +218,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         } catch (InvalidRumbleMLParamException e) {
             String m = e.getMLMessage();
             throw new InvalidRumbleMLParamException(m, getMetadata());
+        } catch (ExitStatementException exitStatementException) {
+            return exitStatementException.getDataFrameResult();
         }
     }
 }

@@ -7,22 +7,27 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.util.List;
 
+import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
+
 public class ExitStatementException extends RuntimeException {
     private final PendingUpdateList pendingUpdateList;
     private final List<Item> localResult;
     private final JavaRDD<Item> rddResult;
     private final JSoundDataFrame dataFrameResult;
+    private final ExceptionMetadata exceptionMetadata;
 
     public ExitStatementException(
             PendingUpdateList pendingUpdateList,
             List<Item> localResult,
             JavaRDD<Item> rddResult,
-            JSoundDataFrame dataFrameResult
+            JSoundDataFrame dataFrameResult,
+            ExceptionMetadata exceptionMetadata
     ) {
         this.pendingUpdateList = pendingUpdateList;
         this.localResult = localResult;
         this.rddResult = rddResult;
         this.dataFrameResult = dataFrameResult;
+        this.exceptionMetadata = exceptionMetadata;
     }
 
     public PendingUpdateList getPendingUpdateList() {
@@ -30,7 +35,14 @@ public class ExitStatementException extends RuntimeException {
     }
 
     public List<Item> getLocalResult() {
-        return this.localResult;
+        if (hasLocalResult()) {
+            return this.localResult;
+        } else if (hasRDDResult()) {
+            return this.rddResult.collect();
+        } else if (hasDataFrameResult()) {
+            return dataFrameToRDDOfItems(this.dataFrameResult, this.exceptionMetadata).collect();
+        }
+        throw new OurBadException("Expected local result but there was nothing to return from the exit statement!");
     }
 
     public JavaRDD<Item> getRddResult() {

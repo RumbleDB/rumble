@@ -13,25 +13,33 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import java.util.Collections;
 
 public class ExitStatementIterator extends HybridRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;
+    private PendingUpdateList pendingUpdateList;
 
-    public ExitStatementIterator(RuntimeIterator childIterator, RuntimeStaticContext staticContext) {
+    public ExitStatementIterator(
+            RuntimeIterator childIterator,
+            boolean isSequential,
+            RuntimeStaticContext staticContext
+    ) {
         super(Collections.singletonList(childIterator), staticContext);
+        this.isSequential = isSequential;
         this.childIterator = childIterator;
     }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.childIterator.getRDD(dynamicContext);
-        PendingUpdateList pendingUpdateList = new PendingUpdateList();
+        this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
-            pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
+            this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
         }
         throw new ExitStatementException(
-                pendingUpdateList,
+                this.pendingUpdateList,
                 null,
                 childRDD,
-                JSoundDataFrame.emptyDataFrame()
+                null,
+                this.getMetadata()
         );
     }
 
@@ -42,7 +50,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
      */
     @Override
     protected void openLocal() {
-        this.result = this.childIterator.materialize(this.currentDynamicContextForLocalExecution);
+
     }
 
     @Override
@@ -61,15 +69,17 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        PendingUpdateList pendingUpdateList = new PendingUpdateList();
+        this.result = this.childIterator.materialize(this.currentDynamicContextForLocalExecution);
+        this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
             pendingUpdateList = this.childIterator.getPendingUpdateList(this.currentDynamicContextForLocalExecution);
         }
         throw new ExitStatementException(
-                pendingUpdateList,
+                this.pendingUpdateList,
                 this.result,
                 null,
-                JSoundDataFrame.emptyDataFrame()
+                null,
+                this.getMetadata()
         );
     }
 
@@ -81,15 +91,16 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
-        PendingUpdateList pendingUpdateList = new PendingUpdateList();
+        this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
-            pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
+            this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
         }
         throw new ExitStatementException(
-                pendingUpdateList,
+                this.pendingUpdateList,
                 null,
                 null,
-                childDataFrame
+                childDataFrame,
+                this.getMetadata()
         );
     }
 }

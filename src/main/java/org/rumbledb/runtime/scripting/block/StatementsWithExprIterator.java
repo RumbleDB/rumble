@@ -6,7 +6,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -15,6 +14,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.List;
 
 public class StatementsWithExprIterator extends HybridRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
     private Item result;
@@ -146,12 +146,12 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator exprIterator = this.children.get(this.children.size() - 1);
-        if (!exprIterator.isDataFrame()) {
-            throw new OurBadException(
-                    "DataFrame was expected however the expression is not been identified as DataFrame"
-            );
+        int childIndex = 0;
+        while (childIndex < this.children.size() - 1) {
+            this.children.get(childIndex).getDataFrame(dynamicContext);
+            ++childIndex;
         }
+        RuntimeIterator exprIterator = this.children.get(childIndex);
         return exprIterator.getDataFrame(dynamicContext);
     }
 
