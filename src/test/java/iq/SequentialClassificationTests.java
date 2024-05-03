@@ -137,7 +137,7 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         VariableDeclStatement variableDeclStatement = (VariableDeclStatement) blockStatement.getBlockStatements()
             .get(0);
         FlowrStatement flowrStatement = (FlowrStatement) blockStatement.getBlockStatements().get(1);
-        assertFalse(variableDeclStatement.isSequential());
+        assertTrue(variableDeclStatement.isSequential());
         assertTrue(flowrStatement.isSequential());
         SwitchStatement switchStatement = (SwitchStatement) flowrStatement.getReturnStatementClause()
             .getReturnStatement();
@@ -177,7 +177,7 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         FlowrStatement flowrStatement = (FlowrStatement) blockTryCatchStatement.getTryStatement()
             .getBlockStatements()
             .get(1);
-        assertFalse(variableDeclStatement.isSequential());
+        assertTrue(variableDeclStatement.isSequential());
         assertTrue(flowrStatement.isSequential());
         ConditionalStatement flowrConditionStatement = (ConditionalStatement) flowrStatement.getReturnStatementClause()
             .getReturnStatement();
@@ -228,7 +228,7 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertEquals(2, functionBody.getStatements().size());
         VariableDeclStatement variableDeclStatement = (VariableDeclStatement) functionBody.getStatements().get(0);
         ExitStatement exitStatement = (ExitStatement) functionBody.getStatements().get(1);
-        assertFalse(variableDeclStatement.isSequential());
+        assertTrue(variableDeclStatement.isSequential());
         assertTrue(exitStatement.isSequential());
     }
 
@@ -249,10 +249,10 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
             .get(2);
         VariableDeclStatement variableDeclStatement4 = (VariableDeclStatement) statementsAndOptionalExpr.getStatements()
             .get(3);
-        assertFalse(variableDeclStatement1.isSequential());
-        assertFalse(variableDeclStatement2.isSequential());
-        assertFalse(variableDeclStatement3.isSequential());
-        assertFalse(variableDeclStatement4.isSequential());
+        assertTrue(variableDeclStatement1.isSequential());
+        assertTrue(variableDeclStatement2.isSequential());
+        assertTrue(variableDeclStatement3.isSequential());
+        assertTrue(variableDeclStatement4.isSequential());
         ConditionalStatement conditionalStatement = (ConditionalStatement) statementsAndOptionalExpr.getStatements()
             .get(4);
         assertTrue(conditionalStatement.isSequential());
@@ -277,7 +277,11 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
                 if (descendant instanceof Expression) {
                     assertFalse(((Expression) descendant).isSequential());
                 } else if (descendant instanceof Statement) {
-                    assertFalse(((Statement) descendant).isSequential());
+                    if (descendant instanceof VariableDeclStatement) {
+                        assertTrue(((Statement) descendant).isSequential());
+                    } else {
+                        assertFalse(((Statement) descendant).isSequential());
+                    }
                 }
             }
         }

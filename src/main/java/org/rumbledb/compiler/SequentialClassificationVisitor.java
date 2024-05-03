@@ -146,6 +146,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Sequent
 
     @Override
     public SequentialDescendant visitApplyStatement(ApplyStatement statement, SequentialDescendant argument) {
+        visit(statement.getApplyExpression(), argument);
         statement.setSequential(
             statement.getApplyExpression().isUpdating() || statement.getApplyExpression().isSequential()
         );
