@@ -1,7 +1,13 @@
 (:JIQS: ShouldCompile :)
-declare %an:sequential function bar() { 1 };
 declare %an:nonsequential function foo() {
-    bar();
+    variable $x := 3;
+    while ($x eq 3) {
+        if ($x eq 3) then {
+            variable $y := 3;
+            exit returning 5;
+        } else {
+            variable $x := 3;
+            $x := 4;
+        }
+    }
  };
-
-(: declared nonsequential with sequential body is valid as it is a non-updating apply statement :)

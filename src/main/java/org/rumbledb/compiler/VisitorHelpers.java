@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
 import org.rumbledb.compiler.wrapper.BlockExpressionMetadata;
-import org.rumbledb.compiler.wrapper.SequentialDescendant;
+import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -422,7 +422,7 @@ public class VisitorHelpers {
         }
 
         SequentialClassificationVisitor visitor = new SequentialClassificationVisitor(mainModule.getProlog());
-        visitor.visit(mainModule, new SequentialDescendant(false, false));
+        visitor.visit(mainModule, new DescendentSequentialProperties(false, false));
 
         if (configuration.isPrintIteratorTree()) {
             printTree(mainModule, configuration);

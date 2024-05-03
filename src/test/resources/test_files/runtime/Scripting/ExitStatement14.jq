@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="{ "a" : 1, "b" : 2, "c" : 3  }" :)
+(:JIQS: ShouldRun; Output="{ "a" : 1, "b" : 2, "c" : 3 }" :)
 exit returning copy json $je := {"a" : 1, "b" : 2}
                    modify if($je.c)
                           then
