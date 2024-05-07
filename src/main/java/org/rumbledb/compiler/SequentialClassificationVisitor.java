@@ -1,28 +1,42 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
-import org.rumbledb.context.StaticContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSequentialChildInNonSequentialParent;
+import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
 import org.rumbledb.expressions.scripting.loops.BreakStatement;
 import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.types.SequenceType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
 
@@ -35,9 +49,13 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
  */
 public class SequentialClassificationVisitor extends AbstractNodeVisitor<DescendentSequentialProperties> {
     private final Prolog prolog;
+    private int blockLevel;
+    private Map<Name, Integer> variableBlockLevel;
 
     public SequentialClassificationVisitor(Prolog prolog) {
         this.prolog = prolog;
+        this.blockLevel = 0;
+        variableBlockLevel = new HashMap<>();
     }
 
     protected DescendentSequentialProperties defaultAction(Node node, DescendentSequentialProperties argument) {
@@ -105,8 +123,8 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     }
 
     @Override
-    public DescendentSequentialProperties visitProgram(Program node, DescendentSequentialProperties argument) {
-        return visit(node.getStatementsAndOptionalExpr(), argument);
+    public DescendentSequentialProperties visitProgram(Program program, DescendentSequentialProperties argument) {
+        return visitDescendantsWithScope(program, argument);
     }
 
     @Override
@@ -138,11 +156,10 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             AssignStatement statement,
             DescendentSequentialProperties argument
     ) {
-        StaticContext statementContext = statement.getStaticContext();
-        int variableBlockLevel = statementContext.getVariableBlockLevel(statement.getName());
+        int variableBlockLevel = getVariableBlockLevel(statement.getName(), statement.getMetadata());
         // Assign statement is sequential in nature.
         statement.setSequential(true);
-        if (variableBlockLevel < statementContext.getBlockLevel()) {
+        if (variableBlockLevel < this.blockLevel) {
             // Variable is defined outside of this block
             return new DescendentSequentialProperties(true, false);
         }
@@ -156,9 +173,8 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             DescendentSequentialProperties argument
     ) {
         DescendentSequentialProperties descendant = visit(statement.getApplyExpression(), argument);
-        statement.setSequential(
-            statement.getApplyExpression().isUpdating() || statement.getApplyExpression().isSequential()
-        );
+        // Apply Statements are sequential
+        statement.setSequential(true);
         return new DescendentSequentialProperties(
                 statement.isSequential(),
                 descendant.hasInterruptStatement(),
@@ -172,7 +188,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             DescendentSequentialProperties argument
     ) {
         statement.setSequential(true);
-        return new DescendentSequentialProperties(true, true);
+        return new DescendentSequentialProperties(false, true);
     }
 
     @Override
@@ -181,7 +197,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             DescendentSequentialProperties argument
     ) {
         statement.setSequential(true);
-        return new DescendentSequentialProperties(true, true);
+        return new DescendentSequentialProperties(false, true);
     }
 
     @Override
@@ -201,6 +217,11 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) expression.getExpression();
         boolean isFunctionBodySequential = false;
         boolean isNonExitSequential = false;
+        boolean hasExitStatement = false;
+        incrementBlockLevel();
+        for (Map.Entry<Name, SequenceType> parameter : inlineFunctionExpression.getParams().entrySet()) {
+            addVariableToCurrentBlockLevel(parameter.getKey());
+        }
         // Visit each statement to check if it is sequential and non-exit statement.
         for (Node children : inlineFunctionExpression.getBody().getChildren()) {
             DescendentSequentialProperties result = this.visit(
@@ -211,8 +232,11 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             if (result.hasNonExitSequentialStatement()) {
                 isNonExitSequential = true;
             }
+            if (result.hasExitStatement()) {
+                hasExitStatement = true;
+            }
         }
-
+        inlineFunctionExpression.setHasExitStatement(hasExitStatement);
         if (!inlineFunctionExpression.hasSequentialPropertyAnnotation()) {
             /*
              * If we don't have an annotation, then we must determine if
@@ -230,6 +254,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
                     inlineFunctionExpression.getMetadata()
             );
         }
+        decrementBlockLevel();
         return new DescendentSequentialProperties(
                 inlineFunctionExpression.isSequential(),
                 false
@@ -237,27 +262,53 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     }
 
     @Override
+    public DescendentSequentialProperties visitInlineFunctionExpr(
+            InlineFunctionExpression expression,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantsWithScope(expression, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitReturnClause(
+            ReturnClause returnClause,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantsWithScope(returnClause, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitReturnStatementClause(
+            ReturnStatementClause returnStatementClause,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantsWithScope(returnStatementClause, argument);
+    }
+
+
+    @Override
     public DescendentSequentialProperties visitWhileStatement(
             WhileStatement statement,
             DescendentSequentialProperties argument
     ) {
+        incrementBlockLevel();
         DescendentSequentialProperties descendant = visit(
             statement.getStatement(),
             argument
         );
-        if (descendant.isSequential() && !descendant.hasInterruptStatement()) {
+        if (descendant.isSequential()) {
             statement.setSequential(true);
+            decrementBlockLevel();
             return new DescendentSequentialProperties(
                     descendant.hasNonExitSequentialStatement(),
                     false,
                     descendant.hasExitStatement()
             );
         }
-        // If we have a descendant that is sequential with interrupt, the while will be affected by the interrupt,
+        // If we have a descendant that is non-sequential with interrupt, the while will be affected by the interrupt,
         // therefore it is not sequential.
-        // If the descendant is not sequential, it cannot have an interrupt statement as that would have made it
-        // sequential.
         statement.setSequential(false);
+        decrementBlockLevel();
         return new DescendentSequentialProperties(false, false, descendant.hasExitStatement());
     }
 
@@ -266,21 +317,24 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             FlowrStatement statement,
             DescendentSequentialProperties argument
     ) {
+        incrementBlockLevel();
         Clause clause = statement.getReturnStatementClause().getFirstClause();
         DescendentSequentialProperties result = argument;
         while (clause != null) {
             result = this.visit(clause, result);
             clause = clause.getNextClause();
         }
-        if (result.isSequential() && !result.hasInterruptStatement()) {
+        if (result.isSequential()) {
             statement.setSequential(true);
+            decrementBlockLevel();
             return new DescendentSequentialProperties(
                     result.hasNonExitSequentialStatement(),
                     false,
                     result.hasExitStatement()
             );
         }
-        statement.setSequential(true);
+        statement.setSequential(false);
+        decrementBlockLevel();
         return new DescendentSequentialProperties(false, false, result.hasExitStatement());
     }
 
@@ -290,10 +344,6 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             DescendentSequentialProperties argument
     ) {
         DescendentSequentialProperties result = visit(expression.getMainExpression(), argument);
-        if (expression.isSequential()) {
-            expression.setSequential(true);
-            return new DescendentSequentialProperties(true, false, result.hasExitStatement());
-        }
         expression.setSequential(result.isSequential());
         return result;
     }
@@ -306,10 +356,110 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     ) {
         visitDescendants(statement, argument);
         statement.setSequential(true);
+        addVariableToCurrentBlockLevel(statement.getVariableName());
         // The parent should not become sequential if this is sequential. Basically, the expression containing the
         // declaration is not sequential even though the declaration is. This is enforced as the declaration must be
         // executed (it being sequential), but the expression encapsulating it is non side-effecting if it only contains
         // declarations.
         return new DescendentSequentialProperties(false, false);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitVariableDeclaration(
+            VariableDeclaration variableDeclaration,
+            DescendentSequentialProperties argument
+    ) {
+        addVariableToCurrentBlockLevel(variableDeclaration.getVariableName());
+        return defaultAction(variableDeclaration, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitBlockStatement(
+            BlockStatement statement,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantWithInterruptPropagation(statement, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitTypeSwitchStatement(
+            TypeSwitchStatement statement,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantWithInterruptPropagation(statement, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitConditionalStatement(
+            ConditionalStatement statement,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantWithInterruptPropagation(statement, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitTryCatchStatement(
+            TryCatchStatement statement,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantWithInterruptPropagation(statement, argument);
+    }
+
+    @Override
+    public DescendentSequentialProperties visitSwitchStatement(
+            SwitchStatement statement,
+            DescendentSequentialProperties argument
+    ) {
+        return visitDescendantWithInterruptPropagation(statement, argument);
+    }
+
+    private DescendentSequentialProperties visitDescendantsWithScope(
+            Node node,
+            DescendentSequentialProperties argument
+    ) {
+        incrementBlockLevel();
+        DescendentSequentialProperties result = defaultAction(node, argument);
+        decrementBlockLevel();
+        return result;
+    }
+
+    private void addVariableToCurrentBlockLevel(Name variableName) {
+        this.variableBlockLevel.put(variableName, this.blockLevel);
+    }
+
+    private int getVariableBlockLevel(Name variableName, ExceptionMetadata exceptionMetadata) {
+        if (!this.variableBlockLevel.containsKey(variableName)) {
+            throw new UndeclaredVariableException(
+                    "Variable: " + variableName + " not present at block level when expected to",
+                    exceptionMetadata
+            );
+        }
+        return this.variableBlockLevel.get(variableName);
+    }
+
+    private DescendentSequentialProperties visitDescendantWithInterruptPropagation(
+            Statement statement,
+            DescendentSequentialProperties argument
+    ) {
+        DescendentSequentialProperties result = visitDescendantsWithScope(statement, argument);
+        if (result.hasInterruptStatement()) {
+            // If we have an interrupt, we are sequential
+            statement.setSequential(true);
+            return new DescendentSequentialProperties(
+                    result.hasNonExitSequentialStatement(),
+                    true,
+                    result.hasExitStatement()
+            );
+        }
+        statement.setSequential(result.isSequential());
+        return result;
+    }
+
+    private void incrementBlockLevel() {
+        this.blockLevel++;
+    }
+
+    private void decrementBlockLevel() {
+        this.blockLevel--;
     }
 }

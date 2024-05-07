@@ -50,6 +50,7 @@ public class InlineFunctionExpression extends Expression {
     private final StatementsAndOptionalExpr body;
     private final List<Annotation> annotations;
     private boolean hasSequentialPropertyAnnotation;
+    private boolean hasExitStatement;
 
     public InlineFunctionExpression(
             List<Annotation> annotations,
@@ -66,6 +67,7 @@ public class InlineFunctionExpression extends Expression {
         this.body = body;
         this.annotations = annotations;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
+        this.hasExitStatement = false;
         if (annotations != null) {
             this.setSequentialFromAnnotations();
         } else {
@@ -221,6 +223,14 @@ public class InlineFunctionExpression extends Expression {
 
     public boolean hasSequentialPropertyAnnotation() {
         return hasSequentialPropertyAnnotation;
+    }
+
+    public void setHasExitStatement(boolean hasExitStatement) {
+        this.hasExitStatement = hasExitStatement;
+    }
+
+    public boolean hasExitStatement() {
+        return this.hasExitStatement;
     }
 }
 

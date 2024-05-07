@@ -9,8 +9,8 @@ try {
                                     {"a" : {"foo" : 1}};
         for $l in $je
                 return
-                    if($l.a) then
-                        variable $x := 3;
-                    else
-                        variable $x := 2;
+                    switch ($l)
+                                case "bar" return "foo";
+                                case "foo" return "bar";
+                                default return "none";
     } catch * {}

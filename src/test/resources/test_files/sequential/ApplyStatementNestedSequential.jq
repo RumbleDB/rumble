@@ -11,6 +11,6 @@
         return
             switch (())
             case "bar" return rename json $l.a.foo as "bar";
-            case "foo" return "bar";
-            default return "none";
+            case "foo" return variable $res := "foo";
+            default return variable $res := "none";
 }

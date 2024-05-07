@@ -274,6 +274,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return result;
     }
 
+    // Inlining is disabled for functions that:
+    // 1. Are sequential.
+    // 2. Contain an exit statement.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
@@ -285,6 +288,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || targetFunction == null
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
+                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()
         ) {
             List<Expression> arguments = new ArrayList<>();
             for (Expression arg : expression.getArguments()) {

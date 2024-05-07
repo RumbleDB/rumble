@@ -1,6 +1,6 @@
 (:JIOS:ShouldCompile :)
 while(true) {
-    if (true) then {();} else {();}
+    if (true) then {variable $x := 1;} else {variable $x := 1;}
     while (true) {}
     try {
         variable $je := for $i in (1 to 4)

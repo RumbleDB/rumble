@@ -61,9 +61,6 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private int currentMutabilityLevel;
 
-    // Defines the block level this static context is defined for.
-    private int blockLevel;
-
     static {
         defaultBindings = new HashMap<>();
         defaultBindings.put("local", Name.LOCAL_NS);
@@ -89,7 +86,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
-        this.blockLevel = 0;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -103,7 +99,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        this.blockLevel = 0;
     }
 
     public StaticContext(StaticContext parent) {
@@ -115,7 +110,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
-        this.blockLevel = parent.getBlockLevel();
     }
 
     public StaticContext getParent() {
@@ -200,7 +194,6 @@ public class StaticContext implements Serializable, KryoSerializable {
                     newSequenceType,
                     variable.getMetadata(),
                     variable.getStorageMode(),
-                    this.blockLevel,
                     variable.isAssignable()
             )
         );
@@ -222,10 +215,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         getInScopeVariable(varName).setStorageMode(mode);
     }
 
-    public int getVariableBlockLevel(Name varName) {
-        return getInScopeVariable(varName).getBlockLevel();
-    }
-
     public void addVariable(
             Name varName,
             SequenceType type,
@@ -233,7 +222,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     ) {
         this.inScopeVariables.put(
             varName,
-            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, this.blockLevel)
+            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET)
         );
     }
 
@@ -245,7 +234,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     ) {
         this.inScopeVariables.put(
             varName,
-            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, this.blockLevel, isAssignable)
+            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, isAssignable)
         );
     }
 
@@ -279,9 +268,6 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
             stringBuilder.append("\n");
         }
-        stringBuilder.append("\nBlockLevel:");
-        stringBuilder.append(this.blockLevel);
-        stringBuilder.append("\n");
         if (this.inScopeSchemaTypes != null) {
             stringBuilder.append("Static context with user-defined types:\n");
             for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
@@ -430,8 +416,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                         value.getName(),
                         value.getSequenceType().incrementArity(),
                         value.getMetadata(),
-                        value.getStorageMode(),
-                        this.blockLevel
+                        value.getStorageMode()
                 )
         );
         StaticContext current = this.parent;
@@ -474,14 +459,6 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
         this.currentMutabilityLevel = currentMutabilityLevel;
-    }
-
-    public int getBlockLevel() {
-        return blockLevel;
-    }
-
-    public void increaseBlockLevel() {
-        this.blockLevel++;
     }
 
     public boolean getIsAssignable(Name name) {

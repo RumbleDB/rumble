@@ -10,6 +10,6 @@ declare %an:sequential function foo() { 1 };
      for $j in [1 to 3]
      return {
          break loop;
-         $j;
+         variable $res;
      }
  }

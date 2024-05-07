@@ -53,4 +53,22 @@ public abstract class Statement extends Node {
                 getMetadata()
         );
     }
+
+    @Override
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        if (this.isSequential) {
+            buffer.append(" | " + "sequential");
+        } else {
+            buffer.append(" | " + "non-sequential");
+        }
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
 }

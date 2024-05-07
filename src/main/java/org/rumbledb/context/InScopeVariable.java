@@ -17,21 +17,18 @@ public class InScopeVariable implements Serializable, KryoSerializable {
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
     private ExecutionMode storageMode;
-    private final int blockLevel;
     private final boolean isAssignable;
 
     public InScopeVariable(
             Name name,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
-            ExecutionMode storageMode,
-            int blockLevel
+            ExecutionMode storageMode
     ) {
         this.name = name;
         this.sequenceType = sequenceType;
         this.metadata = metadata;
         this.storageMode = storageMode;
-        this.blockLevel = blockLevel;
         this.isAssignable = false; // unspecified means false.
     }
 
@@ -40,14 +37,12 @@ public class InScopeVariable implements Serializable, KryoSerializable {
             SequenceType type,
             ExceptionMetadata metadata,
             ExecutionMode storageMode,
-            int blockLevel,
             boolean isAssignable
     ) {
         this.name = name;
         this.sequenceType = type;
         this.metadata = metadata;
         this.storageMode = storageMode;
-        this.blockLevel = blockLevel;
         this.isAssignable = isAssignable;
     }
 
@@ -85,10 +80,6 @@ public class InScopeVariable implements Serializable, KryoSerializable {
         this.sequenceType = kryo.readObject(input, SequenceType.class);
         this.metadata = kryo.readObject(input, ExceptionMetadata.class);
         this.storageMode = kryo.readObject(input, ExecutionMode.class);
-    }
-
-    public int getBlockLevel() {
-        return blockLevel;
     }
 
     public boolean isAssignable() {

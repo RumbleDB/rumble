@@ -69,9 +69,9 @@ public class VisitorHelpers {
         // Annotate recursive functions as such
         new FunctionDependenciesVisitor().visit(result, null);
         // Inline non-recursive functions
-        // if (conf.functionInlining()) {
-        // result = (MainModule) new FunctionInliningVisitor().visit(result, null);
-        // }
+        if (conf.functionInlining()) {
+            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+        }
         return result;
     }
 
@@ -158,13 +158,13 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
+            populateSequentialClassifications(mainModule, configuration);
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
             populateExpressionClassifications(mainModule, configuration);
-            populateSequentialClassifications(mainModule, configuration);
             verifyComposabilityConstraints(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
