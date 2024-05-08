@@ -2258,6 +2258,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
         visit(statement.getAssignExpression(), argument);
+        SequenceType variableDeclaredType = statement.getStaticContext().getVariableSequenceType(statement.getName());
+        SequenceType expressionType = statement.getAssignExpression().getStaticSequenceType();
+        if (!expressionType.isSubtypeOf(variableDeclaredType)) {
+            throw new UnexpectedStaticTypeException(
+                    "Declared type: "
+                        + variableDeclaredType
+                        + " of variable: $"
+                        + statement.getName()
+                        + " is not a supertype of assigned expression type: "
+                        + expressionType,
+                    statement.getMetadata()
+            );
+        }
         statement.setStaticSequenceType(statement.getAssignExpression().getStaticSequenceType());
         return argument;
     }
@@ -2494,14 +2507,29 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(statement, argument);
         SequenceType declaredType = statement.getActualSequenceType();
         SequenceType inferredType = getInferredSequenceType(statement, declaredType);
-        checkAndUpdateVariableStaticType(
-            declaredType,
-            inferredType,
-            statement.getStaticContext(),
-            statement.getClass().getSimpleName(),
-            statement.getVariableName(),
-            statement.getMetadata()
-        );
+        if (declaredType == null) {
+            if (!statement.isAssignable()) {
+                // Non-assignable typ
+                checkAndUpdateVariableStaticType(
+                    null,
+                    inferredType,
+                    statement.getStaticContext(),
+                    statement.getClass().getSimpleName(),
+                    statement.getVariableName(),
+                    statement.getMetadata()
+                );
+            } else {
+                // Assignable variables without a declared type are have Item* type.
+                checkAndUpdateVariableStaticType(
+                    null,
+                    SequenceType.ITEM_STAR,
+                    statement.getStaticContext(),
+                    statement.getClass().getSimpleName(),
+                    statement.getVariableName(),
+                    statement.getMetadata()
+                );
+            }
+        }
         statement.setStaticSequenceType(
             statement.getStaticContext().getVariableSequenceType(statement.getVariableName())
         );

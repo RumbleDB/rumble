@@ -9,6 +9,8 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
@@ -310,6 +312,23 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         statement.setSequential(false);
         decrementBlockLevel();
         return new DescendentSequentialProperties(false, false, descendant.hasExitStatement());
+    }
+
+    @Override
+    public DescendentSequentialProperties visitLetClause(LetClause clause, DescendentSequentialProperties argument) {
+        this.visit(clause.getExpression(), argument);
+        addVariableToCurrentBlockLevel(clause.getVariableName());
+        return argument;
+    }
+
+    @Override
+    public DescendentSequentialProperties visitForClause(ForClause clause, DescendentSequentialProperties argument) {
+        this.visit(clause.getExpression(), argument);
+        addVariableToCurrentBlockLevel(clause.getVariableName());
+        if (clause.getPositionalVariableName() != null) {
+            addVariableToCurrentBlockLevel(clause.getPositionalVariableName());
+        }
+        return argument;
     }
 
     @Override
