@@ -9,6 +9,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -155,4 +156,12 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         return exprIterator.getDataFrame(dynamicContext);
     }
 
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        RuntimeIterator exprIterator = this.children.get(this.children.size() - 1);
+        if (exprIterator.isUpdating()) {
+            return exprIterator.getPendingUpdateList(context);
+        }
+        return new PendingUpdateList();
+    }
 }

@@ -5,7 +5,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.util.Collections;
 
@@ -30,13 +29,5 @@ public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             this.exprIterator.getPendingUpdateList(context).applyUpdates(this.getMetadata());
         }
         return null;
-    }
-
-    @Override
-    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!this.exprIterator.isUpdating()) {
-            return new PendingUpdateList();
-        }
-        return this.exprIterator.getPendingUpdateList(context);
     }
 }

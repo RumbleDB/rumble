@@ -107,17 +107,18 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             .forEach(
                 libraryModule -> visit(libraryModule, argument)
             );
-        node.getFunctionDeclarations()
-            .forEach(
-                functionDeclaration -> visit(
-                    functionDeclaration,
-                    argument
-                )
-            );
+        // Visit variables first as they may be modified in a function.
         node.getVariableDeclarations()
             .forEach(
                 variableDeclaration -> visit(
                     variableDeclaration,
+                    argument
+                )
+            );
+        node.getFunctionDeclarations()
+            .forEach(
+                functionDeclaration -> visit(
+                    functionDeclaration,
                     argument
                 )
             );

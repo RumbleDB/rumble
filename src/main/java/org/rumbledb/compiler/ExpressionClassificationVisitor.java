@@ -22,6 +22,7 @@ import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
@@ -56,6 +57,10 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         }
         if (node instanceof StatementsAndOptionalExpr) {
             ((StatementsAndOptionalExpr) node).setExpressionClassification(expressionClassification);
+            return expressionClassification;
+        }
+        if (node instanceof InlineFunctionExpression) {
+            ((InlineFunctionExpression) node).setExpressionClassification(expressionClassification);
             return expressionClassification;
         }
         if (expressionClassification.isUpdating()) {

@@ -119,6 +119,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
             this.userDefinedFunctionCallIterator.close();
         }
+        this.userDefinedFunctionCallIterator = null;
     }
 
     public void setNextResult() {

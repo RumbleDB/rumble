@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 public class VariableValues implements Serializable, KryoSerializable {
 
@@ -54,7 +53,6 @@ public class VariableValues implements Serializable, KryoSerializable {
     private Map<Name, Item> localVariableCounts;
     private Map<Name, JavaRDD<Item>> rddVariableValues;
     private Map<Name, JSoundDataFrame> dataFrameVariableValues;
-    private Stack<VariableMapAndPrevValue> variableDeclarationOverwrites;
     private boolean nestedQuery;
     private VariableValues parent;
 
@@ -65,7 +63,6 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.nestedQuery = false;
-        this.variableDeclarationOverwrites = new Stack<>();
     }
 
     public VariableValues(VariableValues parent) {
@@ -78,7 +75,6 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.nestedQuery = false;
-        this.variableDeclarationOverwrites = new Stack<>();
     }
 
     public VariableValues(
@@ -96,7 +92,6 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
         this.nestedQuery = false;
-        this.variableDeclarationOverwrites = new Stack<>();
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
