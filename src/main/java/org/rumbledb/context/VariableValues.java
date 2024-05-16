@@ -81,7 +81,8 @@ public class VariableValues implements Serializable, KryoSerializable {
             VariableValues parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, JSoundDataFrame> dataFrameVariableValues
+            Map<Name, JSoundDataFrame> dataFrameVariableValues,
+            GlobalVariables globalVariables
     ) {
         if (parent == null) {
             throw new OurBadException("Variable values defined with null parent");
@@ -91,7 +92,16 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = localVariableValues;
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
+        removeGlobalVariablesFromCopiedValues(globalVariables);
         this.nestedQuery = false;
+    }
+
+    private void removeGlobalVariablesFromCopiedValues(GlobalVariables globalVariables) {
+        globalVariables.getGlobalVariables().forEach(globalVariable -> {
+            if (containsLocally(this, globalVariable)) {
+                removeVariable(globalVariable);
+            }
+        });
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {

@@ -109,7 +109,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             // named (static function declaration)
             argument.getNamedFunctions().addUserDefinedFunction(function, expression.getMetadata());
         }
-
         return defaultAction(expression, argument);
     }
 
@@ -133,7 +132,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
-
+        argument.addGlobalVariable(name);
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
