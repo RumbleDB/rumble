@@ -199,11 +199,6 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
                     expression.getMetadata()
             );
         }
-        if (argument instanceof WhileStatement) {
-            expression.setStoppingStatement((WhileStatement) argument);
-        } else if (argument instanceof FlowrStatement) {
-            expression.setStoppingStatement((FlowrStatement) argument);
-        }
         return argument;
     }
 
@@ -218,11 +213,6 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
                     "Break statements must be enclosed in while or flwor statements!",
                     expression.getMetadata()
             );
-        }
-        if (argument instanceof WhileStatement) {
-            expression.setContinueStatement((WhileStatement) argument);
-        } else if (argument instanceof FlowrStatement) {
-            expression.setContinueStatement((FlowrStatement) argument);
         }
         return argument;
     }
