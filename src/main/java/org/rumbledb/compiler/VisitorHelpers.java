@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
-import org.rumbledb.compiler.wrapper.BlockExpressionMetadata;
 import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -439,7 +438,7 @@ public class VisitorHelpers {
         }
 
         ComposabilityVisitor visitor = new ComposabilityVisitor();
-        visitor.visit(mainModule, new BlockExpressionMetadata(null, null));
+        visitor.visit(mainModule, null);
 
         if (configuration.isPrintIteratorTree()) {
             printTree(mainModule, configuration);

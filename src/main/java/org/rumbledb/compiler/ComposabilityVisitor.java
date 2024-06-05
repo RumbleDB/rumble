@@ -1,12 +1,12 @@
 package org.rumbledb.compiler;
 
-import org.rumbledb.compiler.wrapper.BlockExpressionMetadata;
 import org.rumbledb.exceptions.InvalidAssignableVariableComposability;
 import org.rumbledb.exceptions.InvalidComposabilityUpdatingAndSequentialExpression;
 import org.rumbledb.exceptions.InvalidControlStatementComposability;
 import org.rumbledb.exceptions.InvalidUpdatingExpressionCondition;
 import org.rumbledb.exceptions.InvalidUpdatingExpressionOperand;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -25,33 +25,32 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 /**
  * Visitor checks rules for composing statements based on sequential properties
  * or nesting (e.g., break statements).
- * The visitor passes a pair to the descendents:
- * - the first element of the pair is the innermost block expression (function or program).
- * - the second element of the pair is the innermost FLWOR or While statement. Null is expected if there is none.
+ * The visitor passes a node representing the innermost control statement (while or FLWOR), and for some of the rules
+ * applies checks to verify if loops enclose the visited node type.
  */
-public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMetadata> {
+public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
-    public BlockExpressionMetadata visitMainModule(MainModule mainModule, BlockExpressionMetadata argument) {
-        visit(mainModule.getProlog(), argument);
-        visit(mainModule.getProgram(), new BlockExpressionMetadata(mainModule.getProlog(), null));
+    public Node visitMainModule(MainModule mainModule, Node argument) {
+        visit(mainModule.getProlog(), null);
+        visit(mainModule.getProgram(), null);
         return argument;
     }
 
     @Override
-    public BlockExpressionMetadata visitProlog(Prolog expression, BlockExpressionMetadata argument) {
+    public Node visitProlog(Prolog expression, Node argument) {
         expression.getFunctionDeclarations()
             .forEach(
                 functionDeclaration -> visit(
                     functionDeclaration,
-                    new BlockExpressionMetadata(expression, null)
+                    null
                 )
             );
         expression.getVariableDeclarations()
             .forEach(
                 variableDeclaration -> visit(
                     variableDeclaration,
-                    new BlockExpressionMetadata(expression, null)
+                    null
                 )
             );
         boolean containsOtherThanNonUpdatingNonSeq = expression.getVariableDeclarations()
@@ -68,19 +67,19 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
                     expression.getMetadata()
             );
         }
-        return new BlockExpressionMetadata(expression, null);
+        return argument;
     }
 
     @Override
-    public BlockExpressionMetadata visitProgram(Program expression, BlockExpressionMetadata argument) {
+    public Node visitProgram(Program expression, Node argument) {
         visit(expression.getStatementsAndOptionalExpr(), argument);
         return argument;
     }
 
     @Override
-    public BlockExpressionMetadata visitStatementsAndExpr(
+    public Node visitStatementsAndExpr(
             StatementsAndExpr statementsAndExpr,
-            BlockExpressionMetadata argument
+            Node argument
     ) {
         if (statementsAndExpr.getStatements() != null) {
             statementsAndExpr.getStatements().forEach(statement -> visit(statement, argument));
@@ -91,9 +90,9 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     }
 
     @Override
-    public BlockExpressionMetadata visitStatementsAndOptionalExpr(
+    public Node visitStatementsAndOptionalExpr(
             StatementsAndOptionalExpr statementsAndOptionalExpr,
-            BlockExpressionMetadata argument
+            Node argument
     ) {
         if (statementsAndOptionalExpr.getStatements() != null) {
             statementsAndOptionalExpr.getStatements().forEach(statement -> visit(statement, argument));
@@ -105,7 +104,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     }
 
     @Override
-    public BlockExpressionMetadata visitAssignStatement(AssignStatement expression, BlockExpressionMetadata argument) {
+    public Node visitAssignStatement(AssignStatement expression, Node argument) {
         if (expression.getAssignExpression().isUpdating()) {
             throw new InvalidUpdatingExpressionOperand(
                     "Assign statement expects a non-updating operand.",
@@ -122,9 +121,9 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     }
 
     @Override
-    public BlockExpressionMetadata visitVariableDeclStatement(
+    public Node visitVariableDeclStatement(
             VariableDeclStatement statement,
-            BlockExpressionMetadata argument
+            Node argument
     ) {
         if (statement.getVariableExpression() != null && statement.getVariableExpression().isUpdating()) {
             throw new InvalidUpdatingExpressionOperand(
@@ -136,30 +135,30 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     }
 
     @Override
-    public BlockExpressionMetadata visitWhileStatement(WhileStatement expression, BlockExpressionMetadata argument) {
+    public Node visitWhileStatement(WhileStatement expression, Node argument) {
         if (expression.getTestCondition().isUpdating()) {
             throw new InvalidUpdatingExpressionCondition(
                     "While statement expects non-updating test condition",
                     expression.getMetadata()
             );
         }
-        return new BlockExpressionMetadata(argument.getInnerMostBlock(), expression);
+        return argument;
     }
 
     @Override
-    public BlockExpressionMetadata visitFlowrStatement(FlowrStatement expression, BlockExpressionMetadata argument) {
+    public Node visitFlowrStatement(FlowrStatement expression, Node argument) {
         Clause itClause = expression.getReturnStatementClause().getFirstClause();
         while (itClause != null) {
-            this.visit(itClause, new BlockExpressionMetadata(argument.getInnerMostBlock(), expression));
+            this.visit(itClause, expression);
             itClause = itClause.getNextClause();
         }
-        return new BlockExpressionMetadata(argument.getInnerMostBlock(), expression);
+        return argument;
     }
 
     @Override
-    public BlockExpressionMetadata visitConditionalStatement(
+    public Node visitConditionalStatement(
             ConditionalStatement expression,
-            BlockExpressionMetadata argument
+            Node argument
     ) {
         visit(expression.getCondition(), argument);
         if (expression.getCondition().isUpdating()) {
@@ -174,9 +173,9 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     }
 
     @Override
-    public BlockExpressionMetadata visitVariableDeclaration(
+    public Node visitVariableDeclaration(
             VariableDeclaration expression,
-            BlockExpressionMetadata argument
+            Node argument
     ) {
         if (expression.external()) {
             // TODO: see if external should have different behavior.
@@ -192,38 +191,38 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<BlockExpressionMet
     }
 
     @Override
-    public BlockExpressionMetadata visitBreakStatement(BreakStatement expression, BlockExpressionMetadata argument) {
-        if (argument.getInnerMostLoopStatement() == null) {
+    public Node visitBreakStatement(BreakStatement expression, Node argument) {
+        if (argument == null) {
             // There is no enclosing while or flwor statement
             throw new InvalidControlStatementComposability(
                     "Break statements must be enclosed in while or flwor statements!",
                     expression.getMetadata()
             );
         }
-        if (argument.getInnerMostLoopStatement() instanceof WhileStatement) {
-            expression.setStoppingStatement((WhileStatement) argument.getInnerMostLoopStatement());
-        } else if (argument.getInnerMostLoopStatement() instanceof FlowrStatement) {
-            expression.setStoppingStatement((FlowrStatement) argument.getInnerMostLoopStatement());
+        if (argument instanceof WhileStatement) {
+            expression.setStoppingStatement((WhileStatement) argument);
+        } else if (argument instanceof FlowrStatement) {
+            expression.setStoppingStatement((FlowrStatement) argument);
         }
         return argument;
     }
 
     @Override
-    public BlockExpressionMetadata visitContinueStatement(
+    public Node visitContinueStatement(
             ContinueStatement expression,
-            BlockExpressionMetadata argument
+            Node argument
     ) {
-        if (argument.getInnerMostLoopStatement() == null) {
+        if (argument == null) {
             // There is no enclosing while or flwor statement
             throw new InvalidControlStatementComposability(
                     "Break statements must be enclosed in while or flwor statements!",
                     expression.getMetadata()
             );
         }
-        if (argument.getInnerMostLoopStatement() instanceof WhileStatement) {
-            expression.setContinueStatement((WhileStatement) argument.getInnerMostLoopStatement());
-        } else if (argument.getInnerMostLoopStatement() instanceof FlowrStatement) {
-            expression.setContinueStatement((FlowrStatement) argument.getInnerMostLoopStatement());
+        if (argument instanceof WhileStatement) {
+            expression.setContinueStatement((WhileStatement) argument);
+        } else if (argument instanceof FlowrStatement) {
+            expression.setContinueStatement((FlowrStatement) argument);
         }
         return argument;
     }
