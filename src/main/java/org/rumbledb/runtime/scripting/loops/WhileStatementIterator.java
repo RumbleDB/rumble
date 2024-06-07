@@ -38,7 +38,6 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
 
-
         return null;
     }
 }

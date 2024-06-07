@@ -30,7 +30,6 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         List<Item> exprItems = this.assignExpression.materialize(context);
-        // Check sequence type
         context.getVariableValues()
             .changeVariableValue(
                 this.variableName,

@@ -16,7 +16,6 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
     private final RuntimeIterator defaultReturn;
-    private RuntimeIterator matchingIterator = null;
 
     public SwitchStatementIterator(
             RuntimeIterator testField,
@@ -94,9 +93,9 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        this.matchingIterator = this.selectApplicableIterator(dynamicContext);
+        RuntimeIterator matchingIterator = this.selectApplicableIterator(dynamicContext);
         DynamicContext childContext = new DynamicContext(dynamicContext);
-        this.matchingIterator.materialize(childContext);
+        matchingIterator.materialize(childContext);
         return null;
     }
 }

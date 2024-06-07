@@ -556,8 +556,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
-    // TODO: Check what happens for break and continue
-
     @Override
     public Void visitReturnStatementClause(ReturnStatementClause clause, Void argument) {
         visit(clause.getReturnStatement(), null);
