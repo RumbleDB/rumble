@@ -91,6 +91,9 @@ import org.rumbledb.runtime.functions.object.ObjectKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectProjectFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
+import org.rumbledb.runtime.functions.random.RandomNumberGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceWithoutSeedGeneratorIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.MaxFunctionIterator;
@@ -2677,6 +2680,53 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
+    /**
+     * function that returns a random number
+     */
+    static final BuiltinFunction random_number_generator = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random"
+        ),
+        "double",
+        RandomNumberGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a sequence of random numbers
+     */
+    static final BuiltinFunction random_sequence_generator = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random_sequence"
+        ),
+        "integer",
+        "item*",
+        RandomSequenceWithoutSeedGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a sequence of random numbers using a seed
+     */
+    static final BuiltinFunction random_sequence_generator_with_seed = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random_sequence"
+        ),
+        "integer",
+        "integer",
+        "item*",
+        RandomSequenceGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+
+
     static {
         builtinFunctions = new HashMap<>();
 
@@ -2880,6 +2930,9 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(binary_classification_metrics1.getIdentifier(), binary_classification_metrics1);
         builtinFunctions.put(binary_classification_metrics2.getIdentifier(), binary_classification_metrics2);
         builtinFunctions.put(print_variable_values.getIdentifier(), print_variable_values);
+        builtinFunctions.put(random_number_generator.getIdentifier(), random_number_generator);
+        builtinFunctions.put(random_sequence_generator.getIdentifier(), random_sequence_generator);
+        builtinFunctions.put(random_sequence_generator_with_seed.getIdentifier(), random_sequence_generator_with_seed);
     }
 
 
