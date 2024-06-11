@@ -109,6 +109,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     @Override
     protected void resetLocal() {
         this.userDefinedFunctionCallIterator.reset(this.currentDynamicContextForLocalExecution);
+        this.encounteredExitStatement = false;
+        this.nextExitStatementResult = 0;
         setNextResult();
     }
 
@@ -120,6 +122,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             this.userDefinedFunctionCallIterator.close();
         }
         this.userDefinedFunctionCallIterator = null;
+        this.encounteredExitStatement = false;
+        this.nextExitStatementResult = 0;
     }
 
     public void setNextResult() {

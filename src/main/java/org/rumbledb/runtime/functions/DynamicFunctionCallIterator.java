@@ -194,6 +194,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         if (this.isOpen) {
             this.functionCallIterator.close();
         }
+        this.nextExitStatementResult = 0;
+        this.encounteredExitStatement = false;
     }
 
     protected boolean implementsDataFrames() {
