@@ -23,8 +23,8 @@ public class RandomSequenceGeneratorIterator extends AtMostOneItemLocalRuntimeIt
         Random random = new Random();
         List<Item> randomSequence = new ArrayList<>();
 
-        Item sequenceLength = this.children.get(0).materializeFirstItemOrNull(context);
-        Item seed = this.children.get(1).materializeFirstItemOrNull(context);
+        Item seed = this.children.get(0).materializeFirstItemOrNull(context);
+        Item sequenceLength = this.children.get(1).materializeFirstItemOrNull(context);
         random.setSeed(seed.castToIntValue());
         random.doubles(sequenceLength.castToIntValue()).forEach(randomDouble -> {
             randomSequence.add(ItemFactory.getInstance().createDoubleItem(randomDouble));

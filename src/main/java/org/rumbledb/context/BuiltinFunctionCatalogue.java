@@ -93,6 +93,7 @@ import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
 import org.rumbledb.runtime.functions.random.RandomNumberGeneratorIterator;
 import org.rumbledb.runtime.functions.random.RandomSequenceGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceWithBounds;
 import org.rumbledb.runtime.functions.random.RandomSequenceWithoutSeedGeneratorIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
@@ -2701,7 +2702,7 @@ public class BuiltinFunctionCatalogue {
         new Name(
                 Name.FN_NS,
                 "",
-                "random_sequence"
+                "random"
         ),
         "integer",
         "item*",
@@ -2716,12 +2717,46 @@ public class BuiltinFunctionCatalogue {
         new Name(
                 Name.FN_NS,
                 "",
-                "random_sequence"
+                "seeded_random"
         ),
         "integer",
         "integer",
         "item*",
         RandomSequenceGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a sequence of random numbers using a low and high bound, while also allowing to limit the
+     * number of elements generated and their type
+     */
+    static final BuiltinFunction random_sequence_with_bounds = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random-between"
+        ),
+        "integer",
+        "integer",
+        "integer",
+        "string",
+        "item*",
+        RandomSequenceWithBounds.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction random_sequence_with_bounds_double = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random-between"
+        ),
+        "double",
+        "double",
+        "integer",
+        "string",
+        "item*",
+        RandomSequenceWithBounds.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2933,6 +2968,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(random_number_generator.getIdentifier(), random_number_generator);
         builtinFunctions.put(random_sequence_generator.getIdentifier(), random_sequence_generator);
         builtinFunctions.put(random_sequence_generator_with_seed.getIdentifier(), random_sequence_generator_with_seed);
+        builtinFunctions.put(random_sequence_with_bounds.getIdentifier(), random_sequence_with_bounds);
+        builtinFunctions.put(random_sequence_with_bounds_double.getIdentifier(), random_sequence_with_bounds_double);
     }
 
 
