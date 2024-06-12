@@ -44,6 +44,7 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.error.ThrowErrorIterator;
 import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
@@ -2760,7 +2761,41 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
+    static final BuiltinFunction error = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "null?",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
 
+    static final BuiltinFunction error_with_code = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "string",
+        "null?",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction error_with_code_and_description = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "string",
+        "string",
+        "null?",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
 
     static {
         builtinFunctions = new HashMap<>();
@@ -2970,6 +3005,9 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(random_sequence_generator_with_seed.getIdentifier(), random_sequence_generator_with_seed);
         builtinFunctions.put(random_sequence_with_bounds.getIdentifier(), random_sequence_with_bounds);
         builtinFunctions.put(random_sequence_with_bounds_double.getIdentifier(), random_sequence_with_bounds_double);
+        builtinFunctions.put(error.getIdentifier(), error);
+        builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
+        builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
     }
 
 
