@@ -13,3 +13,18 @@ declare function jsoniq_utils:cast-as($value, $type as string) {
         case "null" return $value cast as null
         default return $value cast as integer
 };
+
+(: Function returns the shape of the array as a list where each index represents the number of elements in that particular dimension.
+Required params are:
+- arr (array): the array to compute the shape for :)
+declare function jsoniq_utils:shape($arr as array) {
+    variable $shape := [];
+    variable $pos := 1;
+    variable $it := $arr;
+    while (size($it) gt 0) {
+        insert json size($it) into $shape at position $pos;
+        $pos := $pos + 1;
+        $it := $arr[[1]];
+    }
+    $shape
+};

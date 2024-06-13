@@ -152,7 +152,7 @@ declare function jsoniq_numpy:linspace($start as double, $end as double, $params
                 let $step := $range div ($num - 1)
                 let $res :=
                             for $i in 1 to $num
-                            return if ($i eq $num) then round(float($start + ($i - 1) * $step), 8)
+                            return if ($i eq $num) then float($start + ($i - 1) * $step)
                                 else $start + ($i - 1) * $step
                 return
                     if ($params.retstep eq true) then ([$res], $step)
@@ -167,7 +167,7 @@ declare function jsoniq_numpy:linspace($start as double, $end as double, $params
                 let $step := $range div $num
                 let $res :=
                             for $i in 1 to $num
-                            return if ($i eq $num) then round(float($start + ($i - 1) * $step), 8)
+                            return if ($i eq $num) then float($start + ($i - 1) * $step)
                                 else $start + ($i - 1) * $step
                 return
                     if ($params.retstep eq true) then ([$res], $step)
@@ -431,8 +431,32 @@ declare %an:sequential function jsoniq_numpy:binsearch($arr as array, $x) {
         variable $mid := integer($low + ($high - $low) div 2);
         if ($arr[[$mid]] eq $x) then exit returning $mid;
         else
-            if ($x lt $arr[[$mid]]) then $high := $mid;
+            if ($x le $arr[[$mid]]) then $high := $mid;
             else $low := $mid + 1;
+    }
+    exit returning if ($low eq 1) then 0 else $low;
+};
+
+(: returns i s.t. arr[i - 1] <= x < arr[i] :)
+declare %an:sequential function jsoniq_numpy:searchsorted_left($arr as array, $x) {
+    variable $low := 1;
+    variable $high := size($arr) + 1;
+    while ($low lt $high) {
+        variable $mid := integer($low + ($high - $low) div 2);
+        if ($x ge $arr[[$mid]]) then $low := $mid + 1;
+        else $high := $mid;
+    }
+    exit returning if ($low eq 1) then 0 else $low;
+};
+
+(: returns i s.t. arr[i - 1] < x <= arr[i] :)
+declare %an:sequential function jsoniq_numpy:searchsorted_right($arr as array, $x) {
+    variable $low := 1;
+    variable $high := size($arr) + 1;
+    while ($low lt $high) {
+        variable $mid := integer($low + ($high - $low) div 2);
+        if ($x ge $arr[[$mid]]) then $low := $mid + 1;
+        else $high := $mid;
     }
     exit returning if ($low eq 1) then 0 else $low;
 };
@@ -445,10 +469,70 @@ Required arguments:
 - bins (array): one dimensional monotonic, array
 Optional arguments include:
 - right (boolean): indicates whether the intervals include the right or the left bin edge
+Values outside of the bins bounds return position 1 or size(bins) + 1 according to their relation.
+(: TODO: right param:)
 :)
 declare function jsoniq_numpy:digitize($x as array, $bins as array) {
-    let $join :=
-        for $i in 1 to size($x)
-        return jsoniq_numpy:binsearch($bins, $x[[$i]])
-    return [$join]
+    let $monotonic := jsoniq_numpy:monotonic($bins)
+    return {
+        if ($monotonic eq 0) then
+            fn:error("Bins must be monotonically increasing or decreasing!")
+        else
+            if ($monotonic eq 1) then
+                let $join := for $i in 1 to size($x)
+                            return jsoniq_numpy:searchsorted_left($bins, $x[[$i]])
+                return [$join]
+            else
+                (: reverse case requires reversing the array :)
+                let $bins_rev := [fn:reverse($bins[])]
+                let $join := for $i in 1 to size($x)
+                            let $searchsorted_res := jsoniq_numpy:searchsorted_left($bins_rev, $x[[$i]])
+                            let $bin_index := jsoniq_numpy:compute_index($searchsorted_res, size($bins))
+                            return $bin_index
+                return [$join]
+    }
 };
+
+declare function jsoniq_numpy:compute_index($result as integer, $size as integer) {
+    (: the value is out of the bounds on the left => size + 1:)
+    if ($result eq 0) then $size + 1
+    else
+        (: the value is out of bounds on the right => 1 :)
+        if ($result eq ($size + 1)) then 1
+        else
+            $size - $result + 2
+};
+
+declare function jsoniq_numpy:non_decreasing($arr as array) {
+    variable $i := 1;
+    while ($i lt (size($arr) - 1)) {
+        if ($arr[[$i]] gt $arr[[$i + 1]]) then {
+            exit returning 0;
+        } else {
+            $i := $i + 1;
+            continue loop;
+        }
+    }
+    1
+};
+
+declare function jsoniq_numpy:non_increasing($arr as array) {
+    variable $i := 1;
+    while ($i lt (size($arr) - 1)) {
+        if ($arr[[$i]] lt $arr[[$i + 1]]) then {
+            exit returning 0;
+        } else {
+            $i := $i + 1;
+            continue loop;
+        }
+    }
+    -1
+};
+
+declare function jsoniq_numpy:monotonic($arr as array) {
+    if (jsoniq_numpy:non_decreasing($arr) eq 0) then
+        jsoniq_numpy:non_increasing($arr)
+    else
+        1
+};
+
