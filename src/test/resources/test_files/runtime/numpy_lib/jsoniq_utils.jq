@@ -21,10 +21,15 @@ declare function jsoniq_utils:shape($arr as array) {
     variable $shape := [];
     variable $pos := 1;
     variable $it := $arr;
-    while (size($it) gt 0) {
-        insert json size($it) into $shape at position $pos;
-        $pos := $pos + 1;
-        $it := $arr[[1]];
+    try {
+        while (size($it) gt 0) {
+            insert json size($it) into $shape at position $pos;
+            $pos := $pos + 1;
+            $it := $it[[1]];
+        }
+    } catch XPTY0004 {
+        (: While loop stops when $it becomes a single value :)
+        ();
     }
     $shape
 };

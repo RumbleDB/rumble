@@ -10,8 +10,9 @@ declare function jsoniq_numpy:zeros($shape as array, $zero, $i as integer) {
             return [$join]
     else
       let $join := 
+                    let $partial_res := jsoniq_numpy:zeros($shape, $zero, $i + 1)
                     for $j in 1 to $shape[[$i]]
-                    return jsoniq_numpy:zeros($shape, $zero, $i + 1)
+                    return $partial_res
       return [$join] 
 };
 
@@ -36,8 +37,9 @@ declare function jsoniq_numpy:zeros($shape as array, $params as object) {
             let $i := 1
             let $zero := utils:cast-as(0, $params.type)
             let $join :=
+                        let $partial_res := jsoniq_numpy:zeros($shape, $zero, $i + 1)
                         for $j in 1 to $shape[[$i]]
-                        return jsoniq_numpy:zeros($shape, $zero, $i + 1)
+                        return $partial_res
             return [$join]
     }
 };
@@ -56,8 +58,9 @@ declare function jsoniq_numpy:ones($shape as array, $one, $i as integer) {
             return [$join]
     else
       let $join := 
+                    let $partial_res := jsoniq_numpy:ones($shape, $one, $i + 1)
                     for $j in 1 to $shape[[$i]]
-                    return jsoniq_numpy:ones($shape, $one, $i + 1)
+                    return $partial_res
       return [$join]  
 
 };
@@ -83,8 +86,9 @@ declare function jsoniq_numpy:ones($shape as array, $params as object) {
             let $i := 1
             let $one := utils:cast-as(1, $params.type)
             let $join :=
+                        let $partial_res := jsoniq_numpy:ones($shape, $one, $i + 1)
                         for $j in 1 to $shape[[$i]]
-                        return jsoniq_numpy:ones($shape, $one, $i + 1)
+                        return $partial_res
             return [$join]  
     }
 };
@@ -415,6 +419,10 @@ declare function jsoniq_numpy:identity($n as integer, $params as object) {
     }
 };
 
+declare function jsoniq_numpy:identity($n as integer) {
+    jsoniq_numpy:identity($n, {})
+};
+
 (: Binary search method. It performs binary search over the given arr parameter looking for the value of x for it. The current behavior is to return the first matching position for a given x even if more values of it are present.
 Required params are:
 - arr (array): the array to search for x
@@ -536,3 +544,31 @@ declare function jsoniq_numpy:monotonic($arr as array) {
         1
 };
 
+(: Gives a new shape to an array. Currently, only integer sizing is supported.
+Required params are:
+- arr (array): the array to reshape
+- shape (array) UNSUPPORTED: the one-dimensional value to resize it to. :)
+declare function jsoniq_numpy:reshape($arr as array) {
+    flatten($arr)
+};
+
+(: Helper method for argwhere :)
+declare function jsoniq_numpy:argwhere($arr, $res as array) {
+    typeswitch($arr) 
+        case array return {
+            for $i in 1 to size($arr)
+            let $sub_arr := $arr[[$i]]
+            let $next_res := [$res[], $i]
+            return jsoniq_numpy:argwhere($sub_arr, $next_res)
+        }
+        case integer return if ($arr gt 0) then $res
+                            else ()
+        default return ()
+};
+
+(: Returns the indexes of non-zero elements with respect to the dimension. The result is a [N, nr_dim] array, where N is the number of non-zero elements and nr_dim is the number of dimensions.
+Required params are:
+- arr (array): the array to look into :)
+declare function jsoniq_numpy:argwhere($arr as array) {
+    [jsoniq_numpy:argwhere($arr, [])]
+};
