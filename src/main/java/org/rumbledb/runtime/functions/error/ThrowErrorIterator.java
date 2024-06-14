@@ -29,13 +29,13 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             Item errorCode = this.children.get(0).materializeFirstItemOrNull(context);
             throw new RumbleException(
                     "An error has been raised without an error description.",
-                    ErrorCode.valueOf(errorCode.toString())
+                    ErrorCode.valueOf(errorCode.getStringValue())
             );
         } else {
             // Error code and description arguments case.
             Item errorCode = this.children.get(0).materializeFirstItemOrNull(context);
             Item description = this.children.get(1).materializeFirstItemOrNull(context);
-            throw new RumbleException(description.toString(), ErrorCode.valueOf(errorCode.toString()));
+            throw new RumbleException(description.getStringValue(), ErrorCode.valueOf(errorCode.getStringValue()));
         }
     }
 }
