@@ -661,3 +661,118 @@ declare function jsoniq_numpy:min($array as array, $params as object) {
 declare function jsoniq_numpy:min($array as array) {
     jsoniq_numpy:min($array, {})
 };
+
+(: MAX :)
+
+(: Helper method to compute maximum of two arrays. The maximum is computed per index, so the maximum value for a specific index is taken. :)
+declare function jsoniq_numpy:max_array_rec($array1, $array2) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:max_array_rec($array1[[$i]], $array2[[$i]])
+                          return [$join]
+        default return if ($array1 gt $array2) then $array1
+                            else $array2
+};
+(: Helper method to compute maximum of two arrays. The maximum is computed per index, so the maximum value for a specific index is taken. If the maximum is greater than initial, initial is returned instead as the maximum. :)
+declare function jsoniq_numpy:max_array_rec($array1, $array2, $initial) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:max_array_rec($array1[[$i]], $array2[[$i]], $initial)
+                          return [$join]
+        default return if ($array1 gt $array2) then 
+                            if ($initial gt $array1) then $initial
+                            else $array1
+                        else
+                            if ($initial gt $array2) then $initial
+                            else $array2
+};
+
+(: Helper method to compute the maximum on the right axis. :)
+declare function jsoniq_numpy:max_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
+    if ($dim eq $max_dim) then exit returning max($array[]);
+    else {
+        if ($dim eq $axis) then {
+            (: Take the first array as maximum :)
+            variable $maxii := $array[[1]];
+            variable $i := 2;
+            while ($i le size($array)) {
+                $maxii := jsoniq_numpy:max_array_rec($maxii, $array[[$i]]);
+                $i := $i + 1;
+            }
+            exit returning $maxii;
+        } else {
+            let $join :=
+                let $size := size($array)
+                for $i in 1 to $size
+                return jsoniq_numpy:max_rec($array[[$i]], $axis, $dim + 1, $max_dim)
+            return exit returning [$join];
+        }
+    }
+};
+
+(: Helper method to compute the maximum on the right axis and using initial. :)
+declare function jsoniq_numpy:max_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer, $initial as integer) {
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning max(($array[], $initial));
+        else {
+            if ($dim eq $axis) then {
+                (: Take the first array as maximum :)
+                variable $maxii := $array[[1]];
+                variable $i := 2;
+                while ($i le size($array)) {
+                    $maxii := jsoniq_numpy:max_array_rec($maxii, $array[[$i]], $initial);
+                    $i := $i + 1;
+                }
+                exit returning $maxii;
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:max_rec($array[[$i]], $axis, $dim + 1, $max_dim, $initial)
+                return exit returning [$join];
+            }
+        }
+};
+
+(: Helper method that invokes maximum with axis only :)
+declare function jsoniq_numpy:max_($array as array, $axis as integer) {
+    if ($axis eq -1) then max($array[])
+    else 
+        jsoniq_numpy:max_rec($array, $axis, 0, size(utils:shape($array)) - 1)
+};
+
+(: Helper method that invokes maximum with axis and initial :)
+declare function jsoniq_numpy:max_($array as array, $axis as integer, $initial as integer) {
+    if ($axis eq -1) then max(($array[], $initial))
+    else
+        jsoniq_numpy:max_rec($array, $axis, 0, size(utils:shape($array)) - 1, $initial)
+        
+};
+
+declare type jsoniq_numpy:max_params as {
+    "axis": "integer=-1",
+    "initial": "integer=2147483647"
+};
+
+(: max returns the maximum value of an array along an axis. Without an axis, it returns the maximum value in the array.
+Required params are:
+- array (array): The array to look into
+Params is an object for optional arguments. These arguments are:
+- axis (integer): The axis along which to compute the maximum. Only values greater than 0 are accepted.
+- initial (integer): The maximum value returned as output. If a maximum value is smaller than initial, initial is returned. We reserve the value 2147483647 for the default, unset value of initial.:)
+declare function jsoniq_numpy:max($array as array, $params as object) {
+    let $params := validate type jsoniq_numpy:max_params {$params}
+    return {
+        if ($params.initial eq 2147483647) then
+            jsoniq_numpy:max_($array, $params.axis)
+        else
+            jsoniq_numpy:max_($array, $params.axis, $params.initial)
+    }
+};
+
+declare function jsoniq_numpy:max($array as array) {
+    jsoniq_numpy:max($array, {})
+};

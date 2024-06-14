@@ -46,8 +46,15 @@ FrontendTests:
 
 RuntimeTests:
   stage: tests3
+  artifacts:
+    name: "Runtime Tests log"
+    paths:
+      - target/runtime_test.log
+    when:
+      always
+    expire_in: 2 days
   script:
-    - mvn -Dtest=RuntimeTests test
+    - mvn -Dtest=RuntimeTests test --log-file target/runtime_test.log
 
 RuntimeTestsNoParallelism:
   stage: tests3
