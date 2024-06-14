@@ -854,3 +854,19 @@ declare function jsoniq_numpy:mean($array as array, $params as object) {
 declare function jsoniq_numpy:mean($array as array) {
     jsoniq_numpy:mean($array, {})
 };
+
+(: Returns the array in absolute value.
+Required params are:
+- array (array): the array to perform absolute value on.
+Other numpy equivalent numpy params are unsupported.
+:)
+declare function jsoniq_numpy:absolute($array) {
+    typeswitch($array)
+        case array return if (size($array) eq 0) then []
+                          else
+                                let $join :=
+                                    for $i in 1 to size($array)
+                                    return jsoniq_numpy:absolute($array[[$i]])
+                                return [$join]
+        default return abs($array)
+};
