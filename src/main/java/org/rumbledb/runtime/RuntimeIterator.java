@@ -331,11 +331,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             while (this.hasNext()) {
                 result.add(this.next());
             }
+            this.close();
             return result;
         } catch (BreakStatementException | ContinueStatementException controlException) {
-            throw controlException;
-        } finally {
             this.close();
+            throw controlException;
         }
     }
 
