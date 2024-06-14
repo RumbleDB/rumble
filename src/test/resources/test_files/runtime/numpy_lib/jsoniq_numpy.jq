@@ -576,32 +576,34 @@ declare function jsoniq_numpy:min_array_rec($array1, $array2, $initial) {
 
 (: Helper method to compute the minimum on the right axis. :)
 declare function jsoniq_numpy:min_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
-    if ($dim eq $max_dim) then exit returning min($array[]);
-    else {
-        if ($dim eq $axis) then {
-            (: Take the first array as minimum :)
-            variable $mini := $array[[1]];
-            variable $i := 2;
-            while ($i le size($array)) {
-                $mini := jsoniq_numpy:min_array_rec($mini, $array[[$i]]);
-                $i := $i + 1;
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning min(flatten($array[]));
+        else {
+            if ($dim eq $axis) then {
+                (: Take the first array as minimum :)
+                variable $mini := $array[[1]];
+                variable $i := 2;
+                while ($i le size($array)) {
+                    $mini := jsoniq_numpy:min_array_rec($mini, $array[[$i]]);
+                    $i := $i + 1;
+                }
+                exit returning $mini;
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:min_rec($array[[$i]], $axis, $dim + 1, $max_dim)
+                return exit returning [$join];
             }
-            exit returning $mini;
-        } else {
-            let $join :=
-                let $size := size($array)
-                for $i in 1 to $size
-                return jsoniq_numpy:min_rec($array[[$i]], $axis, $dim + 1, $max_dim)
-            return exit returning [$join];
         }
-    }
 };
 
 (: Helper method to compute the minimum on the right axis and using initial. :)
 declare function jsoniq_numpy:min_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer, $initial as integer) {
     if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
     else
-        if ($dim eq $max_dim) then exit returning min(($array[], $initial));
+        if ($dim eq $max_dim) then exit returning min((flatten($array[]), $initial));
         else {
             if ($dim eq $axis) then {
                 (: Take the first array as minimum :)
@@ -624,14 +626,14 @@ declare function jsoniq_numpy:min_rec($array as array, $axis as integer, $dim as
 
 (: Helper method that invokes minimum with axis only :)
 declare function jsoniq_numpy:min_($array as array, $axis as integer) {
-    if ($axis eq -1) then min($array[])
+    if ($axis eq -1) then min(flatten($array[]))
     else 
         jsoniq_numpy:min_rec($array, $axis, 0, size(utils:shape($array)) - 1)
 };
 
 (: Helper method that invokes minimum with axis and initial :)
 declare function jsoniq_numpy:min_($array as array, $axis as integer, $initial as integer) {
-    if ($axis eq -1) then min(($array[], $initial))
+    if ($axis eq -1) then min((flatten($array[]), $initial))
     else
         jsoniq_numpy:min_rec($array, $axis, 0, size(utils:shape($array)) - 1, $initial)
         
@@ -691,32 +693,34 @@ declare function jsoniq_numpy:max_array_rec($array1, $array2, $initial) {
 
 (: Helper method to compute the maximum on the right axis. :)
 declare function jsoniq_numpy:max_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
-    if ($dim eq $max_dim) then exit returning max($array[]);
-    else {
-        if ($dim eq $axis) then {
-            (: Take the first array as maximum :)
-            variable $maxii := $array[[1]];
-            variable $i := 2;
-            while ($i le size($array)) {
-                $maxii := jsoniq_numpy:max_array_rec($maxii, $array[[$i]]);
-                $i := $i + 1;
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning max(flatten($array[]));
+        else {
+            if ($dim eq $axis) then {
+                (: Take the first array as maximum :)
+                variable $maxii := $array[[1]];
+                variable $i := 2;
+                while ($i le size($array)) {
+                    $maxii := jsoniq_numpy:max_array_rec($maxii, $array[[$i]]);
+                    $i := $i + 1;
+                }
+                exit returning $maxii;
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:max_rec($array[[$i]], $axis, $dim + 1, $max_dim)
+                return exit returning [$join];
             }
-            exit returning $maxii;
-        } else {
-            let $join :=
-                let $size := size($array)
-                for $i in 1 to $size
-                return jsoniq_numpy:max_rec($array[[$i]], $axis, $dim + 1, $max_dim)
-            return exit returning [$join];
         }
-    }
 };
 
 (: Helper method to compute the maximum on the right axis and using initial. :)
 declare function jsoniq_numpy:max_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer, $initial as integer) {
     if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
     else
-        if ($dim eq $max_dim) then exit returning max(($array[], $initial));
+        if ($dim eq $max_dim) then exit returning max((flatten($array[]), $initial));
         else {
             if ($dim eq $axis) then {
                 (: Take the first array as maximum :)
@@ -739,14 +743,14 @@ declare function jsoniq_numpy:max_rec($array as array, $axis as integer, $dim as
 
 (: Helper method that invokes maximum with axis only :)
 declare function jsoniq_numpy:max_($array as array, $axis as integer) {
-    if ($axis eq -1) then max($array[])
+    if ($axis eq -1) then max(flatten($array[]))
     else 
         jsoniq_numpy:max_rec($array, $axis, 0, size(utils:shape($array)) - 1)
 };
 
 (: Helper method that invokes maximum with axis and initial :)
 declare function jsoniq_numpy:max_($array as array, $axis as integer, $initial as integer) {
-    if ($axis eq -1) then max(($array[], $initial))
+    if ($axis eq -1) then max((flatten($array[]), $initial))
     else
         jsoniq_numpy:max_rec($array, $axis, 0, size(utils:shape($array)) - 1, $initial)
         
@@ -775,4 +779,78 @@ declare function jsoniq_numpy:max($array as array, $params as object) {
 
 declare function jsoniq_numpy:max($array as array) {
     jsoniq_numpy:max($array, {})
+};
+
+
+(: MEAN :)
+(: TODO: Currently, only the axis argument is supported. :)
+(: Helper method to sum two arrays together. :)
+declare function jsoniq_numpy:sum_array_rec($array1, $array2) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:sum_array_rec($array1[[$i]], $array2[[$i]])
+                          return [$join]
+        default return $array1 + $array2
+};
+
+(: Helper method to compute average on an array given the number of values. :)
+declare function jsoniq_numpy:mean_array_rec($array1, $count) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:mean_array_rec($array1[[$i]], $count)
+                          return [$join]
+        default return $array1 div $count
+};
+
+(: Helper method to compute the mean on the right axis. :)
+declare function jsoniq_numpy:mean_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning avg(flatten($array));
+        else {
+            if ($dim eq $axis) then {
+                (: Take the first array as sum :)
+                variable $mean := $array[[1]];
+                variable $i := 2;
+                while ($i le size($array)) {
+                    $mean := jsoniq_numpy:sum_array_rec($mean, $array[[$i]]);
+                    $i := $i + 1;
+                }
+                $mean := jsoniq_numpy:mean_array_rec($mean, size($array));
+                exit returning $mean;
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:mean_rec($array[[$i]], $axis, $dim + 1, $max_dim)
+                return exit returning [$join];
+            }
+        }
+};
+
+(: Helper method that invokes maximum with axis only :)
+declare function jsoniq_numpy:mean_($array as array, $axis as integer) {
+    if ($axis eq -1) then avg(flatten($array))
+    else 
+        jsoniq_numpy:mean_rec($array, $axis, 0, size(utils:shape($array)) - 1)
+};
+
+declare type jsoniq_numpy:mean_params as {
+    "axis": "integer=-1"
+};
+
+(: mean returns the mean (average) of an array along an axis. Without an axis, it returns the mean of the array.
+Required params are:
+- array (array): The array to look into
+Params is an object for optional arguments. These arguments are:
+- axis (integer): The axis along which to compute the mean. Only values greater than 0 are accepted.:)
+declare function jsoniq_numpy:mean($array as array, $params as object) {
+    let $params := validate type jsoniq_numpy:mean_params {$params}
+    return jsoniq_numpy:mean_($array, $params.axis)
+};
+
+declare function jsoniq_numpy:mean($array as array) {
+    jsoniq_numpy:mean($array, {})
 };
