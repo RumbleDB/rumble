@@ -99,32 +99,6 @@ declare function jsoniq_numpy:ones($shape as array) {
 };
 
 
-(: 
-declare function local:min_array($array1 as array, $array2 as array) {
-
-};
-
-declare function local:min_rec($array as array, $axis as integer, $dim as integer) {
-    if ($dim eq 0) then {();}
-    else {
-        if ($dim eq $axis) then {
-            (: Take the first array as minimum :)
-            variable $mini := $array[[1]];
-            for $i in 2 to $dim
-            return $mini := local:min_array($mini, $array[[$i]]);
-            exit returning $mini;
-        } else {
-            for $i in 1 to $dim
-            return [local:min_rec($array[[$i]], $axis, size($array[[$i]]))];
-        }
-    }
-};
-
-declare function local:min($array as array, $axis as integer) {
-    local:min_res($array, $axis, size($array))
-}; 
-:)
-
 declare type jsoniq_numpy:linspace_params as {
     "num": "integer=50",
     "endpoint": "boolean=true",
@@ -571,4 +545,119 @@ Required params are:
 - arr (array): the array to look into :)
 declare function jsoniq_numpy:argwhere($arr as array) {
     [jsoniq_numpy:argwhere($arr, [])]
+};
+
+(: Axis based methods :)
+
+(: Helper method to compute minimum of two arrays. The minimum is computed per index, so the minimum value for a specific index is taken. :)
+declare function jsoniq_numpy:min_array_rec($array1, $array2) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:min_array_rec($array1[[$i]], $array2[[$i]])
+                          return [$join]
+        default return if ($array1 lt $array2) then $array1
+                            else $array2
+};
+(: Helper method to compute minimum of two arrays. The minimum is computed per index, so the minimum value for a specific index is taken. If the minimum is greater than initial, initial is returned instead as the minimum. :)
+declare function jsoniq_numpy:min_array_rec($array1, $array2, $initial) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:min_array_rec($array1[[$i]], $array2[[$i]], $initial)
+                          return [$join]
+        default return if ($array1 lt $array2) then 
+                            if ($initial lt $array1) then $initial
+                            else $array1
+                        else
+                            if ($initial lt $array2) then $initial
+                            else $array2
+};
+
+(: Helper method to compute the minimum on the right axis. :)
+declare function jsoniq_numpy:min_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
+    if ($dim eq $max_dim) then exit returning min($array[]);
+    else {
+        if ($dim eq $axis) then {
+            (: Take the first array as minimum :)
+            variable $mini := $array[[1]];
+            variable $i := 2;
+            while ($i le size($array)) {
+                $mini := jsoniq_numpy:min_array_rec($mini, $array[[$i]]);
+                $i := $i + 1;
+            }
+            exit returning $mini;
+        } else {
+            let $join :=
+                let $size := size($array)
+                for $i in 1 to $size
+                return jsoniq_numpy:min_rec($array[[$i]], $axis, $dim + 1, $max_dim)
+            return exit returning [$join];
+        }
+    }
+};
+
+(: Helper method to compute the minimum on the right axis and using initial. :)
+declare function jsoniq_numpy:min_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer, $initial as integer) {
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning min(($array[], $initial));
+        else {
+            if ($dim eq $axis) then {
+                (: Take the first array as minimum :)
+                variable $mini := $array[[1]];
+                variable $i := 2;
+                while ($i le size($array)) {
+                    $mini := jsoniq_numpy:min_array_rec($mini, $array[[$i]], $initial);
+                    $i := $i + 1;
+                }
+                exit returning $mini;
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:min_rec($array[[$i]], $axis, $dim + 1, $max_dim, $initial)
+                return exit returning [$join];
+            }
+        }
+};
+
+(: Helper method that invokes minimum with axis only :)
+declare function jsoniq_numpy:min_($array as array, $axis as integer) {
+    if ($axis eq -1) then min($array[])
+    else 
+        jsoniq_numpy:min_rec($array, $axis, 0, size(utils:shape($array)) - 1)
+};
+
+(: Helper method that invokes minimum with axis and initial :)
+declare function jsoniq_numpy:min_($array as array, $axis as integer, $initial as integer) {
+    if ($axis eq -1) then min(($array[], $initial))
+    else
+        jsoniq_numpy:min_rec($array, $axis, 0, size(utils:shape($array)) - 1, $initial)
+        
+};
+
+declare type jsoniq_numpy:min_params as {
+    "axis": "integer=-1",
+    "initial": "integer=-2147483648"
+};
+
+(: Min returns the minimum value of an array along an axis. Without an axis, it returns the minimum value in the array.
+Required params are:
+- array (array): The array to look into
+Params is an object for optional arguments. These arguments are:
+- axis (integer): The axis along which to compute the minimum. Only values greater than 0 are accepted.
+- initial (integer): The maximum value returned as output. If a minimum value is greater than initial, initial is returned. We reserve the value -2147483648 for the default, unset value of initial.:)
+declare function jsoniq_numpy:min($array as array, $params as object) {
+    let $params := validate type jsoniq_numpy:min_params {$params}
+    return {
+        if ($params.initial eq -2147483648) then
+            jsoniq_numpy:min_($array, $params.axis)
+        else
+            jsoniq_numpy:min_($array, $params.axis, $params.initial)
+    }
+};
+
+declare function jsoniq_numpy:min($array as array) {
+    jsoniq_numpy:min($array, {})
 };
