@@ -870,3 +870,106 @@ declare function jsoniq_numpy:absolute($array) {
                                 return [$join]
         default return abs($array)
 };
+
+declare function jsoniq_numpy:sort($array as array, $low as integer, $high as integer) as array {
+    if ($low ge $high or $low lt 1) then exit returning $array;
+    else {
+        variable $partition_res := jsoniq_numpy:partition($array, $low, $high);
+        $array := [flatten(subsequence($partition_res, 1, 1))];
+        variable $pivot := subsequence($partition_res, 2, 2);
+        $array := jsoniq_numpy:sort($array, $low, $pivot - 1);
+        $array := jsoniq_numpy:sort($array, $pivot + 1, $high);
+        exit returning $array;
+    }
+};
+
+declare function jsoniq_numpy:partition($array as array, $low as integer, $high as integer) {
+    variable $pivot := jsoniq_numpy:random_randint($low, {"high": $high + 1, "size": 1})[[1]];
+    variable $end := $array[[$high]];
+    replace json value of $array[[$high]] with $array[[$pivot]];
+    replace json value of $array[[$pivot]] with $end;
+
+    variable $i := $low;
+    for $j in $low to $high - 1
+    return {
+        if ($array[[$j]] le $array[[$high]]) then {
+            variable $aux := $array[[$i]];
+            replace json value of $array[[$i]] with $array[[$j]];
+            replace json value of $array[[$j]] with $aux;
+            $i := $i + 1;
+        } else ();
+    }
+    variable $aux := $array[[$i]];
+    replace json value of $array[[$i]] with $array[[$high]];
+    replace json value of $array[[$high]] with $aux;
+    exit returning ($array, $i);
+};
+
+declare function jsoniq_numpy:sort($array) {
+    jsoniq_numpy:sort([flatten($array)], 1, size($array))
+};
+
+(: Count non-zero :)
+
+(: TODO: Test with strings :)
+(: Helper method to compute count nonzero on an array given the number of values. :)
+declare function jsoniq_numpy:count_nonzero_rec_array($array1) {
+    typeswitch($array1)
+        case array return let $join :=
+                                for $i in 1 to size($array1)
+                                return jsoniq_numpy:count_nonzero_rec_array($array1[[$i]])
+                          return [$join]
+        default return if ($array1 ne 0) then 1
+                       else 0
+};
+
+(: Helper method to compute the mean on the right axis. :)
+declare function jsoniq_numpy:count_nonzero_rec($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning sum(flatten(jsoniq_numpy:count_nonzero_rec_array($array)));
+        else {
+            if ($dim eq $axis) then {
+                (: Take the first array as sum :)
+                variable $count := jsoniq_numpy:count_nonzero_rec_array($array[[1]]);
+                variable $i := 2;
+                while ($i le size($array)) {
+                    variable $curr_count := jsoniq_numpy:count_nonzero_rec_array($array[[$i]]); 
+                    $count := jsoniq_numpy:sum_array_rec($curr_count, $count);
+                    $i := $i + 1;
+                }
+                exit returning $count;
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:count_nonzero_rec($array[[$i]], $axis, $dim + 1, $max_dim)
+                return exit returning [$join];
+            }
+        }
+};
+
+(: Helper method that invokes maximum with axis only :)
+declare function jsoniq_numpy:count_nonzero_($array as array, $axis as integer) {
+    if ($axis eq -1) then sum(flatten(jsoniq_numpy:count_nonzero_rec_array($array)))
+    else 
+        jsoniq_numpy:count_nonzero_rec($array, $axis, 0, size(utils:shape($array)) - 1)
+};
+
+declare type jsoniq_numpy:count_nonzero_params as {
+    "axis": "integer=-1"
+};
+
+(: count_nonzero returns the the number of non-zero elements in the array. Non-zero is interpreted as being any value greater than 0, has a boolean value of True or is a non-empty string.
+Required params are:
+- array (array): The array to look into
+Params is an object for optional arguments. These arguments are:
+- axis (integer): The axis along which to compute the count on. Only values greater than 0 are accepted.:)
+declare function jsoniq_numpy:count_nonzero($array as array, $params as object) {
+    let $params := validate type jsoniq_numpy:count_nonzero_params {$params}
+    return jsoniq_numpy:count_nonzero_($array, $params.axis)
+};
+
+declare function jsoniq_numpy:count_nonzero($array as array) {
+    jsoniq_numpy:count_nonzero($array, {})
+};
