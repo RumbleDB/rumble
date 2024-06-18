@@ -919,6 +919,10 @@ declare function jsoniq_numpy:count_nonzero_rec_array($array1) {
                                 for $i in 1 to size($array1)
                                 return jsoniq_numpy:count_nonzero_rec_array($array1[[$i]])
                           return [$join]
+        case string return if ($array1 eq "") then 0
+                           else 1
+        case boolean return if ($array1) then 1
+                            else 0
         default return if ($array1 ne 0) then 1
                        else 0
 };
