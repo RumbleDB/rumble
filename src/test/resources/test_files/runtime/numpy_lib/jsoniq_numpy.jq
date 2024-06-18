@@ -872,14 +872,14 @@ declare function jsoniq_numpy:absolute($array) {
 };
 
 declare function jsoniq_numpy:sort($array as array, $low as integer, $high as integer) as array {
-    if ($low ge $high or $low lt 1) then exit returning $array;
+    if ($low ge $high or $low lt 1) then $array
     else {
         variable $partition_res := jsoniq_numpy:partition($array, $low, $high);
         $array := [flatten(subsequence($partition_res, 1, 1))];
         variable $pivot := subsequence($partition_res, 2, 2);
         $array := jsoniq_numpy:sort($array, $low, $pivot - 1);
         $array := jsoniq_numpy:sort($array, $pivot + 1, $high);
-        exit returning $array;
+        $array
     }
 };
 
@@ -930,7 +930,6 @@ declare function jsoniq_numpy:count_nonzero_rec($array as array, $axis as intege
         if ($dim eq $max_dim) then exit returning sum(flatten(jsoniq_numpy:count_nonzero_rec_array($array)));
         else {
             if ($dim eq $axis) then {
-                (: Take the first array as sum :)
                 variable $count := jsoniq_numpy:count_nonzero_rec_array($array[[1]]);
                 variable $i := 2;
                 while ($i le size($array)) {
@@ -972,4 +971,12 @@ declare function jsoniq_numpy:count_nonzero($array as array, $params as object) 
 
 declare function jsoniq_numpy:count_nonzero($array as array) {
     jsoniq_numpy:count_nonzero($array, {})
+};
+
+
+(: unique returns a 1 dimensional array containing the unique elements of the array, sorted ascendingly. Currently, we only support flattening of the unique array as axis behavior is more intricate for jsoniq to support.
+Required params are:
+- array (array): the array to look for unique values.:)
+declare function jsoniq_numpy:unique($array as array) {
+    jsoniq_numpy:sort([distinct-values(flatten($array))])
 };
