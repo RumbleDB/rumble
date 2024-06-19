@@ -518,12 +518,44 @@ declare function jsoniq_numpy:monotonic($arr as array) {
         1
 };
 
-(: Gives a new shape to an array. Currently, only integer sizing is supported.
-Required params are:
+declare function jsoniq_numpy:product_of_all_values($arr as array) {
+    variable $product := 1;
+    variable $i := 1;
+    while ($i lt size($arr)) {
+        $product := $product * $arr[[$i]];
+        $i := $i + 1;
+    }
+    $product
+};
+
+
+declare function jsoniq_numpy:reshape_recursively($arr, $shape as array, $current_index as integer) {
+    if ($current_index gt size($shape)) then
+        $arr
+    else
+        if ($shape[[$current_index]] eq 1) then
+            [jsoniq_numpy:reshape_recursively($arr, $shape, $current_index + 1)]
+        else
+            let $join := let $size_arr := count($arr)
+                    let $size_subarr := $size_arr div $shape[[$current_index]]
+                    for $j in 0 to ($shape[[$current_index]] - 1)
+                    return jsoniq_numpy:reshape_recursively(subsequence($arr, $j * $size_subarr + 1, $size_subarr), $shape, $current_index + 1)
+            return [$join]
+};
+(: Gives a new shape to an array. The shape argument should have the product of its dimension sizes equal to the number of elements found in arr.
 - arr (array): the array to reshape
-- shape (array) UNSUPPORTED: the one-dimensional value to resize it to. :)
-declare function jsoniq_numpy:reshape($arr as array) {
-    flatten($arr)
+- shape (array): the dimension sizes to resize to. :)
+declare function jsoniq_numpy:reshape($arr as array, $shape as array) {
+    let $flatten_arr := flatten($arr)
+    let $flatten_size := count($flatten_arr)
+    let $product := jsoniq_numpy:product_of_all_values($shape)
+    return
+        if (($flatten_size mod $product) eq 0) then
+            (: construct array :)
+            jsoniq_numpy:reshape_recursively($flatten_arr, $shape, 1)
+        else
+            error("InvalidFunctionCallErrorCode", "Invalid call to reshape. The shape array must result in a size equivalent to the size of the array.")
+
 };
 
 (: Helper method for argwhere :)
