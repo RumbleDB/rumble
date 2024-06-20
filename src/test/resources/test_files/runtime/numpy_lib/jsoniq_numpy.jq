@@ -943,7 +943,6 @@ declare function jsoniq_numpy:sort($array) {
 
 (: Count non-zero :)
 
-(: TODO: Test with strings :)
 (: Helper method to compute count nonzero on an array given the number of values. :)
 declare function jsoniq_numpy:count_nonzero_rec_array($array1) {
     typeswitch($array1)
@@ -1009,10 +1008,97 @@ declare function jsoniq_numpy:count_nonzero($array as array) {
     jsoniq_numpy:count_nonzero($array, {})
 };
 
+(: Unique :)
 
 (: unique returns a 1 dimensional array containing the unique elements of the array, sorted ascendingly. Currently, we only support flattening of the unique array as axis behavior is more intricate for jsoniq to support.
 Required params are:
 - array (array): the array to look for unique values.:)
 declare function jsoniq_numpy:unique($array as array) {
     jsoniq_numpy:sort([distinct-values(flatten($array))])
+};
+
+(: Median :)
+(: Helper method to merge two arrays. Destination may have higher dimension that source, thus we may append to it if it is already an array. :)
+declare function jsoniq_numpy:merge_arrays($source, $dest) {
+    typeswitch($source)
+        case array return let $join :=
+                                for $i in 1 to size($source)
+                                return jsoniq_numpy:merge_arrays($source[[$i]], $dest[[$i]])
+                          return [$join]
+        default return typeswitch($dest)
+                            case array return [$source, flatten($dest)]
+                            default return [$source, $dest]
+};
+
+declare function jsoniq_numpy:median_of_array_recursive($array) {
+    if (size(utils:shape($array)) gt 1) then
+        let $join :=
+            for $i in 1 to size($array)
+            return jsoniq_numpy:median_of_array_recursive($array[[$i]])
+        return [$join]
+    else
+        jsoniq_numpy:median_of_array($array)
+};
+
+(: Helper method to compute the mean on the right axis. :)
+declare function jsoniq_numpy:median_on_axis_recursive($array as array, $axis as integer, $dim as integer, $max_dim as integer) {
+    if ($axis gt $max_dim) then error("InvalidFunctionCallErrorCode","Axis value higher than maximum dimension! Choose a value fitting the dimensions of your array.");
+    else
+        if ($dim eq $max_dim) then exit returning jsoniq_numpy:median_of_array($array);
+        else {
+            if ($dim eq $axis) then {
+                variable $sub_arr := $array[[1]];
+                variable $i := 2;
+                while ($i le size($array)) {
+                    $sub_arr := jsoniq_numpy:merge_arrays($array[[$i]], $sub_arr);
+                    $i := $i + 1;
+                }
+                if ($i eq 2) then
+                    (: no merging was done, no median is needed for this axis :)
+                    exit returning $sub_arr;
+                else
+                    exit returning jsoniq_numpy:median_of_array_recursive($sub_arr);
+            } else {
+                let $join :=
+                    let $size := size($array)
+                    for $i in 1 to $size
+                    return jsoniq_numpy:median_on_axis_recursive($array[[$i]], $axis, $dim + 1, $max_dim)
+                return exit returning [$join];
+            }
+        }
+};
+
+declare function jsoniq_numpy:median_of_array($array as array) {
+    let $sorted_arr := jsoniq_numpy:sort($array)
+    let $middle_index := size($sorted_arr) div 2
+    return 
+        if (size($sorted_arr) mod 2 eq 0) then
+            ($sorted_arr[[$middle_index]] + $sorted_arr[[$middle_index + 1]]) div 2
+        else
+            $sorted_arr[[$middle_index + 1]]
+};
+
+(: Helper method that computes median on given axis. It acts as a wrapper for the recursive method :)
+declare function jsoniq_numpy:median_on_axis($array as array, $axis as integer) {
+    if ($axis eq -1) then jsoniq_numpy:median_of_array([flatten($array)])
+    else 
+        jsoniq_numpy:median_on_axis_recursive($array, $axis, 0, size(utils:shape($array)) - 1)
+};
+
+declare type jsoniq_numpy:median_params as {
+    "axis": "integer=-1"
+};
+
+(: median computes the median along the specified axis. Given an array V of length N, the median of V is the middle value of a sorted copy of V, V_sorted - i e., V_sorted[(N-1)/2], when N is odd, and the average of the two middle values of V_sorted when N is even.
+Required params are:
+- array (array): The array to look into
+Params is an object for optional arguments. These arguments are:
+- axis (integer): The axis along which to compute median on. Only values greater than 0 are accepted.:)
+declare function jsoniq_numpy:median($array as array, $params as object) {
+    let $params := validate type jsoniq_numpy:median_params {$params}
+    return jsoniq_numpy:median_on_axis($array, $params.axis)
+};
+
+declare function jsoniq_numpy:median($array as array) {
+    jsoniq_numpy:median($array, {})
 };
