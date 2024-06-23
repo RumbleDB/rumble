@@ -291,7 +291,7 @@ declare function jsoniq_numpy:compute_logspace($start as double, $end as double,
     let $linspace_vals := jsoniq_numpy:linspace($start, $end, {"num": $params.num, "endpoint": $params.endpoint, "retstep": false})
     let $res :=
                 for $i in 1 to $params.num
-                return pow($base, $linspace_vals[[$i]])
+                return float(pow($base, $linspace_vals[[$i]]))
     return [$res]
 };
 (: Generate evenly spaced numbers on a log scale in base 10.
