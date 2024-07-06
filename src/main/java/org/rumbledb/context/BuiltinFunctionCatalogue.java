@@ -142,6 +142,7 @@ import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
+import org.rumbledb.runtime.functions.typing.DynamicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -2797,6 +2798,18 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
+    static final BuiltinFunction item_type = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "item-type"
+        ),
+        "item*",
+        "string",
+        DynamicItemType.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
     static {
         builtinFunctions = new HashMap<>();
 
@@ -3008,6 +3021,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(error.getIdentifier(), error);
         builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
         builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
+        builtinFunctions.put(item_type.getIdentifier(), item_type);
     }
 
 
