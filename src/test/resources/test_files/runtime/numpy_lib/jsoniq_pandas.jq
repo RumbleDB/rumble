@@ -157,7 +157,43 @@ declare function jsoniq_pandas:sample($dataframe as object*, $num as integer) {}
 Required params are:
 - dataframe (DataFrame): the dataframe to search nulls in.
 :)
-declare function jsoniq_pandas:isnull($dataframe as object*) {};
+declare function jsoniq_pandas:isnull($dataframe as object*) {
+    for $row in $dataframe
+    return jsoniq_pandas:isnull_object($row)
+};
+
+
+declare function jsoniq_pandas:isnull_value($value) {
+    if ($value eq null) then true
+    else false
+};
+
+declare function jsoniq_pandas:isnull_array($array as array) {
+    (: TODO: Error handling. Limit. :)
+    for $value in $array[]
+    return typeswitch($value)
+        case array return jsoniq_pandas:isnull_array($value)
+        case object return jsoniq_pandas:isnull_object($value)
+        default return jsoniq_pandas:isnull_value($value)
+};
+
+declare function jsoniq_pandas:isnull_object($object as object) {
+    {|
+        for $key in keys($object)
+        let $value := $object.$key
+        return
+            typeswitch($value)
+            case object return 
+                let $result := jsoniq_pandas:isnull_object($value)
+                return {$key: $result}
+            case array return
+                let $result := jsoniq_pandas:isnull_array($value)
+                return {$key: $result}
+            default return
+                let $result := jsoniq_pandas:isnull_value($value)
+                return {$key: $result}
+    |}
+};
 
 
 declare type jsoniq_pandas:fillna_params as {
