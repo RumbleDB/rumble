@@ -9,7 +9,24 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.DefaultCollationException;
+import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
+import org.rumbledb.exceptions.DuplicateParamNameException;
+import org.rumbledb.exceptions.EmptyModuleURIException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.JsoniqVersionException;
+import org.rumbledb.exceptions.ModuleNotFoundException;
+import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
+import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
+import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
+import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.exceptions.XMLUnsupportedException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -17,16 +34,53 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.control.*;
-import org.rumbledb.expressions.flowr.*;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
+import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.*;
-import org.rumbledb.expressions.postfix.*;
-import org.rumbledb.expressions.primary.*;
+import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -40,7 +94,14 @@ import org.rumbledb.types.SequenceType;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
@@ -111,7 +172,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     public Node visitMainModule(XQueryParser.MainModuleContext ctx) {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         Expression commaExpression = (Expression) this.visitExpr(ctx.queryBody().expr()); // Had to access query body
-        MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        // TODO: Update XQuery grammar to support scripting.
+        ExceptionMetadata metadata = createMetadataFromContext(ctx);
+        Program program = new Program(new StatementsAndOptionalExpr(null, commaExpression, metadata), metadata);
+        MainModule module = new MainModule(prolog, program, metadata);
         module.setStaticContext(this.moduleContext);
         return module;
     }
@@ -340,7 +404,8 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             }
         }
 
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+        // TODO: add annotations.
+        return new VariableDeclaration(var, external, seq, expr, null, createMetadataFromContext(ctx));
     }
 
     private void processAnnotations(XQueryParser.AnnotationsContext annotations) {
@@ -416,12 +481,20 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         } else {
             bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
         }
+        // TODO: Add statements to XQuery
+        StatementsAndOptionalExpr funcBody = new StatementsAndOptionalExpr(
+                null,
+                bodyExpression,
+                createMetadataFromContext(ctx)
+        );
+
 
         return new InlineFunctionExpression(
+                null, // TODO: add annotations to grammar of XQuery.
                 name,
                 fnParams,
                 fnReturnType,
-                bodyExpression,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1319,12 +1392,14 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         } else {
             expr = new CommaExpression(createMetadataFromContext(ctx));
         }
-
+        // TODO: Add statements to XQuery
+        StatementsAndOptionalExpr funcBody = new StatementsAndOptionalExpr(null, expr, createMetadataFromContext(ctx));
         return new InlineFunctionExpression(
+                null, // TODO: add annotations to grammar of XQuery.
                 null,
                 fnParams,
                 fnReturnType,
-                expr,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }

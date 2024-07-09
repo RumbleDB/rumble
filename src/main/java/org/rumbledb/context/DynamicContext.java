@@ -48,6 +48,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private InScopeSchemaTypes inScopeSchemaTypes;
     private DateTime currentDateTime;
     private int currentMutabilityLevel;
+    private final GlobalVariables globalVariables;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -60,6 +61,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.inScopeSchemaTypes = null;
         this.currentDateTime = new DateTime();
         this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
     }
 
     /**
@@ -75,6 +77,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = new DateTime();
         this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -87,6 +90,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
     }
 
     public DynamicContext(
@@ -103,10 +107,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 this.parent.variableValues,
                 localVariableValues,
                 rddVariableValues,
-                dataFrameVariableValues
+                dataFrameVariableValues,
+                parent.globalVariables
         );
         this.namedFunctions = null;
         this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -246,6 +252,11 @@ public class DynamicContext implements Serializable, KryoSerializable {
         for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
             LogManager.getLogger("DynamicContext").debug(e.getKey() + " : " + e.getValue());
         }
+    }
+
+
+    public void addGlobalVariable(Name globalVariable) {
+        this.globalVariables.addGlobalVariable(globalVariable);
     }
 }
 

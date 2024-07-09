@@ -10,20 +10,91 @@ moduleAndThisIsIt       : module EOF;
 module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
-mainModule              : prolog expr;
+mainModule              : prolog program;
 
 libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 
 prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
                           (annotatedDecl ';')*;
-                         
+
+///////////////////////// Scripting addition - begin
+
+program                 : statementsAndOptionalExpr ;
+
+///////////////////////// Statements
+
+statements                  : statement* ;
+
+statementsAndExpr           : statements expr ;
+
+statementsAndOptionalExpr   : statements expr? ;
+
+statement                   : applyStatement
+                            | assignStatement
+                            | blockStatement
+                            | breakStatement
+                            | continueStatement
+                            | exitStatement
+                            | flowrStatement
+                            | ifStatement
+                            | switchStatement
+                            | tryCatchStatement
+                            | typeSwitchStatement
+                            | varDeclStatement
+                            | whileStatement
+                            ;
+
+applyStatement              : exprSimple ';' ;
+
+assignStatement             : '$' qname ':=' exprSingle ';' ;
+
+blockStatement              : '{' statements '}' ;
+
+breakStatement              : Kbreak Kloop ';' ;
+
+continueStatement           : Kcontinue Kloop ';' ;
+
+exitStatement               : Kexit Kreturning exprSingle ';' ;
+
+flowrStatement              : (start_for=forClause| start_let=letClause)
+                              (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                              Kreturn returnStmt=statement ;
+
+ifStatement:                Kif '(' test_expr=expr ')'
+                            Kthen branch=statement
+                            Kelse else_branch=statement ;
+
+switchStatement             : Kswitch '(' condExpr=expr ')' cases+=switchCaseStatement+ Kdefault Kreturn def=statement ;
+
+switchCaseStatement         : (Kcase cond+=exprSingle)+ Kreturn ret=statement ;
+
+tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseStatement+ ;
+
+catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
+
+typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement+ Kdefault (var_ref=varRef)? Kreturn def=statement ;
+
+caseStatement               : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=statement ;
+
+annotation                  : '%' name=qname ('(' Literal (',' Literal)* ')')? ;
+
+annotations                 : annotation* ;
+
+varDeclStatement            : annotations Kvariable varDeclForStatement (',' varDeclForStatement)* ';' ;
+
+varDeclForStatement         : var_ref=varRef (Kas sequenceType)? (':=' expr_vals+=exprSingle)? ;
+
+whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
+
+///////////////////////// Scripting addition - end
+
 setter                  : defaultCollationDecl
                         | orderingModeDecl
                         | emptyOrderDecl
                         | decimalFormatDecl;
-                        
+
 namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
-                        
+
 annotatedDecl           : functionDecl
                         | varDecl
                         | typeDecl
@@ -55,13 +126,14 @@ dfPropertyName          : 'decimal-separator'
 
 moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
-varDecl                 : Kdeclare Kvariable varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+// TODO: Assignable variable decl
+varDecl                 : Kdeclare annotations Kvariable varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
 contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
-functionDecl            : Kdeclare 'function' fn_name=qname '(' paramList? ')'
+functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' (fn_body=expr)? '}' | 'external');
+                          ('{' (fn_body=statementsAndOptionalExpr) '}' | 'external');
 
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -72,27 +144,30 @@ schemaLanguage          : 'jsound' 'compact'
 paramList               : param (',' param)*;
 
 param                   : '$' qname (Kas sequenceType)?;
-
 ///////////////////////// constructs, expression
 
 expr                    : exprSingle (',' exprSingle)*;     // expr -> CommaExpression in visitor
 
-exprSingle              : flowrExpr
-                        | quantifiedExpr
+exprSingle              : exprSimple
+                        | flowrExpr
                         | switchExpr
                         | typeSwitchExpr
                         | ifExpr
                         | tryCatchExpr
+                        ;
+
+exprSimple              : quantifiedExpr
+                        | orExpr
                         | insertExpr
                         | deleteExpr
                         | renameExpr
                         | replaceExpr
                         | transformExpr
                         | appendExpr
-                        | orExpr;
+                        ;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
-                          (forClause | whereClause | letClause | groupByClause | orderByClause | countClause)*
+                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
                           Kreturn return_expr=exprSingle;
 
 forClause               : Kfor vars+=forVar (',' vars+=forVar)*;
@@ -179,7 +254,7 @@ castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
 arrowExpr               : main_expr=unaryExpr (('=' '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
 
 arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
- 
+
 unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 
 valueExpr               : simpleMap_expr=simpleMapExpr
@@ -216,7 +291,10 @@ primaryExpr             : NullLiteral
                         | unorderedExpr
                         | arrayConstructor
                         | functionItemExpr
+                        | blockExpr
                         ;
+
+blockExpr : '{' statementsAndExpr '}' ;
 
 
 varRef                  : '$' var_name=qname;
@@ -239,9 +317,9 @@ functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
 namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
-inlineFunctionExpr      : 'function' '(' paramList? ')'
+inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
-                           ('{' (fn_body=expr)? '}');
+                           ('{' (fn_body=statementsAndOptionalExpr) '}');
 
 ///////////////////////// Updating Expressions
 
@@ -260,7 +338,9 @@ appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_ex
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 
-copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
+copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
+
+// TODO: Direct element constructors
 
 ///////////////////////// Types
 
@@ -357,6 +437,12 @@ keyWords                : Kjsoniq
                         | Kposition
                         | Kvalidate
                         | Kannotate
+                        | Kbreak
+                        | Kloop
+                        | Kcontinue
+                        | Kexit
+                        | Kreturning
+                        | Kwhile
                         ;
 
 ///////////////////////// literals
@@ -493,6 +579,14 @@ Kwith                   : 'with';
 
 Kposition               : 'position';
 
+///////////////////////// Scripting keywords
+Kbreak                  : 'break' ;
+Kloop                   : 'loop' ;
+Kcontinue               : 'continue' ;
+Kexit                   : 'exit' ;
+Kreturning              : 'returning' ;
+Kwhile                  : 'while' ;
+
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
@@ -547,3 +641,4 @@ fragment NameChar       : NameStartChar
 XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 
 ContentChar             :  ~["'{}<&]  ;
+
