@@ -21,8 +21,6 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
-import scala.util.Properties;
-
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
@@ -32,6 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
+import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 

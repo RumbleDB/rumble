@@ -2,15 +2,38 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
 import org.rumbledb.exceptions.SimpleExpressionMustBeVacuousException;
-import org.rumbledb.expressions.*;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.ExpressionClassification;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
-import org.rumbledb.expressions.flowr.*;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
-import org.rumbledb.expressions.update.*;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +45,24 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     protected ExpressionClassification defaultAction(Node node, ExpressionClassification argument) {
         ExpressionClassification expressionClassification = this.visitDescendants(node, argument);
 
-        if (!(node instanceof Expression)) {
+        if (
+            !(node instanceof Expression)
+        ) {
             return expressionClassification;
         }
 
+        if (node instanceof StatementsAndExpr) {
+            ((StatementsAndExpr) node).setExpressionClassification(expressionClassification);
+            return expressionClassification;
+        }
+        if (node instanceof StatementsAndOptionalExpr) {
+            ((StatementsAndOptionalExpr) node).setExpressionClassification(expressionClassification);
+            return expressionClassification;
+        }
+        if (node instanceof InlineFunctionExpression) {
+            ((InlineFunctionExpression) node).setExpressionClassification(expressionClassification);
+            return expressionClassification;
+        }
         if (expressionClassification.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Operand of expression is Updating when it should be Simple or Vacuous",
@@ -126,8 +163,14 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitGroupByClause(GroupByClause expression, ExpressionClassification argument) {
-        // TODO: Add check for updating?
-        return super.visitGroupByClause(expression, argument);
+        ExpressionClassification result = this.visitDescendants(expression, argument);
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expressions in Group By Clause cannot be updating",
+                    expression.getMetadata()
+            );
+        }
+        return result;
     }
 
     @Override
@@ -156,7 +199,6 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
     @Override
     public ExpressionClassification visitCountClause(CountClause expression, ExpressionClassification argument) {
-        // TODO: Add check for updating?
         return super.visitCountClause(expression, argument);
     }
 
@@ -481,5 +523,25 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             );
         }
         return ExpressionClassification.SIMPLE;
+    }
+
+    @Override
+    public ExpressionClassification visitBlockExpr(BlockExpression expression, ExpressionClassification argument) {
+        ExpressionClassification result = this.visit(expression.getStatementsAndExpr().getExpression(), argument);
+        if (result.isUpdating()) {
+            return ExpressionClassification.UPDATING;
+        }
+        return ExpressionClassification.SIMPLE;
+    }
+
+    @Override
+    public ExpressionClassification visitReturnStatementClause(
+            ReturnStatementClause statementClause,
+            ExpressionClassification argument
+    ) {
+        if (statementClause.getReturnStatement() == null) {
+            return argument;
+        }
+        return this.visitDescendants(statementClause, argument);
     }
 }

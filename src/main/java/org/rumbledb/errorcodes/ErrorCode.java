@@ -138,8 +138,18 @@ public enum ErrorCode {
     TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
     TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
     CannotResolveUpdateSelectorErrorCode("JNUP0016"),
-    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019");
+    ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
 
+    InvalidExpressionClassification("SCCL0001"),
+    InvalidComposabilityUpdatingAndSequentialExpression("SCCP0001"),
+    InvalidUpdatingExpressionOperand("SCCP0002"),
+
+    InvalidUpdatingExpressionCondition("SCCP0003"),
+    InvalidControlStatementComposability("SCCP0004"),
+    InvalidAssignableVariableComposability("SCCP0005"),
+    InvalidSequentialChildInNonSequentialParent("SCCP0006"),
+    InvalidAnnotation("XQAN0001"),
+    InvalidVariableDeclaration("SCIN0001");
 
 
     private String code;
