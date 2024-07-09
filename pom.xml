@@ -107,7 +107,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.7.0</version>
                 <configuration>
                     <excludePackageNames>org.rumbledb.cli:org.rumbledb.config:sparksoniq.*:sparksoniq</excludePackageNames>
                 </configuration>
