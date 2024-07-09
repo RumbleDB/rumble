@@ -24,7 +24,7 @@
     <!-- Set project properties. -->
     <property name="src.dir" value="./src/main/java/org/rumbledb"/>
     <property name="parser.dir" value="${src.dir}/parser"/>
-    <property name="antlr.jar" value="/lib/antlr-4.7-complete.jar"/>
+    <property name="antlr.jar" value="/lib/antlr-4.9.3-complete.jar"/>
 
     <target name="clean-xquery-parser">
         <delete file="/org/rumbledb/parser/XQueryParser.tokens"/>

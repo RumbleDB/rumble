@@ -353,4 +353,7 @@ public class FunctionItem implements Item {
     }
 
 
+    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
+        this.dynamicModuleContext = dynamicModuleContext;
+    }
 }

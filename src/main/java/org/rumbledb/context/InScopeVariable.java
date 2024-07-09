@@ -1,15 +1,14 @@
 package org.rumbledb.context;
 
-import java.io.Serializable;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.SequenceType;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.types.SequenceType;
+
+import java.io.Serializable;
 
 public class InScopeVariable implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
@@ -18,6 +17,7 @@ public class InScopeVariable implements Serializable, KryoSerializable {
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
     private ExecutionMode storageMode;
+    private final boolean isAssignable;
 
     public InScopeVariable(
             Name name,
@@ -29,6 +29,21 @@ public class InScopeVariable implements Serializable, KryoSerializable {
         this.sequenceType = sequenceType;
         this.metadata = metadata;
         this.storageMode = storageMode;
+        this.isAssignable = false; // unspecified means false.
+    }
+
+    public InScopeVariable(
+            Name name,
+            SequenceType type,
+            ExceptionMetadata metadata,
+            ExecutionMode storageMode,
+            boolean isAssignable
+    ) {
+        this.name = name;
+        this.sequenceType = type;
+        this.metadata = metadata;
+        this.storageMode = storageMode;
+        this.isAssignable = isAssignable;
     }
 
     public Name getName() {
@@ -65,5 +80,9 @@ public class InScopeVariable implements Serializable, KryoSerializable {
         this.sequenceType = kryo.readObject(input, SequenceType.class);
         this.metadata = kryo.readObject(input, ExceptionMetadata.class);
         this.storageMode = kryo.readObject(input, ExecutionMode.class);
+    }
+
+    public boolean isAssignable() {
+        return isAssignable;
     }
 }

@@ -27,6 +27,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,15 +37,15 @@ public class MainModule extends Module {
 
     protected StaticContext staticContext;
     private final Prolog prolog;
-    private final Expression expression;
+    private final Program program;
 
-    public MainModule(Prolog prolog, Expression expression, ExceptionMetadata metadata) {
+    public MainModule(Prolog prolog, Program program, ExceptionMetadata metadata) {
         super(metadata);
         this.prolog = prolog;
-        if (expression == null) {
-            throw new OurBadException("The main module must have a non-null expression");
+        if (program == null) {
+            throw new OurBadException("The main module must have a non-null program");
         }
-        this.expression = expression;
+        this.program = program;
     }
 
     public StaticContext getStaticContext() {
@@ -59,7 +61,15 @@ public class MainModule extends Module {
     }
 
     public Expression getExpression() {
-        return this.expression;
+        return this.program.getStatementsAndOptionalExpr().getExpression();
+    }
+
+    public StatementsAndOptionalExpr getStatementsAndOptionalExpr() {
+        return this.program.getStatementsAndOptionalExpr();
+    }
+
+    public Program getProgram() {
+        return this.program;
     }
 
     @Override
@@ -68,14 +78,14 @@ public class MainModule extends Module {
         if (this.prolog != null) {
             result.add(this.prolog);
         }
-        result.add(this.expression);
+        result.add(this.program);
         return result;
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         this.prolog.serializeToJSONiq(sb, indent);
-        this.expression.serializeToJSONiq(sb, indent);
+        this.program.serializeToJSONiq(sb, indent);
     }
 
     @Override
