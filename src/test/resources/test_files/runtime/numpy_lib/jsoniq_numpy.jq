@@ -225,22 +225,22 @@ declare function jsoniq_numpy:random($size as array) {
     else jsoniq_numpy:random_with_dimensions($size, 1)
 };
 
-declare function jsoniq_numpy:random_with_dimensions($current_dimensionensions as array, $current_dimension as integer) {
-    if ($current_dimension eq size($current_dimensionensions)) then fn:random($current_dimensionensions[[$current_dimension]])
+declare function jsoniq_numpy:random_with_dimensions($current_dimensions as array, $current_dimension as integer) {
+    if ($current_dimension eq size($current_dimensions)) then fn:random($current_dimensions[[$current_dimension]])
         else
             let $accumulated_result := 
-                let $higher_dimension_result := jsoniq_numpy:random_with_dimensions($current_dimensionensions, $current_dimension + 1)
-                for $i in 1 to $current_dimensionensions[[$current_dimension]]
+                let $higher_dimension_result := jsoniq_numpy:random_with_dimensions($current_dimensions, $current_dimension + 1)
+                for $i in 1 to $current_dimensions[[$current_dimension]]
                 return $higher_dimension_result
             return [$accumulated_result]
 };
 
-declare function jsoniq_numpy:random_between_with_dimensions($low as double, $high as double, $type as string, $current_dimensionensions as array, $current_dimension as integer) {
-    if ($current_dimension eq size($current_dimensionensions)) then fn:random-between($low, $high, $current_dimensionensions[[$current_dimension]], $type)
+declare function jsoniq_numpy:random_between_with_dimensions($low as double, $high as double, $type as string, $current_dimensions as array, $current_dimension as integer) {
+    if ($current_dimension eq size($current_dimensions)) then fn:random-between($low, $high, $current_dimensions[[$current_dimension]], $type)
     else
         let $accumulated_result := 
-            let $higher_dimension_result := jsoniq_numpy:random_between_with_dimensions($low, $high, $type, $current_dimensionensions, $current_dimension + 1)
-            for $i in 1 to $current_dimensionensions[[$current_dimension]]
+            let $higher_dimension_result := jsoniq_numpy:random_between_with_dimensions($low, $high, $type, $current_dimensions, $current_dimension + 1)
+            for $i in 1 to $current_dimensions[[$current_dimension]]
             return $higher_dimension_result
         return [$accumulated_result]
 };
@@ -258,9 +258,9 @@ declare function jsoniq_numpy:random_uniform($params as object) {
     let $params := validate type jsoniq_numpy:random_uniform_params {$params}
     let $low := $params.low
     let $high := $params.high
-    let $current_dimensionensions := $params.size
-    return if (size($current_dimensionensions) eq 0) then []
-           else jsoniq_numpy:random_between_with_dimensions($low, $high, "double", $current_dimensionensions, 1)
+    let $current_dimensions := $params.size
+    return if (size($current_dimensions) eq 0) then []
+           else jsoniq_numpy:random_between_with_dimensions($low, $high, "double", $current_dimensions, 1)
 };
 
 declare type jsoniq_numpy:random_randint_params as {
@@ -276,9 +276,13 @@ Params is an object for optional arguments. These arguments are:
 declare function jsoniq_numpy:random_randint($low as integer, $params as object) {
     let $params := validate type jsoniq_numpy:random_randint_params {$params}
     let $high := $params.high
-    let $current_dimensionensions := $params.size
-    return if (size($current_dimensionensions) eq 0) then []
-           else jsoniq_numpy:random_between_with_dimensions($low, $high, "integer", $current_dimensionensions, 1)
+    let $current_dimensions := $params.size
+    return if (size($current_dimensions) eq 0) then []
+           else jsoniq_numpy:random_between_with_dimensions($low, $high, "integer", $current_dimensions, 1)
+};
+
+declare function jsoniq_numpy:random_randint($low as integer) {
+    jsoniq_numpy:random_randint($low, {})
 };
 
 declare type jsoniq_numpy:logspace_params as {
@@ -325,13 +329,13 @@ declare function jsoniq_numpy:logspace($start as double, $end as double) {
     jsoniq_numpy:logspace($start, $end, {})
 };
 
-declare function jsoniq_numpy:compute_full_on_sub_dimensions($current_dimensionensions as array, $fill_value, $current_dimension as integer) {
-    let $current_dimensionension := size($current_dimensionensions)
+declare function jsoniq_numpy:compute_full_on_sub_dimensions($current_dimensions as array, $fill_value, $current_dimension as integer) {
+    let $current_dimensionension := size($current_dimensions)
     let $accumulated_result :=
-        for $j in 1 to $current_dimensionensions[[$current_dimension]]
+        for $j in 1 to $current_dimensions[[$current_dimension]]
         return
             if ($current_dimension eq $current_dimensionension) then $fill_value
-            else jsoniq_numpy:compute_full_on_sub_dimensions($current_dimensionensions, $fill_value, $current_dimension + 1)
+            else jsoniq_numpy:compute_full_on_sub_dimensions($current_dimensions, $fill_value, $current_dimension + 1)
     return [$accumulated_result]
 };
 
@@ -564,18 +568,18 @@ declare function jsoniq_numpy:product_of_all_values($arr as array) {
 };
 
 
-declare function jsoniq_numpy:reshape_sub_dimension($arr, $current_dimensionensions as array, $current_dimension as integer) {
-    if ($current_dimension gt size($current_dimensionensions)) then
+declare function jsoniq_numpy:reshape_sub_dimension($arr, $current_dimensions as array, $current_dimension as integer) {
+    if ($current_dimension gt size($current_dimensions)) then
         $arr
     else
-        if ($current_dimensionensions[[$current_dimension]] eq 1) then
-            [jsoniq_numpy:reshape_sub_dimension($arr, $current_dimensionensions, $current_dimension + 1)]
+        if ($current_dimensions[[$current_dimension]] eq 1) then
+            [jsoniq_numpy:reshape_sub_dimension($arr, $current_dimensions, $current_dimension + 1)]
         else
             let $sub_dimension_result :=
                 let $size_arr := count($arr)
-                let $size_subarr := $size_arr div $current_dimensionensions[[$current_dimension]]
-                for $j in 0 to ($current_dimensionensions[[$current_dimension]] - 1)
-                return jsoniq_numpy:reshape_sub_dimension(subsequence($arr, $j * $size_subarr + 1, $size_subarr), $current_dimensionensions, $current_dimension + 1)
+                let $size_subarr := $size_arr div $current_dimensions[[$current_dimension]]
+                for $j in 0 to ($current_dimensions[[$current_dimension]] - 1)
+                return jsoniq_numpy:reshape_sub_dimension(subsequence($arr, $j * $size_subarr + 1, $size_subarr), $current_dimensions, $current_dimension + 1)
             return [$sub_dimension_result]
 };
 (: Gives a new shape to an array. The shape argument should have the product of its dimension sizes equal to the number of elements found in arr.
@@ -948,7 +952,7 @@ declare function jsoniq_numpy:sort($array as array, $low as integer, $high as in
 };
 
 declare function jsoniq_numpy:partition($array as array, $low as integer, $high as integer) {
-    variable $pivot := jsoniq_numpy:random_randint($low, {"high": $high + 1, "size": [1]})[[1]];
+    variable $pivot := jsoniq_numpy:random_randint($low, {"high": $high + 1, "size": [1]})[1];
     variable $end := $array[[$high]];
     replace json value of $array[[$high]] with $array[[$pivot]];
     replace json value of $array[[$pivot]] with $end;

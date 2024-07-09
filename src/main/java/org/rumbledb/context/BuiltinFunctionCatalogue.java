@@ -94,8 +94,7 @@ import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
 import org.rumbledb.runtime.functions.random.RandomNumberGeneratorIterator;
 import org.rumbledb.runtime.functions.random.RandomSequenceGeneratorIterator;
-import org.rumbledb.runtime.functions.random.RandomSequenceWithBounds;
-import org.rumbledb.runtime.functions.random.RandomSequenceWithoutSeedGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceWithBoundsIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.MaxFunctionIterator;
@@ -142,7 +141,7 @@ import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
-import org.rumbledb.runtime.functions.typing.DynamicItemType;
+import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -2708,7 +2707,7 @@ public class BuiltinFunctionCatalogue {
         ),
         "integer",
         "item*",
-        RandomSequenceWithoutSeedGeneratorIterator.class,
+        RandomSequenceGeneratorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2743,7 +2742,7 @@ public class BuiltinFunctionCatalogue {
         "integer",
         "string",
         "item*",
-        RandomSequenceWithBounds.class,
+        RandomSequenceWithBoundsIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2758,7 +2757,7 @@ public class BuiltinFunctionCatalogue {
         "integer",
         "string",
         "item*",
-        RandomSequenceWithBounds.class,
+        RandomSequenceWithBoundsIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2806,7 +2805,7 @@ public class BuiltinFunctionCatalogue {
         ),
         "item*",
         "string",
-        DynamicItemType.class,
+        DynamicItemTypeIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 

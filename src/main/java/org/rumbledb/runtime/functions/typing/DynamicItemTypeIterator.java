@@ -4,18 +4,17 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
 import java.util.List;
 
-public class DynamicItemType extends AtMostOneItemLocalRuntimeIterator {
+public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
     private List<Item> materializedArgument;
     private ItemType itemType;
 
-    public DynamicItemType(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public DynamicItemTypeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -40,7 +39,7 @@ public class DynamicItemType extends AtMostOneItemLocalRuntimeIterator {
         for (Item item : structureItems) {
             structureCommonType = structureCommonType.findLeastCommonSuperTypeWith(item.getDynamicType());
         }
-        return new StringItem(structureCommonType.getIdentifierString());
+        return ItemFactory.getInstance().createStringItem(structureCommonType.getIdentifierString());
     }
 
     private List<Item> getStructureItems() {
