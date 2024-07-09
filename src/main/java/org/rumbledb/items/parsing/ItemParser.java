@@ -46,7 +46,7 @@ import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import scala.collection.mutable.WrappedArray;
+import scala.collection.mutable.ArraySeq;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -525,7 +525,7 @@ public class ItemParser implements Serializable {
                 }
             } else {
                 @SuppressWarnings("unchecked")
-                Object arrayObject = ((WrappedArray<Object>) o).array();
+                Object arrayObject = ((ArraySeq<Object>) o).array();
                 for (int index = 0; index < Array.getLength(arrayObject); index++) {
                     Object value = Array.get(arrayObject, index);
                     members.add(convertValueToItem(value, dataType, metadata, memberType));

@@ -23,12 +23,12 @@ package org.rumbledb.runtime.flwor.udfs;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.mutable.WrappedArray;
+import scala.collection.mutable.ArraySeq;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
+public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<byte[]>, byte[]> {
 
 
     private static final long serialVersionUID = 1L;
@@ -43,7 +43,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     }
 
     @Override
-    public byte[] call(WrappedArray<byte[]> wrappedParameters) {
+    public byte[] call(ArraySeq<byte[]> wrappedParameters) {
         this.nextResult.clear();
         this.deserializedParams.clear();
         FlworDataFrameUtils.deserializeWrappedParameters(

@@ -86,7 +86,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import scala.collection.mutable.WrappedArray;
+import scala.collection.mutable.ArraySeq;
 import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
@@ -807,7 +807,7 @@ public class FlworDataFrameUtils {
     }
 
     public static void deserializeWrappedParameters(
-            WrappedArray<byte[]> wrappedParameters,
+            ArraySeq<byte[]> wrappedParameters,
             List<List<Item>> deserializedParams,
             Kryo kryo,
             Input input
