@@ -10,12 +10,12 @@ variable $entry := {
 variable $result as xs:boolean;
 if ($username = json-file("log.json").current-users.user.name)
   then {
-    replace json value of $entry.access-allowed with "Yes";
+    replace value of json $entry.access-allowed with "Yes";
     $result := true;
     exit returning  insert json $entry into $log;
   }
 else {
-    replace json value of $entry.access-allowed with "No";
+    replace value of json $entry.access-allowed with "No";
     $result := false;
     exit returning  $result;
  }

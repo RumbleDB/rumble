@@ -5,7 +5,7 @@ for $l in $je
     return {
         if($l[[1]] eq 0)
         then
-            replace json value of $l[[1]] with 1;
+            replace value of json $l[[1]] with 1;
         else
-            replace json value of $l[[1]] with 0; }
+            replace value of json $l[[1]] with 0; }
 break loop;
