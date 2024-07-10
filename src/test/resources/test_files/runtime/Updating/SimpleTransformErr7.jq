@@ -1,8 +1,8 @@
 (:JIQS: ShouldCrash; ErrorCode="XUDY0014"; ErrorMetadata="LINE:6:COLUMN:15:" :)
-copy json $je := [1 to 4]
+copy $je := [1 to 4]
 modify (
     let $x := (
-        copy json $ej := [5 to 8]
+        copy $ej := [5 to 8]
         modify delete json $je[[1]]
         return $ej
     )

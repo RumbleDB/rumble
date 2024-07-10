@@ -2,7 +2,7 @@
 declare function foo() {};
 
 variable $je := {"a" : 1, "b" : 2};
-exit returning copy json $je := {"a" : 1, "b" : 2}
+exit returning copy $je := {"a" : 1, "b" : 2}
                modify if($je.c)
                       then
                           delete json $je.c
