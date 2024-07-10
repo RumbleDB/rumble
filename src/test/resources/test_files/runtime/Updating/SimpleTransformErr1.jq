@@ -1,5 +1,5 @@
 (:JIQS: ShouldCrash; ErrorCode="XUST0001"; ErrorMetadata="LINE:2:COLUMN:0:" :)
-copy json $je := rename json {"bar" : 1}.bar as "bar"
+copy $je := rename json {"bar" : 1}.bar as "bar"
 modify rename json $je.foo as "bar"
 return $je
 

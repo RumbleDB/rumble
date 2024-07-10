@@ -330,9 +330,9 @@ deleteExpr              : Kdelete Kjson updateLocator;
 
 renameExpr              : Krename Kjson updateLocator Kas name_expr=exprSingle;
 
-replaceExpr             : Kreplace Kjson Kvalue Kof updateLocator Kwith replacer_expr=exprSingle;
+replaceExpr             : Kreplace Kvalue Kof Kjson updateLocator Kwith replacer_expr=exprSingle;
 
-transformExpr           : Kcopy Kjson copyDecl ( ',' copyDecl )* Kmodify mod_expr=exprSingle Kreturn ret_expr=exprSingle;
+transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=exprSingle Kreturn ret_expr=exprSingle;
 
 appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 

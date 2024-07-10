@@ -11,11 +11,11 @@ declare function local:validate-and-log($username as xs:string) {
     };
     variable $changed := false;
     if ($username eq $user-doc[[3]].name) then {
-        replace json value of $user-entry.email_verified with true;
-        replace json value of $user-entry.access-attempt with "2016-11-28T16:00:47.203Z";
+        replace value of json $user-entry.email_verified with true;
+        replace value of json $user-entry.access-attempt with "2016-11-28T16:00:47.203Z";
         $changed := true;
     } else {
-        replace json value of $user-entry.failed with true;
+        replace value of json $user-entry.failed with true;
     }
     if ($changed eq true) then {
         insert json $user-entry into $log;

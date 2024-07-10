@@ -57,7 +57,6 @@ public class Rumble {
             pul.applyUpdates(iterator.getMetadata());
         }
 
-        System.err.println("final iterator is: " + iterator.isUpdating());
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 
