@@ -3,31 +3,31 @@ let $users := json-file("./datasets/users.json")
 let $items := json-file("./datasets/items.json")
 let $bids := json-file("./datasets/bids.json")
 
-let $q1_users := copy json $copy_users := [$users]
+let $q1_users := copy $copy_users := [$users]
                  modify append json {"userID" : "U07", "name" : "Annabel Lee"} into $copy_users
                  return $copy_users[]
 
-let $q2_bids := copy json $copy_bids := [$bids]
+let $q2_bids := copy $copy_bids := [$bids]
                 modify append json {"userID" : "U07", "itemNO" : 1001, "bid" : 60, "bid_date" : "1999-02-01"} into $copy_bids
                 return $copy_bids[]
 
-let $q3_bids := copy json $copy_bids := [$q2_bids], $uid := $q1_users[$$.name eq "Annabel Lee"].userID, $top_bid := max($q2_bids[$$.itemNO eq 1002].bid)
+let $q3_bids := copy $copy_bids := [$q2_bids], $uid := $q1_users[$$.name eq "Annabel Lee"].userID, $top_bid := max($q2_bids[$$.itemNO eq 1002].bid)
                 modify append json {"userID" : $uid, "itemNO" : 1002, "bid" : $top_bid * 1.1, "bid_date" : "1999-02-01"} into $copy_bids
                 return $copy_bids[]
 
-let $q4_users := copy json $copy_users := [$q1_users]
+let $q4_users := copy $copy_users := [$q1_users]
                 modify
                     for $user in $copy_users[]
                     where $user.name eq "Annabel Lee"
                     return
                         if ($user.rating)
                         then
-                            replace json value of $user.rating with "B"
+                            replace value of json $user.rating with "B"
                         else
                             insert json "rating" : "B" into $user
                 return $copy_users[]
 
-let $q5_bids := copy json $copy_bids := [$q3_bids], $uid := $q4_users[$$.name eq "Annabel Lee"].userID, $top_bid := max($q3_bids[$$.itemNO eq 1007].bid)
+let $q5_bids := copy $copy_bids := [$q3_bids], $uid := $q4_users[$$.name eq "Annabel Lee"].userID, $top_bid := max($q3_bids[$$.itemNO eq 1007].bid)
                 modify
                     if ($top_bid * 1.1 le 200)
                     then
@@ -37,7 +37,7 @@ let $q5_bids := copy json $copy_bids := [$q3_bids], $uid := $q4_users[$$.name eq
                 return $copy_bids[]
 
 let $to_copy_remove_uid := $q4_users[$$.name eq "Dee Linquent"].userID
-let $q6_items := copy json $copy_items := [$items], $remove_uid := $to_copy_remove_uid
+let $q6_items := copy $copy_items := [$items], $remove_uid := $to_copy_remove_uid
                  modify
                     for $i in (1 to size($copy_items))
                     return
@@ -47,7 +47,7 @@ let $q6_items := copy json $copy_items := [$items], $remove_uid := $to_copy_remo
                         else
                             ()
                  return $copy_items[]
- let $q6_bids := copy json $copy_bids := [$q5_bids], $remove_uid := $to_copy_remove_uid
+ let $q6_bids := copy $copy_bids := [$q5_bids], $remove_uid := $to_copy_remove_uid
                   modify
                      for $i in (1 to size($copy_bids))
                      return
@@ -57,7 +57,7 @@ let $q6_items := copy json $copy_items := [$items], $remove_uid := $to_copy_remo
                          else
                              ()
                   return $copy_bids[]
-let $q6_users := copy json $copy_users := [$q4_users]
+let $q6_users := copy $copy_users := [$q4_users]
                  modify
                     for $i in (1 to size($copy_users))
                     return

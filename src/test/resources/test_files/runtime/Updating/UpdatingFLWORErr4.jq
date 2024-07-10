@@ -1,11 +1,11 @@
 (:JIQS: ShouldCrash; ErrorCode="XUST0001"; ErrorMetadata="LINE:6:COLUMN:4:" :)
-copy json $je := for $i in (1 to 4)
+copy $je := for $i in (1 to 4)
                  return [$i mod 2]
 modify
     for $l in $je
-    order by replace json value of $l[[1]] with 1
+    order by replace value of json $l[[1]] with 1
     return
-        replace json value of $l[[1]] with 1
+        replace value of json $l[[1]] with 1
 return $je
 
 (: expr in order by clause is not simple :)
