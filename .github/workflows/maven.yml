@@ -101,7 +101,7 @@ jobs:
     - name: Compile with Maven
       run: mvn clean compile assembly:single
     - name: Bugs
-      run: mvn -Dtest=Bugs test
+      run: mvn -Dtest=Bugs test -DargLine="--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
     - name: NativeFLWORRuntimeTests
       run: mvn -Dtest=NativeFLWORRuntimeTests test -DargLine="--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
     - name: NativeFLWORRuntimeTestsNativeDeactivated
