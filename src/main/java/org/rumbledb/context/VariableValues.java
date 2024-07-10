@@ -34,7 +34,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
-
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -82,7 +81,8 @@ public class VariableValues implements Serializable, KryoSerializable {
             VariableValues parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, JSoundDataFrame> dataFrameVariableValues
+            Map<Name, JSoundDataFrame> dataFrameVariableValues,
+            GlobalVariables globalVariables
     ) {
         if (parent == null) {
             throw new OurBadException("Variable values defined with null parent");
@@ -92,7 +92,16 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = localVariableValues;
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
+        removeGlobalVariablesFromCopiedValues(globalVariables);
         this.nestedQuery = false;
+    }
+
+    private void removeGlobalVariablesFromCopiedValues(GlobalVariables globalVariables) {
+        globalVariables.getGlobalVariables().forEach(globalVariable -> {
+            if (containsLocally(this, globalVariable)) {
+                removeVariable(globalVariable);
+            }
+        });
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
@@ -178,6 +187,13 @@ public class VariableValues implements Serializable, KryoSerializable {
     }
 
     public List<Item> getLocalVariableValue(Name varName, ExceptionMetadata metadata) {
+        if (this.localVariableValues.containsKey(varName) && this.localVariableValues.get(varName) == null) {
+            // Referencing an uninitialized local variable is illegal
+            throw new RumbleException(
+                    "Runtime error retrieving variable " + varName + " value",
+                    metadata
+            );
+        }
         if (this.localVariableValues.containsKey(varName)) {
             return this.localVariableValues.get(varName);
         }
@@ -388,6 +404,39 @@ public class VariableValues implements Serializable, KryoSerializable {
             JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
             this.dataFrameVariableValues.put(name, items);
         }
+    }
+
+    private VariableValues findNodeWithVariableDeclaration(Name varName) {
+        VariableValues nodeWithVariableDecl = this;
+        // Invariant: there is a node among the current node or its parents that contains the variable
+        while (nodeWithVariableDecl != null && !containsLocally(nodeWithVariableDecl, varName)) {
+            nodeWithVariableDecl = nodeWithVariableDecl.parent;
+        }
+        if (nodeWithVariableDecl == null) {
+            throw new OurBadException("Changing undeclared variable value is not supported.");
+        }
+        return nodeWithVariableDecl;
+    }
+
+    public boolean containsLocally(VariableValues variableValues, Name varName) {
+        return variableValues.localVariableValues.containsKey(varName)
+            || variableValues.rddVariableValues.containsKey(varName)
+            || variableValues.dataFrameVariableValues.containsKey(varName);
+    }
+
+    public void changeVariableValue(Name varName, List<Item> value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.localVariableValues.put(varName, value);
+    }
+
+    public void changeVariableValue(Name varName, JavaRDD<Item> value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.rddVariableValues.put(varName, value);
+    }
+
+    public void changeVariableValue(Name varName, JSoundDataFrame value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.dataFrameVariableValues.put(varName, value);
     }
 }
 
