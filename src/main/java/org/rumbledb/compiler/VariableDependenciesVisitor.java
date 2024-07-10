@@ -22,17 +22,6 @@ package org.rumbledb.compiler;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.Map;
-
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
@@ -64,6 +53,26 @@ import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.TransformExpression;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 
 /**
@@ -511,6 +520,80 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression));
+        return null;
+    }
+
+    @Override
+    public Void visitTransformExpression(TransformExpression expression, Void argument) {
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            visit(copyDecl.getSourceExpression(), null);
+            addInputVariableDependencies(expression, getInputVariableDependencies(copyDecl.getSourceExpression()));
+        }
+        visit(expression.getModifyExpression(), null);
+        visit(expression.getReturnExpression(), null);
+
+        return null;
+    }
+
+    @Override
+    public Void visitApplyStatement(ApplyStatement statement, Void argument) {
+        visit(statement.getApplyExpression(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getApplyExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitAssignStatement(AssignStatement statement, Void argument) {
+        visit(statement.getAssignExpression(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getAssignExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitExitStatement(ExitStatement statement, Void argument) {
+        visit(statement.getExitExpression(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getExitExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitReturnStatementClause(ReturnStatementClause clause, Void argument) {
+        visit(clause.getReturnStatement(), null);
+        addInputVariableDependencies(clause, getInputVariableDependencies(clause.getReturnStatement()));
+
+        removeInputVariableDependencies(clause, getOutputVariableDependencies(clause.getPreviousClause()));
+        return null;
+    }
+
+    @Override
+    public Void visitTypeSwitchStatement(TypeSwitchStatement statement, Void argument) {
+        visit(statement.getTestCondition(), null);
+        for (TypeSwitchStatementCase tswc : statement.getCases()) {
+            visit(tswc.getReturnStatement(), null);
+            addInputVariableDependencies(statement, getOutputVariableDependencies(tswc.getReturnStatement()));
+            if (tswc.getVariableName() != null) {
+                removeInputVariableDependency(statement, tswc.getVariableName());
+            }
+        }
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getTestCondition()));
+        return null;
+    }
+
+    @Override
+    public Void visitWhileStatement(WhileStatement statement, Void argument) {
+        visit(statement.getTestCondition(), null);
+        visit(statement.getStatement(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getStatement()));
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getTestCondition()));
+        return null;
+    }
+
+    @Override
+    public Void visitVariableDeclStatement(VariableDeclStatement statement, Void argument) {
+        if (statement.getVariableExpression() != null) {
+            visit(statement.getVariableExpression(), null);
+            addInputVariableDependencies(statement, getInputVariableDependencies(statement.getVariableExpression()));
+        }
         return null;
     }
 }

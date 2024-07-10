@@ -78,6 +78,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
         buffer.append(getClass().getSimpleName());
         buffer.append(" ($" + this.name + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(
             " | "
                 + (this.staticSequenceType == null

@@ -64,7 +64,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the RumbleDB shell locally, like so:
 
-    $ spark-submit target/rumbledb-1.21.0.jar repl
+    $ spark-submit target/rumbledb-1.22.0.jar repl
 
 The RumbleDB shell should start:
 
@@ -73,7 +73,7 @@ The RumbleDB shell should start:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.21.0 "Hawthorn blossom" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.22.0 "Pyrenean oak" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     Master: local[2]
@@ -107,7 +107,7 @@ You can try a few more queries.
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     
-This is it. RumbleDB is step and ready to go locally. You can now move on to a JSONiq tutorial. A RumbleDB tutorial will also follow soon.
+This is it. RumbleDB is setup and ready to go locally. You can now move on to a JSONiq tutorial. A RumbleDB tutorial will also follow soon.
 
 ## Running on a cluster
 

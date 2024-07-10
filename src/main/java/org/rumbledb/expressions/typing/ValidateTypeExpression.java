@@ -66,6 +66,7 @@ public class ValidateTypeExpression extends Expression {
                 + ") "
         );
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(
             " | "
                 + (this.staticSequenceType == null

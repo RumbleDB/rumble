@@ -20,6 +20,10 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -29,11 +33,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -60,6 +59,8 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private static final Map<String, String> defaultBindings;
 
+    private int currentMutabilityLevel;
+
     static {
         defaultBindings = new HashMap<>();
         defaultBindings.put("local", Name.LOCAL_NS);
@@ -70,6 +71,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("xs", Name.XS_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
+        defaultBindings.put("an", Name.AN_NS);
     }
 
     private RumbleRuntimeConfiguration configuration;
@@ -83,6 +85,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = 0;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -95,6 +98,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentMutabilityLevel = 0;
     }
 
     public StaticContext(StaticContext parent) {
@@ -105,6 +109,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.currentMutabilityLevel;
     }
 
     public StaticContext getParent() {
@@ -184,7 +189,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         InScopeVariable variable = getInScopeVariable(varName);
         this.inScopeVariables.replace(
             varName,
-            new InScopeVariable(varName, newSequenceType, variable.getMetadata(), variable.getStorageMode())
+            new InScopeVariable(
+                    varName,
+                    newSequenceType,
+                    variable.getMetadata(),
+                    variable.getStorageMode(),
+                    variable.isAssignable()
+            )
         );
     }
 
@@ -209,7 +220,22 @@ public class StaticContext implements Serializable, KryoSerializable {
             SequenceType type,
             ExceptionMetadata metadata
     ) {
-        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET));
+        this.inScopeVariables.put(
+            varName,
+            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET)
+        );
+    }
+
+    public void addVariable(
+            Name varName,
+            SequenceType type,
+            ExceptionMetadata metadata,
+            boolean isAssignable
+    ) {
+        this.inScopeVariables.put(
+            varName,
+            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, isAssignable)
+        );
     }
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
@@ -269,6 +295,10 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.hasVariable(variableName);
         }
         return false;
+    }
+
+    public boolean hasVariableInScopeOnly(Name variableName) {
+        return this.inScopeVariables.containsKey(variableName);
     }
 
     public boolean bindNamespace(String prefix, String namespace) {
@@ -398,7 +428,8 @@ public class StaticContext implements Serializable, KryoSerializable {
                         varToExclude.contains(entry.getKey())
                             ? entry.getValue().getSequenceType()
                             : entry.getValue().getSequenceType().incrementArity(),
-                        entry.getValue().getMetadata()
+                        entry.getValue().getMetadata(),
+                        entry.getValue().isAssignable()
                     );
                 }
             }
@@ -420,5 +451,17 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public int getCurrentMutabilityLevel() {
+        return currentMutabilityLevel;
+    }
+
+    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
+        this.currentMutabilityLevel = currentMutabilityLevel;
+    }
+
+    public boolean getIsAssignable(Name name) {
+        return this.getInScopeVariable(name).isAssignable();
     }
 }
