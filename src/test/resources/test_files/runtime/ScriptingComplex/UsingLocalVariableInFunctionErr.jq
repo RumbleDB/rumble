@@ -13,11 +13,11 @@ declare function local:validate-and-return($username as xs:string) {
     variable $counter := 1;
     while ($counter < size($usernames)) {
         if ($username eq $user-doc[[$counter]].name) then {
-            replace json value of $user-entry.email_verified with true;
-            replace json value of $user-entry.access-attempt with "2016-11-28T16:00:47.203Z";
+            replace value of json $user-entry.email_verified with true;
+            replace value of json $user-entry.access-attempt with "2016-11-28T16:00:47.203Z";
             $changed := true;
         } else {
-            replace json value of $user-entry.failed with true;
+            replace value of json $user-entry.failed with true;
         }
         $counter := $counter + 1;
     }
