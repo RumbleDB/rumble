@@ -23,7 +23,7 @@ package org.rumbledb.runtime.flwor.udfs;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.mutable.ArraySeq;
+import scala.collection.immutable.ArraySeq;
 
 import java.util.ArrayList;
 import java.util.List;
