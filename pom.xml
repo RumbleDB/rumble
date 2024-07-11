@@ -198,7 +198,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
 	    <version>3.3.0</version>
             <configuration>
-                <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED</argLine>
+                <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-exports=java.base/sun.util.calendar=ALL-UNNAMED</argLine>
             </configuration>
         </plugin>
         </plugins>
