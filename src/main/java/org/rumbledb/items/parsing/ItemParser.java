@@ -46,7 +46,7 @@ import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import scala.collection.immutable.ArraySeq;
+import scala.collection.mutable.ArraySeq;
 import scala.collection.Iterator;
 import sparksoniq.spark.SparkSessionManager;
 
