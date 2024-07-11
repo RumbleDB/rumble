@@ -40,12 +40,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.9.0</version>
+                <version>3.13.0</version>
                 <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
                     <compilerId>eclipse</compilerId>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>11</source>
+                    <target>11</target>
                     <compilerArgs>
                         <arg>-properties</arg>
                         <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
