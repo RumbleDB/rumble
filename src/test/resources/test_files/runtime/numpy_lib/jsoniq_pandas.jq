@@ -3,7 +3,8 @@ module namespace jsoniq_pandas = "jsoniq_pandas.jq";
 import module namespace jsoniq_numpy = "jsoniq_numpy.jq";
 
 declare type jsoniq_pandas:describe_params as {
-    "include": "string=all"
+    "include": "string=all",
+    "percentiles": "array"
 };
 (: describe generates descriptive statistics about a dataset. Statistics summarize the central tendency, dispersion and shape of a dataset, excluding null values. Provides a string/dataframe as result.
 TODO: Supported percentiles are only [.25, .5, .75].
@@ -14,14 +15,13 @@ Params is an object for optional arguments. These arguments are:
 - exclude - not supported :)
 declare function jsoniq_pandas:describe($dataframe as object*, $params as object) {
     let $params := validate type jsoniq_pandas:describe_params {$params}
-    for $row in $dataframe
-    for $column in keys($row)
+    for $column in keys($dataframe)
     return { $column:
         switch($params.include)
-        case "all" return jsoniq_pandas:all_report($row.$column)
-        case "number" return jsoniq_pandas:number_report($row.$column)
-        case "object" return jsoniq_pandas:object_report($row.$column)
-        default return error("Unrecognized include option. Only 'number' and 'object' are supported.")
+            case "all" return jsoniq_pandas:all_report([$dataframe.$column], $params)
+            (: case "number" return jsoniq_pandas:number_report($dataframe.$column, $params)
+            case "object" return jsoniq_pandas:object_report($dataframe.$column) :)
+            default return error("Unrecognized include option. Only 'number' and 'object' are supported.")
     }
 };
 
@@ -29,24 +29,24 @@ declare function jsoniq_pandas:describe($dataframe as object*) {
     jsoniq_pandas:describe($dataframe, {})
 };
 
-declare function jsoniq_pandas:all_report($column) {
+declare function jsoniq_pandas:all_report($column, $params as object) {
     let $column_type := item-type($column)
     return switch($column_type)
-        case "xs:int" return jsoniq_pandas:numerical_report($column)
-        case "xs:decimal" return jsoniq_pandas:numerical_report($column)
-        case "xs:float" return jsoniq_pandas:numerical_report($column)
-        case "xs:double" return jsoniq_pandas:numerical_report($column)
+        case "xs:int" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:decimal" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:float" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:double" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:boolean" return jsoniq_pandas:categorical_report($column)
         default return jsoniq_pandas:categorical_report($column)
 };
 
-declare function jsoniq_pandas:number_report($column) {
+declare function jsoniq_pandas:number_report($column, $params as object) {
     let $column_type := item-type($column)
     return switch($column_type)
-        case "xs:int" return jsoniq_pandas:numerical_report($column)
-        case "xs:decimal" return jsoniq_pandas:numerical_report($column)
-        case "xs:float" return jsoniq_pandas:numerical_report($column)
-        case "xs:double" return jsoniq_pandas:numerical_report($column)
+        case "xs:int" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:decimal" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:float" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:double" return jsoniq_pandas:numerical_report($column, $params)
         default return ()
 };
 
@@ -58,7 +58,7 @@ declare function jsoniq_pandas:object_report($column) {
         default return ()
 };
 
-declare function jsoniq_pandas:numerical_report($column) {
+declare function jsoniq_pandas:numerical_report($column as array, $params as object) {
     (: Compute count, mean, std, min, .25, .5, .75, max :)
     let $count := size($column)
     let $mean := jsoniq_numpy:mean($column)
@@ -66,19 +66,23 @@ declare function jsoniq_pandas:numerical_report($column) {
     let $min := jsoniq_numpy:min($column)
     let $max := jsoniq_numpy:max($column)
     let $sorted_arr := jsoniq_numpy:sort($column)
-    let $percentile_25 := jsoniq_pandas:compute_percentile($sorted_arr, .25)
-    let $percentile_50 := jsoniq_pandas:compute_percentile($sorted_arr, .50)
-    let $percentile_75 := jsoniq_pandas:compute_percentile($sorted_arr, .75)
-    return {
+    let $percentiles := jsoniq_pandas:get_percentiles($params.percentiles)
+    return {|
+    {
         "count": $count,
         "mean": $mean,
         "std": $std,
         "min": $min,
-        "max": $max,
-        "25%": $percentile_25,
-        "50%": $percentile_50,
-        "75%": $percentile_75
-    }
+        "max": $max
+    },
+    for $percentile in $percentiles[]
+    return {string($percentile * 100) || "%": jsoniq_pandas:compute_percentile($sorted_arr, $percentile)}
+    |}
+};
+
+declare function jsoniq_pandas:get_percentiles($params_percentiles) {
+    if (empty($params_percentiles)) then [.25, .5, .75]
+    else $params_percentiles
 };
 
 declare function jsoniq_pandas:std($arr as array, $mean as double) {
@@ -93,8 +97,9 @@ declare function jsoniq_pandas:std($arr as array, $mean as double) {
 declare function jsoniq_pandas:categorical_report($column) {
     let $count := size($column)
     let $unique := size(jsoniq_numpy:unique($column))
-    let $top := jsoniq_numpy:max($column)
-    let $frequency := jsoniq_pandas:count_occurences($column, $top)
+    let $occurences := jsoniq_pandas:count_occurences($column)
+    let $top := $occurences[1].value
+    let $frequency := $occurences[1].count
     return {
         "count": $count,
         "unique": $unique,
@@ -103,24 +108,22 @@ declare function jsoniq_pandas:categorical_report($column) {
     }
 };
 
-declare function jsoniq_pandas:compute_percentile($arr as array, $percentile) {
+declare function jsoniq_pandas:count_occurences($column) {
+    for $value in $column[]
+    let $group_key := $value
+    group by $group_key
+    (: let $freq := count($value) :)
+    (: order by $freq descending :)
+    return {"value": $group_key, "count": count($value)}
+};
+
+declare function jsoniq_pandas:compute_percentile($arr as array, $percentile as double) {
     let $distance_of_min_to_max := size($arr) - 1
     let $percentile_index := $distance_of_min_to_max * $percentile + 1
     let $percentile_index_integer_part := floor($percentile_index)
     let $percentile_index_fractional_part := $percentile_index - $percentile_index_integer_part
     let $adjacent_difference := $arr[[$percentile_index]] + $percentile_index_fractional_part * ($arr[[$percentile_index_integer_part + 1]] - $arr[[$percentile_index_integer_part]])
     return $adjacent_difference
-};
-
-declare function jsoniq_pandas:count_occurences($arr as array, $value) {
-    variable $count := 0;
-    variable $index := 1;
-    while ($index le size($arr)) {
-        if ($arr[[$index]] eq $value) then $count := $count + 1;
-        else ();
-        $index := $index + 1;
-    }
-    exit returning $count;
 };
 
 
@@ -150,7 +153,14 @@ Required params are:
 - dataframe (DataFrame): the dataframe to sample from.
 - n (integer): number of samples to return.
 :)
-declare function jsoniq_pandas:sample($dataframe as object*, $num as integer) {};
+declare function jsoniq_pandas:sample($dataframe as object*, $num as integer) {
+    if ($num lt 0) then ()
+    else
+        let $df_keys := keys($dataframe)
+        let $size_dataframe := size($df_keys)
+        for $i in 1 to $num
+        return $df_keys[jsoniq_numpy:random_randint($size_dataframe, {"size": [1]})]
+};
 
 
 (: isnull returns a same-sized array indicating if values are null or not.
@@ -271,8 +281,13 @@ declare function jsoniq_pandas:dropna($dataframe as object*, $params as object) 
             return jsoniq_pandas:dropna_how_object($row, $params.how)
         } else {
             (: Remove columns :)
-            for $column_name in keys($dataframe)
-            return jsoniq_pandas:dropna_how_array($dataframe.$column_name, $params.how)
+            
+            let $columns_to_remove :=
+                for $column_name in keys($dataframe)
+                where (every $value in $dataframe.$column_name
+                      satisfies $value eq null)
+                return $column_name
+            return remove-keys($dataframe, $columns_to_remove)
         }
 };
 
@@ -287,19 +302,6 @@ declare function jsoniq_pandas:dropna_how_object($object as object, $how as stri
                 if (jsoniq_pandas:has_all_na($object.$key)) then ()
                 else {$key: $object.$key}
     |}
-};
-
-declare function jsoniq_pandas:dropna_how_array($array as array, $how as string) {
-    [
-        for $value in $array[]
-        return
-            if ($how eq "any") then
-                if (jsoniq_pandas:has_na($value)) then ()
-                else $value
-            else
-                if (jsoniq_pandas:has_all_na($value)) then ()
-                else $value
-    ]
 };
 
 declare function jsoniq_pandas:has_na($data) {
