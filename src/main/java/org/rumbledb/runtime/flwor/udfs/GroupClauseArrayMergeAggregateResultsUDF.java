@@ -25,9 +25,11 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
-import scala.collection.mutable.ArraySeq;
+import scala.collection.immutable.ArraySeq;
+import scala.collection.Iterator;
 
 import java.util.ArrayList;
+// import java.util.Iterator;
 import java.util.List;
 
 public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
@@ -47,18 +49,19 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
         this.nextResult.clear();
         this.deserializedParams.clear();
         List<Object> result = new ArrayList<Object>();
-        Object[] insideArrays = (Object[]) wrappedParameters.array();
-        for (Object o : insideArrays) {
+        Iterator<Object> iterator = wrappedParameters.iterator();
+        while (iterator.hasNext()) {
+            Object o = iterator.next();
             if (o instanceof Row) {
                 Row row = (Row) o;
                 result.add(row);
             }
             if (o instanceof ArraySeq) {
-                @SuppressWarnings("rawtypes")
-                ArraySeq arraySeq = (ArraySeq) o;
-                Object[] insideArrays2 = (Object[]) arraySeq.array();
-                for (Object p : insideArrays2)
-                    result.add(p);
+                @SuppressWarnings("unchecked")
+                ArraySeq<Object> arraySeq = (ArraySeq<Object>) o;
+                Iterator<Object> iterator2 = arraySeq.iterator();
+                while (iterator2.hasNext())
+                    result.add(iterator2.next());
             } else {
                 throw new OurBadException("We cannot process " + o.getClass().getCanonicalName());
             }
