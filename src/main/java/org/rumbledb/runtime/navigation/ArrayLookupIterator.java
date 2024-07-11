@@ -228,7 +228,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 )
             );
             newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
-            newContext.setResultingQuery("get("+newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
+            newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
         }
         return newContext;
     }
