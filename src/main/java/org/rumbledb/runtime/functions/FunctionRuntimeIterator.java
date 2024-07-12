@@ -20,8 +20,6 @@
 
 package org.rumbledb.runtime.functions;
 
-import java.util.Map;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,6 +28,8 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
+
+import java.util.Map;
 
 public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

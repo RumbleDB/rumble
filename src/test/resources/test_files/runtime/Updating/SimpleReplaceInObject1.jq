@@ -1,4 +1,4 @@
 (:JIQS: ShouldRun; Output="{ "foobar" : "barfoo", "foo" : "foo" }" :)
-copy json $je := {"foo": "bar", "foobar": "barfoo"}
-modify replace json value of $je.foo with "foo"
+copy $je := {"foo": "bar", "foobar": "barfoo"}
+modify replace value of json $je.foo with "foo"
 return $je

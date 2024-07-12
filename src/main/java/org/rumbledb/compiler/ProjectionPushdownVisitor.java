@@ -8,6 +8,7 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.scripting.Program;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
         this.projectionPushdownDetectionVisitor.visit(mainModule, null);
         MainModule result = new MainModule(
                 mainModule.getProlog(),
-                (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),
+                (Program) visit(mainModule.getExpression(), mainModule.getProlog()),
                 mainModule.getMetadata()
         );
         result.setStaticContext(mainModule.getStaticContext());

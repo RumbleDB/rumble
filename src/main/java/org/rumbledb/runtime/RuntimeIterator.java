@@ -20,19 +20,10 @@
 
 package org.rumbledb.runtime;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -40,6 +31,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -56,10 +49,18 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
@@ -67,7 +68,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
-    protected transient boolean isUpdating;
+    protected boolean isUpdating;
+    protected transient boolean isSequential;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
@@ -83,6 +85,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         this.isOpen = false;
         this.isUpdating = false;
+        this.isSequential = false;
 
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
@@ -315,16 +318,25 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    public boolean isSequential() {
+        return this.isSequential;
+    }
+
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
-        List<Item> result = new ArrayList<>();
-        this.open(context);
-        while (this.hasNext()) {
-            result.add(this.next());
+        try {
+            List<Item> result = new ArrayList<>();
+            this.open(context);
+            while (this.hasNext()) {
+                result.add(this.next());
+            }
+            this.close();
+            return result;
+        } catch (BreakStatementException | ContinueStatementException controlException) {
+            this.close();
+            throw controlException;
         }
-        this.close();
-        return result;
     }
 
     public void materialize(DynamicContext context, List<Item> result) {
@@ -423,6 +435,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(getStaticType());
         buffer.append(" | ");
         buffer.append(this.isUpdating ? "updating" : "simple");
+        buffer.append(" | ");
+        buffer.append(this.isSequential ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

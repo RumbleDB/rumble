@@ -18,6 +18,8 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.*;
 
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     public Node visitMainModule(MainModule mainModule, Node argument) {
         MainModule result = new MainModule(
                 (Prolog) visit(mainModule.getProlog(), argument),
-                (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),
+                (Program) visit(mainModule.getExpression(), mainModule.getProlog()),
                 mainModule.getMetadata()
         );
         result.setStaticContext(mainModule.getStaticContext());
@@ -265,10 +267,11 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     @Override
     public Node visitInlineFunctionExpr(InlineFunctionExpression expression, Node argument) {
         InlineFunctionExpression result = new InlineFunctionExpression(
+                expression.getAnnotations(),
                 expression.getName(),
                 expression.getParams(),
                 expression.getReturnType(),
-                (Expression) visit(expression.getBody(), argument),
+                (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
@@ -578,6 +581,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                 expression.external(),
                 expression.getActualSequenceType(),
                 (Expression) visit(expression.getExpression(), argument),
+                expression.getAnnotations(),
                 expression.getMetadata()
         );
     }

@@ -41,12 +41,12 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
