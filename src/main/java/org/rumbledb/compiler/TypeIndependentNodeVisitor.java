@@ -38,7 +38,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     public Node visitMainModule(MainModule mainModule, Node argument) {
         MainModule result = new MainModule(
                 (Prolog) visit(mainModule.getProlog(), argument),
-                (Program) visit(mainModule.getExpression(), mainModule.getProlog()),
+                (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
                 mainModule.getMetadata()
         );
         result.setStaticContext(mainModule.getStaticContext());

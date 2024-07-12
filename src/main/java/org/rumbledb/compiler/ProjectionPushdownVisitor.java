@@ -31,7 +31,7 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
         this.projectionPushdownDetectionVisitor.visit(mainModule, null);
         MainModule result = new MainModule(
                 mainModule.getProlog(),
-                (Program) visit(mainModule.getExpression(), mainModule.getProlog()),
+                (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
                 mainModule.getMetadata()
         );
         result.setStaticContext(mainModule.getStaticContext());
