@@ -28,6 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.math.BigDecimal;
@@ -103,7 +104,10 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().equals(SequenceType.FLOAT)) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(value.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!value.getResultingType().getItemType().isNumeric()) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("
@@ -111,7 +115,11 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + value.getResultingQuery()
             + " ) AS FLOAT)"
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.FLOAT);
+        return new NativeClauseContext(
+                value,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
+        );
     }
 
 

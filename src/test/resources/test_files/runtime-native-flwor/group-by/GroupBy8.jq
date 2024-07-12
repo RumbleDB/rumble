@@ -6,6 +6,7 @@ for $i in annotate(
 let $j := $i.key
 let $l := $i.foo.bar[]
 let $m := $i.foo.bar
+order by $i.key
 group by $k := $i.key
 order by $k
 return { "k": $k, "c" : [ $i ], "d" : [ $j ], "e" : [ $l ], "f" : [ $m ] }
