@@ -7,7 +7,7 @@ target/
 .ipynb_checkpoints/
 *.iml
 /bin/
-*.jar
+rumble*.jar
 *.*~
 
 # for now ignore jsound package
