@@ -32,7 +32,7 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         this.children.addAll(statements);
         this.children.add(exprIterator);
 
-        for (RuntimeIterator child : children) {
+        for (RuntimeIterator child : this.children) {
             if (child.isSequential()) {
                 this.isSequential = child.isSequential();
             }

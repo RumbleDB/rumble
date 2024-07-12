@@ -103,10 +103,10 @@ public class VariableDeclStatement extends Statement {
     }
 
     public List<Annotation> getAnnotations() {
-        return annotations;
+        return this.annotations;
     }
 
     public boolean isAssignable() {
-        return isAssignable;
+        return this.isAssignable;
     }
 }

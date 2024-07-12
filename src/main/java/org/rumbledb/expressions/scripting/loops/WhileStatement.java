@@ -27,8 +27,8 @@ public class WhileStatement extends Statement {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(testCondition);
-        result.add(statement);
+        result.add(this.testCondition);
+        result.add(this.statement);
         return result;
     }
 
@@ -43,10 +43,10 @@ public class WhileStatement extends Statement {
     }
 
     public Expression getTestCondition() {
-        return testCondition;
+        return this.testCondition;
     }
 
     public Statement getStatement() {
-        return statement;
+        return this.statement;
     }
 }

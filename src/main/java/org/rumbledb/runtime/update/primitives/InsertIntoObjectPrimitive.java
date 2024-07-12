@@ -39,7 +39,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public Item getTarget() {
-        return target;
+        return this.target;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public Item getContent() {
-        return content;
+        return this.content;
     }
 
     @Override

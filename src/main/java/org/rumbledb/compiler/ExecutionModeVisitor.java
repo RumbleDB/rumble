@@ -656,7 +656,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitProgram(Program program, StaticContext argument) {
         visitDescendants(program, argument);
-        ExecutionMode mergedExecutionMode = getHighestExecutionModeFromStatements(exitStatementChildren);
+        ExecutionMode mergedExecutionMode = getHighestExecutionModeFromStatements(this.exitStatementChildren);
         program.setHighestExecutionMode(mergedExecutionMode);
         return argument;
     }

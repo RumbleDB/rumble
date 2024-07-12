@@ -46,6 +46,6 @@ public class ReturnStatementClause extends Clause {
     }
 
     public Statement getReturnStatement() {
-        return returnStatement;
+        return this.returnStatement;
     }
 }

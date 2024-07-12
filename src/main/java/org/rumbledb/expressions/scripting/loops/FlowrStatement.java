@@ -48,6 +48,6 @@ public class FlowrStatement extends Statement {
     }
 
     public ReturnStatementClause getReturnStatementClause() {
-        return returnStatementClause;
+        return this.returnStatementClause;
     }
 }
