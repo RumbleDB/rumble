@@ -82,6 +82,7 @@ public class DynamicFunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(
             " | "
                 + (this.staticSequenceType == null

@@ -47,6 +47,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
     private DateTime currentDateTime;
+    private int currentMutabilityLevel;
+    private final GlobalVariables globalVariables;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -58,6 +60,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
         this.currentDateTime = new DateTime();
+        this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
     }
 
     /**
@@ -72,6 +76,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = new DateTime();
+        this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -83,6 +89,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
     }
 
     public DynamicContext(
@@ -99,9 +107,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 this.parent.variableValues,
                 localVariableValues,
                 rddVariableValues,
-                dataFrameVariableValues
+                dataFrameVariableValues,
+                parent.globalVariables
         );
         this.namedFunctions = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -136,6 +147,14 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = new NamedFunctions(this.conf);
         this.inScopeSchemaTypes = kryo.readObject(input, InScopeSchemaTypes.class);
         this.currentDateTime = new DateTime(kryo.readObject(input, Long.class));
+    }
+
+    public int getCurrentMutabilityLevel() {
+        return this.currentMutabilityLevel;
+    }
+
+    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
+        this.currentMutabilityLevel = currentMutabilityLevel;
     }
 
     public enum VariableDependency {
@@ -241,6 +260,11 @@ public class DynamicContext implements Serializable, KryoSerializable {
         for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
             LogManager.getLogger("DynamicContext").debug(e.getKey() + " : " + e.getValue());
         }
+    }
+
+
+    public void addGlobalVariable(Name globalVariable) {
+        this.globalVariables.addGlobalVariable(globalVariable);
     }
 }
 

@@ -20,6 +20,35 @@
 
 package org.rumbledb.runtime;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,39 +62,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.SequenceType;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
+    protected boolean isUpdating;
+    protected transient boolean isSequential;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
@@ -89,6 +93,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             );
         }
         this.isOpen = false;
+        this.isUpdating = false;
+        this.isSequential = false;
+
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
@@ -311,16 +318,36 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    public boolean isUpdating() {
+        return this.isUpdating;
+    }
+
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        throw new OurBadException(
+                "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
+    }
+
+    public boolean isSequential() {
+        return this.isSequential;
+    }
+
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
-        List<Item> result = new ArrayList<>();
-        this.open(context);
-        while (this.hasNext()) {
-            result.add(this.next());
+        try {
+            List<Item> result = new ArrayList<>();
+            this.open(context);
+            while (this.hasNext()) {
+                result.add(this.next());
+            }
+            this.close();
+            return result;
+        } catch (BreakStatementException | ContinueStatementException controlException) {
+            this.close();
+            throw controlException;
         }
-        this.close();
-        return result;
     }
 
     public void materialize(DynamicContext context, List<Item> result) {
@@ -417,6 +444,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(this.staticContext.getExecutionMode());
         buffer.append(" | ");
         buffer.append(getStaticType());
+        buffer.append(" | ");
+        buffer.append(this.isUpdating ? "updating" : "simple");
+        buffer.append(" | ");
+        buffer.append(this.isSequential ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

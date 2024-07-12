@@ -29,17 +29,24 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.types.SequenceType;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class VariableDeclaration extends Node {
+import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
+public class VariableDeclaration extends Node {
+    // Default is false for variable declaration.
+    private final boolean DEFAULT_ASSIGNABLE = false;
     private final Name variableName;
     private final boolean external;
     protected SequenceType sequenceType;
     protected Expression expression;
+    private final List<Annotation> annotations;
+    private final boolean isAssignable;
 
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -48,6 +55,7 @@ public class VariableDeclaration extends Node {
             boolean external,
             SequenceType sequenceType,
             Expression expression,
+            List<Annotation> annotations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -55,8 +63,14 @@ public class VariableDeclaration extends Node {
         this.external = external;
         this.sequenceType = sequenceType;
         this.expression = expression;
+        this.annotations = annotations;
         if (!this.external && this.expression == null) {
             throw new OurBadException("If a variable is not external, an expression must be provided.");
+        }
+        if (this.annotations != null) {
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata);
+        } else {
+            this.isAssignable = this.DEFAULT_ASSIGNABLE;
         }
     }
 
@@ -148,6 +162,16 @@ public class VariableDeclaration extends Node {
             this.expression.serializeToJSONiq(sb, 0);
             sb.append("\n");
         }
+    }
+
+    @Nullable
+    public List<Annotation> getAnnotations() {
+        return annotations;
+    }
+
+
+    public boolean isAssignable() {
+        return isAssignable;
     }
 }
 
