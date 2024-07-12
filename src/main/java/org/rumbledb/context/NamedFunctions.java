@@ -20,6 +20,10 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
@@ -34,11 +38,6 @@ import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
@@ -156,7 +155,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
-        return functionItem.deepCopy();
+        FunctionItem copyFunctionItem = functionItem.deepCopy();
+        copyFunctionItem.setModuleDynamicContext(functionItem.getModuleDynamicContext());
+        return copyFunctionItem;
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(

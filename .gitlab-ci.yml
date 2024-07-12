@@ -1,46 +1,107 @@
 image: marioarduini/rumble-source:2020-11-23
 
-build-rumble:
+stages:
+  - build
+  - tests2
+  - tests3
+
+Build:
   stage: build
   artifacts:
     paths:
       - target/
   script:
-    - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
+    - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.9.3-complete.jar
     - mvn clean compile assembly:single
 
-javaapi-test:
-  stage: test
-  script:
-    - mvn -Dtest=JavaAPITest test
-
-frontend-test:
-  stage: test
-  script:
-    - mvn -Dtest=FrontendTests test
-    
-runtime-test:
-  stage: test
-  script:
-    - mvn -Dtest=RuntimeTests test
-
-sparkruntime-test:
-  stage: test
+SparkRuntimeTest:
+  stage: tests2
   script:
     - mvn -Dtest=SparkRuntimeTests test
 
-nativeflworruntime-test:
-  stage: test
+SparkRuntimeTestsNativeDeactivated:
+  stage: tests2
+  script:
+    - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
+
+SparkRuntimeTestsDataFramesDeactivated:
+  stage: tests2
+  script:
+    - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
+
+SparkRuntimeTestsParallelismDeactivated:
+  stage: tests2
+  script:
+    - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
+
+JavaAPITest:
+  stage: tests3
+  script:
+    - mvn -Dtest=JavaAPITest test
+
+FrontendTests:
+  stage: tests3
+  script:
+    - mvn -Dtest=FrontendTests test
+
+RuntimeTests:
+  stage: tests3
+  script:
+    - mvn -Dtest=RuntimeTests test
+
+RuntimeTestsNoParallelism:
+  stage: tests3
+  script:
+    - mvn -Dtest=RuntimeTestsNoParallelism test
+
+RuntimeTestsNoInlining:
+  stage: tests3
+  script:
+    - mvn -Dtest=RuntimeTestsNoInlining test
+
+NativeFLWORRuntimeTests:
+  stage: tests3
   script:
     - mvn -Dtest=NativeFLWORRuntimeTests test
 
-statictyping-test:
-  stage: test
+NativeFLWORRuntimeTestsNativeDeactivated:
+  stage: tests3
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
+
+NativeFLWORRuntimeTestsDataFramesDeactivated:
+  stage: tests3
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
+
+NativeFLWORRuntimeTestsParallelismDeactivated:
+  stage: tests3
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
+
+StaticTypingTest:
+  stage: tests3
   script:
     - mvn -Dtest=StaticTypeTests test
 
-spotless-test:
-  stage: test
+SpotlessTest:
+  stage: tests3
   script:
     - mvn spotless:check
 
+MLTests:
+  stage: tests3
+  artifacts:
+    name: "ML Tests log"
+    paths:
+      - target/ml_test.log
+    when:
+      always
+    expire_in: 2 days
+  script:
+    - mvn -Dtest=MLTests test --log-file target/ml_test.log
+
+MLTestsNativeDeactivated:
+  stage: tests3
+  script:
+    - mvn -Dtest=MLTestsNativeDeactivated test
