@@ -46,20 +46,20 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         PendingUpdateList pul = getPendingUpdateList(context);
         pul.applyUpdates(this.getMetadata());
-        return this.returnIterator.getRDD(context);
+        return returnIterator.getRDD(context);
     }
 
     @Override
     protected void openLocal() {
         PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
         pul.applyUpdates(this.getMetadata());
-        this.returnIterator.open(this.currentDynamicContextForLocalExecution);
+        returnIterator.open(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
     protected void closeLocal() {
-        this.returnIterator.close();
-        for (Name copyVar : this.copyDeclMap.keySet()) {
+        returnIterator.close();
+        for (Name copyVar : copyDeclMap.keySet()) {
             this.currentDynamicContextForLocalExecution.getVariableValues().removeVariable(copyVar);
         }
     }
@@ -68,29 +68,29 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     protected void resetLocal() {
         PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
         pul.applyUpdates(this.getMetadata());
-        this.returnIterator.reset(this.currentDynamicContextForLocalExecution);
+        returnIterator.reset(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this.returnIterator.hasNext();
+        return returnIterator.hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        return this.returnIterator.next();
+        return returnIterator.next();
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         bindCopyDeclarations(context);
         context.setCurrentMutabilityLevel(this.mutabilityLevel);
-        return this.modifyIterator.getPendingUpdateList(context);
+        return modifyIterator.getPendingUpdateList(context);
     }
 
     private void bindCopyDeclarations(DynamicContext context) {
-        for (Name copyVar : this.copyDeclMap.keySet()) {
-            RuntimeIterator copyIterator = this.copyDeclMap.get(copyVar);
+        for (Name copyVar : copyDeclMap.keySet()) {
+            RuntimeIterator copyIterator = copyDeclMap.get(copyVar);
             List<Item> toCopy = copyIterator.materialize(context);
             List<Item> copy = new ArrayList<>();
             Item temp;

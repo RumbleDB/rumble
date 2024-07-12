@@ -166,12 +166,12 @@ public class VariableDeclaration extends Node {
 
     @Nullable
     public List<Annotation> getAnnotations() {
-        return this.annotations;
+        return annotations;
     }
 
 
     public boolean isAssignable() {
-        return this.isAssignable;
+        return isAssignable;
     }
 }
 

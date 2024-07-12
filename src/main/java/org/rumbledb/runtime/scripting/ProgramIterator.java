@@ -89,7 +89,7 @@ public class ProgramIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        if (!this.encounteredExitStatement) {
+        if (!encounteredExitStatement) {
             try {
                 return this.statementsAndExprIterator.next();
             } catch (ExitStatementException exitStatementException) {
@@ -107,7 +107,7 @@ public class ProgramIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        if (!this.encounteredExitStatement) {
+        if (!encounteredExitStatement) {
             return this.statementsAndExprIterator.getPendingUpdateList(context);
         }
         return this.pendingUpdateList;

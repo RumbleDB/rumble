@@ -42,7 +42,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
     }
 
     public boolean hasPositionIterator() {
-        return this.positionIterator != null;
+        return positionIterator != null;
     }
 
     @Override

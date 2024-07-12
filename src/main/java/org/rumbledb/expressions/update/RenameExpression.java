@@ -42,15 +42,15 @@ public class RenameExpression extends Expression {
     }
 
     public Expression getMainExpression() {
-        return this.mainExpression;
+        return mainExpression;
     }
 
     public Expression getLocatorExpression() {
-        return this.locatorExpression;
+        return locatorExpression;
     }
 
     public Expression getNameExpression() {
-        return this.nameExpression;
+        return nameExpression;
     }
 
     @Override

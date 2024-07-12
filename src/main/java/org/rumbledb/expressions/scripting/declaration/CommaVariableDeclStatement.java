@@ -23,18 +23,18 @@ public class CommaVariableDeclStatement extends Statement {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(this.variables);
+        return new ArrayList<>(variables);
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        for (VariableDeclStatement variableDeclStatement : this.variables) {
+        for (VariableDeclStatement variableDeclStatement : variables) {
             variableDeclStatement.serializeToJSONiq(sb, 0);
         }
     }
 
     public List<VariableDeclStatement> getVariables() {
-        return this.variables;
+        return variables;
     }
 }

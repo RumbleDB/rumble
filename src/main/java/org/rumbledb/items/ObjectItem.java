@@ -209,7 +209,7 @@ public class ObjectItem implements Item {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
-        for (Item item : this.values) {
+        for (Item item : values) {
             item.setMutabilityLevel(mutabilityLevel);
         }
     }

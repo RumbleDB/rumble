@@ -72,7 +72,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
         this.result = this.childIterator.materialize(this.currentDynamicContextForLocalExecution);
         this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
-            this.pendingUpdateList = this.childIterator.getPendingUpdateList(this.currentDynamicContextForLocalExecution);
+            pendingUpdateList = this.childIterator.getPendingUpdateList(this.currentDynamicContextForLocalExecution);
         }
         throw new ExitStatementException(
                 this.pendingUpdateList,

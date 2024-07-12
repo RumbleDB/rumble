@@ -319,7 +319,7 @@ public class XQueryLexer extends Lexer {
 
 	public XQueryLexer(CharStream input) {
 		super(input);
-		this._interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
+		_interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 
 	@Override

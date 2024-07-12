@@ -37,22 +37,22 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public Item getTarget() {
-        return this.target;
+        return target;
     }
 
     @Override
     public Item getSelector() {
-        return this.selector;
+        return selector;
     }
 
     @Override
     public int getIntSelector() {
-        return this.selector.getIntValue();
+        return selector.getIntValue();
     }
 
     @Override
     public List<Item> getContentList() {
-        return this.content;
+        return content;
     }
 
     @Override

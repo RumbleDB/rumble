@@ -48,17 +48,17 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public Item getTarget() {
-        return this.target;
+        return target;
     }
 
     @Override
     public Item getSelector() {
-        return this.selector;
+        return selector;
     }
 
     @Override
     public Item getContent() {
-        return this.content;
+        return content;
     }
 
     @Override

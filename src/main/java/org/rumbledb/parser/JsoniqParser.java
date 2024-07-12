@@ -221,7 +221,7 @@ public class JsoniqParser extends Parser {
 
 	public JsoniqParser(TokenStream input) {
 		super(input);
-		this._interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
+		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 
 	@SuppressWarnings("CheckReturnValue")
@@ -242,7 +242,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ModuleAndThisIsItContext moduleAndThisIsIt() throws RecognitionException {
-		ModuleAndThisIsItContext _localctx = new ModuleAndThisIsItContext(this._ctx, getState());
+		ModuleAndThisIsItContext _localctx = new ModuleAndThisIsItContext(_ctx, getState());
 		enterRule(_localctx, 0, RULE_moduleAndThisIsIt);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -255,8 +255,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -291,14 +291,14 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ModuleContext module() throws RecognitionException {
-		ModuleContext _localctx = new ModuleContext(this._ctx, getState());
+		ModuleContext _localctx = new ModuleContext(_ctx, getState());
 		enterRule(_localctx, 2, RULE_module);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(262);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,0,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,0,_ctx) ) {
 			case 1:
 				{
 				setState(257);
@@ -313,8 +313,8 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(266);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__1:
 				{
 				setState(264);
@@ -422,8 +422,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -451,7 +451,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final MainModuleContext mainModule() throws RecognitionException {
-		MainModuleContext _localctx = new MainModuleContext(this._ctx, getState());
+		MainModuleContext _localctx = new MainModuleContext(_ctx, getState());
 		enterRule(_localctx, 4, RULE_mainModule);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -464,8 +464,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -494,7 +494,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final LibraryModuleContext libraryModule() throws RecognitionException {
-		LibraryModuleContext _localctx = new LibraryModuleContext(this._ctx, getState());
+		LibraryModuleContext _localctx = new LibraryModuleContext(_ctx, getState());
 		enterRule(_localctx, 6, RULE_libraryModule);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -517,8 +517,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -564,22 +564,22 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final PrologContext prolog() throws RecognitionException {
-		PrologContext _localctx = new PrologContext(this._ctx, getState());
+		PrologContext _localctx = new PrologContext(_ctx, getState());
 		enterRule(_localctx, 8, RULE_prolog);
 		try {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(288);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,3,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,3,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
 					setState(282);
-					this._errHandler.sync(this);
-					switch ( getInterpreter().adaptivePredict(this._input,2,this._ctx) ) {
+					_errHandler.sync(this);
+					switch ( getInterpreter().adaptivePredict(_input,2,_ctx) ) {
 					case 1:
 						{
 						setState(279);
@@ -605,12 +605,12 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(290);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,3,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,3,_ctx);
 			}
 			setState(296);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,4,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,4,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
@@ -623,15 +623,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(298);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,4,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,4,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -656,7 +656,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ProgramContext program() throws RecognitionException {
-		ProgramContext _localctx = new ProgramContext(this._ctx, getState());
+		ProgramContext _localctx = new ProgramContext(_ctx, getState());
 		enterRule(_localctx, 10, RULE_program);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -667,8 +667,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -696,15 +696,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final StatementsContext statements() throws RecognitionException {
-		StatementsContext _localctx = new StatementsContext(this._ctx, getState());
+		StatementsContext _localctx = new StatementsContext(_ctx, getState());
 		enterRule(_localctx, 12, RULE_statements);
 		try {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(304);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,5,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,5,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
@@ -715,15 +715,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(306);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,5,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,5,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -751,7 +751,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final StatementsAndExprContext statementsAndExpr() throws RecognitionException {
-		StatementsAndExprContext _localctx = new StatementsAndExprContext(this._ctx, getState());
+		StatementsAndExprContext _localctx = new StatementsAndExprContext(_ctx, getState());
 		enterRule(_localctx, 14, RULE_statementsAndExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -764,8 +764,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -793,7 +793,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final StatementsAndOptionalExprContext statementsAndOptionalExpr() throws RecognitionException {
-		StatementsAndOptionalExprContext _localctx = new StatementsAndOptionalExprContext(this._ctx, getState());
+		StatementsAndOptionalExprContext _localctx = new StatementsAndOptionalExprContext(_ctx, getState());
 		enterRule(_localctx, 16, RULE_statementsAndOptionalExpr);
 		int _la;
 		try {
@@ -802,8 +802,8 @@ public class JsoniqParser extends Parser {
 			setState(310);
 			statements();
 			setState(312);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -1566408243247242592L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 16831L) != 0)) {
 				{
 				setState(311);
@@ -815,8 +815,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -877,12 +877,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final StatementContext statement() throws RecognitionException {
-		StatementContext _localctx = new StatementContext(this._ctx, getState());
+		StatementContext _localctx = new StatementContext(_ctx, getState());
 		enterRule(_localctx, 18, RULE_statement);
 		try {
 			setState(327);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,7,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,7,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -978,8 +978,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1004,7 +1004,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ApplyStatementContext applyStatement() throws RecognitionException {
-		ApplyStatementContext _localctx = new ApplyStatementContext(this._ctx, getState());
+		ApplyStatementContext _localctx = new ApplyStatementContext(_ctx, getState());
 		enterRule(_localctx, 20, RULE_applyStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1017,8 +1017,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1046,7 +1046,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AssignStatementContext assignStatement() throws RecognitionException {
-		AssignStatementContext _localctx = new AssignStatementContext(this._ctx, getState());
+		AssignStatementContext _localctx = new AssignStatementContext(_ctx, getState());
 		enterRule(_localctx, 22, RULE_assignStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1065,8 +1065,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1091,7 +1091,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final BlockStatementContext blockStatement() throws RecognitionException {
-		BlockStatementContext _localctx = new BlockStatementContext(this._ctx, getState());
+		BlockStatementContext _localctx = new BlockStatementContext(_ctx, getState());
 		enterRule(_localctx, 24, RULE_blockStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1106,8 +1106,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1131,7 +1131,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final BreakStatementContext breakStatement() throws RecognitionException {
-		BreakStatementContext _localctx = new BreakStatementContext(this._ctx, getState());
+		BreakStatementContext _localctx = new BreakStatementContext(_ctx, getState());
 		enterRule(_localctx, 26, RULE_breakStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1146,8 +1146,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1171,7 +1171,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ContinueStatementContext continueStatement() throws RecognitionException {
-		ContinueStatementContext _localctx = new ContinueStatementContext(this._ctx, getState());
+		ContinueStatementContext _localctx = new ContinueStatementContext(_ctx, getState());
 		enterRule(_localctx, 28, RULE_continueStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1186,8 +1186,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1214,7 +1214,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ExitStatementContext exitStatement() throws RecognitionException {
-		ExitStatementContext _localctx = new ExitStatementContext(this._ctx, getState());
+		ExitStatementContext _localctx = new ExitStatementContext(_ctx, getState());
 		enterRule(_localctx, 30, RULE_exitStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1231,8 +1231,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1297,15 +1297,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final FlowrStatementContext flowrStatement() throws RecognitionException {
-		FlowrStatementContext _localctx = new FlowrStatementContext(this._ctx, getState());
+		FlowrStatementContext _localctx = new FlowrStatementContext(_ctx, getState());
 		enterRule(_localctx, 32, RULE_flowrStatement);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(357);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Kfor:
 				{
 				setState(355);
@@ -1322,13 +1322,13 @@ public class JsoniqParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			setState(367);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (((((_la - 61)) & ~0x3f) == 0 && ((1L << (_la - 61)) & 24623L) != 0)) {
 				{
 				setState(365);
-				this._errHandler.sync(this);
-				switch (this._input.LA(1)) {
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
 				case Kfor:
 					{
 					setState(359);
@@ -1371,8 +1371,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(369);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(370);
 			match(Kreturn);
@@ -1382,8 +1382,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1420,7 +1420,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final IfStatementContext ifStatement() throws RecognitionException {
-		IfStatementContext _localctx = new IfStatementContext(this._ctx, getState());
+		IfStatementContext _localctx = new IfStatementContext(_ctx, getState());
 		enterRule(_localctx, 34, RULE_ifStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1445,8 +1445,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1487,7 +1487,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SwitchStatementContext switchStatement() throws RecognitionException {
-		SwitchStatementContext _localctx = new SwitchStatementContext(this._ctx, getState());
+		SwitchStatementContext _localctx = new SwitchStatementContext(_ctx, getState());
 		enterRule(_localctx, 36, RULE_switchStatement);
 		int _la;
 		try {
@@ -1502,8 +1502,8 @@ public class JsoniqParser extends Parser {
 			setState(385);
 			match(T__9);
 			setState(387); 
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			do {
 				{
 				{
@@ -1513,8 +1513,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(389); 
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			} while ( _la==Kcase );
 			setState(391);
 			match(Kdefault);
@@ -1526,8 +1526,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1566,15 +1566,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SwitchCaseStatementContext switchCaseStatement() throws RecognitionException {
-		SwitchCaseStatementContext _localctx = new SwitchCaseStatementContext(this._ctx, getState());
+		SwitchCaseStatementContext _localctx = new SwitchCaseStatementContext(_ctx, getState());
 		enterRule(_localctx, 38, RULE_switchCaseStatement);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(397); 
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			do {
 				{
 				{
@@ -1586,8 +1586,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(399); 
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			} while ( _la==Kcase );
 			setState(401);
 			match(Kreturn);
@@ -1597,8 +1597,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1633,7 +1633,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TryCatchStatementContext tryCatchStatement() throws RecognitionException {
-		TryCatchStatementContext _localctx = new TryCatchStatementContext(this._ctx, getState());
+		TryCatchStatementContext _localctx = new TryCatchStatementContext(_ctx, getState());
 		enterRule(_localctx, 40, RULE_tryCatchStatement);
 		try {
 			int _alt;
@@ -1644,7 +1644,7 @@ public class JsoniqParser extends Parser {
 			setState(405);
 			((TryCatchStatementContext)_localctx).try_block = blockStatement();
 			setState(407); 
-			this._errHandler.sync(this);
+			_errHandler.sync(this);
 			_alt = 1;
 			do {
 				switch (_alt) {
@@ -1661,15 +1661,15 @@ public class JsoniqParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				setState(409); 
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,13,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,13,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1706,7 +1706,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CatchCaseStatementContext catchCaseStatement() throws RecognitionException {
-		CatchCaseStatementContext _localctx = new CatchCaseStatementContext(this._ctx, getState());
+		CatchCaseStatementContext _localctx = new CatchCaseStatementContext(_ctx, getState());
 		enterRule(_localctx, 42, RULE_catchCaseStatement);
 		int _la;
 		try {
@@ -1715,8 +1715,8 @@ public class JsoniqParser extends Parser {
 			setState(411);
 			match(Kcatch);
 			setState(414);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__10:
 				{
 				setState(412);
@@ -1808,16 +1808,16 @@ public class JsoniqParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			setState(423);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__11) {
 				{
 				{
 				setState(416);
 				match(T__11);
 				setState(419);
-				this._errHandler.sync(this);
-				switch (this._input.LA(1)) {
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
 				case T__10:
 					{
 					setState(417);
@@ -1911,8 +1911,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(425);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(426);
 			((CatchCaseStatementContext)_localctx).catch_block = blockStatement();
@@ -1920,8 +1920,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -1966,7 +1966,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TypeSwitchStatementContext typeSwitchStatement() throws RecognitionException {
-		TypeSwitchStatementContext _localctx = new TypeSwitchStatementContext(this._ctx, getState());
+		TypeSwitchStatementContext _localctx = new TypeSwitchStatementContext(_ctx, getState());
 		enterRule(_localctx, 44, RULE_typeSwitchStatement);
 		int _la;
 		try {
@@ -1981,8 +1981,8 @@ public class JsoniqParser extends Parser {
 			setState(431);
 			match(T__9);
 			setState(433); 
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			do {
 				{
 				{
@@ -1992,14 +1992,14 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(435); 
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			} while ( _la==Kcase );
 			setState(437);
 			match(Kdefault);
 			setState(439);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__4) {
 				{
 				setState(438);
@@ -2015,8 +2015,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2057,7 +2057,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CaseStatementContext caseStatement() throws RecognitionException {
-		CaseStatementContext _localctx = new CaseStatementContext(this._ctx, getState());
+		CaseStatementContext _localctx = new CaseStatementContext(_ctx, getState());
 		enterRule(_localctx, 46, RULE_caseStatement);
 		int _la;
 		try {
@@ -2066,8 +2066,8 @@ public class JsoniqParser extends Parser {
 			setState(444);
 			match(Kcase);
 			setState(448);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__4) {
 				{
 				setState(445);
@@ -2081,8 +2081,8 @@ public class JsoniqParser extends Parser {
 			((CaseStatementContext)_localctx).sequenceType = sequenceType();
 			((CaseStatementContext)_localctx).union.add(((CaseStatementContext)_localctx).sequenceType);
 			setState(455);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__11) {
 				{
 				{
@@ -2094,8 +2094,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(457);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(458);
 			match(Kreturn);
@@ -2105,8 +2105,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2136,7 +2136,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AnnotationContext annotation() throws RecognitionException {
-		AnnotationContext _localctx = new AnnotationContext(this._ctx, getState());
+		AnnotationContext _localctx = new AnnotationContext(_ctx, getState());
 		enterRule(_localctx, 48, RULE_annotation);
 		int _la;
 		try {
@@ -2147,8 +2147,8 @@ public class JsoniqParser extends Parser {
 			setState(462);
 			((AnnotationContext)_localctx).name = qname();
 			setState(473);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__8) {
 				{
 				setState(463);
@@ -2156,8 +2156,8 @@ public class JsoniqParser extends Parser {
 				setState(464);
 				match(Literal);
 				setState(469);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				while (_la==T__13) {
 					{
 					{
@@ -2168,8 +2168,8 @@ public class JsoniqParser extends Parser {
 					}
 					}
 					setState(471);
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 				}
 				setState(472);
 				match(T__9);
@@ -2180,8 +2180,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2209,15 +2209,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AnnotationsContext annotations() throws RecognitionException {
-		AnnotationsContext _localctx = new AnnotationsContext(this._ctx, getState());
+		AnnotationsContext _localctx = new AnnotationsContext(_ctx, getState());
 		enterRule(_localctx, 50, RULE_annotations);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(478);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__12) {
 				{
 				{
@@ -2226,15 +2226,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(480);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2266,7 +2266,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final VarDeclStatementContext varDeclStatement() throws RecognitionException {
-		VarDeclStatementContext _localctx = new VarDeclStatementContext(this._ctx, getState());
+		VarDeclStatementContext _localctx = new VarDeclStatementContext(_ctx, getState());
 		enterRule(_localctx, 52, RULE_varDeclStatement);
 		int _la;
 		try {
@@ -2279,8 +2279,8 @@ public class JsoniqParser extends Parser {
 			setState(483);
 			varDeclForStatement();
 			setState(488);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -2291,8 +2291,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(490);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(491);
 			match(T__0);
@@ -2300,8 +2300,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2336,7 +2336,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final VarDeclForStatementContext varDeclForStatement() throws RecognitionException {
-		VarDeclForStatementContext _localctx = new VarDeclForStatementContext(this._ctx, getState());
+		VarDeclForStatementContext _localctx = new VarDeclForStatementContext(_ctx, getState());
 		enterRule(_localctx, 54, RULE_varDeclForStatement);
 		int _la;
 		try {
@@ -2345,8 +2345,8 @@ public class JsoniqParser extends Parser {
 			setState(493);
 			((VarDeclForStatementContext)_localctx).var_ref = varRef();
 			setState(496);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(494);
@@ -2357,8 +2357,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(500);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__5) {
 				{
 				setState(498);
@@ -2373,8 +2373,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2405,7 +2405,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final WhileStatementContext whileStatement() throws RecognitionException {
-		WhileStatementContext _localctx = new WhileStatementContext(this._ctx, getState());
+		WhileStatementContext _localctx = new WhileStatementContext(_ctx, getState());
 		enterRule(_localctx, 56, RULE_whileStatement);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -2424,8 +2424,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2459,12 +2459,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SetterContext setter() throws RecognitionException {
-		SetterContext _localctx = new SetterContext(this._ctx, getState());
+		SetterContext _localctx = new SetterContext(_ctx, getState());
 		enterRule(_localctx, 58, RULE_setter);
 		try {
 			setState(512);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,27,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,27,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -2497,8 +2497,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2525,7 +2525,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final NamespaceDeclContext namespaceDecl() throws RecognitionException {
-		NamespaceDeclContext _localctx = new NamespaceDeclContext(this._ctx, getState());
+		NamespaceDeclContext _localctx = new NamespaceDeclContext(_ctx, getState());
 		enterRule(_localctx, 60, RULE_namespaceDecl);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -2544,8 +2544,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2579,12 +2579,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AnnotatedDeclContext annotatedDecl() throws RecognitionException {
-		AnnotatedDeclContext _localctx = new AnnotatedDeclContext(this._ctx, getState());
+		AnnotatedDeclContext _localctx = new AnnotatedDeclContext(_ctx, getState());
 		enterRule(_localctx, 62, RULE_annotatedDecl);
 		try {
 			setState(524);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,28,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,28,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -2617,8 +2617,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2646,7 +2646,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final DefaultCollationDeclContext defaultCollationDecl() throws RecognitionException {
-		DefaultCollationDeclContext _localctx = new DefaultCollationDeclContext(this._ctx, getState());
+		DefaultCollationDeclContext _localctx = new DefaultCollationDeclContext(_ctx, getState());
 		enterRule(_localctx, 64, RULE_defaultCollationDecl);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -2663,8 +2663,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2688,7 +2688,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final OrderingModeDeclContext orderingModeDecl() throws RecognitionException {
-		OrderingModeDeclContext _localctx = new OrderingModeDeclContext(this._ctx, getState());
+		OrderingModeDeclContext _localctx = new OrderingModeDeclContext(_ctx, getState());
 		enterRule(_localctx, 66, RULE_orderingModeDecl);
 		int _la;
 		try {
@@ -2699,21 +2699,21 @@ public class JsoniqParser extends Parser {
 			setState(532);
 			match(T__14);
 			setState(533);
-			_la = this._input.LA(1);
+			_la = _input.LA(1);
 			if ( !(_la==T__15 || _la==Kunordered) ) {
-			this._errHandler.recoverInline(this);
+			_errHandler.recoverInline(this);
 			}
 			else {
-				if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-				this._errHandler.reportMatch(this);
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
 				consume();
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2742,7 +2742,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final EmptyOrderDeclContext emptyOrderDecl() throws RecognitionException {
-		EmptyOrderDeclContext _localctx = new EmptyOrderDeclContext(this._ctx, getState());
+		EmptyOrderDeclContext _localctx = new EmptyOrderDeclContext(_ctx, getState());
 		enterRule(_localctx, 68, RULE_emptyOrderDecl);
 		int _la;
 		try {
@@ -2758,14 +2758,14 @@ public class JsoniqParser extends Parser {
 			match(Kempty);
 			{
 			setState(539);
-			((EmptyOrderDeclContext)_localctx).emptySequenceOrder = this._input.LT(1);
-			_la = this._input.LA(1);
+			((EmptyOrderDeclContext)_localctx).emptySequenceOrder = _input.LT(1);
+			_la = _input.LA(1);
 			if ( !(_la==Kgreatest || _la==Kleast) ) {
-				((EmptyOrderDeclContext)_localctx).emptySequenceOrder = (Token)this._errHandler.recoverInline(this);
+				((EmptyOrderDeclContext)_localctx).emptySequenceOrder = (Token)_errHandler.recoverInline(this);
 			}
 			else {
-				if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-				this._errHandler.reportMatch(this);
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
 				consume();
 			}
 			}
@@ -2773,8 +2773,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2813,7 +2813,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final DecimalFormatDeclContext decimalFormatDecl() throws RecognitionException {
-		DecimalFormatDeclContext _localctx = new DecimalFormatDeclContext(this._ctx, getState());
+		DecimalFormatDeclContext _localctx = new DecimalFormatDeclContext(_ctx, getState());
 		enterRule(_localctx, 70, RULE_decimalFormatDecl);
 		int _la;
 		try {
@@ -2822,8 +2822,8 @@ public class JsoniqParser extends Parser {
 			setState(541);
 			match(Kdeclare);
 			setState(546);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__16:
 				{
 				{
@@ -2848,8 +2848,8 @@ public class JsoniqParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			setState(554);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 536346624L) != 0)) {
 				{
 				{
@@ -2862,15 +2862,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(556);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -2906,19 +2906,19 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final QnameContext qname() throws RecognitionException {
-		QnameContext _localctx = new QnameContext(this._ctx, getState());
+		QnameContext _localctx = new QnameContext(_ctx, getState());
 		enterRule(_localctx, 72, RULE_qname);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(562);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,32,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,32,_ctx) ) {
 			case 1:
 				{
 				setState(559);
-				this._errHandler.sync(this);
-				switch (this._input.LA(1)) {
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
 				case NCName:
 					{
 					setState(557);
@@ -3012,8 +3012,8 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(566);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case NCName:
 				{
 				setState(564);
@@ -3105,8 +3105,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3128,28 +3128,28 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final DfPropertyNameContext dfPropertyName() throws RecognitionException {
-		DfPropertyNameContext _localctx = new DfPropertyNameContext(this._ctx, getState());
+		DfPropertyNameContext _localctx = new DfPropertyNameContext(_ctx, getState());
 		enterRule(_localctx, 74, RULE_dfPropertyName);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(568);
-			_la = this._input.LA(1);
+			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 536346624L) != 0)) ) {
-			this._errHandler.recoverInline(this);
+			_errHandler.recoverInline(this);
 			}
 			else {
-				if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-				this._errHandler.reportMatch(this);
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
 				consume();
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3181,7 +3181,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ModuleImportContext moduleImport() throws RecognitionException {
-		ModuleImportContext _localctx = new ModuleImportContext(this._ctx, getState());
+		ModuleImportContext _localctx = new ModuleImportContext(_ctx, getState());
 		enterRule(_localctx, 76, RULE_moduleImport);
 		int _la;
 		try {
@@ -3192,8 +3192,8 @@ public class JsoniqParser extends Parser {
 			setState(571);
 			match(T__1);
 			setState(575);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__2) {
 				{
 				setState(572);
@@ -3208,8 +3208,8 @@ public class JsoniqParser extends Parser {
 			setState(577);
 			((ModuleImportContext)_localctx).targetNamespace = uriLiteral();
 			setState(587);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kat) {
 				{
 				setState(578);
@@ -3217,8 +3217,8 @@ public class JsoniqParser extends Parser {
 				setState(579);
 				uriLiteral();
 				setState(584);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				while (_la==T__13) {
 					{
 					{
@@ -3229,8 +3229,8 @@ public class JsoniqParser extends Parser {
 					}
 					}
 					setState(586);
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 				}
 				}
 			}
@@ -3239,8 +3239,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3278,7 +3278,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final VarDeclContext varDecl() throws RecognitionException {
-		VarDeclContext _localctx = new VarDeclContext(this._ctx, getState());
+		VarDeclContext _localctx = new VarDeclContext(_ctx, getState());
 		enterRule(_localctx, 78, RULE_varDecl);
 		int _la;
 		try {
@@ -3293,8 +3293,8 @@ public class JsoniqParser extends Parser {
 			setState(592);
 			varRef();
 			setState(595);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(593);
@@ -3305,8 +3305,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(604);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__5:
 				{
 				{
@@ -3323,8 +3323,8 @@ public class JsoniqParser extends Parser {
 				setState(599);
 				((VarDeclContext)_localctx).external = match(T__29);
 				setState(602);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				if (_la==T__5) {
 					{
 					setState(600);
@@ -3344,8 +3344,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3378,7 +3378,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ContextItemDeclContext contextItemDecl() throws RecognitionException {
-		ContextItemDeclContext _localctx = new ContextItemDeclContext(this._ctx, getState());
+		ContextItemDeclContext _localctx = new ContextItemDeclContext(_ctx, getState());
 		enterRule(_localctx, 80, RULE_contextItemDecl);
 		int _la;
 		try {
@@ -3391,8 +3391,8 @@ public class JsoniqParser extends Parser {
 			setState(608);
 			match(Kitem);
 			setState(611);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(609);
@@ -3403,8 +3403,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(620);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__5:
 				{
 				{
@@ -3421,8 +3421,8 @@ public class JsoniqParser extends Parser {
 				setState(615);
 				((ContextItemDeclContext)_localctx).external = match(T__29);
 				setState(618);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				if (_la==T__5) {
 					{
 					setState(616);
@@ -3442,8 +3442,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3485,7 +3485,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final FunctionDeclContext functionDecl() throws RecognitionException {
-		FunctionDeclContext _localctx = new FunctionDeclContext(this._ctx, getState());
+		FunctionDeclContext _localctx = new FunctionDeclContext(_ctx, getState());
 		enterRule(_localctx, 82, RULE_functionDecl);
 		int _la;
 		try {
@@ -3502,8 +3502,8 @@ public class JsoniqParser extends Parser {
 			setState(626);
 			match(T__8);
 			setState(628);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__4) {
 				{
 				setState(627);
@@ -3514,8 +3514,8 @@ public class JsoniqParser extends Parser {
 			setState(630);
 			match(T__9);
 			setState(633);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(631);
@@ -3526,8 +3526,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(640);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__6:
 				{
 				setState(635);
@@ -3553,8 +3553,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3591,7 +3591,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TypeDeclContext typeDecl() throws RecognitionException {
-		TypeDeclContext _localctx = new TypeDeclContext(this._ctx, getState());
+		TypeDeclContext _localctx = new TypeDeclContext(_ctx, getState());
 		enterRule(_localctx, 84, RULE_typeDecl);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -3605,8 +3605,8 @@ public class JsoniqParser extends Parser {
 			setState(645);
 			match(Kas);
 			setState(647);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,46,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,46,_ctx) ) {
 			case 1:
 				{
 				setState(646);
@@ -3620,8 +3620,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3644,12 +3644,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SchemaLanguageContext schemaLanguage() throws RecognitionException {
-		SchemaLanguageContext _localctx = new SchemaLanguageContext(this._ctx, getState());
+		SchemaLanguageContext _localctx = new SchemaLanguageContext(_ctx, getState());
 		enterRule(_localctx, 86, RULE_schemaLanguage);
 		try {
 			setState(657);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,47,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,47,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -3681,8 +3681,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3710,7 +3710,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ParamListContext paramList() throws RecognitionException {
-		ParamListContext _localctx = new ParamListContext(this._ctx, getState());
+		ParamListContext _localctx = new ParamListContext(_ctx, getState());
 		enterRule(_localctx, 88, RULE_paramList);
 		int _la;
 		try {
@@ -3719,8 +3719,8 @@ public class JsoniqParser extends Parser {
 			setState(659);
 			param();
 			setState(664);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -3731,15 +3731,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(666);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3768,7 +3768,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ParamContext param() throws RecognitionException {
-		ParamContext _localctx = new ParamContext(this._ctx, getState());
+		ParamContext _localctx = new ParamContext(_ctx, getState());
 		enterRule(_localctx, 90, RULE_param);
 		int _la;
 		try {
@@ -3779,8 +3779,8 @@ public class JsoniqParser extends Parser {
 			setState(668);
 			qname();
 			setState(671);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(669);
@@ -3794,8 +3794,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3823,7 +3823,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ExprContext expr() throws RecognitionException {
-		ExprContext _localctx = new ExprContext(this._ctx, getState());
+		ExprContext _localctx = new ExprContext(_ctx, getState());
 		enterRule(_localctx, 92, RULE_expr);
 		int _la;
 		try {
@@ -3832,8 +3832,8 @@ public class JsoniqParser extends Parser {
 			setState(673);
 			exprSingle();
 			setState(678);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -3844,15 +3844,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(680);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3892,12 +3892,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ExprSingleContext exprSingle() throws RecognitionException {
-		ExprSingleContext _localctx = new ExprSingleContext(this._ctx, getState());
+		ExprSingleContext _localctx = new ExprSingleContext(_ctx, getState());
 		enterRule(_localctx, 94, RULE_exprSingle);
 		try {
 			setState(687);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,51,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,51,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -3944,8 +3944,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -3991,12 +3991,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ExprSimpleContext exprSimple() throws RecognitionException {
-		ExprSimpleContext _localctx = new ExprSimpleContext(this._ctx, getState());
+		ExprSimpleContext _localctx = new ExprSimpleContext(_ctx, getState());
 		enterRule(_localctx, 96, RULE_exprSimple);
 		try {
 			setState(697);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,52,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,52,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -4057,8 +4057,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4123,15 +4123,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final FlowrExprContext flowrExpr() throws RecognitionException {
-		FlowrExprContext _localctx = new FlowrExprContext(this._ctx, getState());
+		FlowrExprContext _localctx = new FlowrExprContext(_ctx, getState());
 		enterRule(_localctx, 98, RULE_flowrExpr);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(701);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Kfor:
 				{
 				setState(699);
@@ -4148,13 +4148,13 @@ public class JsoniqParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			setState(711);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (((((_la - 61)) & ~0x3f) == 0 && ((1L << (_la - 61)) & 24623L) != 0)) {
 				{
 				setState(709);
-				this._errHandler.sync(this);
-				switch (this._input.LA(1)) {
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
 				case Kfor:
 					{
 					setState(703);
@@ -4197,8 +4197,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(713);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(714);
 			match(Kreturn);
@@ -4208,8 +4208,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4240,7 +4240,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ForClauseContext forClause() throws RecognitionException {
-		ForClauseContext _localctx = new ForClauseContext(this._ctx, getState());
+		ForClauseContext _localctx = new ForClauseContext(_ctx, getState());
 		enterRule(_localctx, 100, RULE_forClause);
 		int _la;
 		try {
@@ -4252,8 +4252,8 @@ public class JsoniqParser extends Parser {
 			((ForClauseContext)_localctx).forVar = forVar();
 			((ForClauseContext)_localctx).vars.add(((ForClauseContext)_localctx).forVar);
 			setState(723);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -4265,15 +4265,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(725);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4317,7 +4317,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ForVarContext forVar() throws RecognitionException {
-		ForVarContext _localctx = new ForVarContext(this._ctx, getState());
+		ForVarContext _localctx = new ForVarContext(_ctx, getState());
 		enterRule(_localctx, 102, RULE_forVar);
 		int _la;
 		try {
@@ -4326,8 +4326,8 @@ public class JsoniqParser extends Parser {
 			setState(726);
 			((ForVarContext)_localctx).var_ref = varRef();
 			setState(729);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(727);
@@ -4338,8 +4338,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(733);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kallowing) {
 				{
 				setState(731);
@@ -4350,8 +4350,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(737);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kat) {
 				{
 				setState(735);
@@ -4369,8 +4369,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4401,7 +4401,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final LetClauseContext letClause() throws RecognitionException {
-		LetClauseContext _localctx = new LetClauseContext(this._ctx, getState());
+		LetClauseContext _localctx = new LetClauseContext(_ctx, getState());
 		enterRule(_localctx, 104, RULE_letClause);
 		int _la;
 		try {
@@ -4413,8 +4413,8 @@ public class JsoniqParser extends Parser {
 			((LetClauseContext)_localctx).letVar = letVar();
 			((LetClauseContext)_localctx).vars.add(((LetClauseContext)_localctx).letVar);
 			setState(748);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -4426,15 +4426,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(750);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4469,7 +4469,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final LetVarContext letVar() throws RecognitionException {
-		LetVarContext _localctx = new LetVarContext(this._ctx, getState());
+		LetVarContext _localctx = new LetVarContext(_ctx, getState());
 		enterRule(_localctx, 106, RULE_letVar);
 		int _la;
 		try {
@@ -4478,8 +4478,8 @@ public class JsoniqParser extends Parser {
 			setState(751);
 			((LetVarContext)_localctx).var_ref = varRef();
 			setState(754);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(752);
@@ -4497,8 +4497,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4524,7 +4524,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final WhereClauseContext whereClause() throws RecognitionException {
-		WhereClauseContext _localctx = new WhereClauseContext(this._ctx, getState());
+		WhereClauseContext _localctx = new WhereClauseContext(_ctx, getState());
 		enterRule(_localctx, 108, RULE_whereClause);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -4537,8 +4537,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4570,7 +4570,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final GroupByClauseContext groupByClause() throws RecognitionException {
-		GroupByClauseContext _localctx = new GroupByClauseContext(this._ctx, getState());
+		GroupByClauseContext _localctx = new GroupByClauseContext(_ctx, getState());
 		enterRule(_localctx, 110, RULE_groupByClause);
 		int _la;
 		try {
@@ -4584,8 +4584,8 @@ public class JsoniqParser extends Parser {
 			((GroupByClauseContext)_localctx).groupByVar = groupByVar();
 			((GroupByClauseContext)_localctx).vars.add(((GroupByClauseContext)_localctx).groupByVar);
 			setState(769);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -4597,15 +4597,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(771);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4646,7 +4646,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final GroupByVarContext groupByVar() throws RecognitionException {
-		GroupByVarContext _localctx = new GroupByVarContext(this._ctx, getState());
+		GroupByVarContext _localctx = new GroupByVarContext(_ctx, getState());
 		enterRule(_localctx, 112, RULE_groupByVar);
 		int _la;
 		try {
@@ -4655,13 +4655,13 @@ public class JsoniqParser extends Parser {
 			setState(772);
 			((GroupByVarContext)_localctx).var_ref = varRef();
 			setState(779);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__5 || _la==Kas) {
 				{
 				setState(775);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				if (_la==Kas) {
 					{
 					setState(773);
@@ -4679,8 +4679,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(783);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kcollation) {
 				{
 				setState(781);
@@ -4694,8 +4694,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4727,15 +4727,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final OrderByClauseContext orderByClause() throws RecognitionException {
-		OrderByClauseContext _localctx = new OrderByClauseContext(this._ctx, getState());
+		OrderByClauseContext _localctx = new OrderByClauseContext(_ctx, getState());
 		enterRule(_localctx, 114, RULE_orderByClause);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(790);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Korder:
 				{
 				{
@@ -4764,8 +4764,8 @@ public class JsoniqParser extends Parser {
 			setState(792);
 			orderByExpr();
 			setState(797);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -4776,15 +4776,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(799);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4823,7 +4823,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final OrderByExprContext orderByExpr() throws RecognitionException {
-		OrderByExprContext _localctx = new OrderByExprContext(this._ctx, getState());
+		OrderByExprContext _localctx = new OrderByExprContext(_ctx, getState());
 		enterRule(_localctx, 116, RULE_orderByExpr);
 		int _la;
 		try {
@@ -4832,8 +4832,8 @@ public class JsoniqParser extends Parser {
 			setState(800);
 			((OrderByExprContext)_localctx).ex = exprSingle();
 			setState(803);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Kascending:
 				{
 				setState(801);
@@ -4862,15 +4862,15 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(810);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kempty) {
 				{
 				setState(805);
 				match(Kempty);
 				setState(808);
-				this._errHandler.sync(this);
-				switch (this._input.LA(1)) {
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
 				case Kgreatest:
 					{
 					setState(806);
@@ -4890,8 +4890,8 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(814);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kcollation) {
 				{
 				setState(812);
@@ -4905,8 +4905,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4932,7 +4932,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CountClauseContext countClause() throws RecognitionException {
-		CountClauseContext _localctx = new CountClauseContext(this._ctx, getState());
+		CountClauseContext _localctx = new CountClauseContext(_ctx, getState());
 		enterRule(_localctx, 118, RULE_countClause);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -4945,8 +4945,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -4984,15 +4984,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final QuantifiedExprContext quantifiedExpr() throws RecognitionException {
-		QuantifiedExprContext _localctx = new QuantifiedExprContext(this._ctx, getState());
+		QuantifiedExprContext _localctx = new QuantifiedExprContext(_ctx, getState());
 		enterRule(_localctx, 120, RULE_quantifiedExpr);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(821);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Ksome:
 				{
 				setState(819);
@@ -5012,8 +5012,8 @@ public class JsoniqParser extends Parser {
 			((QuantifiedExprContext)_localctx).quantifiedExprVar = quantifiedExprVar();
 			((QuantifiedExprContext)_localctx).vars.add(((QuantifiedExprContext)_localctx).quantifiedExprVar);
 			setState(828);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -5025,8 +5025,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(830);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(831);
 			match(Ksatisfies);
@@ -5036,8 +5036,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5070,7 +5070,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final QuantifiedExprVarContext quantifiedExprVar() throws RecognitionException {
-		QuantifiedExprVarContext _localctx = new QuantifiedExprVarContext(this._ctx, getState());
+		QuantifiedExprVarContext _localctx = new QuantifiedExprVarContext(_ctx, getState());
 		enterRule(_localctx, 122, RULE_quantifiedExprVar);
 		int _la;
 		try {
@@ -5079,8 +5079,8 @@ public class JsoniqParser extends Parser {
 			setState(834);
 			varRef();
 			setState(837);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(835);
@@ -5098,8 +5098,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5140,7 +5140,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SwitchExprContext switchExpr() throws RecognitionException {
-		SwitchExprContext _localctx = new SwitchExprContext(this._ctx, getState());
+		SwitchExprContext _localctx = new SwitchExprContext(_ctx, getState());
 		enterRule(_localctx, 124, RULE_switchExpr);
 		int _la;
 		try {
@@ -5155,8 +5155,8 @@ public class JsoniqParser extends Parser {
 			setState(845);
 			match(T__9);
 			setState(847); 
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			do {
 				{
 				{
@@ -5166,8 +5166,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(849); 
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			} while ( _la==Kcase );
 			setState(851);
 			match(Kdefault);
@@ -5179,8 +5179,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5216,15 +5216,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SwitchCaseClauseContext switchCaseClause() throws RecognitionException {
-		SwitchCaseClauseContext _localctx = new SwitchCaseClauseContext(this._ctx, getState());
+		SwitchCaseClauseContext _localctx = new SwitchCaseClauseContext(_ctx, getState());
 		enterRule(_localctx, 126, RULE_switchCaseClause);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(857); 
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			do {
 				{
 				{
@@ -5236,8 +5236,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(859); 
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			} while ( _la==Kcase );
 			setState(861);
 			match(Kreturn);
@@ -5247,8 +5247,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5293,7 +5293,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TypeSwitchExprContext typeSwitchExpr() throws RecognitionException {
-		TypeSwitchExprContext _localctx = new TypeSwitchExprContext(this._ctx, getState());
+		TypeSwitchExprContext _localctx = new TypeSwitchExprContext(_ctx, getState());
 		enterRule(_localctx, 128, RULE_typeSwitchExpr);
 		int _la;
 		try {
@@ -5308,8 +5308,8 @@ public class JsoniqParser extends Parser {
 			setState(867);
 			match(T__9);
 			setState(869); 
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			do {
 				{
 				{
@@ -5319,14 +5319,14 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(871); 
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			} while ( _la==Kcase );
 			setState(873);
 			match(Kdefault);
 			setState(875);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__4) {
 				{
 				setState(874);
@@ -5342,8 +5342,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5384,7 +5384,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CaseClauseContext caseClause() throws RecognitionException {
-		CaseClauseContext _localctx = new CaseClauseContext(this._ctx, getState());
+		CaseClauseContext _localctx = new CaseClauseContext(_ctx, getState());
 		enterRule(_localctx, 130, RULE_caseClause);
 		int _la;
 		try {
@@ -5393,8 +5393,8 @@ public class JsoniqParser extends Parser {
 			setState(880);
 			match(Kcase);
 			setState(884);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__4) {
 				{
 				setState(881);
@@ -5408,8 +5408,8 @@ public class JsoniqParser extends Parser {
 			((CaseClauseContext)_localctx).sequenceType = sequenceType();
 			((CaseClauseContext)_localctx).union.add(((CaseClauseContext)_localctx).sequenceType);
 			setState(891);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__11) {
 				{
 				{
@@ -5421,8 +5421,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(893);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(894);
 			match(Kreturn);
@@ -5432,8 +5432,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5470,7 +5470,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final IfExprContext ifExpr() throws RecognitionException {
-		IfExprContext _localctx = new IfExprContext(this._ctx, getState());
+		IfExprContext _localctx = new IfExprContext(_ctx, getState());
 		enterRule(_localctx, 132, RULE_ifExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -5495,8 +5495,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5531,7 +5531,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TryCatchExprContext tryCatchExpr() throws RecognitionException {
-		TryCatchExprContext _localctx = new TryCatchExprContext(this._ctx, getState());
+		TryCatchExprContext _localctx = new TryCatchExprContext(_ctx, getState());
 		enterRule(_localctx, 134, RULE_tryCatchExpr);
 		try {
 			int _alt;
@@ -5546,7 +5546,7 @@ public class JsoniqParser extends Parser {
 			setState(909);
 			match(T__7);
 			setState(911); 
-			this._errHandler.sync(this);
+			_errHandler.sync(this);
 			_alt = 1;
 			do {
 				switch (_alt) {
@@ -5563,15 +5563,15 @@ public class JsoniqParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				setState(913); 
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,81,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,81,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5608,7 +5608,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CatchClauseContext catchClause() throws RecognitionException {
-		CatchClauseContext _localctx = new CatchClauseContext(this._ctx, getState());
+		CatchClauseContext _localctx = new CatchClauseContext(_ctx, getState());
 		enterRule(_localctx, 136, RULE_catchClause);
 		int _la;
 		try {
@@ -5617,8 +5617,8 @@ public class JsoniqParser extends Parser {
 			setState(915);
 			match(Kcatch);
 			setState(918);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__10:
 				{
 				setState(916);
@@ -5710,16 +5710,16 @@ public class JsoniqParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			setState(927);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__11) {
 				{
 				{
 				setState(920);
 				match(T__11);
 				setState(923);
-				this._errHandler.sync(this);
-				switch (this._input.LA(1)) {
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
 				case T__10:
 					{
 					setState(921);
@@ -5813,8 +5813,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(929);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(930);
 			match(T__6);
@@ -5826,8 +5826,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5862,7 +5862,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final OrExprContext orExpr() throws RecognitionException {
-		OrExprContext _localctx = new OrExprContext(this._ctx, getState());
+		OrExprContext _localctx = new OrExprContext(_ctx, getState());
 		enterRule(_localctx, 138, RULE_orExpr);
 		try {
 			int _alt;
@@ -5871,8 +5871,8 @@ public class JsoniqParser extends Parser {
 			setState(934);
 			((OrExprContext)_localctx).main_expr = andExpr();
 			setState(939);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,85,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,85,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
@@ -5886,15 +5886,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(941);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,85,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,85,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5929,7 +5929,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AndExprContext andExpr() throws RecognitionException {
-		AndExprContext _localctx = new AndExprContext(this._ctx, getState());
+		AndExprContext _localctx = new AndExprContext(_ctx, getState());
 		enterRule(_localctx, 140, RULE_andExpr);
 		try {
 			int _alt;
@@ -5938,8 +5938,8 @@ public class JsoniqParser extends Parser {
 			setState(942);
 			((AndExprContext)_localctx).main_expr = notExpr();
 			setState(947);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,86,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,86,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
@@ -5953,15 +5953,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(949);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,86,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,86,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -5990,14 +5990,14 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final NotExprContext notExpr() throws RecognitionException {
-		NotExprContext _localctx = new NotExprContext(this._ctx, getState());
+		NotExprContext _localctx = new NotExprContext(_ctx, getState());
 		enterRule(_localctx, 142, RULE_notExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(951);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,87,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,87,_ctx) ) {
 			case 1:
 				{
 				setState(950);
@@ -6012,8 +6012,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6058,7 +6058,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ComparisonExprContext comparisonExpr() throws RecognitionException {
-		ComparisonExprContext _localctx = new ComparisonExprContext(this._ctx, getState());
+		ComparisonExprContext _localctx = new ComparisonExprContext(_ctx, getState());
 		enterRule(_localctx, 144, RULE_comparisonExpr);
 		int _la;
 		try {
@@ -6067,19 +6067,19 @@ public class JsoniqParser extends Parser {
 			setState(955);
 			((ComparisonExprContext)_localctx).main_expr = stringConcatExpr();
 			setState(958);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 140668768878608L) != 0)) {
 				{
 				setState(956);
-				((ComparisonExprContext)_localctx)._tset1828 = this._input.LT(1);
-				_la = this._input.LA(1);
+				((ComparisonExprContext)_localctx)._tset1828 = _input.LT(1);
+				_la = _input.LA(1);
 				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 140668768878608L) != 0)) ) {
-					((ComparisonExprContext)_localctx)._tset1828 = (Token)this._errHandler.recoverInline(this);
+					((ComparisonExprContext)_localctx)._tset1828 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
-					if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-					this._errHandler.reportMatch(this);
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				((ComparisonExprContext)_localctx).op.add(((ComparisonExprContext)_localctx)._tset1828);
@@ -6093,8 +6093,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6125,7 +6125,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final StringConcatExprContext stringConcatExpr() throws RecognitionException {
-		StringConcatExprContext _localctx = new StringConcatExprContext(this._ctx, getState());
+		StringConcatExprContext _localctx = new StringConcatExprContext(_ctx, getState());
 		enterRule(_localctx, 146, RULE_stringConcatExpr);
 		int _la;
 		try {
@@ -6134,8 +6134,8 @@ public class JsoniqParser extends Parser {
 			setState(960);
 			((StringConcatExprContext)_localctx).main_expr = rangeExpr();
 			setState(965);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__46) {
 				{
 				{
@@ -6147,15 +6147,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(967);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6187,7 +6187,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final RangeExprContext rangeExpr() throws RecognitionException {
-		RangeExprContext _localctx = new RangeExprContext(this._ctx, getState());
+		RangeExprContext _localctx = new RangeExprContext(_ctx, getState());
 		enterRule(_localctx, 148, RULE_rangeExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -6195,8 +6195,8 @@ public class JsoniqParser extends Parser {
 			setState(968);
 			((RangeExprContext)_localctx).main_expr = additiveExpr();
 			setState(971);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,90,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,90,_ctx) ) {
 			case 1:
 				{
 				setState(969);
@@ -6211,8 +6211,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6247,7 +6247,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AdditiveExprContext additiveExpr() throws RecognitionException {
-		AdditiveExprContext _localctx = new AdditiveExprContext(this._ctx, getState());
+		AdditiveExprContext _localctx = new AdditiveExprContext(_ctx, getState());
 		enterRule(_localctx, 150, RULE_additiveExpr);
 		int _la;
 		try {
@@ -6257,21 +6257,21 @@ public class JsoniqParser extends Parser {
 			setState(973);
 			((AdditiveExprContext)_localctx).main_expr = multiplicativeExpr();
 			setState(978);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,91,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,91,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
 					setState(974);
-					((AdditiveExprContext)_localctx)._tset1937 = this._input.LT(1);
-					_la = this._input.LA(1);
+					((AdditiveExprContext)_localctx)._tset1937 = _input.LT(1);
+					_la = _input.LA(1);
 					if ( !(_la==T__47 || _la==T__48) ) {
-						((AdditiveExprContext)_localctx)._tset1937 = (Token)this._errHandler.recoverInline(this);
+						((AdditiveExprContext)_localctx)._tset1937 = (Token)_errHandler.recoverInline(this);
 					}
 					else {
-						if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-						this._errHandler.reportMatch(this);
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
 						consume();
 					}
 					((AdditiveExprContext)_localctx).op.add(((AdditiveExprContext)_localctx)._tset1937);
@@ -6282,15 +6282,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(980);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,91,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,91,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6327,7 +6327,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final MultiplicativeExprContext multiplicativeExpr() throws RecognitionException {
-		MultiplicativeExprContext _localctx = new MultiplicativeExprContext(this._ctx, getState());
+		MultiplicativeExprContext _localctx = new MultiplicativeExprContext(_ctx, getState());
 		enterRule(_localctx, 152, RULE_multiplicativeExpr);
 		int _la;
 		try {
@@ -6336,20 +6336,20 @@ public class JsoniqParser extends Parser {
 			setState(981);
 			((MultiplicativeExprContext)_localctx).main_expr = instanceOfExpr();
 			setState(986);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 7881299347900416L) != 0)) {
 				{
 				{
 				setState(982);
-				((MultiplicativeExprContext)_localctx)._tset1965 = this._input.LT(1);
-				_la = this._input.LA(1);
+				((MultiplicativeExprContext)_localctx)._tset1965 = _input.LT(1);
+				_la = _input.LA(1);
 				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 7881299347900416L) != 0)) ) {
-					((MultiplicativeExprContext)_localctx)._tset1965 = (Token)this._errHandler.recoverInline(this);
+					((MultiplicativeExprContext)_localctx)._tset1965 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
-					if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-					this._errHandler.reportMatch(this);
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				((MultiplicativeExprContext)_localctx).op.add(((MultiplicativeExprContext)_localctx)._tset1965);
@@ -6359,15 +6359,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(988);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6399,7 +6399,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final InstanceOfExprContext instanceOfExpr() throws RecognitionException {
-		InstanceOfExprContext _localctx = new InstanceOfExprContext(this._ctx, getState());
+		InstanceOfExprContext _localctx = new InstanceOfExprContext(_ctx, getState());
 		enterRule(_localctx, 154, RULE_instanceOfExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -6407,8 +6407,8 @@ public class JsoniqParser extends Parser {
 			setState(989);
 			((InstanceOfExprContext)_localctx).main_expr = isStaticallyExpr();
 			setState(993);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,93,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,93,_ctx) ) {
 			case 1:
 				{
 				setState(990);
@@ -6424,8 +6424,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6457,7 +6457,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final IsStaticallyExprContext isStaticallyExpr() throws RecognitionException {
-		IsStaticallyExprContext _localctx = new IsStaticallyExprContext(this._ctx, getState());
+		IsStaticallyExprContext _localctx = new IsStaticallyExprContext(_ctx, getState());
 		enterRule(_localctx, 156, RULE_isStaticallyExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -6465,8 +6465,8 @@ public class JsoniqParser extends Parser {
 			setState(995);
 			((IsStaticallyExprContext)_localctx).main_expr = treatExpr();
 			setState(999);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,94,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,94,_ctx) ) {
 			case 1:
 				{
 				setState(996);
@@ -6482,8 +6482,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6515,7 +6515,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TreatExprContext treatExpr() throws RecognitionException {
-		TreatExprContext _localctx = new TreatExprContext(this._ctx, getState());
+		TreatExprContext _localctx = new TreatExprContext(_ctx, getState());
 		enterRule(_localctx, 158, RULE_treatExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -6523,8 +6523,8 @@ public class JsoniqParser extends Parser {
 			setState(1001);
 			((TreatExprContext)_localctx).main_expr = castableExpr();
 			setState(1005);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,95,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,95,_ctx) ) {
 			case 1:
 				{
 				setState(1002);
@@ -6540,8 +6540,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6573,7 +6573,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CastableExprContext castableExpr() throws RecognitionException {
-		CastableExprContext _localctx = new CastableExprContext(this._ctx, getState());
+		CastableExprContext _localctx = new CastableExprContext(_ctx, getState());
 		enterRule(_localctx, 160, RULE_castableExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -6581,8 +6581,8 @@ public class JsoniqParser extends Parser {
 			setState(1007);
 			((CastableExprContext)_localctx).main_expr = castExpr();
 			setState(1011);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,96,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,96,_ctx) ) {
 			case 1:
 				{
 				setState(1008);
@@ -6598,8 +6598,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6631,7 +6631,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CastExprContext castExpr() throws RecognitionException {
-		CastExprContext _localctx = new CastExprContext(this._ctx, getState());
+		CastExprContext _localctx = new CastExprContext(_ctx, getState());
 		enterRule(_localctx, 162, RULE_castExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -6639,8 +6639,8 @@ public class JsoniqParser extends Parser {
 			setState(1013);
 			((CastExprContext)_localctx).main_expr = arrowExpr();
 			setState(1017);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,97,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,97,_ctx) ) {
 			case 1:
 				{
 				setState(1014);
@@ -6656,8 +6656,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6699,7 +6699,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArrowExprContext arrowExpr() throws RecognitionException {
-		ArrowExprContext _localctx = new ArrowExprContext(this._ctx, getState());
+		ArrowExprContext _localctx = new ArrowExprContext(_ctx, getState());
 		enterRule(_localctx, 164, RULE_arrowExpr);
 		try {
 			int _alt;
@@ -6708,8 +6708,8 @@ public class JsoniqParser extends Parser {
 			setState(1019);
 			((ArrowExprContext)_localctx).main_expr = unaryExpr();
 			setState(1028);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,98,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,98,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
@@ -6730,15 +6730,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(1030);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,98,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,98,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6769,12 +6769,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArrowFunctionSpecifierContext arrowFunctionSpecifier() throws RecognitionException {
-		ArrowFunctionSpecifierContext _localctx = new ArrowFunctionSpecifierContext(this._ctx, getState());
+		ArrowFunctionSpecifierContext _localctx = new ArrowFunctionSpecifierContext(_ctx, getState());
 		enterRule(_localctx, 166, RULE_arrowFunctionSpecifier);
 		try {
 			setState(1034);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Kfor:
 			case Klet:
 			case Kwhere:
@@ -6875,8 +6875,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6906,35 +6906,35 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final UnaryExprContext unaryExpr() throws RecognitionException {
-		UnaryExprContext _localctx = new UnaryExprContext(this._ctx, getState());
+		UnaryExprContext _localctx = new UnaryExprContext(_ctx, getState());
 		enterRule(_localctx, 168, RULE_unaryExpr);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1039);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__47 || _la==T__48) {
 				{
 				{
 				setState(1036);
-				((UnaryExprContext)_localctx)._tset2144 = this._input.LT(1);
-				_la = this._input.LA(1);
+				((UnaryExprContext)_localctx)._tset2144 = _input.LT(1);
+				_la = _input.LA(1);
 				if ( !(_la==T__47 || _la==T__48) ) {
-					((UnaryExprContext)_localctx)._tset2144 = (Token)this._errHandler.recoverInline(this);
+					((UnaryExprContext)_localctx)._tset2144 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
-					if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-					this._errHandler.reportMatch(this);
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset2144);
 				}
 				}
 				setState(1041);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(1042);
 			((UnaryExprContext)_localctx).main_expr = valueExpr();
@@ -6942,8 +6942,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -6977,12 +6977,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ValueExprContext valueExpr() throws RecognitionException {
-		ValueExprContext _localctx = new ValueExprContext(this._ctx, getState());
+		ValueExprContext _localctx = new ValueExprContext(_ctx, getState());
 		enterRule(_localctx, 170, RULE_valueExpr);
 		try {
 			setState(1047);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,101,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,101,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -7008,8 +7008,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7039,7 +7039,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ValidateExprContext validateExpr() throws RecognitionException {
-		ValidateExprContext _localctx = new ValidateExprContext(this._ctx, getState());
+		ValidateExprContext _localctx = new ValidateExprContext(_ctx, getState());
 		enterRule(_localctx, 172, RULE_validateExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7060,8 +7060,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7091,7 +7091,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AnnotateExprContext annotateExpr() throws RecognitionException {
-		AnnotateExprContext _localctx = new AnnotateExprContext(this._ctx, getState());
+		AnnotateExprContext _localctx = new AnnotateExprContext(_ctx, getState());
 		enterRule(_localctx, 174, RULE_annotateExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7112,8 +7112,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7144,7 +7144,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SimpleMapExprContext simpleMapExpr() throws RecognitionException {
-		SimpleMapExprContext _localctx = new SimpleMapExprContext(this._ctx, getState());
+		SimpleMapExprContext _localctx = new SimpleMapExprContext(_ctx, getState());
 		enterRule(_localctx, 176, RULE_simpleMapExpr);
 		int _la;
 		try {
@@ -7153,8 +7153,8 @@ public class JsoniqParser extends Parser {
 			setState(1063);
 			((SimpleMapExprContext)_localctx).main_expr = postFixExpr();
 			setState(1068);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__52) {
 				{
 				{
@@ -7166,15 +7166,15 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(1070);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7230,7 +7230,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final PostFixExprContext postFixExpr() throws RecognitionException {
-		PostFixExprContext _localctx = new PostFixExprContext(this._ctx, getState());
+		PostFixExprContext _localctx = new PostFixExprContext(_ctx, getState());
 		enterRule(_localctx, 178, RULE_postFixExpr);
 		try {
 			int _alt;
@@ -7239,14 +7239,14 @@ public class JsoniqParser extends Parser {
 			setState(1071);
 			((PostFixExprContext)_localctx).main_expr = primaryExpr();
 			setState(1079);
-			this._errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(this._input,104,this._ctx);
+			_errHandler.sync(this);
+			_alt = getInterpreter().adaptivePredict(_input,104,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					setState(1077);
-					this._errHandler.sync(this);
-					switch ( getInterpreter().adaptivePredict(this._input,103,this._ctx) ) {
+					_errHandler.sync(this);
+					switch ( getInterpreter().adaptivePredict(_input,103,_ctx) ) {
 					case 1:
 						{
 						setState(1072);
@@ -7281,15 +7281,15 @@ public class JsoniqParser extends Parser {
 					} 
 				}
 				setState(1081);
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,104,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,104,_ctx);
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7314,7 +7314,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArrayLookupContext arrayLookup() throws RecognitionException {
-		ArrayLookupContext _localctx = new ArrayLookupContext(this._ctx, getState());
+		ArrayLookupContext _localctx = new ArrayLookupContext(_ctx, getState());
 		enterRule(_localctx, 180, RULE_arrayLookup);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7333,8 +7333,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7356,7 +7356,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArrayUnboxingContext arrayUnboxing() throws RecognitionException {
-		ArrayUnboxingContext _localctx = new ArrayUnboxingContext(this._ctx, getState());
+		ArrayUnboxingContext _localctx = new ArrayUnboxingContext(_ctx, getState());
 		enterRule(_localctx, 182, RULE_arrayUnboxing);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7369,8 +7369,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7395,7 +7395,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final PredicateContext predicate() throws RecognitionException {
-		PredicateContext _localctx = new PredicateContext(this._ctx, getState());
+		PredicateContext _localctx = new PredicateContext(_ctx, getState());
 		enterRule(_localctx, 184, RULE_predicate);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7410,8 +7410,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7455,7 +7455,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ObjectLookupContext objectLookup() throws RecognitionException {
-		ObjectLookupContext _localctx = new ObjectLookupContext(this._ctx, getState());
+		ObjectLookupContext _localctx = new ObjectLookupContext(_ctx, getState());
 		enterRule(_localctx, 186, RULE_objectLookup);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7463,8 +7463,8 @@ public class JsoniqParser extends Parser {
 			setState(1095);
 			match(T__55);
 			setState(1102);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Kfor:
 			case Klet:
 			case Kwhere:
@@ -7580,8 +7580,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7640,12 +7640,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final PrimaryExprContext primaryExpr() throws RecognitionException {
-		PrimaryExprContext _localctx = new PrimaryExprContext(this._ctx, getState());
+		PrimaryExprContext _localctx = new PrimaryExprContext(_ctx, getState());
 		enterRule(_localctx, 188, RULE_primaryExpr);
 		try {
 			setState(1119);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,106,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,106,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -7755,8 +7755,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7781,7 +7781,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final BlockExprContext blockExpr() throws RecognitionException {
-		BlockExprContext _localctx = new BlockExprContext(this._ctx, getState());
+		BlockExprContext _localctx = new BlockExprContext(_ctx, getState());
 		enterRule(_localctx, 190, RULE_blockExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7796,8 +7796,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7823,7 +7823,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final VarRefContext varRef() throws RecognitionException {
-		VarRefContext _localctx = new VarRefContext(this._ctx, getState());
+		VarRefContext _localctx = new VarRefContext(_ctx, getState());
 		enterRule(_localctx, 192, RULE_varRef);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7836,8 +7836,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7862,7 +7862,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ParenthesizedExprContext parenthesizedExpr() throws RecognitionException {
-		ParenthesizedExprContext _localctx = new ParenthesizedExprContext(this._ctx, getState());
+		ParenthesizedExprContext _localctx = new ParenthesizedExprContext(_ctx, getState());
 		enterRule(_localctx, 194, RULE_parenthesizedExpr);
 		int _la;
 		try {
@@ -7871,8 +7871,8 @@ public class JsoniqParser extends Parser {
 			setState(1128);
 			match(T__8);
 			setState(1130);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -1566408243247242592L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 16831L) != 0)) {
 				{
 				setState(1129);
@@ -7886,8 +7886,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7909,7 +7909,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ContextItemExprContext contextItemExpr() throws RecognitionException {
-		ContextItemExprContext _localctx = new ContextItemExprContext(this._ctx, getState());
+		ContextItemExprContext _localctx = new ContextItemExprContext(_ctx, getState());
 		enterRule(_localctx, 196, RULE_contextItemExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7920,8 +7920,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7946,7 +7946,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final OrderedExprContext orderedExpr() throws RecognitionException {
-		OrderedExprContext _localctx = new OrderedExprContext(this._ctx, getState());
+		OrderedExprContext _localctx = new OrderedExprContext(_ctx, getState());
 		enterRule(_localctx, 198, RULE_orderedExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -7963,8 +7963,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -7990,7 +7990,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final UnorderedExprContext unorderedExpr() throws RecognitionException {
-		UnorderedExprContext _localctx = new UnorderedExprContext(this._ctx, getState());
+		UnorderedExprContext _localctx = new UnorderedExprContext(_ctx, getState());
 		enterRule(_localctx, 200, RULE_unorderedExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8007,8 +8007,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8037,7 +8037,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final FunctionCallContext functionCall() throws RecognitionException {
-		FunctionCallContext _localctx = new FunctionCallContext(this._ctx, getState());
+		FunctionCallContext _localctx = new FunctionCallContext(_ctx, getState());
 		enterRule(_localctx, 202, RULE_functionCall);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8050,8 +8050,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8081,7 +8081,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArgumentListContext argumentList() throws RecognitionException {
-		ArgumentListContext _localctx = new ArgumentListContext(this._ctx, getState());
+		ArgumentListContext _localctx = new ArgumentListContext(_ctx, getState());
 		enterRule(_localctx, 204, RULE_argumentList);
 		int _la;
 		try {
@@ -8090,8 +8090,8 @@ public class JsoniqParser extends Parser {
 			setState(1149);
 			match(T__8);
 			setState(1156);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & -1566408243247242592L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 16895L) != 0)) {
 				{
 				{
@@ -8099,8 +8099,8 @@ public class JsoniqParser extends Parser {
 				((ArgumentListContext)_localctx).argument = argument();
 				((ArgumentListContext)_localctx).args.add(((ArgumentListContext)_localctx).argument);
 				setState(1152);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				if (_la==T__13) {
 					{
 					setState(1151);
@@ -8111,8 +8111,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(1158);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(1159);
 			match(T__9);
@@ -8120,8 +8120,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8147,12 +8147,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArgumentContext argument() throws RecognitionException {
-		ArgumentContext _localctx = new ArgumentContext(this._ctx, getState());
+		ArgumentContext _localctx = new ArgumentContext(_ctx, getState());
 		enterRule(_localctx, 206, RULE_argument);
 		try {
 			setState(1163);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__4:
 			case T__6:
 			case T__8:
@@ -8259,8 +8259,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8288,12 +8288,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final FunctionItemExprContext functionItemExpr() throws RecognitionException {
-		FunctionItemExprContext _localctx = new FunctionItemExprContext(this._ctx, getState());
+		FunctionItemExprContext _localctx = new FunctionItemExprContext(_ctx, getState());
 		enterRule(_localctx, 208, RULE_functionItemExpr);
 		try {
 			setState(1167);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case Kfor:
 			case Klet:
 			case Kwhere:
@@ -8388,8 +8388,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8417,7 +8417,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final NamedFunctionRefContext namedFunctionRef() throws RecognitionException {
-		NamedFunctionRefContext _localctx = new NamedFunctionRefContext(this._ctx, getState());
+		NamedFunctionRefContext _localctx = new NamedFunctionRefContext(_ctx, getState());
 		enterRule(_localctx, 210, RULE_namedFunctionRef);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8432,8 +8432,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8470,7 +8470,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final InlineFunctionExprContext inlineFunctionExpr() throws RecognitionException {
-		InlineFunctionExprContext _localctx = new InlineFunctionExprContext(this._ctx, getState());
+		InlineFunctionExprContext _localctx = new InlineFunctionExprContext(_ctx, getState());
 		enterRule(_localctx, 212, RULE_inlineFunctionExpr);
 		int _la;
 		try {
@@ -8483,8 +8483,8 @@ public class JsoniqParser extends Parser {
 			setState(1175);
 			match(T__8);
 			setState(1177);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==T__4) {
 				{
 				setState(1176);
@@ -8495,8 +8495,8 @@ public class JsoniqParser extends Parser {
 			setState(1179);
 			match(T__9);
 			setState(1182);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
 				setState(1180);
@@ -8520,8 +8520,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8563,13 +8563,13 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final InsertExprContext insertExpr() throws RecognitionException {
-		InsertExprContext _localctx = new InsertExprContext(this._ctx, getState());
+		InsertExprContext _localctx = new InsertExprContext(_ctx, getState());
 		enterRule(_localctx, 214, RULE_insertExpr);
 		int _la;
 		try {
 			setState(1211);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,116,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,116,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -8584,8 +8584,8 @@ public class JsoniqParser extends Parser {
 				setState(1192);
 				((InsertExprContext)_localctx).main_expr = exprSingle();
 				setState(1196);
-				this._errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(this._input,114,this._ctx) ) {
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,114,_ctx) ) {
 				case 1:
 					{
 					setState(1193);
@@ -8609,8 +8609,8 @@ public class JsoniqParser extends Parser {
 				setState(1200);
 				pairConstructor();
 				setState(1205);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				while (_la==T__13) {
 					{
 					{
@@ -8621,8 +8621,8 @@ public class JsoniqParser extends Parser {
 					}
 					}
 					setState(1207);
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 				}
 				setState(1208);
 				match(Kinto);
@@ -8634,8 +8634,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8662,7 +8662,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final DeleteExprContext deleteExpr() throws RecognitionException {
-		DeleteExprContext _localctx = new DeleteExprContext(this._ctx, getState());
+		DeleteExprContext _localctx = new DeleteExprContext(_ctx, getState());
 		enterRule(_localctx, 216, RULE_deleteExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8677,8 +8677,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8710,7 +8710,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final RenameExprContext renameExpr() throws RecognitionException {
-		RenameExprContext _localctx = new RenameExprContext(this._ctx, getState());
+		RenameExprContext _localctx = new RenameExprContext(_ctx, getState());
 		enterRule(_localctx, 218, RULE_renameExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8729,8 +8729,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8764,7 +8764,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ReplaceExprContext replaceExpr() throws RecognitionException {
-		ReplaceExprContext _localctx = new ReplaceExprContext(this._ctx, getState());
+		ReplaceExprContext _localctx = new ReplaceExprContext(_ctx, getState());
 		enterRule(_localctx, 220, RULE_replaceExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8787,8 +8787,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8827,7 +8827,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TransformExprContext transformExpr() throws RecognitionException {
-		TransformExprContext _localctx = new TransformExprContext(this._ctx, getState());
+		TransformExprContext _localctx = new TransformExprContext(_ctx, getState());
 		enterRule(_localctx, 222, RULE_transformExpr);
 		int _la;
 		try {
@@ -8838,8 +8838,8 @@ public class JsoniqParser extends Parser {
 			setState(1232);
 			copyDecl();
 			setState(1237);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
@@ -8850,8 +8850,8 @@ public class JsoniqParser extends Parser {
 				}
 				}
 				setState(1239);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 			}
 			setState(1240);
 			match(Kmodify);
@@ -8865,8 +8865,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8899,7 +8899,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AppendExprContext appendExpr() throws RecognitionException {
-		AppendExprContext _localctx = new AppendExprContext(this._ctx, getState());
+		AppendExprContext _localctx = new AppendExprContext(_ctx, getState());
 		enterRule(_localctx, 224, RULE_appendExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -8918,8 +8918,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -8957,7 +8957,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final UpdateLocatorContext updateLocator() throws RecognitionException {
-		UpdateLocatorContext _localctx = new UpdateLocatorContext(this._ctx, getState());
+		UpdateLocatorContext _localctx = new UpdateLocatorContext(_ctx, getState());
 		enterRule(_localctx, 226, RULE_updateLocator);
 		try {
 			int _alt;
@@ -8966,15 +8966,15 @@ public class JsoniqParser extends Parser {
 			setState(1251);
 			((UpdateLocatorContext)_localctx).main_expr = primaryExpr();
 			setState(1254); 
-			this._errHandler.sync(this);
+			_errHandler.sync(this);
 			_alt = 1;
 			do {
 				switch (_alt) {
 				case 1:
 					{
 					setState(1254);
-					this._errHandler.sync(this);
-					switch (this._input.LA(1)) {
+					_errHandler.sync(this);
+					switch (_input.LA(1)) {
 					case T__53:
 						{
 						setState(1252);
@@ -8996,15 +8996,15 @@ public class JsoniqParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				setState(1256); 
-				this._errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(this._input,119,this._ctx);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,119,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9034,7 +9034,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final CopyDeclContext copyDecl() throws RecognitionException {
-		CopyDeclContext _localctx = new CopyDeclContext(this._ctx, getState());
+		CopyDeclContext _localctx = new CopyDeclContext(_ctx, getState());
 		enterRule(_localctx, 228, RULE_copyDecl);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -9049,8 +9049,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9083,12 +9083,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SequenceTypeContext sequenceType() throws RecognitionException {
-		SequenceTypeContext _localctx = new SequenceTypeContext(this._ctx, getState());
+		SequenceTypeContext _localctx = new SequenceTypeContext(_ctx, getState());
 		enterRule(_localctx, 230, RULE_sequenceType);
 		try {
 			setState(1270);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__8:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -9178,8 +9178,8 @@ public class JsoniqParser extends Parser {
 				setState(1264);
 				((SequenceTypeContext)_localctx).item = itemType();
 				setState(1268);
-				this._errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(this._input,120,this._ctx) ) {
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,120,_ctx) ) {
 				case 1:
 					{
 					setState(1265);
@@ -9210,8 +9210,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9244,28 +9244,28 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ObjectConstructorContext objectConstructor() throws RecognitionException {
-		ObjectConstructorContext _localctx = new ObjectConstructorContext(this._ctx, getState());
+		ObjectConstructorContext _localctx = new ObjectConstructorContext(_ctx, getState());
 		enterRule(_localctx, 232, RULE_objectConstructor);
 		int _la;
 		try {
 			setState(1288);
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
 			case T__6:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(1272);
 				match(T__6);
 				setState(1281);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -1566408243247242592L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 16831L) != 0)) {
 					{
 					setState(1273);
 					pairConstructor();
 					setState(1278);
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 					while (_la==T__13) {
 						{
 						{
@@ -9276,8 +9276,8 @@ public class JsoniqParser extends Parser {
 						}
 						}
 						setState(1280);
-						this._errHandler.sync(this);
-						_la = this._input.LA(1);
+						_errHandler.sync(this);
+						_la = _input.LA(1);
 					}
 					}
 				}
@@ -9304,8 +9304,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9334,12 +9334,12 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ItemTypeContext itemType() throws RecognitionException {
-		ItemTypeContext _localctx = new ItemTypeContext(this._ctx, getState());
+		ItemTypeContext _localctx = new ItemTypeContext(_ctx, getState());
 		enterRule(_localctx, 234, RULE_itemType);
 		try {
 			setState(1293);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,125,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,125,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
@@ -9365,8 +9365,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9394,14 +9394,14 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final FunctionTestContext functionTest() throws RecognitionException {
-		FunctionTestContext _localctx = new FunctionTestContext(this._ctx, getState());
+		FunctionTestContext _localctx = new FunctionTestContext(_ctx, getState());
 		enterRule(_localctx, 236, RULE_functionTest);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1297);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,126,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,126,_ctx) ) {
 			case 1:
 				{
 				setState(1295);
@@ -9419,8 +9419,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9442,7 +9442,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final AnyFunctionTestContext anyFunctionTest() throws RecognitionException {
-		AnyFunctionTestContext _localctx = new AnyFunctionTestContext(this._ctx, getState());
+		AnyFunctionTestContext _localctx = new AnyFunctionTestContext(_ctx, getState());
 		enterRule(_localctx, 238, RULE_anyFunctionTest);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -9459,8 +9459,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9492,7 +9492,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final TypedFunctionTestContext typedFunctionTest() throws RecognitionException {
-		TypedFunctionTestContext _localctx = new TypedFunctionTestContext(this._ctx, getState());
+		TypedFunctionTestContext _localctx = new TypedFunctionTestContext(_ctx, getState());
 		enterRule(_localctx, 240, RULE_typedFunctionTest);
 		int _la;
 		try {
@@ -9503,16 +9503,16 @@ public class JsoniqParser extends Parser {
 			setState(1305);
 			match(T__8);
 			setState(1314);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -2305843007066209792L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 16543L) != 0)) {
 				{
 				setState(1306);
 				((TypedFunctionTestContext)_localctx).sequenceType = sequenceType();
 				((TypedFunctionTestContext)_localctx).st.add(((TypedFunctionTestContext)_localctx).sequenceType);
 				setState(1311);
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
 				while (_la==T__13) {
 					{
 					{
@@ -9524,8 +9524,8 @@ public class JsoniqParser extends Parser {
 					}
 					}
 					setState(1313);
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 				}
 				}
 			}
@@ -9540,8 +9540,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9570,7 +9570,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final SingleTypeContext singleType() throws RecognitionException {
-		SingleTypeContext _localctx = new SingleTypeContext(this._ctx, getState());
+		SingleTypeContext _localctx = new SingleTypeContext(_ctx, getState());
 		enterRule(_localctx, 242, RULE_singleType);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -9578,8 +9578,8 @@ public class JsoniqParser extends Parser {
 			setState(1320);
 			((SingleTypeContext)_localctx).item = itemType();
 			setState(1322);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,129,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,129,_ctx) ) {
 			case 1:
 				{
 				setState(1321);
@@ -9592,8 +9592,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9626,15 +9626,15 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final PairConstructorContext pairConstructor() throws RecognitionException {
-		PairConstructorContext _localctx = new PairConstructorContext(this._ctx, getState());
+		PairConstructorContext _localctx = new PairConstructorContext(_ctx, getState());
 		enterRule(_localctx, 244, RULE_pairConstructor);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1326);
-			this._errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(this._input,130,this._ctx) ) {
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,130,_ctx) ) {
 			case 1:
 				{
 				setState(1324);
@@ -9649,13 +9649,13 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(1328);
-			_la = this._input.LA(1);
+			_la = _input.LA(1);
 			if ( !(_la==T__17 || _la==ArgumentPlaceholder) ) {
-			this._errHandler.recoverInline(this);
+			_errHandler.recoverInline(this);
 			}
 			else {
-				if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-				this._errHandler.reportMatch(this);
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
 				consume();
 			}
 			setState(1329);
@@ -9664,8 +9664,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9690,7 +9690,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final ArrayConstructorContext arrayConstructor() throws RecognitionException {
-		ArrayConstructorContext _localctx = new ArrayConstructorContext(this._ctx, getState());
+		ArrayConstructorContext _localctx = new ArrayConstructorContext(_ctx, getState());
 		enterRule(_localctx, 246, RULE_arrayConstructor);
 		int _la;
 		try {
@@ -9699,8 +9699,8 @@ public class JsoniqParser extends Parser {
 			setState(1331);
 			match(T__53);
 			setState(1333);
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -1566408243247242592L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 16831L) != 0)) {
 				{
 				setState(1332);
@@ -9714,8 +9714,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9740,7 +9740,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final UriLiteralContext uriLiteral() throws RecognitionException {
-		UriLiteralContext _localctx = new UriLiteralContext(this._ctx, getState());
+		UriLiteralContext _localctx = new UriLiteralContext(_ctx, getState());
 		enterRule(_localctx, 248, RULE_uriLiteral);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -9751,8 +9751,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9775,7 +9775,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final StringLiteralContext stringLiteral() throws RecognitionException {
-		StringLiteralContext _localctx = new StringLiteralContext(this._ctx, getState());
+		StringLiteralContext _localctx = new StringLiteralContext(_ctx, getState());
 		enterRule(_localctx, 250, RULE_stringLiteral);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -9786,8 +9786,8 @@ public class JsoniqParser extends Parser {
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();
@@ -9882,28 +9882,28 @@ public class JsoniqParser extends Parser {
 	}
 
 	public final KeyWordsContext keyWords() throws RecognitionException {
-		KeyWordsContext _localctx = new KeyWordsContext(this._ctx, getState());
+		KeyWordsContext _localctx = new KeyWordsContext(_ctx, getState());
 		enterRule(_localctx, 252, RULE_keyWords);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1341);
-			_la = this._input.LA(1);
+			_la = _input.LA(1);
 			if ( !(((((_la - 61)) & ~0x3f) == 0 && ((1L << (_la - 61)) & -1L) != 0) || ((((_la - 125)) & ~0x3f) == 0 && ((1L << (_la - 125)) & 1279L) != 0)) ) {
-			this._errHandler.recoverInline(this);
+			_errHandler.recoverInline(this);
 			}
 			else {
-				if ( this._input.LA(1)==Token.EOF ) this.matchedEOF = true;
-				this._errHandler.reportMatch(this);
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
 				consume();
 			}
 			}
 		}
 		catch (RecognitionException re) {
 			_localctx.exception = re;
-			this._errHandler.reportError(this, re);
-			this._errHandler.recover(this, re);
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
 		}
 		finally {
 			exitRule();

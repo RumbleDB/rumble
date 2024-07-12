@@ -36,11 +36,11 @@ public class DeleteExpression extends Expression {
     }
 
     public Expression getMainExpression() {
-        return this.mainExpression;
+        return mainExpression;
     }
 
     public Expression getLocatorExpression() {
-        return this.locatorExpression;
+        return locatorExpression;
     }
 
 

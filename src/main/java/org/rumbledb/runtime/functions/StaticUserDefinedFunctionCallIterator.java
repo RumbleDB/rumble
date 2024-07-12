@@ -128,7 +128,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     public void setNextResult() {
         this.nextResult = null;
-        if (!this.encounteredExitStatement) {
+        if (!encounteredExitStatement) {
             try {
                 if (this.userDefinedFunctionCallIterator.hasNext()) {
                     this.nextResult = this.userDefinedFunctionCallIterator.next();
