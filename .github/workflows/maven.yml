@@ -24,7 +24,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Install with Maven
-      run: mvn install -DskipTests -Dgpg.skip --quiet
+      run: mvn install -DskipTests -Dgpg.skip --quiet -Dsisu.debug
     - name: Compile with Maven
       run: mvn clean compile assembly:single
     - name: Spotless check
