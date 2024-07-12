@@ -21,11 +21,11 @@ public class CopyDeclaration {
     }
 
     public Name getVariableName() {
-        return variableName;
+        return this.variableName;
     }
 
     public Expression getSourceExpression() {
-        return sourceExpression;
+        return this.sourceExpression;
     }
 
     public SequenceType getSourceSequenceType() {

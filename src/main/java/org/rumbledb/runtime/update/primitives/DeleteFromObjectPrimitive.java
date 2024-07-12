@@ -44,12 +44,12 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public Item getTarget() {
-        return target;
+        return this.target;
     }
 
     @Override
     public List<Item> getContentList() {
-        return content;
+        return this.content;
     }
 
     @Override
