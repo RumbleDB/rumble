@@ -45,11 +45,17 @@ public class DateTimeItem implements Item {
     private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + timezoneFrag;
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag + ")?)";
     private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
+    private static final String dateTimeNoTimeZoneLexicalRep = dateFrag + "T" + timeFrag;
+    private static final String dateNoTimeZoneLexicalRep = dateFrag;
+    private static final String timeNoTimeZoneLexicalRep = timeFrag;
 
-    private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
-    private static final Pattern dateTimeStampPattern = Pattern.compile(dateTimeStampLexicalRep);
-    private static final Pattern datePattern = Pattern.compile(dateLexicalRep);
-    private static final Pattern timePattern = Pattern.compile(timeLexicalRep);
+    public static final Pattern DATETIME_PATTERN = Pattern.compile(dateTimeLexicalRep);
+    public static final Pattern DATETIMESTAMP_PATTERN = Pattern.compile(dateTimeStampLexicalRep);
+    public static final Pattern DATE_PATTERN = Pattern.compile(dateLexicalRep);
+    public static final Pattern TIME_PATTERN = Pattern.compile(timeLexicalRep);
+    public static final Pattern DATETIME_NOTIMEZONE_PATTERN = Pattern.compile(dateTimeNoTimeZoneLexicalRep);
+    public static final Pattern DATE_NOTIMEZONE_PATTERN = Pattern.compile(dateNoTimeZoneLexicalRep);
+    public static final Pattern TIME_NOTIMEZONE_PATTERN = Pattern.compile(timeNoTimeZoneLexicalRep);
 
 
     private static final long serialVersionUID = 1L;
@@ -64,14 +70,22 @@ public class DateTimeItem implements Item {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
+        if (!hasTimeZone) {
+            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+        }
+
     }
 
     DateTimeItem(String dateTimeString) {
         this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
+        if (doesLexicalValueHaveNoTimeZone(dateTimeString)) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
         }
+    }
+
+    private static boolean doesLexicalValueHaveNoTimeZone(String dateTimeString) {
+        return DATETIME_NOTIMEZONE_PATTERN.matcher(dateTimeString).matches();
     }
 
     @Override
@@ -95,15 +109,21 @@ public class DateTimeItem implements Item {
 
     @Override
     public String getStringValue() {
-        String value = this.value.toString();
-        String zoneString = this.value.getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
-                ? ""
-                : value.substring(value.length() - 6);
-        value = value.substring(0, value.length() - zoneString.length());
+        String originalValue = this.value.toString();
+        if (!hasTimeZone()) {
+            String value = originalValue.substring(0, originalValue.length() - 1);
+            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+            return value;
+        }
+        if (this.value.getZone() == DateTimeZone.UTC) {
+            String value = originalValue.substring(0, originalValue.length() - 1);
+            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+            return value + "Z";
+        }
+        String zoneString = originalValue.substring(originalValue.length() - 6);
+        String value = originalValue.substring(0, originalValue.length() - 6);
         value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + (this.hasTimeZone ? zoneString : "");
+        return value + zoneString;
     }
 
     @Override
@@ -170,16 +190,16 @@ public class DateTimeItem implements Item {
 
     static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return dateTimeStampPattern.matcher(dateTime).matches();
+            return DATETIMESTAMP_PATTERN.matcher(dateTime).matches();
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            return dateTimePattern.matcher(dateTime).matches();
+            return DATETIME_PATTERN.matcher(dateTime).matches();
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
-            return datePattern.matcher(dateTime).matches();
+            return DATE_PATTERN.matcher(dateTime).matches();
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-            return timePattern.matcher(dateTime).matches();
+            return TIME_PATTERN.matcher(dateTime).matches();
         }
         return false;
     }

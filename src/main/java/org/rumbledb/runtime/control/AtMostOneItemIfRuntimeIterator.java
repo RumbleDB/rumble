@@ -30,6 +30,10 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
@@ -70,13 +74,13 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!conditionResult.getResultingType().equals(SequenceType.BOOLEAN)) {
+        if (!this.children.get(0).getStaticType().equals(SequenceType.BOOLEAN)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!thenResult.getResultingType().equals(SequenceType.FLOAT)) {
+        if (!this.children.get(1).getStaticType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!elseResult.getResultingType().equals(SequenceType.FLOAT)) {
+        if (!this.children.get(2).getStaticType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
@@ -87,6 +91,16 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             + ", "
             + elseResult.getResultingQuery()
             + " ) )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.FLOAT);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery);
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        super.write(kryo, output);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        super.read(kryo, input);
     }
 }

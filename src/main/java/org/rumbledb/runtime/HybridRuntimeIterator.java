@@ -43,6 +43,12 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected List<Item> result = null;
     private int currentResultIndex = 0;
 
+    protected HybridRuntimeIterator() {
+        super();
+        this.result = null;
+        this.currentResultIndex = 0;
+    }
+
     protected HybridRuntimeIterator(
             List<RuntimeIterator> children,
             RuntimeStaticContext staticContext

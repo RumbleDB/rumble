@@ -143,7 +143,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().equals(SequenceType.FLOAT)) {
+        if (!this.children.get(0).getStaticType().equals(SequenceType.FLOAT)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("
@@ -151,6 +151,6 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             + value.getResultingQuery()
             + " ) AS FLOAT)"
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.FLOAT);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery);
     }
 }

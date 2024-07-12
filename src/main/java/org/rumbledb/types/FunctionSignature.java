@@ -21,9 +21,15 @@
 package org.rumbledb.types;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionSignature implements Serializable {
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+public class FunctionSignature implements Serializable, KryoSerializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;
     private static final long serialVersionUID = 1L;
@@ -34,6 +40,11 @@ public class FunctionSignature implements Serializable {
     ) {
         this.parameterTypes = parameterTypes;
         this.returnType = returnType;
+    }
+
+    public FunctionSignature() {
+        this.parameterTypes = new ArrayList<>();
+        this.returnType = SequenceType.ITEM_STAR;
     }
 
 
@@ -90,5 +101,19 @@ public class FunctionSignature implements Serializable {
         sb.append(") as ");
         sb.append(this.returnType);
         return sb.toString();
+    }
+
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.parameterTypes);
+        kryo.writeObject(output, this.returnType);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.parameterTypes = kryo.readObject(input, ArrayList.class);
+        this.returnType = kryo.readObject(input, SequenceType.class);
     }
 }

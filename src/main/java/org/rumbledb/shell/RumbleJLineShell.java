@@ -22,7 +22,6 @@ package org.rumbledb.shell;
 
 import javassist.CannotCompileException;
 import org.apache.commons.io.IOUtils;
-import org.apache.spark.SparkException;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -160,25 +159,10 @@ public class RumbleJLineShell {
     }
 
     private void handleException(Throwable ex, boolean showErrorInfo) {
+        ex = Main.unboxException(ex);
         if (ex != null) {
             if (ex instanceof EndOfFileException) {
                 this.currentLine = RumbleJLineShell.EXIT_COMMAND;
-            } else if (ex instanceof SparkException) {
-                Throwable sparkExceptionCause = ex.getCause();
-                if (sparkExceptionCause != null) {
-                    handleException(sparkExceptionCause, showErrorInfo);
-                } else {
-                    if (showErrorInfo) {
-                        ex.printStackTrace();
-                    }
-                    handleException(
-                        new OurBadException(
-                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
-                                    + ex.getMessage()
-                        ),
-                        showErrorInfo
-                    );
-                }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
                 if (showErrorInfo) {
