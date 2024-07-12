@@ -163,7 +163,7 @@ public class JsoniqLexer extends Lexer {
 
 	public JsoniqLexer(CharStream input) {
 		super(input);
-		_interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
+		this._interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 
 	@Override

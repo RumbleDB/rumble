@@ -20,11 +20,11 @@ public class Annotation {
     }
 
     public Name getAnnotationName() {
-        return annotationName;
+        return this.annotationName;
     }
 
     public List<Expression> getLiterals() {
-        return literals;
+        return this.literals;
     }
 
     public static boolean checkAssignable(

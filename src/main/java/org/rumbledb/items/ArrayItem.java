@@ -150,7 +150,7 @@ public class ArrayItem implements Item {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
-        for (Item item : arrayItems) {
+        for (Item item : this.arrayItems) {
             item.setMutabilityLevel(mutabilityLevel);
         }
     }
