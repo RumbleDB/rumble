@@ -7,17 +7,16 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
-import java.util.Random;
 
-public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
+public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterator {
     private Item low;
     private Item high;
-    private int size;
     private Item type;
-    private Random random;
+    private int seed;
+    private int size;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceWithBoundsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public RandomSequenceWithBoundsAndSeedIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
@@ -27,7 +26,7 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
         this.high = this.children.get(1).materializeFirstItemOrNull(context);
         this.size = this.children.get(2).materializeFirstItemOrNull(context).castToIntValue();
         this.type = this.children.get(3).materializeFirstItemOrNull(context);
-        this.random = new Random();
+        this.seed = this.children.get(4).materializeFirstItemOrNull(context).castToIntValue();
         this.generatedRandomsIterator = createRandomNumberStream();
     }
 
@@ -36,14 +35,16 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
             return new GeneratedRandomIntegersIterator(
                     size,
                     low.castToIntValue(),
-                    high.castToIntValue()
+                    high.castToIntValue(),
+                    seed
             );
         } else {
             // Generate doubles otherwise
             return new GeneratedRandomDoublesIterator(
                     size,
                     low.castToDoubleValue(),
-                    high.castToDoubleValue()
+                    high.castToDoubleValue(),
+                    seed
             );
         }
     }

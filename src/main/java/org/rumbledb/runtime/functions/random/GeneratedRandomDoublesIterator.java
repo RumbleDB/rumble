@@ -8,8 +8,24 @@ import java.util.PrimitiveIterator;
 public class GeneratedRandomDoublesIterator extends GeneratedRandomsIterator {
     private final PrimitiveIterator.OfDouble iterator;
 
-    public GeneratedRandomDoublesIterator(PrimitiveIterator.OfDouble iterator) {
-        this.iterator = iterator;
+    public GeneratedRandomDoublesIterator(int size, double low, double high) {
+        super();
+        this.iterator = this.random.doubles(size, low, high).iterator();
+    }
+
+    public GeneratedRandomDoublesIterator(int size, double low, double high, int seed) {
+        super(seed);
+        this.iterator = this.random.doubles(size, low, high).iterator();
+    }
+
+    public GeneratedRandomDoublesIterator(int size) {
+        super();
+        this.iterator = this.random.doubles(size).iterator();
+    }
+
+    public GeneratedRandomDoublesIterator(int size, int seed) {
+        super(seed);
+        this.iterator = this.random.doubles(size).iterator();
     }
 
     @Override

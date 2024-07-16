@@ -12,6 +12,7 @@ import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.TrueFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
+import org.rumbledb.runtime.functions.dataframe.DropColumnsIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
@@ -62,6 +63,7 @@ import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
 import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
+import org.rumbledb.runtime.functions.nullable.IsNullIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
@@ -94,6 +96,7 @@ import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
 import org.rumbledb.runtime.functions.random.RandomNumberGeneratorIterator;
 import org.rumbledb.runtime.functions.random.RandomSequenceGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceWithBoundsAndSeedIterator;
 import org.rumbledb.runtime.functions.random.RandomSequenceWithBoundsIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
@@ -350,6 +353,36 @@ public class BuiltinFunctionCatalogue {
                                 SequenceType.createSequenceType(param2Type),
                                 SequenceType.createSequenceType(param3Type),
                                 SequenceType.createSequenceType(param4Type)
+                            )
+                        ),
+                        SequenceType.createSequenceType(returnType)
+                ),
+                functionIteratorClass,
+                builtInFunctionExecutionMode
+        );
+    }
+
+    private static BuiltinFunction createBuiltinFunction(
+            Name functionName,
+            String param1Type,
+            String param2Type,
+            String param3Type,
+            String param4Type,
+            String param5Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 5),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(
+                                SequenceType.createSequenceType(param1Type),
+                                SequenceType.createSequenceType(param2Type),
+                                SequenceType.createSequenceType(param3Type),
+                                SequenceType.createSequenceType(param4Type),
+                                SequenceType.createSequenceType(param5Type)
                             )
                         ),
                         SequenceType.createSequenceType(returnType)
@@ -2741,6 +2774,7 @@ public class BuiltinFunctionCatalogue {
         "integer",
         "integer",
         "string",
+        "integer",
         "item*",
         RandomSequenceWithBoundsIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2758,6 +2792,22 @@ public class BuiltinFunctionCatalogue {
         "string",
         "item*",
         RandomSequenceWithBoundsIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction random_sequence_with_bounds_seeded_int = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random-between"
+        ),
+        "integer",
+        "integer",
+        "integer",
+        "string",
+        "integer",
+        "item*",
+        RandomSequenceWithBoundsAndSeedIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2806,6 +2856,31 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "string",
         DynamicItemTypeIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction drop_columns = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "drop-columns"
+        ),
+        "object*",
+        "string*",
+        "object*",
+        DropColumnsIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
+    static final BuiltinFunction is_null = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "is-null"
+        ),
+        "item*",
+        "boolean",
+        IsNullIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3021,6 +3096,12 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
         builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
         builtinFunctions.put(item_type.getIdentifier(), item_type);
+        builtinFunctions.put(drop_columns.getIdentifier(), drop_columns);
+        builtinFunctions.put(is_null.getIdentifier(), is_null);
+        builtinFunctions.put(
+            random_sequence_with_bounds_seeded_int.getIdentifier(),
+            random_sequence_with_bounds_seeded_int
+        );
     }
 
 
