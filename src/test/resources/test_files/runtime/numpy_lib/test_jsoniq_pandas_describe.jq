@@ -31,6 +31,6 @@ pandas:describe({"categorical": ["d", "e", "f"],"numeric": [1, 2, 3],"object": [
 pandas:describe({"categorical": ["d", "e", "f"],"numeric": [1, 2, 3],"object": ["a", "b", "c"]}, {"include": "object"}),
 pandas:describe({"0": [10, 18, 11],"1": [13, 15, 8], "2": [9, 20, 3]}),
 pandas:describe({"Normal": [1, 2, 3, 4, 5],"Uniform": [1, 1, 1, 1, 1],"Skewed": [1, 1, 1, 1,100]}), :)
-declare variable $file_data := json-file("../../../queries/sample-na-data-without-arrays.json");
-let $data := validate type local:sample-type-without-arrays* {$file_data}
+declare variable $file_data := json-file("../../../queries/sample-na-data.json");
+let $data := validate type local:sample-type-with-arrays* {$file_data}
 return $data=>pandas:describe()

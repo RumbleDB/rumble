@@ -19,8 +19,8 @@ declare function jsoniq_pandas:describe($dataframe as object*, $params as object
     return { $column:
         switch($params.include)
             case "all" return jsoniq_pandas:all_report([$dataframe.$column], $params)
-            (: case "number" return jsoniq_pandas:number_report($dataframe.$column, $params)
-            case "object" return jsoniq_pandas:object_report($dataframe.$column) :)
+            case "number" return jsoniq_pandas:number_report([$dataframe.$column], $params)
+            case "object" return jsoniq_pandas:object_report([$dataframe.$column])
             default return error("Unrecognized include option. Only 'number' and 'object' are supported.")
     }
 };
@@ -112,8 +112,6 @@ declare function jsoniq_pandas:count_occurences($column) {
     for $value in $column[]
     let $group_key := $value
     group by $group_key
-    (: let $freq := count($value) :)
-    (: order by $freq descending :)
     return {"value": $group_key, "count": count($value)}
 };
 
@@ -141,13 +139,6 @@ Params is an object for optional arguments. These arguments are:
 - show_counts (boolean): Option to provide count of null elements in a column.:)
 declare function jsoniq_pandas:info($dataframe as object*, $params as object){};
 
-(: assign inserts new columns into a dataframe. Returns a new DataFrame with all of the original dataframe's columns in addition to new ones. Existing columns that are re-assigned are overwritten.
-Required params are:
-- dataframe (DataFrame): The dataframe to copy the columns from.
-- columns (object): Pairs of string:array values to insert, where string is the column name and array is the values. Note, the array must have the same size as the number of entries in the DataFrame, otherwise an error is raised.
-:)
-declare function jsoniq_pandas:assign($to_insert as object) {};
-
 (: sample returns a random sample from the DataFrame. We currently only support returning results from the first axis, that is rows of the DataFrame. We do not support weighted samples or fractional samples. We only support sampling with replacement.
 Required params are:
 - dataframe (DataFrame): the dataframe to sample from.
@@ -156,10 +147,19 @@ Required params are:
 declare function jsoniq_pandas:sample($dataframe as object*, $num as integer) {
     if ($num lt 0) then ()
     else
-        let $df_keys := keys($dataframe)
-        let $size_dataframe := size($df_keys)
+        let $size_dataframe := count($dataframe)
+        let $random_numbers := jsoniq_numpy:random_randint(1, {"size": [$size_dataframe], "high": $size_dataframe})
         for $i in 1 to $num
-        return $df_keys[jsoniq_numpy:random_randint($size_dataframe, {"size": [1]})]
+        return $dataframe[$random_numbers[$i]]
+};
+
+declare function jsoniq_pandas:sample($dataframe as object*, $num as integer, $seed as integer) {
+    if ($num lt 0) then ()
+        else
+            let $size_dataframe := count($dataframe)
+            let $random_numbers := random-between(1, $size_dataframe, $num, "integer", $seed)
+            for $i in 1 to $num
+            return $dataframe[$random_numbers[$i]]
 };
 
 
@@ -179,7 +179,7 @@ declare function jsoniq_pandas:isnull_value($value) {
 };
 
 declare function jsoniq_pandas:isnull_array($array as array) {
-    (: TODO: Error handling. Limit. :)
+    (: TODO: Add support for limited number of replacements :)
     for $value in $array[]
     return typeswitch($value)
         case array return jsoniq_pandas:isnull_array($value)
@@ -217,7 +217,7 @@ declare function jsoniq_pandas:fillna_value($value, $params as object) {
 };
 
 declare function jsoniq_pandas:fillna_array($array as array, $params as object) {
-    (: TODO: Error handling. Limit. :)
+    (: TODO: Add support for limited number of replacements :)
     for $value in $array[]
     return typeswitch($value)
         case array return jsoniq_pandas:fillna_array($value, $params)
@@ -278,60 +278,74 @@ declare function jsoniq_pandas:dropna($dataframe as object*, $params as object) 
         if ($params.axis eq 0) then {
             (: Remove rows :)
             for $row in $dataframe
-            return jsoniq_pandas:dropna_how_object($row, $params.how)
+            return
+                if (not jsoniq_pandas:row_has_null($row, $params.how)) then $row
+                else ()
         } else {
             (: Remove columns :)
-            
             let $columns_to_remove :=
                 for $column_name in keys($dataframe)
-                where (every $value in $dataframe.$column_name
-                      satisfies $value eq null)
+                where jsoniq_pandas:column_has_null($dataframe.$column_name, $params.how) eq true
                 return $column_name
-            return remove-keys($dataframe, $columns_to_remove)
+            return
+                if (count($columns_to_remove) gt 0) then drop-columns($dataframe, $columns_to_remove)
+                else $dataframe
         }
 };
 
-declare function jsoniq_pandas:dropna_how_object($object as object, $how as string) {
-    {|
-        for $key in keys($object)
-        return
-            if ($how eq "any") then
-                if (jsoniq_pandas:has_na($object.$key)) then ()
-                else {$key: $object.$key}
-            else
-                if (jsoniq_pandas:has_all_na($object.$key)) then ()
-                else {$key: $object.$key}
-    |}
+declare function jsoniq_pandas:row_has_null($row as object, $how as string) {
+    if ($how eq "any") then {
+        variable $i := 1;
+        variable $keys := keys($row);
+        variable $size := count($keys);
+        print_vars($row);
+        while($i le $size) {
+            if (is-null($row.($keys[$i]))) then exit returning true;
+            else ();
+            $i := $i + 1;
+        }
+        exit returning false;
+    }
+    else {
+        variable $i := 1;
+        variable $keys := keys($row);
+        variable $size := count($keys);
+        while($i le $size) {
+            if (not is-null($row.keys[$i])) then exit returning false;
+            else ();
+            $i := $i + 1;
+        }
+        exit returning true;
+    }
+    (: if ($how eq "any") then
+        some $key in keys($row) satisfies is-null($row.$key) eq true
+    else
+        every $key in keys($row) satisfies is-null($row.$key) eq true :)
 };
 
-declare function jsoniq_pandas:has_na($data) {
-    variable $res := false;
-    typeswitch($data)
-        case object return
-            for $key in keys($data)
-            return if (jsoniq_pandas:has_na($data.$key)) then {$res := true; break loop;}
+declare function jsoniq_pandas:column_has_null($column, $how as string) {
+    if ($how eq "any") then {
+        variable $i := 1;
+        variable $size := count($column);
+        variable $column_flat := flatten($column);
+        while($i le $size) {
+            if (is-null($column_flat[$i])) then exit returning true;
             else ();
-        case array return
-            for $value in $data[]
-            return if (jsoniq_pandas:has_na($value)) then {$res := true; break loop;}
+            $i := $i + 1;
+        }
+        exit returning false;
+    }
+        (: some $value in $column satisfies is-null($value) eq true :)
+    else {
+        (: every $value in $column satisfies is-null($value) eq true :)
+        variable $i := 1;
+        variable $size := count($column);
+        variable $column_flat := flatten($column);
+        while($i le $size) {
+            if (not is-null($column_flat[$i])) then exit returning false;
             else ();
-        default return if ($data eq null) then $res := true;
-                       else $res := false;
-    exit returning $res;
-};
-
-declare function jsoniq_pandas:has_all_na($data) {
-    variable $res := false;
-    typeswitch($data)
-        case object return
-            for $key in keys($data)
-            return if (jsoniq_pandas:has_all_na($data.$key)) then $res := true;
-            else {$res := false; break loop;}
-        case array return
-            for $value in $data[]
-            return if (jsoniq_pandas:has_all_na($value)) then $res := true;
-            else {$res := false; break loop;}
-        default return if ($data eq null) then $res := true;
-                       else $res := false;
-    exit returning $res;
+            $i := $i + 1;
+        }
+        exit returning true;
+    }
 };
