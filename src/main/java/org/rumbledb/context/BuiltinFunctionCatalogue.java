@@ -61,6 +61,7 @@ import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
+import org.rumbledb.runtime.functions.io.XmlDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
 import org.rumbledb.runtime.functions.nullable.IsNullIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
@@ -469,6 +470,13 @@ public class BuiltinFunctionCatalogue {
         "string?",
         "item?",
         ParseJsonFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction xml_doc = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "xml-doc"),
+        "string",
+        "item*",
+        XmlDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3087,6 +3095,7 @@ public class BuiltinFunctionCatalogue {
             random_sequence_with_bounds_seeded_int.getIdentifier(),
             random_sequence_with_bounds_seeded_int
         );
+        builtinFunctions.put(xml_doc.getIdentifier(), xml_doc);
     }
 
 

@@ -4,7 +4,12 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.ItemType;
+import org.w3c.dom.Node;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -221,4 +226,19 @@ public class ItemFactory {
         return new ObjectItem(keyValuePairs);
     }
 
+    public Item createXmlTextNode(Node currentNode) {
+        return new TextItem(currentNode.getTextContent());
+    }
+
+    public Item createXmlAttributeNode(Node attribute) {
+        return new AttributeItem(attribute.getNodeName(), attribute.getNodeValue());
+    }
+
+    public Item createXmlDocumentNode(List<Item> children) {
+        return new DocumentItem(children);
+    }
+
+    public Item createXmlElementNode(List<Item> children, List<Item> attributes, String nodeName) {
+        return new ElementItem(children, attributes, nodeName);
+    }
 }

@@ -1,11 +1,6 @@
 package org.rumbledb.api;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-
+import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -21,7 +16,11 @@ import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.KryoSerializable;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -294,6 +293,42 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if it is an atomic item of type base64Binary, false otherwise.
      */
     default boolean isBase64Binary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Element node.
+     *
+     * @return true if it is an XML Element node, false otherwise.
+     */
+    default boolean isElement() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Attribute node.
+     *
+     * @return true if it is an XML Attribute node, false otherwise.
+     */
+    default boolean isAttribute() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Text node.
+     *
+     * @return true if it is an XML Text node, false otherwise.
+     */
+    default boolean getContent() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Document node.
+     *
+     * @return true if it is an XML Document node, false otherwise.
+     */
+    default boolean isDocument() {
         return false;
     }
 
@@ -745,6 +780,22 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default Transformer getTransformer() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the string value of the text item, if it is a text item.
+     *
+     * @return the string value.
+     */
+    default String getTextValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Method sets the parent item for all descendents of the current item.
+     */
+    default void addParentToDescendants() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }

@@ -20,6 +20,9 @@
 
 package org.rumbledb.items.parsing;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -39,13 +42,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-
-import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -580,5 +582,69 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
+    }
+
+    /**
+     * Parses an XML document to an item.
+     * 
+     * @param currentNode The current node
+     * @return the parsed item
+     */
+    public static Item getItemFromXML(Node currentNode) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE) {
+            return getTextNodeItem(currentNode);
+        } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
+            return getDocumentNodeItem(currentNode);
+        }
+        return getElementNodeItem(currentNode);
+    }
+
+    private static List<Item> getChildren(Node currentNode) {
+        List<Item> children = new ArrayList<>();
+        NodeList nodeList = currentNode.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Node childNode = nodeList.item(i);
+            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                children.add(getItemFromXML(childNode));
+            } else if (childNode.getNodeType() == Node.TEXT_NODE) {
+                children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
+            }
+        }
+        return children;
+    }
+
+    private static List<Item> getAttributes(Node currentNode) {
+        List<Item> attributes = new ArrayList<>();
+        NamedNodeMap attributesMap = currentNode.getAttributes();
+
+        for (int i = 0; i < attributesMap.getLength(); ++i) {
+            Node attribute = attributesMap.item(i);
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
+        }
+        return attributes;
+    }
+
+    private static Item getDocumentNodeItem(Node currentNode) {
+        List<Item> children = getChildren(currentNode);
+        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(children);
+        addParentToChildrenAndAttributes(documentItem);
+        return documentItem;
+    }
+
+    private static Item getElementNodeItem(Node currentNode) {
+        List<Item> children = getChildren(currentNode);
+        List<Item> attributes = getAttributes(currentNode);
+        Item elementItem = ItemFactory.getInstance()
+            .createXmlElementNode(children, attributes, currentNode.getNodeName());
+        addParentToChildrenAndAttributes(elementItem);
+        return elementItem;
+    }
+
+    private static void addParentToChildrenAndAttributes(Item nodeItem) {
+        nodeItem.addParentToDescendants();
+    }
+
+    private static Item getTextNodeItem(Node currentNode) {
+        return ItemFactory.getInstance().createXmlTextNode(currentNode);
     }
 }
