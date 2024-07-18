@@ -342,6 +342,179 @@ copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
 // TODO: Direct element constructors
 
+
+///////////////////////// XPath and XQuery
+
+// Mostly taken from http://www.w3.org/TR/xquery/#id-grammar, with some
+// simplifications:
+//
+// 1. The parser itself doesn't really enforce ws:explicit except for some easy
+//    cases (QNames and wildcards).  Walkers will need to do this (and also parse
+//    wildcards a bit).
+//
+// 2. When collecting element content, we will need to check the HIDDEN
+//    channel as well, for whitespace and XQuery comments (these should be
+//    treated as regular text inside elements).
+
+// MODULE HEADER ///////////////////////////////////////////////////////////////
+
+// Replace according to https://www.w3.org/TR/xquery-31/#id-query-prolog, we only have single mainModule
+
+schemaImport: Kimport Kschema
+              schemaPrefix?
+              nsURI=uriLiteral
+              (Kat locations+=uriLiteral (',' locations+=uriLiteral)*)? ;
+
+schemaPrefix: (Knamespace NCName '=' | Kdefault Kelement Knamespace) ;
+
+// PATHS ///////////////////////////////////////////////////////////////////////
+
+pathExpr: (Kslash singleslash=relativePathExpr?) | (Kdslash doubleslash=relativePathExpr) | relative=relativePathExpr ;
+
+relativePathExpr: stepExpr (sep=(Kslash|Kdslash) stepExpr)* ;
+
+stepExpr: postfixExpr | axisStep ;
+
+axisStep: (reverseStep | forwardStep) predicateList ;
+
+forwardStep: forwardAxis nodeTest | abbrevForwardStep ;
+
+forwardAxis: ( Kchild
+             | Kdescendant
+             | Kattribute
+             | Kself
+             | Kdescendant_or_self
+             | Kfollowing_sibling
+             | Kfollowing ) ':' ':' ;
+
+abbrevForwardStep: Kat_symbol ? nodeTest ;
+
+reverseStep: reverseAxis nodeTest | abbrevReverseStep ;
+
+reverseAxis: ( Kparent
+             | Kancestor
+             | Kpreceding_sibling
+             | Kpreceding
+             | Kancestor_or_self ) ':' ':';
+
+abbrevReverseStep: '..' ;
+
+nodeTest: nameTest | kindTest ;
+
+nameTest: qname wildcard ;
+
+wildcard: '*'            # allNames
+        | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
+        | nCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
+        ;
+nCNameWithLocalWildcard :  NCName ':' '*' ;
+nCNameWithPrefixWildcard: '*' ':' NCName ;
+
+postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
+
+predicateList: predicate*;
+
+lookup: '?' keySpecifier ;
+
+keySpecifier: NCName | IntegerLiteral | parenthesizedExpr | '*' ;
+
+typeDeclaration: Kas sequenceType ;
+
+itemType: qname
+        | NullLiteral
+        | kindTest
+        | ('item' '(' ')')
+        | functionTest
+        | mapTest
+        | arrayTest
+        | atomicOrUnionType
+        | parenthesizedItemTest ;
+
+atomicOrUnionType: qname ;
+
+kindTest: documentTest
+        | elementTest
+        | attributeTest
+        | schemaElementTest
+        | schemaAttributeTest
+        | piTest
+        | commentTest
+        | textTest
+        | namespaceNodeTest
+        | mlNodeTest
+        | binaryNodeTest
+        | anyKindTest
+        ;
+
+anyKindTest: Knode '(' '*'? ')' ;
+
+binaryNodeTest: Kbinary '(' ')' ;
+
+documentTest: Kdocument_node '(' (elementTest | schemaElementTest)? ')' ;
+
+textTest: Ktext '(' ')' ;
+
+commentTest: Kcomment '(' ')' ;
+
+namespaceNodeTest: Knamespace_node '(' ')' ;
+
+piTest: Kpi '(' (NCName | stringLiteral)? ')' ;
+
+attributeTest: Kattribute '(' (attributeNameOrWildcard (',' type=typeName)?)? ')' ;
+
+attributeNameOrWildcard: attributeName | '*' ;
+
+schemaAttributeTest: Kschema_attribute '(' attributeDeclaration ')' ;
+
+elementTest: Kelement '(' (elementNameOrWildcard (',' typeName optional='?'?)?)? ')' ;
+
+elementNameOrWildcard: elementName | '*' ;
+
+schemaElementTest: Kschema_element '(' elementDeclaration ')' ;
+
+elementDeclaration: elementName ;
+
+attributeName: qname ;
+
+elementName: qname ;
+
+simpleTypeName: typeName ;
+
+typeName: qname;
+
+mapTest: anyMapTest | typedMapTest ;
+
+anyMapTest: Kmap '(' '*' ')' ;
+
+typedMapTest: Kmap '(' qname ',' sequenceType ')' ;
+
+arrayTest: anyArrayTest | typedArrayTest ;
+
+anyArrayTest: Karray '(' '*' ')' ;
+
+typedArrayTest: Karray '(' sequenceType ')' ;
+
+parenthesizedItemTest: '(' itemType ')' ;
+
+attributeDeclaration: attributeName ;
+
+mlNodeTest: mlArrayNodeTest
+          | mlObjectNodeTest
+          | mlNumberNodeTest
+          | mlBooleanNodeTest
+          | mlNullNodeTest
+          ;
+
+mlArrayNodeTest: Karray_node '(' stringLiteral? ')' ;
+
+mlObjectNodeTest: Kobject_node '(' stringLiteral? ')' ;
+
+mlNumberNodeTest: Knumber_node '(' stringLiteral? ')' ;
+
+mlBooleanNodeTest: Kboolean_node '(' stringLiteral? ')' ;
+
+mlNullNodeTest: Knull_node '(' stringLiteral? ')' ;
+
 ///////////////////////// Types
 
 sequenceType            : '(' ')'
@@ -349,10 +522,6 @@ sequenceType            : '(' ')'
 
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
-
-itemType                : qname
-                        | NullLiteral
-                        | functionTest;
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
 
@@ -586,6 +755,44 @@ Kcontinue               : 'continue' ;
 Kexit                   : 'exit' ;
 Kreturning              : 'returning' ;
 Kwhile                  : 'while' ;
+
+///////////////////////// XPath
+Kimport                 : 'import';
+Kschema                 : 'schema';
+Knamespace              : 'namespace';
+Kelement                : 'element';
+Kslash                  : '/';
+Kdslash                 : '//';
+Kat_symbol              : '@';
+Kchild                  : 'child';
+Kdescendant             : 'descendant';
+Kattribute              : 'attribute';
+Kself                   : 'self';
+Kdescendant_or_self     : 'descendant-or-self';
+Kfollowing_sibling      : 'following-sibling';
+Kfollowing              : 'following';
+Kparent                 : 'parent';
+Kancestor               : 'ancestor';
+Kpreceding_sibling      : 'preceding-sibling';
+Kpreceding              : 'preceding';
+Kancestor_or_self       : 'ancestor-or-self';
+Knode                   : 'node';
+Kbinary                 : 'binary';
+Kdocument               : 'document';
+Kdocument_node          : 'document-node';
+Ktext                   : 'text';
+Kpi                     : 'processing-instruction';
+Knamespace_node         : 'namespace-node';
+Kschema_attribute       : 'schema-attribute';
+Kschema_element         : 'schema-element';
+Karray_node             : 'array-node';
+Kboolean_node           : 'boolean-node';
+Knull_node              : 'null-node';
+Knumber_node            : 'number-node';
+Kobject_node            : 'object-node';
+Kcomment                : 'comment';
+Karray                  : 'array';
+Kmap                    : 'map';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
