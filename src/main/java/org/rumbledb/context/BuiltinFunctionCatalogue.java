@@ -12,7 +12,6 @@ import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.TrueFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
-import org.rumbledb.runtime.functions.dataframe.DropColumnsIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
@@ -2859,19 +2858,6 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
-    static final BuiltinFunction drop_columns = createBuiltinFunction(
-        new Name(
-                Name.JN_NS,
-                "jn",
-                "drop-columns"
-        ),
-        "object*",
-        "string*",
-        "object*",
-        DropColumnsIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
-    );
-
     static final BuiltinFunction is_null = createBuiltinFunction(
         new Name(
                 Name.JN_NS,
@@ -3096,7 +3082,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
         builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
         builtinFunctions.put(item_type.getIdentifier(), item_type);
-        builtinFunctions.put(drop_columns.getIdentifier(), drop_columns);
         builtinFunctions.put(is_null.getIdentifier(), is_null);
         builtinFunctions.put(
             random_sequence_with_bounds_seeded_int.getIdentifier(),

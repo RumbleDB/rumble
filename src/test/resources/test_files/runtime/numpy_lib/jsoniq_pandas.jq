@@ -276,51 +276,33 @@ declare function jsoniq_pandas:dropna($dataframe as object*, $params as object) 
     let $params := validate type jsoniq_pandas:dropna_params {$params}
     let $keys := keys($dataframe)
     return 
-        if ($params.axis eq 0) then {
-            (: Remove rows :)
-            for $row in $dataframe
-            where (count(keys($row)) eq count($keys))
-            return $row
-        } else {
-            (: Remove columns :)
-            let $columns_to_remove :=
-                for $column_name in keys($dataframe)
-                where jsoniq_pandas:column_has_null($dataframe.$column_name, $params.how) eq true
-                return $column_name
-            return
-                if (count($columns_to_remove) gt 0) then drop-columns($dataframe, $columns_to_remove)
-                else $dataframe
-        }
+        if ($params.axis eq 0) then 
+            jsoniq_pandas:remove_rows($dataframe, $params.how, $keys)
+        else
+            jsoniq_pandas:remove_columns($dataframe, $params.how, $keys)
 };
 
-declare function jsoniq_pandas:row_has_null($row as object, $how as string) {
+declare function jsoniq_pandas:remove_columns($dataframe as object*, $how as string, $keys) {
+    let $columns_to_remove :=
+        for $column_name in $keys
+        where jsoniq_pandas:column_has_null($dataframe.$column_name, $how) eq true
+        return $column_name
+    return
+        if (count($columns_to_remove) gt 0) then remove-keys($dataframe, $columns_to_remove)
+        else $dataframe
+};
+
+declare function jsoniq_pandas:remove_rows($dataframe as object*, $how as string, $keys) {
     if ($how eq "any") then {
-        variable $i := 1;
-        variable $keys := keys($row);
-        variable $size := count($keys);
-        print_vars($row);
-        while($i le $size) {
-            if (empty($row.($keys[$i]))) then exit returning true;
-            else ();
-            $i := $i + 1;
-        }
-        exit returning false;
+        for $row in $dataframe
+        where (count(keys($row)) eq count ($keys))
+        return $row
     }
     else {
-        variable $i := 1;
-        variable $keys := keys($row);
-        variable $size := count($keys);
-        while($i le $size) {
-            if (exists($row.keys[$i])) then exit returning false;
-            else ();
-            $i := $i + 1;
-        }
-        exit returning true;
+        for $row in $dataframe
+        where (count(keys($row)) gt 0)
+        return $row
     }
-    (: if ($how eq "any") then
-        some $key in keys($row) satisfies is-null($row.$key) eq true
-    else
-        every $key in keys($row) satisfies is-null($row.$key) eq true :)
 };
 
 declare function jsoniq_pandas:column_has_null($column, $how as string) {
@@ -335,9 +317,7 @@ declare function jsoniq_pandas:column_has_null($column, $how as string) {
         }
         exit returning false;
     }
-        (: some $value in $column satisfies is-null($value) eq true :)
     else {
-        (: every $value in $column satisfies is-null($value) eq true :)
         variable $i := 1;
         variable $size := count($column);
         variable $column_flat := flatten($column);
