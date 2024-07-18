@@ -591,37 +591,12 @@ public class ItemParser implements Serializable {
      * @return the parsed item
      */
     public static Item getItemFromXML(Node currentNode) {
-        if (currentNode.getNodeType() == Node.TEXT_NODE) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
             return getTextNodeItem(currentNode);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
             return getDocumentNodeItem(currentNode);
         }
         return getElementNodeItem(currentNode);
-    }
-
-    private static List<Item> getChildren(Node currentNode) {
-        List<Item> children = new ArrayList<>();
-        NodeList nodeList = currentNode.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); ++i) {
-            Node childNode = nodeList.item(i);
-            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                children.add(getItemFromXML(childNode));
-            } else if (childNode.getNodeType() == Node.TEXT_NODE) {
-                children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
-            }
-        }
-        return children;
-    }
-
-    private static List<Item> getAttributes(Node currentNode) {
-        List<Item> attributes = new ArrayList<>();
-        NamedNodeMap attributesMap = currentNode.getAttributes();
-
-        for (int i = 0; i < attributesMap.getLength(); ++i) {
-            Node attribute = attributesMap.item(i);
-            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
-        }
-        return attributes;
     }
 
     private static Item getDocumentNodeItem(Node currentNode) {
@@ -638,6 +613,37 @@ public class ItemParser implements Serializable {
             .createXmlElementNode(children, attributes, currentNode.getNodeName());
         addParentToChildrenAndAttributes(elementItem);
         return elementItem;
+    }
+
+    private static boolean hasWhitespaceText(Node currentNode) {
+        String content = currentNode.getTextContent();
+        content = content.replaceAll("[\\r\\n]+\\s", "");
+        return content.trim().isEmpty();
+    }
+
+    private static List<Item> getChildren(Node currentNode) {
+        List<Item> children = new ArrayList<>();
+        NodeList nodeList = currentNode.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Node childNode = nodeList.item(i);
+            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                children.add(getItemFromXML(childNode));
+            } else if (childNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(childNode)) {
+                children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
+            }
+        }
+        return children;
+    }
+
+    private static List<Item> getAttributes(Node currentNode) {
+        List<Item> attributes = new ArrayList<>();
+        NamedNodeMap attributesMap = currentNode.getAttributes();
+
+        for (int i = 0; i < attributesMap.getLength(); ++i) {
+            Node attribute = attributesMap.item(i);
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
+        }
+        return attributes;
     }
 
     private static void addParentToChildrenAndAttributes(Item nodeItem) {
