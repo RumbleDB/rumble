@@ -211,35 +211,11 @@ declare type jsoniq_pandas:fillna_params as {
     "limit": "integer=1000"  
 };
 
-declare function jsoniq_pandas:fillna_value($value, $params as object) {
-    if ($value eq null) then $params.value
-    else $value  
-};
-
-declare function jsoniq_pandas:fillna_array($array as array, $params as object) {
-    (: TODO: Add support for limited number of replacements :)
-    for $value in $array[]
-    return typeswitch($value)
-        case array return jsoniq_pandas:fillna_array($value, $params)
-        case object return jsoniq_pandas:fillna_object($value, $params)
-        default return jsoniq_pandas:fillna_value($value, $params)
-};
-
-declare function jsoniq_pandas:fillna_object($object as object, $params as object) {
+declare function jsoniq_pandas:fillna_row($row as object, $params as object, $keys) {
     {|
-        for $key in keys($object)
-        let $value := $object.$key
-        return
-            typeswitch($value)
-            case object return 
-                let $result := jsoniq_pandas:fillna_object($value, $params)
-                return {$key: $result}
-            case array return
-                let $result := jsoniq_pandas:fillna_array($value, $params)
-                return {$key: $result}
-            default return
-                let $result := jsoniq_pandas:fillna_value($value, $params)
-                return {$key: $result}
+        for $key in $keys
+        return if (empty($row.$key)) then {$key: $params.value}
+               else {$key: $row.$key}
     |}
 };
 
@@ -252,8 +228,9 @@ Params is an object for optional arguments. These arguments are:
 :)
 declare function jsoniq_pandas:fillna($dataframe as object*, $params as object) {
     let $params := validate type jsoniq_pandas:fillna_params {$params}
+    let $keys := keys($dataframe)
     for $row in $dataframe
-    return jsoniq_pandas:fillna_object($row, $params)
+    return jsoniq_pandas:fillna_row($row, $params, $keys)
 };
 
 declare function jsoniq_pandas:fillna($dataframe as object*) {
