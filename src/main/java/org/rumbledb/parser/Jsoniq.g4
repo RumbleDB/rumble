@@ -373,7 +373,7 @@ pathExpr: (Kslash singleslash=relativePathExpr?) | (Kdslash doubleslash=relative
 
 relativePathExpr: stepExpr (sep=(Kslash|Kdslash) stepExpr)* ;
 
-stepExpr: postfixExpr | axisStep ;
+stepExpr: postFixExpr | axisStep ;
 
 axisStep: (reverseStep | forwardStep) predicateList ;
 
@@ -410,15 +410,8 @@ wildcard: '*'            # allNames
 nCNameWithLocalWildcard :  NCName ':' '*' ;
 nCNameWithPrefixWildcard: '*' ':' NCName ;
 
-postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
 predicateList: predicate*;
-
-lookup: '?' keySpecifier ;
-
-keySpecifier: NCName | IntegerLiteral | parenthesizedExpr | '*' ;
-
-typeDeclaration: Kas sequenceType ;
 
 itemType: qname
         | NullLiteral
@@ -466,7 +459,7 @@ attributeNameOrWildcard: attributeName | '*' ;
 
 schemaAttributeTest: Kschema_attribute '(' attributeDeclaration ')' ;
 
-elementTest: Kelement '(' (elementNameOrWildcard (',' typeName optional='?'?)?)? ')' ;
+elementTest: Kelement '(' (elementNameOrWildcard (',' type=typeName optional='?'?)?)? ')' ;
 
 elementNameOrWildcard: elementName | '*' ;
 
