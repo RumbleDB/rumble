@@ -97,6 +97,7 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PathExpr;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -452,5 +453,9 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, T argument) {
         return defaultAction(statement, argument);
+    }
+
+    public T visitPathExpr(PathExpr pathExpr, T argument) {
+        return defaultAction(pathExpr, argument);
     }
 }
