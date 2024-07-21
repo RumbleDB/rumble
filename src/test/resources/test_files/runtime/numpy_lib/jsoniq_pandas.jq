@@ -1,6 +1,7 @@
 (:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:1:COLUMN:0:" :)
 module namespace jsoniq_pandas = "jsoniq_pandas.jq";
 import module namespace jsoniq_numpy = "jsoniq_numpy.jq";
+import module namespace functx = "functx.jq";
 
 declare type jsoniq_pandas:describe_params as {
     "include": "string=all",
@@ -32,7 +33,7 @@ declare function jsoniq_pandas:describe($dataframe as object*) {
 declare function jsoniq_pandas:all_report($column, $params as object) {
     let $column_type := item-type($column)
     return switch($column_type)
-        case "xs:int" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:integer" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:decimal" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:float" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:double" return jsoniq_pandas:numerical_report($column, $params)
@@ -43,7 +44,7 @@ declare function jsoniq_pandas:all_report($column, $params as object) {
 declare function jsoniq_pandas:number_report($column, $params as object) {
     let $column_type := item-type($column)
     return switch($column_type)
-        case "xs:int" return jsoniq_pandas:numerical_report($column, $params)
+        case "xs:integer" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:decimal" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:float" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:double" return jsoniq_pandas:numerical_report($column, $params)
@@ -94,10 +95,10 @@ declare function jsoniq_pandas:std($arr as array, $mean as double) {
     return float(sqrt($sum_accumulated div $sample_size))
 };
 
-declare function jsoniq_pandas:categorical_report($column) {
+declare function jsoniq_pandas:categorical_report($column as array) {
     let $count := size($column)
-    let $unique := size(jsoniq_numpy:unique($column))
-    let $occurences := jsoniq_pandas:count_occurences($column)
+    let $unique := count(functx:distinct-deep($column[]))
+    let $occurences := jsoniq_pandas:frequency_of_values($column)
     let $top := $occurences[1].value
     let $frequency := $occurences[1].count
     return {
@@ -108,11 +109,31 @@ declare function jsoniq_pandas:categorical_report($column) {
     }
 };
 
-declare function jsoniq_pandas:count_occurences($column) {
+(: declare function jsoniq_pandas:count_occurences($column) {
     for $value in $column[]
     let $group_key := $value
     group by $group_key
     return {"value": $group_key, "count": count($value)}
+}; :)
+
+declare function jsoniq_pandas:frequency_of_values($column) {
+    variable $counts :=
+        let $distinct_values := functx:distinct-deep($column[])
+        for $value in $distinct_values
+        return {"count": jsoniq_pandas:count_value($value, $column[]), "value": $value};
+    print_vars($counts);
+    (: for $count in $counts
+    order by $count.count
+    return $count :)
+};
+
+declare function jsoniq_pandas:count_value($value, $column) {
+    print_vars($value);
+    let $frequency :=
+        for $column_value in $column
+        where deep-equal($value, $column_value)
+        return 1
+    return count($frequency)
 };
 
 declare function jsoniq_pandas:compute_percentile($arr as array, $percentile as double) {
@@ -306,3 +327,4 @@ declare function jsoniq_pandas:column_has_null($column, $how as string) {
         exit returning true;
     }
 };
+
