@@ -6,31 +6,36 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DocumentItem implements NodeItem {
+public class DocumentItem implements Item {
+    private Node documentNode;
     private List<Item> children;
     // TODO: add base-uri, document-uri, typed-value
 
-    public DocumentItem(List<Item> children) {
+    public DocumentItem(Node documentNode, List<Item> children) {
+        this.documentNode = documentNode;
         this.children = children;
     }
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> ((NodeItem) child).setParent(this));
+        this.children.forEach(child -> child.setParent(this));
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, children);
+        kryo.writeObject(output, this.documentNode);
+        kryo.writeObject(output, this.children);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
+        this.documentNode = kryo.readObject(input, Node.class);
         this.children = kryo.readObject(input, ArrayList.class);
     }
 
@@ -56,14 +61,7 @@ public class DocumentItem implements NodeItem {
 
     @Override
     public String stringValue() {
-        StringBuffer result = new StringBuffer();
-        this.children.forEach(child -> {
-            String childStringValue = child.getStringValue();
-            if (!childStringValue.isEmpty()) {
-                result.append(childStringValue);
-            }
-        });
-        return result.toString();
+        return this.documentNode.getTextContent();
     }
 
     @Override

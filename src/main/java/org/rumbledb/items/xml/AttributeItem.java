@@ -6,30 +6,27 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.w3c.dom.Node;
 
-public class AttributeItem implements NodeItem {
-    private String nodeName;
-    private String nodeValue;
+public class AttributeItem implements Item {
+    private Node attributeNode;
     private Item parent;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
 
-    public AttributeItem(String nodeName, String nodeValue) {
-        this.nodeName = nodeName;
-        this.nodeValue = nodeValue;
+    public AttributeItem(Node attributeNode) {
+        this.attributeNode = attributeNode;
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.parent);
-        kryo.writeObject(output, this.nodeName);
-        kryo.writeObject(output, this.nodeValue);
+        kryo.writeObject(output, this.attributeNode);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObject(input, Item.class);
-        this.nodeName = kryo.readObject(input, String.class);
-        this.nodeValue = kryo.readObject(input, String.class);
+        this.attributeNode = kryo.readObject(input, Node.class);
     }
 
     @Override
@@ -44,7 +41,7 @@ public class AttributeItem implements NodeItem {
 
     @Override
     public String nodeName() {
-        return this.nodeName;
+        return this.attributeNode.getNodeName();
     }
 
     @Override
@@ -54,11 +51,11 @@ public class AttributeItem implements NodeItem {
 
     @Override
     public String stringValue() {
-        return this.nodeValue;
+        return this.attributeNode.getNodeValue();
     }
 
     @Override
-    public void setParent(NodeItem parent) {
+    public void setParent(Item parent) {
         this.parent = parent;
     }
 

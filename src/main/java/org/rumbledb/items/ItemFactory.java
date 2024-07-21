@@ -227,18 +227,18 @@ public class ItemFactory {
     }
 
     public Item createXmlTextNode(Node currentNode) {
-        return new TextItem(currentNode.getTextContent());
+        return new TextItem(currentNode);
     }
 
     public Item createXmlAttributeNode(Node attribute) {
-        return new AttributeItem(attribute.getNodeName(), attribute.getNodeValue());
+        return new AttributeItem(attribute);
     }
 
-    public Item createXmlDocumentNode(List<Item> children) {
-        return new DocumentItem(children);
+    public Item createXmlDocumentNode(Node documentNode, List<Item> children) {
+        return new DocumentItem(documentNode, children);
     }
 
-    public Item createXmlElementNode(List<Item> children, List<Item> attributes, String nodeName) {
-        return new ElementItem(children, attributes, nodeName);
+    public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
+        return new ElementItem(elementNode, children, attributes);
     }
 }

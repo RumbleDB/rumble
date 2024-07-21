@@ -6,48 +6,45 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ElementItem implements NodeItem {
+public class ElementItem implements Item {
     private List<Item> children;
     private List<Item> attributes;
-    private String nodeName;
+    private Node elementNode;
     private Item parent;
     // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
 
-    public ElementItem(List<Item> children, List<Item> attributes, String nodeName) {
+    public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
+        this.elementNode = elementNode;
         this.children = children;
         this.attributes = attributes;
-        this.nodeName = nodeName;
     }
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> ((NodeItem) child).setParent(this));
-        this.attributes.forEach(attribute -> ((NodeItem) attribute).setParent(this));
-    }
-
-    private void setParent(Item parent) {
-        this.parent = parent;
+        this.children.forEach(child -> child.setParent(this));
+        this.attributes.forEach(attribute -> attribute.setParent(this));
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.elementNode);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
         kryo.writeObject(output, this.parent);
-        kryo.writeObject(output, this.nodeName);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
+        this.elementNode = kryo.readObject(input, Node.class);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
-        this.parent = kryo.readObject(input, NodeItem.class);
-        this.nodeName = kryo.readObject(input, String.class);
+        this.parent = kryo.readObject(input, Item.class);
     }
 
     @Override
@@ -59,10 +56,10 @@ public class ElementItem implements NodeItem {
 
     @Override
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof NodeItem)) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        NodeItem o = (NodeItem) otherItem;
+        Item o = (Item) otherItem;
         if (!o.isElement()) {
             return false;
         }
@@ -80,6 +77,7 @@ public class ElementItem implements NodeItem {
         return this.children;
     }
 
+    // TODO: may require more checks to comply with the specification using typing.
     @Override
     public boolean nilled() {
         return false;
@@ -92,7 +90,7 @@ public class ElementItem implements NodeItem {
 
     @Override
     public String nodeName() {
-        return this.nodeName;
+        return this.elementNode.getNodeName();
     }
 
     @Override
@@ -103,14 +101,7 @@ public class ElementItem implements NodeItem {
 
     @Override
     public String stringValue() {
-        StringBuffer result = new StringBuffer();
-        this.children.forEach(child -> {
-            String childStringValue = child.getStringValue();
-            if (!childStringValue.isEmpty()) {
-                result.append(childStringValue);
-            }
-        });
-        return result.toString();
+        return this.elementNode.getTextContent();
     }
 
     @Override
@@ -119,7 +110,7 @@ public class ElementItem implements NodeItem {
     }
 
     @Override
-    public void setParent(NodeItem parent) {
+    public void setParent(Item parent) {
         this.parent = parent;
     }
 }
