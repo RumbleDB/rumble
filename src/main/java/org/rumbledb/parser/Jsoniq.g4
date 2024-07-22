@@ -323,12 +323,12 @@ inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
 
 ///////////////////////// Updating Expressions
 
-insertExpr              : Kinsert to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
-                        | Kinsert pairConstructor ( ',' pairConstructor )* Kinto main_expr=exprSingle;
+insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
+                        | Kinsert Kjson pairConstructor ( ',' pairConstructor )* Kinto main_expr=exprSingle;
 
-deleteExpr              : Kdelete updateLocator;
+deleteExpr              : Kdelete Kjson updateLocator;
 
-renameExpr              : Krename updateLocator Kas name_expr=exprSingle;
+renameExpr              : Krename Kjson updateLocator Kas name_expr=exprSingle;
 
 replaceExpr             : Kreplace Kvalue Kof Kjson updateLocator Kwith replacer_expr=exprSingle;
 

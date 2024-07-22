@@ -8417,6 +8417,7 @@ public class JsoniqParser extends Parser {
 		public ExprSingleContext main_expr;
 		public ExprSingleContext pos_expr;
 		public TerminalNode Kinsert() { return getToken(JsoniqParser.Kinsert, 0); }
+		public TerminalNode Kjson() { return getToken(JsoniqParser.Kjson, 0); }
 		public TerminalNode Kinto() { return getToken(JsoniqParser.Kinto, 0); }
 		public List<ExprSingleContext> exprSingle() {
 			return getRuleContexts(ExprSingleContext.class);
@@ -8448,7 +8449,7 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 214, RULE_insertExpr);
 		int _la;
 		try {
-			setState(1209);
+			setState(1211);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,116,_ctx) ) {
 			case 1:
@@ -8457,21 +8458,23 @@ public class JsoniqParser extends Parser {
 				setState(1188);
 				match(Kinsert);
 				setState(1189);
-				((InsertExprContext)_localctx).to_insert_expr = exprSingle();
+				match(Kjson);
 				setState(1190);
-				match(Kinto);
+				((InsertExprContext)_localctx).to_insert_expr = exprSingle();
 				setState(1191);
+				match(Kinto);
+				setState(1192);
 				((InsertExprContext)_localctx).main_expr = exprSingle();
-				setState(1195);
+				setState(1196);
 				_errHandler.sync(this);
 				switch ( getInterpreter().adaptivePredict(_input,114,_ctx) ) {
 				case 1:
 					{
-					setState(1192);
-					match(Kat);
 					setState(1193);
-					match(Kposition);
+					match(Kat);
 					setState(1194);
+					match(Kposition);
+					setState(1195);
 					((InsertExprContext)_localctx).pos_expr = exprSingle();
 					}
 					break;
@@ -8481,29 +8484,31 @@ public class JsoniqParser extends Parser {
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1197);
-				match(Kinsert);
 				setState(1198);
+				match(Kinsert);
+				setState(1199);
+				match(Kjson);
+				setState(1200);
 				pairConstructor();
-				setState(1203);
+				setState(1205);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==T__13) {
 					{
 					{
-					setState(1199);
+					setState(1201);
 					match(T__13);
-					setState(1200);
+					setState(1202);
 					pairConstructor();
 					}
 					}
-					setState(1205);
+					setState(1207);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
-				setState(1206);
+				setState(1208);
 				match(Kinto);
-				setState(1207);
+				setState(1209);
 				((InsertExprContext)_localctx).main_expr = exprSingle();
 				}
 				break;
@@ -8522,6 +8527,7 @@ public class JsoniqParser extends Parser {
 
 	public static class DeleteExprContext extends ParserRuleContext {
 		public TerminalNode Kdelete() { return getToken(JsoniqParser.Kdelete, 0); }
+		public TerminalNode Kjson() { return getToken(JsoniqParser.Kjson, 0); }
 		public UpdateLocatorContext updateLocator() {
 			return getRuleContext(UpdateLocatorContext.class,0);
 		}
@@ -8542,9 +8548,11 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1211);
+			setState(1213);
 			match(Kdelete);
-			setState(1212);
+			setState(1214);
+			match(Kjson);
+			setState(1215);
 			updateLocator();
 			}
 		}
@@ -8562,6 +8570,7 @@ public class JsoniqParser extends Parser {
 	public static class RenameExprContext extends ParserRuleContext {
 		public ExprSingleContext name_expr;
 		public TerminalNode Krename() { return getToken(JsoniqParser.Krename, 0); }
+		public TerminalNode Kjson() { return getToken(JsoniqParser.Kjson, 0); }
 		public UpdateLocatorContext updateLocator() {
 			return getRuleContext(UpdateLocatorContext.class,0);
 		}
@@ -8586,13 +8595,15 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1214);
-			match(Krename);
-			setState(1215);
-			updateLocator();
-			setState(1216);
-			match(Kas);
 			setState(1217);
+			match(Krename);
+			setState(1218);
+			match(Kjson);
+			setState(1219);
+			updateLocator();
+			setState(1220);
+			match(Kas);
+			setState(1221);
 			((RenameExprContext)_localctx).name_expr = exprSingle();
 			}
 		}
@@ -8637,19 +8648,19 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1219);
-			match(Kreplace);
-			setState(1220);
-			match(Kvalue);
-			setState(1221);
-			match(Kof);
-			setState(1222);
-			match(Kjson);
 			setState(1223);
-			updateLocator();
+			match(Kreplace);
 			setState(1224);
-			match(Kwith);
+			match(Kvalue);
 			setState(1225);
+			match(Kof);
+			setState(1226);
+			match(Kjson);
+			setState(1227);
+			updateLocator();
+			setState(1228);
+			match(Kwith);
+			setState(1229);
 			((ReplaceExprContext)_localctx).replacer_expr = exprSingle();
 			}
 		}
@@ -8700,33 +8711,33 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1227);
+			setState(1231);
 			match(Kcopy);
-			setState(1228);
+			setState(1232);
 			copyDecl();
-			setState(1233);
+			setState(1237);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
-				setState(1229);
+				setState(1233);
 				match(T__13);
-				setState(1230);
+				setState(1234);
 				copyDecl();
 				}
 				}
-				setState(1235);
+				setState(1239);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(1236);
+			setState(1240);
 			match(Kmodify);
-			setState(1237);
+			setState(1241);
 			((TransformExprContext)_localctx).mod_expr = exprSingle();
-			setState(1238);
+			setState(1242);
 			match(Kreturn);
-			setState(1239);
+			setState(1243);
 			((TransformExprContext)_localctx).ret_expr = exprSingle();
 			}
 		}
@@ -8769,13 +8780,13 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1241);
+			setState(1245);
 			match(Kappend);
-			setState(1242);
+			setState(1246);
 			((AppendExprContext)_localctx).to_append_expr = exprSingle();
-			setState(1243);
+			setState(1247);
 			match(Kinto);
-			setState(1244);
+			setState(1248);
 			((AppendExprContext)_localctx).array_expr = exprSingle();
 			}
 		}
@@ -8825,27 +8836,27 @@ public class JsoniqParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1246);
+			setState(1250);
 			((UpdateLocatorContext)_localctx).main_expr = primaryExpr();
-			setState(1249); 
+			setState(1253); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
 				switch (_alt) {
 				case 1:
 					{
-					setState(1249);
+					setState(1253);
 					_errHandler.sync(this);
 					switch (_input.LA(1)) {
 					case T__54:
 						{
-						setState(1247);
+						setState(1251);
 						arrayLookup();
 						}
 						break;
 					case T__56:
 						{
-						setState(1248);
+						setState(1252);
 						objectLookup();
 						}
 						break;
@@ -8857,7 +8868,7 @@ public class JsoniqParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(1251); 
+				setState(1255); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,119,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
@@ -8900,11 +8911,11 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1253);
+			setState(1257);
 			((CopyDeclContext)_localctx).var_ref = varRef();
-			setState(1254);
+			setState(1258);
 			match(T__5);
-			setState(1255);
+			setState(1259);
 			((CopyDeclContext)_localctx).src_expr = exprSingle();
 			}
 		}
@@ -8946,15 +8957,15 @@ public class JsoniqParser extends Parser {
 		SequenceTypeContext _localctx = new SequenceTypeContext(_ctx, getState());
 		enterRule(_localctx, 230, RULE_sequenceType);
 		try {
-			setState(1265);
+			setState(1269);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__8:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1257);
+				setState(1261);
 				match(T__8);
-				setState(1258);
+				setState(1262);
 				match(T__9);
 				}
 				break;
@@ -9034,28 +9045,28 @@ public class JsoniqParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1259);
-				((SequenceTypeContext)_localctx).item = itemType();
 				setState(1263);
+				((SequenceTypeContext)_localctx).item = itemType();
+				setState(1267);
 				_errHandler.sync(this);
 				switch ( getInterpreter().adaptivePredict(_input,120,_ctx) ) {
 				case 1:
 					{
-					setState(1260);
+					setState(1264);
 					((SequenceTypeContext)_localctx).s134 = match(ArgumentPlaceholder);
 					((SequenceTypeContext)_localctx).question.add(((SequenceTypeContext)_localctx).s134);
 					}
 					break;
 				case 2:
 					{
-					setState(1261);
+					setState(1265);
 					((SequenceTypeContext)_localctx).s11 = match(T__10);
 					((SequenceTypeContext)_localctx).star.add(((SequenceTypeContext)_localctx).s11);
 					}
 					break;
 				case 3:
 					{
-					setState(1262);
+					setState(1266);
 					((SequenceTypeContext)_localctx).s49 = match(T__48);
 					((SequenceTypeContext)_localctx).plus.add(((SequenceTypeContext)_localctx).s49);
 					}
@@ -9106,53 +9117,53 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 232, RULE_objectConstructor);
 		int _la;
 		try {
-			setState(1283);
+			setState(1287);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__6:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1267);
+				setState(1271);
 				match(T__6);
-				setState(1276);
+				setState(1280);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__6) | (1L << T__8) | (1L << T__12) | (1L << T__15) | (1L << T__30) | (1L << T__48) | (1L << T__49) | (1L << T__54) | (1L << T__57) | (1L << T__59) | (1L << Kfor) | (1L << Klet))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Kwhere - 64)) | (1L << (Kgroup - 64)) | (1L << (Kby - 64)) | (1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kbreak - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (Kloop - 128)) | (1L << (Kcontinue - 128)) | (1L << (Kexit - 128)) | (1L << (Kreturning - 128)) | (1L << (Kwhile - 128)) | (1L << (STRING - 128)) | (1L << (NullLiteral - 128)) | (1L << (Literal - 128)) | (1L << (NCName - 128)))) != 0)) {
 					{
-					setState(1268);
+					setState(1272);
 					pairConstructor();
-					setState(1273);
+					setState(1277);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 					while (_la==T__13) {
 						{
 						{
-						setState(1269);
+						setState(1273);
 						match(T__13);
-						setState(1270);
+						setState(1274);
 						pairConstructor();
 						}
 						}
-						setState(1275);
+						setState(1279);
 						_errHandler.sync(this);
 						_la = _input.LA(1);
 					}
 					}
 				}
 
-				setState(1278);
+				setState(1282);
 				match(T__7);
 				}
 				break;
 			case T__59:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1279);
+				setState(1283);
 				((ObjectConstructorContext)_localctx).s60 = match(T__59);
 				((ObjectConstructorContext)_localctx).merge_operator.add(((ObjectConstructorContext)_localctx).s60);
-				setState(1280);
+				setState(1284);
 				expr();
-				setState(1281);
+				setState(1285);
 				match(T__60);
 				}
 				break;
@@ -9194,27 +9205,27 @@ public class JsoniqParser extends Parser {
 		ItemTypeContext _localctx = new ItemTypeContext(_ctx, getState());
 		enterRule(_localctx, 234, RULE_itemType);
 		try {
-			setState(1288);
+			setState(1292);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,125,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1285);
+				setState(1289);
 				qname();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1286);
+				setState(1290);
 				match(NullLiteral);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1287);
+				setState(1291);
 				functionTest();
 				}
 				break;
@@ -9255,18 +9266,18 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1292);
+			setState(1296);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,126,_ctx) ) {
 			case 1:
 				{
-				setState(1290);
+				setState(1294);
 				anyFunctionTest();
 				}
 				break;
 			case 2:
 				{
-				setState(1291);
+				setState(1295);
 				typedFunctionTest();
 				}
 				break;
@@ -9302,13 +9313,13 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1294);
+			setState(1298);
 			match(T__30);
-			setState(1295);
+			setState(1299);
 			match(T__8);
-			setState(1296);
+			setState(1300);
 			match(T__10);
-			setState(1297);
+			setState(1301);
 			match(T__9);
 			}
 		}
@@ -9352,43 +9363,43 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1299);
+			setState(1303);
 			match(T__30);
-			setState(1300);
+			setState(1304);
 			match(T__8);
-			setState(1309);
+			setState(1313);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__8) | (1L << T__30) | (1L << Kfor) | (1L << Klet))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Kwhere - 64)) | (1L << (Kgroup - 64)) | (1L << (Kby - 64)) | (1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kbreak - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (Kloop - 128)) | (1L << (Kcontinue - 128)) | (1L << (Kexit - 128)) | (1L << (Kreturning - 128)) | (1L << (Kwhile - 128)) | (1L << (NullLiteral - 128)) | (1L << (NCName - 128)))) != 0)) {
 				{
-				setState(1301);
+				setState(1305);
 				((TypedFunctionTestContext)_localctx).sequenceType = sequenceType();
 				((TypedFunctionTestContext)_localctx).st.add(((TypedFunctionTestContext)_localctx).sequenceType);
-				setState(1306);
+				setState(1310);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==T__13) {
 					{
 					{
-					setState(1302);
+					setState(1306);
 					match(T__13);
-					setState(1303);
+					setState(1307);
 					((TypedFunctionTestContext)_localctx).sequenceType = sequenceType();
 					((TypedFunctionTestContext)_localctx).st.add(((TypedFunctionTestContext)_localctx).sequenceType);
 					}
 					}
-					setState(1308);
+					setState(1312);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
 				}
 			}
 
-			setState(1311);
+			setState(1315);
 			match(T__9);
-			setState(1312);
+			setState(1316);
 			match(Kas);
-			setState(1313);
+			setState(1317);
 			((TypedFunctionTestContext)_localctx).rt = sequenceType();
 			}
 		}
@@ -9428,14 +9439,14 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1315);
+			setState(1319);
 			((SingleTypeContext)_localctx).item = itemType();
-			setState(1317);
+			setState(1321);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,129,_ctx) ) {
 			case 1:
 				{
-				setState(1316);
+				setState(1320);
 				((SingleTypeContext)_localctx).s134 = match(ArgumentPlaceholder);
 				((SingleTypeContext)_localctx).question.add(((SingleTypeContext)_localctx).s134);
 				}
@@ -9484,23 +9495,23 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1321);
+			setState(1325);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,130,_ctx) ) {
 			case 1:
 				{
-				setState(1319);
+				setState(1323);
 				((PairConstructorContext)_localctx).lhs = exprSingle();
 				}
 				break;
 			case 2:
 				{
-				setState(1320);
+				setState(1324);
 				((PairConstructorContext)_localctx).name = match(NCName);
 				}
 				break;
 			}
-			setState(1323);
+			setState(1327);
 			_la = _input.LA(1);
 			if ( !(_la==T__17 || _la==ArgumentPlaceholder) ) {
 			_errHandler.recoverInline(this);
@@ -9510,7 +9521,7 @@ public class JsoniqParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(1324);
+			setState(1328);
 			((PairConstructorContext)_localctx).rhs = exprSingle();
 			}
 		}
@@ -9547,19 +9558,19 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1326);
+			setState(1330);
 			match(T__54);
-			setState(1328);
+			setState(1332);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__6) | (1L << T__8) | (1L << T__12) | (1L << T__15) | (1L << T__30) | (1L << T__48) | (1L << T__49) | (1L << T__54) | (1L << T__57) | (1L << T__59) | (1L << Kfor) | (1L << Klet))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Kwhere - 64)) | (1L << (Kgroup - 64)) | (1L << (Kby - 64)) | (1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kbreak - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (Kloop - 128)) | (1L << (Kcontinue - 128)) | (1L << (Kexit - 128)) | (1L << (Kreturning - 128)) | (1L << (Kwhile - 128)) | (1L << (STRING - 128)) | (1L << (NullLiteral - 128)) | (1L << (Literal - 128)) | (1L << (NCName - 128)))) != 0)) {
 				{
-				setState(1327);
+				setState(1331);
 				expr();
 				}
 			}
 
-			setState(1330);
+			setState(1334);
 			match(T__55);
 			}
 		}
@@ -9595,7 +9606,7 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1332);
+			setState(1336);
 			stringLiteral();
 			}
 		}
@@ -9629,7 +9640,7 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1334);
+			setState(1338);
 			match(STRING);
 			}
 		}
@@ -9735,7 +9746,7 @@ public class JsoniqParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1336);
+			setState(1340);
 			_la = _input.LA(1);
 			if ( !(((((_la - 62)) & ~0x3f) == 0 && ((1L << (_la - 62)) & ((1L << (Kfor - 62)) | (1L << (Klet - 62)) | (1L << (Kwhere - 62)) | (1L << (Kgroup - 62)) | (1L << (Kby - 62)) | (1L << (Korder - 62)) | (1L << (Kreturn - 62)) | (1L << (Kif - 62)) | (1L << (Kin - 62)) | (1L << (Kas - 62)) | (1L << (Kat - 62)) | (1L << (Kallowing - 62)) | (1L << (Kempty - 62)) | (1L << (Kcount - 62)) | (1L << (Kstable - 62)) | (1L << (Kascending - 62)) | (1L << (Kdescending - 62)) | (1L << (Ksome - 62)) | (1L << (Kevery - 62)) | (1L << (Ksatisfies - 62)) | (1L << (Kcollation - 62)) | (1L << (Kgreatest - 62)) | (1L << (Kleast - 62)) | (1L << (Kswitch - 62)) | (1L << (Kcase - 62)) | (1L << (Ktry - 62)) | (1L << (Kcatch - 62)) | (1L << (Kdefault - 62)) | (1L << (Kthen - 62)) | (1L << (Kelse - 62)) | (1L << (Ktypeswitch - 62)) | (1L << (Kor - 62)) | (1L << (Kand - 62)) | (1L << (Knot - 62)) | (1L << (Kto - 62)) | (1L << (Kinstance - 62)) | (1L << (Kof - 62)) | (1L << (Kstatically - 62)) | (1L << (Kis - 62)) | (1L << (Ktreat - 62)) | (1L << (Kcast - 62)) | (1L << (Kcastable - 62)) | (1L << (Kversion - 62)) | (1L << (Kjsoniq - 62)) | (1L << (Kunordered - 62)) | (1L << (Ktrue - 62)) | (1L << (Kfalse - 62)) | (1L << (Ktype - 62)) | (1L << (Kvalidate - 62)) | (1L << (Kannotate - 62)) | (1L << (Kdeclare - 62)) | (1L << (Kcontext - 62)) | (1L << (Kitem - 62)) | (1L << (Kvariable - 62)) | (1L << (Kinsert - 62)) | (1L << (Kdelete - 62)) | (1L << (Krename - 62)) | (1L << (Kreplace - 62)) | (1L << (Kcopy - 62)) | (1L << (Kmodify - 62)) | (1L << (Kappend - 62)) | (1L << (Kinto - 62)) | (1L << (Kvalue - 62)) | (1L << (Kwith - 62)))) != 0) || ((((_la - 126)) & ~0x3f) == 0 && ((1L << (_la - 126)) & ((1L << (Kposition - 126)) | (1L << (Kbreak - 126)) | (1L << (Kloop - 126)) | (1L << (Kcontinue - 126)) | (1L << (Kexit - 126)) | (1L << (Kreturning - 126)) | (1L << (Kwhile - 126)) | (1L << (NullLiteral - 126)))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -9759,7 +9770,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\u0093\u053d\4\2\t"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\u0093\u0541\4\2\t"+
 		"\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13"+
 		"\t\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -9836,30 +9847,30 @@ public class JsoniqParser extends Parser {
 		"\3c\3d\3d\3e\3e\3e\3e\3e\3f\3f\3f\3f\3f\3g\3g\3g\3h\3h\3h\5h\u0483\nh"+
 		"\7h\u0485\nh\fh\16h\u0488\13h\3h\3h\3i\3i\5i\u048e\ni\3j\3j\5j\u0492\n"+
 		"j\3k\3k\3k\3k\3l\3l\3l\3l\5l\u049c\nl\3l\3l\3l\5l\u04a1\nl\3l\3l\3l\3"+
-		"l\3m\3m\3m\3m\3m\3m\3m\5m\u04ae\nm\3m\3m\3m\3m\7m\u04b4\nm\fm\16m\u04b7"+
-		"\13m\3m\3m\3m\5m\u04bc\nm\3n\3n\3n\3o\3o\3o\3o\3o\3p\3p\3p\3p\3p\3p\3"+
-		"p\3p\3q\3q\3q\3q\7q\u04d2\nq\fq\16q\u04d5\13q\3q\3q\3q\3q\3q\3r\3r\3r"+
-		"\3r\3r\3s\3s\3s\6s\u04e4\ns\rs\16s\u04e5\3t\3t\3t\3t\3u\3u\3u\3u\3u\3"+
-		"u\5u\u04f2\nu\5u\u04f4\nu\3v\3v\3v\3v\7v\u04fa\nv\fv\16v\u04fd\13v\5v"+
-		"\u04ff\nv\3v\3v\3v\3v\3v\5v\u0506\nv\3w\3w\3w\5w\u050b\nw\3x\3x\5x\u050f"+
-		"\nx\3y\3y\3y\3y\3y\3z\3z\3z\3z\3z\7z\u051b\nz\fz\16z\u051e\13z\5z\u0520"+
-		"\nz\3z\3z\3z\3z\3{\3{\5{\u0528\n{\3|\3|\5|\u052c\n|\3|\3|\3|\3}\3}\5}"+
-		"\u0533\n}\3}\3}\3~\3~\3\177\3\177\3\u0080\3\u0080\3\u0080\2\2\u0081\2"+
-		"\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJL"+
-		"NPRTVXZ\\^`bdfhjlnprtvxz|~\u0080\u0082\u0084\u0086\u0088\u008a\u008c\u008e"+
-		"\u0090\u0092\u0094\u0096\u0098\u009a\u009c\u009e\u00a0\u00a2\u00a4\u00a6"+
-		"\u00a8\u00aa\u00ac\u00ae\u00b0\u00b2\u00b4\u00b6\u00b8\u00ba\u00bc\u00be"+
-		"\u00c0\u00c2\u00c4\u00c6\u00c8\u00ca\u00cc\u00ce\u00d0\u00d2\u00d4\u00d6"+
-		"\u00d8\u00da\u00dc\u00de\u00e0\u00e2\u00e4\u00e6\u00e8\u00ea\u00ec\u00ee"+
-		"\u00f0\u00f2\u00f4\u00f6\u00f8\u00fa\u00fc\u00fe\2\n\4\2\22\22ll\3\2U"+
-		"V\3\2\25\36\4\2\6\6\'\61\3\2\63\64\4\2\r\r\65\67\4\2\24\24\u0088\u0088"+
-		"\4\2@\u0086\u0089\u0089\2\u057e\2\u0100\3\2\2\2\4\u0108\3\2\2\2\6\u010e"+
-		"\3\2\2\2\b\u0111\3\2\2\2\n\u0122\3\2\2\2\f\u012d\3\2\2\2\16\u0132\3\2"+
-		"\2\2\20\u0135\3\2\2\2\22\u0138\3\2\2\2\24\u0149\3\2\2\2\26\u014b\3\2\2"+
-		"\2\30\u014e\3\2\2\2\32\u0154\3\2\2\2\34\u0158\3\2\2\2\36\u015c\3\2\2\2"+
-		" \u0160\3\2\2\2\"\u0167\3\2\2\2$\u0177\3\2\2\2&\u0180\3\2\2\2(\u018f\3"+
-		"\2\2\2*\u0196\3\2\2\2,\u019d\3\2\2\2.\u01ae\3\2\2\2\60\u01be\3\2\2\2\62"+
-		"\u01cf\3\2\2\2\64\u01e0\3\2\2\2\66\u01e3\3\2\2\28\u01ef\3\2\2\2:\u01f8"+
+		"l\3m\3m\3m\3m\3m\3m\3m\3m\5m\u04af\nm\3m\3m\3m\3m\3m\7m\u04b6\nm\fm\16"+
+		"m\u04b9\13m\3m\3m\3m\5m\u04be\nm\3n\3n\3n\3n\3o\3o\3o\3o\3o\3o\3p\3p\3"+
+		"p\3p\3p\3p\3p\3p\3q\3q\3q\3q\7q\u04d6\nq\fq\16q\u04d9\13q\3q\3q\3q\3q"+
+		"\3q\3r\3r\3r\3r\3r\3s\3s\3s\6s\u04e8\ns\rs\16s\u04e9\3t\3t\3t\3t\3u\3"+
+		"u\3u\3u\3u\3u\5u\u04f6\nu\5u\u04f8\nu\3v\3v\3v\3v\7v\u04fe\nv\fv\16v\u0501"+
+		"\13v\5v\u0503\nv\3v\3v\3v\3v\3v\5v\u050a\nv\3w\3w\3w\5w\u050f\nw\3x\3"+
+		"x\5x\u0513\nx\3y\3y\3y\3y\3y\3z\3z\3z\3z\3z\7z\u051f\nz\fz\16z\u0522\13"+
+		"z\5z\u0524\nz\3z\3z\3z\3z\3{\3{\5{\u052c\n{\3|\3|\5|\u0530\n|\3|\3|\3"+
+		"|\3}\3}\5}\u0537\n}\3}\3}\3~\3~\3\177\3\177\3\u0080\3\u0080\3\u0080\2"+
+		"\2\u0081\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668"+
+		":<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080\u0082\u0084\u0086\u0088\u008a"+
+		"\u008c\u008e\u0090\u0092\u0094\u0096\u0098\u009a\u009c\u009e\u00a0\u00a2"+
+		"\u00a4\u00a6\u00a8\u00aa\u00ac\u00ae\u00b0\u00b2\u00b4\u00b6\u00b8\u00ba"+
+		"\u00bc\u00be\u00c0\u00c2\u00c4\u00c6\u00c8\u00ca\u00cc\u00ce\u00d0\u00d2"+
+		"\u00d4\u00d6\u00d8\u00da\u00dc\u00de\u00e0\u00e2\u00e4\u00e6\u00e8\u00ea"+
+		"\u00ec\u00ee\u00f0\u00f2\u00f4\u00f6\u00f8\u00fa\u00fc\u00fe\2\n\4\2\22"+
+		"\22ll\3\2UV\3\2\25\36\4\2\6\6\'\61\3\2\63\64\4\2\r\r\65\67\4\2\24\24\u0088"+
+		"\u0088\4\2@\u0086\u0089\u0089\2\u0582\2\u0100\3\2\2\2\4\u0108\3\2\2\2"+
+		"\6\u010e\3\2\2\2\b\u0111\3\2\2\2\n\u0122\3\2\2\2\f\u012d\3\2\2\2\16\u0132"+
+		"\3\2\2\2\20\u0135\3\2\2\2\22\u0138\3\2\2\2\24\u0149\3\2\2\2\26\u014b\3"+
+		"\2\2\2\30\u014e\3\2\2\2\32\u0154\3\2\2\2\34\u0158\3\2\2\2\36\u015c\3\2"+
+		"\2\2 \u0160\3\2\2\2\"\u0167\3\2\2\2$\u0177\3\2\2\2&\u0180\3\2\2\2(\u018f"+
+		"\3\2\2\2*\u0196\3\2\2\2,\u019d\3\2\2\2.\u01ae\3\2\2\2\60\u01be\3\2\2\2"+
+		"\62\u01cf\3\2\2\2\64\u01e0\3\2\2\2\66\u01e3\3\2\2\28\u01ef\3\2\2\2:\u01f8"+
 		"\3\2\2\2<\u0202\3\2\2\2>\u0204\3\2\2\2@\u020e\3\2\2\2B\u0210\3\2\2\2D"+
 		"\u0215\3\2\2\2F\u0219\3\2\2\2H\u021f\3\2\2\2J\u0234\3\2\2\2L\u023a\3\2"+
 		"\2\2N\u023c\3\2\2\2P\u024f\3\2\2\2R\u0260\3\2\2\2T\u0270\3\2\2\2V\u0284"+
@@ -9880,12 +9891,12 @@ public class JsoniqParser extends Parser {
 		"\2\2\u00c4\u046a\3\2\2\2\u00c6\u0470\3\2\2\2\u00c8\u0472\3\2\2\2\u00ca"+
 		"\u0477\3\2\2\2\u00cc\u047c\3\2\2\2\u00ce\u047f\3\2\2\2\u00d0\u048d\3\2"+
 		"\2\2\u00d2\u0491\3\2\2\2\u00d4\u0493\3\2\2\2\u00d6\u0497\3\2\2\2\u00d8"+
-		"\u04bb\3\2\2\2\u00da\u04bd\3\2\2\2\u00dc\u04c0\3\2\2\2\u00de\u04c5\3\2"+
-		"\2\2\u00e0\u04cd\3\2\2\2\u00e2\u04db\3\2\2\2\u00e4\u04e0\3\2\2\2\u00e6"+
-		"\u04e7\3\2\2\2\u00e8\u04f3\3\2\2\2\u00ea\u0505\3\2\2\2\u00ec\u050a\3\2"+
-		"\2\2\u00ee\u050e\3\2\2\2\u00f0\u0510\3\2\2\2\u00f2\u0515\3\2\2\2\u00f4"+
-		"\u0525\3\2\2\2\u00f6\u052b\3\2\2\2\u00f8\u0530\3\2\2\2\u00fa\u0536\3\2"+
-		"\2\2\u00fc\u0538\3\2\2\2\u00fe\u053a\3\2\2\2\u0100\u0101\5\4\3\2\u0101"+
+		"\u04bd\3\2\2\2\u00da\u04bf\3\2\2\2\u00dc\u04c3\3\2\2\2\u00de\u04c9\3\2"+
+		"\2\2\u00e0\u04d1\3\2\2\2\u00e2\u04df\3\2\2\2\u00e4\u04e4\3\2\2\2\u00e6"+
+		"\u04eb\3\2\2\2\u00e8\u04f7\3\2\2\2\u00ea\u0509\3\2\2\2\u00ec\u050e\3\2"+
+		"\2\2\u00ee\u0512\3\2\2\2\u00f0\u0514\3\2\2\2\u00f2\u0519\3\2\2\2\u00f4"+
+		"\u0529\3\2\2\2\u00f6\u052f\3\2\2\2\u00f8\u0534\3\2\2\2\u00fa\u053a\3\2"+
+		"\2\2\u00fc\u053c\3\2\2\2\u00fe\u053e\3\2\2\2\u0100\u0101\5\4\3\2\u0101"+
 		"\u0102\7\2\2\3\u0102\3\3\2\2\2\u0103\u0104\7k\2\2\u0104\u0105\7j\2\2\u0105"+
 		"\u0106\5\u00fc\177\2\u0106\u0107\7\3\2\2\u0107\u0109\3\2\2\2\u0108\u0103"+
 		"\3\2\2\2\u0108\u0109\3\2\2\2\u0109\u010c\3\2\2\2\u010a\u010d\5\b\5\2\u010b"+
@@ -10199,67 +10210,68 @@ public class JsoniqParser extends Parser {
 		"\2\u049d\u04a0\7\f\2\2\u049e\u049f\7I\2\2\u049f\u04a1\5\u00e8u\2\u04a0"+
 		"\u049e\3\2\2\2\u04a0\u04a1\3\2\2\2\u04a1\u04a2\3\2\2\2\u04a2\u04a3\7\t"+
 		"\2\2\u04a3\u04a4\5\22\n\2\u04a4\u04a5\7\n\2\2\u04a5\u00d7\3\2\2\2\u04a6"+
-		"\u04a7\7v\2\2\u04a7\u04a8\5`\61\2\u04a8\u04a9\7}\2\2\u04a9\u04ad\5`\61"+
-		"\2\u04aa\u04ab\7J\2\2\u04ab\u04ac\7\u0080\2\2\u04ac\u04ae\5`\61\2\u04ad"+
-		"\u04aa\3\2\2\2\u04ad\u04ae\3\2\2\2\u04ae\u04bc\3\2\2\2\u04af\u04b0\7v"+
-		"\2\2\u04b0\u04b5\5\u00f6|\2\u04b1\u04b2\7\20\2\2\u04b2\u04b4\5\u00f6|"+
-		"\2\u04b3\u04b1\3\2\2\2\u04b4\u04b7\3\2\2\2\u04b5\u04b3\3\2\2\2\u04b5\u04b6"+
-		"\3\2\2\2\u04b6\u04b8\3\2\2\2\u04b7\u04b5\3\2\2\2\u04b8\u04b9\7}\2\2\u04b9"+
-		"\u04ba\5`\61\2\u04ba\u04bc\3\2\2\2\u04bb\u04a6\3\2\2\2\u04bb\u04af\3\2"+
-		"\2\2\u04bc\u00d9\3\2\2\2\u04bd\u04be\7w\2\2\u04be\u04bf\5\u00e4s\2\u04bf"+
-		"\u00db\3\2\2\2\u04c0\u04c1\7x\2\2\u04c1\u04c2\5\u00e4s\2\u04c2\u04c3\7"+
-		"I\2\2\u04c3\u04c4\5`\61\2\u04c4\u00dd\3\2\2\2\u04c5\u04c6\7y\2\2\u04c6"+
-		"\u04c7\7~\2\2\u04c7\u04c8\7d\2\2\u04c8\u04c9\7\u0093\2\2\u04c9\u04ca\5"+
-		"\u00e4s\2\u04ca\u04cb\7\177\2\2\u04cb\u04cc\5`\61\2\u04cc\u00df\3\2\2"+
-		"\2\u04cd\u04ce\7z\2\2\u04ce\u04d3\5\u00e6t\2\u04cf\u04d0\7\20\2\2\u04d0"+
-		"\u04d2\5\u00e6t\2\u04d1\u04cf\3\2\2\2\u04d2\u04d5\3\2\2\2\u04d3\u04d1"+
-		"\3\2\2\2\u04d3\u04d4\3\2\2\2\u04d4\u04d6\3\2\2\2\u04d5\u04d3\3\2\2\2\u04d6"+
-		"\u04d7\7{\2\2\u04d7\u04d8\5`\61\2\u04d8\u04d9\7F\2\2\u04d9\u04da\5`\61"+
-		"\2\u04da\u00e1\3\2\2\2\u04db\u04dc\7|\2\2\u04dc\u04dd\5`\61\2\u04dd\u04de"+
-		"\7}\2\2\u04de\u04df\5`\61\2\u04df\u00e3\3\2\2\2\u04e0\u04e3\5\u00be`\2"+
-		"\u04e1\u04e4\5\u00b6\\\2\u04e2\u04e4\5\u00bc_\2\u04e3\u04e1\3\2\2\2\u04e3"+
-		"\u04e2\3\2\2\2\u04e4\u04e5\3\2\2\2\u04e5\u04e3\3\2\2\2\u04e5\u04e6\3\2"+
-		"\2\2\u04e6\u00e5\3\2\2\2\u04e7\u04e8\5\u00c2b\2\u04e8\u04e9\7\b\2\2\u04e9"+
-		"\u04ea\5`\61\2\u04ea\u00e7\3\2\2\2\u04eb\u04ec\7\13\2\2\u04ec\u04f4\7"+
-		"\f\2\2\u04ed\u04f1\5\u00ecw\2\u04ee\u04f2\7\u0088\2\2\u04ef\u04f2\7\r"+
-		"\2\2\u04f0\u04f2\7\63\2\2\u04f1\u04ee\3\2\2\2\u04f1\u04ef\3\2\2\2\u04f1"+
-		"\u04f0\3\2\2\2\u04f1\u04f2\3\2\2\2\u04f2\u04f4\3\2\2\2\u04f3\u04eb\3\2"+
-		"\2\2\u04f3\u04ed\3\2\2\2\u04f4\u00e9\3\2\2\2\u04f5\u04fe\7\t\2\2\u04f6"+
-		"\u04fb\5\u00f6|\2\u04f7\u04f8\7\20\2\2\u04f8\u04fa\5\u00f6|\2\u04f9\u04f7"+
-		"\3\2\2\2\u04fa\u04fd\3\2\2\2\u04fb\u04f9\3\2\2\2\u04fb\u04fc\3\2\2\2\u04fc"+
-		"\u04ff\3\2\2\2\u04fd\u04fb\3\2\2\2\u04fe\u04f6\3\2\2\2\u04fe\u04ff\3\2"+
-		"\2\2\u04ff\u0500\3\2\2\2\u0500\u0506\7\n\2\2\u0501\u0502\7>\2\2\u0502"+
-		"\u0503\5^\60\2\u0503\u0504\7?\2\2\u0504\u0506\3\2\2\2\u0505\u04f5\3\2"+
-		"\2\2\u0505\u0501\3\2\2\2\u0506\u00eb\3\2\2\2\u0507\u050b\5J&\2\u0508\u050b"+
-		"\7\u0089\2\2\u0509\u050b\5\u00eex\2\u050a\u0507\3\2\2\2\u050a\u0508\3"+
-		"\2\2\2\u050a\u0509\3\2\2\2\u050b\u00ed\3\2\2\2\u050c\u050f\5\u00f0y\2"+
-		"\u050d\u050f\5\u00f2z\2\u050e\u050c\3\2\2\2\u050e\u050d\3\2\2\2\u050f"+
-		"\u00ef\3\2\2\2\u0510\u0511\7!\2\2\u0511\u0512\7\13\2\2\u0512\u0513\7\r"+
-		"\2\2\u0513\u0514\7\f\2\2\u0514\u00f1\3\2\2\2\u0515\u0516\7!\2\2\u0516"+
-		"\u051f\7\13\2\2\u0517\u051c\5\u00e8u\2\u0518\u0519\7\20\2\2\u0519\u051b"+
-		"\5\u00e8u\2\u051a\u0518\3\2\2\2\u051b\u051e\3\2\2\2\u051c\u051a\3\2\2"+
-		"\2\u051c\u051d\3\2\2\2\u051d\u0520\3\2\2\2\u051e\u051c\3\2\2\2\u051f\u0517"+
-		"\3\2\2\2\u051f\u0520\3\2\2\2\u0520\u0521\3\2\2\2\u0521\u0522\7\f\2\2\u0522"+
-		"\u0523\7I\2\2\u0523\u0524\5\u00e8u\2\u0524\u00f3\3\2\2\2\u0525\u0527\5"+
-		"\u00ecw\2\u0526\u0528\7\u0088\2\2\u0527\u0526\3\2\2\2\u0527\u0528\3\2"+
-		"\2\2\u0528\u00f5\3\2\2\2\u0529\u052c\5`\61\2\u052a\u052c\7\u0090\2\2\u052b"+
-		"\u0529\3\2\2\2\u052b\u052a\3\2\2\2\u052c\u052d\3\2\2\2\u052d\u052e\t\b"+
-		"\2\2\u052e\u052f\5`\61\2\u052f\u00f7\3\2\2\2\u0530\u0532\79\2\2\u0531"+
-		"\u0533\5^\60\2\u0532\u0531\3\2\2\2\u0532\u0533\3\2\2\2\u0533\u0534\3\2"+
-		"\2\2\u0534\u0535\7:\2\2\u0535\u00f9\3\2\2\2\u0536\u0537\5\u00fc\177\2"+
-		"\u0537\u00fb\3\2\2\2\u0538\u0539\7\u0087\2\2\u0539\u00fd\3\2\2\2\u053a"+
-		"\u053b\t\t\2\2\u053b\u00ff\3\2\2\2\u0086\u0108\u010c\u011c\u0122\u012a"+
-		"\u0132\u013a\u0149\u0167\u016f\u0171\u0187\u0191\u019b\u01a0\u01a5\u01a9"+
-		"\u01b5\u01b9\u01c2\u01c9\u01d7\u01db\u01e0\u01ea\u01f2\u01f6\u0202\u020e"+
-		"\u0224\u022c\u0231\u0234\u0238\u0241\u024a\u024d\u0255\u025c\u025e\u0265"+
-		"\u026c\u026e\u0276\u027b\u0282\u0289\u0293\u029a\u02a1\u02a8\u02b1\u02bb"+
-		"\u02bf\u02c7\u02c9\u02d5\u02db\u02df\u02e3\u02ee\u02f4\u0303\u0309\u030d"+
-		"\u0311\u0318\u031f\u0325\u032a\u032c\u0330\u0337\u033e\u0347\u0353\u035d"+
-		"\u0369\u036d\u0376\u037d\u0393\u0398\u039d\u03a1\u03ad\u03b5\u03b9\u03c0"+
-		"\u03c7\u03cd\u03d4\u03dc\u03e3\u03e9\u03ef\u03f5\u03fb\u0406\u040c\u0411"+
-		"\u0419\u042e\u0437\u0439\u0450\u0461\u046c\u0482\u0486\u048d\u0491\u049b"+
-		"\u04a0\u04ad\u04b5\u04bb\u04d3\u04e3\u04e5\u04f1\u04f3\u04fb\u04fe\u0505"+
-		"\u050a\u050e\u051c\u051f\u0527\u052b\u0532";
+		"\u04a7\7v\2\2\u04a7\u04a8\7\u0093\2\2\u04a8\u04a9\5`\61\2\u04a9\u04aa"+
+		"\7}\2\2\u04aa\u04ae\5`\61\2\u04ab\u04ac\7J\2\2\u04ac\u04ad\7\u0080\2\2"+
+		"\u04ad\u04af\5`\61\2\u04ae\u04ab\3\2\2\2\u04ae\u04af\3\2\2\2\u04af\u04be"+
+		"\3\2\2\2\u04b0\u04b1\7v\2\2\u04b1\u04b2\7\u0093\2\2\u04b2\u04b7\5\u00f6"+
+		"|\2\u04b3\u04b4\7\20\2\2\u04b4\u04b6\5\u00f6|\2\u04b5\u04b3\3\2\2\2\u04b6"+
+		"\u04b9\3\2\2\2\u04b7\u04b5\3\2\2\2\u04b7\u04b8\3\2\2\2\u04b8\u04ba\3\2"+
+		"\2\2\u04b9\u04b7\3\2\2\2\u04ba\u04bb\7}\2\2\u04bb\u04bc\5`\61\2\u04bc"+
+		"\u04be\3\2\2\2\u04bd\u04a6\3\2\2\2\u04bd\u04b0\3\2\2\2\u04be\u00d9\3\2"+
+		"\2\2\u04bf\u04c0\7w\2\2\u04c0\u04c1\7\u0093\2\2\u04c1\u04c2\5\u00e4s\2"+
+		"\u04c2\u00db\3\2\2\2\u04c3\u04c4\7x\2\2\u04c4\u04c5\7\u0093\2\2\u04c5"+
+		"\u04c6\5\u00e4s\2\u04c6\u04c7\7I\2\2\u04c7\u04c8\5`\61\2\u04c8\u00dd\3"+
+		"\2\2\2\u04c9\u04ca\7y\2\2\u04ca\u04cb\7~\2\2\u04cb\u04cc\7d\2\2\u04cc"+
+		"\u04cd\7\u0093\2\2\u04cd\u04ce\5\u00e4s\2\u04ce\u04cf\7\177\2\2\u04cf"+
+		"\u04d0\5`\61\2\u04d0\u00df\3\2\2\2\u04d1\u04d2\7z\2\2\u04d2\u04d7\5\u00e6"+
+		"t\2\u04d3\u04d4\7\20\2\2\u04d4\u04d6\5\u00e6t\2\u04d5\u04d3\3\2\2\2\u04d6"+
+		"\u04d9\3\2\2\2\u04d7\u04d5\3\2\2\2\u04d7\u04d8\3\2\2\2\u04d8\u04da\3\2"+
+		"\2\2\u04d9\u04d7\3\2\2\2\u04da\u04db\7{\2\2\u04db\u04dc\5`\61\2\u04dc"+
+		"\u04dd\7F\2\2\u04dd\u04de\5`\61\2\u04de\u00e1\3\2\2\2\u04df\u04e0\7|\2"+
+		"\2\u04e0\u04e1\5`\61\2\u04e1\u04e2\7}\2\2\u04e2\u04e3\5`\61\2\u04e3\u00e3"+
+		"\3\2\2\2\u04e4\u04e7\5\u00be`\2\u04e5\u04e8\5\u00b6\\\2\u04e6\u04e8\5"+
+		"\u00bc_\2\u04e7\u04e5\3\2\2\2\u04e7\u04e6\3\2\2\2\u04e8\u04e9\3\2\2\2"+
+		"\u04e9\u04e7\3\2\2\2\u04e9\u04ea\3\2\2\2\u04ea\u00e5\3\2\2\2\u04eb\u04ec"+
+		"\5\u00c2b\2\u04ec\u04ed\7\b\2\2\u04ed\u04ee\5`\61\2\u04ee\u00e7\3\2\2"+
+		"\2\u04ef\u04f0\7\13\2\2\u04f0\u04f8\7\f\2\2\u04f1\u04f5\5\u00ecw\2\u04f2"+
+		"\u04f6\7\u0088\2\2\u04f3\u04f6\7\r\2\2\u04f4\u04f6\7\63\2\2\u04f5\u04f2"+
+		"\3\2\2\2\u04f5\u04f3\3\2\2\2\u04f5\u04f4\3\2\2\2\u04f5\u04f6\3\2\2\2\u04f6"+
+		"\u04f8\3\2\2\2\u04f7\u04ef\3\2\2\2\u04f7\u04f1\3\2\2\2\u04f8\u00e9\3\2"+
+		"\2\2\u04f9\u0502\7\t\2\2\u04fa\u04ff\5\u00f6|\2\u04fb\u04fc\7\20\2\2\u04fc"+
+		"\u04fe\5\u00f6|\2\u04fd\u04fb\3\2\2\2\u04fe\u0501\3\2\2\2\u04ff\u04fd"+
+		"\3\2\2\2\u04ff\u0500\3\2\2\2\u0500\u0503\3\2\2\2\u0501\u04ff\3\2\2\2\u0502"+
+		"\u04fa\3\2\2\2\u0502\u0503\3\2\2\2\u0503\u0504\3\2\2\2\u0504\u050a\7\n"+
+		"\2\2\u0505\u0506\7>\2\2\u0506\u0507\5^\60\2\u0507\u0508\7?\2\2\u0508\u050a"+
+		"\3\2\2\2\u0509\u04f9\3\2\2\2\u0509\u0505\3\2\2\2\u050a\u00eb\3\2\2\2\u050b"+
+		"\u050f\5J&\2\u050c\u050f\7\u0089\2\2\u050d\u050f\5\u00eex\2\u050e\u050b"+
+		"\3\2\2\2\u050e\u050c\3\2\2\2\u050e\u050d\3\2\2\2\u050f\u00ed\3\2\2\2\u0510"+
+		"\u0513\5\u00f0y\2\u0511\u0513\5\u00f2z\2\u0512\u0510\3\2\2\2\u0512\u0511"+
+		"\3\2\2\2\u0513\u00ef\3\2\2\2\u0514\u0515\7!\2\2\u0515\u0516\7\13\2\2\u0516"+
+		"\u0517\7\r\2\2\u0517\u0518\7\f\2\2\u0518\u00f1\3\2\2\2\u0519\u051a\7!"+
+		"\2\2\u051a\u0523\7\13\2\2\u051b\u0520\5\u00e8u\2\u051c\u051d\7\20\2\2"+
+		"\u051d\u051f\5\u00e8u\2\u051e\u051c\3\2\2\2\u051f\u0522\3\2\2\2\u0520"+
+		"\u051e\3\2\2\2\u0520\u0521\3\2\2\2\u0521\u0524\3\2\2\2\u0522\u0520\3\2"+
+		"\2\2\u0523\u051b\3\2\2\2\u0523\u0524\3\2\2\2\u0524\u0525\3\2\2\2\u0525"+
+		"\u0526\7\f\2\2\u0526\u0527\7I\2\2\u0527\u0528\5\u00e8u\2\u0528\u00f3\3"+
+		"\2\2\2\u0529\u052b\5\u00ecw\2\u052a\u052c\7\u0088\2\2\u052b\u052a\3\2"+
+		"\2\2\u052b\u052c\3\2\2\2\u052c\u00f5\3\2\2\2\u052d\u0530\5`\61\2\u052e"+
+		"\u0530\7\u0090\2\2\u052f\u052d\3\2\2\2\u052f\u052e\3\2\2\2\u0530\u0531"+
+		"\3\2\2\2\u0531\u0532\t\b\2\2\u0532\u0533\5`\61\2\u0533\u00f7\3\2\2\2\u0534"+
+		"\u0536\79\2\2\u0535\u0537\5^\60\2\u0536\u0535\3\2\2\2\u0536\u0537\3\2"+
+		"\2\2\u0537\u0538\3\2\2\2\u0538\u0539\7:\2\2\u0539\u00f9\3\2\2\2\u053a"+
+		"\u053b\5\u00fc\177\2\u053b\u00fb\3\2\2\2\u053c\u053d\7\u0087\2\2\u053d"+
+		"\u00fd\3\2\2\2\u053e\u053f\t\t\2\2\u053f\u00ff\3\2\2\2\u0086\u0108\u010c"+
+		"\u011c\u0122\u012a\u0132\u013a\u0149\u0167\u016f\u0171\u0187\u0191\u019b"+
+		"\u01a0\u01a5\u01a9\u01b5\u01b9\u01c2\u01c9\u01d7\u01db\u01e0\u01ea\u01f2"+
+		"\u01f6\u0202\u020e\u0224\u022c\u0231\u0234\u0238\u0241\u024a\u024d\u0255"+
+		"\u025c\u025e\u0265\u026c\u026e\u0276\u027b\u0282\u0289\u0293\u029a\u02a1"+
+		"\u02a8\u02b1\u02bb\u02bf\u02c7\u02c9\u02d5\u02db\u02df\u02e3\u02ee\u02f4"+
+		"\u0303\u0309\u030d\u0311\u0318\u031f\u0325\u032a\u032c\u0330\u0337\u033e"+
+		"\u0347\u0353\u035d\u0369\u036d\u0376\u037d\u0393\u0398\u039d\u03a1\u03ad"+
+		"\u03b5\u03b9\u03c0\u03c7\u03cd\u03d4\u03dc\u03e3\u03e9\u03ef\u03f5\u03fb"+
+		"\u0406\u040c\u0411\u0419\u042e\u0437\u0439\u0450\u0461\u046c\u0482\u0486"+
+		"\u048d\u0491\u049b\u04a0\u04ae\u04b7\u04bd\u04d7\u04e7\u04e9\u04f5\u04f7"+
+		"\u04ff\u0502\u0509\u050e\u0512\u0520\u0523\u052b\u052f\u0536";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
