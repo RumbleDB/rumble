@@ -143,13 +143,11 @@ public class InlineFunctionExpression extends Expression {
 
     @Override
     public boolean isUpdating() {
-    	for(Annotation a : this.annotations)
-    	{
-    		if(a.getAnnotationName().equals(AnnotationConstants.UPDATING))
-    		{
-    			return true;
-    		}
-    	}
+        for (Annotation a : this.annotations) {
+            if (a.getAnnotationName().equals(AnnotationConstants.UPDATING)) {
+                return true;
+            }
+        }
         return false;
     }
 

@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class GlobalVariables implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
-	private Set<Name> globalVariables;
+    private Set<Name> globalVariables;
 
     public GlobalVariables() {
         globalVariables = new HashSet<>();

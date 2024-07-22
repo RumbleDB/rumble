@@ -34,6 +34,12 @@ public class UpdatesForRumbleBenchmark {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
             new String[] {
+                "--variable:externalUnparsedString",
+                "unparsed string",
+                "--escape-backticks",
+                "yes",
+                "--dates-with-timezone",
+                "yes",
                 "--print-iterator-tree",
                 "yes",
                 "--show-error-info",

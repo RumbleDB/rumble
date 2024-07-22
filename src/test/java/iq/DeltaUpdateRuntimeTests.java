@@ -60,6 +60,25 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     public static final String scalaVersion =
         Properties.scalaPropOrElse("version.number", "unknown");
 
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--dates-with-timezone",
+                    "yes",
+                    "--print-iterator-tree",
+                    "yes",
+                    "--show-error-info",
+                    "yes",
+                    "--materialization-cap",
+                    "900000"
+                }
+        );
+    }
+
     protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
@@ -148,7 +167,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        SparkSessionManager.COLLECT_ITEM_LIMIT = defaultConfiguration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
@@ -166,7 +185,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         boolean didDelete = checkTableDeletion();
         boolean didCreate = checkTableCreation(this.testFile.getAbsolutePath());
         if (!(didCreate || didDelete)) {
-            testAnnotations(this.testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
+            testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
         }
     }
 
@@ -259,16 +278,16 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             while (
                 sequence.hasNext()
                     &&
-                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
-                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
+                    ((itemCount < getConfiguration().getResultSizeCap()
+                        && getConfiguration().getResultSizeCap() > 0)
                         ||
-                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
+                        getConfiguration().getResultSizeCap() == 0)
             ) {
                 sb.append(sequence.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
+            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
