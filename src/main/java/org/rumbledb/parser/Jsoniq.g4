@@ -371,13 +371,13 @@ schemaPrefix: (Knamespace NCName '=' | Kdefault Kelement Knamespace) ;
 
 pathExpr: (Kslash singleslash=relativePathExpr?) | (Kdslash doubleslash=relativePathExpr) | relative=relativePathExpr ;
 
-relativePathExpr: stepExpr (sep=(Kslash|Kdslash) stepExpr)* ;
+relativePathExpr: stepExpr (sep+=(Kslash|Kdslash) stepExpr)* ;
 
 stepExpr: postFixExpr | axisStep ;
 
 axisStep: (reverseStep | forwardStep) predicateList ;
 
-forwardStep: forwardAxis nodeTest | abbrevForwardStep ;
+forwardStep: (forwardAxis nodeTest) | abbrevForwardStep ;
 
 forwardAxis: ( Kchild
              | Kdescendant
@@ -389,7 +389,7 @@ forwardAxis: ( Kchild
 
 abbrevForwardStep: Kat_symbol ? nodeTest ;
 
-reverseStep: reverseAxis nodeTest | abbrevReverseStep ;
+reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
 reverseAxis: ( Kparent
              | Kancestor

@@ -138,6 +138,22 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.AxisStep;
+import org.rumbledb.expressions.xml.Dash;
+import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.ForwardAxis;
+import org.rumbledb.expressions.xml.axis.ForwardStep;
+import org.rumbledb.expressions.xml.axis.ReverseAxis;
+import org.rumbledb.expressions.xml.axis.ReverseStep;
+import org.rumbledb.expressions.xml.axis.Step;
+import org.rumbledb.expressions.xml.node_test.AnyKindTest;
+import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.DocumentTest;
+import org.rumbledb.expressions.xml.node_test.ElementTest;
+import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -2273,6 +2289,152 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     // end declaration
+
+    // start xml
+
+    @Override
+    public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
+        if (!ctx.singleslash.isEmpty()) {
+            Dash singleDash = Dash.SINGLE_DASH;
+            List<Dash> dashes = getDashes(ctx.singleslash, singleDash);
+            List<StepExpr> stepExprs = getStepExpr(ctx.singleslash);
+            return new PathExpr(true, stepExprs, dashes, createMetadataFromContext(ctx));
+        } else if (!ctx.doubleslash.isEmpty()) {
+            Dash doubleDash = Dash.DOUBLE_DASH;
+            List<Dash> dashes = getDashes(ctx.singleslash, doubleDash);
+            List<StepExpr> stepExprs = getStepExpr(ctx.singleslash);
+            return new PathExpr(true, stepExprs, dashes, createMetadataFromContext(ctx));
+        }
+        List<Dash> dashes = getDashes(ctx.singleslash, null);
+        List<StepExpr> stepExprs = getStepExpr(ctx.singleslash);
+        return new PathExpr(false, stepExprs, dashes, createMetadataFromContext(ctx));
+
+    }
+
+    @Override
+    public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
+        if (ctx.postFixExpr().isEmpty()) {
+            return new StepExpr((AxisStep) this.visitAxisStep(ctx.axisStep()));
+        }
+        return new StepExpr((Expression) this.visitPostFixExpr(ctx.postFixExpr()));
+    }
+
+    @Override
+    public Node visitAxisStep(JsoniqParser.AxisStepContext ctx) {
+        List<Expression> predicates = new ArrayList<>();
+        Step step = getStep(ctx);
+        for (JsoniqParser.PredicateContext predicateContext : ctx.predicateList().predicate()) {
+            predicates.add((Expression) this.visitPredicate(predicateContext));
+        }
+        return new AxisStep(step, predicates);
+    }
+
+    private Step getStep(JsoniqParser.AxisStepContext ctx) {
+        if (ctx.forwardStep().isEmpty()) {
+            return getReverseStep(ctx.reverseStep());
+        }
+        return getForwardStep(ctx.forwardStep());
+    }
+
+    private Step getForwardStep(JsoniqParser.ForwardStepContext ctx) {
+        if (ctx.nodeTest().isEmpty()) {
+            NodeTest nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
+            return new ForwardStep(nodeTest);
+        }
+        ForwardAxis forwardAxis = ForwardAxis.valueOf(ctx.forwardAxis().getText());
+        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        return new ForwardStep(forwardAxis, nodeTest);
+    }
+
+    private Step getReverseStep(JsoniqParser.ReverseStepContext ctx) {
+        if (ctx.nodeTest().isEmpty()) {
+            return new ReverseStep();
+        }
+        ReverseAxis reverseAxis = ReverseAxis.valueOf(ctx.reverseAxis().getText());
+        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        return new ReverseStep(reverseAxis, nodeTest);
+    }
+
+    private NodeTest getNodeTest(JsoniqParser.NodeTestContext nodeTestContext) {
+        if (nodeTestContext.nameTest().isEmpty()) {
+            // kind test
+            return getKindTest(nodeTestContext.kindTest());
+        }
+        Name name = parseName(nodeTestContext.nameTest().qname(), false, false);
+        String wildcard = nodeTestContext.nameTest().wildcard().getText();
+        return new NameTest(name, wildcard);
+    }
+
+    private NodeTest getKindTest(ParseTree kindTestContext) {
+        if (kindTestContext instanceof JsoniqParser.DocumentTestContext) {
+            JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTestContext;
+            if (docContext.elementTest().isEmpty()) {
+                throw new UnsupportedFeatureException(
+                        "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                        createMetadataFromContext((ParserRuleContext) kindTestContext)
+                );
+            }
+            return new DocumentTest(getKindTest(docContext.elementTest()));
+        } else if (kindTestContext instanceof JsoniqParser.ElementTestContext) {
+            JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTestContext;
+            boolean hasWildcard = elementContext.elementNameOrWildcard().elementName().isEmpty();
+            Name typeName = parseName(elementContext.typeName().qname(), false, false);
+            Name elementName;
+            if (!hasWildcard) {
+                elementName = parseName(elementContext.elementNameOrWildcard().elementName().qname(), false, false);
+                return new ElementTest(elementName, typeName);
+            }
+            return new ElementTest(typeName);
+        } else if (kindTestContext instanceof JsoniqParser.AttributeTestContext) {
+            JsoniqParser.AttributeTestContext attributeTestContext =
+                (JsoniqParser.AttributeTestContext) kindTestContext;
+            boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName().isEmpty();
+            Name typeName = parseName(attributeTestContext.typeName().qname(), false, false);
+            Name elementName;
+            if (!hasWildcard) {
+                elementName = parseName(
+                    attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
+                    false,
+                    false
+                );
+                return new AttributeTest(elementName, typeName);
+            }
+            return new AttributeTest(typeName);
+        } else if (kindTestContext instanceof JsoniqParser.TextTestContext) {
+            return new TextTest();
+        } else if (kindTestContext instanceof JsoniqParser.AnyKindTestContext) {
+            return new AnyKindTest();
+        } else {
+            throw new UnsupportedFeatureException(
+                    "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                    createMetadataFromContext((ParserRuleContext) kindTestContext)
+            );
+        }
+    }
+
+    private List<StepExpr> getStepExpr(JsoniqParser.RelativePathExprContext relativePathExprContext) {
+        List<StepExpr> stepExprs = new ArrayList<>();
+        for (JsoniqParser.StepExprContext stepExprContext : relativePathExprContext.stepExpr()) {
+            stepExprs.add((StepExpr) this.visitStepExpr(stepExprContext));
+        }
+        return stepExprs;
+    }
+
+
+    private List<Dash> getDashes(JsoniqParser.RelativePathExprContext relativePathExprContext, Dash initialDash) {
+        List<Dash> dashes = new ArrayList<>();
+        if (initialDash != null) {
+            dashes.add(initialDash);
+        }
+        if (relativePathExprContext.isEmpty()) {
+            return dashes;
+        }
+        for (Token dash : relativePathExprContext.sep) {
+            dashes.add(Dash.valueOf(dash.getText()));
+        }
+        return dashes;
+    }
+
 
     // end region
 

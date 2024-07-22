@@ -6,20 +6,18 @@ public class ElementTest implements NodeTest {
     private Name elementName;
     private boolean hasWildcard;
     private Name typeName;
-    private boolean hasOptional;
+    // TODO: add support for optional type
 
 
-    public ElementTest(Name elementName, Name typeName, boolean hasOptional) {
+    public ElementTest(Name elementName, Name typeName) {
         this.elementName = elementName;
         this.typeName = typeName;
-        this.hasOptional = hasOptional;
         this.hasWildcard = false;
     }
 
-    public ElementTest(Name typeName, boolean hasOptional) {
+    public ElementTest(Name typeName) {
         this.elementName = null;
         this.typeName = typeName;
-        this.hasOptional = hasOptional;
         this.hasWildcard = true;
     }
 }

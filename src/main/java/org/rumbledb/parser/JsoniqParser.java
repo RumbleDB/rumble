@@ -9336,7 +9336,10 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class RelativePathExprContext extends ParserRuleContext {
-		public Token sep;
+		public Token Kslash;
+		public List<Token> sep = new ArrayList<Token>();
+		public Token Kdslash;
+		public Token _tset2889;
 		public List<StepExprContext> stepExpr() {
 			return getRuleContexts(StepExprContext.class);
 		}
@@ -9378,16 +9381,17 @@ public class JsoniqParser extends Parser {
 				{
 				{
 				setState(1402);
-				((RelativePathExprContext)_localctx).sep = _input.LT(1);
+				((RelativePathExprContext)_localctx)._tset2889 = _input.LT(1);
 				_la = _input.LA(1);
 				if ( !(_la==Kslash || _la==Kdslash) ) {
-					((RelativePathExprContext)_localctx).sep = (Token)_errHandler.recoverInline(this);
+					((RelativePathExprContext)_localctx)._tset2889 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
 					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 					_errHandler.reportMatch(this);
 					consume();
 				}
+				((RelativePathExprContext)_localctx).sep.add(((RelativePathExprContext)_localctx)._tset2889);
 				setState(1403);
 				stepExpr();
 				}
@@ -9653,10 +9657,12 @@ public class JsoniqParser extends Parser {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
+				{
 				setState(1419);
 				forwardAxis();
 				setState(1420);
 				nodeTest();
+				}
 				}
 				break;
 			case 2:
@@ -9815,10 +9821,12 @@ public class JsoniqParser extends Parser {
 			case Kancestor_or_self:
 				enterOuterAlt(_localctx, 1);
 				{
+				{
 				setState(1434);
 				reverseAxis();
 				setState(1435);
 				nodeTest();
+				}
 				}
 				break;
 			case T__55:
