@@ -144,4 +144,20 @@ public class DecimalItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DECIMAL";
+    }
 }

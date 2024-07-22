@@ -261,6 +261,41 @@ public class ItemParser implements Serializable {
             return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
         }
 
+        if (
+            fields.length == 5
+                && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
+                && fieldnames[4].equals("tableLocation")
+        ) {
+            ItemType resType = null;
+            if (itemType != null) {
+                resType = itemType.getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
+            }
+            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
+            // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
+            for (int i = 0; i < fields.length; ++i) {
+                String fieldName = fields[i].name();
+
+                if (fieldName.equals("mutabilityLevel")) {
+                    res.setMutabilityLevel(row.getInt(i));
+                    continue;
+                }
+                if (fieldName.equals("rowID")) {
+                    res.setTopLevelID(row.getLong(i));
+                    continue;
+                }
+                if (fieldName.equals("pathIn")) {
+                    res.setPathIn(row.getString(i));
+                    continue;
+                }
+                if (fieldName.equals("tableLocation")) {
+                    res.setTableLocation(row.getString(i));
+                }
+            }
+            return res;
+        }
+
         Map<String, FieldDescriptor> content = null;
 
         if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
@@ -272,11 +307,34 @@ public class ItemParser implements Serializable {
             }
         }
 
+        int mutabilityLevel = -1;
+        long topLevelID = -1;
+        String pathIn = "null";
+        String tableLocation = "null";
+
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
+
+            if (fieldName.equals("mutabilityLevel")) {
+                mutabilityLevel = row.getInt(i);
+                continue;
+            }
+            if (fieldName.equals("rowID")) {
+                topLevelID = row.getLong(i);
+                continue;
+            }
+            if (fieldName.equals("pathIn")) {
+                pathIn = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals("tableLocation")) {
+                tableLocation = row.getString(i);
+                continue;
+            }
+
             if (content != null) {
                 FieldDescriptor descriptor = content.get(fieldName);
                 if (descriptor != null) {
@@ -304,7 +362,13 @@ public class ItemParser implements Serializable {
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        res.setMutabilityLevel(mutabilityLevel);
+        res.setTopLevelID(topLevelID);
+        res.setPathIn(pathIn);
+        res.setTableLocation(tableLocation);
+
+        return res;
     }
 
     public static Item convertValueToItem(

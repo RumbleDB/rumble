@@ -114,7 +114,8 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            RuntimeIterator bodyIterator,
+            boolean isUpdating
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -125,7 +126,7 @@ public class FunctionItem implements Item {
 
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
-        this.signature = new FunctionSignature(parameters, returnType);
+        this.signature = new FunctionSignature(parameters, returnType, isUpdating);
         this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();

@@ -160,6 +160,7 @@ public class VisitorHelpers {
             populateSequentialClassifications(mainModule, configuration);
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
+            populateExpressionClassifications(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);

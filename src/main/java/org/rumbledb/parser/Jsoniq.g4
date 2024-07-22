@@ -133,7 +133,7 @@ contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exp
 
 functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' (fn_body=statementsAndOptionalExpr) '}' | 'external');
+                          ('{' (fn_body=statementsAndOptionalExpr) '}' | is_external='external');
 
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -323,18 +323,18 @@ inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
 
 ///////////////////////// Updating Expressions
 
-insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
-                        | Kinsert Kjson pairConstructor ( ',' pairConstructor )* Kinto main_expr=exprSingle;
+insertExpr              : Kinsert to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
+                        | Kinsert pairConstructor ( ',' pairConstructor )* Kinto main_expr=exprSingle;
 
-deleteExpr              : Kdelete Kjson updateLocator;
+deleteExpr              : Kdelete updateLocator;
 
-renameExpr              : Krename Kjson updateLocator Kas name_expr=exprSingle;
+renameExpr              : Krename updateLocator Kas name_expr=exprSingle;
 
 replaceExpr             : Kreplace Kvalue Kof Kjson updateLocator Kwith replacer_expr=exprSingle;
 
 transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=exprSingle Kreturn ret_expr=exprSingle;
 
-appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
+appendExpr              : Kappend to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 
@@ -430,7 +430,6 @@ keyWords                : Kjsoniq
                         | Kappend
                         | Kcopy
                         | Kmodify
-                        | Kjson
                         | Kinto
                         | Kvalue
                         | Kwith
@@ -572,8 +571,6 @@ Kappend                 : 'append';
 Kinto                   : 'into';
 
 Kvalue                  : 'value';
-
-Kjson                   : 'json';
 
 Kwith                   : 'with';
 

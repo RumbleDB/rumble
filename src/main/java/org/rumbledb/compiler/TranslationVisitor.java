@@ -495,12 +495,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         StatementsAndOptionalExpr funcBody = (StatementsAndOptionalExpr) this
             .visitStatementsAndOptionalExpr(ctx.fn_body);
 
+        boolean isExternal = ctx.is_external != null;
+
         return new InlineFunctionExpression(
                 annotations,
                 name,
                 fnParams,
                 fnReturnType,
                 funcBody,
+                isExternal,
                 createMetadataFromContext(ctx)
         );
     }

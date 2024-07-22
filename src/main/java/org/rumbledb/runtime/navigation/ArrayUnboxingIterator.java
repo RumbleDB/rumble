@@ -23,6 +23,8 @@ package org.rumbledb.runtime.navigation;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -39,6 +41,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -182,6 +185,11 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        boolean isObject = childDataFrame.getItemType().isObjectItemType();
+        boolean hasAtomicJSONiqItem = isObject
+            && childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
@@ -205,6 +213,41 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 ),
                 elementType
             );
+        } else if (
+            hasAtomicJSONiqItem
+                && childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType()
+                    .isArrayItemType()
+                && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
+        ) {
+            ItemType elementType = childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType()
+                .getArrayContentFacet();
+            String sql;
+            JSoundDataFrame res;
+            // TODO: SORT OUT INDEXING DURING UNBOXING
+            if (elementType.isObjectItemType()) {
+                sql = String.format(
+                    "SELECT col.*, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    array
+                );
+                res = childDataFrame.evaluateSQL(sql, elementType);
+            } else {
+                sql = String.format(
+                    "SELECT col, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    array
+                );
+                Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
+                res = new JSoundDataFrame(df, deltaItemType);
+            }
+            return res;
         }
         if (getConfiguration().doStaticAnalysis()) {
             throw new UnexpectedStaticTypeException(

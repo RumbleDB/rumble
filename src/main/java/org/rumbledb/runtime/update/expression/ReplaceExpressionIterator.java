@@ -106,6 +106,9 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (target.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
@@ -119,6 +122,9 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         "Replace expression selection cannot be cast to Int type",
                         this.getMetadata()
                 );
+            }
+            if (target.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(

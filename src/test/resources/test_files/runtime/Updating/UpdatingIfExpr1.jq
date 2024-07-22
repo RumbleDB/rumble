@@ -2,7 +2,7 @@
 copy $je := {"a" : 1, "b" : 2}
 modify if($je.c)
        then
-           delete json $je.c
+           delete $je.c
        else
-           insert json "c" : 3 into $je
+           insert "c" : 3 into $je
 return $je
