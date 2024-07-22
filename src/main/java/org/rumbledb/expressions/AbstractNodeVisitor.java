@@ -97,9 +97,9 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.AxisStep;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.AxisStep;
 
 public abstract class AbstractNodeVisitor<T> {
 

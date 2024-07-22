@@ -1,9 +1,8 @@
-package org.rumbledb.expressions.xml;
+package org.rumbledb.expressions.xml.axis;
 
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.xml.axis.Step;
 
 import java.util.ArrayList;
 import java.util.List;

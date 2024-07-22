@@ -1,22 +1,26 @@
 package org.rumbledb.expressions.xml;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.xml.axis.AxisStep;
 
 import java.util.Collections;
 import java.util.List;
 
-public class StepExpr extends Node {
+public class StepExpr extends Expression {
     private Expression postFixExpr;
     private AxisStep axisStep;
 
-    public StepExpr(Expression postFixExpr) {
+    public StepExpr(Expression postFixExpr, ExceptionMetadata exceptionMetadata) {
+        super(exceptionMetadata);
         this.postFixExpr = postFixExpr;
         this.axisStep = null;
     }
 
-    public StepExpr(AxisStep axisStep) {
+    public StepExpr(AxisStep axisStep, ExceptionMetadata exceptionMetadata) {
+        super(exceptionMetadata);
         this.postFixExpr = null;
         this.axisStep = axisStep;
     }

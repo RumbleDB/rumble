@@ -138,10 +138,9 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.AxisStep;
-import org.rumbledb.expressions.xml.Dash;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.AxisStep;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStep;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -2295,28 +2294,23 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
         if (!ctx.singleslash.isEmpty()) {
-            Dash singleDash = Dash.SINGLE_DASH;
-            List<Dash> dashes = getDashes(ctx.singleslash, singleDash);
-            List<StepExpr> stepExprs = getStepExpr(ctx.singleslash);
-            return new PathExpr(true, stepExprs, dashes, createMetadataFromContext(ctx));
+            List<StepExpr> stepExprs = getStepExpr(ctx.singleslash, ctx.Kslash());
+            return new PathExpr(true, stepExprs, createMetadataFromContext(ctx));
         } else if (!ctx.doubleslash.isEmpty()) {
-            Dash doubleDash = Dash.DOUBLE_DASH;
-            List<Dash> dashes = getDashes(ctx.singleslash, doubleDash);
-            List<StepExpr> stepExprs = getStepExpr(ctx.singleslash);
-            return new PathExpr(true, stepExprs, dashes, createMetadataFromContext(ctx));
+            List<StepExpr> stepExprs = getStepExpr(ctx.doubleslash, ctx.Kdslash());
+            return new PathExpr(true, stepExprs, createMetadataFromContext(ctx));
         }
-        List<Dash> dashes = getDashes(ctx.singleslash, null);
-        List<StepExpr> stepExprs = getStepExpr(ctx.singleslash);
-        return new PathExpr(false, stepExprs, dashes, createMetadataFromContext(ctx));
+        List<StepExpr> stepExprs = getStepExpr(ctx.relative, null);
+        return new PathExpr(false, stepExprs, createMetadataFromContext(ctx));
 
     }
 
     @Override
     public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
         if (ctx.postFixExpr().isEmpty()) {
-            return new StepExpr((AxisStep) this.visitAxisStep(ctx.axisStep()));
+            return new StepExpr((AxisStep) this.visitAxisStep(ctx.axisStep()), createMetadataFromContext(ctx));
         }
-        return new StepExpr((Expression) this.visitPostFixExpr(ctx.postFixExpr()));
+        return new StepExpr((Expression) this.visitPostFixExpr(ctx.postFixExpr()), createMetadataFromContext(ctx));
     }
 
     @Override
@@ -2337,18 +2331,32 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     private Step getForwardStep(JsoniqParser.ForwardStepContext ctx) {
+        ForwardAxis forwardAxis;
+        NodeTest nodeTest;
         if (ctx.nodeTest().isEmpty()) {
-            NodeTest nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
-            return new ForwardStep(nodeTest);
+            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
+            if (ctx.abbrevForwardStep().Kat_symbol() != null) {
+                // @ equivalent with 'attribute::'
+                forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else if (nodeTest instanceof AttributeTest) {
+                // @ equivalent with 'attribute::'
+                forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else {
+                forwardAxis = ForwardAxis.CHILD;
+            }
+            return new ForwardStep(forwardAxis, nodeTest);
         }
-        ForwardAxis forwardAxis = ForwardAxis.valueOf(ctx.forwardAxis().getText());
-        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        forwardAxis = ForwardAxis.valueOf(ctx.forwardAxis().getText());
+        nodeTest = getNodeTest(ctx.nodeTest());
         return new ForwardStep(forwardAxis, nodeTest);
     }
 
     private Step getReverseStep(JsoniqParser.ReverseStepContext ctx) {
         if (ctx.nodeTest().isEmpty()) {
-            return new ReverseStep();
+            // .. equivalent with 'parent::node()'
+            ReverseAxis reverseAxis = ReverseAxis.PARENT;
+            NodeTest nodeTest = new AnyKindTest();
+            return new ReverseStep(reverseAxis, nodeTest);
         }
         ReverseAxis reverseAxis = ReverseAxis.valueOf(ctx.reverseAxis().getText());
         NodeTest nodeTest = getNodeTest(ctx.nodeTest());
@@ -2360,9 +2368,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             // kind test
             return getKindTest(nodeTestContext.kindTest());
         }
-        Name name = parseName(nodeTestContext.nameTest().qname(), false, false);
-        String wildcard = nodeTestContext.nameTest().wildcard().getText();
-        return new NameTest(name, wildcard);
+        if (nodeTestContext.nameTest().wildcard().isEmpty()) {
+            Name name = parseName(nodeTestContext.nameTest().qname(), false, false);
+            return new NameTest(name);
+        } else {
+            String wildcard = nodeTestContext.nameTest().wildcard().getText();
+            return new NameTest(wildcard);
+        }
     }
 
     private NodeTest getKindTest(ParseTree kindTestContext) {
@@ -2412,27 +2424,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
     }
 
-    private List<StepExpr> getStepExpr(JsoniqParser.RelativePathExprContext relativePathExprContext) {
+    private List<StepExpr> getStepExpr(JsoniqParser.RelativePathExprContext relativePathExprContext, TerminalNode startDash) {
         List<StepExpr> stepExprs = new ArrayList<>();
         for (JsoniqParser.StepExprContext stepExprContext : relativePathExprContext.stepExpr()) {
             stepExprs.add((StepExpr) this.visitStepExpr(stepExprContext));
         }
         return stepExprs;
-    }
-
-
-    private List<Dash> getDashes(JsoniqParser.RelativePathExprContext relativePathExprContext, Dash initialDash) {
-        List<Dash> dashes = new ArrayList<>();
-        if (initialDash != null) {
-            dashes.add(initialDash);
-        }
-        if (relativePathExprContext.isEmpty()) {
-            return dashes;
-        }
-        for (Token dash : relativePathExprContext.sep) {
-            dashes.add(Dash.valueOf(dash.getText()));
-        }
-        return dashes;
     }
 
 

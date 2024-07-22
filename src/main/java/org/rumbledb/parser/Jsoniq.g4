@@ -387,7 +387,7 @@ forwardAxis: ( Kchild
              | Kfollowing_sibling
              | Kfollowing ) ':' ':' ;
 
-abbrevForwardStep: Kat_symbol ? nodeTest ;
+abbrevForwardStep: Kat_symbol? nodeTest ;
 
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
@@ -401,7 +401,7 @@ abbrevReverseStep: '..' ;
 
 nodeTest: nameTest | kindTest ;
 
-nameTest: qname wildcard ;
+nameTest: qname | wildcard ;
 
 wildcard: '*'            # allNames
         | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
