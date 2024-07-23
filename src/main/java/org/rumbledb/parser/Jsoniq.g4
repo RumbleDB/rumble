@@ -442,6 +442,7 @@ keyWords                : Kjsoniq
                         | Kexit
                         | Kreturning
                         | Kwhile
+                        | Kjson
                         ;
 
 ///////////////////////// literals
@@ -576,6 +577,7 @@ Kwith                   : 'with';
 
 Kposition               : 'position';
 
+Kjson                   : 'json';
 ///////////////////////// Scripting keywords
 Kbreak                  : 'break' ;
 Kloop                   : 'loop' ;
