@@ -138,6 +138,8 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.Dash;
+import org.rumbledb.expressions.xml.IntermediaryPath;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.AxisStep;
@@ -2294,15 +2296,54 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
         if (!ctx.singleslash.isEmpty()) {
-            List<StepExpr> stepExprs = getStepExpr(ctx.singleslash, ctx.Kslash());
-            return new PathExpr(true, stepExprs, createMetadataFromContext(ctx));
+            Dash startDash = new Dash(true);
+            StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.singleslash.stepExpr(0));
+            List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, stepExpr, ctx.singleslash);
+            return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
         } else if (!ctx.doubleslash.isEmpty()) {
-            List<StepExpr> stepExprs = getStepExpr(ctx.doubleslash, ctx.Kdslash());
-            return new PathExpr(true, stepExprs, createMetadataFromContext(ctx));
+            Dash startDash = new Dash(
+                    true,
+                    new AxisStep(new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()))
+            );
+            StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.doubleslash.stepExpr(0));
+            List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, stepExpr, ctx.doubleslash);
+            return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
+        } else if (!ctx.relative.isEmpty()) {
+            StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.relative.stepExpr(0));
+            List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(null, stepExpr, ctx.relative);
+            return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
         }
-        List<StepExpr> stepExprs = getStepExpr(ctx.relative, null);
-        return new PathExpr(false, stepExprs, createMetadataFromContext(ctx));
+        // Case: No StepExpr, only dash
+        Dash startDash = new Dash(true);
+        List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, null, ctx.singleslash);
+        return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
+    }
 
+    private List<IntermediaryPath> getIntermediaryPaths(
+            Dash startDash,
+            StepExpr stepExpr,
+            JsoniqParser.RelativePathExprContext relativePathExprContext
+    ) {
+        List<IntermediaryPath> intermediaryPaths = new ArrayList<>();
+        Dash currentDash = startDash;
+        StepExpr currentStepExpr = stepExpr;
+        for (int i = 1; i < relativePathExprContext.stepExpr().size(); ++i) {
+            IntermediaryPath intermediaryPath = new IntermediaryPath(currentDash, currentStepExpr);
+            intermediaryPaths.add(intermediaryPath);
+
+            if (relativePathExprContext.sep.get(i).getText().equals("/")) {
+                currentDash = new Dash(false, null);
+            } else {
+                currentDash = new Dash(
+                        false,
+                        new AxisStep(new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()))
+                );
+            }
+            currentStepExpr = (StepExpr) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+        }
+        IntermediaryPath intermediaryPath = new IntermediaryPath(currentDash, currentStepExpr);
+        intermediaryPaths.add(intermediaryPath);
+        return intermediaryPaths;
     }
 
     @Override
@@ -2422,14 +2463,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                     createMetadataFromContext((ParserRuleContext) kindTestContext)
             );
         }
-    }
-
-    private List<StepExpr> getStepExpr(JsoniqParser.RelativePathExprContext relativePathExprContext, TerminalNode startDash) {
-        List<StepExpr> stepExprs = new ArrayList<>();
-        for (JsoniqParser.StepExprContext stepExprContext : relativePathExprContext.stepExpr()) {
-            stepExprs.add((StepExpr) this.visitStepExpr(stepExprContext));
-        }
-        return stepExprs;
     }
 
 

@@ -10,4 +10,9 @@ public class ForwardStep implements Step {
         this.forwardAxis = forwardAxis;
         this.nodeTest = nodeTest;
     }
+
+    @Override
+    public String toString() {
+        return forwardAxis.getAxisValue() + nodeTest.toString();
+    }
 }

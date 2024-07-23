@@ -9,16 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PathExpr extends Expression {
-    private boolean startsWithDash;
-    private List<StepExpr> relativePathExpr;
+    private final List<IntermediaryPath> relativePathExpr;
 
     public PathExpr(
-            boolean startsWithDash,
-            List<StepExpr> relativePathExpr,
+            List<IntermediaryPath> relativePathExpr,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.startsWithDash = startsWithDash;
         this.relativePathExpr = relativePathExpr;
     }
 
@@ -29,15 +26,28 @@ public class PathExpr extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(this.relativePathExpr);
+        List<Node> result = new ArrayList<>();
+        for (IntermediaryPath path : this.relativePathExpr) {
+            result.add(path.getPreStepExprDash().getAxisStep());
+            result.add(path.getStepExpr());
+        }
+        return result;
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
-        int dashPathCounter = 0;
         indentIt(sb, indent);
-        for (StepExpr relativePathExp : this.relativePathExpr) {
-            relativePathExp.serializeToJSONiq(sb, indent);
+        for (IntermediaryPath path : this.relativePathExpr) {
+            if (path.getPreStepExprDash().requiresRoot()) {
+                sb.append("/");
+            }
+            if (path.getPreStepExprDash() == null) {
+                path.getStepExpr().serializeToJSONiq(sb, indent);
+            } else {
+                sb.append(path.getPreStepExprDash().toString());
+                path.getStepExpr().serializeToJSONiq(sb, indent);
+            }
+            sb.append("/");
         }
         sb.append("\n");
     }

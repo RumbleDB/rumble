@@ -11,6 +11,11 @@ public class AxisStep extends Node {
     private Step step;
     private List<Expression> predicates;
 
+    public AxisStep(Step step) {
+        this.step = step;
+        this.predicates = null;
+    }
+
     public AxisStep(Step step, List<Expression> predicates) {
         this.step = step;
         this.predicates = predicates;
@@ -28,8 +33,8 @@ public class AxisStep extends Node {
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
-        // TODO: serialize step
         indentIt(sb, indent);
+        sb.append(step.toString());
         for (Expression predicate : predicates) {
             sb.append("[ ");
             predicate.serializeToJSONiq(sb, indent);
