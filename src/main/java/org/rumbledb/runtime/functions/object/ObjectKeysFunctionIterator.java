@@ -69,22 +69,18 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     private void setResultsFromDF() {
         JSoundDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
         for (String key : childDF.getKeys()) {
-        	if(key.equals(SparkSessionManager.mutabilityLevelColumnName))
-        	{
-        		continue;
-        	}
-        	if(key.equals(SparkSessionManager.rowIdColumnName))
-        	{
-        		continue;
-        	}
-        	if(key.equals(SparkSessionManager.tableLocationColumnName))
-        	{
-        		continue;
-        	}
-        	if(key.equals(SparkSessionManager.pathInColumnName))
-        	{
-        		continue;
-        	}
+            if (key.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.rowIdColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.tableLocationColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.pathInColumnName)) {
+                continue;
+            }
             if (
                 !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
                     && !key.equals(SparkSessionManager.atomicJSONiqItemColumnName)
