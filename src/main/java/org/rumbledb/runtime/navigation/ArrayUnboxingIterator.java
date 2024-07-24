@@ -232,15 +232,33 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             // TODO: SORT OUT INDEXING DURING UNBOXING
             if (elementType.isObjectItemType()) {
                 sql = String.format(
-                    "SELECT col.*, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
+                    "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
                     SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
                     array
                 );
                 res = childDataFrame.evaluateSQL(sql, elementType);
             } else {
                 sql = String.format(
-                    "SELECT col, rowID, mutabilityLevel, CONCAT(CONCAT(CONCAT(pathIn, '['), pos), ']') AS pathIn, tableLocation FROM (SELECT posexplode(`%s`), rowID, mutabilityLevel, pathIn, tableLocation FROM %s)",
+                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
                     SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);

@@ -364,9 +364,14 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 String sql;
                 if (childDataFrame.getKeys().contains("tableLocation")) {
                     sql = String.format(
-                        "SELECT `%s`.*, rowID, mutabilityLevel, CONCAT(pathIn, '.%s') AS pathIn, tableLocation FROM %s",
+                        "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
                         key,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
                         key,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
                         object
                     );
 
@@ -383,10 +388,15 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 JSoundDataFrame result;
                 if (childDataFrame.getKeys().contains("tableLocation")) {
                     sql = String.format(
-                        "SELECT `%s` AS `%s`, rowID, mutabilityLevel, CONCAT(pathIn, '.%s') AS pathIn, tableLocation FROM %s",
+                        "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
                         key,
                         SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
                         key,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
                         object
                     );
                     Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);

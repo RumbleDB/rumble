@@ -277,19 +277,19 @@ public class ItemParser implements Serializable {
             for (int i = 0; i < fields.length; ++i) {
                 String fieldName = fields[i].name();
 
-                if (fieldName.equals("mutabilityLevel")) {
+                if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                     res.setMutabilityLevel(row.getInt(i));
                     continue;
                 }
-                if (fieldName.equals("rowID")) {
+                if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
                     res.setTopLevelID(row.getLong(i));
                     continue;
                 }
-                if (fieldName.equals("pathIn")) {
+                if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
                     res.setPathIn(row.getString(i));
                     continue;
                 }
-                if (fieldName.equals("tableLocation")) {
+                if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                     res.setTableLocation(row.getString(i));
                 }
             }
@@ -318,19 +318,19 @@ public class ItemParser implements Serializable {
             String fieldName = field.name();
             ItemType fieldItemType = null;
 
-            if (fieldName.equals("mutabilityLevel")) {
+            if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                 mutabilityLevel = row.getInt(i);
                 continue;
             }
-            if (fieldName.equals("rowID")) {
+            if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
                 topLevelID = row.getLong(i);
                 continue;
             }
-            if (fieldName.equals("pathIn")) {
+            if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
                 pathIn = row.getString(i);
                 continue;
             }
-            if (fieldName.equals("tableLocation")) {
+            if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                 tableLocation = row.getString(i);
                 continue;
             }
