@@ -954,22 +954,22 @@ declare function jsoniq_numpy:sort($array as array, $low as integer, $high as in
 declare function jsoniq_numpy:partition($array as array, $low as integer, $high as integer) {
     variable $pivot := jsoniq_numpy:random_randint($low, {"high": $high + 1, "size": [1]})[1];
     variable $end := $array[[$high]];
-    replace json value of $array[[$high]] with $array[[$pivot]];
-    replace json value of $array[[$pivot]] with $end;
+    replace value of json $array[[$high]] with $array[[$pivot]];
+    replace value of json $array[[$pivot]] with $end;
 
     variable $i := $low;
     for $j in $low to $high - 1
     return {
         if ($array[[$j]] le $array[[$high]]) then {
             variable $aux := $array[[$i]];
-            replace json value of $array[[$i]] with $array[[$j]];
-            replace json value of $array[[$j]] with $aux;
+            replace value of json $array[[$i]] with $array[[$j]];
+            replace value of json $array[[$j]] with $aux;
             $i := $i + 1;
         } else ();
     }
     variable $aux := $array[[$i]];
-    replace json value of $array[[$i]] with $array[[$high]];
-    replace json value of $array[[$high]] with $aux;
+    replace value of json $array[[$i]] with $array[[$high]];
+    replace value of json $array[[$high]] with $aux;
     exit returning ($array, $i);
 };
 
