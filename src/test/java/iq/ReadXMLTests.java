@@ -132,7 +132,7 @@ public class ReadXMLTests extends AnnotationsTestsBase {
         String res = sb.toString().trim().replaceAll("\n", "");
         res = res.replaceAll(" ", "");
         res = res.replaceAll("[,#]", "");
-        assertEquals("/child::book/child::chapter[(fn:position0())eq(5)]/child::section[(fn:position0())eq(2)]", res);
+        assertEquals("/child::book/child::chapter[(fn:position0())=(5)]/child::section[(fn:position0())=(2)]", res);
     }
 
     @Test(timeout = 100000)

@@ -9,14 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PathExpr extends Expression {
-    private final List<IntermediaryPath> relativePathExpr;
+    private final List<Expression> relativePathExpressions;
+    // TODO: Handle fetching.
+    private boolean fetchRoot;
 
     public PathExpr(
-            List<IntermediaryPath> relativePathExpr,
+            boolean fetchRoot,
+            List<Expression> relativePathExpressions,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.relativePathExpr = relativePathExpr;
+        this.fetchRoot = fetchRoot;
+        this.relativePathExpressions = relativePathExpressions;
     }
 
     @Override
@@ -26,31 +30,26 @@ public class PathExpr extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        for (IntermediaryPath path : this.relativePathExpr) {
-            if (path.getPreStepExprDash() != null && path.getPreStepExprDash().getAxisStep() != null) {
-                result.add(path.getPreStepExprDash().getAxisStep());
-            }
-            result.add(path.getStepExpr());
-        }
-        return result;
+        return new ArrayList<>(this.relativePathExpressions);
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
+        int pathCounter = 0;
         indentIt(sb, indent);
-        for (IntermediaryPath path : this.relativePathExpr) {
-            if (path.getPreStepExprDash() == null) {
-                path.getStepExpr().serializeToJSONiq(sb, indent);
-            } else {
-                sb.append(path.getPreStepExprDash().toString());
-                path.getStepExpr().serializeToJSONiq(sb, indent);
+        if (this.fetchRoot) {
+            sb.append("/");
+        }
+        for (Expression stepExpr : this.relativePathExpressions) {
+            stepExpr.serializeToJSONiq(sb, indent);
+            if (++pathCounter < this.relativePathExpressions.size()) {
+                sb.append("/");
             }
         }
         sb.append("\n");
     }
 
-    public List<IntermediaryPath> getIntermediaryPaths() {
-        return this.relativePathExpr;
+    public List<Expression> getRelativePathExpressions() {
+        return this.relativePathExpressions;
     }
 }

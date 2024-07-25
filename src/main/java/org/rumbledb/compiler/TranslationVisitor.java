@@ -138,13 +138,11 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.Dash;
-import org.rumbledb.expressions.xml.IntermediaryPath;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
-import org.rumbledb.expressions.xml.axis.AxisStep;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStep;
+import org.rumbledb.expressions.xml.axis.NoStep;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStep;
 import org.rumbledb.expressions.xml.axis.Step;
@@ -2296,76 +2294,100 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
         if (ctx.singleslash != null) {
-            Dash startDash = new Dash(true);
-            StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.singleslash.stepExpr(0));
-            List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, stepExpr, ctx.singleslash);
-            return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
+            return visitSingleSlash(ctx.singleslash);
         } else if (ctx.doubleslash != null) {
-            Dash startDash = new Dash(
-                    true,
-                    new AxisStep(new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()))
-            );
-            StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.doubleslash.stepExpr(0));
-            List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, stepExpr, ctx.doubleslash);
-            return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
+            return visitDoubleSlash(ctx.doubleslash);
         } else if (ctx.relative != null) {
-            if (ctx.relative.stepExpr(0).postFixExpr() != null) {
-                // We only have a postfix expression, not a path expression
-                return this.visitPostFixExpr(ctx.relative.stepExpr(0).postFixExpr());
-            }
-            StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.relative.stepExpr(0));
-            List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(null, stepExpr, ctx.relative);
-            return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
+            return visitRelativeWithoutSlash(ctx.relative);
         }
-        // Case: No StepExpr, only dash
-        Dash startDash = new Dash(true);
-        List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, null, ctx.singleslash);
-        return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
+        return visitSingleSlashNoStepExpr(ctx);
     }
 
-    private List<IntermediaryPath> getIntermediaryPaths(
-            Dash startDash,
+    private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
+        // Case: No StepExpr, only dash
+        StepExpr stepExpr = new StepExpr(new NoStep(), createMetadataFromContext(ctx));
+        List<Expression> intermediaryPaths = Collections.singletonList(stepExpr);
+        return new PathExpr(true, intermediaryPaths, createMetadataFromContext(ctx));
+    }
+
+    private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
+        if (relativeContext.stepExpr().size() == 1 && relativeContext.stepExpr(0).postFixExpr() != null) {
+            // We only have a postfix expression, not a path expression
+            return this.visitPostFixExpr(relativeContext.stepExpr(0).postFixExpr());
+        }
+        List<Expression> intermediaryPaths = getIntermediaryPaths(relativeContext);
+        return new PathExpr(false, intermediaryPaths, createMetadataFromContext(relativeContext));
+    }
+
+    private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
+        StepExpr stepExpr = new StepExpr(
+                new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()),
+                createMetadataFromContext(doubleSlashContext)
+        );
+        List<Expression> intermediaryPaths = getIntermediaryPaths(stepExpr, doubleSlashContext);
+        return new PathExpr(true, intermediaryPaths, createMetadataFromContext(doubleSlashContext));
+    }
+
+    private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
+        List<Expression> intermediaryPaths = getIntermediaryPaths(singleSlashContext);
+        return new PathExpr(true, intermediaryPaths, createMetadataFromContext(singleSlashContext));
+    }
+
+
+    // The path may start with a '/' or '//' which should be already converted to a StepExpr.
+    private List<Expression> getIntermediaryPaths(
             StepExpr stepExpr,
             JsoniqParser.RelativePathExprContext relativePathExprContext
     ) {
-        List<IntermediaryPath> intermediaryPaths = new ArrayList<>();
-        Dash currentDash = startDash;
-        StepExpr currentStepExpr = stepExpr;
-        for (int i = 1; i < relativePathExprContext.stepExpr().size(); ++i) {
-            IntermediaryPath intermediaryPath = new IntermediaryPath(currentDash, currentStepExpr);
-            intermediaryPaths.add(intermediaryPath);
-
-            if (relativePathExprContext.sep.get(i - 1).getText().equals("/")) {
-                currentDash = new Dash(false, null);
-            } else {
-                currentDash = new Dash(
-                        false,
-                        new AxisStep(new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()))
-                );
-            }
+        List<Expression> intermediaryPaths = new ArrayList<>();
+        StepExpr currentStepExpr;
+        intermediaryPaths.add(stepExpr);
+        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
             currentStepExpr = (StepExpr) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
+                // Unroll '//' to forward axis
+                StepExpr intermediaryStep = new StepExpr(
+                        new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()),
+                        createMetadataFromContext(relativePathExprContext)
+                );
+                intermediaryPaths.add(intermediaryStep);
+            }
+            intermediaryPaths.add(currentStepExpr);
         }
-        IntermediaryPath intermediaryPath = new IntermediaryPath(currentDash, currentStepExpr);
-        intermediaryPaths.add(intermediaryPath);
+        return intermediaryPaths;
+    }
+
+    private List<Expression> getIntermediaryPaths(
+            JsoniqParser.RelativePathExprContext relativePathExprContext
+    ) {
+        List<Expression> intermediaryPaths = new ArrayList<>();
+        Expression currentStepExpr;
+        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
+            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
+                // Unroll '//' to forward axis
+                StepExpr intermediaryStep = new StepExpr(
+                        new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()),
+                        createMetadataFromContext(relativePathExprContext)
+                );
+                intermediaryPaths.add(intermediaryStep);
+            }
+            intermediaryPaths.add(currentStepExpr);
+        }
         return intermediaryPaths;
     }
 
     @Override
     public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
         if (ctx.postFixExpr() == null) {
-            return new StepExpr((AxisStep) this.visitAxisStep(ctx.axisStep()), createMetadataFromContext(ctx));
+            List<Expression> predicates = new ArrayList<>();
+            Step step = getStep(ctx.axisStep());
+            for (JsoniqParser.PredicateContext predicateContext : ctx.axisStep().predicateList().predicate()) {
+                predicates.add((Expression) this.visitPredicate(predicateContext));
+            }
+            return new StepExpr(step, predicates, createMetadataFromContext(ctx));
         }
-        return new StepExpr((Expression) this.visitPostFixExpr(ctx.postFixExpr()), createMetadataFromContext(ctx));
-    }
-
-    @Override
-    public Node visitAxisStep(JsoniqParser.AxisStepContext ctx) {
-        List<Expression> predicates = new ArrayList<>();
-        Step step = getStep(ctx);
-        for (JsoniqParser.PredicateContext predicateContext : ctx.predicateList().predicate()) {
-            predicates.add((Expression) this.visitPredicate(predicateContext));
-        }
-        return new AxisStep(step, predicates);
+        return this.visitPostFixExpr(ctx.postFixExpr());
     }
 
     private Step getStep(JsoniqParser.AxisStepContext ctx) {

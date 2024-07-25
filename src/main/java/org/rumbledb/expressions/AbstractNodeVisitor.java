@@ -99,7 +99,6 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
-import org.rumbledb.expressions.xml.axis.AxisStep;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -463,9 +462,5 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitStepExpr(StepExpr stepExpr, T argument) {
         return defaultAction(stepExpr, argument);
-    }
-
-    public T visitAxisStep(AxisStep axisStep, T argument) {
-        return defaultAction(axisStep, argument);
     }
 }

@@ -4,25 +4,25 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.xml.axis.AxisStep;
+import org.rumbledb.expressions.xml.axis.Step;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class StepExpr extends Expression {
-    private Expression postFixExpr;
-    private AxisStep axisStep;
+    private Step step;
+    private List<Expression> predicates;
 
-    public StepExpr(Expression postFixExpr, ExceptionMetadata exceptionMetadata) {
+    public StepExpr(Step step, ExceptionMetadata exceptionMetadata) {
         super(exceptionMetadata);
-        this.postFixExpr = postFixExpr;
-        this.axisStep = null;
+        this.step = step;
+        this.predicates = new ArrayList<>();
     }
 
-    public StepExpr(AxisStep axisStep, ExceptionMetadata exceptionMetadata) {
+    public StepExpr(Step step, List<Expression> predicates, ExceptionMetadata exceptionMetadata) {
         super(exceptionMetadata);
-        this.postFixExpr = null;
-        this.axisStep = axisStep;
+        this.step = step;
+        this.predicates = predicates;
     }
 
     @Override
@@ -32,27 +32,25 @@ public class StepExpr extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        if (this.postFixExpr != null) {
-            return Collections.singletonList(this.postFixExpr);
-        }
-        return Collections.singletonList(this.axisStep);
+        return new ArrayList<>(predicates);
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        if (this.postFixExpr != null) {
-            this.postFixExpr.serializeToJSONiq(sb, indent);
-        } else {
-            this.axisStep.serializeToJSONiq(sb, indent);
+        sb.append(step.toString());
+        for (Expression predicate : predicates) {
+            sb.append("[ ");
+            predicate.serializeToJSONiq(sb, indent);
+            sb.append(" ], ");
         }
     }
 
-    public Node getPostFixExpr() {
-        return this.postFixExpr;
+    public List<Expression> getPredicates() {
+        return this.predicates;
     }
 
-    public AxisStep getAxisStep() {
-        return this.axisStep;
+    public Step getStep() {
+        return this.step;
     }
 }
