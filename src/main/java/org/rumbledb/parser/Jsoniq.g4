@@ -265,7 +265,7 @@ validateExpr            : Kvalidate Ktype sequenceType '{' expr '}';
 
 annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
-simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
+simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
 postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
 
@@ -439,7 +439,7 @@ kindTest: documentTest
         | anyKindTest
         ;
 
-anyKindTest: Knode '(' '*'? ')' ;
+anyKindTest: Knode '(' ')' ;
 
 binaryNodeTest: Kbinary '(' ')' ;
 

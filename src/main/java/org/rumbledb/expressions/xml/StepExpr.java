@@ -46,6 +46,13 @@ public class StepExpr extends Expression {
         } else {
             this.axisStep.serializeToJSONiq(sb, indent);
         }
-        sb.append("\n");
+    }
+
+    public Node getPostFixExpr() {
+        return this.postFixExpr;
+    }
+
+    public AxisStep getAxisStep() {
+        return this.axisStep;
     }
 }

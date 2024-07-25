@@ -6,9 +6,14 @@ import org.junit.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
@@ -29,6 +34,24 @@ public class ReadXMLTests extends AnnotationsTestsBase {
             getConfiguration(),
             ExceptionMetadata.EMPTY_METADATA
         );
+    }
+
+    private MainModule parseAndCompile(String filePath) throws IOException {
+        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+            filePath,
+            getConfiguration(),
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        return VisitorHelpers.parseMainModuleFromLocation(
+            uri,
+            getConfiguration()
+        );
+    }
+
+    private PathExpr getPathExprFromMainModule(String filePath) throws IOException {
+        MainModule mainModule = parseAndCompile(filePath);
+        Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
+        return (PathExpr) program.getStatementsAndOptionalExpr().getExpression();
     }
 
     @Test(timeout = 100000)
@@ -74,5 +97,184 @@ public class ReadXMLTests extends AnnotationsTestsBase {
         assertEquals("children", attribute2.stringValue());
         assertEquals("web", attribute3.stringValue());
         assertEquals("web", attribute4.stringValue());
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithStartingDash() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample1.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        assertEquals("/child::div1/child::div2\n", sb.toString());
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithoutStartingDash() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample2.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        assertEquals("parent::author/child::title\n", sb.toString());
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithPredicates() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample3.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("/child::book/child::chapter[(fn:position0())eq(5)]/child::section[(fn:position0())eq(2)]", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithDoubleSlashStart() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample4.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("/descendant-or-self::node()/child::book/child::chapter[5]/child::section[2]", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithOrOperation() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample5.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("child::book/(child::chapter)or(child::appendix)/descendant-or-self::node()/child::section", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithDoubleSlashes() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample6.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals(
+            "child::chapter/descendant-or-self::node()/child::para/descendant-or-self::node()/attribute::version",
+            res
+        );
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithWildcard() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample7.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("attribute::*", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithWildcardReverseAxis() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample8.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("parent::*", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithWildcardMultiPath() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample9.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("child::*/child::para", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithAttributeTest() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample10.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("attribute::attribute(price)", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithReverseAxis() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample11.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("parent::node()", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithReverseAxisAbbreviated() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample12.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("parent::node()/parent::element(*)", res);
+    }
+
+    @Test(timeout = 100000)
+    public void testPathConstructionWithReverseAxisMultiPath() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+            +
+            "/src/test/resources/test_files/xml/compile-xpath/XPathExample13.jq";
+        PathExpr pathExpr = getPathExprFromMainModule(filePath);
+        StringBuffer sb = new StringBuffer();
+        pathExpr.serializeToJSONiq(sb, 0);
+        String res = sb.toString().trim().replaceAll("\n", "");
+        res = res.replaceAll(" ", "");
+        res = res.replaceAll("[,#]", "");
+        assertEquals("ancestor-or-self::di/ancestor::p/parent::text()", res);
     }
 }

@@ -18,4 +18,13 @@ public enum ForwardAxis {
     public String getAxisValue() {
         return axisValue;
     }
+
+    public static ForwardAxis fromString(String text) {
+        for (ForwardAxis forwardAxis : ForwardAxis.values()) {
+            if (forwardAxis.axisValue.equalsIgnoreCase(text)) {
+                return forwardAxis;
+            }
+        }
+        throw new IllegalArgumentException("No constant with text: " + text + " found!");
+    }
 }

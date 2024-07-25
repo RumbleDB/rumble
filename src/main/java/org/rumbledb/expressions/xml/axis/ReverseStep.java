@@ -10,4 +10,9 @@ public class ReverseStep implements Step {
         this.reverseAxis = reverseAxis;
         this.nodeTest = nodeTest;
     }
+
+    @Override
+    public String toString() {
+        return reverseAxis.getAxisValue() + nodeTest.toString();
+    }
 }

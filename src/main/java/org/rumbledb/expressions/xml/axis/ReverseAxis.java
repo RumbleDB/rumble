@@ -16,4 +16,13 @@ public enum ReverseAxis {
     public String getAxisValue() {
         return axisValue;
     }
+
+    public static ReverseAxis fromString(String text) {
+        for (ReverseAxis forwardAxis : ReverseAxis.values()) {
+            if (forwardAxis.axisValue.equalsIgnoreCase(text)) {
+                return forwardAxis;
+            }
+        }
+        throw new IllegalArgumentException("No constant with text: " + text + " found!");
+    }
 }

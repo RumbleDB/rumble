@@ -16,4 +16,12 @@ public class NameTest implements NodeTest {
         this.qname = null;
         this.wildcardWithNCName = wildcardWithNCName;
     }
+
+    @Override
+    public String toString() {
+        if (this.qname != null) {
+            return this.qname.toString();
+        }
+        return this.wildcardWithNCName;
+    }
 }

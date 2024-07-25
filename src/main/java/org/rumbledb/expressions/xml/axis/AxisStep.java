@@ -13,7 +13,7 @@ public class AxisStep extends Node {
 
     public AxisStep(Step step) {
         this.step = step;
-        this.predicates = null;
+        this.predicates = new ArrayList<>();
     }
 
     public AxisStep(Step step, List<Expression> predicates) {
@@ -40,6 +40,13 @@ public class AxisStep extends Node {
             predicate.serializeToJSONiq(sb, indent);
             sb.append(" ], ");
         }
-        sb.append("\n");
+    }
+
+    public List<Expression> getPredicates() {
+        return this.predicates;
+    }
+
+    public Step getStep() {
+        return this.step;
     }
 }

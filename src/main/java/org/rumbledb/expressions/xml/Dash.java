@@ -27,8 +27,12 @@ public class Dash {
     @Override
     public String toString() {
         // TODO: add root function call
-        StringBuffer sb = new StringBuffer();
-        this.axisStep.serializeToJSONiq(sb, 0);
-        return sb.toString();
+        if (this.axisStep != null) {
+            StringBuffer sb = new StringBuffer("/");
+            this.axisStep.serializeToJSONiq(sb, 0);
+            sb.append("/");
+            return sb.toString();
+        }
+        return "/";
     }
 }

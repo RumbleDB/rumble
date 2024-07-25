@@ -18,4 +18,32 @@ public class AttributeTest implements NodeTest {
         this.typeName = typeName;
         this.hasWildcard = true;
     }
+
+    public AttributeTest(boolean hasWildcard) {
+        this.attributeName = null;
+        this.typeName = null;
+        this.hasWildcard = hasWildcard;
+    }
+
+    public AttributeTest() {
+        this.attributeName = null;
+        this.typeName = null;
+        this.hasWildcard = false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("attribute(");
+        if (this.hasWildcard) {
+            sb.append("*");
+        } else if (this.attributeName != null) {
+            sb.append(this.attributeName);
+        }
+        if (typeName != null) {
+            sb.append(",");
+            sb.append(this.typeName);
+        }
+        sb.append(")");
+        return sb.toString();
+    }
 }

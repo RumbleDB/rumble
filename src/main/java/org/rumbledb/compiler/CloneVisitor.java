@@ -79,6 +79,11 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.xml.Dash;
+import org.rumbledb.expressions.xml.IntermediaryPath;
+import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.AxisStep;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1045,4 +1050,55 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
     // end region scripting
+
+    // begin region xml
+
+    @Override
+    public Node visitPathExpr(PathExpr expression, Node argument) {
+        List<IntermediaryPath> intermediaryPaths = new ArrayList<>();
+        for (IntermediaryPath path : expression.getIntermediaryPaths()) {
+            Dash dash = null;
+            if (path.getPreStepExprDash() != null) {
+                dash = new Dash(
+                        path.getPreStepExprDash().requiresRoot(),
+                        (AxisStep) this.visitAxisStep(path.getPreStepExprDash().getAxisStep(), argument)
+                );
+            }
+            StepExpr stepExpr = (StepExpr) this.visitStepExpr(path.getStepExpr(), argument);
+            intermediaryPaths.add(new IntermediaryPath(dash, stepExpr));
+        }
+        PathExpr result = new PathExpr(intermediaryPaths, expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitStepExpr(StepExpr expression, Node argument) {
+        StepExpr result;
+        if (expression.getPostFixExpr() != null) {
+            Expression postFixExpr = (Expression) this.visit(expression.getPostFixExpr(), argument);
+            result = new StepExpr(postFixExpr, expression.getMetadata());
+        } else {
+            AxisStep axisStep = (AxisStep) this.visitAxisStep(expression.getAxisStep(), argument);
+            result = new StepExpr(axisStep, expression.getMetadata());
+        }
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitAxisStep(AxisStep axisStep, Node argument) {
+        if (axisStep == null) {
+            return null;
+        }
+        List<Expression> predicates = new ArrayList<>();
+        for (Expression predicate : axisStep.getPredicates()) {
+            predicates.add((Expression) this.visit(predicate, argument));
+        }
+        return new AxisStep(axisStep.getStep(), predicates);
+    }
+
+    // end region xml
 }

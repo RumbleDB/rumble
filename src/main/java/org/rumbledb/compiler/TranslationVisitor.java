@@ -1053,13 +1053,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
-        Expression result = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitPathExpr(ctx.main_expr);
         if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.map_expr.size(); ++i) {
-            JsoniqParser.PostFixExprContext child = ctx.map_expr.get(i);
-            Expression rightExpression = (Expression) this.visitPostFixExpr(child);
+            JsoniqParser.PathExprContext child = ctx.map_expr.get(i);
+            Expression rightExpression = (Expression) this.visitPathExpr(child);
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
@@ -2295,12 +2295,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
-        if (!ctx.singleslash.isEmpty()) {
+        if (ctx.singleslash != null) {
             Dash startDash = new Dash(true);
             StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.singleslash.stepExpr(0));
             List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, stepExpr, ctx.singleslash);
             return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
-        } else if (!ctx.doubleslash.isEmpty()) {
+        } else if (ctx.doubleslash != null) {
             Dash startDash = new Dash(
                     true,
                     new AxisStep(new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()))
@@ -2308,7 +2308,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.doubleslash.stepExpr(0));
             List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(startDash, stepExpr, ctx.doubleslash);
             return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
-        } else if (!ctx.relative.isEmpty()) {
+        } else if (ctx.relative != null) {
+            if (ctx.relative.stepExpr(0).postFixExpr() != null) {
+                // We only have a postfix expression, not a path expression
+                return this.visitPostFixExpr(ctx.relative.stepExpr(0).postFixExpr());
+            }
             StepExpr stepExpr = (StepExpr) this.visitStepExpr(ctx.relative.stepExpr(0));
             List<IntermediaryPath> intermediaryPaths = getIntermediaryPaths(null, stepExpr, ctx.relative);
             return new PathExpr(intermediaryPaths, createMetadataFromContext(ctx));
@@ -2331,7 +2335,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             IntermediaryPath intermediaryPath = new IntermediaryPath(currentDash, currentStepExpr);
             intermediaryPaths.add(intermediaryPath);
 
-            if (relativePathExprContext.sep.get(i).getText().equals("/")) {
+            if (relativePathExprContext.sep.get(i - 1).getText().equals("/")) {
                 currentDash = new Dash(false, null);
             } else {
                 currentDash = new Dash(
@@ -2348,7 +2352,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
-        if (ctx.postFixExpr().isEmpty()) {
+        if (ctx.postFixExpr() == null) {
             return new StepExpr((AxisStep) this.visitAxisStep(ctx.axisStep()), createMetadataFromContext(ctx));
         }
         return new StepExpr((Expression) this.visitPostFixExpr(ctx.postFixExpr()), createMetadataFromContext(ctx));
@@ -2365,7 +2369,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     private Step getStep(JsoniqParser.AxisStepContext ctx) {
-        if (ctx.forwardStep().isEmpty()) {
+        if (ctx.forwardStep() == null) {
             return getReverseStep(ctx.reverseStep());
         }
         return getForwardStep(ctx.forwardStep());
@@ -2374,42 +2378,41 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private Step getForwardStep(JsoniqParser.ForwardStepContext ctx) {
         ForwardAxis forwardAxis;
         NodeTest nodeTest;
-        if (ctx.nodeTest().isEmpty()) {
+        if (ctx.nodeTest() == null) {
             nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
             if (ctx.abbrevForwardStep().Kat_symbol() != null) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
             } else if (nodeTest instanceof AttributeTest) {
-                // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
             } else {
                 forwardAxis = ForwardAxis.CHILD;
             }
             return new ForwardStep(forwardAxis, nodeTest);
         }
-        forwardAxis = ForwardAxis.valueOf(ctx.forwardAxis().getText());
+        forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
         nodeTest = getNodeTest(ctx.nodeTest());
         return new ForwardStep(forwardAxis, nodeTest);
     }
 
     private Step getReverseStep(JsoniqParser.ReverseStepContext ctx) {
-        if (ctx.nodeTest().isEmpty()) {
+        if (ctx.nodeTest() == null) {
             // .. equivalent with 'parent::node()'
             ReverseAxis reverseAxis = ReverseAxis.PARENT;
             NodeTest nodeTest = new AnyKindTest();
             return new ReverseStep(reverseAxis, nodeTest);
         }
-        ReverseAxis reverseAxis = ReverseAxis.valueOf(ctx.reverseAxis().getText());
+        ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
         NodeTest nodeTest = getNodeTest(ctx.nodeTest());
         return new ReverseStep(reverseAxis, nodeTest);
     }
 
     private NodeTest getNodeTest(JsoniqParser.NodeTestContext nodeTestContext) {
-        if (nodeTestContext.nameTest().isEmpty()) {
+        if (nodeTestContext.nameTest() == null) {
             // kind test
-            return getKindTest(nodeTestContext.kindTest());
+            return getKindTest(nodeTestContext.kindTest().children.get(0));
         }
-        if (nodeTestContext.nameTest().wildcard().isEmpty()) {
+        if (nodeTestContext.nameTest().wildcard() == null) {
             Name name = parseName(nodeTestContext.nameTest().qname(), false, false);
             return new NameTest(name);
         } else {
@@ -2418,49 +2421,63 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
     }
 
-    private NodeTest getKindTest(ParseTree kindTestContext) {
-        if (kindTestContext instanceof JsoniqParser.DocumentTestContext) {
-            JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTestContext;
+    private NodeTest getKindTest(ParseTree kindTest) {
+        if (kindTest instanceof JsoniqParser.DocumentTestContext) {
+            JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTest;
             if (docContext.elementTest().isEmpty()) {
                 throw new UnsupportedFeatureException(
                         "Kind tests of type document, element, attribute, text and any are supported at the moment",
-                        createMetadataFromContext((ParserRuleContext) kindTestContext)
+                        createMetadataFromContext((ParserRuleContext) kindTest)
                 );
             }
             return new DocumentTest(getKindTest(docContext.elementTest()));
-        } else if (kindTestContext instanceof JsoniqParser.ElementTestContext) {
-            JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTestContext;
-            boolean hasWildcard = elementContext.elementNameOrWildcard().elementName().isEmpty();
-            Name typeName = parseName(elementContext.typeName().qname(), false, false);
+        } else if (kindTest instanceof JsoniqParser.ElementTestContext) {
+            JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTest;
             Name elementName;
-            if (!hasWildcard) {
-                elementName = parseName(elementContext.elementNameOrWildcard().elementName().qname(), false, false);
-                return new ElementTest(elementName, typeName);
+            if (elementContext.elementNameOrWildcard() != null) {
+                boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
+                if (!hasWildcard) {
+                    elementName = parseName(elementContext.elementNameOrWildcard().elementName().qname(), false, false);
+                    if (elementContext.typeName() == null) {
+                        return new ElementTest(elementName, null);
+                    }
+                    Name typeName = parseName(elementContext.typeName().qname(), false, false);
+                    return new ElementTest(elementName, typeName);
+                }
+                return new ElementTest(true);
             }
-            return new ElementTest(typeName);
-        } else if (kindTestContext instanceof JsoniqParser.AttributeTestContext) {
+            return new ElementTest();
+        } else if (kindTest instanceof JsoniqParser.AttributeTestContext) {
             JsoniqParser.AttributeTestContext attributeTestContext =
-                (JsoniqParser.AttributeTestContext) kindTestContext;
-            boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName().isEmpty();
-            Name typeName = parseName(attributeTestContext.typeName().qname(), false, false);
+                (JsoniqParser.AttributeTestContext) kindTest;
             Name elementName;
-            if (!hasWildcard) {
-                elementName = parseName(
-                    attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
-                    false,
-                    false
-                );
-                return new AttributeTest(elementName, typeName);
+            if (attributeTestContext.attributeNameOrWildcard() != null) {
+                boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
+                if (!hasWildcard) {
+                    elementName = parseName(
+                        attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
+                        false,
+                        false
+                    );
+                    if (attributeTestContext.typeName() != null) {
+                        Name typeName = parseName(attributeTestContext.typeName().qname(), false, false);
+                        return new AttributeTest(elementName, typeName);
+                    } else {
+                        return new AttributeTest(elementName, null);
+                    }
+                } else {
+                    return new AttributeTest(true);
+                }
             }
-            return new AttributeTest(typeName);
-        } else if (kindTestContext instanceof JsoniqParser.TextTestContext) {
+            return new AttributeTest();
+        } else if (kindTest instanceof JsoniqParser.TextTestContext) {
             return new TextTest();
-        } else if (kindTestContext instanceof JsoniqParser.AnyKindTestContext) {
+        } else if (kindTest instanceof JsoniqParser.AnyKindTestContext) {
             return new AnyKindTest();
         } else {
             throw new UnsupportedFeatureException(
                     "Kind tests of type document, element, attribute, text and any are supported at the moment",
-                    createMetadataFromContext((ParserRuleContext) kindTestContext)
+                    createMetadataFromContext((ParserRuleContext) kindTest)
             );
         }
     }

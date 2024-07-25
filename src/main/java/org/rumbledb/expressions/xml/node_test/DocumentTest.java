@@ -7,4 +7,14 @@ public class DocumentTest implements NodeTest {
     public DocumentTest(NodeTest nodeTest) {
         this.nodeTest = nodeTest;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("document-node(");
+        if (this.nodeTest != null) {
+            sb.append(this.nodeTest);
+        }
+        sb.append(")");
+        return sb.toString();
+    }
 }

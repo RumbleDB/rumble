@@ -28,7 +28,9 @@ public class PathExpr extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         for (IntermediaryPath path : this.relativePathExpr) {
-            result.add(path.getPreStepExprDash().getAxisStep());
+            if (path.getPreStepExprDash() != null && path.getPreStepExprDash().getAxisStep() != null) {
+                result.add(path.getPreStepExprDash().getAxisStep());
+            }
             result.add(path.getStepExpr());
         }
         return result;
@@ -38,17 +40,17 @@ public class PathExpr extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         for (IntermediaryPath path : this.relativePathExpr) {
-            if (path.getPreStepExprDash().requiresRoot()) {
-                sb.append("/");
-            }
             if (path.getPreStepExprDash() == null) {
                 path.getStepExpr().serializeToJSONiq(sb, indent);
             } else {
                 sb.append(path.getPreStepExprDash().toString());
                 path.getStepExpr().serializeToJSONiq(sb, indent);
             }
-            sb.append("/");
         }
         sb.append("\n");
+    }
+
+    public List<IntermediaryPath> getIntermediaryPaths() {
+        return this.relativePathExpr;
     }
 }

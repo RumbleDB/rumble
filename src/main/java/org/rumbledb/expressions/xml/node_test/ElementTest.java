@@ -20,4 +20,31 @@ public class ElementTest implements NodeTest {
         this.typeName = typeName;
         this.hasWildcard = true;
     }
+
+    public ElementTest(boolean hasWildcard) {
+        this.elementName = null;
+        this.typeName = null;
+        this.hasWildcard = true;
+    }
+
+    public ElementTest() {
+        this.elementName = null;
+        this.typeName = null;
+        this.hasWildcard = false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("element(");
+        if (this.hasWildcard) {
+            sb.append("*");
+        } else if (this.elementName != null) {
+            sb.append(this.elementName);
+        }
+        if (this.typeName != null) {
+            sb.append(this.typeName);
+        }
+        sb.append(")");
+        return sb.toString();
+    }
 }
