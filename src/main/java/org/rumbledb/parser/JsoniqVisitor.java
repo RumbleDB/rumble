@@ -704,18 +704,6 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCopyDecl(JsoniqParser.CopyDeclContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#schemaImport}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSchemaImport(JsoniqParser.SchemaImportContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#schemaPrefix}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSchemaPrefix(JsoniqParser.SchemaPrefixContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#pathExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -827,18 +815,6 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPredicateList(JsoniqParser.PredicateListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#itemType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitItemType(JsoniqParser.ItemTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#atomicOrUnionType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAtomicOrUnionType(JsoniqParser.AtomicOrUnionTypeContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#kindTest}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -905,6 +881,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSchemaAttributeTest(JsoniqParser.SchemaAttributeTestContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#attributeDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAttributeDeclaration(JsoniqParser.AttributeDeclarationContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#elementTest}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -953,90 +935,6 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypeName(JsoniqParser.TypeNameContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mapTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMapTest(JsoniqParser.MapTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#anyMapTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAnyMapTest(JsoniqParser.AnyMapTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#typedMapTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypedMapTest(JsoniqParser.TypedMapTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#arrayTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArrayTest(JsoniqParser.ArrayTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#anyArrayTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAnyArrayTest(JsoniqParser.AnyArrayTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#typedArrayTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypedArrayTest(JsoniqParser.TypedArrayTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#parenthesizedItemTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParenthesizedItemTest(JsoniqParser.ParenthesizedItemTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#attributeDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAttributeDeclaration(JsoniqParser.AttributeDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mlNodeTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMlNodeTest(JsoniqParser.MlNodeTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mlArrayNodeTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMlArrayNodeTest(JsoniqParser.MlArrayNodeTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mlObjectNodeTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMlObjectNodeTest(JsoniqParser.MlObjectNodeTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mlNumberNodeTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMlNumberNodeTest(JsoniqParser.MlNumberNodeTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mlBooleanNodeTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMlBooleanNodeTest(JsoniqParser.MlBooleanNodeTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#mlNullNodeTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMlNullNodeTest(JsoniqParser.MlNullNodeTestContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#sequenceType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -1048,6 +946,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#itemType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitItemType(JsoniqParser.ItemTypeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#functionTest}.
 	 * @param ctx the parse tree
