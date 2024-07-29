@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ReadXMLTests extends AnnotationsTestsBase {
     private Rumble rumble;
@@ -62,8 +64,8 @@ public class ReadXMLTests extends AnnotationsTestsBase {
         URI uri = resolveUri(filePath);
         SequenceOfItems sequence = this.rumble.runQuery(uri);
         sequence.open();
-        Item result = sequence.next();
-        List<Item> children = result.children();
+        Item documentNode = sequence.next();
+        List<Item> children = documentNode.children().get(0).children();
         Item elementNode1 = children.get(0);
         Item elementNode2 = children.get(1);
         Item elementNode3 = children.get(2);
@@ -77,6 +79,7 @@ public class ReadXMLTests extends AnnotationsTestsBase {
         Item attribute3 = elementNode3.attributes().get(0);
         Item attribute4 = elementNode4.attributes().get(0);
         assertFalse(sequence.hasNext());
+        assertTrue(documentNode instanceof DocumentItem);
         assertEquals(4, children.size());
         assertEquals(4, elementNode1.children().size());
         assertEquals(4, elementNode2.children().size());

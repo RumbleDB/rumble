@@ -365,7 +365,7 @@ forwardAxis: ( Kchild
              | Kfollowing_sibling
              | Kfollowing ) ':' ':' ;
 
-abbrevForwardStep: Kat_symbol nodeTest ;
+abbrevForwardStep: Kat_symbol? nodeTest ;
 
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 

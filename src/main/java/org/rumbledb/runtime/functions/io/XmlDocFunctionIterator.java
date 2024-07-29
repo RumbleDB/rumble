@@ -52,7 +52,7 @@ public class XmlDocFunctionIterator extends LocalFunctionCallIterator {
                 );
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                 Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                Item res = ItemParser.getItemFromXML(xmlDocument.getDocumentElement());
+                Item res = ItemParser.getItemFromXML(xmlDocument);
                 return res;
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
