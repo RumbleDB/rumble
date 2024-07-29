@@ -17,4 +17,12 @@ public class DocumentTest implements NodeTest {
         sb.append(")");
         return sb.toString();
     }
+
+    public boolean isEmptyCheck() {
+        return nodeTest == null;
+    }
+
+    public NodeTest getNodeTest() {
+        return this.nodeTest;
+    }
 }

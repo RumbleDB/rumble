@@ -24,4 +24,20 @@ public class NameTest implements NodeTest {
         }
         return this.wildcardWithNCName;
     }
+
+    public boolean hasQName() {
+        return this.qname != null;
+    }
+
+    public String getQName() {
+        return this.qname.toString();
+    }
+
+    public boolean hasWildcardOnly() {
+        return this.wildcardWithNCName != null && this.wildcardWithNCName.equals("*");
+    }
+
+    public String getWildcardQName() {
+        return this.wildcardWithNCName;
+    }
 }

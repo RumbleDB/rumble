@@ -68,4 +68,13 @@ public class DocumentItem implements Item {
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.item;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof DocumentItem)) {
+            return false;
+        }
+        DocumentItem otherDocumentItem = (DocumentItem) other;
+        return otherDocumentItem.documentNode.isEqualNode(this.documentNode);
+    }
 }

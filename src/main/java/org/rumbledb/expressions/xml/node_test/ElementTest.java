@@ -47,4 +47,20 @@ public class ElementTest implements NodeTest {
         sb.append(")");
         return sb.toString();
     }
+
+    public boolean isEmptyCheck() {
+        return !this.hasWildcard && this.elementName == null;
+    }
+
+    public boolean isNameWithoutTypeCheck() {
+        return this.elementName != null && this.typeName == null;
+    }
+
+    public String getElementName() {
+        return elementName.getLocalName();
+    }
+
+    public boolean isWildcardOnly() {
+        return this.elementName == null && this.typeName == null && this.hasWildcard;
+    }
 }

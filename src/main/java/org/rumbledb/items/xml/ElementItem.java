@@ -55,16 +55,12 @@ public class ElementItem implements Item {
 
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof ElementItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isElement()) {
-            return false;
-        }
-        // TODO: Compare each element
-        return true;
+        ElementItem otherElementItem = (ElementItem) other;
+        return otherElementItem.elementNode.isEqualNode(this.elementNode);
     }
 
     @Override

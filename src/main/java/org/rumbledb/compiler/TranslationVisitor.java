@@ -2446,11 +2446,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private NodeTest getKindTest(ParseTree kindTest) {
         if (kindTest instanceof JsoniqParser.DocumentTestContext) {
             JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTest;
-            if (docContext.elementTest().isEmpty()) {
+            if (docContext.schemaElementTest() != null) {
                 throw new UnsupportedFeatureException(
                         "Kind tests of type document, element, attribute, text and any are supported at the moment",
                         createMetadataFromContext((ParserRuleContext) kindTest)
                 );
+            }
+            if (docContext.elementTest() == null) {
+                return new DocumentTest(null);
             }
             return new DocumentTest(getKindTest(docContext.elementTest()));
         } else if (kindTest instanceof JsoniqParser.ElementTestContext) {

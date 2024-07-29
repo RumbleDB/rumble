@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
@@ -114,6 +115,10 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.Step;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
@@ -190,6 +195,10 @@ import org.rumbledb.runtime.update.expression.InsertExpressionIterator;
 import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
+import org.rumbledb.runtime.xml.PathExprIterator;
+import org.rumbledb.runtime.xml.StepExprIterator;
+import org.rumbledb.runtime.xml.axis.AxisIterator;
+import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -1414,4 +1423,57 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         runtimeIterator.setStaticContext(statement.getStaticContext());
         return runtimeIterator;
     }
+
+    @Override
+    public RuntimeIterator visitPathExpr(PathExpr pathExpr, RuntimeIterator argument) {
+        List<RuntimeIterator> stepExprIterators = new ArrayList<>();
+        pathExpr.getRelativePathExpressions()
+            .forEach(relativePathExpr -> stepExprIterators.add(this.visit(relativePathExpr, argument)));
+        if (pathExpr.needsRoot()) {
+            // TODO: add iterator for function getRoot()
+        }
+        RuntimeIterator runtimeIterator = new PathExprIterator(
+                stepExprIterators,
+                null,
+                new RuntimeStaticContext(
+                        this.config,
+                        pathExpr.getStaticSequenceType(),
+                        pathExpr.getHighestExecutionMode(this.visitorConfig),
+                        pathExpr.getMetadata()
+                )
+        );
+        runtimeIterator.setStaticContext(pathExpr.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitStepExpr(StepExpr stepExpr, RuntimeIterator argument) {
+        AxisIterator axisIterator = this.visitAxisStep(stepExpr.getStep(), stepExpr.getMetadata());
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        List<RuntimeIterator> predicatesIterator = new ArrayList<>();
+        stepExpr.getPredicates().forEach(predicate -> predicatesIterator.add(this.visit(predicate, argument)));
+        return new StepExprIterator(
+                axisIterator,
+                nodeTest,
+                predicatesIterator,
+                new RuntimeStaticContext(
+                        this.config,
+                        stepExpr.getStaticSequenceType(),
+                        stepExpr.getHighestExecutionMode(this.visitorConfig),
+                        stepExpr.getMetadata()
+                )
+        );
+    }
+
+    private AxisIterator visitAxisStep(Step step, ExceptionMetadata metadata) {
+        return step.accept(
+            new AxisIteratorVisitor(),
+            new RuntimeStaticContext(
+                    this.config,
+                    ExecutionMode.LOCAL,
+                    metadata
+            )
+        );
+    }
+
 }

@@ -52,4 +52,8 @@ public class PathExpr extends Expression {
     public List<Expression> getRelativePathExpressions() {
         return this.relativePathExpressions;
     }
+
+    public boolean needsRoot() {
+        return this.fetchRoot;
+    }
 }

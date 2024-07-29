@@ -5,6 +5,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.xml.axis.Step;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,5 +53,9 @@ public class StepExpr extends Expression {
 
     public Step getStep() {
         return this.step;
+    }
+
+    public NodeTest getNodeTest() {
+        return this.step.getNodeTest();
     }
 }

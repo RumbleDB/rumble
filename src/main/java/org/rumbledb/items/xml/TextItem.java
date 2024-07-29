@@ -4,9 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -31,17 +28,12 @@ public class TextItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
+    public boolean equals(Object other) {
+        if (!(other instanceof TextItem)) {
+            return false;
         }
-        return false;
+        TextItem otherTextItem = (TextItem) other;
+        return otherTextItem.textNode.isEqualNode(this.textNode);
     }
 
     @Override
@@ -93,4 +85,5 @@ public class TextItem implements Item {
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.item;
     }
+
 }

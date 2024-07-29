@@ -149,8 +149,9 @@ public enum ErrorCode {
     InvalidAssignableVariableComposability("SCCP0005"),
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
-    InvalidVariableDeclaration("SCIN0001");
+    InvalidVariableDeclaration("SCIN0001"),
 
+    UnexpectedNode("XPTY0019");
 
     private String code;
 

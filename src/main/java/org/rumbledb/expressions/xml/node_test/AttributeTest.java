@@ -46,4 +46,20 @@ public class AttributeTest implements NodeTest {
         sb.append(")");
         return sb.toString();
     }
+
+    public boolean isEmptyCheck() {
+        return !this.hasWildcard && this.attributeName == null;
+    }
+
+    public boolean isNameWithoutTypeCheck() {
+        return this.attributeName != null && this.typeName == null;
+    }
+
+    public String getAttributeName() {
+        return this.attributeName.getLocalName();
+    }
+
+    public boolean isWildcardOnly() {
+        return this.attributeName == null && this.typeName == null && this.hasWildcard;
+    }
 }

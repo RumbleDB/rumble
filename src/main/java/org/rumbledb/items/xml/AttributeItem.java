@@ -63,4 +63,13 @@ public class AttributeItem implements Item {
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.item;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof AttributeItem)) {
+            return false;
+        }
+        AttributeItem otherAttributeItem = (AttributeItem) other;
+        return otherAttributeItem.attributeNode.isEqualNode(this.attributeNode);
+    }
 }
