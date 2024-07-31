@@ -58,14 +58,6 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             return expressionClassification;
         }
 
-        if (node instanceof StatementsAndExpr) {
-            ((StatementsAndExpr) node).setExpressionClassification(expressionClassification);
-            return expressionClassification;
-        }
-        if (node instanceof StatementsAndOptionalExpr) {
-            ((StatementsAndOptionalExpr) node).setExpressionClassification(expressionClassification);
-            return expressionClassification;
-        }
         if (node instanceof InlineFunctionExpression) {
             ((InlineFunctionExpression) node).setExpressionClassification(expressionClassification);
             return expressionClassification;
@@ -93,6 +85,28 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
                 : ExpressionClassification.SIMPLE;
 
         return result;
+    }
+
+    @Override
+    public ExpressionClassification visitStatementsAndOptionalExpr(
+            StatementsAndOptionalExpr expression,
+            ExpressionClassification argument
+    ) {
+        this.visitDescendants(expression, argument);
+        Expression e = expression.getExpression();
+        expression.setExpressionClassification(e.getExpressionClassification());
+        return e.getExpressionClassification();
+    }
+
+    @Override
+    public ExpressionClassification visitStatementsAndExpr(
+            StatementsAndExpr expression,
+            ExpressionClassification argument
+    ) {
+        this.visitDescendants(expression, argument);
+        Expression e = expression.getExpression();
+        expression.setExpressionClassification(e.getExpressionClassification());
+        return e.getExpressionClassification();
     }
 
     @Override
