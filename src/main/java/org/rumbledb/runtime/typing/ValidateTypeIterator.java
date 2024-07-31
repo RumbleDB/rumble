@@ -389,7 +389,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, true);
             if (itemType.getName() == null) {
                 itemType = itemType.getBaseType();
             }

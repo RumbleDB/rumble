@@ -209,8 +209,14 @@ public class ItemFactory {
         return new ArrayItem();
     }
 
-    public Item createArrayItem(List<Item> items) {
-        return new ArrayItem(items);
+    public Item createArrayItem(List<Item> items, boolean mutable) {
+        Item result = new ArrayItem(items);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
     public Item createObjectItem(

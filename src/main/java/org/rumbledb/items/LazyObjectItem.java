@@ -77,7 +77,7 @@ public class LazyObjectItem implements Item {
                     return ItemFactory.getInstance().createNullItem();
                 }
             }
-            return ItemFactory.getInstance().createArrayItem(items);
+            return ItemFactory.getInstance().createArrayItem(items, true);
         }
     }
 

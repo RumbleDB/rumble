@@ -112,7 +112,7 @@ public class ObjectItem implements Item {
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
-                Item valuesArray = ItemFactory.getInstance().createArrayItem(values);
+                Item valuesArray = ItemFactory.getInstance().createArrayItem(values, false);
                 valueList.add(valuesArray);
             } else if (values.size() == 1) {
                 Item value = values.get(0);

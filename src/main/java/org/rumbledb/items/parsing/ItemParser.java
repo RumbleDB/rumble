@@ -116,7 +116,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata));
                 }
                 object.endArray();
-                return ItemFactory.getInstance().createArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
             if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
@@ -203,7 +203,7 @@ public class ItemParser implements Serializable {
                     // System.err.println("Next token (reading array): " + nt.toString());
                 }
                 // System.err.println("Finished reading array.");
-                return ItemFactory.getInstance().createArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
                 List<String> keys = new ArrayList<>();
@@ -595,7 +595,7 @@ public class ItemParser implements Serializable {
                     members.add(convertValueToItem(value, dataType, metadata, memberType));
                 }
             }
-            Item item = ItemFactory.getInstance().createArrayItem(members);
+            Item item = ItemFactory.getInstance().createArrayItem(members, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                 return item;
             } else {
@@ -615,7 +615,7 @@ public class ItemParser implements Serializable {
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
-                Item item = ItemFactory.getInstance().createArrayItem(members);
+                Item item = ItemFactory.getInstance().createArrayItem(members, false);
                 if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                     return item;
                 } else {

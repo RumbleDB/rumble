@@ -45,7 +45,7 @@ public class ObjectIntersectMapClosure implements Function<Item, Item> {
         for (String key : arg0.getKeys()) {
             Item value = arg0.getItemByKey(key);
             Item arrayValue = ItemFactory.getInstance()
-                .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)));
+                .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)), false);
             keyValuePairs.put(key, new ArrayList<Item>(Collections.singletonList(arrayValue)));
         }
 
