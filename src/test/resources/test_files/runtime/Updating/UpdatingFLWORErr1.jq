@@ -1,9 +1,9 @@
 (:JIQS: ShouldCrash; ErrorCode="XUST0001"; ErrorMetadata="LINE:4:COLUMN:8:" :)
 copy $je := { "a" : {"foo" : 1}}
 modify
-    let $l := rename $je.a.foo as "b"
+    let $l := rename json $je.a.foo as "b"
     return
-        rename $l.foo as "b"
+        rename json $l.foo as "b"
 return $je
 
 (: expr in let clause is not simple :)

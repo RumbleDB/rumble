@@ -3,6 +3,6 @@ declare updating function local:upsert($o as object, $key as string, $val as ite
     ()
 };
 copy $je := {"a" : 1, "b" : 2}
-modify local:upsert(insert "c" : 3 into $je, "c", 3)
+modify local:upsert(insert json "c" : 3 into $je, "c", 3)
 return $je
 (: argument of function call is not simple :)
