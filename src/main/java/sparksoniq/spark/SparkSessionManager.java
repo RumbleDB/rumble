@@ -83,16 +83,16 @@ public class SparkSessionManager {
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
-    public static String emptyObjectJSONiqItemColumnName = "a84bc646-05af-4383-8853-2e9f31a710f2";
-    public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
-    public static String countColumnName = "5af0c0c8-e84c-482a-82ce-1887565cf448";
-    public static String rightHandSideHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
-    public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
-    public static String mutabilityLevelColumnName = "mutabilityLevel";
-    public static String rowIdColumnName = "rowID";
-    public static String pathInColumnName = "pathIn";
-    public static String tableLocationColumnName = "tableLocation";
+    public static String atomicJSONiqItemColumnName = "atomic0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
+    public static String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
+    public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
+    public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b ";
+    public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String mutabilityLevelColumnName = "mutabilityLevel44757020-504f-481f-b7f9-3a535b91e1cf";
+    public static String rowIdColumnName = "rowID386b0c2c-d6cc-4385-b5ce-cc77fe863988";
+    public static String pathInColumnName = "pathIn3f90351d-2837-40a3-8c5e-3974e4206332";
+    public static String tableLocationColumnName = "tableLocation383fd0c4-03ed-46aa-83e3-8eef8bb92434";
 
     private SparkSessionManager() {
     }

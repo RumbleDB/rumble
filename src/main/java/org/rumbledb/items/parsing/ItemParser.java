@@ -128,7 +128,7 @@ public class ItemParser implements Serializable {
                 }
                 object.endObject();
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                    .createObjectItem(keys, values, metadata, false);
             }
             if (object.peek() == JsonToken.NULL) {
                 object.nextNull();
@@ -223,7 +223,7 @@ public class ItemParser implements Serializable {
                 }
                 // System.err.println("Finished reading object.");
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                    .createObjectItem(keys, values, metadata, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
                 return ItemFactory.getInstance().createNullItem();
@@ -362,7 +362,7 @@ public class ItemParser implements Serializable {
             }
         }
 
-        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
         res.setMutabilityLevel(mutabilityLevel);
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
@@ -632,7 +632,7 @@ public class ItemParser implements Serializable {
                     objectKeyList.add(String.valueOf(vectorIndices[j]));
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata);
+                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
                 if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                     return item;
                 } else {

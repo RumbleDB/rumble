@@ -77,7 +77,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata());
+                .createObjectItem(keys, values, getMetadata(), true);
 
         } else {
 
@@ -121,7 +121,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata());
+                .createObjectItem(keys, values, getMetadata(), true);
         }
     }
 }

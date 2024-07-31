@@ -213,12 +213,29 @@ public class ItemFactory {
         return new ArrayItem(items);
     }
 
-    public Item createObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
-        return new ObjectItem(keys, values, itemMetadata);
+    public Item createObjectItem(
+            List<String> keys,
+            List<Item> values,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
+        Item result = new ObjectItem(keys, values, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
-    public Item createObjectItem(Map<String, List<Item>> keyValuePairs) {
-        return new ObjectItem(keyValuePairs);
+    public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
+        Item result = new ObjectItem(keyValuePairs);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
 }

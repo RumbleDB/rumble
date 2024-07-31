@@ -172,7 +172,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         values.addAll(second.getValues());
 
         try {
-            res = ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+            res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
         } catch (DuplicateObjectKeyException e) {
             throw new DuplicateObjectInsertSourceException(e.getMessage(), metadata);
         }

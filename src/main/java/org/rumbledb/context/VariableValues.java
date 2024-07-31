@@ -366,6 +366,9 @@ public class VariableValues implements Serializable, KryoSerializable {
             sb.append("    " + name + " (" + this.localVariableValues.get(name).size() + " items)\n");
             if (this.localVariableValues.get(name).size() == 1) {
                 sb.append("      " + this.localVariableValues.get(name).get(0).serialize() + "\n");
+                sb.append(
+                    "      Mutability level: " + this.localVariableValues.get(name).get(0).getMutabilityLevel() + "\n"
+                );
             }
         }
         sb.append("  Counts:\n");

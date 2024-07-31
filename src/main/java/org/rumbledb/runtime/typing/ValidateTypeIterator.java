@@ -453,7 +453,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 }
             }
             Item objectItem = ItemFactory.getInstance()
-                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
             if (itemType.getName() == null) {
                 itemType = itemType.getBaseType();
             }
