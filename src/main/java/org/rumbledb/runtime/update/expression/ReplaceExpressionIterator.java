@@ -74,7 +74,6 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         Item target;
         Item locator;
         Item content;
-        System.err.println(context);
         try {
             target = this.mainIterator.materializeExactlyOneItem(context);
             locator = this.locatorIterator.materializeExactlyOneItem(context);
