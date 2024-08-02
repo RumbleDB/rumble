@@ -76,7 +76,7 @@ typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement
 
 caseStatement               : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=statement ;
 
-annotation                  : '%' name=qname ('(' Literal (',' Literal)* ')')? ;
+annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
 
 annotations                 : annotation* ;
 
@@ -443,6 +443,7 @@ keyWords                : Kjsoniq
                         | Kreturning
                         | Kwhile
                         | Kjson
+                        | Kupdating
                         ;
 
 ///////////////////////// literals
@@ -578,6 +579,9 @@ Kwith                   : 'with';
 Kposition               : 'position';
 
 Kjson                   : 'json';
+
+Kupdating               :  'updating';
+
 ///////////////////////// Scripting keywords
 Kbreak                  : 'break' ;
 Kloop                   : 'loop' ;

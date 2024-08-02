@@ -71,7 +71,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("xs", Name.XS_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
-        defaultBindings.put("an", Name.AN_NS);
+        //defaultBindings.put("an", Name.AN_NS);
     }
 
     private RumbleRuntimeConfiguration configuration;
