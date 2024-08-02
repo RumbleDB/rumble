@@ -46,6 +46,7 @@ import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.DeltaFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
@@ -518,6 +519,16 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
+    /**
+     * function that parses a delta file
+     */
+    static final BuiltinFunction delta_file = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "delta-file"),
+        "string",
+        "item*",
+        DeltaFileFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
     /**
      * function that parses a csv file
      */
@@ -2698,6 +2709,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtinFunctions.put(parquet_file1.getIdentifier(), parquet_file1);
         builtinFunctions.put(parquet_file2.getIdentifier(), parquet_file2);
+        builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);

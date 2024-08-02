@@ -113,7 +113,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     List<Item> valueList = Collections.singletonList(value);
 
                     Item result = ItemFactory.getInstance()
-                        .createObjectItem(keyList, valueList, getMetadata());
+                        .createObjectItem(keyList, valueList, getMetadata(), true);
                     this.nextResults.add(result);
                     getDescendantPairs(valueList);
                 }

@@ -426,7 +426,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return prolog;
     }
 
-    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction, boolean isType) {
+    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -445,6 +445,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 name = Name.createVariableInDefaultFunctionNamespace(localName);
             } else if (isType) {
                 name = Name.createVariableInDefaultTypeNamespace(localName);
+            } else if (isAnnotation) {
+                name = Name.createVariableInDefaultAnnotationsNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -463,14 +465,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
-        Name name = parseName(ctx.qname(), true, false);
+        Name name = parseName(ctx.qname(), true, false, false);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false);
+                paramName = parseName(param.qname(), false, false, false);
                 paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -495,12 +497,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         StatementsAndOptionalExpr funcBody = (StatementsAndOptionalExpr) this
             .visitStatementsAndOptionalExpr(ctx.fn_body);
 
+        boolean isExternal = ctx.is_external != null;
+
         return new InlineFunctionExpression(
                 annotations,
                 name,
                 fnParams,
                 fnReturnType,
                 funcBody,
+                isExternal,
                 createMetadataFromContext(ctx)
         );
     }
@@ -531,7 +536,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             pe.initCause(e);
             throw pe;
         }
-        Name name = parseName(ctx.qname(), false, true);
+        Name name = parseName(ctx.qname(), false, true, false);
         String schemaLanguage = null;
         if (ctx.schema != null) {
             schemaLanguage = ctx.schema.getText();
@@ -1132,7 +1137,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             children.add(mainExpression);
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
             if (functionCallContext.qname() != null) {
-                Name name = parseName(functionCallContext.qname(), true, false);
+                Name name = parseName(functionCallContext.qname(), true, false, false);
                 mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
                 continue;
             } else if (functionCallContext.varRef() != null) {
@@ -1518,7 +1523,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        Name name = parseName(ctx.qname(), false, false);
+        Name name = parseName(ctx.qname(), false, false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -1589,7 +1594,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        Name name = parseName(itemTypeContext.qname(), false, true);
+        Name name = parseName(itemTypeContext.qname(), false, true, false);
         if (!BuiltinTypesCatalogue.typeExists(name)) {
             return new ItemTypeReference(name);
         }
@@ -1622,7 +1627,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false);
+        Name name = parseName(ctx.fn_name, true, false, false);
         return processFunctionCall(
             name,
             getArgumentsFromArgumentListContext(ctx.argumentList()),
@@ -1666,7 +1671,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false);
+        Name name = parseName(ctx.fn_name, true, false, false);
         int arity = 0;
         try {
             arity = Integer.parseInt(ctx.arity.getText());
@@ -1691,7 +1696,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false);
+                paramName = parseName(param.qname(), false, false, false);
                 paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -1873,7 +1878,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
-                Name name = parseName(qnameCtx, false, false);
+                Name name = parseName(qnameCtx, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
@@ -2028,7 +2033,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
-        Name paramName = parseName(ctx.qname(), false, false);
+        Name paramName = parseName(ctx.qname(), false, false, false);
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
@@ -2170,7 +2175,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
-                Name name = parseName(qnameCtx, false, false);
+                Name name = parseName(qnameCtx, false, false, false);
                 if (!catchBlockStatements.containsKey(name.getLocalName())) {
                     catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
                 }
@@ -2380,20 +2385,20 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        annotations.annotation().forEach(annotationContext -> {
+        for (JsoniqParser.AnnotationContext annotationContext : annotations.annotation()) {
+            // for backwards compatibility, the specification allows for updating without % sign
+            if (annotationContext.updating != null) {
+                Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
+                parsedAnnotations.add(new Annotation(name, null));
+                continue;
+            }
             JsoniqParser.QnameContext qnameContext = annotationContext.qname();
-            Name name = parseName(qnameContext, false, false);
+            Name name = parseName(qnameContext, false, false, true);
             if (!annotationContext.Literal().isEmpty()) {
                 throw new OurBadException("Literals are currently not supported in annotations!");
             }
             parsedAnnotations.add(new Annotation(name, null));
-            // List<Expression> literals = new ArrayList<>();
-            // ExceptionMetadata metadata = createMetadataFromContext(annotationContext);
-            // annotationContext.Literal().forEach(literal -> {
-            // literals.add(getLiteralExpressionFromToken(literal.getText(), metadata));
-            // });
-            // parsedAnnotations.add(new Annotation(name, literals));
-        });
+        }
 
         return parsedAnnotations;
     }

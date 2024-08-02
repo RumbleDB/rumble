@@ -17,9 +17,27 @@ public class PendingUpdateList {
     private Map<Item, Map<Item, Item>> delReplaceArrayMap;
     private Map<Item, Map<Item, Item>> renameObjMap;
     private Comparator<Item> targetComparator;
+    private Comparator<Item> arraySelectorComparator;
 
     public PendingUpdateList() {
+        // TODO: diff comparator for delta
         this.targetComparator = (item1, item2) -> {
+            boolean itemIsDelta1 = item1.getTableLocation() != null && !item1.getTableLocation().equals("null");
+            boolean itemIsDelta2 = item2.getTableLocation() != null && !item2.getTableLocation().equals("null");
+            if (itemIsDelta1 && itemIsDelta2) {
+                int tableComp = item1.getTableLocation().compareTo(item2.getTableLocation());
+                if (tableComp != 0) {
+                    return tableComp;
+                }
+                int rowComp = Long.compare(item1.getTopLevelID(), item2.getTopLevelID());
+                if (rowComp != 0) {
+                    return rowComp;
+                }
+                return item1.getPathIn().compareTo(item2.getPathIn());
+            } else if (itemIsDelta1 || itemIsDelta2) {
+                // TODO: what to compare when one is delta and one is not? Never occurs?
+                return 0;
+            }
             int hashCompare = Integer.compare(item1.hashCode(), item2.hashCode());
             if (item1.hashCode() != item2.hashCode()) {
                 return hashCompare;
@@ -29,6 +47,7 @@ public class PendingUpdateList {
             }
             return Integer.compare(System.identityHashCode(item1), System.identityHashCode(item2));
         };
+        this.arraySelectorComparator = Comparator.comparingInt(Item::getIntValue).reversed();
         this.insertObjMap = new TreeMap<>(this.targetComparator);
         this.insertArrayMap = new TreeMap<>(this.targetComparator);
         this.delReplaceObjMap = new TreeMap<>(this.targetComparator);
@@ -44,39 +63,39 @@ public class PendingUpdateList {
     public void addUpdatePrimitive(UpdatePrimitive updatePrimitive) {
         Item target = updatePrimitive.getTarget();
         if (updatePrimitive.isDeleteObject()) {
-            Map<Item, Item> locSrcMap = delReplaceObjMap.getOrDefault(target, new HashMap<>());
+            Map<Item, Item> locSrcMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
             for (Item locator : updatePrimitive.getContentList()) {
                 locSrcMap.put(locator, null);
             }
-            delReplaceObjMap.put(target, locSrcMap);
+            this.delReplaceObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isReplaceObject()) {
-            Map<Item, Item> locSrcMap = delReplaceObjMap.getOrDefault(target, new HashMap<>());
+            Map<Item, Item> locSrcMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
-            delReplaceObjMap.put(target, locSrcMap);
+            this.delReplaceObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isInsertObject()) {
-            insertObjMap.put(target, updatePrimitive.getContent());
+            this.insertObjMap.put(target, updatePrimitive.getContent());
 
         } else if (updatePrimitive.isRenameObject()) {
-            Map<Item, Item> locSrcMap = renameObjMap.getOrDefault(target, new HashMap<>());
+            Map<Item, Item> locSrcMap = this.renameObjMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
-            renameObjMap.put(target, locSrcMap);
+            this.renameObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isDeleteArray()) {
-            Map<Item, Item> locSrcMap = delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+            Map<Item, Item> locSrcMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), null);
-            delReplaceArrayMap.put(target, locSrcMap);
+            this.delReplaceArrayMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isReplaceArray()) {
-            Map<Item, Item> locSrcMap = delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+            Map<Item, Item> locSrcMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
-            delReplaceArrayMap.put(target, locSrcMap);
+            this.delReplaceArrayMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isInsertArray()) {
-            Map<Item, List<Item>> locSrcMap = insertArrayMap.getOrDefault(target, new HashMap<>());
+            Map<Item, List<Item>> locSrcMap = this.insertArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContentList());
-            insertArrayMap.put(target, locSrcMap);
+            this.insertArrayMap.put(target, locSrcMap);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -85,7 +104,9 @@ public class PendingUpdateList {
     public void applyUpdates(ExceptionMetadata metadata) {
         UpdatePrimitiveFactory upFactory = UpdatePrimitiveFactory.getInstance();
 
-        Map<Item, List<UpdatePrimitive>> targetArrayPULs = new HashMap<>();
+        // new TreeMap<>(this.targetComparator) sometimes causes null on apply?
+        Map<Item, Map<Item, List<UpdatePrimitive>>> targetArrayPULs = new HashMap<>();
+        Map<Item, List<UpdatePrimitive>> tempSelPULsMap;
         List<UpdatePrimitive> tempArrayPULs;
 
         List<UpdatePrimitive> objectPUL = new ArrayList<>();
@@ -96,9 +117,9 @@ public class PendingUpdateList {
         ////// OBJECTS
 
         // DELETES & REPLACES
-        for (Item target : delReplaceObjMap.keySet()) {
+        for (Item target : this.delReplaceObjMap.keySet()) {
             List<Item> toDel = new ArrayList<>();
-            tempSelSrcMap = delReplaceObjMap.get(target);
+            tempSelSrcMap = this.delReplaceObjMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
                 tempSrc = tempSelSrcMap.get(locator);
                 if (tempSrc == null) {
@@ -107,19 +128,21 @@ public class PendingUpdateList {
                     objectPUL.add(upFactory.createReplaceInObjectPrimitive(target, locator, tempSrc, metadata));
                 }
             }
-            objectPUL.add(upFactory.createDeleteFromObjectPrimitive(target, toDel, metadata));
+            if (!toDel.isEmpty()) {
+                objectPUL.add(upFactory.createDeleteFromObjectPrimitive(target, toDel, metadata));
+            }
         }
 
         // INSERTS
 
-        for (Item target : insertObjMap.keySet()) {
-            objectPUL.add(upFactory.createInsertIntoObjectPrimitive(target, insertObjMap.get(target)));
+        for (Item target : this.insertObjMap.keySet()) {
+            objectPUL.add(upFactory.createInsertIntoObjectPrimitive(target, this.insertObjMap.get(target), metadata));
         }
 
         // RENAMES
 
-        for (Item target : renameObjMap.keySet()) {
-            tempSelSrcMap = renameObjMap.get(target);
+        for (Item target : this.renameObjMap.keySet()) {
+            tempSelSrcMap = this.renameObjMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
                 objectPUL.add(
                     upFactory.createRenameInObjectPrimitive(target, locator, tempSelSrcMap.get(locator), metadata)
@@ -131,9 +154,9 @@ public class PendingUpdateList {
 
         // DELETES & REPLACES
 
-        for (Item target : delReplaceArrayMap.keySet()) {
-            tempArrayPULs = targetArrayPULs.getOrDefault(target, new ArrayList<>());
-            tempSelSrcMap = delReplaceArrayMap.get(target);
+        for (Item target : this.delReplaceArrayMap.keySet()) {
+            tempSelPULsMap = targetArrayPULs.getOrDefault(target, new TreeMap<>(this.arraySelectorComparator));
+            tempSelSrcMap = this.delReplaceArrayMap.get(target);
             for (Item locator : tempSelSrcMap.keySet()) {
                 UpdatePrimitive up;
                 tempSrc = tempSelSrcMap.get(locator);
@@ -142,38 +165,31 @@ public class PendingUpdateList {
                 } else {
                     up = upFactory.createReplaceInArrayPrimitive(target, locator, tempSrc, metadata);
                 }
-                int index = Collections.binarySearch(
-                    tempArrayPULs,
-                    up,
-                    Comparator.comparing(UpdatePrimitive::getIntSelector)
-                );
-                if (index < 0) {
-                    index = -index - 1;
-                }
-                tempArrayPULs.add(index, up);
+                tempArrayPULs = tempSelPULsMap.getOrDefault(locator, new ArrayList<>());
+                tempArrayPULs.add(up);
+                tempSelPULsMap.put(locator, tempArrayPULs);
             }
-            targetArrayPULs.put(target, tempArrayPULs);
+            targetArrayPULs.put(target, tempSelPULsMap);
         }
 
         // INSERTS
 
-        for (Item target : insertArrayMap.keySet()) {
+        for (Item target : this.insertArrayMap.keySet()) {
             UpdatePrimitive up;
-            tempArrayPULs = targetArrayPULs.getOrDefault(target, new ArrayList<>());
-            tempSelSrcListMap = insertArrayMap.get(target);
+            tempSelPULsMap = targetArrayPULs.getOrDefault(target, new TreeMap<>(this.arraySelectorComparator));
+            tempSelSrcListMap = this.insertArrayMap.get(target);
             for (Item locator : tempSelSrcListMap.keySet()) {
-                up = upFactory.createInsertIntoArrayPrimitive(target, locator, tempSelSrcListMap.get(locator));
-                int index = Collections.binarySearch(
-                    tempArrayPULs,
-                    up,
-                    Comparator.comparing(UpdatePrimitive::getIntSelector)
+                up = upFactory.createInsertIntoArrayPrimitive(
+                    target,
+                    locator,
+                    tempSelSrcListMap.get(locator),
+                    metadata
                 );
-                if (index < 0) {
-                    index = -index - 1;
-                }
-                tempArrayPULs.add(index, up);
+                tempArrayPULs = tempSelPULsMap.getOrDefault(locator, new ArrayList<>());
+                tempArrayPULs.add(up);
+                tempSelPULsMap.put(locator, tempArrayPULs);
             }
-            targetArrayPULs.put(target, tempArrayPULs);
+            targetArrayPULs.put(target, tempSelPULsMap);
         }
 
         ////// APPLY OBJECTS
@@ -183,151 +199,123 @@ public class PendingUpdateList {
         }
 
         ////// APPLY ARRAYS
-
         for (Item target : targetArrayPULs.keySet()) {
-            tempArrayPULs = targetArrayPULs.get(target);
-            for (int i = tempArrayPULs.size() - 1; i >= 0; i--) {
-                tempArrayPULs.get(i).apply();
+            tempSelPULsMap = targetArrayPULs.get(target);
+            for (Item selector : tempSelPULsMap.keySet()) {
+                tempArrayPULs = tempSelPULsMap.get(selector);
+                for (UpdatePrimitive up : tempArrayPULs) {
+                    up.apply();
+                }
             }
         }
 
     }
 
-    public static PendingUpdateList mergeUpdates(
-            PendingUpdateList pul1,
-            PendingUpdateList pul2,
+    public void mergeUpdates(
+            PendingUpdateList otherPul,
             ExceptionMetadata metadata
     ) {
-        PendingUpdateList res = new PendingUpdateList();
         Map<Item, Item> tempSelSrcMap;
         Map<Item, List<Item>> tempSelSrcListMap;
         Map<Item, Item> tempSelSrcResMap;
         Map<Item, List<Item>> tempSelSrcResListMap;
         Item tempSrc;
+        Item tempSrcRes;
         List<Item> tempSrcList;
 
         ////// OBJECTS
 
         // DELETES & REPLACES
-
-        for (Item target : pul1.delReplaceObjMap.keySet()) {
-            tempSelSrcMap = pul1.delReplaceObjMap.get(target);
-            tempSelSrcResMap = res.delReplaceObjMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcMap.keySet()) {
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
-            }
-            res.delReplaceObjMap.put(target, tempSelSrcResMap);
-        }
-
-        for (Item target : pul2.delReplaceObjMap.keySet()) {
-            tempSelSrcMap = pul2.delReplaceObjMap.get(target);
-            tempSelSrcResMap = res.delReplaceObjMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.delReplaceObjMap.keySet()) {
+            tempSelSrcMap = otherPul.delReplaceObjMap.get(target);
+            tempSelSrcResMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
-                if (tempSelSrcResMap.containsKey(selector)) {
-                    tempSrc = tempSelSrcResMap.get(selector);
-                    if (tempSrc != null) {
+                tempSrc = tempSelSrcMap.get(selector);
+                tempSrcRes = tempSelSrcResMap.get(selector);
+                boolean srcResMapHasSel = tempSelSrcResMap.containsKey(selector);
+                if (tempSrc == null) {
+                    boolean hasRename = this.renameObjMap.containsKey(target)
+                        && this.renameObjMap.get(target).containsKey(selector);
+                    if (hasRename) {
+                        this.renameObjMap.get(target).remove(selector);
+                    }
+                } else {
+                    if (srcResMapHasSel && tempSrcRes != null) {
                         throw new TooManyReplacesOnSameTargetSelectorException(
                                 target.getDynamicType().getName().toString(),
                                 selector.getStringValue(),
                                 metadata
                         );
+                    } else if (srcResMapHasSel) {
+                        continue;
                     }
-                    continue;
                 }
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+                tempSelSrcResMap.put(selector, tempSrc);
             }
-            res.delReplaceObjMap.put(target, tempSelSrcResMap);
+            this.delReplaceObjMap.put(target, tempSelSrcResMap);
         }
 
         // INSERTS
-
-        res.insertObjMap.putAll(pul1.insertObjMap);
-
-        for (Item target : pul2.insertObjMap.keySet()) {
-            tempSrc = pul2.insertObjMap.get(target);
-            if (res.insertObjMap.containsKey(target)) {
-                tempSrc = InsertIntoObjectPrimitive.mergeSources(res.insertObjMap.get(target), tempSrc, metadata);
+        for (Item target : otherPul.insertObjMap.keySet()) {
+            tempSrc = otherPul.insertObjMap.get(target);
+            if (this.insertObjMap.containsKey(target)) {
+                tempSrc = InsertIntoObjectPrimitive.mergeSources(this.insertObjMap.get(target), tempSrc, metadata);
             }
-            res.insertObjMap.put(target, tempSrc);
+            this.insertObjMap.put(target, tempSrc);
         }
 
         // RENAME
-
-        for (Item target : pul1.renameObjMap.keySet()) {
-            tempSelSrcMap = pul1.renameObjMap.get(target);
-            tempSelSrcResMap = res.renameObjMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcMap.keySet()) {
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
-            }
-            res.renameObjMap.put(target, tempSelSrcResMap);
-        }
-
-        for (Item target : pul2.renameObjMap.keySet()) {
-            tempSelSrcMap = pul2.renameObjMap.get(target);
-            tempSelSrcResMap = res.renameObjMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.renameObjMap.keySet()) {
+            tempSelSrcMap = otherPul.renameObjMap.get(target);
+            tempSelSrcResMap = this.renameObjMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
                 if (tempSelSrcResMap.containsKey(selector)) {
                     throw new TooManyRenamesOnSameTargetSelectorException(selector.getStringValue(), metadata);
                 }
+                boolean isDelete = this.delReplaceObjMap.containsKey(target)
+                    && this.delReplaceObjMap.get(target).containsKey(selector)
+                    && this.delReplaceObjMap.get(target).get(selector) == null;
+                if (isDelete) {
+                    continue;
+                }
                 tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
             }
-            res.renameObjMap.put(target, tempSelSrcResMap);
+            this.renameObjMap.put(target, tempSelSrcResMap);
         }
 
         ////// ARRAYS
 
         // DELETES & REPLACES
-
-        for (Item target : pul1.delReplaceArrayMap.keySet()) {
-            tempSelSrcMap = pul1.delReplaceArrayMap.get(target);
-            tempSelSrcResMap = res.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcMap.keySet()) {
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
-            }
-            res.delReplaceArrayMap.put(target, tempSelSrcResMap);
-        }
-
-        for (Item target : pul2.delReplaceArrayMap.keySet()) {
-            tempSelSrcMap = pul2.delReplaceArrayMap.get(target);
-            tempSelSrcResMap = res.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.delReplaceArrayMap.keySet()) {
+            tempSelSrcMap = otherPul.delReplaceArrayMap.get(target);
+            tempSelSrcResMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcMap.keySet()) {
-                if (tempSelSrcResMap.containsKey(selector)) {
-                    tempSrc = tempSelSrcResMap.get(selector);
-                    if (tempSrc != null) {
+                tempSrc = tempSelSrcMap.get(selector);
+                tempSrcRes = tempSelSrcResMap.get(selector);
+                boolean srcResMapHasSel = tempSelSrcResMap.containsKey(selector);
+                if (tempSrc != null && srcResMapHasSel) {
+                    if (tempSrcRes == null) {
+                        continue;
+                    } else {
                         throw new TooManyReplacesOnSameTargetSelectorException(
                                 target.getDynamicType().getName().toString(),
                                 Integer.toString(selector.getIntValue()),
                                 metadata
                         );
                     }
-                    continue;
                 }
-                tempSelSrcResMap.put(selector, tempSelSrcMap.get(selector));
+                tempSelSrcResMap.put(selector, tempSrc);
             }
-            res.delReplaceArrayMap.put(target, tempSelSrcResMap);
+            this.delReplaceArrayMap.put(target, tempSelSrcResMap);
         }
 
         // INSERTS
-
-        for (Item target : pul1.insertArrayMap.keySet()) {
-            tempSelSrcListMap = pul1.insertArrayMap.get(target);
-            tempSelSrcResListMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
-
-            for (Item selector : tempSelSrcListMap.keySet()) {
-                tempSelSrcResListMap.put(selector, tempSelSrcListMap.get(selector));
-            }
-            res.insertArrayMap.put(target, tempSelSrcResListMap);
-        }
-
-        for (Item target : pul2.insertArrayMap.keySet()) {
-            tempSelSrcListMap = pul2.insertArrayMap.get(target);
-            tempSelSrcResListMap = res.insertArrayMap.getOrDefault(target, new HashMap<>());
+        for (Item target : otherPul.insertArrayMap.keySet()) {
+            tempSelSrcListMap = otherPul.insertArrayMap.get(target);
+            tempSelSrcResListMap = this.insertArrayMap.getOrDefault(target, new HashMap<>());
 
             for (Item selector : tempSelSrcListMap.keySet()) {
                 tempSrcList = tempSelSrcResListMap.getOrDefault(selector, new ArrayList<>());
@@ -336,10 +324,8 @@ public class PendingUpdateList {
                     InsertIntoArrayPrimitive.mergeSources(tempSrcList, tempSelSrcListMap.get(selector))
                 );
             }
-            res.insertArrayMap.put(target, tempSelSrcResListMap);
+            this.insertArrayMap.put(target, tempSelSrcResListMap);
         }
-
-        return res;
     }
 
 }

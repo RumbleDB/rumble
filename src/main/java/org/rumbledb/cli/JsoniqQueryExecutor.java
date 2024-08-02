@@ -118,7 +118,8 @@ public class JsoniqQueryExecutor {
             !(this.configuration.getOutputFormat().equals("json")
                 || this.configuration.getOutputFormat().equals("tyson")
                 || this.configuration.getOutputFormat().equals("xml-json-hybrid")
-                || this.configuration.getOutputFormat().equals("yaml"))
+                || this.configuration.getOutputFormat().equals("yaml")
+                || this.configuration.getOutputFormat().equals("delta"))
                 &&
                 !sequence.availableAsDataFrame()
         ) {

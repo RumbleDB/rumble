@@ -83,6 +83,9 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
@@ -96,6 +99,9 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                         "Delete expression selection cannot be cast to Int type",
                         this.getMetadata()
                 );
+            }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(

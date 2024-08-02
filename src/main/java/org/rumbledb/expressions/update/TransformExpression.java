@@ -32,7 +32,7 @@ public class TransformExpression extends Expression {
     }
 
     public List<CopyDeclaration> getCopyDeclarations() {
-        return copyDeclarations;
+        return this.copyDeclarations;
     }
 
     public List<Expression> getCopySourceExpressions() {
@@ -43,11 +43,11 @@ public class TransformExpression extends Expression {
     }
 
     public Expression getModifyExpression() {
-        return modifyExpression;
+        return this.modifyExpression;
     }
 
     public Expression getReturnExpression() {
-        return returnExpression;
+        return this.returnExpression;
     }
 
     @Override

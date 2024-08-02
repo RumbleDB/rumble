@@ -372,4 +372,28 @@ public class ObjectItemType implements ItemType {
             );
         }
     }
+
+
+    @Override
+    public String getSparkSQLType() {
+        StringBuilder sb = new StringBuilder();
+        Map<String, FieldDescriptor> content = this.getObjectContentFacet();
+        String[] keys = content.keySet().toArray(new String[0]);
+
+        sb.append("STRUCT<");
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            FieldDescriptor field = content.get(key);
+
+            sb.append(key);
+            sb.append(":");
+            sb.append(field.getType().getSparkSQLType());
+            if (i < keys.length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append(">");
+
+        return sb.toString();
+    }
 }
