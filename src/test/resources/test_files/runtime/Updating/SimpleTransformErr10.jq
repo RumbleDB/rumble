@@ -7,10 +7,10 @@ return (
         modify (
             let $x := (
                     copy $ee := [5 to 8]
-                    modify delete $je[[1]]
+                    modify delete json $je[[1]]
                     return $ee
                 )
-            return delete $ej[[2]]
+            return delete json $ej[[2]]
         )
         return $ej
     )
