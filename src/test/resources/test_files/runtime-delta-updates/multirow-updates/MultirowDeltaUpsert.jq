@@ -2,9 +2,9 @@
 declare updating function local:upsert($o as object, $key as string, $val as item) {
     if($o.$key)
         then
-            replace value of $o.$key with $val
+            replace value of json $o.$key with $val
         else
-            insert $key : $val into $o
+            insert json $key : $val into $o
 };
 for $data in delta-file("./tempDeltaTable")
 count $c

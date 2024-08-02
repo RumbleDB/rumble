@@ -5,4 +5,4 @@ return
     for $val in $arr[]
     count $c2
     where $c1 eq $c2
-    return delete $arr[[$c2]]
+    return delete json $arr[[$c2]]

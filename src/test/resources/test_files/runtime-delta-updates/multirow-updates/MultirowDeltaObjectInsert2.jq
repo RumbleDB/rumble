@@ -4,6 +4,6 @@ count $c
 return
     if ($c eq 1)
     then
-        insert {"is_1_2" : true} into $data
+        insert json {"is_1_2" : true} into $data
     else
-        insert {"is_not_1_2" : true} into $data
+        insert json {"is_not_1_2" : true} into $data

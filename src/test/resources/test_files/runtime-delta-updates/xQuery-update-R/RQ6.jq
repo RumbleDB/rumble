@@ -7,15 +7,15 @@ return
     for $item in $R.items[]
     count $c
     where $item.offered_by = $remove_uid
-    return delete $R.items[[$c]]
+    return delete json $R.items[[$c]]
     ,
     for $bid in $R.bids[]
     count $c
     where $bid.userID = $remove_uid
-    return delete $R.bids[[$c]]
+    return delete json $R.bids[[$c]]
     ,
     for $user in $R.users[]
     count $c
     where $user.name eq "Dee Linquent"
-    return delete $R.users[[$c]]
+    return delete json $R.users[[$c]]
     )

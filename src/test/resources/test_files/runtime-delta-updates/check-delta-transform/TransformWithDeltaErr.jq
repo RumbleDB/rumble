@@ -2,7 +2,7 @@
 let $data := delta-file("./tempDeltaTable")
 return (
     copy $je := {"a" : 1}
-    modify delete $data.string
+    modify delete json $data.string
     return $je
 )
 (: Attempt to modify mutable delta file value inside transform without copy :)

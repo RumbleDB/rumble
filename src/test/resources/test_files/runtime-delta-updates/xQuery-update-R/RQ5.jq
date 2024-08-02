@@ -7,6 +7,6 @@ let $top_bid := max($bids[$$.itemNO eq 1007].bid)
 return
     if ($top_bid * 1.1 le 200)
     then
-        append {"userID" : $uid, "itemNO" : 1007, "bid" : $top_bid * 1.1, "bid_date" : "1999-02-01"} into $R.bids
+        append json {"userID" : $uid, "itemNO" : 1007, "bid" : $top_bid * 1.1, "bid_date" : "1999-02-01"} into $R.bids
     else
         ()
