@@ -445,7 +445,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 name = Name.createVariableInDefaultFunctionNamespace(localName);
             } else if (isType) {
                 name = Name.createVariableInDefaultTypeNamespace(localName);
-            } else if(isAnnotation) {
+            } else if (isAnnotation) {
                 name = Name.createVariableInDefaultAnnotationsNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
@@ -2385,15 +2385,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        for(JsoniqParser.AnnotationContext annotationContext : annotations.annotation())
-        {
-        	// for backwards compatibility, the specification allows for updating without % sign
-        	if(annotationContext.updating != null)
-        	{
-        		Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
+        for (JsoniqParser.AnnotationContext annotationContext : annotations.annotation()) {
+            // for backwards compatibility, the specification allows for updating without % sign
+            if (annotationContext.updating != null) {
+                Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
                 parsedAnnotations.add(new Annotation(name, null));
                 continue;
-        	}
+            }
             JsoniqParser.QnameContext qnameContext = annotationContext.qname();
             Name name = parseName(qnameContext, false, false, true);
             if (!annotationContext.Literal().isEmpty()) {
