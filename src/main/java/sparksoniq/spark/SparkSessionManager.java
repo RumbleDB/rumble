@@ -90,7 +90,7 @@ public class SparkSessionManager {
     public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b ";
     public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
     public static String mutabilityLevelColumnName = "mutabilityLevel44757020-504f-481f-b7f9-3a535b91e1cf";
-    public static String rowIdColumnName = "rowID386b0c2c-d6cc-4385-b5ce-cc77fe863988";
+    public static String rowIdColumnName = "rowID";
     public static String pathInColumnName = "pathIn3f90351d-2837-40a3-8c5e-3974e4206332";
     public static String tableLocationColumnName = "tableLocation383fd0c4-03ed-46aa-83e3-8eef8bb92434";
 

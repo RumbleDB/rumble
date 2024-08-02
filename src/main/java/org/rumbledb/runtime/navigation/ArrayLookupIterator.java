@@ -293,8 +293,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             JSoundDataFrame res;
             if (elementType.isObjectItemType()) {
                 sql = String.format(
-                    "SELECT `%s`.*, rowID, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                    "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
                     SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
                     SparkSessionManager.mutabilityLevelColumnName,
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.tableLocationColumnName,

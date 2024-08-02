@@ -44,7 +44,7 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             .read()
             .format("delta")
             .load(uri.toString())
-            .withColumn("rowID", monotonically_increasing_id())
+            .withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id())
             .write()
             .format("delta")
             .mode("overwrite")
