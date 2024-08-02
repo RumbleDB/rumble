@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="JNUP0016"; ErrorMetadata="LINE:3:COLUMN:33:" :)
+(:JIQS: ShouldCrash; ErrorCode="JNUP0016"; ErrorMetadata="LINE:3:COLUMN:38:" :)
 copy $je := {"a" : 1}
 modify (insert json "b" : 4 into $je, delete json $je.b)
 return $je
