@@ -89,10 +89,10 @@ public class SparkSessionManager {
     public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
     public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b ";
     public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
-    public static String mutabilityLevelColumnName = "mutabilityLevel44757020-504f-481f-b7f9-3a535b91e1cf";
+    public static String mutabilityLevelColumnName = "mutabilityLevel";
     public static String rowIdColumnName = "rowID";
-    public static String pathInColumnName = "pathIn3f90351d-2837-40a3-8c5e-3974e4206332";
-    public static String tableLocationColumnName = "tableLocation383fd0c4-03ed-46aa-83e3-8eef8bb92434";
+    public static String pathInColumnName = "pathIn";
+    public static String tableLocationColumnName = "tableLocation";
 
     private SparkSessionManager() {
     }
