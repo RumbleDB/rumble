@@ -334,7 +334,7 @@ replaceExpr             : Kreplace Kvalue Kof Kjson updateLocator Kwith replacer
 
 transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=exprSingle Kreturn ret_expr=exprSingle;
 
-appendExpr              : Kappend to_append_expr=exprSingle Kinto array_expr=exprSingle;
+appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 
