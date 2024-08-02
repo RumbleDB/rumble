@@ -154,17 +154,77 @@ public class VisitorHelpers {
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("***************");
+                System.err.println("Parsing program");
+                System.err.println("***************");
+            }
             MainModule mainModule = (MainModule) visitor.visit(main);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("***************");
+                System.err.println("Pruning modules");
+                System.err.println("***************");
+            }
             pruneModules(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("**********************");
+                System.err.println("Resolving dependencies");
+                System.err.println("**********************");
+            }
             resolveDependencies(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("*************************************");
+                System.err.println("Populating sequential classifications");
+                System.err.println("*************************************");
+            }
             populateSequentialClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("***************************************");
+                System.err.println("Applying type independent optimizations");
+                System.err.println("***************************************");
+            }
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("*************************");
+                System.err.println("Populating static context");
+                System.err.println("*************************");
+            }
             populateStaticContext(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("*************************************");
+                System.err.println("Populating expression classifications");
+                System.err.println("*************************************");
+            }
             populateExpressionClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("**************");
+                System.err.println("Infering types");
+                System.err.println("**************");
+            }
             inferTypes(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("************************");
+                System.err.println("Applying type dependent optimizations");
+                System.err.println("************************");
+            }
             mainModule = applyTypeDependentOptimizations(mainModule);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("***************************************");
+                System.err.println("Populating execution modes");
+                System.err.println("***************************************");
+            }
             populateExecutionModes(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("*************************************");
+                System.err.println("Populating expression classifications");
+                System.err.println("*************************************");
+            }
             populateExpressionClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                System.err.println("********************************");
+                System.err.println("Verify composability constraints");
+                System.err.println("********************************");
+            }
             verifyComposabilityConstraints(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {

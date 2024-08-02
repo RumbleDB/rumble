@@ -375,8 +375,11 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
         if (expression.isUpdating()) {
             if (expression.getActualReturnType() != null) {
+                System.err.println(expression);
                 throw new UpdatingFunctionHasReturnTypeException(
-                        "An updating function cannot have a return type",
+                        "An updating function cannot have a return type. Return type "
+                            + expression.getActualReturnType()
+                            + " is specified.",
                         expression.getMetadata()
                 );
             }

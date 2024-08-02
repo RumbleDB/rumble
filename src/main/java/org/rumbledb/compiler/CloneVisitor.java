@@ -448,7 +448,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getAnnotations(),
                 expression.getName(),
                 expression.getParams(),
-                expression.getReturnType(),
+                expression.getActualReturnType(),
                 (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
                 expression.getMetadata()
         );
