@@ -24,8 +24,8 @@ public class DescendantOrSelfAxisIterator extends AxisIterator {
             }
             Item node = currentContext.get(0);
             this.results = new ArrayList<>();
-            this.results.add(node);
             this.results.addAll(getDescendants(node));
+            this.results.add(node);
         }
         storeNextResult();
     }

@@ -9,6 +9,7 @@ import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
 public class AttributeItem implements Item {
+    private static final long serialVersionUID = 1L;
     private Node attributeNode;
     private Item parent;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
@@ -71,5 +72,10 @@ public class AttributeItem implements Item {
         }
         AttributeItem otherAttributeItem = (AttributeItem) other;
         return otherAttributeItem.attributeNode.isEqualNode(this.attributeNode);
+    }
+
+    @Override
+    public boolean isAttributeNode() {
+        return true;
     }
 }

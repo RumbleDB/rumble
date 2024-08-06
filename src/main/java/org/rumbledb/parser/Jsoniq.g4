@@ -365,7 +365,7 @@ forwardAxis: ( Kchild
              | Kfollowing_sibling
              | Kfollowing ) ':' ':' ;
 
-abbrevForwardStep: Kat_symbol? nodeTest ;
+abbrevForwardStep: Kat_symbol nodeTest ;
 
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
@@ -377,7 +377,10 @@ reverseAxis: ( Kparent
 
 abbrevReverseStep: '..' ;
 
+// Causes issues
 nodeTest: nameTest | kindTest ;
+
+//nodeTest: kindTest;
 
 nameTest: qname | wildcard ;
 

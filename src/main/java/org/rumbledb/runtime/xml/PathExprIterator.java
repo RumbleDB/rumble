@@ -24,7 +24,9 @@ public class PathExprIterator extends LocalRuntimeIterator {
     ) {
         super(null, staticContext);
         this.children.addAll(stepIterators);
-        this.children.add(getRootIterator);
+        if (getRootIterator != null) {
+            this.children.add(getRootIterator);
+        }
         this.stepIterators = stepIterators;
         this.getRootIterator = getRootIterator;
     }

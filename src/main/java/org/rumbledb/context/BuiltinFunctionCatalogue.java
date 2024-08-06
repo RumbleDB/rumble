@@ -145,6 +145,7 @@ import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
 import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
+import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -477,6 +478,21 @@ public class BuiltinFunctionCatalogue {
         "string",
         "item*",
         XmlDocFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction root_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "root"),
+        "item",
+        "item",
+        GetRootFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction root_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "root"),
+        "item",
+        GetRootFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3096,6 +3112,8 @@ public class BuiltinFunctionCatalogue {
             random_sequence_with_bounds_seeded_int
         );
         builtinFunctions.put(xml_doc.getIdentifier(), xml_doc);
+        builtinFunctions.put(root_with_arg.getIdentifier(), root_with_arg);
+        builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
     }
 
 

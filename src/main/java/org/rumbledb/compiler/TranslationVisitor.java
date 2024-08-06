@@ -643,6 +643,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (content instanceof JsoniqParser.TransformExprContext) {
             return this.visitTransformExpr((JsoniqParser.TransformExprContext) content);
         }
+        if (content instanceof JsoniqParser.PathExprContext) {
+            return this.visitPathExpr((JsoniqParser.PathExprContext) content);
+        }
         throw new OurBadException("Unrecognized ExprSimple.");
     }
 
@@ -2307,7 +2310,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // Case: No StepExpr, only dash
         StepExpr stepExpr = new StepExpr(new NoStep(), createMetadataFromContext(ctx));
         List<Expression> intermediaryPaths = Collections.singletonList(stepExpr);
-        return new PathExpr(true, intermediaryPaths, createMetadataFromContext(ctx));
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(ctx)
+        );
+        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
@@ -2316,7 +2324,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return this.visitPostFixExpr(relativeContext.stepExpr(0).postFixExpr());
         }
         List<Expression> intermediaryPaths = getIntermediaryPaths(relativeContext);
-        return new PathExpr(false, intermediaryPaths, createMetadataFromContext(relativeContext));
+        return new PathExpr(null, intermediaryPaths, createMetadataFromContext(relativeContext));
     }
 
     private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
@@ -2325,12 +2333,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 createMetadataFromContext(doubleSlashContext)
         );
         List<Expression> intermediaryPaths = getIntermediaryPaths(stepExpr, doubleSlashContext);
-        return new PathExpr(true, intermediaryPaths, createMetadataFromContext(doubleSlashContext));
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(doubleSlashContext)
+        );
+        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(doubleSlashContext));
     }
 
     private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
         List<Expression> intermediaryPaths = getIntermediaryPaths(singleSlashContext);
-        return new PathExpr(true, intermediaryPaths, createMetadataFromContext(singleSlashContext));
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(singleSlashContext)
+        );
+        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(singleSlashContext));
     }
 
 

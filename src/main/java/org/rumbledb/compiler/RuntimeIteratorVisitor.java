@@ -1429,12 +1429,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         List<RuntimeIterator> stepExprIterators = new ArrayList<>();
         pathExpr.getRelativePathExpressions()
             .forEach(relativePathExpr -> stepExprIterators.add(this.visit(relativePathExpr, argument)));
+        RuntimeIterator getRootIterator = null;
         if (pathExpr.needsRoot()) {
-            // TODO: add iterator for function getRoot()
+            getRootIterator = this.visitFunctionCall(pathExpr.getFetchRootFunction(), argument);
         }
         RuntimeIterator runtimeIterator = new PathExprIterator(
                 stepExprIterators,
-                null,
+                getRootIterator,
                 new RuntimeStaticContext(
                         this.config,
                         pathExpr.getStaticSequenceType(),
@@ -1458,7 +1459,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 predicatesIterator,
                 new RuntimeStaticContext(
                         this.config,
-                        stepExpr.getStaticSequenceType(),
+                        SequenceType.ITEM,
                         stepExpr.getHighestExecutionMode(this.visitorConfig),
                         stepExpr.getMetadata()
                 )
@@ -1470,6 +1471,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             new AxisIteratorVisitor(),
             new RuntimeStaticContext(
                     this.config,
+                    SequenceType.STRING,
                     ExecutionMode.LOCAL,
                     metadata
             )

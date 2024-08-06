@@ -23,6 +23,7 @@ public class FollowingAxisIterator extends AxisIterator {
             if (currentContext.isEmpty()) {
                 throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
             }
+            // TODO: add duplicate elimination
             Item node = currentContext.get(0);
             this.results = getFollowingNodes(node.parent(), node);
         }

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentItem implements Item {
+    private static final long serialVersionUID = 1L;
     private Node documentNode;
     private List<Item> children;
     // TODO: add base-uri, document-uri, typed-value
@@ -76,5 +77,10 @@ public class DocumentItem implements Item {
         }
         DocumentItem otherDocumentItem = (DocumentItem) other;
         return otherDocumentItem.documentNode.isEqualNode(this.documentNode);
+    }
+
+    @Override
+    public boolean isDocumentNode() {
+        return true;
     }
 }

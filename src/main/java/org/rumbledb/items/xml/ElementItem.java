@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ElementItem implements Item {
+    private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
     private Node elementNode;
@@ -48,7 +49,7 @@ public class ElementItem implements Item {
     }
 
     @Override
-    public boolean isElement() {
+    public boolean isElementNode() {
         return true;
     }
 

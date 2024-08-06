@@ -302,7 +302,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return true if it is an XML Element node, false otherwise.
      */
-    default boolean isElement() {
+    default boolean isElementNode() {
         return false;
     }
 
@@ -311,7 +311,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return true if it is an XML Attribute node, false otherwise.
      */
-    default boolean isAttribute() {
+    default boolean isAttributeNode() {
         return false;
     }
 
@@ -329,7 +329,11 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return true if it is an XML Document node, false otherwise.
      */
-    default boolean isDocument() {
+    default boolean isDocumentNode() {
+        return false;
+    }
+
+    default boolean isTextNode() {
         return false;
     }
 

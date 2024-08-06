@@ -86,4 +86,8 @@ public class TextItem implements Item {
         return BuiltinTypesCatalogue.item;
     }
 
+    @Override
+    public boolean isTextNode() {
+        return true;
+    }
 }

@@ -4,22 +4,22 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PathExpr extends Expression {
     private final List<Expression> relativePathExpressions;
-    // TODO: Handle fetching.
-    private boolean fetchRoot;
+    private final FunctionCallExpression fetchRootFunction;
 
     public PathExpr(
-            boolean fetchRoot,
+            FunctionCallExpression fetchRootFunction,
             List<Expression> relativePathExpressions,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.fetchRoot = fetchRoot;
+        this.fetchRootFunction = fetchRootFunction;
         this.relativePathExpressions = relativePathExpressions;
     }
 
@@ -37,7 +37,7 @@ public class PathExpr extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         int pathCounter = 0;
         indentIt(sb, indent);
-        if (this.fetchRoot) {
+        if (this.fetchRootFunction != null) {
             sb.append("/");
         }
         for (Expression stepExpr : this.relativePathExpressions) {
@@ -54,6 +54,10 @@ public class PathExpr extends Expression {
     }
 
     public boolean needsRoot() {
-        return this.fetchRoot;
+        return this.fetchRootFunction != null;
+    }
+
+    public FunctionCallExpression getFetchRootFunction() {
+        return fetchRootFunction;
     }
 }
