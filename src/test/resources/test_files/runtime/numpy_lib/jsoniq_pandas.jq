@@ -121,10 +121,9 @@ declare function jsoniq_pandas:frequency_of_values($column) {
         let $distinct_values := functx:distinct-deep($column[])
         for $value in $distinct_values
         return {"count": jsoniq_pandas:count_value($value, $column[]), "value": $value};
-    print_vars($counts);
-    (: for $count in $counts
-    order by $count.count
-    return $count :)
+    for $count in $counts
+    order by $count.count descending
+    return $count
 };
 
 declare function jsoniq_pandas:count_value($value, $column) {
