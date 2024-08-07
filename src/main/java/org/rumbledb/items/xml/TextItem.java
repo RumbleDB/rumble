@@ -90,4 +90,9 @@ public class TextItem implements Item {
     public boolean isTextNode() {
         return true;
     }
+
+    @Override
+    public String nodeName() {
+        return "";
+    }
 }

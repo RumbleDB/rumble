@@ -52,12 +52,16 @@ public class StepExprIterator extends LocalRuntimeIterator {
 
     private void setNextResult() {
         if (this.results == null) {
-            List<Item> axisResult = this.axisIterator.materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> axisResult = applyAxis();
             List<Item> nodeTestResult = applyNodeTest(axisResult);
             List<Item> predicateFilterResult = applyPredicateFilter(nodeTestResult);
             this.results = predicateFilterResult;
         }
         storeNextResult();
+    }
+
+    private List<Item> applyAxis() {
+        return this.axisIterator.materialize(this.currentDynamicContextForLocalExecution);
     }
 
     private void storeNextResult() {

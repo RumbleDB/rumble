@@ -8,6 +8,7 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class AxisIterator extends LocalRuntimeIterator {
@@ -29,6 +30,9 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
     protected abstract void setNextResult();
 
     protected void storeNextResult() {
+        if (this.resultCounter == 0) {
+            this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
+        }
         if (this.resultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.resultCounter++);
         } else {

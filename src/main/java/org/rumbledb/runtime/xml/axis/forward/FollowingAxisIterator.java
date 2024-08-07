@@ -18,14 +18,15 @@ public class FollowingAxisIterator extends AxisIterator {
     @Override
     protected void setNextResult() {
         if (this.results == null) {
+            this.results = new ArrayList<>();
             List<Item> currentContext = this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             if (currentContext.isEmpty()) {
                 throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
             }
-            // TODO: add duplicate elimination
-            Item node = currentContext.get(0);
-            this.results = getFollowingNodes(node.parent(), node);
+            for (Item node : currentContext) {
+                this.results.addAll(getFollowingNodes(node.parent(), node));
+            }
         }
         storeNextResult();
     }

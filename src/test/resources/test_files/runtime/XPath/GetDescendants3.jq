@@ -1,2 +1,2 @@
-(:JIQS: ShouldRun; Output="Everyday Italian,Giada De Laurentiis,2005,30.00,Harry Potter,J K. Rowling,2005":)
+(:JIQS: ShouldRun; Output="(Harry Potter\n, J K. Rowling\n, 2005\n, 29.99\n, XQuery Kick Start\n, James McGovern\n, Per Bothner\n, Kurt Cagle\n, James Linn\n, Vaidyanathan Nagarajan\n, 2003\n, 49.99\n, Learning XML\n, Erik T. Ray\n, 39.95\n, Giada De Laurentiis\n, 30.00\n)":)
 xml-doc("../../../queries/xml/books.xml")/descendant::node()/following::text()
