@@ -23,7 +23,7 @@ public class DescendantOrSelfAxisIterator extends AxisIterator {
             if (currentContext.isEmpty()) {
                 throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
             }
-            for (Item node: currentContext) {
+            for (Item node : currentContext) {
                 this.results.addAll(getDescendants(node));
                 this.results.add(node);
             }

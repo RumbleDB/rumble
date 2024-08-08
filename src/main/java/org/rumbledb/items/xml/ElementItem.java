@@ -110,4 +110,9 @@ public class ElementItem implements Item {
     public void setParent(Item parent) {
         this.parent = parent;
     }
+
+    @Override
+    public int hashCode() {
+        return this.elementNode.hashCode();
+    }
 }

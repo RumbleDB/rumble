@@ -7,7 +7,6 @@ import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 public class AttributeAxisIterator extends AxisIterator {

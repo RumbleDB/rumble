@@ -83,4 +83,9 @@ public class DocumentItem implements Item {
     public boolean isDocumentNode() {
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        return this.documentNode.hashCode();
+    }
 }

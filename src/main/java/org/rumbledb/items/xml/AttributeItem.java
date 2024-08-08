@@ -78,4 +78,9 @@ public class AttributeItem implements Item {
     public boolean isAttributeNode() {
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        return this.attributeNode.hashCode();
+    }
 }

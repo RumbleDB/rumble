@@ -18,6 +18,7 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,6 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private List<Item> applyNodeTest(List<Item> axisResult) {
         List<Item> nodeTestResults = new ArrayList<>();
         for (Item node : axisResult) {
-            // TODO: Check type of node
             Item nodeTestResult = nodeTestItem(node);
             if (nodeTestResult != null) {
                 nodeTestResults.add(nodeTestResult);
@@ -125,20 +125,32 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private Item nameKindTest(Item node) {
         NameTest nameTest = (NameTest) this.nodeTest;
         if (nameTest.hasQName()) {
-            // TODO: principal node kind test
+            if (!isPrincipalNodeKind(node)) {
+                return null;
+            }
             if (node.nodeName().equals(nameTest.getQName())) {
                 return node;
             }
             return null;
         }
         if (nameTest.hasWildcardOnly()) {
-            // TODO: principal node kind test
+            if (!isPrincipalNodeKind(node)) {
+                return null;
+            }
             return node;
         }
         if (nameTest.getWildcardQName().equals(node.nodeName())) {
             return node;
         }
         return null;
+    }
+
+    // TODO: Add support for namespace nodes.
+    private boolean isPrincipalNodeKind(Item node) {
+        if (this.axisIterator instanceof AttributeAxisIterator) {
+            return node.isAttributeNode();
+        }
+        return node.isElementNode();
     }
 
     private Item elementKindTest(Item node) {

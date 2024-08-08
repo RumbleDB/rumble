@@ -23,8 +23,8 @@ public class AncestorAxisIterator extends AxisIterator {
             if (currentContext.isEmpty()) {
                 throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
             }
-            for (Item node: currentContext) {
-                this.results.addAll( getAncestors(node));
+            for (Item node : currentContext) {
+                this.results.addAll(getAncestors(node));
             }
         }
         storeNextResult();

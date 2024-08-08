@@ -58,7 +58,7 @@ public class TextItem implements Item {
     }
 
     public int hashCode() {
-        return getTextValue().hashCode();
+        return this.textNode.hashCode();
     }
 
     @Override

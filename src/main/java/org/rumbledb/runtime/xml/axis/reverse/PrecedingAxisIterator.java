@@ -25,7 +25,7 @@ public class PrecedingAxisIterator extends AxisIterator {
             if (currentContext.isEmpty()) {
                 throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
             }
-            for (Item node: currentContext) {
+            for (Item node : currentContext) {
                 this.results.addAll(getPrecedingNode(node.parent(), node));
             }
         }

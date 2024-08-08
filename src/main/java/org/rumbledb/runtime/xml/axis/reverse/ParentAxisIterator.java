@@ -7,7 +7,6 @@ import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ParentAxisIterator extends AxisIterator {
@@ -27,7 +26,7 @@ public class ParentAxisIterator extends AxisIterator {
             for (Item node : currentContext) {
                 this.results.add(node.parent());
             }
-            }
+        }
         storeNextResult();
     }
 }
