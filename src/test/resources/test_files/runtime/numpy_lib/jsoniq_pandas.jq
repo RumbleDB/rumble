@@ -98,7 +98,7 @@ declare function jsoniq_pandas:std($arr as array, $mean as double) {
 declare function jsoniq_pandas:categorical_report($column as array) {
     let $count := size($column)
     let $unique := count(functx:distinct-deep($column[]))
-    let $occurences := jsoniq_pandas:frequency_of_values($column)
+    let $occurences := jsoniq_pandas:count_occurences($column)
     let $top := $occurences[1].value
     let $frequency := $occurences[1].count
     return {
@@ -109,26 +109,31 @@ declare function jsoniq_pandas:categorical_report($column as array) {
     }
 };
 
-(: declare function jsoniq_pandas:count_occurences($column) {
-    for $value in $column[]
+declare function jsoniq_pandas:count_occurences($column) {
+    let $column_values := $column[]
+    return if ($column_values instance of atomic*) then jsoniq_pandas:count_occurences_for_atomic($column_values)
+           else if ($column_values instance of json-item*) then jsoniq_pandas:count_occurences_for_structured_item($column_values)
+           else fn:error("Unrecognized type for dataframe. Only atomic and item types are supported.")
+};
+
+declare function jsoniq_pandas:count_occurences_for_atomic($column) {
+    for $value in $column
     let $group_key := $value
     group by $group_key
     return {"value": $group_key, "count": count($value)}
-}; :)
+};
 
-declare function jsoniq_pandas:frequency_of_values($column) {
+declare function jsoniq_pandas:count_occurences_for_structured_item($column) {
     variable $counts :=
-        let $distinct_values := functx:distinct-deep($column[])
+        let $distinct_values := functx:distinct-deep($column)
         for $value in $distinct_values
-        return {"count": jsoniq_pandas:count_value($value, $column[]), "value": $value};
-    print_vars($counts);
-    (: for $count in $counts
-    order by $count.count
-    return $count :)
+        return {"count": jsoniq_pandas:count_value($value, $column), "value": $value};
+    for $count in $counts
+    order by $count.count descending
+    return $count
 };
 
 declare function jsoniq_pandas:count_value($value, $column) {
-    print_vars($value);
     let $frequency :=
         for $column_value in $column
         where deep-equal($value, $column_value)
@@ -236,6 +241,9 @@ declare function jsoniq_pandas:fillna_row($row as object, $params as object, $ke
     {|
         for $key in $keys
         return if (empty($row.$key)) then {$key: $params.value}
+               else if ($row.$key instance of atomic) then 
+                    if ($row.$key eq null) then {$key: $params.value}
+                    else {$key: $row.$key}
                else {$key: $row.$key}
     |}
 };
