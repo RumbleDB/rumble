@@ -32,6 +32,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
     protected void storeNextResult() {
         if (this.resultCounter == 0) {
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
+            this.results.sort(Item::compareXmlNode);
         }
         if (this.resultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.resultCounter++);

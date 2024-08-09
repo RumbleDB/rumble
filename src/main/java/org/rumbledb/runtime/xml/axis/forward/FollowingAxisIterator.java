@@ -45,6 +45,7 @@ public class FollowingAxisIterator extends AxisIterator {
         for (int i = 0; i < parentChildren.size(); ++i) {
             if (parentChildren.get(i).equals(node)) {
                 followingIndex = i + 1;
+                break;
             }
         }
         for (int i = followingIndex; i > 0 && i < parentChildren.size(); ++i) {

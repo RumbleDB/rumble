@@ -115,4 +115,23 @@ public class ElementItem implements Item {
     public int hashCode() {
         return this.elementNode.hashCode();
     }
+
+    @Override
+    public int compareXmlNode(Item otherNode) {
+        int position = this.elementNode.compareDocumentPosition(otherNode.getXmlNode());
+        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINED_BY) > 0) {
+            return -1;
+        } else if (
+            (position & Node.DOCUMENT_POSITION_PRECEDING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINS) > 0
+        ) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public Node getXmlNode() {
+        return this.elementNode;
+    }
 }

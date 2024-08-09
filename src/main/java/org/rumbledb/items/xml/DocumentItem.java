@@ -88,4 +88,23 @@ public class DocumentItem implements Item {
     public int hashCode() {
         return this.documentNode.hashCode();
     }
+
+    @Override
+    public int compareXmlNode(Item otherNode) {
+        int position = this.documentNode.compareDocumentPosition(otherNode.getXmlNode());
+        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINED_BY) > 0) {
+            return -1;
+        } else if (
+            (position & Node.DOCUMENT_POSITION_PRECEDING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINS) > 0
+        ) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public Node getXmlNode() {
+        return this.documentNode;
+    }
 }

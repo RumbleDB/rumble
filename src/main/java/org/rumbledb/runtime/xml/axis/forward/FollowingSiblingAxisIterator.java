@@ -41,6 +41,7 @@ public class FollowingSiblingAxisIterator extends AxisIterator {
         for (int i = 0; i < parentChildren.size(); ++i) {
             if (parentChildren.get(i).equals(node)) {
                 siblingsStartIndex = i + 1;
+                break;
             }
         }
         for (int i = siblingsStartIndex; i > 0 && i < parentChildren.size(); ++i) {

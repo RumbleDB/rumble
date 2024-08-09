@@ -15,6 +15,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.w3c.dom.Node;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -869,6 +870,14 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default void setParent(Item parent) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default int compareXmlNode(Item otherNode) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default Node getXmlNode() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }
