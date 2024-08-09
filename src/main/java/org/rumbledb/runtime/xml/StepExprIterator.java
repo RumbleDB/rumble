@@ -2,6 +2,7 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -74,8 +75,15 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     private List<Item> applyPredicateFilter(List<Item> nodeTestResult) {
-        // TODO: Implement predicates.
-        return nodeTestResult;
+        List<Item> intermediaryResults = nodeTestResult;
+        this.currentDynamicContextForLocalExecution.getVariableValues()
+            .addVariableValue(Name.CONTEXT_ITEM, intermediaryResults);
+        for (RuntimeIterator predicate : this.predicates) {
+            intermediaryResults = predicate.materialize(this.currentDynamicContextForLocalExecution);
+            this.currentDynamicContextForLocalExecution.getVariableValues()
+                .addVariableValue(Name.CONTEXT_ITEM, intermediaryResults);
+        }
+        return intermediaryResults;
     }
 
     private List<Item> applyNodeTest(List<Item> axisResult) {

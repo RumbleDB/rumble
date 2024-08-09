@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="<book category="children">\n<title lang="en">Harry Potter</title>\n<author>J K. Rowling</author>\n<year>2005</year>\n<price>29.99</price>\n</book>":)
+xml-doc("../../../queries/xml/books.xml")//child::book[@category="children"]

@@ -47,7 +47,6 @@ public class PathExprIterator extends LocalRuntimeIterator {
             }
             for (int i = 0; i < this.stepIterators.size() - 1; ++i) {
                 // TODO: Verify that the type of each item is node
-                // TODO: Remove duplicate nodes
                 // TODO: Sort non-nodes
                 List<Item> nextContext = this.stepIterators.get(i)
                     .materialize(this.currentDynamicContextForLocalExecution);
