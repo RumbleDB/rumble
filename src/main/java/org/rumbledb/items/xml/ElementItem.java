@@ -138,6 +138,6 @@ public class ElementItem implements Item {
 
     @Override
     public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.elementNode.getNodeValue());
+        return ItemFactory.getInstance().createStringItem(this.elementNode.getTextContent());
     }
 }

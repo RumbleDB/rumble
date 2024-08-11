@@ -194,6 +194,7 @@ import org.rumbledb.runtime.update.expression.InsertExpressionIterator;
 import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
+import org.rumbledb.runtime.xml.AtomizationIterator;
 import org.rumbledb.runtime.xml.PathExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
@@ -952,6 +953,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
+        if (left instanceof PathExprIterator) {
+            // We potentially need to atomize
+            left = new AtomizationIterator(
+                    left,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,

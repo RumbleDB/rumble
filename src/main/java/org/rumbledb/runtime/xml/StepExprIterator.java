@@ -47,6 +47,15 @@ public class StepExprIterator extends LocalRuntimeIterator {
         setNextResult();
     }
 
+    @Override
+    public void close() {
+        super.close();
+        this.results = null;
+        this.nextResult = null;
+        this.resultCounter = 0;
+        this.axisIterator.close();
+    }
+
     private void setNextResult() {
         if (this.results == null) {
             List<Item> axisResult = applyAxis();
@@ -204,9 +213,9 @@ public class StepExprIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            Item nextResult = this.nextResult;
+            Item result = this.nextResult;
             setNextResult();
-            return nextResult;
+            return result;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in step expr",

@@ -106,6 +106,6 @@ public class AttributeItem implements Item {
 
     @Override
     public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.attributeNode.getNodeName());
+        return ItemFactory.getInstance().createStringItem(this.attributeNode.getNodeValue());
     }
 }

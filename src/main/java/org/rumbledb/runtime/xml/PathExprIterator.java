@@ -37,6 +37,16 @@ public class PathExprIterator extends LocalRuntimeIterator {
         setNextResult();
     }
 
+    @Override
+    public void close() {
+        super.close();
+        this.hasNext = false;
+        this.results = null;
+        this.nextResult = null;
+        this.nextResultCounter = 0;
+        this.stepIterators.forEach(RuntimeIterator::close);
+    }
+
     private void setNextResult() {
         if (this.results == null) {
             RuntimeIterator finalIterator = this.stepIterators.get(this.stepIterators.size() - 1);
@@ -47,7 +57,6 @@ public class PathExprIterator extends LocalRuntimeIterator {
             }
             for (int i = 0; i < this.stepIterators.size() - 1; ++i) {
                 // TODO: Verify that the type of each item is node
-                // TODO: Sort non-nodes
                 List<Item> nextContext = this.stepIterators.get(i)
                     .materialize(this.currentDynamicContextForLocalExecution);
                 this.currentDynamicContextForLocalExecution.getVariableValues()

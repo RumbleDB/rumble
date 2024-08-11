@@ -72,4 +72,13 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
                 getMetadata()
         );
     }
+
+    @Override
+    public void close() {
+        super.close();
+        this.hasNext = false;
+        this.nextResult = null;
+        this.results = null;
+        this.resultCounter = 0;
+    }
 }
