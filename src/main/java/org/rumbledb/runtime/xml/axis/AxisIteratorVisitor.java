@@ -3,8 +3,8 @@ package org.rumbledb.runtime.xml.axis;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expressions.xml.axis.ForwardStep;
-import org.rumbledb.expressions.xml.axis.ReverseStep;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 import org.rumbledb.runtime.xml.axis.forward.ChildAxisIterator;
 import org.rumbledb.runtime.xml.axis.forward.DescendantAxisIterator;
@@ -20,7 +20,7 @@ import org.rumbledb.runtime.xml.axis.reverse.PrecedingSiblingAxisIterator;
 
 public class AxisIteratorVisitor {
 
-    public AxisIterator visit(ForwardStep forwardStep, RuntimeStaticContext staticContext) {
+    public AxisIterator visit(ForwardStepExpr forwardStep, RuntimeStaticContext staticContext) {
         switch (forwardStep.getForwardAxis()) {
             case SELF:
                 return new SelfAxisIterator(staticContext);
@@ -44,7 +44,7 @@ public class AxisIteratorVisitor {
         }
     }
 
-    public AxisIterator visit(ReverseStep reverseStep, RuntimeStaticContext staticContext) {
+    public AxisIterator visit(ReverseStepExpr reverseStep, RuntimeStaticContext staticContext) {
         switch (reverseStep.getReverseAxis()) {
             case PARENT:
                 return new ParentAxisIterator(staticContext);

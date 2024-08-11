@@ -140,12 +140,11 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.EmptyStepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
-import org.rumbledb.expressions.xml.axis.ForwardStep;
-import org.rumbledb.expressions.xml.axis.NoStep;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
-import org.rumbledb.expressions.xml.axis.ReverseStep;
-import org.rumbledb.expressions.xml.axis.Step;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
 import org.rumbledb.expressions.xml.node_test.DocumentTest;
@@ -2308,7 +2307,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        StepExpr stepExpr = new StepExpr(new NoStep(), createMetadataFromContext(ctx));
+        StepExpr stepExpr = new EmptyStepExpr(createMetadataFromContext(ctx));
         List<Expression> intermediaryPaths = Collections.singletonList(stepExpr);
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultXQueryTypeNamespace("root"),
@@ -2328,8 +2327,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
-        StepExpr stepExpr = new StepExpr(
-                new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()),
+        StepExpr stepExpr = new ForwardStepExpr(
+                ForwardAxis.DESCENDANT_OR_SELF,
+                new AnyKindTest(),
                 createMetadataFromContext(doubleSlashContext)
         );
         List<Expression> intermediaryPaths = getIntermediaryPaths(stepExpr, doubleSlashContext);
@@ -2358,17 +2358,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             JsoniqParser.RelativePathExprContext relativePathExprContext
     ) {
         List<Expression> intermediaryPaths = new ArrayList<>();
-        StepExpr currentStepExpr;
+        Expression currentStepExpr;
         intermediaryPaths.add(stepExpr);
         for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
-            currentStepExpr = (StepExpr) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
             if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
                 // Unroll '//' to forward axis
-                StepExpr intermediaryStep = new StepExpr(
-                        new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()),
+                StepExpr intermediaryStepExpr = new ForwardStepExpr(
+                        ForwardAxis.DESCENDANT_OR_SELF,
+                        new AnyKindTest(),
                         createMetadataFromContext(relativePathExprContext)
                 );
-                intermediaryPaths.add(intermediaryStep);
+                intermediaryPaths.add(intermediaryStepExpr);
             }
             intermediaryPaths.add(currentStepExpr);
         }
@@ -2384,11 +2385,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
             if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
                 // Unroll '//' to forward axis
-                StepExpr intermediaryStep = new StepExpr(
-                        new ForwardStep(ForwardAxis.DESCENDANT_OR_SELF, new AnyKindTest()),
+                StepExpr intermediaryStepExpr = new ForwardStepExpr(
+                        ForwardAxis.DESCENDANT_OR_SELF,
+                        new AnyKindTest(),
                         createMetadataFromContext(relativePathExprContext)
                 );
-                intermediaryPaths.add(intermediaryStep);
+                intermediaryPaths.add(intermediaryStepExpr);
             }
             intermediaryPaths.add(currentStepExpr);
         }
@@ -2398,24 +2400,28 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
         if (ctx.postFixExpr() == null) {
-            List<Expression> predicates = new ArrayList<>();
-            Step step = getStep(ctx.axisStep());
+            Expression stepExpr = getStep(ctx.axisStep());
             for (JsoniqParser.PredicateContext predicateContext : ctx.axisStep().predicateList().predicate()) {
-                predicates.add((Expression) this.visitPredicate(predicateContext));
+                Expression predicate = (Expression) this.visitPredicate(predicateContext);
+                stepExpr = new FilterExpression(
+                        stepExpr,
+                        predicate,
+                        createMetadataFromContext(ctx)
+                );
             }
-            return new StepExpr(step, predicates, createMetadataFromContext(ctx));
+            return stepExpr;
         }
         return this.visitPostFixExpr(ctx.postFixExpr());
     }
 
-    private Step getStep(JsoniqParser.AxisStepContext ctx) {
+    private StepExpr getStep(JsoniqParser.AxisStepContext ctx) {
         if (ctx.forwardStep() == null) {
             return getReverseStep(ctx.reverseStep());
         }
         return getForwardStep(ctx.forwardStep());
     }
 
-    private Step getForwardStep(JsoniqParser.ForwardStepContext ctx) {
+    private StepExpr getForwardStep(JsoniqParser.ForwardStepContext ctx) {
         ForwardAxis forwardAxis;
         NodeTest nodeTest;
         if (ctx.nodeTest() == null) {
@@ -2428,23 +2434,23 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             } else {
                 forwardAxis = ForwardAxis.CHILD;
             }
-            return new ForwardStep(forwardAxis, nodeTest);
+            return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
         }
         forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
         nodeTest = getNodeTest(ctx.nodeTest());
-        return new ForwardStep(forwardAxis, nodeTest);
+        return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
     }
 
-    private Step getReverseStep(JsoniqParser.ReverseStepContext ctx) {
+    private StepExpr getReverseStep(JsoniqParser.ReverseStepContext ctx) {
         if (ctx.nodeTest() == null) {
             // .. equivalent with 'parent::node()'
             ReverseAxis reverseAxis = ReverseAxis.PARENT;
             NodeTest nodeTest = new AnyKindTest();
-            return new ReverseStep(reverseAxis, nodeTest);
+            return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
         }
         ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
         NodeTest nodeTest = getNodeTest(ctx.nodeTest());
-        return new ReverseStep(reverseAxis, nodeTest);
+        return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
     }
 
     private NodeTest getNodeTest(JsoniqParser.NodeTestContext nodeTestContext) {

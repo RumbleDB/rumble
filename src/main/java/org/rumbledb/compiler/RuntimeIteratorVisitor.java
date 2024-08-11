@@ -117,7 +117,6 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.StepExpr;
-import org.rumbledb.expressions.xml.axis.Step;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -1449,14 +1448,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitStepExpr(StepExpr stepExpr, RuntimeIterator argument) {
-        AxisIterator axisIterator = this.visitAxisStep(stepExpr.getStep(), stepExpr.getMetadata());
+        AxisIterator axisIterator = this.visitAxisStep(stepExpr, stepExpr.getMetadata());
         NodeTest nodeTest = stepExpr.getNodeTest();
-        List<RuntimeIterator> predicatesIterator = new ArrayList<>();
-        stepExpr.getPredicates().forEach(predicate -> predicatesIterator.add(this.visit(predicate, argument)));
         return new StepExprIterator(
                 axisIterator,
                 nodeTest,
-                predicatesIterator,
                 new RuntimeStaticContext(
                         this.config,
                         SequenceType.ITEM,
@@ -1466,8 +1462,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         );
     }
 
-    private AxisIterator visitAxisStep(Step step, ExceptionMetadata metadata) {
-        return step.accept(
+    private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
+        return stepExpr.accept(
             new AxisIteratorVisitor(),
             new RuntimeStaticContext(
                     this.config,

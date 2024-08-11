@@ -1,22 +1,36 @@
 package org.rumbledb.expressions.xml.axis;
 
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 
-public class ForwardStep implements Step {
+import java.util.Collections;
+import java.util.List;
+
+public class ForwardStepExpr extends StepExpr {
     private ForwardAxis forwardAxis;
     private NodeTest nodeTest;
 
-    public ForwardStep(ForwardAxis forwardAxis, NodeTest nodeTest) {
+    public ForwardStepExpr(ForwardAxis forwardAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {
+        super(exceptionMetadata);
         this.forwardAxis = forwardAxis;
         this.nodeTest = nodeTest;
     }
 
     @Override
-    public String toString() {
-        return forwardAxis.getAxisValue() + nodeTest.toString();
+    public List<Node> getChildren() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(forwardAxis.getAxisValue());
+        sb.append(nodeTest.toString());
     }
 
     public ForwardAxis getForwardAxis() {

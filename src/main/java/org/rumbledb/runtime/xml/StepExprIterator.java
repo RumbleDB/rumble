@@ -2,7 +2,6 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -27,7 +26,6 @@ import java.util.List;
 public class StepExprIterator extends LocalRuntimeIterator {
     private final RuntimeIterator axisIterator;
     private NodeTest nodeTest;
-    private final List<RuntimeIterator> predicates;
     private List<Item> results;
     private Item nextResult;
     private int resultCounter = 0;
@@ -35,15 +33,12 @@ public class StepExprIterator extends LocalRuntimeIterator {
     public StepExprIterator(
             RuntimeIterator axisIterator,
             NodeTest nodeTest,
-            List<RuntimeIterator> predicates,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
         this.children.add(axisIterator);
-        this.children.addAll(predicates);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
-        this.predicates = predicates;
     }
 
     @Override
@@ -55,9 +50,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private void setNextResult() {
         if (this.results == null) {
             List<Item> axisResult = applyAxis();
-            List<Item> nodeTestResult = applyNodeTest(axisResult);
-            List<Item> predicateFilterResult = applyPredicateFilter(nodeTestResult);
-            this.results = predicateFilterResult;
+            this.results = applyNodeTest(axisResult);
         }
         storeNextResult();
     }
@@ -72,18 +65,6 @@ public class StepExprIterator extends LocalRuntimeIterator {
         } else {
             this.hasNext = false;
         }
-    }
-
-    private List<Item> applyPredicateFilter(List<Item> nodeTestResult) {
-        List<Item> intermediaryResults = nodeTestResult;
-        this.currentDynamicContextForLocalExecution.getVariableValues()
-            .addVariableValue(Name.CONTEXT_ITEM, intermediaryResults);
-        for (RuntimeIterator predicate : this.predicates) {
-            intermediaryResults = predicate.materialize(this.currentDynamicContextForLocalExecution);
-            this.currentDynamicContextForLocalExecution.getVariableValues()
-                .addVariableValue(Name.CONTEXT_ITEM, intermediaryResults);
-        }
-        return intermediaryResults;
     }
 
     private List<Item> applyNodeTest(List<Item> axisResult) {

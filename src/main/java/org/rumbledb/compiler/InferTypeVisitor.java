@@ -104,6 +104,7 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -2602,7 +2603,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region xml
 
-    // TODO: add the right typing data.
     @Override
     public StaticContext visitPathExpr(PathExpr pathExpr, StaticContext argument) {
         visitDescendants(pathExpr, argument);
@@ -2610,6 +2610,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    // TODO: Currently, step expressions are marked as string, but this type may differ. Update to relevant type.
+    @Override
+    public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
+        stepExpr.setStaticSequenceType(SequenceType.ITEM_STAR);
+        return argument;
+    }
 
     // end xml
 }

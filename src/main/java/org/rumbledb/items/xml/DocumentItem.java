@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -106,5 +107,10 @@ public class DocumentItem implements Item {
     @Override
     public Node getXmlNode() {
         return this.documentNode;
+    }
+
+    @Override
+    public Item typedValue() {
+        return ItemFactory.getInstance().createStringItem(this.documentNode.getNodeValue());
     }
 }

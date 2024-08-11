@@ -1,29 +1,16 @@
 package org.rumbledb.expressions.xml;
 
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.xml.axis.Step;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.runtime.xml.axis.AxisIterator;
+import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class StepExpr extends Expression {
-    private Step step;
-    private List<Expression> predicates;
-
-    public StepExpr(Step step, ExceptionMetadata exceptionMetadata) {
-        super(exceptionMetadata);
-        this.step = step;
-        this.predicates = new ArrayList<>();
-    }
-
-    public StepExpr(Step step, List<Expression> predicates, ExceptionMetadata exceptionMetadata) {
-        super(exceptionMetadata);
-        this.step = step;
-        this.predicates = predicates;
+public abstract class StepExpr extends Expression {
+    public StepExpr(ExceptionMetadata metadata) {
+        super(metadata);
     }
 
     @Override
@@ -31,31 +18,7 @@ public class StepExpr extends Expression {
         return visitor.visitStepExpr(this, argument);
     }
 
-    @Override
-    public List<Node> getChildren() {
-        return new ArrayList<>(predicates);
-    }
+    public abstract AxisIterator accept(AxisIteratorVisitor visitor, RuntimeStaticContext staticContext);
 
-    @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
-        indentIt(sb, indent);
-        sb.append(step.toString());
-        for (Expression predicate : predicates) {
-            sb.append("[ ");
-            predicate.serializeToJSONiq(sb, indent);
-            sb.append(" ], ");
-        }
-    }
-
-    public List<Expression> getPredicates() {
-        return this.predicates;
-    }
-
-    public Step getStep() {
-        return this.step;
-    }
-
-    public NodeTest getNodeTest() {
-        return this.step.getNodeTest();
-    }
+    public abstract NodeTest getNodeTest();
 }

@@ -1,22 +1,36 @@
 package org.rumbledb.expressions.xml.axis;
 
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 
-public class ReverseStep implements Step {
+import java.util.Collections;
+import java.util.List;
+
+public class ReverseStepExpr extends StepExpr {
     private ReverseAxis reverseAxis;
     private NodeTest nodeTest;
 
-    public ReverseStep(ReverseAxis reverseAxis, NodeTest nodeTest) {
+    public ReverseStepExpr(ReverseAxis reverseAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {
+        super(exceptionMetadata);
         this.reverseAxis = reverseAxis;
         this.nodeTest = nodeTest;
     }
 
     @Override
-    public String toString() {
-        return reverseAxis.getAxisValue() + nodeTest.toString();
+    public List<Node> getChildren() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(reverseAxis.getAxisValue());
+        sb.append(nodeTest.toString());
     }
 
     public ReverseAxis getReverseAxis() {

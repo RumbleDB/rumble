@@ -1,2 +1,2 @@
-(:JIQS: ShouldRun; Output="<book category="children">\n<title lang="en">Harry Potter</title>\n<author>J K. Rowling</author>\n<year>2005</year>\n<price>29.99</price>\n</book>":)
-xml-doc("../../../queries/xml/books.xml")//child::book[fn:position() = 2]
+(:JIQS: ShouldRun; Output="<book category="web">\n  <title lang="en">\n    XQuery Kick Start\n  </title>\n  <author>\n    James McGovern\n  </author>\n  <author>\n    Per Bothner\n  </author>\n  <author>\n    Kurt Cagle\n  </author>\n  <author>\n    James Linn\n  </author>\n  <author>\n    Vaidyanathan Nagarajan\n  </author>\n  <year>\n    2003\n  </year>\n  <price>\n    49.99\n  </price>\n</book>\n":)
+xml-doc("../../../queries/xml/books.xml")//child::book[fn:position() eq 3]
