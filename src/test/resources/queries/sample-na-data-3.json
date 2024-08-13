@@ -1,3 +1,3 @@
-{ "name": [null], "type": "null", "other2": {"x": null}}
-{ "name": [null], "type": null, "other": ["null"],  "other2": {"x": "3"}, "anotherArray": [[2, 1, 2]]}
-{ "name": [null], "type": null, "other2": {}, "anotherArray": [[23]]}
+{ "name": [null, null], "type": "null", "other2": 1}
+{ "name": [null],  "other": ["null"],  "other2": 2, "anotherArray": [[2, 1, 2]]}
+{ "name": [null], "type": null, "anotherArray": [[23]]}

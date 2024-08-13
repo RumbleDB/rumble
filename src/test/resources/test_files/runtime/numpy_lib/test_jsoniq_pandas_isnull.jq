@@ -1,7 +1,14 @@
-(:JIQS: ShouldRun; Output="({ "label" : false, "binaryLabel" : false, "name" : false, "age" : false, "weight" : false, "booleanCol" : false, "nullCol" : true, "stringCol" : false, "stringArrayCol" : [ false, false, false, false, false ], "intArrayCol" : [ false, false, false ], "doubleArrayCol" : [ false, false, false ], "doubleArrayArrayCol" : [ false, false, false ] }, { "label" : false, "binaryLabel" : false, "name" : false, "age" : false, "weight" : false, "booleanCol" : false, "nullCol" : true, "stringCol" : false, "stringArrayCol" : [ false, false, false, false, false ], "intArrayCol" : [ false, false, false ], "doubleArrayCol" : [ false, false, false ], "doubleArrayArrayCol" : [ false, false, false ] }, { "label" : false, "binaryLabel" : false, "name" : false, "age" : false, "weight" : false, "booleanCol" : false, "nullCol" : true, "stringCol" : false, "stringArrayCol" : [ false, false, false, false, false ], "intArrayCol" : [ false, false, false ], "doubleArrayCol" : [ false, false, false ], "doubleArrayArrayCol" : [ false, false, false ] }, { "label" : false, "binaryLabel" : false, "name" : false, "age" : false, "weight" : false, "booleanCol" : true, "nullCol" : true, "stringCol" : false, "stringArrayCol" : [ false, false, false, false, false ], "intArrayCol" : [ false, false, false ], "doubleArrayCol" : [ false, false, false ], "doubleArrayArrayCol" : [ false, false, false ] }, { "label" : false, "binaryLabel" : false, "name" : false, "age" : false, "weight" : false, "booleanCol" : false, "nullCol" : true, "stringCol" : false, "stringArrayCol" : [ false, false, false, false, false ], "intArrayCol" : [ false, false, false ], "doubleArrayCol" : [ false, false, false ], "doubleArrayArrayCol" : [ false, false, false ] }, { "label" : false, "binaryLabel" : false, "name" : false, "age" : false, "weight" : false, "booleanCol" : false, "nullCol" : true, "stringCol" : false, "stringArrayCol" : [ false, false, false, false, false ], "intArrayCol" : [ false, false, false ], "doubleArrayCol" : [ false, false, false ], "doubleArrayArrayCol" : [ false, false, false ] }, { "test" : [ false, false, true ], "test2" : true, "test3" : { "test4" : [ false, false, false ], "test5" : true, "test6" : { "test7" : [ false, true, true, true ] } } }, { "test1" : [ { "test2" : true }, { "test3" : [ false, false, true ] }, { "test4" : { "test5" : true } } ] }, { "test" : [ false, false, true ], "test2" : true, "test3" : [ false, false, false ], "test4" : [ false, true, true ] })":)
+(:JIQS: ShouldRun; Output="({ "name" : false, "type" : false, "other" : true, "other2" : false, "anotherArray" : true }, { "name" : false, "type" : true, "other" : false, "other2" : false, "anotherArray" : false }, { "name" : false, "type" : false, "other" : true, "other2" : true, "anotherArray" : false })":)
 import module namespace pandas = "jsoniq_pandas.jq";
 
-pandas:isnull(json-file("../../../queries/sample-na-data.json")),
-pandas:isnull({"test": [1,2, null], "test2": null, "test3": {"test4": [1, 4, 2], "test5": null, "test6": {"test7": [1, null, null, null]}}}),
-pandas:isnull({"test1": [{"test2": null}, {"test3": [1, 2, null]}, {"test4": {"test5": null}}]}),
-pandas:isnull({"test": [1,2,null], "test2": null, "test3": [1, 4, 2], "test4": [1, null, null]})
+declare type local:sample-type as {
+    "name": ["string"],
+    "type": "string",
+    "other": ["string"],
+    "other2": "integer",
+    "anotherArray": [["integer"]]
+};
+
+declare variable $file_data := json-file("../../../queries/sample-na-data-3.json");
+let $data := validate type local:sample-type* {$file_data}
+return $data=>pandas:isnull()

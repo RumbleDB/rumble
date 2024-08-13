@@ -3,12 +3,7 @@ module namespace jsoniq_pandas = "jsoniq_pandas.jq";
 import module namespace jsoniq_numpy = "jsoniq_numpy.jq";
 import module namespace functx = "functx.jq";
 
-declare type jsoniq_pandas:describe_params as {
-    "include": "string=all",
-    "percentiles": "array"
-};
 (: describe generates descriptive statistics about a dataset. Statistics summarize the central tendency, dispersion and shape of a dataset, excluding null values. Provides a string/dataframe as result.
-TODO: Supported percentiles are only [.25, .5, .75].
 Required params are:
 - dataframe (DataFrame): The dataframe to look into
 Params is an object for optional arguments. These arguments are:
@@ -24,6 +19,11 @@ declare function jsoniq_pandas:describe($dataframe as object*, $params as object
             case "object" return jsoniq_pandas:object_report([$dataframe.$column])
             default return error("Unrecognized include option. Only 'number' and 'object' are supported.")
     }
+};
+
+declare type jsoniq_pandas:describe_params as {
+    "include": "string=all",
+    "percentiles": "array"
 };
 
 declare function jsoniq_pandas:describe($dataframe as object*) {
@@ -60,7 +60,6 @@ declare function jsoniq_pandas:object_report($column) {
 };
 
 declare function jsoniq_pandas:numerical_report($column as array, $params as object) {
-    (: Compute count, mean, std, min, .25, .5, .75, max :)
     let $count := size($column)
     let $mean := jsoniq_numpy:mean($column)
     let $std := jsoniq_pandas:std($column, $mean)
@@ -150,21 +149,6 @@ declare function jsoniq_pandas:compute_percentile($arr as array, $percentile as 
     return $adjacent_difference
 };
 
-
-declare type jsoniq_pandas:info_params as {
-    "max_cols": "integer=10",
-    "memory_usage": "boolean=false",
-    "show_counts": "boolean=false"    
-};
-(: info prints a summary of a DataFrame to the screen.
-Required params are:
-- dataframe (DataFrame): The dataframe to look into
-Params is an object for optional arguments. These arguments are:
-- max_cols (integer): If the DataFrame has more columns, a truncated output is provided up to the given maximum column number.
-- memory_usage (boolean): Provides memory size of the DataFrame (TODO)
-- show_counts (boolean): Option to provide count of null elements in a column.:)
-declare function jsoniq_pandas:info($dataframe as object*, $params as object){};
-
 (: sample returns a random sample from the DataFrame. We currently only support returning results from the first axis, that is rows of the DataFrame. We do not support weighted samples or fractional samples. We only support sampling with replacement.
 Required params are:
 - dataframe (DataFrame): the dataframe to sample from.
@@ -179,6 +163,12 @@ declare function jsoniq_pandas:sample($dataframe as object*, $num as integer) {
         return $dataframe[$random_numbers[$i]]
 };
 
+(: sample returns a random sample from the DataFrame with a seed. We currently only support returning results from the first axis, that is rows of the DataFrame. We do not support weighted samples or fractional samples. We only support sampling with replacement.
+Required params are:
+- dataframe (DataFrame): the dataframe to sample from.
+- n (integer): number of samples to return.
+- seed (integer): seed to be used for random number sampling.
+:)
 declare function jsoniq_pandas:sample($dataframe as object*, $num as integer, $seed as integer) {
     if ($num lt 0) then ()
         else
@@ -193,51 +183,46 @@ declare function jsoniq_pandas:sample($dataframe as object*, $num as integer, $s
 Required params are:
 - dataframe (DataFrame): the dataframe to search nulls in.
 :)
-declare function jsoniq_pandas:isnull($dataframe as object*) {
+declare function jsoniq_pandas:isnull($dataframe as object*) as object* {
+    let $keys := keys($dataframe)
     for $row in $dataframe
-    return jsoniq_pandas:isnull_object($row)
+    return jsoniq_pandas:isnull_row($row, $keys)
 };
 
-
-declare function jsoniq_pandas:isnull_value($value) {
-    if ($value eq null) then true
-    else false
-};
-
-declare function jsoniq_pandas:isnull_array($array as array) {
-    (: TODO: Add support for limited number of replacements :)
-    for $value in $array[]
-    return typeswitch($value)
-        case array return jsoniq_pandas:isnull_array($value)
-        case object return jsoniq_pandas:isnull_object($value)
-        default return jsoniq_pandas:isnull_value($value)
-};
-
-declare function jsoniq_pandas:isnull_object($object as object) {
+declare function jsoniq_pandas:isnull_row($row as object, $keys) as object {
     {|
-        for $key in keys($object)
-        let $value := $object.$key
-        return
-            typeswitch($value)
-            case object return 
-                let $result := jsoniq_pandas:isnull_object($value)
-                return {$key: $result}
-            case array return
-                let $result := jsoniq_pandas:isnull_array($value)
-                return {$key: $result}
-            default return
-                let $result := jsoniq_pandas:isnull_value($value)
-                return {$key: $result}
+        for $key in $keys
+        return if (empty($row.$key)) then {$key: true}
+               else if ($row.$key instance of atomic) then 
+                    if ($row.$key eq null) then {$key: true}
+                    else {$key: false}
+               else {$key: false}
     |}
 };
 
 
-declare type jsoniq_pandas:fillna_params as {
-    "value": "item",
-    "limit": "integer=1000"  
+(: fillna replaces null values with specified values. It returns a new DataFrame with the replacement result.
+Required params are:
+- dataframe (DataFrame): the dataframe to fill nulls in.
+Params is an object for optional arguments. These arguments are:
+- value (integer): the value to replace null's with.
+:)
+declare function jsoniq_pandas:fillna($dataframe as object*, $params as object) as object*{
+    let $params := validate type jsoniq_pandas:fillna_params {$params}
+    let $keys := keys($dataframe)
+    for $row in $dataframe
+    return jsoniq_pandas:fillna_row($row, $params, $keys)
 };
 
-declare function jsoniq_pandas:fillna_row($row as object, $params as object, $keys) {
+declare function jsoniq_pandas:fillna($dataframe as object*) as object*{
+    jsoniq_pandas:fillna($dataframe, {})
+};
+
+declare type jsoniq_pandas:fillna_params as {
+    "value": "item"
+};
+
+declare function jsoniq_pandas:fillna_row($row as object, $params as object, $keys) as object{
     {|
         for $key in $keys
         return if (empty($row.$key)) then {$key: $params.value}
@@ -248,29 +233,6 @@ declare function jsoniq_pandas:fillna_row($row as object, $params as object, $ke
     |}
 };
 
-(: fillna replaces null values with specified values. It returns a new DataFrame with the replacement result.
-Required params are:
-- dataframe (DataFrame): the dataframe to fill nulls in.
-Params is an object for optional arguments. These arguments are:
-- value (integer): the value to replace null's with.
-- limit (integer): how many null's to fill. If unspecified, all nulls are replaced.
-:)
-declare function jsoniq_pandas:fillna($dataframe as object*, $params as object) {
-    let $params := validate type jsoniq_pandas:fillna_params {$params}
-    let $keys := keys($dataframe)
-    for $row in $dataframe
-    return jsoniq_pandas:fillna_row($row, $params, $keys)
-};
-
-declare function jsoniq_pandas:fillna($dataframe as object*) {
-    jsoniq_pandas:fillna($dataframe, {})
-};
-
-
-declare type jsoniq_pandas:dropna_params as {
-    "axis": "integer=0",
-    "how": "string=any"
-};
 (: dropna removes rows or columns from DataFrames that contain nulls. The $axis parameter controls if rows or columns are removed, whereas the $how parameter controls the ruling for dropping the row or column.
 Required params are:
 - dataframe (DataFrame): the dataframe to drop nulls from.
@@ -286,6 +248,11 @@ declare function jsoniq_pandas:dropna($dataframe as object*, $params as object) 
             jsoniq_pandas:remove_rows($dataframe, $params.how, $keys)
         else
             jsoniq_pandas:remove_columns($dataframe, $params.how, $keys)
+};
+
+declare type jsoniq_pandas:dropna_params as {
+    "axis": "integer=0",
+    "how": "string=any"
 };
 
 declare function jsoniq_pandas:remove_columns($dataframe as object*, $how as string, $keys) {
