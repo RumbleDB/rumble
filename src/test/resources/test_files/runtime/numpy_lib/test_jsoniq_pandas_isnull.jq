@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "name" : false, "type" : false, "other" : true, "other2" : false, "anotherArray" : true }, { "name" : false, "type" : true, "other" : false, "other2" : false, "anotherArray" : false }, { "name" : false, "type" : false, "other" : true, "other2" : true, "anotherArray" : false })":)
+(:JIQS: ShouldRun; Output="({ "anotherArray" : true, "name" : false, "other" : true, "other2" : false, "type" : false }, { "anotherArray" : false, "name" : false, "other" : false, "other2" : false, "type" : true }, { "anotherArray" : false, "name" : false, "other" : true, "other2" : true, "type" : false })":)
 import module namespace pandas = "jsoniq_pandas.jq";
 
 declare type local:sample-type as {
@@ -9,6 +9,16 @@ declare type local:sample-type as {
     "anotherArray": [["integer"]]
 };
 
+declare function local:order-by-keys($object as object*) as object* {
+    for $row in $object
+    return
+        {|
+            for $key in keys($row)
+            order by $key
+            return {$key: $row.$key}
+        |}
+};
+
 declare variable $file_data := json-file("../../../queries/sample-na-data-3.json");
 let $data := validate type local:sample-type* {$file_data}
-return $data=>pandas:isnull()
+return local:order-by-keys($data=>pandas:isnull())

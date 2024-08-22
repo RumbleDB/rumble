@@ -33,6 +33,7 @@ declare function jsoniq_pandas:describe($dataframe as object*) {
 declare function jsoniq_pandas:all_report($column, $params as object) {
     let $column_type := item-type($column)
     return switch($column_type)
+        case "xs:int" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:integer" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:decimal" return jsoniq_pandas:numerical_report($column, $params)
         case "xs:float" return jsoniq_pandas:numerical_report($column, $params)

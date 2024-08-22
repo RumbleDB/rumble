@@ -54,8 +54,6 @@ public class XmlDocFunctionIterator extends LocalFunctionCallIterator {
                 Document xmlDocument = documentBuilder.parse(xmlFileStream);
                 Item res = ItemParser.getItemFromXML(xmlDocument);
                 return res;
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             } catch (ParserConfigurationException e) {
                 throw new OurBadException("Document builder creation failed with: " + e);
             } catch (IOException e) {

@@ -31,7 +31,9 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
 
     protected void storeNextResult() {
         if (this.resultCounter == 0) {
+            // Remove duplicates
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
+            // Sort values in document order.
             this.results.sort(Item::compareXmlNode);
         }
         if (this.resultCounter < this.results.size()) {
