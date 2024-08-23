@@ -1,3 +1,0 @@
-(:JIQS: ShouldRun; UpdateDim=[3,8]; Output="[ { "name" : "Tom Jones", "rating" : "B", "userID" : "U01" }, { "name" : "Mary Doe", "rating" : "A", "userID" : "U02" }, { "name" : "Dee Linquent", "rating" : "D", "userID" : "U03" }, { "name" : "Roger Smith", "rating" : "C", "userID" : "U04" }, { "name" : "Jack Sprat", "rating" : "B", "userID" : "U05" }, { "name" : "Rip Van Winkle", "rating" : "B", "userID" : "U06" }, { "name" : "Annabel Lee", "rating" : "B", "userID" : "U07" } ]" :)
-let $users := delta-file("./R").users
-return $users
