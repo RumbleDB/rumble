@@ -106,6 +106,16 @@ public class ProgramIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public boolean isSequential() {
+        return this.statementsAndExprIterator.isSequential();
+    }
+
+    @Override
+    public boolean isUpdating() {
+        return this.statementsAndExprIterator.isUpdating();
+    }
+
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!encounteredExitStatement) {
             return this.statementsAndExprIterator.getPendingUpdateList(context);
