@@ -33,6 +33,7 @@ import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.DeleteExpression;
@@ -138,6 +139,18 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
         return expression.getExpressionClassification();
     }
+
+    // Region Typing
+
+    @Override
+    public ExpressionClassification visitTreatExpression(TreatExpression expression, ExpressionClassification argument) {
+        ExpressionClassification result = this.visit(expression.getMainExpression(), argument);
+        expression.setExpressionClassification(result);
+        return result;
+    }
+
+
+    // Endregion
 
     // Region FLWOR
 
