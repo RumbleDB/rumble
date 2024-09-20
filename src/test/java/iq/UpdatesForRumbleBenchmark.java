@@ -42,6 +42,8 @@ public class UpdatesForRumbleBenchmark {
                 "yes",
                 "--print-iterator-tree",
                 "yes",
+                "--apply-updates",
+                "yes",
                 "--show-error-info",
                 "yes",
                 "--materialization-cap",
@@ -56,6 +58,8 @@ public class UpdatesForRumbleBenchmark {
                 "--output-format",
                 "delta",
                 "--show-error-info",
+                "yes",
+                "--apply-updates",
                 "yes",
                 "--materialization-cap",
                 "900000"
