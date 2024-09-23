@@ -71,6 +71,6 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keyValuePairs);
+        return ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
     }
 };
