@@ -62,28 +62,28 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
-                        "--print-iterator-tree",
-                        "yes",
-                        "--variable:externalUnparsedString",
-                        "unparsed string",
-                        "--apply-updates",
-                        "yes" }
+                    "--print-iterator-tree",
+                    "yes",
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--apply-updates",
+                    "yes" }
         ).setExternalVariableValue(
-                        Name.createVariableInNoNamespace("externalStringItem"),
-                        Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
+            Name.createVariableInNoNamespace("externalStringItem"),
+            Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
+        )
+            .setExternalVariableValue(
+                Name.createVariableInNoNamespace("externalIntegerItems"),
+                Arrays.asList(
+                    new Item[] {
+                        ItemFactory.getInstance().createIntItem(1),
+                        ItemFactory.getInstance().createIntItem(2),
+                        ItemFactory.getInstance().createIntItem(3),
+                        ItemFactory.getInstance().createIntItem(4),
+                        ItemFactory.getInstance().createIntItem(5),
+                    }
                 )
-                .setExternalVariableValue(
-                        Name.createVariableInNoNamespace("externalIntegerItems"),
-                        Arrays.asList(
-                                new Item[] {
-                                        ItemFactory.getInstance().createIntItem(1),
-                                        ItemFactory.getInstance().createIntItem(2),
-                                        ItemFactory.getInstance().createIntItem(3),
-                                        ItemFactory.getInstance().createIntItem(4),
-                                        ItemFactory.getInstance().createIntItem(5),
-                                }
-                        )
-                );
+            );
     }
 
     public static void readFileList(File dir) {

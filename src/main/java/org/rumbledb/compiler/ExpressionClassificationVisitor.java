@@ -143,7 +143,10 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     // Region Typing
 
     @Override
-    public ExpressionClassification visitTreatExpression(TreatExpression expression, ExpressionClassification argument) {
+    public ExpressionClassification visitTreatExpression(
+            TreatExpression expression,
+            ExpressionClassification argument
+    ) {
         ExpressionClassification result = this.visit(expression.getMainExpression(), argument);
         expression.setExpressionClassification(result);
         return result;
