@@ -186,6 +186,10 @@ public class JsoniqQueryExecutor {
             }
         }
 
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL() && outputPath != null) {
+            sequence.applyPUL();
+        }
+
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
         if (logPath != null) {
@@ -225,6 +229,9 @@ public class JsoniqQueryExecutor {
         SequenceOfItems sequence = rumble.runQuery(query);
         if (!sequence.availableAsRDD()) {
             return sequence.populateList(resultList);
+        }
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
         resultList.clear();
         JavaRDD<Item> rdd = sequence.getAsRDD();

@@ -73,6 +73,8 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
                     "yes",
                     "--show-error-info",
                     "yes",
+                    "--apply-updates",
+                    "yes",
                     "--materialization-cap",
                     "900000"
                 }
@@ -86,7 +88,9 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
                 "--output-format",
                 "delta",
                 "--show-error-info",
-                "yes"
+                "yes",
+                "--apply-updates",
+                "yes",
             }
     );
 
@@ -97,7 +101,9 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
                 "--output-format",
                 "delta",
                 "--show-error-info",
-                "yes"
+                "yes",
+                "--apply-updates",
+                "yes",
             }
     );
 
@@ -254,6 +260,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
     protected String runIterators(SequenceOfItems sequence) {
         String actualOutput = getIteratorOutput(sequence);
+        applyPossibleUpdates(sequence);
         return actualOutput;
     }
 
@@ -304,9 +311,11 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
     private String getRDDResults(SequenceOfItems sequence) {
         JavaRDD<Item> rdd = sequence.getAsRDD();
+        applyPossibleUpdates(sequence);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         List<String> collectedOutput = new ArrayList<String>();
         SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
+
 
         if (collectedOutput.isEmpty()) {
             return "";
@@ -327,6 +336,12 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         result = result.substring(0, result.length() - 2);
         result += ")";
         return result;
+    }
+
+    private void applyPossibleUpdates(SequenceOfItems sequence) {
+        if (getConfiguration().applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
+        }
     }
 
 }

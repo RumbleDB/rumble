@@ -30,14 +30,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
@@ -56,6 +57,33 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     public RuntimeTests(File testFile) {
         this.testFile = testFile;
+    }
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--print-iterator-tree",
+                    "yes",
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--apply-updates",
+                    "yes" }
+        ).setExternalVariableValue(
+            Name.createVariableInNoNamespace("externalStringItem"),
+            Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
+        )
+            .setExternalVariableValue(
+                Name.createVariableInNoNamespace("externalIntegerItems"),
+                Arrays.asList(
+                    new Item[] {
+                        ItemFactory.getInstance().createIntItem(1),
+                        ItemFactory.getInstance().createIntItem(2),
+                        ItemFactory.getInstance().createIntItem(3),
+                        ItemFactory.getInstance().createIntItem(4),
+                        ItemFactory.getInstance().createIntItem(5),
+                    }
+                )
+            );
     }
 
     public static void readFileList(File dir) {
