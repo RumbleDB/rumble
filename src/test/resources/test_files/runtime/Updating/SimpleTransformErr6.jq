@@ -5,4 +5,4 @@ let $y := copy $je := [1 to 4]
           return $je
 return $x
 
-(: target of modify is not same level copy var :)
+(: target of modify is not mutable :)

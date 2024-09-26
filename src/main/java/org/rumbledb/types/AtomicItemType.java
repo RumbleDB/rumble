@@ -547,4 +547,24 @@ public class AtomicItemType implements ItemType {
         }
         return true;
     }
+
+    @Override
+    public String getSparkSQLType() {
+        if (this.getPrimitiveType().equals(stringItem)) {
+            return "STRING";
+        }
+        if (this.getPrimitiveType().equals(booleanItem)) {
+            return "BOOLEAN";
+        }
+        if (this.getPrimitiveType().equals(doubleItem)) {
+            return "DOUBLE";
+        }
+        if (this.getPrimitiveType().equals(floatItem)) {
+            return "FLOAT";
+        }
+        if (this.getPrimitiveType().equals(decimalItem)) {
+            return "DECIMAL";
+        }
+        throw new UnsupportedOperationException("getSparkSQLType is unsupported for " + this.getPrimitiveType());
+    }
 }
