@@ -8,7 +8,7 @@ The following software is required:
 
 - [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 or java 11.
 - [Spark](https://spark.apache.org/), version 3.1.2 (for example)
-- [Ant](http://www.ant.org/), version 1.11.1
+- [Ant](https://ant.apache.org/), version 1.11.1
 - [ANTLR](http://www.ant.org/), version 4.8 (supplied in our repository)
 - [Maven](https://maven.apache.org/) 3.6.0
 
