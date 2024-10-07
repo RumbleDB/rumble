@@ -20,14 +20,21 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import sparksoniq.spark.SparkSessionManager;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -47,6 +54,26 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+
+        // we can do an optimization using SparkSQL OFFSET if it is a DataFrame
+        if (iterator.isDataFrame()) {
+            JSoundDataFrame df = iterator.getDataFrame(dynamicContext);
+            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+            df = df.evaluateSQL(
+                    String.format(
+                            "SELECT * FROM %s LIMIT 1 OFFSET %s",
+                            input,
+                            Integer.toString(this.position - 1)
+                    ),
+                    df.getItemType()
+            );
+            JavaRDD<Item> rdd = dataFrameToRDDOfItems(
+                    df,
+                    this.getMetadata()
+            );
+            return SparkSessionManager.collectRDDwithLimit(rdd, this.getMetadata()).get(0);
+        }
+
         List<Item> materializedItems = new ArrayList<>();
         this.iterator.materializeNFirstItems(
             dynamicContext,
