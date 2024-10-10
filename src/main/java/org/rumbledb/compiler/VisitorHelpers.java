@@ -64,12 +64,12 @@ public class VisitorHelpers {
     }
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
+        List<CloneVisitor> optimizers = new ArrayList<>();
+        optimizers.add(new FunctionInliningVisitor());
+        optimizers.add(new ProjectionPushdownVisitor());
         MainModule result = module;
-        // Annotate recursive functions as such
-        new FunctionDependenciesVisitor().visit(result, null);
-        // Inline non-recursive functions
-        if (conf.functionInlining()) {
-            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+        for (CloneVisitor optimizer : optimizers) {
+            result = (MainModule) optimizer.visit(result, null);
         }
         return result;
     }
