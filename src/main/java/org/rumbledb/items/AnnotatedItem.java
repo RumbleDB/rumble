@@ -369,4 +369,79 @@ public class AnnotatedItem implements Item {
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return this.itemToAnnotate.generateNativeQuery(context);
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.itemToAnnotate.getSparkSQLValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.itemToAnnotate.getSparkSQLValue(itemType);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        return this.itemToAnnotate.getSparkSQLType();
+    }
+
+    @Override
+    public void putItemAt(Item item, int i) {
+        this.itemToAnnotate.putItemAt(item, i);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> items, int i) {
+        this.itemToAnnotate.putItemsAt(items, i);
+    }
+
+    @Override
+    public void removeItemAt(int i) {
+        this.itemToAnnotate.removeItemAt(i);
+    }
+
+    @Override
+    public void removeItemByKey(String key) {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.itemToAnnotate.getMutabilityLevel();
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.itemToAnnotate.setMutabilityLevel(mutabilityLevel);
+    }
+
+    @Override
+    public long getTopLevelID() {
+        return this.itemToAnnotate.getTopLevelID();
+    }
+
+    @Override
+    public void setTopLevelID(long topLevelID) {
+        this.itemToAnnotate.setTopLevelID(topLevelID);
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.itemToAnnotate.getPathIn();
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.itemToAnnotate.setPathIn(pathIn);
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.itemToAnnotate.getTableLocation();
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.itemToAnnotate.setTableLocation(location);
+    }
 }

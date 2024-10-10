@@ -56,7 +56,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.children.isEmpty()) {
             result.addAll(this.children.get(0).materialize(dynamicContext));
         }
-        Item item = ItemFactory.getInstance().createArrayItem(result);
+        Item item = ItemFactory.getInstance().createArrayItem(result, true);
         return item;
     }
 

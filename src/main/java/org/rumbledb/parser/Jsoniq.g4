@@ -76,7 +76,7 @@ typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement
 
 caseStatement               : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=statement ;
 
-annotation                  : '%' name=qname ('(' Literal (',' Literal)* ')')? ;
+annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
 
 annotations                 : annotation* ;
 
@@ -133,7 +133,7 @@ contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exp
 
 functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' (fn_body=statementsAndOptionalExpr) '}' | 'external');
+                          ('{' (fn_body=statementsAndOptionalExpr) '}' | is_external='external');
 
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -430,7 +430,6 @@ keyWords                : Kjsoniq
                         | Kappend
                         | Kcopy
                         | Kmodify
-                        | Kjson
                         | Kinto
                         | Kvalue
                         | Kwith
@@ -443,6 +442,8 @@ keyWords                : Kjsoniq
                         | Kexit
                         | Kreturning
                         | Kwhile
+                        | Kjson
+                        | Kupdating
                         ;
 
 ///////////////////////// literals
@@ -573,11 +574,13 @@ Kinto                   : 'into';
 
 Kvalue                  : 'value';
 
-Kjson                   : 'json';
-
 Kwith                   : 'with';
 
 Kposition               : 'position';
+
+Kjson                   : 'json';
+
+Kupdating               :  'updating';
 
 ///////////////////////// Scripting keywords
 Kbreak                  : 'break' ;

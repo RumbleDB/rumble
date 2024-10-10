@@ -463,7 +463,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             returnType = expression.getBody().getExpression().getStaticSequenceType();
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
-        FunctionSignature signature = new FunctionSignature(params, returnType);
+        FunctionSignature signature = new FunctionSignature(params, returnType, expression.isUpdating());
         expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         return argument;
     }
@@ -533,6 +533,29 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 throw e;
             }
+        }
+
+        // handle 'delta-file' function
+        if (
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("delta-file"))
+                && args.size() > 0
+                && args.get(0) instanceof StringLiteralExpression
+        ) {
+            String path = ((StringLiteralExpression) args.get(0)).getValue();
+            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+            }
+            StructType s = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .read()
+                .format("delta")
+                .load(uri.toString())
+                .schema();
+            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
+            // TODO : check if arity is correct
+            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+            return true;
         }
 
         // handle 'round' function
@@ -622,7 +645,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         if (expression.isPartialApplication()) {
-            FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
+            FunctionSignature partialSignature = new FunctionSignature(
+                    partialParams,
+                    signature.getReturnType(),
+                    expression.isUpdating()
+            );
             expression.setStaticSequenceType(
                 new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature))
             );
@@ -855,8 +882,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         visit(expression.getModifyExpression(), argument);
         visit(expression.getReturnExpression(), argument);
-
-        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        expression.setStaticSequenceType(expression.getReturnExpression().getStaticSequenceType());
 
         return argument;
     }
@@ -1879,7 +1905,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (isPartialApplication) {
             FunctionSignature newSignature = new FunctionSignature(
                     partialFormalParameterTypes,
-                    signature.getReturnType()
+                    signature.getReturnType(),
+                    expression.isUpdating()
             );
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(newSignature)));
             return argument;

@@ -584,7 +584,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         PendingUpdateList result = new PendingUpdateList();
 
-        if (!isRDDOrDataFrame()) {
+        if (!this.expression.isRDDOrDataFrame()) {
             this.child.open(context);
             this.tupleContext = new DynamicContext(context); // assign current context
 
@@ -594,12 +594,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
                                                                                                   // variables
                 // from new tuple
-
-                result = PendingUpdateList.mergeUpdates(
-                    result,
-                    this.expression.getPendingUpdateList(this.tupleContext),
-                    this.getMetadata()
-                );
+                result.mergeUpdates(this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
 
             }
             this.child.close();
@@ -625,7 +620,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 // from new tuple
 
                 PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
-                result = PendingUpdateList.mergeUpdates(result, intermediateResult, this.getMetadata());
+                result.mergeUpdates(intermediateResult, this.getMetadata());
             }
         }
         return result;

@@ -245,8 +245,8 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (RuntimeIterator child : children) {
-            pul = PendingUpdateList.mergeUpdates(pul, child.getPendingUpdateList(context), this.getMetadata());
+        for (RuntimeIterator child : this.children) {
+            pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
         }
         return pul;
     }

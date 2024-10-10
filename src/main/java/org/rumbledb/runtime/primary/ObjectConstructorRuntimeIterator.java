@@ -85,7 +85,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata());
+                .createObjectItem(keys, values, getMetadata(), true);
 
         } else {
 
@@ -98,7 +98,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 valueIterator.close();
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
-                    values.add(ItemFactory.getInstance().createArrayItem(currentResults));
+                    values.add(ItemFactory.getInstance().createArrayItem(currentResults, true));
                 } else if (currentResults.size() == 1) {
                     values.add(currentResults.get(0));
                 } else {
@@ -129,7 +129,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata());
+                .createObjectItem(keys, values, getMetadata(), true);
         }
     }
 

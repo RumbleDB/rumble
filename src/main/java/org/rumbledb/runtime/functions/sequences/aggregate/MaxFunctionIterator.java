@@ -472,6 +472,18 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (df.isEmptySequence()) {
                 return null;
             }
+            ItemType maxType;
+            if (
+                df.getItemType().isObjectItemType()
+                    && df.getItemType().getObjectContentFacet().containsKey("tableLocation")
+            ) {
+                maxType = df.getItemType()
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
+            } else {
+                maxType = df.getItemType();
+            }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             JSoundDataFrame maxDF = df.evaluateSQL(
                 String.format(
@@ -480,7 +492,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     SparkSessionManager.atomicJSONiqItemColumnName,
                     input
                 ),
-                df.getItemType()
+                maxType
             );
             return itemTypePromotion(maxDF.getExactlyOneItem());
         }
