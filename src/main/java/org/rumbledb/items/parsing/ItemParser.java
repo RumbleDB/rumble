@@ -261,6 +261,13 @@ public class ItemParser implements Serializable {
             return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
         }
 
+        if (fields.length == 2 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
+        }
+        if (fields.length == 2 && fieldnames[1].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 1, null, fields[1].dataType(), metadata, itemType);
+        }
+
         if (
             fields.length == 5
                 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)

@@ -861,11 +861,12 @@ public class FlworDataFrameUtils {
      * @param offset - starting offset for the first index
      * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
      */
-    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset) {
-        return new JSoundDataFrame(
+    public static Dataset<Row> zipWithIndex(JSoundDataFrame jdf, Long offset) {
+        return zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName);
+        /*return new JSoundDataFrame(
                 zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
                 jdf.getItemType()
-        );
+        );*/
     }
 
     /**

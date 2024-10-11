@@ -24,6 +24,8 @@ import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -282,13 +284,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
                     childDataFrame.getItemType()
                 );
             } else {
-                JSoundDataFrame zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
+                Dataset<Row> zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
                     childDataFrame,
                     1L
                 );
-                String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
+                String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame);
                 List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-                    zippedChildDataFrame.getDataFrame().schema(),
+                    zippedChildDataFrame.schema(),
                     null,
                     null,
                     null
