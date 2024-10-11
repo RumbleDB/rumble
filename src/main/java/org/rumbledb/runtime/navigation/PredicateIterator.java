@@ -256,7 +256,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (getConfiguration().nativeExecution()) {
             nativeQuery = filter.generateNativeQuery(nativeClauseContext);
         }
-        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+        if (nativeQuery == NativeClauseContext.NoNativeQuery || !this.isBooleanOnlyFilter) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
                 List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
