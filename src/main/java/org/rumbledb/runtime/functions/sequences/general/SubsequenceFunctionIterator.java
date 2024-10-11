@@ -105,6 +105,17 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 df.getItemType()
             );
         }
+        else
+        {
+            df = df.evaluateSQL(
+                    String.format(
+                            "SELECT * FROM %s OFFSET %s",
+                            input,
+                            Integer.toString(this.startPosition - 1)
+                    ),
+                    df.getItemType()
+            );
+        }
         return new JSoundDataFrame(df.getDataFrame(), df.getItemType());
     }
 
