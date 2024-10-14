@@ -102,19 +102,23 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             return results.get(0)._1();
         }
 
-
-        // TODO DO THIS WITH ITERATION IN ANY CASE
-        List<Item> materializedItems = new ArrayList<>();
-        this.iterator.materializeNFirstItems(
-            dynamicContext,
-            materializedItems,
-            this.position
-        );
-        if (materializedItems.size() >= this.position) {
-            return materializedItems.get(this.position - 1);
+        if (this.iterator.isOpen()) {
+            this.iterator.reset(this.currentDynamicContextForLocalExecution);
         } else {
-            return null;
+            this.iterator.open(this.currentDynamicContextForLocalExecution);
         }
+        int currentPosition = 0;
+        Item result = null;
+        while (this.iterator.hasNext()) {
+            if (currentPosition < this.position-1 ) {
+                this.iterator.next();
+            } else if (currentPosition == this.position-1) { // check again to avoid returning anything at idx 0
+                result = this.iterator.next();
+                break;
+            }
+            currentPosition++;
+        }
+        return result;
     }
 
 }
