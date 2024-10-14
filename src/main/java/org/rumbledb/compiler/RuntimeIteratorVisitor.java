@@ -142,6 +142,7 @@ import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
+import org.rumbledb.runtime.functions.sequences.general.SubsequenceFunctionIterator;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
@@ -512,14 +513,70 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
-                if (n <= this.config.getResultSizeCap()) {
-                    RuntimeIterator runtimeIterator = new SequenceLookupIterator(
-                            mainIterator,
-                            n,
-                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    );
-                    runtimeIterator.setStaticContext(expression.getStaticContext());
-                    return runtimeIterator;
+                RuntimeIterator runtimeIterator = new SequenceLookupIterator(
+                        mainIterator,
+                        n,
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                );
+                runtimeIterator.setStaticContext(expression.getStaticContext());
+                return runtimeIterator;
+            }
+        }
+
+        // optimization if predicate is of type [position() eq/lt/gt x]
+        if (expression.getPredicateExpression() instanceof ComparisonExpression) {
+            Node left = expression.getPredicateExpression().getChildren().get(0);
+            Node right = expression.getPredicateExpression().getChildren().get(1);
+            Node intLiteral = null;
+            if (left instanceof FunctionCallExpression && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")) {
+                if (right instanceof IntegerLiteralExpression) {
+                    intLiteral = right;
+                }
+            }
+            if (right instanceof FunctionCallExpression && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")) {
+                if (left instanceof IntegerLiteralExpression) {
+                    intLiteral = left;
+                }
+            }
+            if (intLiteral != null) {
+                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
+                if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                    int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                    ComparisonExpression.ComparisonOperator op = ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator();
+                    if (op./*getCorrespondingValueComparison().*/toString().equals("eq")) {
+                        RuntimeIterator runtimeIterator = new SequenceLookupIterator(
+                                mainIterator,
+                                n,
+                                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                        );
+                        runtimeIterator.setStaticContext(expression.getStaticContext());
+                        return runtimeIterator;
+                    }
+                    if (op./*getCorrespondingValueComparison().*/toString().equals("le")) {
+                        RuntimeStaticContext ctx = expression.getStaticContextForRuntime(this.config, this.visitorConfig);
+                        RuntimeIterator runtimeIterator = new SubsequenceFunctionIterator(
+                                new ArrayList<RuntimeIterator>() {{
+                                    add(mainIterator);
+                                    add(new DoubleRuntimeIterator(0.0, ctx));
+                                    add(new DoubleRuntimeIterator((double) n, ctx));
+                                }},
+                                ctx
+                        );
+                        runtimeIterator.setStaticContext(expression.getStaticContext());
+                        return runtimeIterator;
+                    }
+                    if (op./*getCorrespondingValueComparison().*/toString().equals("ge")) {
+                        RuntimeStaticContext ctx = expression.getStaticContextForRuntime(this.config, this.visitorConfig);
+                        RuntimeIterator runtimeIterator = new SubsequenceFunctionIterator(
+                                new ArrayList<RuntimeIterator>() {{
+                                    add(mainIterator);
+                                    add(new DoubleRuntimeIterator((double) n, ctx));
+                                }},
+                                ctx
+                        );
+                        runtimeIterator.setStaticContext(expression.getStaticContext());
+                        return runtimeIterator;
+                    }
                 }
             }
         }
