@@ -523,7 +523,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             }
         }
 
-        // optimization if predicate is of type [position() eq/lt/gt x]
+        /*// optimization if predicate is of type [position() eq/lt/gt x]
         if (expression.getPredicateExpression() instanceof ComparisonExpression) {
             Node left = expression.getPredicateExpression().getChildren().get(0);
             Node right = expression.getPredicateExpression().getChildren().get(1);
@@ -543,7 +543,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                     int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
                     ComparisonExpression.ComparisonOperator op = ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator();
-                    if (op./*getCorrespondingValueComparison().*/toString().equals("eq")) {
+                    //if (op.getCorrespondingValueComparison().toString().equals("eq")) {
+                    if (op.toString().equals("eq")) {
                         RuntimeIterator runtimeIterator = new SequenceLookupIterator(
                                 mainIterator,
                                 n,
@@ -552,7 +553,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         runtimeIterator.setStaticContext(expression.getStaticContext());
                         return runtimeIterator;
                     }
-                    if (op./*getCorrespondingValueComparison().*/toString().equals("le")) {
+                    //if (op.getCorrespondingValueComparison().toString().equals("le")) {
+                    if (op.toString().equals("le")) {
                         RuntimeStaticContext ctx = expression.getStaticContextForRuntime(this.config, this.visitorConfig);
                         RuntimeIterator runtimeIterator = new SubsequenceFunctionIterator(
                                 new ArrayList<RuntimeIterator>() {{
@@ -565,7 +567,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         runtimeIterator.setStaticContext(expression.getStaticContext());
                         return runtimeIterator;
                     }
-                    if (op./*getCorrespondingValueComparison().*/toString().equals("ge")) {
+                    //if (op.getCorrespondingValueComparison().toString().equals("ge")) {
+                    if (op.toString().equals("ge")) {
                         RuntimeStaticContext ctx = expression.getStaticContextForRuntime(this.config, this.visitorConfig);
                         RuntimeIterator runtimeIterator = new SubsequenceFunctionIterator(
                                 new ArrayList<RuntimeIterator>() {{
@@ -579,7 +582,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     }
                 }
             }
-        }
+        }*/
         RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
         RuntimeIterator runtimeIterator = new PredicateIterator(
                 mainIterator,
