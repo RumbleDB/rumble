@@ -80,12 +80,12 @@ NativeFLWORRuntimeTestsParallelismDeactivated:
     - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
 
 updatedeltaruntime-test:
-  stage: test
+  stage: test3
   script:
     - mvn -Dtest=DeltaUpdateRuntimeTests test
 
 statictyping-test:
-  stage: test
+  stage: test3
   script:
     - mvn -Dtest=StaticTypeTests test
 
