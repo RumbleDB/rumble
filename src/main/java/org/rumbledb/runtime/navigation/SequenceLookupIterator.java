@@ -100,10 +100,8 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             return results.get(0)._1();
         }
 
-        if (this.iterator.isOpen()) {
-            this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        } else {
-            this.iterator.open(this.currentDynamicContextForLocalExecution);
+        if (!this.iterator.isOpen()) {
+            this.iterator.open(dynamicContext);
         }
         int currentPosition = 0;
         Item result = null;
