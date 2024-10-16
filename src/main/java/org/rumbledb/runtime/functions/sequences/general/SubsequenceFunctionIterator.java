@@ -22,8 +22,6 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,7 +30,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -104,16 +101,14 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 ),
                 df.getItemType()
             );
-        }
-        else
-        {
+        } else {
             df = df.evaluateSQL(
-                    String.format(
-                            "SELECT * FROM %s OFFSET %s",
-                            input,
-                            Integer.toString(this.startPosition - 1)
-                    ),
-                    df.getItemType()
+                String.format(
+                    "SELECT * FROM %s OFFSET %s",
+                    input,
+                    Integer.toString(this.startPosition - 1)
+                ),
+                df.getItemType()
             );
         }
         return new JSoundDataFrame(df.getDataFrame(), df.getItemType());

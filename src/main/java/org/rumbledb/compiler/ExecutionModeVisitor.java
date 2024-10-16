@@ -896,8 +896,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
             String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
-                    expression.setHighestExecutionMode(ExecutionMode.LOCAL);
-                    return argument;
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
             }
         }
         expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));

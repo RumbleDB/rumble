@@ -30,9 +30,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -64,16 +62,16 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             JSoundDataFrame df = iterator.getDataFrame(dynamicContext);
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             df = df.evaluateSQL(
-                    String.format(
-                            "SELECT * FROM %s LIMIT 1 OFFSET %s",
-                            input,
-                            Integer.toString(this.position - 1)
-                    ),
-                    df.getItemType()
+                String.format(
+                    "SELECT * FROM %s LIMIT 1 OFFSET %s",
+                    input,
+                    Integer.toString(this.position - 1)
+                ),
+                df.getItemType()
             );
             JavaRDD<Item> rdd = dataFrameToRDDOfItems(
-                    df,
-                    this.getMetadata()
+                df,
+                this.getMetadata()
             );
 
             List<Item> results = rdd.take(1);
@@ -93,7 +91,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
             JavaPairRDD<Item, Long> filteredRDD;
             filteredRDD = zippedRDD.filter(
-                    (input) -> input._2() == this.position - 1
+                (input) -> input._2() == this.position - 1
             );
             List<Tuple2<Item, Long>> results = filteredRDD.take(1);
             if (results.isEmpty()) {
@@ -110,9 +108,9 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
         int currentPosition = 0;
         Item result = null;
         while (this.iterator.hasNext()) {
-            if (currentPosition < this.position-1 ) {
+            if (currentPosition < this.position - 1) {
                 this.iterator.next();
-            } else if (currentPosition == this.position-1) { // check again to avoid returning anything at idx 0
+            } else if (currentPosition == this.position - 1) { // check again to avoid returning anything at idx 0
                 result = this.iterator.next();
                 break;
             }
