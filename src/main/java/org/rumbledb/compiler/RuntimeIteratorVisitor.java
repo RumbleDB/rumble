@@ -522,71 +522,49 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             }
         }
 
-        /*
-         * // optimization if predicate is of type [position() eq/lt/gt x]
-         * if (expression.getPredicateExpression() instanceof ComparisonExpression) {
-         * Node left = expression.getPredicateExpression().getChildren().get(0);
-         * Node right = expression.getPredicateExpression().getChildren().get(1);
-         * Node intLiteral = null;
-         * if (left instanceof FunctionCallExpression && ((FunctionCallExpression)
-         * left).getFunctionName().getLocalName().equals("position")) {
-         * if (right instanceof IntegerLiteralExpression) {
-         * intLiteral = right;
-         * }
-         * }
-         * if (right instanceof FunctionCallExpression && ((FunctionCallExpression)
-         * right).getFunctionName().getLocalName().equals("position")) {
-         * if (left instanceof IntegerLiteralExpression) {
-         * intLiteral = left;
-         * }
-         * }
-         * if (intLiteral != null) {
-         * String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
-         * if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
-         * int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
-         * ComparisonExpression.ComparisonOperator op = ((ComparisonExpression)
-         * expression.getPredicateExpression()).getComparisonOperator();
-         * //if (op.getCorrespondingValueComparison().toString().equals("eq")) {
-         * if (op.toString().equals("eq")) {
-         * RuntimeIterator runtimeIterator = new SequenceLookupIterator(
-         * mainIterator,
-         * n,
-         * expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-         * );
-         * runtimeIterator.setStaticContext(expression.getStaticContext());
-         * return runtimeIterator;
-         * }
-         * //if (op.getCorrespondingValueComparison().toString().equals("le")) {
-         * if (op.toString().equals("le")) {
-         * RuntimeStaticContext ctx = expression.getStaticContextForRuntime(this.config, this.visitorConfig);
-         * RuntimeIterator runtimeIterator = new SubsequenceFunctionIterator(
-         * new ArrayList<RuntimeIterator>() {{
-         * add(mainIterator);
-         * add(new DoubleRuntimeIterator(0.0, ctx));
-         * add(new DoubleRuntimeIterator((double) n, ctx));
-         * }},
-         * ctx
-         * );
-         * runtimeIterator.setStaticContext(expression.getStaticContext());
-         * return runtimeIterator;
-         * }
-         * //if (op.getCorrespondingValueComparison().toString().equals("ge")) {
-         * if (op.toString().equals("ge")) {
-         * RuntimeStaticContext ctx = expression.getStaticContextForRuntime(this.config, this.visitorConfig);
-         * RuntimeIterator runtimeIterator = new SubsequenceFunctionIterator(
-         * new ArrayList<RuntimeIterator>() {{
-         * add(mainIterator);
-         * add(new DoubleRuntimeIterator((double) n, ctx));
-         * }},
-         * ctx
-         * );
-         * runtimeIterator.setStaticContext(expression.getStaticContext());
-         * return runtimeIterator;
-         * }
-         * }
-         * }
-         * }
-         */
+        // START eq optimization
+        if (
+            expression.getPredicateExpression() instanceof ComparisonExpression
+                && ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator()
+                    .toString()
+                    .equals("eq")
+        ) {
+            Node left = expression.getPredicateExpression().getChildren().get(0);
+            Node right = expression.getPredicateExpression().getChildren().get(1);
+
+            Node intLiteral = null;
+            if (
+                left instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (right instanceof IntegerLiteralExpression) {
+                    intLiteral = right;
+                }
+            }
+            if (
+                right instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (left instanceof IntegerLiteralExpression) {
+                    intLiteral = left;
+                }
+            }
+            if (intLiteral != null) {
+                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
+                if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                    int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                    RuntimeIterator runtimeIterator = new SequenceLookupIterator(
+                            mainIterator,
+                            n,
+                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    );
+                    runtimeIterator.setStaticContext(expression.getStaticContext());
+                    return runtimeIterator;
+                }
+            }
+        }
+        // END eq optimization
+
         RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
         RuntimeIterator runtimeIterator = new PredicateIterator(
                 mainIterator,

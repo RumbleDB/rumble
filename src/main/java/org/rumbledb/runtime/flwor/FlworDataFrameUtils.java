@@ -863,12 +863,6 @@ public class FlworDataFrameUtils {
      */
     public static Dataset<Row> zipWithIndex(JSoundDataFrame jdf, Long offset) {
         return zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName);
-        /*
-         * return new JSoundDataFrame(
-         * zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
-         * jdf.getItemType()
-         * );
-         */
     }
 
     /**

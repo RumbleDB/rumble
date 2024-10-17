@@ -36,6 +36,7 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -900,6 +901,44 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             }
         }
+
+
+        // START eq optimization
+        if (
+            expression.getPredicateExpression() instanceof ComparisonExpression
+                && ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator()
+                    .toString()
+                    .equals("eq")
+        ) {
+            Node left = expression.getPredicateExpression().getChildren().get(0);
+            Node right = expression.getPredicateExpression().getChildren().get(1);
+
+            Node intLiteral = null;
+            if (
+                left instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (right instanceof IntegerLiteralExpression) {
+                    intLiteral = right;
+                }
+            }
+            if (
+                right instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (left instanceof IntegerLiteralExpression) {
+                    intLiteral = left;
+                }
+            }
+            if (intLiteral != null) {
+                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
+                if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                    expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                    return argument;
+                }
+            }
+        }
+        // END eq optimization
         expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
         if (!expression.getStaticContext().getRumbleConfiguration().getNativeSQLPredicates()) {
             if (expression.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
