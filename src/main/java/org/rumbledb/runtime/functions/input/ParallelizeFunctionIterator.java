@@ -26,6 +26,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -53,6 +55,11 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
+        /*if (this.sequenceIterator.isDataFrame()) {
+            JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
+            rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
+            // repartition it to the desired amount
+        }*/
         this.sequenceIterator.materialize(context, contents);
         if (this.children.size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
