@@ -55,11 +55,15 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
-        /*if (this.sequenceIterator.isDataFrame()) {
+        if (this.sequenceIterator.isDataFrame()) {
             JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
             rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
-            // repartition it to the desired amount
-        }*/
+            if (this.children.size() == 1) {
+                return rdd;
+            } else {
+                return rdd.repartition(getNumberOfPartitions(context).getIntValue());
+            }
+        }
         this.sequenceIterator.materialize(context, contents);
         if (this.children.size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
