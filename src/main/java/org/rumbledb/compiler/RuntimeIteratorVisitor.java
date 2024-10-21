@@ -522,7 +522,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             }
         }
         // if decimalliteral whole do same
-        //else do empty sequence iterator
+        // else do empty sequence iterator
 
         // START eq optimization
         if (
