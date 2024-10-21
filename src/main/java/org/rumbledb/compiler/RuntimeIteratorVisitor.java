@@ -115,10 +115,7 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.*;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
@@ -508,31 +505,39 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFilterExpression(FilterExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
-            String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
+        Expression predicateExpression = expression.getPredicateExpression();
+
+        // if we have a int in the predicate we can optimize to a SequenceLookupIterator
+        if (predicateExpression instanceof IntegerLiteralExpression) {
+            String lexicalValue = ((IntegerLiteralExpression) predicateExpression).getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
-                RuntimeIterator runtimeIterator = new SequenceLookupIterator(
-                        mainIterator,
-                        n,
-                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                );
-                runtimeIterator.setStaticContext(expression.getStaticContext());
-                return runtimeIterator;
+                return getSequenceLookupIterator(expression, mainIterator, n);
             }
         }
-        // if decimalliteral whole do same
-        // else do empty sequence iterator
 
-        // START eq optimization
+        if (predicateExpression instanceof DecimalLiteralExpression) {
+            if (((DecimalLiteralExpression) predicateExpression).isIntValue()) {
+                int n = ((DecimalLiteralExpression) predicateExpression).getValue().intValue();
+                return getSequenceLookupIterator(expression, mainIterator, n);
+            }
+
+            // if decimal has digits to the right of the decimal point, return empty sequence according to spec
+            if (((DecimalLiteralExpression) predicateExpression).getValue().stripTrailingZeros().scale() > 0) {
+                return new EmptySequenceIterator(
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                );
+            }
+        }
+
         if (
-            expression.getPredicateExpression() instanceof ComparisonExpression
-                && ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator()
+            predicateExpression instanceof ComparisonExpression
+                && ((ComparisonExpression) predicateExpression).getComparisonOperator()
                     .toString()
                     .equals("eq")
         ) {
-            Node left = expression.getPredicateExpression().getChildren().get(0);
-            Node right = expression.getPredicateExpression().getChildren().get(1);
+            Node left = predicateExpression.getChildren().get(0);
+            Node right = predicateExpression.getChildren().get(1);
 
             Node intLiteral = null;
             if (
@@ -555,19 +560,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
                 if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                     int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
-                    RuntimeIterator runtimeIterator = new SequenceLookupIterator(
-                            mainIterator,
-                            n,
-                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    );
-                    runtimeIterator.setStaticContext(expression.getStaticContext());
-                    return runtimeIterator;
+                    return getSequenceLookupIterator(expression, mainIterator, n);
                 }
             }
         }
-        // END eq optimization
 
-        RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
+        // fallback for alll other cases
+        RuntimeIterator filterIterator = this.visit(predicateExpression, argument);
         RuntimeIterator runtimeIterator = new PredicateIterator(
                 mainIterator,
                 filterIterator,
@@ -575,6 +574,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    private RuntimeIterator getSequenceLookupIterator(
+            FilterExpression expression,
+            RuntimeIterator mainIterator,
+            int n
+    ) {
+        RuntimeIterator iterator = new SequenceLookupIterator(
+                mainIterator,
+                n,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        iterator.setStaticContext(expression.getStaticContext());
+        return iterator;
     }
 
     @Override

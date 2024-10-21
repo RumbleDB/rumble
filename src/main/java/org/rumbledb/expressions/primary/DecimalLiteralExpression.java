@@ -43,6 +43,10 @@ public class DecimalLiteralExpression extends Expression {
         return this.value;
     }
 
+    public boolean isIntValue() {
+        return this.value.compareTo(new BigDecimal(this.value.intValue())) == 0;
+    }
+
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDecimal(this, argument);
