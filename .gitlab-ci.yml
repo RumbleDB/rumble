@@ -2,8 +2,8 @@ image: marioarduini/rumble-source:2020-11-23
 
 stages:
   - build
-  - tests2
-  - tests3
+  - spark-tests
+  - other-tests
 
 Build:
   stage: build
@@ -15,87 +15,82 @@ Build:
     - mvn clean compile assembly:single
 
 SparkRuntimeTest:
-  stage: tests2
+  stage: spark-tests
   script:
     - mvn -Dtest=SparkRuntimeTests test
 
 SparkRuntimeTestsNativeDeactivated:
-  stage: tests2
+  stage: spark-tests
   script:
     - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
 
 SparkRuntimeTestsDataFramesDeactivated:
-  stage: tests2
+  stage: spark-tests
   script:
     - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
 
 SparkRuntimeTestsParallelismDeactivated:
-  stage: tests2
+  stage: spark-tests
   script:
     - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
 
 JavaAPITest:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=JavaAPITest test
 
 FrontendTests:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=FrontendTests test
 
 RuntimeTests:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=RuntimeTests test
 
 RuntimeTestsNoParallelism:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=RuntimeTestsNoParallelism test
 
 RuntimeTestsNoInlining:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=RuntimeTestsNoInlining test
 
 NativeFLWORRuntimeTests:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTests test
 
 NativeFLWORRuntimeTestsNativeDeactivated:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
 
 NativeFLWORRuntimeTestsDataFramesDeactivated:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
 
 NativeFLWORRuntimeTestsParallelismDeactivated:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
 
-updatedeltaruntime-test:
-  stage: tests3
-  script:
-    - mvn -Dtest=DeltaUpdateRuntimeTests test
-
-statictyping-test:
-  stage: tests3
+StaticTypingTest:
+  stage: other-tests
   script:
     - mvn -Dtest=StaticTypeTests test
 
 SpotlessTest:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn spotless:check
 
 MLTests:
-  stage: tests3
+  stage: other-tests
   artifacts:
     name: "ML Tests log"
     paths:
@@ -107,6 +102,6 @@ MLTests:
     - mvn -Dtest=MLTests test --log-file target/ml_test.log
 
 MLTestsNativeDeactivated:
-  stage: tests3
+  stage: other-tests
   script:
     - mvn -Dtest=MLTestsNativeDeactivated test

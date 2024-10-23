@@ -22,8 +22,6 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,7 +30,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -93,40 +90,28 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
 
-        List<FlworDataFrameColumn> allColumns = df.getColumns();
-
-        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
-
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
                 String.format(
-                    "SELECT * FROM %s LIMIT %s",
+                    "SELECT * FROM %s LIMIT %s OFFSET %s",
                     input,
-                    Integer.toString(this.startPosition + this.length - 1)
+                    Integer.toString(this.length),
+                    Integer.toString(this.startPosition - 1)
+                ),
+                df.getItemType()
+            );
+        } else {
+            df = df.evaluateSQL(
+                String.format(
+                    "SELECT * FROM %s OFFSET %s",
+                    input,
+                    Integer.toString(this.startPosition - 1)
                 ),
                 df.getItemType()
             );
         }
-
-        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
-            df.getDataFrame(),
-            1L,
-            SparkSessionManager.temporaryColumnName
-        );
-
-        String inputds = FlworDataFrameUtils.createTempView(ds);
-        ds = ds.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
-                    selectSQL,
-                    inputds,
-                    SparkSessionManager.temporaryColumnName,
-                    Integer.toString(this.startPosition)
-                )
-            );
-        return new JSoundDataFrame(ds, df.getItemType());
+        return new JSoundDataFrame(df.getDataFrame(), df.getItemType());
     }
 
     @Override
