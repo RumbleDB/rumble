@@ -364,6 +364,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             String r = right.getStringValue();
             return processString(l, r);
         }
+        if (left.getContent() && right.getContent()) {
+            String l = left.getTextValue();
+            String r = right.getTextValue();
+            return processString(l, r);
+        }
         return Long.MIN_VALUE;
     }
 

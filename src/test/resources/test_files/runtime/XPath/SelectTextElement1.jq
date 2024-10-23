@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="(<title lang="en">\n  Everyday Italian\n</title>\n, <title lang="en">\n  Harry Potter\n</title>\n, <title lang="en">\n  XQuery Kick Start\n</title>\n, <title lang="en">\n  Learning XML\n</title>\n)":)
+xml-doc("../../../queries/xml/books.xml")/child::bookstore/child::book/child::title

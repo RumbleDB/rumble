@@ -138,6 +138,20 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.EmptyStepExpr;
+import org.rumbledb.expressions.xml.axis.ForwardAxis;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseAxis;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
+import org.rumbledb.expressions.xml.node_test.AnyKindTest;
+import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.DocumentTest;
+import org.rumbledb.expressions.xml.node_test.ElementTest;
+import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -633,6 +647,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (content instanceof JsoniqParser.TransformExprContext) {
             return this.visitTransformExpr((JsoniqParser.TransformExprContext) content);
         }
+        if (content instanceof JsoniqParser.PathExprContext) {
+            return this.visitPathExpr((JsoniqParser.PathExprContext) content);
+        }
         throw new OurBadException("Unrecognized ExprSimple.");
     }
 
@@ -1041,13 +1058,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
-        Expression result = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitPathExpr(ctx.main_expr);
         if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.map_expr.size(); ++i) {
-            JsoniqParser.PostFixExprContext child = ctx.map_expr.get(i);
-            Expression rightExpression = (Expression) this.visitPostFixExpr(child);
+            JsoniqParser.PathExprContext child = ctx.map_expr.get(i);
+            Expression rightExpression = (Expression) this.visitPathExpr(child);
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
@@ -2278,6 +2295,247 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     // end declaration
+
+    // start xml
+
+    @Override
+    public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
+        if (ctx.singleslash != null) {
+            return visitSingleSlash(ctx.singleslash);
+        } else if (ctx.doubleslash != null) {
+            return visitDoubleSlash(ctx.doubleslash);
+        } else if (ctx.relative != null) {
+            return visitRelativeWithoutSlash(ctx.relative);
+        }
+        return visitSingleSlashNoStepExpr(ctx);
+    }
+
+    private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
+        // Case: No StepExpr, only dash
+        StepExpr stepExpr = new EmptyStepExpr(createMetadataFromContext(ctx));
+        List<Expression> intermediaryPaths = Collections.singletonList(stepExpr);
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(ctx)
+        );
+        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(ctx));
+    }
+
+    private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
+        if (relativeContext.stepExpr().size() == 1 && relativeContext.stepExpr(0).postFixExpr() != null) {
+            // We only have a postfix expression, not a path expression
+            return this.visitPostFixExpr(relativeContext.stepExpr(0).postFixExpr());
+        }
+        List<Expression> intermediaryPaths = getIntermediaryPaths(relativeContext);
+        return new PathExpr(null, intermediaryPaths, createMetadataFromContext(relativeContext));
+    }
+
+    private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
+        StepExpr stepExpr = new ForwardStepExpr(
+                ForwardAxis.DESCENDANT_OR_SELF,
+                new AnyKindTest(),
+                createMetadataFromContext(doubleSlashContext)
+        );
+        List<Expression> intermediaryPaths = getIntermediaryPaths(stepExpr, doubleSlashContext);
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(doubleSlashContext)
+        );
+        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(doubleSlashContext));
+    }
+
+    private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
+        List<Expression> intermediaryPaths = getIntermediaryPaths(singleSlashContext);
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(singleSlashContext)
+        );
+        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(singleSlashContext));
+    }
+
+
+    // The path may start with a '/' or '//' which should be already converted to a StepExpr.
+    private List<Expression> getIntermediaryPaths(
+            StepExpr stepExpr,
+            JsoniqParser.RelativePathExprContext relativePathExprContext
+    ) {
+        List<Expression> intermediaryPaths = new ArrayList<>();
+        Expression currentStepExpr;
+        intermediaryPaths.add(stepExpr);
+        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
+            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
+                // Unroll '//' to forward axis
+                StepExpr intermediaryStepExpr = new ForwardStepExpr(
+                        ForwardAxis.DESCENDANT_OR_SELF,
+                        new AnyKindTest(),
+                        createMetadataFromContext(relativePathExprContext)
+                );
+                intermediaryPaths.add(intermediaryStepExpr);
+            }
+            intermediaryPaths.add(currentStepExpr);
+        }
+        return intermediaryPaths;
+    }
+
+    private List<Expression> getIntermediaryPaths(
+            JsoniqParser.RelativePathExprContext relativePathExprContext
+    ) {
+        List<Expression> intermediaryPaths = new ArrayList<>();
+        Expression currentStepExpr;
+        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
+            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
+                // Unroll '//' to forward axis
+                StepExpr intermediaryStepExpr = new ForwardStepExpr(
+                        ForwardAxis.DESCENDANT_OR_SELF,
+                        new AnyKindTest(),
+                        createMetadataFromContext(relativePathExprContext)
+                );
+                intermediaryPaths.add(intermediaryStepExpr);
+            }
+            intermediaryPaths.add(currentStepExpr);
+        }
+        return intermediaryPaths;
+    }
+
+    @Override
+    public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
+        if (ctx.postFixExpr() == null) {
+            Expression stepExpr = getStep(ctx.axisStep());
+            for (JsoniqParser.PredicateContext predicateContext : ctx.axisStep().predicateList().predicate()) {
+                Expression predicate = (Expression) this.visitPredicate(predicateContext);
+                stepExpr = new FilterExpression(
+                        stepExpr,
+                        predicate,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            return stepExpr;
+        }
+        return this.visitPostFixExpr(ctx.postFixExpr());
+    }
+
+    private StepExpr getStep(JsoniqParser.AxisStepContext ctx) {
+        if (ctx.forwardStep() == null) {
+            return getReverseStep(ctx.reverseStep());
+        }
+        return getForwardStep(ctx.forwardStep());
+    }
+
+    private StepExpr getForwardStep(JsoniqParser.ForwardStepContext ctx) {
+        ForwardAxis forwardAxis;
+        NodeTest nodeTest;
+        if (ctx.nodeTest() == null) {
+            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
+            if (ctx.abbrevForwardStep().Kat_symbol() != null) {
+                // @ equivalent with 'attribute::'
+                forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else if (nodeTest instanceof AttributeTest) {
+                forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else {
+                forwardAxis = ForwardAxis.CHILD;
+            }
+            return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
+        }
+        forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
+        nodeTest = getNodeTest(ctx.nodeTest());
+        return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
+    }
+
+    private StepExpr getReverseStep(JsoniqParser.ReverseStepContext ctx) {
+        if (ctx.nodeTest() == null) {
+            // .. equivalent with 'parent::node()'
+            ReverseAxis reverseAxis = ReverseAxis.PARENT;
+            NodeTest nodeTest = new AnyKindTest();
+            return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
+        }
+        ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
+        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
+    }
+
+    private NodeTest getNodeTest(JsoniqParser.NodeTestContext nodeTestContext) {
+        if (nodeTestContext.nameTest() == null) {
+            // kind test
+            return getKindTest(nodeTestContext.kindTest().children.get(0));
+        }
+        if (nodeTestContext.nameTest().wildcard() == null) {
+            Name name = parseName(nodeTestContext.nameTest().qname(), false, false);
+            return new NameTest(name);
+        } else {
+            String wildcard = nodeTestContext.nameTest().wildcard().getText();
+            return new NameTest(wildcard);
+        }
+    }
+
+    private NodeTest getKindTest(ParseTree kindTest) {
+        if (kindTest instanceof JsoniqParser.DocumentTestContext) {
+            JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTest;
+            if (docContext.schemaElementTest() != null) {
+                throw new UnsupportedFeatureException(
+                        "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                        createMetadataFromContext((ParserRuleContext) kindTest)
+                );
+            }
+            if (docContext.elementTest() == null) {
+                return new DocumentTest(null);
+            }
+            return new DocumentTest(getKindTest(docContext.elementTest()));
+        } else if (kindTest instanceof JsoniqParser.ElementTestContext) {
+            JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTest;
+            Name elementName;
+            if (elementContext.elementNameOrWildcard() != null) {
+                boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
+                if (!hasWildcard) {
+                    elementName = parseName(elementContext.elementNameOrWildcard().elementName().qname(), false, false);
+                    if (elementContext.typeName() == null) {
+                        return new ElementTest(elementName, null);
+                    }
+                    Name typeName = parseName(elementContext.typeName().qname(), false, false);
+                    return new ElementTest(elementName, typeName);
+                }
+                return new ElementTest(true);
+            }
+            return new ElementTest();
+        } else if (kindTest instanceof JsoniqParser.AttributeTestContext) {
+            JsoniqParser.AttributeTestContext attributeTestContext =
+                (JsoniqParser.AttributeTestContext) kindTest;
+            Name elementName;
+            if (attributeTestContext.attributeNameOrWildcard() != null) {
+                boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
+                if (!hasWildcard) {
+                    elementName = parseName(
+                        attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
+                        false,
+                        false
+                    );
+                    if (attributeTestContext.typeName() != null) {
+                        Name typeName = parseName(attributeTestContext.typeName().qname(), false, false);
+                        return new AttributeTest(elementName, typeName);
+                    } else {
+                        return new AttributeTest(elementName, null);
+                    }
+                } else {
+                    return new AttributeTest(true);
+                }
+            }
+            return new AttributeTest();
+        } else if (kindTest instanceof JsoniqParser.TextTestContext) {
+            return new TextTest();
+        } else if (kindTest instanceof JsoniqParser.AnyKindTestContext) {
+            return new AnyKindTest();
+        } else {
+            throw new UnsupportedFeatureException(
+                    "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                    createMetadataFromContext((ParserRuleContext) kindTest)
+            );
+        }
+    }
+
 
     // end region
 

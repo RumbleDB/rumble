@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="<book category="web">\n  <title lang="en">\n    Learning XML\n  </title>\n  <author>\n    Erik T. Ray\n  </author>\n  <year>\n    2003\n  </year>\n  <price>\n    39.95\n  </price>\n</book>\n":)
+xml-doc("../../../queries/xml/books.xml")/child::*/child::book[position() eq last()]
