@@ -1,3 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[0,11]; Output="" :)
+(:JIQS: ShouldRun; UpdateDim=[5,6]; Output="DOUBLE SUCCESS" :)
 let $data := delta-file("./tempDeltaTable")
-return replace value of json $data.string_array[[2]] with "DOUBLE SUCCESS"
+return replace value of json $data.new_array[[1]] with "DOUBLE SUCCESS";
+delta-file("./tempDeltaTable").new_array[[1]]

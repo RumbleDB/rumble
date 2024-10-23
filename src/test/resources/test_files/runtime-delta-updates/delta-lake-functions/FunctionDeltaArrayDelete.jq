@@ -1,3 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[0,13]; Output="" :)
+(:JIQS: ShouldRun; UpdateDim=[5,7]; Output="[ "SUCCESS" ]" :)
 let $data := delta-file("./tempDeltaTable")
-return delete json $data.string_array[[2]]
+return delete json $data.new_array[[1]];
+delta-file("./tempDeltaTable").new_array

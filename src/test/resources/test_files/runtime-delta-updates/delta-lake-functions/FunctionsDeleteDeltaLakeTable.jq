@@ -1,4 +1,3 @@
-(:JIQS: ShouldRun; UpdateDim=[5,0]; Output="" :)
-create-delta-lake-table("./tempDeltaTable");
-let $data := delta-file("./tempDeltaTable")
-return $data
+(:JIQS: ShouldRun; UpdateDim=[5,8]; Output="true" :)
+let $ret := delete-delta-lake-table("./tempDeltaTable")
+return $ret
