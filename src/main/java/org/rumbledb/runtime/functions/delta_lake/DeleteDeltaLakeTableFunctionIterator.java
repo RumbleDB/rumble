@@ -5,12 +5,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,11 +35,11 @@ public class DeleteDeltaLakeTableFunctionIterator extends AtMostOneItemLocalRunt
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
 
-//        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-//                this.currentAnnotation.getDeltaTablePath(),
-//                DeltaLakeConfigurationCatalogue.defaultDeltaLakeConfiguration,
-//                ExceptionMetadata.EMPTY_METADATA
-//        );
+        // URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+        // this.currentAnnotation.getDeltaTablePath(),
+        // DeltaLakeConfigurationCatalogue.defaultDeltaLakeConfiguration,
+        // ExceptionMetadata.EMPTY_METADATA
+        // );
 
         try {
             File oldTable = new File(uri.getPath());
