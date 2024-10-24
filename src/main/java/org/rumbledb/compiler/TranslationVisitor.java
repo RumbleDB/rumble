@@ -2464,7 +2464,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return getKindTest(nodeTestContext.kindTest().children.get(0));
         }
         if (nodeTestContext.nameTest().wildcard() == null) {
-            Name name = parseName(nodeTestContext.nameTest().qname(), false, false);
+            Name name = parseName(nodeTestContext.nameTest().qname(), false, false, false);
             return new NameTest(name);
         } else {
             String wildcard = nodeTestContext.nameTest().wildcard().getText();
@@ -2491,11 +2491,16 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             if (elementContext.elementNameOrWildcard() != null) {
                 boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
                 if (!hasWildcard) {
-                    elementName = parseName(elementContext.elementNameOrWildcard().elementName().qname(), false, false);
+                    elementName = parseName(
+                        elementContext.elementNameOrWildcard().elementName().qname(),
+                        false,
+                        false,
+                        false
+                    );
                     if (elementContext.typeName() == null) {
                         return new ElementTest(elementName, null);
                     }
-                    Name typeName = parseName(elementContext.typeName().qname(), false, false);
+                    Name typeName = parseName(elementContext.typeName().qname(), false, false, false);
                     return new ElementTest(elementName, typeName);
                 }
                 return new ElementTest(true);
@@ -2511,10 +2516,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                     elementName = parseName(
                         attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
                         false,
+                        false,
                         false
                     );
                     if (attributeTestContext.typeName() != null) {
-                        Name typeName = parseName(attributeTestContext.typeName().qname(), false, false);
+                        Name typeName = parseName(attributeTestContext.typeName().qname(), false, false, false);
                         return new AttributeTest(elementName, typeName);
                     } else {
                         return new AttributeTest(elementName, null);
