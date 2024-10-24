@@ -692,15 +692,111 @@ public interface Item extends Serializable, KryoSerializable {
      * @return an int representing nestedness of the item inside transform expressions.
      */
     default int getMutabilityLevel() {
-        return 0;
+        return -1;
     }
 
     /**
-     * Sets the mutability level of the item.
+     * Sets the mutability level of the item to a supplied value.
      *
-     * @param mutabilityLevel the new mutability level.
+     * @param mutabilityLevel new mutability level.
      */
     default void setMutabilityLevel(int mutabilityLevel) {
+    }
+
+    /**
+     * Returns the top level ID of the item.
+     *
+     * @return int representing the rowID of the item within a DeltaFile.
+     */
+    default long getTopLevelID() {
+        return -1;
+    }
+
+    /**
+     * Sets the top level ID of the item to a supplied value.
+     *
+     * @param topLevelID new top level ID.
+     */
+    default void setTopLevelID(long topLevelID) {
+    }
+
+    /**
+     * Returns the path from the top level object of a DeltaFile for the item.
+     *
+     * @return String representing the path of the item from the top level within a DeltaFile.
+     */
+    default String getPathIn() {
+        return "null";
+    }
+
+    /**
+     * Sets the path from the top level object of a DeltaFile for the item to a supplied value.
+     *
+     * @param pathIn new path from top level.
+     */
+    default void setPathIn(String pathIn) {
+    }
+
+    /**
+     * Returns the location of the DeltaFile for the item.
+     *
+     * @return String representing the location of the DeltaFile for the item.
+     */
+    default String getTableLocation() {
+        return null;
+    }
+
+
+    /**
+     * Sets the location of the DeltaFile for the item to a supplied value.
+     *
+     * @param location new location of the DeltaFile for the item.
+     */
+    default void setTableLocation(String location) {
+    }
+
+    /**
+     * Returns the SparkSQL value of the item for use in a query.
+     *
+     * @return String representing the SparkSQL value of the item.
+     */
+    default String getSparkSQLValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the SparkSQL value of the item for use in a query.
+     *
+     * @return String representing the SparkSQL value of the item.
+     */
+    default String getSparkSQLValue(ItemType itemType) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the SparkSQL type of the item for use in a query.
+     *
+     * @return String representing the SparkSQL type of the item.
+     */
+    default String getSparkSQLType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Tests for physical equality. The semantics are that of the eq operator.
+     *
+     * @param other another item.
+     * @return true it is equal to other, false otherwise.
+     */
+    default boolean physicalEquals(Object other) {
+        if (!(other instanceof Item)) {
+            return false;
+        }
+        Item otherItem = (Item) other;
+        if (this.getTopLevelID() == -1 || otherItem.getTopLevelID() == -1) {
+            return System.identityHashCode(this) == System.identityHashCode(otherItem);
+        }
+        return this.getTopLevelID() == otherItem.getTopLevelID() && this.getPathIn().equals(otherItem.getPathIn());
     }
 
     /**

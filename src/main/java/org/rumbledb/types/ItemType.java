@@ -451,6 +451,15 @@ public interface ItemType extends Serializable {
         return false;
     }
 
+    /**
+     * Returns the SparkSQL type of the item type for use in a query.
+     *
+     * @return String representing the SparkSQL type of the item type.
+     */
+    default String getSparkSQLType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getName());
+    }
+
     String toString();
 
     default boolean isResolved() {

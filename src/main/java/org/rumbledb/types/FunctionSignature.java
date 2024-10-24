@@ -26,14 +26,24 @@ import java.util.List;
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;
+    private boolean isUpdating;
     private static final long serialVersionUID = 1L;
+
+    public FunctionSignature(
+            List<SequenceType> parameterTypes,
+            SequenceType returnType,
+            boolean isUpdating
+    ) {
+        this.parameterTypes = parameterTypes;
+        this.returnType = returnType;
+        this.isUpdating = isUpdating;
+    }
 
     public FunctionSignature(
             List<SequenceType> parameterTypes,
             SequenceType returnType
     ) {
-        this.parameterTypes = parameterTypes;
-        this.returnType = returnType;
+        this(parameterTypes, returnType, false);
     }
 
 
@@ -43,6 +53,10 @@ public class FunctionSignature implements Serializable {
 
     public SequenceType getReturnType() {
         return this.returnType;
+    }
+
+    public boolean isUpdating() {
+        return this.isUpdating;
     }
 
     @Override

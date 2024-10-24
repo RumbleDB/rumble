@@ -190,4 +190,32 @@ public class FloatItem implements Item {
         }
         return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.FLOAT);
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "FLOAT";
+    }
 }

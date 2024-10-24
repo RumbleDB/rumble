@@ -116,4 +116,10 @@ public class DateItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DATE";
+    }
 }

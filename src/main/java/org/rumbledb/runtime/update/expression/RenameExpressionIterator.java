@@ -90,6 +90,9 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (target.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",

@@ -121,7 +121,8 @@ public class JsoniqQueryExecutor implements Logging {
             !(this.configuration.getOutputFormat().equals("json")
                 || this.configuration.getOutputFormat().equals("tyson")
                 || this.configuration.getOutputFormat().equals("xml-json-hybrid")
-                || this.configuration.getOutputFormat().equals("yaml"))
+                || this.configuration.getOutputFormat().equals("yaml")
+                || this.configuration.getOutputFormat().equals("delta"))
                 &&
                 !sequence.availableAsDataFrame()
         ) {
@@ -188,6 +189,10 @@ public class JsoniqQueryExecutor implements Logging {
             }
         }
 
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL() && outputPath != null) {
+            sequence.applyPUL();
+        }
+
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
         if (logPath != null) {
@@ -227,6 +232,9 @@ public class JsoniqQueryExecutor implements Logging {
         SequenceOfItems sequence = rumble.runQuery(query);
         if (!sequence.availableAsRDD()) {
             return sequence.populateList(resultList);
+        }
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
         resultList.clear();
         JavaRDD<Item> rdd = sequence.getAsRDD();
