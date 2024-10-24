@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.8
+// Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.9.3
 
 // Java header
 package org.rumbledb.parser;
