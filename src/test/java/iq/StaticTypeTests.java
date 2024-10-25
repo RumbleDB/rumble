@@ -3,6 +3,7 @@ package iq;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import iq.base.AnnotationsTestsBase;
+import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
@@ -37,7 +38,13 @@ public class StaticTypeTests extends AnnotationsTestsBase {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", "unknown");
+            Properties.scalaPropOrElse("version.number", new Function0<String>() {
+                @Override
+                public String apply() {
+                    return "unknown";
+                }
+            });
+
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 

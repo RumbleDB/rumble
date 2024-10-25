@@ -209,31 +209,31 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.12</artifactId>
+            <artifactId>spark-core_2.13</artifactId>
             <version>3.5.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
+            <artifactId>spark-sql_2.13</artifactId>
             <version>3.5.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.12</artifactId>
+            <artifactId>spark-mllib_2.13</artifactId>
             <version>3.5.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-             <artifactId>hadoop-aws</artifactId>
+            <artifactId>hadoop-aws</artifactId>
             <version>3.3.6</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-avro_2.12</artifactId>
+            <artifactId>spark-avro_2.13</artifactId>
             <version>3.5.1</version>
         </dependency>
         <dependency>
@@ -277,37 +277,37 @@
             <artifactId>commons-io</artifactId>
             <version>2.11.0</version>
         </dependency>
-		<dependency>
-		  <groupId>org.apache.httpcomponents</groupId>
-		  <artifactId>httpclient</artifactId>
-		  <version>4.5.13</version>
-		</dependency>
-		<!--<dependency>
-		    <groupId>edu.vanderbilt.accre</groupId>
-		    <artifactId>laurelin</artifactId>
-		    <version>1.0.1</version>
-		</dependency>-->
-		<dependency>
-			<groupId>org.jgrapht</groupId>
-			<artifactId>jgrapht-core</artifactId>
-			<version>1.4.0</version>
-		</dependency>
-		<dependency>
-			<groupId>joda-time</groupId>
-			<artifactId>joda-time</artifactId>
-			<version>2.10.6</version>
-		</dependency>
-		<dependency>
-		  <groupId>com.fasterxml.jackson.dataformat</groupId>
-		  <artifactId>jackson-dataformat-yaml</artifactId>
-		  <version>2.15.2</version>
-		</dependency>
-    <dependency>
-      <groupId>io.delta</groupId>
-      <artifactId>delta-spark_2.12</artifactId>
-      <version>3.2.1</version>
-    </dependency>
-  </dependencies>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>edu.vanderbilt.accre</groupId>
+            <artifactId>laurelin</artifactId>
+            <version>1.0.1</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.10.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-spark_2.13</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+    </dependencies>
 
     <distributionManagement>
         <snapshotRepository>
