@@ -54,7 +54,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;

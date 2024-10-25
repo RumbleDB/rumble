@@ -52,12 +52,12 @@ public class Bugs extends AnnotationsTestsBase {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-            Properties.scalaPropOrElse("version.number", new Function0<String>() {
-                @Override
-                public String apply() {
-                    return "unknown";
-                }
-            });
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 

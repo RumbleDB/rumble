@@ -29,12 +29,12 @@ public class UpdatesForRumbleBenchmark {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-            Properties.scalaPropOrElse("version.number", new Function0<String>() {
-                @Override
-                public String apply() {
-                    return "unknown";
-                }
-            });
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
 
 
     public List<FileTuple> benchmarkFiles;
