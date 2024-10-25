@@ -420,7 +420,7 @@ The returned value is an integer such that:
 - if searched_element is not found:
     - if searched_element is smaller than all values, index 0 is returned.
     - if searched_element is greater than all values, index size(arr) + 1 is returned.:)
-declare %an:sequential function jsoniq_numpy:binsearch($arr as array, $searched_element) {
+declare %sequential function jsoniq_numpy:binsearch($arr as array, $searched_element) {
     variable $low := 1;
     variable $high := size($arr) + 1;
     while ($low lt $high) {
@@ -434,7 +434,7 @@ declare %an:sequential function jsoniq_numpy:binsearch($arr as array, $searched_
 };
 
 (: returns i s.t. arr[i - 1] <= x < arr[i] :)
-declare %an:sequential function jsoniq_numpy:searchsorted_left($arr as array, $searched_element) {
+declare %sequential function jsoniq_numpy:searchsorted_left($arr as array, $searched_element) {
     variable $low := 1;
     variable $high := size($arr) + 1;
     while ($low lt $high) {
@@ -446,7 +446,7 @@ declare %an:sequential function jsoniq_numpy:searchsorted_left($arr as array, $s
 };
 
 (: returns i s.t. arr[i - 1] < x <= arr[i] :)
-declare %an:sequential function jsoniq_numpy:searchsorted_right($arr as array, $searched_element) {
+declare %sequential function jsoniq_numpy:searchsorted_right($arr as array, $searched_element) {
     variable $low := 1;
     variable $high := size($arr) + 1;
     while ($low lt $high) {
