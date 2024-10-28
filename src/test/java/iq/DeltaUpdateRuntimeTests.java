@@ -37,6 +37,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
+import scala.Function0;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
@@ -58,7 +59,12 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", "unknown");
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
