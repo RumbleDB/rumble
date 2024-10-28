@@ -1,5 +1,5 @@
 (:JIQS: ShouldCompile :)
-declare %an:nonsequential function foo() { 1 };
+declare %nonsequential function foo() { 1 };
 
  {
      variable $x := 3;
