@@ -656,7 +656,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitProgram(Program program, StaticContext argument) {
         visitDescendants(program, argument);
-        ExecutionMode mergedExecutionMode = getHighestExecutionModeFromStatements(exitStatementChildren);
+        ExecutionMode mergedExecutionMode = program.getStatementsAndOptionalExpr().getHighestExecutionMode();
+        for (Statement statement : exitStatementChildren) {
+            ExecutionMode statementExecMode = statement.getHighestExecutionMode(this.visitorConfig);
+            mergedExecutionMode = getHighestExecutionMode(mergedExecutionMode, statementExecMode);
+        }
         program.setHighestExecutionMode(mergedExecutionMode);
         return argument;
     }
@@ -1044,7 +1048,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private ExecutionMode getHighestExecutionMode(ExecutionMode firstExecMode, ExecutionMode secondExecMode) {
+    private static ExecutionMode getHighestExecutionMode(ExecutionMode firstExecMode, ExecutionMode secondExecMode) {
         if (firstExecMode == ExecutionMode.UNSET || secondExecMode == ExecutionMode.UNSET) {
             return ExecutionMode.UNSET;
         }
@@ -1061,16 +1065,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         ExecutionMode result = ExecutionMode.UNSET;
         for (Statement statement : statements) {
             ExecutionMode statementExecMode = statement.getHighestExecutionMode(this.visitorConfig);
-            if (statementExecMode.isUnset()) {
-                return ExecutionMode.UNSET;
-            }
-            if (result.isUnset()) {
-                result = statementExecMode;
-            } else if (result.isRDD() && statementExecMode.isLocal()) {
-                return ExecutionMode.LOCAL;
-            } else if (result.isDataFrame() && !statementExecMode.isDataFrame()) {
-                result = statementExecMode;
-            }
+            result = getHighestExecutionMode(result, statementExecMode);
         }
         return result;
     }
