@@ -283,7 +283,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
             }
         }
-
         if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
             if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
                 contextItemValueExpression = rightHandSideOfJoinEqualityCriterion;
