@@ -31,11 +31,11 @@ public class AppendExpression extends Expression {
     }
 
     public Expression getArrayExpression() {
-        return arrayExpression;
+        return this.arrayExpression;
     }
 
     public Expression getToAppendExpression() {
-        return toAppendExpression;
+        return this.toAppendExpression;
     }
 
     @Override

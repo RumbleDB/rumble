@@ -486,9 +486,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             copyDeclMap.put(copyDecl.getVariableName(), this.visit(copyDecl.getSourceExpression(), argument));
         }
-        for (Expression childExpr : expression.getCopySourceExpressions()) {
-            copyDeclIterators.add(this.visit(childExpr, argument));
-        }
         RuntimeIterator modifyIterator = this.visit(expression.getModifyExpression(), argument);
         RuntimeIterator returnIterator = this.visit(expression.getReturnExpression(), argument);
 
@@ -664,7 +661,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                expression.isUpdating()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -703,7 +701,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isUpdating()
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -1005,6 +1004,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new TreatIterator(
                 childExpression,
                 expression.getSequenceType(),
+                expression.isUpdating(),
                 expression.errorCodeThatShouldBeThrown(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

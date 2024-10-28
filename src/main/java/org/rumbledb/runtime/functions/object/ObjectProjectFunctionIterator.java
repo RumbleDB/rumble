@@ -112,7 +112,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata());
+            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
     }
 
     @Override

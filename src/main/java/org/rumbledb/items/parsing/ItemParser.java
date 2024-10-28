@@ -116,7 +116,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata));
                 }
                 object.endArray();
-                return ItemFactory.getInstance().createArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
             if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
@@ -128,7 +128,7 @@ public class ItemParser implements Serializable {
                 }
                 object.endObject();
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                    .createObjectItem(keys, values, metadata, false);
             }
             if (object.peek() == JsonToken.NULL) {
                 object.nextNull();
@@ -203,7 +203,7 @@ public class ItemParser implements Serializable {
                     // System.err.println("Next token (reading array): " + nt.toString());
                 }
                 // System.err.println("Finished reading array.");
-                return ItemFactory.getInstance().createArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
                 List<String> keys = new ArrayList<>();
@@ -223,7 +223,7 @@ public class ItemParser implements Serializable {
                 }
                 // System.err.println("Finished reading object.");
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                    .createObjectItem(keys, values, metadata, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
                 return ItemFactory.getInstance().createNullItem();
@@ -261,6 +261,41 @@ public class ItemParser implements Serializable {
             return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
         }
 
+        if (
+            fields.length == 5
+                && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
+                && fieldnames[4].equals("tableLocation")
+        ) {
+            ItemType resType = null;
+            if (itemType != null) {
+                resType = itemType.getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
+            }
+            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
+            // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
+            for (int i = 0; i < fields.length; ++i) {
+                String fieldName = fields[i].name();
+
+                if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                    res.setMutabilityLevel(row.getInt(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
+                    res.setTopLevelID(row.getLong(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
+                    res.setPathIn(row.getString(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
+                    res.setTableLocation(row.getString(i));
+                }
+            }
+            return res;
+        }
+
         Map<String, FieldDescriptor> content = null;
 
         if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
@@ -272,11 +307,34 @@ public class ItemParser implements Serializable {
             }
         }
 
+        int mutabilityLevel = -1;
+        long topLevelID = -1;
+        String pathIn = "null";
+        String tableLocation = "null";
+
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
+
+            if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                mutabilityLevel = row.getInt(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
+                topLevelID = row.getLong(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
+                pathIn = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
+                tableLocation = row.getString(i);
+                continue;
+            }
+
             if (content != null) {
                 FieldDescriptor descriptor = content.get(fieldName);
                 if (descriptor != null) {
@@ -304,7 +362,13 @@ public class ItemParser implements Serializable {
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+        res.setMutabilityLevel(mutabilityLevel);
+        res.setTopLevelID(topLevelID);
+        res.setPathIn(pathIn);
+        res.setTableLocation(tableLocation);
+
+        return res;
     }
 
     public static Item convertValueToItem(
@@ -536,7 +600,7 @@ public class ItemParser implements Serializable {
                     members.add(convertValueToItem(value, dataType, metadata, memberType));
                 }
             }
-            Item item = ItemFactory.getInstance().createArrayItem(members);
+            Item item = ItemFactory.getInstance().createArrayItem(members, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                 return item;
             } else {
@@ -556,7 +620,7 @@ public class ItemParser implements Serializable {
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
-                Item item = ItemFactory.getInstance().createArrayItem(members);
+                Item item = ItemFactory.getInstance().createArrayItem(members, false);
                 if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                     return item;
                 } else {
@@ -573,7 +637,7 @@ public class ItemParser implements Serializable {
                     objectKeyList.add(String.valueOf(vectorIndices[j]));
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata);
+                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
                 if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                     return item;
                 } else {

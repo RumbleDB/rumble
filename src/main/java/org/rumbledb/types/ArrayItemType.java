@@ -266,4 +266,12 @@ public class ArrayItemType implements ItemType {
         return this.content.isCompatibleWithDataFrames(configuration);
     }
 
+    @Override
+    public String getSparkSQLType() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ARRAY<");
+        sb.append(this.getArrayContentFacet().getSparkSQLType());
+        sb.append(">");
+        return sb.toString();
+    }
 }

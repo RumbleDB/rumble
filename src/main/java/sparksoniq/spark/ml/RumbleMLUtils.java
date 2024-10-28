@@ -245,7 +245,7 @@ public class RumbleMLUtils {
         int indexToRemove = keys.indexOf(key);
         keys.remove(indexToRemove);
         values.remove(indexToRemove);
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        return ItemFactory.getInstance().createObjectItem(keys, values, metadata, true);
     }
 
     public static JSoundDataFrame createDataFrameContainingVectorizedColumn(

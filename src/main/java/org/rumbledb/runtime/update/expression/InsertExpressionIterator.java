@@ -42,7 +42,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
     }
 
     public boolean hasPositionIterator() {
-        return positionIterator != null;
+        return this.positionIterator != null;
     }
 
     @Override
@@ -84,7 +84,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
         try {
             main = this.mainIterator.materializeExactlyOneItem(context);
-            content = (Item) SerializationUtils.clone(this.toInsertIterator.materializeExactlyOneItem(context));
+            content = SerializationUtils.clone(this.toInsertIterator.materializeExactlyOneItem(context));
             if (this.hasPositionIterator()) {
                 locator = this.positionIterator.materializeExactlyOneItem(context);
             }
@@ -103,13 +103,16 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
                         this.getMetadata()
                 );
             }
-            up = factory.createInsertIntoObjectPrimitive(main, content);
+            up = factory.createInsertIntoObjectPrimitive(main, content, this.getMetadata());
         } else if (main.isArray()) {
             if (locator == null) {
                 throw new CannotCastUpdateSelectorException("Insert expression selector is null", this.getMetadata());
@@ -120,13 +123,21 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
                         this.getMetadata()
                 );
             }
-            up = factory.createInsertIntoArrayPrimitive(main, locator, Collections.singletonList(content));
+            up = factory.createInsertIntoArrayPrimitive(
+                main,
+                locator,
+                Collections.singletonList(content),
+                this.getMetadata()
+            );
         } else {
             throw new InvalidUpdateTargetException(
                     "Insert expression target must be a single array or object",

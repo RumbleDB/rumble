@@ -73,6 +73,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean nativeExecution;
     private boolean functionInlining;
     private boolean thirdFeature;
+    private boolean applyUpdates;
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -422,6 +423,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.functionInlining = true;
         }
 
+        if (this.arguments.containsKey("apply-updates")) {
+            this.applyUpdates = this.arguments.get("apply-updates").equals("yes");
+        } else {
+            this.applyUpdates = false;
+        }
+
         if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
             this.optimizeGeneralComparisonToValueComparison = this.arguments.get(
                 "optimize-general-comparison-to-value-comparison"
@@ -642,6 +649,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setFunctionInlining(boolean b) {
         this.functionInlining = b;
+    }
+
+    public boolean applyUpdates() {
+        return this.applyUpdates;
+    }
+
+    public void setApplyUpdates(boolean b) {
+        this.applyUpdates = b;
     }
 
     public boolean optimizeGeneralComparisonToValueComparison() {

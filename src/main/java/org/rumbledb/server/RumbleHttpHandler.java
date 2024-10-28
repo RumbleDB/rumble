@@ -155,7 +155,7 @@ public class RumbleHttpHandler implements HttpHandler {
             );
         } else {
             if (results != null) {
-                Item values = ItemFactory.getInstance().createArrayItem(results);
+                Item values = ItemFactory.getInstance().createArrayItem(results, false);
                 output.putItemByKey("values", values);
             }
         }

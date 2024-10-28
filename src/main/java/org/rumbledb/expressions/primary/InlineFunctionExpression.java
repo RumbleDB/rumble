@@ -30,6 +30,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
 
@@ -51,6 +52,7 @@ public class InlineFunctionExpression extends Expression {
     private final List<Annotation> annotations;
     private boolean hasSequentialPropertyAnnotation;
     private boolean hasExitStatement;
+    private final boolean isExternal;
 
     public InlineFunctionExpression(
             List<Annotation> annotations,
@@ -58,6 +60,7 @@ public class InlineFunctionExpression extends Expression {
             Map<Name, SequenceType> params,
             SequenceType returnType,
             StatementsAndOptionalExpr body,
+            boolean isExternal,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -67,6 +70,7 @@ public class InlineFunctionExpression extends Expression {
         this.body = body;
         this.annotations = annotations;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
+        this.isExternal = isExternal;
         this.hasExitStatement = false;
         if (annotations != null) {
             this.setSequentialFromAnnotations();
@@ -97,6 +101,17 @@ public class InlineFunctionExpression extends Expression {
         this.setSequential(foundSeqAnnotation);
     }
 
+    public InlineFunctionExpression(
+            List<Annotation> annotations,
+            Name name,
+            Map<Name, SequenceType> params,
+            SequenceType returnType,
+            StatementsAndOptionalExpr body,
+            ExceptionMetadata metadata
+    ) {
+        this(annotations, name, params, returnType, body, false, metadata);
+    }
+
     public Name getName() {
         return this.name;
     }
@@ -124,6 +139,20 @@ public class InlineFunctionExpression extends Expression {
     @Nullable
     public List<Annotation> getAnnotations() {
         return this.annotations;
+    }
+
+    @Override
+    public boolean isUpdating() {
+        for (Annotation a : this.annotations) {
+            if (a.getAnnotationName().equals(AnnotationConstants.UPDATING)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isExternal() {
+        return this.isExternal;
     }
 
     @Override
@@ -192,8 +221,9 @@ public class InlineFunctionExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
+        String updating = isUpdating() ? "%an:updating" : "";
         if (this.name != null) {
-            sb.append("declare function " + this.name.toString() + "(");
+            sb.append("declare " + updating + " function " + this.name.toString() + "(");
         } else {
             sb.append("function (");
         }

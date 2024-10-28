@@ -73,7 +73,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
                     }
                 }
 
-                Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
+                Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
 
                 this.hasNext = false;
                 return result;

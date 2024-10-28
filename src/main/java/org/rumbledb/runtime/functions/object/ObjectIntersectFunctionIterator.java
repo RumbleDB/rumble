@@ -88,7 +88,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 }
             }
 
-            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
+            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
 
             return result;
         }

@@ -101,7 +101,8 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                     List<Item> values = new ArrayList<>();
                     values.add(ItemFactory.getInstance().createDoubleItem((double) a._1()));
                     values.add(ItemFactory.getInstance().createDoubleItem((double) a._2()));
-                    return ItemFactory.getInstance().createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+                    return ItemFactory.getInstance()
+                        .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
                 }
             }
         );

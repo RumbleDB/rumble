@@ -157,6 +157,11 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public boolean isUpdating() {
+        return this.children.get(this.children.size() - 1).isUpdating();
+    }
+
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         RuntimeIterator exprIterator = this.children.get(this.children.size() - 1);
         if (exprIterator.isUpdating()) {

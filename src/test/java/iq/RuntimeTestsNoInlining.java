@@ -48,7 +48,9 @@ public class RuntimeTestsNoInlining extends RuntimeTests {
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--function-inlining",
-                    "no" }
+                    "no",
+                    "--apply-updates",
+                    "yes" }
         ).setExternalVariableValue(
             Name.createVariableInNoNamespace("externalStringItem"),
             Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))

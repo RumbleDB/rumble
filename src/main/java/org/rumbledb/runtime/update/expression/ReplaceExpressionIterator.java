@@ -74,7 +74,6 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
         Item target;
         Item locator;
         Item content;
-
         try {
             target = this.mainIterator.materializeExactlyOneItem(context);
             locator = this.locatorIterator.materializeExactlyOneItem(context);
@@ -94,7 +93,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             for (Item item : tempContent) {
                 copyContent.add((Item) SerializationUtils.clone(item));
             }
-            content = ItemFactory.getInstance().createArrayItem(copyContent);
+            content = ItemFactory.getInstance().createArrayItem(copyContent, true);
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
@@ -105,6 +104,9 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         "Replace expression selection cannot be cast to String type",
                         this.getMetadata()
                 );
+            }
+            if (target.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
@@ -119,6 +121,9 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         "Replace expression selection cannot be cast to Int type",
                         this.getMetadata()
                 );
+            }
+            if (target.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
