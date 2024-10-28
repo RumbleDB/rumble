@@ -74,6 +74,7 @@ public enum ErrorCode {
     OurBadErrorCode("RBST0004"),
     ClusterConnectionErrorCode("RBDY0005"),
     DatesWithTimezonesNotSupported("RBDY0006"),
+    CannotModifyImmutableValue("RBDY0007"),
 
     UnexpectedStaticType("RBTY0001"),
 
@@ -130,6 +131,8 @@ public enum ErrorCode {
 
     TransformModifiesNonCopiedValue("XUDY0014"),
     UpdateTargetIsEmptySeqErrorCode("XUDY0027"),
+
+    UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
 
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),

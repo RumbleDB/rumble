@@ -7,9 +7,9 @@ We show here how to install RumbleDB from the github repository if you wish to d
 The following software is required:
 
 - [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 or java 11.
-- [Spark](https://spark.apache.org/), version 3.1.2 (for example)
+- [Spark](https://spark.apache.org/), version 3.4.3 (for example)
 - [Ant](http://www.ant.org/), version 1.11.1
-- [ANTLR](http://www.ant.org/), version 4.8 (supplied in our repository)
+- [ANTLR](http://www.ant.org/), version 4.9.3 (supplied in our repository)
 - [Maven](https://maven.apache.org/) 3.6.0
 
 Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 3.0 and 3.1 is with ANTLR 4.7, Spark 3.2 with ANTLR 4.8). The ANTLR runtime MUST match the ANTLR generator used to generate the RumbleDB jar file.
