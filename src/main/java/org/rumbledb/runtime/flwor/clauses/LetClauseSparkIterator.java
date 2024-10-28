@@ -295,12 +295,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
             }
         }
-        if (inputTupleValueExpression == null) {
-            throw new JobWithinAJobException(
-                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.",
-                    getMetadata()
-            );
-        }
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
@@ -334,6 +328,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             context,
             sequenceDependencies
         ).getDataFrame();
+
+        LogManager.getLogger("LetClauseSparkIterator").info("Rumble detected an equi-join in the left clause.");
 
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
