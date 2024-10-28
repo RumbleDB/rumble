@@ -1065,7 +1065,16 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         ExecutionMode result = ExecutionMode.UNSET;
         for (Statement statement : statements) {
             ExecutionMode statementExecMode = statement.getHighestExecutionMode(this.visitorConfig);
-            result = getHighestExecutionMode(result, statementExecMode);
+            if (statementExecMode.isUnset()) {
+                return ExecutionMode.UNSET;
+            }
+            if (result.isUnset()) {
+                result = statementExecMode;
+            } else if (result.isRDD() && statementExecMode.isLocal()) {
+                return ExecutionMode.LOCAL;
+            } else if (result.isDataFrame() && !statementExecMode.isDataFrame()) {
+                result = statementExecMode;
+            }
         }
         return result;
     }
