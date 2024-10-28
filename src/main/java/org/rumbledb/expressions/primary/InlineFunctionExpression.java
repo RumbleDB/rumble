@@ -138,7 +138,7 @@ public class InlineFunctionExpression extends Expression {
 
     @Nullable
     public List<Annotation> getAnnotations() {
-        return thisannotations;
+        return this.annotations;
     }
 
     @Override
