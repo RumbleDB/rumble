@@ -138,7 +138,7 @@ public class InlineFunctionExpression extends Expression {
 
     @Nullable
     public List<Annotation> getAnnotations() {
-        return annotations;
+        return thisannotations;
     }
 
     @Override
@@ -252,7 +252,7 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public boolean hasSequentialPropertyAnnotation() {
-        return hasSequentialPropertyAnnotation;
+        return this.hasSequentialPropertyAnnotation;
     }
 
     public void setHasExitStatement(boolean hasExitStatement) {
