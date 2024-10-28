@@ -37,12 +37,12 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         String javaVersion = System.getProperty("java.version");
-        if (!javaVersion.startsWith("1.8") && !javaVersion.startsWith("11.")) {
-            System.err.println("[Error] RumbleDB requires Java 8 or Java 11.");
+        if (!javaVersion.startsWith("11.")) {
+            System.err.println("[Error] RumbleDB requires Java 11.");
             System.err.println("Your Java version: " + System.getProperty("java.version"));
-            System.err.println("You can download Java 8 or 11 from https://adoptium.net/");
+            System.err.println("You can download Java 11 from https://adoptium.net/");
             System.err.println(
-                "If you do have Java 8 or 11, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 8 or 11."
+                "If you do have Java 11, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 11."
             );
             System.exit(43);
         }
