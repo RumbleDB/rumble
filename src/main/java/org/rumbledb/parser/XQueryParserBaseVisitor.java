@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.9.3
+// Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.13.1
 
 // Java header
 package org.rumbledb.parser;
@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * @param <T> The return type of the visit operation. Use {@link Void} for
  * operations with no return type.
  */
+@SuppressWarnings("CheckReturnValue")
 public class XQueryParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements XQueryParserVisitor<T> {
 	/**
 	 * {@inheritDoc}
