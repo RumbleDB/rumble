@@ -21,9 +21,6 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
-import scala.Function0;
-import scala.util.Properties;
-
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
