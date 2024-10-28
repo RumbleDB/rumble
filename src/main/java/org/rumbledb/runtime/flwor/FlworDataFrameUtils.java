@@ -821,7 +821,7 @@ public class FlworDataFrameUtils {
                 continue;
             }
             @SuppressWarnings("unchecked")
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray(bytes, kryo, input);
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) bytes, kryo, input);
             deserializedParams.add(deserializedParam);
         }
     }

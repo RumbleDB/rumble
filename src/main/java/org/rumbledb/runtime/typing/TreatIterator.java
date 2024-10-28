@@ -23,6 +23,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
@@ -51,12 +52,14 @@ public class TreatIterator extends HybridRuntimeIterator {
     public TreatIterator(
             RuntimeIterator iterator,
             SequenceType sequenceType,
+            boolean isUpdating,
             ErrorCode errorCode,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
+        this.isUpdating = isUpdating;
         this.errorCode = errorCode;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
@@ -71,6 +74,15 @@ public class TreatIterator extends HybridRuntimeIterator {
                     "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
             );
         }
+    }
+
+    public TreatIterator(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            ErrorCode errorCode,
+            RuntimeStaticContext staticContext
+    ) {
+        this(iterator, sequenceType, false, errorCode, staticContext);
     }
 
     @Override
@@ -224,6 +236,11 @@ public class TreatIterator extends HybridRuntimeIterator {
             return df;
         }
         throw errorToThrow("" + dataItemType);
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        return iterator.getPendingUpdateList(context);
     }
 
     /**

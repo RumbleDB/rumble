@@ -613,4 +613,21 @@ public class DerivedAtomicItemType implements ItemType {
                 ExceptionMetadata.EMPTY_METADATA
         );
     }
+
+    @Override
+    public String getSparkSQLType() {
+        if (this.equals(BuiltinTypesCatalogue.integerItem)) {
+            return "INT";
+        }
+        if (this.equals(BuiltinTypesCatalogue.intItem)) {
+            return "INT";
+        }
+        if (this.equals(BuiltinTypesCatalogue.longItem)) {
+            return "LONG";
+        }
+        if (this.equals(BuiltinTypesCatalogue.shortItem)) {
+            return "SHORT";
+        }
+        return this.primitiveType.getSparkSQLType();
+    }
 }
