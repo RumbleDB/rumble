@@ -313,7 +313,7 @@
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
-            <artifactId>delta-core_2.13</artifactId>
+            <artifactId>delta-spark_2.13</artifactId>
             <version>3.2.1</version>
         </dependency>
     </dependencies>
