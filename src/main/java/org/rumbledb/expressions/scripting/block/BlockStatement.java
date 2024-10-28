@@ -27,7 +27,7 @@ public class BlockStatement extends Statement {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        blockStatements.forEach(statement -> {
+        this.blockStatements.forEach(statement -> {
             if (statement != null) {
                 result.add(statement);
             }
@@ -49,6 +49,6 @@ public class BlockStatement extends Statement {
     }
 
     public List<Statement> getBlockStatements() {
-        return blockStatements;
+        return this.blockStatements;
     }
 }

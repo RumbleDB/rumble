@@ -74,14 +74,14 @@ public class SwitchStatement extends Statement {
     }
 
     public Expression getTestCondition() {
-        return testCondition;
+        return this.testCondition;
     }
 
     public List<SwitchCaseStatement> getCases() {
-        return cases;
+        return this.cases;
     }
 
     public Statement getDefaultStatement() {
-        return defaultStatement;
+        return this.defaultStatement;
     }
 }
