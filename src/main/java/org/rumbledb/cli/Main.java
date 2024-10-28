@@ -42,12 +42,14 @@ public class Main {
                 && !javaVersion.startsWith("17")
                 && !javaVersion.startsWith("21")
         ) {
-            System.err.println("[Error] RumbleDB requires at least Java 11 17 or 21 (17 being the default Spark 4 version).");
+            System.err.println(
+                "[Error] RumbleDB requires at least Java 11 17 or 21 (17 being the default Spark 4 version)."
+            );
             System.err.println("Your Java version: " + System.getProperty("java.version"));
             System.err.println("You can download Java from https://adoptium.net/");
             System.err.println(
-		"If you do have Java 11 17 or 21, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to the correct JAVA_HOME."
-	    );
+                "If you do have Java 11 17 or 21, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to the correct JAVA_HOME."
+            );
             System.exit(43);
         }
         RumbleRuntimeConfiguration sparksoniqConf = null;
