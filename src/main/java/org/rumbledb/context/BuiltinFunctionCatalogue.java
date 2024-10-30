@@ -46,17 +46,7 @@ import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFun
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.error.ThrowErrorIterator;
-import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.DeltaFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
-import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.RepartitionFunctionIterator;
-import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
+import org.rumbledb.runtime.functions.input.*;
 import org.rumbledb.runtime.functions.io.DebugFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
@@ -440,6 +430,16 @@ public class BuiltinFunctionCatalogue {
         "item*",
         StructuredJsonFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+    /**
+     * function that parses multiple xml files into an RDD in parallel
+     */
+    static final BuiltinFunction xml_files = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "xml-files"),
+        "string",
+        "item*",
+        XmlFilesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
      * function that parses a libSVM formatted file into a DataFrame
@@ -2926,6 +2926,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(json_file1.getIdentifier(), json_file1);
         builtinFunctions.put(json_file2.getIdentifier(), json_file2);
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
+        builtinFunctions.put(xml_files.getIdentifier(), xml_files);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
         builtinFunctions.put(yaml_doc.getIdentifier(), yaml_doc);
