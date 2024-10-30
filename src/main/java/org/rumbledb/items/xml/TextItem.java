@@ -48,14 +48,14 @@ public class TextItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.textNode);
-        kryo.writeObject(output, this.parent);
+        kryo.writeClassAndObject(output, this.textNode);
+        kryo.writeClassAndObject(output, this.parent);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.textNode = kryo.readObject(input, Node.class);
-        this.parent = kryo.readObject(input, Item.class);
+        this.textNode = (Node) kryo.readClassAndObject(input);
+        this.parent = (Item) kryo.readClassAndObject(input);
     }
 
     public int hashCode() {

@@ -9,7 +9,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ElementItem implements Item {
@@ -34,19 +33,19 @@ public class ElementItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.elementNode);
-        kryo.writeObject(output, this.children);
-        kryo.writeObject(output, this.attributes);
-        kryo.writeObject(output, this.parent);
+        kryo.writeClassAndObject(output, this.elementNode);
+        kryo.writeClassAndObject(output, this.children);
+        kryo.writeClassAndObject(output, this.attributes);
+        kryo.writeClassAndObject(output, this.parent);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.elementNode = kryo.readObject(input, Node.class);
-        this.children = kryo.readObject(input, ArrayList.class);
-        this.attributes = kryo.readObject(input, ArrayList.class);
-        this.parent = kryo.readObject(input, Item.class);
+        this.elementNode = (Node) kryo.readClassAndObject(input);
+        this.children = (List<Item>) kryo.readClassAndObject(input);
+        this.attributes = (List<Item>) kryo.readClassAndObject(input);
+        this.parent = (Item) kryo.readClassAndObject(input);
     }
 
     @Override

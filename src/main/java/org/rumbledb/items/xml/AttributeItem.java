@@ -21,14 +21,14 @@ public class AttributeItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.parent);
-        kryo.writeObject(output, this.attributeNode);
+        kryo.writeClassAndObject(output, this.parent);
+        kryo.writeClassAndObject(output, this.attributeNode);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.parent = kryo.readObject(input, Item.class);
-        this.attributeNode = kryo.readObject(input, Node.class);
+        this.parent = (Item) kryo.readClassAndObject(input);
+        this.attributeNode = (Node) kryo.readClassAndObject(input);
     }
 
     @Override
