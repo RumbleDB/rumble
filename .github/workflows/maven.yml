@@ -42,7 +42,7 @@ jobs:
     - name: JavaAPITest
       run: mvn -Dtest=JavaAPITest test
     - name: Install Spark and run server tests
-      run: mkdir -p /opt; wget -q -O /opt/spark.tgz https://downloads.apache.org/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz ; tar -xzf /opt/spark.tgz -C /opt/ ; rm /opt/spark.tgz ; export SPARK_HOME=/opt/spark-2.4.5-bin-hadoop2.7 ; export PATH=$PATH:/opt/spark-2.4.5-bin-hadoop2.7/bin; bash server-test-script.sh
+      run: mkdir -p /opt; wget -q -O /opt/spark.tgz https://www.apache.org/dyn/closer.lua/spark/spark-3.4.4/spark-3.4.4-bin-hadoop3.tgz ; tar -xzf /opt/spark.tgz -C /opt/ ; rm /opt/spark.tgz ; export SPARK_HOME=/opt/spark-3.4.4-bin-hadoop3 ; export PATH=$PATH:/opt/spark-3.4.4-bin-hadoop3/bin; bash server-test-script.sh
     - name: Copying artefacts
       run: mkdir staging && cp target/*.jar staging
     - name: Package
