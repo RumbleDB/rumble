@@ -14,12 +14,7 @@ public class TextItem implements Item {
     private Node textNode;
     private Item parent;
 
-    public TextItem() {
-        super();
-    }
-
     public TextItem(Node textNode) {
-        super();
         this.textNode = textNode;
     }
 
