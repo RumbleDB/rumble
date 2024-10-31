@@ -24,17 +24,17 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
-import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -53,10 +53,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     public SubsequenceFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
         this.sequenceIterator = this.children.get(0);
         this.positionIterator = this.children.get(1);
         if (this.children.size() == 3) {
@@ -90,37 +89,44 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
-        StructType inputSchema = df.schema();
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, -1, null);
+        List<FlworDataFrameColumn> allColumns = df.getColumns();
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, false);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 
-        df.createOrReplaceTempView("input");
-        df = df.sparkSession()
-            .sql(
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        if (this.length != -1) {
+            df = df.evaluateSQL(
                 String.format(
-                    "SELECT * FROM input LIMIT %s",
+                    "SELECT * FROM %s LIMIT %s",
+                    input,
                     Integer.toString(this.startPosition + this.length - 1)
-                )
+                ),
+                df.getItemType()
             );
+        }
 
-        df = FlworDataFrameUtils.zipWithIndex(df, 1L, SparkSessionManager.temporaryColumnName);
+        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
+            df.getDataFrame(),
+            1L,
+            SparkSessionManager.temporaryColumnName
+        );
 
-        df.createOrReplaceTempView("input");
-        df = df.sparkSession()
+        String inputds = FlworDataFrameUtils.createTempView(ds);
+        ds = ds.sparkSession()
             .sql(
                 String.format(
-                    "SELECT %s FROM (SELECT * FROM input WHERE `%s` >= %s)",
+                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
                     selectSQL,
+                    inputds,
                     SparkSessionManager.temporaryColumnName,
                     Integer.toString(this.startPosition)
                 )
             );
-        return df;
+        return new JSoundDataFrame(ds, df.getItemType());
     }
 
     @Override
@@ -135,7 +141,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         initializeLocal();
     }
 
@@ -188,7 +194,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         // if startPosition overshoots, return empty sequence
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }
@@ -227,7 +232,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }

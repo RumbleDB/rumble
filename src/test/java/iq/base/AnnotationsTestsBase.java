@@ -20,24 +20,19 @@
 
 package iq.base;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
-import org.rumbledb.compiler.TranslationVisitor;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
@@ -46,7 +41,10 @@ import utils.annotations.AnnotationProcessor;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -54,8 +52,32 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] {});
+    protected static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration(
+            new String[] {
+                "--print-iterator-tree",
+                "yes",
+                "--variable:externalUnparsedString",
+                "unparsed string" }
+    ).setExternalVariableValue(
+        Name.createVariableInNoNamespace("externalStringItem"),
+        Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
+    )
+        .setExternalVariableValue(
+            Name.createVariableInNoNamespace("externalIntegerItems"),
+            Arrays.asList(
+                new Item[] {
+                    ItemFactory.getInstance().createIntItem(1),
+                    ItemFactory.getInstance().createIntItem(2),
+                    ItemFactory.getInstance().createIntItem(3),
+                    ItemFactory.getInstance().createIntItem(4),
+                    ItemFactory.getInstance().createIntItem(5),
+                }
+            )
+        );
 
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return defaultConfiguration;
+    }
 
     public void initializeTests(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));
@@ -65,26 +87,23 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected MainModule testAnnotations(String path)
+    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
             throws IOException {
-        RuntimeIterator runtimeIterator = null;
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
         } catch (AnnotationParseException e) {
             e.printStackTrace();
             Assert.fail();
         }
-        MainModule mainModule = null;
-        DynamicContext dynamicContext = null;
+        SequenceOfItems sequence = null;
         try {
-            mainModule = this.parse(path);
-            Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
-
-            VisitorHelpers.resolveDependencies(mainModule, AnnotationsTestsBase.configuration);
-            VisitorHelpers.populateStaticContext(mainModule);
-            dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
-            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
-            // PARSING
+            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                path,
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            Rumble rumble = new Rumble(configuration);
+            sequence = rumble.runQuery(uri);
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(
@@ -94,10 +113,10 @@ public class AnnotationsTestsBase {
             );
             if (this.currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return mainModule;
+                return;
             } else {
                 System.out.println(errorOutput);
-                return mainModule;
+                return;
             }
 
             // SEMANTIC
@@ -111,11 +130,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return mainModule;
+                    return;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return mainModule;
+                    return;
                 }
             } catch (Exception ex) {
             }
@@ -131,11 +150,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return mainModule;
+                    return;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return mainModule;
+                    return;
                 }
             } catch (Exception ex) {
             }
@@ -144,14 +163,14 @@ public class AnnotationsTestsBase {
         try {
             if (!this.currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
-                return mainModule;
+                return;
             }
         } catch (Exception ex) {
         }
 
         if (!this.currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
-            return mainModule;
+            return;
         }
 
         // PROGRAM SHOULD RUN
@@ -161,10 +180,10 @@ public class AnnotationsTestsBase {
                 this.currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+                checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
-                exception.printStackTrace();
+                errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {
@@ -175,7 +194,7 @@ public class AnnotationsTestsBase {
                     !this.currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+                    checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(
@@ -183,49 +202,18 @@ public class AnnotationsTestsBase {
                         this.currentAnnotation.getErrorCode(),
                         this.currentAnnotation.getErrorMetadata()
                     );
-                    return mainModule;
+                    return;
                 }
 
                 Assert.fail("Program executed when not expected to");
             }
         }
-        return mainModule;
-    }
-
-    private MainModule parse(String path) throws IOException {
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromFileName(path));
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-
-        try {
-            // the original
-            /*
-             * JsoniqParser.ModuleContext unit = parser.module();
-             * JsoniqParser.MainModuleContext main = unit.main;
-             * visitor.visit(unit);
-             */
-
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext main = module.main;
-            MainModule mainModule = (MainModule) new TranslationVisitor().visit(main);
-            return mainModule;
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    new ExceptionMetadata(
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine()
-                    )
-            );
-            e.initCause(ex);
-            throw e;
-        }
+        return;
     }
 
     protected void checkExpectedOutput(
             String expectedOutput,
-            RuntimeIterator runtimeIterator,
-            DynamicContext dynamicContext
+            SequenceOfItems sequence
     ) {
         Assert.assertTrue(true);
     }

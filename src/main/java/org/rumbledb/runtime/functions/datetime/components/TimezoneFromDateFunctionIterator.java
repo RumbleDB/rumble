@@ -3,48 +3,34 @@ package org.rumbledb.runtime.functions.datetime.components;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class TimezoneFromDateFunctionIterator extends LocalFunctionCallIterator {
+public class TimezoneFromDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item dateItem = null;
 
     public TimezoneFromDateFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(
-                    new Period(this.dateItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
-                );
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " timezone-from-date function",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        this.dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (this.dateItem == null || !this.dateItem.hasTimeZone()) {
+            return null;
         }
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.dateItem = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.dateItem != null && this.dateItem.hasTimeZone();
+        return ItemFactory.getInstance()
+            .createDayTimeDurationItem(
+                new Period(this.dateItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
+            );
     }
 }

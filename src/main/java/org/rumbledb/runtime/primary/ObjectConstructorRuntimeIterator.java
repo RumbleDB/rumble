@@ -21,19 +21,19 @@
 package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
+public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -44,10 +44,9 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(keys, executionMode, iteratorMetadata);
+        super(keys, staticContext);
         this.children.addAll(values);
         this.keys = keys;
         this.values = values;
@@ -55,78 +54,74 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.addAll(childExpressions);
         this.isMergedObject = true;
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            List<Item> values = new ArrayList<>();
-            List<String> keys = new ArrayList<>();
-            if (this.isMergedObject) {
-                for (RuntimeIterator iterator : this.children) {
-                    iterator.open(this.currentDynamicContextForLocalExecution);
-                    while (iterator.hasNext()) {
-                        ObjectItem item = (ObjectItem) iterator.next();
-                        keys.addAll(item.getKeys());
-                        values.addAll(item.getValues());
-                    }
-                    iterator.close();
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        List<Item> values = new ArrayList<>();
+        List<String> keys = new ArrayList<>();
+        if (this.isMergedObject) {
+            for (RuntimeIterator iterator : this.children) {
+                iterator.open(dynamicContext);
+                while (iterator.hasNext()) {
+                    ObjectItem item = (ObjectItem) iterator.next();
+                    keys.addAll(item.getKeys());
+                    values.addAll(item.getValues());
                 }
-                this.hasNext = false;
-                return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, getMetadata());
-
-            } else {
-
-                for (RuntimeIterator valueIterator : this.values) {
-                    List<Item> currentResults = new ArrayList<>();
-                    valueIterator.open(this.currentDynamicContextForLocalExecution);
-                    while (valueIterator.hasNext()) {
-                        currentResults.add(valueIterator.next());
-                    }
-                    valueIterator.close();
-                    // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
-                    if (currentResults.size() > 1) {
-                        values.add(ItemFactory.getInstance().createArrayItem(currentResults));
-                    } else if (currentResults.size() == 1) {
-                        values.add(currentResults.get(0));
-                    } else {
-                        values.add(ItemFactory.getInstance().createNullItem());
-                    }
-                }
-
-                for (RuntimeIterator keyIterator : this.keys) {
-                    keyIterator.open(this.currentDynamicContextForLocalExecution);
-                    if (!keyIterator.hasNext()) {
-                        throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
-                    }
-                    Item key = keyIterator.next();
-                    if (!key.isString()) {
-                        throw new UnexpectedTypeException(
-                                "Key provided for object creation must be of type String",
-                                getMetadata()
-                        );
-                    }
-                    keys.add(key.getStringValue());
-                    if (keyIterator.hasNext()) {
-                        throw new IteratorFlowException(
-                                "A key cannot be a sequence of more than one item",
-                                getMetadata()
-                        );
-                    }
-                    keyIterator.close();
-                }
-                this.hasNext = false;
-                return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, getMetadata());
+                iterator.close();
             }
+            this.hasNext = false;
+            return ItemFactory.getInstance()
+                .createObjectItem(keys, values, getMetadata(), true);
+
+        } else {
+
+            for (RuntimeIterator valueIterator : this.values) {
+                List<Item> currentResults = new ArrayList<>();
+                valueIterator.open(dynamicContext);
+                while (valueIterator.hasNext()) {
+                    currentResults.add(valueIterator.next());
+                }
+                valueIterator.close();
+                // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
+                if (currentResults.size() > 1) {
+                    values.add(ItemFactory.getInstance().createArrayItem(currentResults, true));
+                } else if (currentResults.size() == 1) {
+                    values.add(currentResults.get(0));
+                } else {
+                    values.add(ItemFactory.getInstance().createNullItem());
+                }
+            }
+
+            for (RuntimeIterator keyIterator : this.keys) {
+                keyIterator.open(dynamicContext);
+                if (!keyIterator.hasNext()) {
+                    throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
+                }
+                Item key = keyIterator.next();
+                if (!key.isString()) {
+                    throw new UnexpectedTypeException(
+                            "Key provided for object creation must be of type String",
+                            getMetadata()
+                    );
+                }
+                keys.add(key.getStringValue());
+                if (keyIterator.hasNext()) {
+                    throw new IteratorFlowException(
+                            "A key cannot be a sequence of more than one item",
+                            getMetadata()
+                    );
+                }
+                keyIterator.close();
+            }
+            this.hasNext = false;
+            return ItemFactory.getInstance()
+                .createObjectItem(keys, values, getMetadata(), true);
         }
-        throw new IteratorFlowException("Invalid next() call on object!", getMetadata());
     }
 }

@@ -1,14 +1,14 @@
 # JSONiq
 
-Rumble relies on the JSONiq language.
+RumbleDB relies on the JSONiq language.
 
 ## JSONiq reference
 
-The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq/webhelp/index.html) on the [JSONiq.org](http://www.jsoniq.org) website. Note that it is not fully implemented yet (see below).
+The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq/webhelp/index.html) on the [JSONiq.org](http://www.jsoniq.org) website. The implementation is now in a very advanced stage and there remain only few unsupported core JSONiq features.
 
 ## JSONiq tutorial
 
-A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). All queries in this tutorial will work with Rumble.
+A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). All queries in this tutorial will work with RumbleDB.
 
 ## JSONiq tutorial for Python users
 
@@ -61,32 +61,56 @@ More expressions working on sequences will be pushed down in the future, priorit
 
 We also started to push down some expressions to DataFrames and Spark SQL (obtained via structured-json-file, csv-file and parquet-file calls). In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() as well as object lookup, array unboxing and array lookup is also pushed down on DataFrames.
 
-When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
+When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 200 items, but this can be changed on the command line with --materialization-cap. A warning is issued if a materialization happened and the sequence was truncated on screen. An error is thrown if this happens within a query.
 
 ## External global variables.
 
-Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
+Prologs with user-defined functions and global variables are supported. Global external variables are supported (use "--variable:foo bar" on the command line to assign values to them). If the declared type is not string, then the literal supplied
+on the command line is cast. If the declared type is anyURI, the path supplied on the command line is also resolved against
+the working directory to an absolute URI. Thus, anyURI should be used to supply paths dynamically through an external variable.
 
+Context item declarations are supported and a global context item value can be passed with the "--context-item" or "-I" parameter on the command line.
 
-## Unsupported/Unimplemented features (beta release)
+## Library modules
 
-Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
+Library modules are now supported (experimental, please report bugs), and their namespace URI is used for resolution. If it is relative, it is resolved against the importing module location.
 
-### Settings and modules
+The same schemes are supported as for reading queries and data: file, hdfs, and so on. HTTP is also supported: you can import modules from the Web!
 
-Prolog settings and library modules are not supported yet.
+Example of library module (the file name is library-module.jq):
+
+```
+module namespace m = "library-module.jq";
+
+declare variable $m:x := 2;
+
+declare function mod:func($v) {
+  $m:x + $v
+);
+```
+
+Example of importing module (assuming it is in the same directory):
+
+```
+import module namespace mod = "library-module.jq";
+
+mod:func($mod:x)
+```
 
 ### Try/catch
 
-Try/catch expressions are not supported yet but this is planned.
+Try/catch expressions are supported. Error codes are in the default, RumbleDB namespace and do not need prefixes.
 
-### Nested expressions in object lookups (rhs)
+```
+try { 1 div 0 } catch FOAR0001 { "Division by zero!" }
+```
 
-Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.
 
-### Types
+### Supported types
 
-The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
+The JSONiq type system is fully supported. Below is a complete list of JSONiq types and their support status. All builtin types are in the default type namespace, so that no prefix is needed. These types are defined in the XML Schema standard. Note that some
+types specific to XML (e.g., NOTATION, NMTOKENS, NMTOKEN, ID, IDREF, ENTITY, etc) are not part of the JSONiq standard and
+not supported by RumbleDB.
 
 |  Type | Status |
 |-------|--------|
@@ -94,41 +118,69 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | anyURI | supported |
 | base64Binary | supported |
 | boolean | supported |
-| byte | not supported |
+| byte | supported |
 | date | supported |
 | dateTime | supported |
-| dateTimeStamp | not supported |
+| dateTimeStamp | supported |
 | dayTimeDuration | supported |
 | decimal | supported |
 | double | supported |
 | duration | supported |
-| float | not supported |
-| gDay | not supported |
-| gMonth | not supported |
-| gYear | not supported |
-| gYearMonth | not supported |
+| float | supported |
+| gDay | supported |
+| gMonth | supported |
+| gYear | supported |
+| gYearMonth | supported |
 | hexBinary | supported |
-| int | not supported |
+| int | supported |
 | integer | supported |
-| long | not supported |
-| negativeInteger | not supported |
-| nonPositiveInteger | not supported |
-| nonNegativeInteger | not supported |
-| positiveInteger | not supported |
-| short | not supported |
+| long | supported |
+| negativeInteger | supported |
+| nonPositiveInteger | supported |
+| nonNegativeInteger | supported |
+| positiveInteger | supported |
+| short | supported |
 | string | supported |
 | time | supported |
-| unsignedByte | not supported |
-| unsignedInt | not supported |
-| unsignedLong | not supported |
-| unsignedShort | not supported |
+| unsignedByte | supported |
+| unsignedInt | supported |
+| unsignedLong | supported |
+| unsignedShort | supported |
 | yearMonthDuration | supported |
 
+## Unsupported/Unimplemented features (beta release)
+
+Most core features of JSONiq are now in place, and we are working on getting the last (less used) ones into RumbleDB as well. We prioritize their implementation on user requests.
+
+### Prolog
+
+Some prolog settings (base URI, ordering mode, decimal format, namespace declarations) are not supported yet.
+
+Location hints for the resolution of modules are not supported yet.
+
+### FLWOR features
+
+Window clauses are not supported, because they are not compatible with the Spark execution model.
+
+### Function types
+
+Function type syntax is supported.
+
+Function annotations are not supported (%public, %private...), but this is planned.
 
 ### Builtin functions
 
-Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
+Most JSONiq and XQuery builtin functions are now supported (see function documentation), except XML-specific functions. A few are
+still missing, do not hesitate to reach out if you need them.
+
+Constructors for atomic types are fully supported.
+
+Buitin functions cannot yet be used with named function reference expressions (example: concat#2).
+
+### Error variables
+
+Error variables ($err:code, ...) for inside catch blocks are not supported.
 
 ### Updates and scripting
 
-JSON updates are not supported. Scripting features (assignment, while loop, ...) are not supported yet either.
+There are future plans to support JSONiq updates and scripting.

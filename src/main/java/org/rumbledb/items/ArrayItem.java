@@ -23,26 +23,57 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayItem extends JsonItem {
+public class ArrayItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
     private List<Item> arrayItems;
+    private int mutabilityLevel;
+    private long topLevelID;
+    private String pathIn;
+    private String location;
 
     public ArrayItem() {
         super();
         this.arrayItems = new ArrayList<>();
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
     }
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
+    }
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
+            return false;
+        }
+        Item o = (Item) otherItem;
+        if (!o.isArray()) {
+            return false;
+        }
+        if (getSize() != o.getSize()) {
+            return false;
+        }
+        for (int i = 0; i < getSize(); ++i) {
+            if (!getItemAt(i).equals(o.getItemAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void append(Item other) {
@@ -65,6 +96,21 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
+    public void putItemAt(Item value, int i) {
+        this.arrayItems.add(i, value);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> values, int i) {
+        this.arrayItems.addAll(i, values);
+    }
+
+    @Override
+    public void removeItemAt(int i) {
+        this.arrayItems.remove(i);
+    }
+
+    @Override
     public boolean isArray() {
         return true;
     }
@@ -75,61 +121,22 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.arrayItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public String serialize() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-
-        String separator = " ";
-        for (Item item : this.arrayItems) {
-            sb.append(separator);
-            separator = ", ";
-            boolean isStringValue = item.isString();
-            if (isStringValue) {
-                sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(item.serialize()));
-                sb.append("\"");
-            } else {
-                sb.append(item.serialize());
-            }
-        }
-
-        sb.append(" ]");
-        return sb.toString();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.arrayItems);
+        output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        kryo.writeObject(output, this.pathIn);
+        kryo.writeObject(output, this.location);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
         this.arrayItems = kryo.readObject(input, ArrayList.class);
-    }
-
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
-            return false;
-        }
-        if (getSize() != o.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
-                return false;
-            }
-        }
-        return true;
+        this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = kryo.readObject(input, String.class);
+        this.location = kryo.readObject(input, String.class);
     }
 
     public int hashCode() {
@@ -143,6 +150,108 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.arrayItem;
+        return BuiltinTypesCatalogue.arrayItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (Item item : this.arrayItems) {
+            item.setMutabilityLevel(mutabilityLevel);
+        }
+    }
+
+    @Override
+    public long getTopLevelID() {
+        return this.topLevelID;
+    }
+
+    @Override
+    public void setTopLevelID(long topLevelID) {
+        this.topLevelID = topLevelID;
+        for (Item item : this.arrayItems) {
+            item.setTopLevelID(topLevelID);
+        }
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.pathIn;
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.pathIn = pathIn;
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            item.setPathIn(pathIn + "[" + i + "]");
+        }
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.location;
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.location = location;
+        for (Item item : this.arrayItems) {
+            item.setTableLocation(location);
+        }
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("array(");
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            sb.append(item.getSparkSQLValue());
+            if (i + 1 < this.arrayItems.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        StringBuilder sb = new StringBuilder();
+        ItemType elementType = itemType.getArrayContentFacet();
+        sb.append("array(");
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            sb.append(item.getSparkSQLValue(elementType));
+            if (i + 1 < this.arrayItems.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Is it okay to assume first elem type is same as rest?
+        StringBuilder sb = new StringBuilder();
+        sb.append("ARRAY<");
+        if (this.getSize() <= 0) {
+            // TODO: Throw error? No empty arrays?
+        }
+        sb.append(this.getItemAt(0).getSparkSQLType());
+        sb.append(">");
+        return sb.toString();
     }
 }

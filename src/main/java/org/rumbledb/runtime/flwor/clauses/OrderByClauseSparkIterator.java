@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -28,21 +29,29 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
-import org.rumbledb.types.ItemType;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.types.TypeMappings;
+
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -55,16 +64,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static org.rumbledb.items.parsing.ItemParser.decimalType;
-
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
-    @SuppressWarnings("unused")
-    private final boolean isStable;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
+    private Map<Name, DynamicContext.VariableDependency> dependencies;
 
     private List<FlworTuple> localTupleResults;
     private int resultIndex;
@@ -73,46 +78,65 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, staticContext);
         this.expressionsWithIterator = expressionsWithIterator;
-        this.isStable = stable;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
             this.dependencies.putAll(e.getIterator().getVariableDependencies());
         }
+        this.localTupleResults = new ArrayList<>();
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this.child != null) {
-            this.child.open(this.currentDynamicContext);
-
-            this.hasNext = this.child.hasNext();
-        } else {
-            throw new OurBadException("Invalid where clause.");
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
         }
+        this.child.open(this.currentDynamicContext);
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
+        this.hasNext = this.child.hasNext();
+    }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
+        }
+        this.child.reset(this.currentDynamicContext);
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
+        this.hasNext = this.child.hasNext();
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
+        }
+        this.child.close();
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
     }
 
     @Override
     public FlworTuple next() {
         if (this.hasNext) {
-            if (this.localTupleResults == null) {
-                this.localTupleResults = new ArrayList<>();
-                this.resultIndex = 0;
+            if (this.resultIndex == 0) {
                 setAllLocalResults();
             }
-
             FlworTuple result = this.localTupleResults.get(this.resultIndex++);
             if (this.resultIndex == this.localTupleResults.size()) {
                 this.hasNext = false;
             }
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
+        throw new IteratorFlowException("Invalid next() call in order-by clause", getMetadata());
     }
 
     /**
@@ -138,7 +162,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(this.expressionsWithIterator, true)
+                new FlworKeyComparator(this.expressionsWithIterator, getMetadata())
         );
 
         // assign current context as parent. re-use the same context object for efficiency
@@ -148,41 +172,28 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             List<Item> results = new ArrayList<>(); // results from the expressions will become a key
             for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-                tupleContext.removeAllVariables(); // clear the previous variables
-                tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+                tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+                tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
+                                                                                                  // variables from new
+                                                                                                  // tuple
 
-                boolean isFieldEmpty = true;
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
-                iterator.open(tupleContext);
-                while (iterator.hasNext()) {
-                    Item resultItem = iterator.next();
-                    if (resultItem != null) {
-                        if (!resultItem.isAtomic()) {
-                            throw new NonAtomicKeyException(
-                                    "Order by keys must be atomics",
-                                    expressionWithIterator.getIterator().getMetadata()
-                            );
-                        }
-                        if (resultItem.isBinary()) {
-                            String itemType = resultItem.getDynamicType().toString();
-                            throw new UnexpectedTypeException(
-                                    "\""
-                                        + itemType
-                                        + "\": invalid type: can not compare for equality to type \""
-                                        + itemType
-                                        + "\"",
-                                    getMetadata()
-                            );
-                        }
+                try {
+                    Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
+                    if (resultItem != null && !resultItem.isAtomic()) {
+                        throw new UnexpectedTypeException(
+                                "Keys in an order-by clause must be atomics.",
+                                expressionWithIterator.getIterator().getMetadata()
+                        );
                     }
-                    isFieldEmpty = false;
+                    // possibly null for empty sequence.
                     results.add(resultItem);
+                } catch (MoreThanOneItemException e) {
+                    throw new UnexpectedTypeException(
+                            "Keys in an order-by clause must be at most one item.",
+                            expressionWithIterator.getIterator().getMetadata()
+                    );
                 }
-                // if empty ordering field is found, add a Java null as placeholder
-                if (isFieldEmpty) {
-                    results.add(null);
-                }
-                iterator.close();
             }
             FlworKey key = new FlworKey(results);
             List<FlworTuple> values = keyValuePairs.get(key); // all values for a single matching key are held in a list
@@ -196,16 +207,17 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
+    public FlworDataFrame getDataFrame(
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid orderby clause.");
         }
 
+        int numberOfOrderingKeys = this.expressionsWithIterator.size();
+
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-            if (expressionWithIterator.getIterator().isRDD()) {
+            if (expressionWithIterator.getIterator().isRDDOrDataFrame()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -213,29 +225,41 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
-        if (df.count() == 0) {
-            return df;
-        }
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
-            -1,
-            this.dependencies
+            null,
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
         );
+
+        FlworDataFrame nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expressionsWithIterator,
+                allColumns,
+                inputSchema,
+                context
+            );
+        }
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
 
         df.sparkSession()
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, UDFcolumnsByType),
+                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -246,57 +270,79 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
+
         Object columnTypesObject = columnTypesDf.collect();
         Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
 
+        if (columnTypesOfRows.length == 0) {
+            // The input is empty, so we output this empty DF again.
+            return new FlworDataFrame(df);
+        }
+
         // Every column represents an order by expression
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
-        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
+        Map<Integer, Name> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
             List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
-            for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
-                String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
-
-                if (!columnType.equals(StringFlagForEmptySequence) && !columnType.equals(ItemType.nullItem.getName())) {
-                    String currentColumnType = typesForAllColumns.get(columnIndex);
-                    if (currentColumnType == null) {
-                        typesForAllColumns.put(columnIndex, columnType);
-                    } else if (
-                        (currentColumnType.equals(ItemType.integerItem.getName())
-                            || currentColumnType.equals(ItemType.doubleItem.getName())
-                            || currentColumnType.equals(ItemType.decimalItem.getName()))
-                            && (columnType.equals(ItemType.integerItem.getName())
-                                || columnType.equals(ItemType.doubleItem.getName())
-                                || columnType.equals(ItemType.decimalItem.getName()))
+            for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
+                String typeString = (String) columnsTypesOfRowAsList.get(columnIndex);
+                boolean isEmptySequence = typeString.contentEquals(StringFlagForEmptySequence);
+                if (!isEmptySequence) {
+                    Name columnType = BuiltinTypesCatalogue.getItemTypeByName(
+                        Name.createVariableInDefaultTypeNamespace(typeString)
+                    ).getName();
+                    if (
+                        !columnType.equals(BuiltinTypesCatalogue.nullItem.getName())
                     ) {
-                        // the numeric type calculation is identical to Item::getNumericResultType()
-                        if (
-                            currentColumnType.equals(ItemType.doubleItem.getName())
-                                || columnType.equals(ItemType.doubleItem.getName())
-                        ) {
-                            typesForAllColumns.put(columnIndex, ItemType.doubleItem.getName());
+                        Name currentColumnType = typesForAllColumns.get(columnIndex);
+                        if (currentColumnType == null) {
+                            typesForAllColumns.put(columnIndex, columnType);
                         } else if (
-                            currentColumnType.equals(ItemType.decimalItem.getName())
-                                || columnType.equals(ItemType.decimalItem.getName())
+                            (currentColumnType.equals(BuiltinTypesCatalogue.integerItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.intItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.floatItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.decimalItem.getName()))
+                                && (columnType.equals(BuiltinTypesCatalogue.integerItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.intItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.floatItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.decimalItem.getName()))
                         ) {
-                            typesForAllColumns.put(columnIndex, ItemType.decimalItem.getName());
-                        } else {
-                            // do nothing, type is already set to integer
+                            // the numeric type calculation is identical to Item::getNumericResultType()
+                            if (
+                                currentColumnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
+                            ) {
+                                typesForAllColumns.put(columnIndex, BuiltinTypesCatalogue.floatItem.getName());
+                            } else if (
+                                currentColumnType.equals(BuiltinTypesCatalogue.floatItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.floatItem.getName())
+                            ) {
+                                typesForAllColumns.put(columnIndex, BuiltinTypesCatalogue.doubleItem.getName());
+                            } else if (
+                                currentColumnType.equals(BuiltinTypesCatalogue.decimalItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.decimalItem.getName())
+                            ) {
+                                typesForAllColumns.put(columnIndex, BuiltinTypesCatalogue.decimalItem.getName());
+                            } else {
+                                // do nothing, type is already set to integer
+                            }
+                        } else if (
+                            (currentColumnType.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.durationItem.getName()))
+                                && (columnType.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.durationItem.getName()))
+                        ) {
+                            typesForAllColumns.put(columnIndex, BuiltinTypesCatalogue.durationItem.getName());
+                        } else if (!currentColumnType.equals(columnType)) {
+                            throw new UnexpectedTypeException(
+                                    "Order by variable must contain values of a single type.",
+                                    getMetadata()
+                            );
                         }
-                    } else if (
-                        (currentColumnType.equals(ItemType.dayTimeDurationItem.getName())
-                            || currentColumnType.equals(ItemType.yearMonthDurationItem.getName())
-                            || currentColumnType.equals(ItemType.durationItem.getName()))
-                            && (columnType.equals(ItemType.dayTimeDurationItem.getName())
-                                || columnType.equals(ItemType.yearMonthDurationItem.getName())
-                                || columnType.equals(ItemType.durationItem.getName()))
-                    ) {
-                        typesForAllColumns.put(columnIndex, ItemType.durationItem.getName());
-                    } else if (!currentColumnType.equals(columnType)) {
-                        throw new UnexpectedTypeException(
-                                "Order by variable must contain values of a single type.",
-                                getMetadata()
-                        );
                     }
                 }
             }
@@ -306,8 +352,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         List<StructField> typedFields = new ArrayList<>(); // Determine the return type for ordering UDF
         StringBuilder orderingSQL = new StringBuilder(); // Prepare the SQL statement for the order by query
         String appendedOrderingColumnsName = "ordering_columns";
-        for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
-            String columnTypeString = typesForAllColumns.get(columnIndex);
+        for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
+            Name columnTypeString = typesForAllColumns.get(columnIndex);
             String columnName;
             DataType columnType;
 
@@ -317,28 +363,37 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
-            if (columnTypeString.equals(ItemType.booleanItem.getName())) {
+            if (columnTypeString == null) {
                 columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals(ItemType.stringItem.getName())) {
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.booleanItem.getName())) {
+                columnType = DataTypes.BooleanType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                 columnType = DataTypes.StringType;
-            } else if (columnTypeString.equals(ItemType.integerItem.getName())) {
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.integerItem.getName())) {
+                columnType = TypeMappings.integerType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.intItem.getName())) {
                 columnType = DataTypes.IntegerType;
-            } else if (columnTypeString.equals(ItemType.doubleItem.getName())) {
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
                 columnType = DataTypes.DoubleType;
-            } else if (columnTypeString.equals(ItemType.decimalItem.getName())) {
-                columnType = decimalType;
-                // columnType = DataTypes.createDecimalType();
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.floatItem.getName())) {
+                columnType = DataTypes.FloatType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.base64BinaryItem.getName())) {
+                columnType = DataTypes.BinaryType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.hexBinaryItem.getName())) {
+                columnType = DataTypes.BinaryType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
+                columnType = TypeMappings.decimalType;
             } else if (
-                columnTypeString.equals(ItemType.durationItem.getName())
-                    || columnTypeString.equals(ItemType.yearMonthDurationItem.getName())
-                    || columnTypeString.equals(ItemType.dayTimeDurationItem.getName())
-                    || columnTypeString.equals(ItemType.dateTimeItem.getName())
-                    || columnTypeString.equals(ItemType.dateItem.getName())
-                    || columnTypeString.equals(ItemType.timeItem.getName())
+                columnTypeString.equals(BuiltinTypesCatalogue.durationItem.getName())
+                    || columnTypeString.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
+                    || columnTypeString.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
+                    || columnTypeString.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
+                    || columnTypeString.equals(BuiltinTypesCatalogue.dateItem.getName())
+                    || columnTypeString.equals(BuiltinTypesCatalogue.timeItem.getName())
             ) {
                 columnType = DataTypes.LongType;
             } else {
-                throw new RumbleException(
+                throw new OurBadException(
                         "Unexpected ordering type found while determining UDF return type."
                 );
             }
@@ -365,7 +420,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             orderingSQL.append("`.`");
             orderingSQL.append(columnIndex);
             orderingSQL.append("-valueField`");
-            if (columnIndex != typesForAllColumns.size() - 1) {
+            if (columnIndex != numberOfOrderingKeys - 1) {
                 if (expressionWithIterator.isAscending()) {
                     orderingSQL.append(", ");
                 } else {
@@ -386,41 +441,43 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         this.expressionsWithIterator,
                         context,
                         typesForAllColumns,
-                        UDFcolumnsByType
+                        UDFcolumns
                 ),
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
-        return df.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
-                    projectSQL,
-                    selectSQL,
-                    UDFParameters,
-                    appendedOrderingColumnsName,
-                    orderingSQL
-                )
-            );
+        return new FlworDataFrame(
+                df.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
+                            projectSQL,
+                            selectSQL,
+                            UDFParameters,
+                            appendedOrderingColumnsName,
+                            orderingSQL
+                        )
+                    )
+        );
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
-        for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        return new HashSet<>(this.child.getVariablesBoundInCurrentFLWORExpression());
+    public Set<Name> getOutputTupleVariableNames() {
+        return new HashSet<>(this.child.getOutputTupleVariableNames());
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -430,27 +487,147 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getProjection(
-            Map<String, DynamicContext.VariableDependency> parentProjection
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection =
+        Map<Name, DynamicContext.VariableDependency> projection =
             new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
-            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getIterator()
+            Map<Name, DynamicContext.VariableDependency> exprDependency = iterator.getIterator()
                 .getVariableDependencies();
-            for (String variable : exprDependency.keySet()) {
+            for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
-                        projection.put(variable, DynamicContext.VariableDependency.FULL);
+                        if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                            projection.put(variable, DynamicContext.VariableDependency.FULL);
+                        }
                     }
                 } else {
-                    projection.put(variable, exprDependency.get(variable));
+                    if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                        projection.put(variable, exprDependency.get(variable));
+                    }
                 }
             }
         }
         return projection;
+    }
+
+    /**
+     * Try to generate the native query for the order by clause and run it, if successful return the resulting
+     * dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param expressionsWithIterator list of ordering iterators
+     * @param allColumns other columns required in following clauses
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the order by clause if successful, null otherwise
+     */
+    public static FlworDataFrame tryNativeQuery(
+            Dataset<Row> dataFrame,
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
+            List<FlworDataFrameColumn> allColumns,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
+        StringBuilder orderSql = new StringBuilder();
+        String orderSeparator = "";
+        NativeClauseContext nativeQuery;
+        for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
+            nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
+            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+                return null;
+            }
+            // For now we are conservative and do not support arities other than one.
+            if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
+                return null;
+            }
+            orderSql.append(orderSeparator);
+            orderSeparator = ", ";
+            // special check to avoid ordering by an integer constant in an ordering clause
+            // second check to assure it is a literal
+            // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
+            // and jsoniq (order by a costant, so no actual ordering is performed)
+            if (
+                (nativeQuery.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                    || nativeQuery.getResultingType().isSubtypeOf(SequenceType.INT_QM))
+                    && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
+            ) {
+                orderSql.append('"');
+                orderSql.append(nativeQuery.getResultingQuery());
+                orderSql.append('"');
+            } else {
+                orderSql.append(nativeQuery.getResultingQuery());
+            }
+            if (!orderIterator.isAscending()) {
+                orderSql.append(" desc");
+                if (orderIterator.getEmptyOrder() == EMPTY_ORDER.GREATEST) {
+                    orderSql.append(" nulls first");
+                }
+            } else {
+                if (orderIterator.getEmptyOrder() == EMPTY_ORDER.GREATEST) {
+                    orderSql.append(" nulls last");
+                }
+            }
+        }
+
+        LogManager.getLogger("OrderByClauseSparkIterator")
+            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
+        dataFrame.createOrReplaceTempView("input");
+        return new FlworDataFrame(
+                dataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from input order by %s",
+                            selectSQL,
+                            orderSql
+                        )
+                    )
+        );
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.ORDER_BY) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
+    }
+
+    /**
+     * Says whether this expression evaluation triggers a Spark job.
+     *
+     * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
+     */
+    @Override
+    public boolean isSparkJobNeeded() {
+        if (this.child.isSparkJobNeeded()) {
+            return true;
+        }
+        for (OrderByClauseAnnotatedChildIterator i : this.expressionsWithIterator) {
+            if (i.getIterator().isSparkJobNeeded()) {
+                return true;
+            }
+        }
+        switch (getHighestExecutionMode()) {
+            case DATAFRAME:
+                return true;
+            case LOCAL:
+                return false;
+            case RDD:
+                return true;
+            case UNSET:
+                return false;
+            default:
+                return false;
+        }
     }
 }

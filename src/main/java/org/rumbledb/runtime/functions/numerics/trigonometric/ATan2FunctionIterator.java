@@ -21,70 +21,33 @@
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.List;
 
-public class ATan2FunctionIterator extends LocalFunctionCallIterator {
+public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public ATan2FunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item y;
-            RuntimeIterator yIterator = this.children.get(0);
-            yIterator.open(this.currentDynamicContextForLocalExecution);
-            if (yIterator.hasNext()) {
-                y = yIterator.next();
-            } else {
-                throw new UnexpectedTypeException("Type error; y parameter can't be empty sequence ", getMetadata());
-            }
-
-            Item x;
-            RuntimeIterator xIterator = this.children.get(1);
-            xIterator.open(this.currentDynamicContextForLocalExecution);
-            if (xIterator.hasNext()) {
-                x = xIterator.next();
-            } else {
-                throw new UnexpectedTypeException("Type error; x parameter can't be empty sequence ", getMetadata());
-            }
-
-            if (y.isNumeric() && x.isNumeric()) {
-                try {
-                    this.hasNext = false;
-                    return ItemFactory.getInstance()
-                        .createDoubleItem(Math.atan2(y.castToDoubleValue(), x.castToDoubleValue()));
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "ATan2 expression has non numeric args "
-                            +
-                            y.serialize()
-                            + ", "
-                            + x.serialize(),
-                        getMetadata()
-                );
-            }
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item valuey = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item valuex = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        double y = valuey.getDoubleValue();
+        double x = valuex.getDoubleValue();
+        if (Double.isNaN(x) || Double.isNaN(y)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
+        return ItemFactory.getInstance().createDoubleItem(Math.atan2(y, x));
     }
 }

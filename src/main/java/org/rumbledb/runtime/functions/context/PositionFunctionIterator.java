@@ -22,52 +22,44 @@ package org.rumbledb.runtime.functions.context;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class PositionFunctionIterator extends LocalFunctionCallIterator {
+public class PositionFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
 
     public PositionFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.hasNext = true;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item result = this.currentDynamicContextForLocalExecution.getPosition();
-            if (result == null) {
-                throw new AbsentPartOfDynamicContextException("Context undefined (position) ", getMetadata());
-            }
-            return result;
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item result = context.getVariableValues().getPosition();
+        if (result == null) {
+            throw new AbsentPartOfDynamicContextException("Context undefined (position) ", getMetadata());
         }
-        return null;
+        return result;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        result.put("$position", DynamicContext.VariableDependency.FULL);
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
+        result.put(
+            Name.CONTEXT_POSITION,
+            DynamicContext.VariableDependency.FULL
+        );
         return result;
     }
 

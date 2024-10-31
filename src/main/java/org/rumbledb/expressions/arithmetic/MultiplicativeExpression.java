@@ -92,6 +92,14 @@ public class MultiplicativeExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
+    }
+
     public MultiplicativeOperator getMultiplicativeOperator() {
         return this.multiplicativeOperator;
     }
@@ -103,9 +111,33 @@ public class MultiplicativeExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.multiplicativeOperator) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append(this.multiplicativeOperator.toString() + "\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
     }
 }

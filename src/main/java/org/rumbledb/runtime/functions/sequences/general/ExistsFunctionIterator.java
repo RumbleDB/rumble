@@ -21,49 +21,36 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class ExistsFunctionIterator extends LocalFunctionCallIterator {
+public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
 
     public ExistsFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
-        this.sequenceIterator = this.children.get(0);
+        super(parameters, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.hasNext = false;
-            if (this.sequenceIterator.isRDD()) {
-                List<Item> i = this.sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
-                return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
-            }
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-            Item result;
-            if (this.sequenceIterator.hasNext()) {
-                result = ItemFactory.getInstance().createBooleanItem(true);
-
-            } else {
-                result = ItemFactory.getInstance().createBooleanItem(false);
-            }
-            this.sequenceIterator.close();
-            return result;
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (this.children.get(0).isRDDOrDataFrame()) {
+            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
+            return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "exists function", getMetadata());
+        Item first = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (first == null) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+        return ItemFactory.getInstance().createBooleanItem(true);
     }
 }

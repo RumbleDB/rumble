@@ -24,6 +24,8 @@ import org.rumbledb.errorcodes.ErrorCode;
 
 import java.util.Arrays;
 
+import org.apache.spark.SparkException;
+
 public class RumbleException extends RuntimeException {
 
 
@@ -32,14 +34,15 @@ public class RumbleException extends RuntimeException {
     private final String errorMessage;
     private ExceptionMetadata metadata;
 
-    public RumbleException(String message) {
-        super("Error [err: " + ErrorCode.RuntimeExceptionErrorCode + " ] " + message);
+    RumbleException(String message) {
+        super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
+        this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
-    public RumbleException(String message, ErrorCode errorCode) {
-        super("Error [err: " + errorCode + " ] " + message);
+    RumbleException(String message, ErrorCode errorCode) {
+        super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
@@ -52,24 +55,12 @@ public class RumbleException extends RuntimeException {
             this.errorCode = errorCode;
         }
         this.errorMessage = message;
+        this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
 
-    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
-        super(
-            "Error [err: "
-                + errorCode
-                + "]"
-                + (metadata != null
-                    ? "LINE:"
-                        + metadata.getTokenLineNumber()
-                        +
-                        ":COLUMN:"
-                        + metadata.getTokenColumnNumber()
-                        + ":"
-                    : "")
-                + message
-        );
+    RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+        super(formatMessage(errorCode, metadata, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
@@ -86,23 +77,42 @@ public class RumbleException extends RuntimeException {
     }
 
     public RumbleException(String message, ExceptionMetadata metadata) {
-        super(
-            "Error [err: "
-                + ErrorCode.RuntimeExceptionErrorCode
-                + "]"
-                + (metadata != null
-                    ? "LINE:"
-                        + metadata.getTokenLineNumber()
-                        +
-                        ";COLUMN:"
-                        + metadata.getTokenColumnNumber()
-                        + ";"
-                    : "")
-                + message
-        );
-        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;;
+        super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, metadata, message));
+        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.metadata = metadata;
         this.errorMessage = message;
+    }
+
+    private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
+        if (metadata.getTokenLineNumber() == 0) {
+            return "There was an error."
+                + "\nCode: ["
+                + errorCode
+                + "]\n"
+                + "Message: "
+                + message
+                + "\n"
+                + "Metadata: "
+                + ((metadata != null) ? metadata.toString() : null)
+                + "\n"
+                + "This code can also be looked up in the documentation and specifications for more information.\n";
+        }
+        return "There was an error on line "
+            + metadata.getTokenLineNumber()
+            + " in "
+            + metadata.getLocation()
+            + ":\n\n"
+            + metadata.getLineInContext()
+            + "\nCode: ["
+            + errorCode
+            + "]\n"
+            + "Message: "
+            + message
+            + "\n"
+            + "Metadata: "
+            + ((metadata != null) ? metadata.toString() : null)
+            + "\n"
+            + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
     public String getErrorCode() {
@@ -113,7 +123,24 @@ public class RumbleException extends RuntimeException {
         return this.metadata;
     }
 
+    public void setMetadata(ExceptionMetadata metadata) {
+        this.metadata = metadata;
+    }
+
     public String getJSONiqErrorMessage() {
         return this.errorMessage;
+    }
+
+    public static RumbleException unnestException(Throwable ex) {
+        if (ex instanceof SparkException) {
+            Throwable sparkExceptionCause = ex.getCause();
+            return unnestException(sparkExceptionCause);
+        } else if (ex instanceof RumbleException) {
+            return (RumbleException) ex;
+        } else {
+            RumbleException e2 = new OurBadException("Unanticipated exception!");
+            e2.initCause(ex);
+            return e2;
+        }
     }
 }

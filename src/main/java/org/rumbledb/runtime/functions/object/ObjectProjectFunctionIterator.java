@@ -24,14 +24,17 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +48,9 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
     public ObjectProjectFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
 
@@ -93,7 +95,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -111,7 +112,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata());
+            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
     }
 
     @Override
@@ -120,7 +121,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (this.projectionKeys.isEmpty()) {
@@ -141,11 +142,55 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        this.projectionKeys = this.children.get(1).materialize(context);
         FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
                 this.projectionKeys,
                 getMetadata()
         );
         return childRDD.flatMap(transformation);
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        if (!childDataFrame.getItemType().isObjectItemType()) {
+            return childDataFrame;
+        }
+        List<String> fieldNames = childDataFrame.getKeys();
+
+        List<String> keys = new ArrayList<>();
+        this.projectionKeys = this.children.get(1).materialize(context);
+        for (Item keyItem : this.projectionKeys) {
+            String key = keyItem.getStringValue();
+            if (fieldNames.contains(key)) {
+                keys.add(key);
+            }
+        }
+        if (keys.isEmpty()) {
+            return childDataFrame.evaluateSQL(
+                String.format(
+                    "SELECT NULL as `%s` FROM %s",
+                    SparkSessionManager.emptyObjectJSONiqItemColumnName,
+                    object
+                ),
+                BuiltinTypesCatalogue.objectItem
+            );
+        }
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
+        JSoundDataFrame result = childDataFrame.evaluateSQL(
+            String.format(
+                "SELECT %s FROM %s",
+                projectionVariables,
+                object
+            ),
+            BuiltinTypesCatalogue.objectItem
+        );
+        return result;
     }
 }

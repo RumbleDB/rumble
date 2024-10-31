@@ -22,31 +22,34 @@ package org.rumbledb.runtime.primary;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.SequenceType;
 
-public class StringRuntimeIterator extends AtomicRuntimeIterator {
-
+public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String item;
+    private Item item;
 
-    public StringRuntimeIterator(String value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
-        this.item = value;
-        this.item = StringEscapeUtils.unescapeJson(this.item);
+    public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
+        super(null, staticContext);
+        this.item = ItemFactory.getInstance().createStringItem(StringEscapeUtils.unescapeJson(value));
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance().createStringItem(this.item);
-        }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return this.item;
+    }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                '"' + this.item.getStringValue() + '"',
+                SequenceType.STRING
+        );
     }
 }

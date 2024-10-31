@@ -24,13 +24,15 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.List;
 
 public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -39,27 +41,31 @@ public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
 
     public LibSVMFileFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, metadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.children.get(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         try {
-            return SparkSessionManager.getInstance()
+            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
                 .format("libsvm")
-                .load(url);
+                .load(uri.toString());
+            return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             throw e;
         }

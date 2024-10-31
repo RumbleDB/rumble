@@ -24,11 +24,10 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
@@ -41,10 +40,9 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
     public TailFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
         this.iterator = this.children.get(0);
     }
 
@@ -76,8 +74,8 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
-        this.iterator.reset(context);
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
 
         if (!this.iterator.hasNext()) {
             this.hasNext = false;
@@ -101,7 +99,6 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }

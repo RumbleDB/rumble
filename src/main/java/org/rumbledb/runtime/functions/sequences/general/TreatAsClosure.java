@@ -7,6 +7,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
 public class TreatAsClosure implements Function<Item, Boolean> {
@@ -23,13 +24,13 @@ public class TreatAsClosure implements Function<Item, Boolean> {
 
     @Override
     public Boolean call(Item input) throws Exception {
-        if (!input.isTypeOf(this.sequenceType.getItemType())) {
+        if (!InstanceOfIterator.doesItemTypeMatchItem(this.sequenceType.getItemType(), input)) {
             switch (this.errorCode) {
                 case DynamicTypeTreatErrorCode:
                     throw new TreatException(
                             input.getDynamicType().toString()
                                 + " cannot be treated as type "
-                                + this.sequenceType.getItemType().toString()
+                                + this.sequenceType.getItemType().getIdentifierString()
                                 + this.sequenceType.getArity().getSymbol(),
                             this.metadata
                     );
@@ -37,7 +38,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
                     throw new UnexpectedTypeException(
                             input.getDynamicType().toString()
                                 + " is not expected here. The expected type is "
-                                + this.sequenceType.getItemType().toString()
+                                + this.sequenceType.getItemType().getIdentifierString()
                                 + this.sequenceType.getArity().getSymbol(),
                             this.metadata
                     );

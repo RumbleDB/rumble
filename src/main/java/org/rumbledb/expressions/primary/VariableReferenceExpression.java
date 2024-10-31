@@ -21,15 +21,12 @@
 package org.rumbledb.expressions.primary;
 
 
-import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,36 +35,30 @@ import java.util.List;
 public class VariableReferenceExpression extends Expression implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private String name;
+    private Name name;
     private SequenceType type;
 
 
-    public VariableReferenceExpression(String name, ExceptionMetadata metadata) {
+    public VariableReferenceExpression(Name name, ExceptionMetadata metadata) {
         super(metadata);
         this.name = name;
     }
 
-    public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
-        this.highestExecutionMode = highestExecutionMode;
-    }
-
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.name;
     }
 
+    // default to item* if type is null
     public SequenceType getType() {
+        return this.type == null ? SequenceType.ITEM_STAR : this.type;
+    }
+
+    public SequenceType getActualType() {
         return this.type;
     }
 
-    public void setType(SequenceType type) {
+    public void setActualType(SequenceType type) {
         this.type = type;
-    }
-
-    @Override
-    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        // Variable reference execution mode can only be resolved in conjunction with a static context
-        // variable reference's execution mode gets initialized in staticContextVisitor by a setter
-        throw new OurBadException("Variable references do not use the highestExecutionMode initializer");
     }
 
     @Override
@@ -87,9 +78,23 @@ public class VariableReferenceExpression extends Expression implements Serializa
         buffer.append(getClass().getSimpleName());
         buffer.append(" ($" + this.name + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("($" + this.name + ")\n");
     }
 }

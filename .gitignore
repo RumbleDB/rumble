@@ -1,4 +1,15 @@
+.DS_Store
+.classpath
+.project
 .idea/
 target/
+.settings/
+.ipynb_checkpoints/
 *.iml
 /bin/
+rumble*.jar
+*.*~
+
+# for now ignore jsound package
+src/main/java/jsound/
+src/main/resources/log4j.properties

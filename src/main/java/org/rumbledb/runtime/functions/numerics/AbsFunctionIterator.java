@@ -22,52 +22,49 @@ package org.rumbledb.runtime.functions.numerics;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class AbsFunctionIterator extends LocalFunctionCallIterator {
+public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private RuntimeIterator iterator;
-
     public AbsFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.abs(
-                        this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                            .castToDoubleValue()
-                    )
-                );
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " abs function", getMetadata());
+        if (value.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(Math.abs(value.getDoubleValue()));
+        }
+        if (value.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(Math.abs(value.getFloatValue()));
+        }
+        if (value.isInt()) {
+            if (value.getIntValue() >= 0) {
+                return value;
+            }
+            return ItemFactory.getInstance().createIntItem(-value.getIntValue());
+        }
+        if (value.isInteger()) {
+            return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue().abs());
+        }
+        if (value.isDecimal()) {
+            return ItemFactory.getInstance().createDecimalItem(value.getDecimalValue().abs());
+        }
+        throw new OurBadException("Numeric value expected in abs()");
     }
-
-
 }

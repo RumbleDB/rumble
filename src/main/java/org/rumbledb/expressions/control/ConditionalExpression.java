@@ -21,13 +21,10 @@
 package org.rumbledb.expressions.control;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,14 +70,23 @@ public class ConditionalExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (
-            this.thenExpression.getHighestExecutionMode(visitorConfig).isRDD()
-                && this.elseExpression.getHighestExecutionMode(visitorConfig).isRDD()
-        ) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-        }
-        this.highestExecutionMode = ExecutionMode.LOCAL;
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("if (");
+        this.conditionExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("then (");
+
+        this.thenExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("else (");
+
+        this.elseExpression.serializeToJSONiq(sb, indent + 1);
+        sb.append(")\n");
     }
 
     @Override

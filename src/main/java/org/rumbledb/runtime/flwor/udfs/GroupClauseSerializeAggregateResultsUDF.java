@@ -20,15 +20,11 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.mutable.WrappedArray;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,20 +34,12 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     private static final long serialVersionUID = 1L;
     private List<Item> nextResult;
     private List<List<Item>> deserializedParams;
-
-    private transient Kryo kryo;
-    private transient Output output;
-    private transient Input input;
+    private DataFrameContext dataFrameContext;
 
     public GroupClauseSerializeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();
         this.deserializedParams = new ArrayList<>();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        this.dataFrameContext = new DataFrameContext();
     }
 
     @Override
@@ -61,25 +49,17 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
-            this.kryo,
-            this.input
+            this.dataFrameContext.getKryo(),
+            this.dataFrameContext.getInput()
         );
 
         for (List<Item> deserializedParam : this.deserializedParams) {
             this.nextResult.addAll(deserializedParam);
         }
-        return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        return FlworDataFrameUtils.serializeItemList(
+            this.nextResult,
+            this.dataFrameContext.getKryo(),
+            this.dataFrameContext.getOutput()
+        );
     }
 }

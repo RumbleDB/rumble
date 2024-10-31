@@ -21,15 +21,15 @@
 package org.rumbledb.runtime.functions.sequences.value;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +43,21 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     public DistinctValuesFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.sequenceIterator = arguments.get(0);
+    }
+
+    private void checkCollation(DynamicContext context) {
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1)
+                .materializeFirstItemOrNull(context)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
     }
 
     public Item nextLocal() {
@@ -65,7 +75,8 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
+        checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -79,6 +90,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.prevResults = new ArrayList<>();
+        checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -88,17 +100,10 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
         while (this.sequenceIterator.hasNext()) {
             Item item = this.sequenceIterator.next();
-            if (!item.isAtomic()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. distinct-values can't be performed on non-atomics",
-                        getMetadata()
-                );
-            } else {
-                if (!this.prevResults.contains(item)) {
-                    this.prevResults.add(item);
-                    this.nextResult = item;
-                    break;
-                }
+            if (!this.prevResults.contains(item)) {
+                this.prevResults.add(item);
+                this.nextResult = item;
+                break;
             }
         }
 
@@ -112,14 +117,20 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        checkCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
-        if (childRDD.filter(transformation).isEmpty()) {
-            return childRDD.distinct();
-        }
-        throw new NonAtomicKeyException(
-                "Invalid args. distinct-values can't be performed on non-atomics",
-                getMetadata()
-        );
+        return childRDD.distinct();
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        checkCollation(dynamicContext);
+        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+        return df.distinct();
     }
 }

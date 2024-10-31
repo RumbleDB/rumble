@@ -20,25 +20,25 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
-import java.util.Collections;
-import java.util.List;
-
 public class ForClause extends Clause {
 
-    private final String variableName;
-    private final boolean allowEmpty;
-    private final String positionalVariableName;
+    private final Name variableName;
+    private final boolean allowingEmpty;
+    private final Name positionalVariableName;
     protected SequenceType sequenceType;
     protected Expression expression;
 
@@ -47,10 +47,10 @@ public class ForClause extends Clause {
 
 
     public ForClause(
-            String variableName,
+            Name variableName,
             boolean allowEmpty,
             SequenceType sequenceType,
-            String positionalVariableName,
+            Name positionalVariableName,
             Expression expression,
             ExceptionMetadata metadata
     ) {
@@ -59,43 +59,35 @@ public class ForClause extends Clause {
             throw new SemanticException("For clause must have a variable", metadata);
         }
         this.variableName = variableName;
-        this.allowEmpty = allowEmpty;
+        this.allowingEmpty = allowEmpty;
         this.positionalVariableName = positionalVariableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
 
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 
     public boolean isAllowEmpty() {
-        return this.allowEmpty;
+        return this.allowingEmpty;
     }
 
-    public String getPositionalVariableName() {
+    public Name getPositionalVariableName() {
         return this.positionalVariableName;
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.createSequenceType("item") : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
     public Expression getExpression() {
         return this.expression;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
-                || (this.previousClause != null
-                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
-                        ? ExecutionMode.DATAFRAME
-                        : ExecutionMode.LOCAL;
-
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
@@ -108,9 +100,20 @@ public class ForClause extends Clause {
         return this.variableHighestStorageMode;
     }
 
+    public void setVariableHighestStorageMode(ExecutionMode mode) {
+        this.variableHighestStorageMode = mode;
+    }
+
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.expression);
+        List<Node> result = new ArrayList<>();
+        if (this.expression != null) {
+            result.add(this.expression);
+        }
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
+        }
+        return result;
     }
 
     @Override
@@ -125,15 +128,17 @@ public class ForClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(
             " ("
-                + (this.variableName)
+                + ("$" + this.variableName)
                 + ", "
-                + this.sequenceType.toString()
+                + this.getSequenceType().toString()
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
                 + ", "
-                + (this.allowEmpty ? "allowing empty, " : "")
+                + (this.allowingEmpty ? "allowing empty, " : "")
                 + this.positionalVariableName
                 + ") "
         );
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -141,5 +146,20 @@ public class ForClause extends Clause {
         if (this.previousClause != null) {
             this.previousClause.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("for $" + this.variableName.toString());
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.allowingEmpty)
+            sb.append(" allowing empty ");
+        if (this.positionalVariableName != null)
+            sb.append(" at $" + this.positionalVariableName.toString());
+        sb.append(" in (");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
     }
 }

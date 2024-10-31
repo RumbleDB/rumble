@@ -20,9 +20,9 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.expressions.ExecutionMode;
 
 import java.util.List;
 
@@ -32,11 +32,10 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
     protected LocalRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.LOCAL) {
+        super(children, staticContext);
+        if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
             throw new OurBadException("Local runtime iterators support only the local execution mode");
         }
     }

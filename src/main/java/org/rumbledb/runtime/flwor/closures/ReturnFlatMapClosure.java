@@ -20,83 +20,47 @@
 
 package org.rumbledb.runtime.flwor.closures;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     private static final long serialVersionUID = 1L;
+    private DataFrameContext dataFrameContext;
     private RuntimeIterator expression;
-    private StructType oldSchema;
-    private DynamicContext parentContext;
-    private DynamicContext context;
 
-    private transient Kryo kryo;
-    private transient Input input;
+    List<Item> results;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
+    public ReturnFlatMapClosure(
+            RuntimeIterator expression,
+            DynamicContext context,
+            List<FlworDataFrameColumn> columns
+    ) {
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        this.oldSchema = oldSchema;
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getMetadata()
+            );
+        }
+        this.results = new ArrayList<>();
     }
 
     @Override
     public Iterator<Item> call(Row row) {
-        String[] columnNames = this.oldSchema.fieldNames();
-        Map<String, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
-        this.context.removeAllVariables();
-        // Create dynamic context with deserialized data but only with dependencies
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
-            if (dependencies.containsKey(field)) {
-                List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
-                if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    this.context.addVariableCount(field, i.get(0));
-                } else {
-                    this.context.addVariableValue(field, i);
-                }
-            }
-        }
-
-        // Apply expression to the context
-        List<Item> results = new ArrayList<>();
-        this.expression.open(this.context);
-        while (this.expression.hasNext()) {
-            results.add(this.expression.next());
-        }
-        this.expression.close();
-
-        return results.iterator();
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
+        this.dataFrameContext.setFromRow(row);
+        this.expression.materialize(this.dataFrameContext.getContext(), this.results);
+        return this.results.iterator();
     }
 }

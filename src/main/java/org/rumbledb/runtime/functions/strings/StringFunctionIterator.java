@@ -1,82 +1,61 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Authors: Stefan Irimescu, Can Berker Cikis
+ *
+ */
+
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CastException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.StringOfJSONiqItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.AtomicItem;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.ItemType;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class StringFunctionIterator extends LocalFunctionCallIterator {
+public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item item = null;
 
     public StringFunctionIterator(
-            List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            List<RuntimeIterator> arguments,
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                if (!this.item.isAtomic()) {
-                    throw new StringOfJSONiqItemException(
-                            this.item.getDynamicType().toString()
-                                +
-                                " items do not have string value",
-                            getMetadata()
-                    );
-                }
-                AtomicItem atomicItem = (AtomicItem) this.item;
-                String message = atomicItem.serialize()
-                    +
-                    ": value of type "
-                    + this.item.getDynamicType().toString()
-                    + " is not castable to type string.";
-                if (atomicItem.isCastableAs(ItemType.stringItem)) {
-                    try {
-                        return atomicItem.castAs(ItemType.stringItem);
-                    } catch (ClassCastException e) {
-                        throw new UnexpectedTypeException(message, getMetadata());
-                    }
-
-                }
-                throw new UnexpectedTypeException(message, getMetadata());
-            } catch (IllegalArgumentException e) {
-                String message = String.format(
-                    "\"%s\": value of type %s is not castable to type %s",
-                    this.item.serialize(),
-                    "string",
-                    "string"
-                );
-                throw new CastException(message, getMetadata());
-            }
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string function",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 0) {
+            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return ItemFactory.getInstance().createStringItem(items.get(0).getStringValue());
         }
+
+        Item item = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+
+        if (item == null) {
+            return null;
+        }
+
+        return ItemFactory.getInstance().createStringItem(item.getStringValue());
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.item = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.item != null;
-    }
 }

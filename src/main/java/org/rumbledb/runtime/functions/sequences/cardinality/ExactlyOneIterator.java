@@ -20,80 +20,53 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.util.List;
 
-public class ExactlyOneIterator extends CardinalityFunctionIterator {
+public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Item nextResult;
 
     public ExactlyOneIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return this.nextResult;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " EXACTLY-ONE function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        RuntimeIterator sequenceIterator = this.children.get(0);
-
-        if (!sequenceIterator.isRDD()) {
-            sequenceIterator.open(context);
-            if (!sequenceIterator.hasNext()) {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        try {
+            Item value = this.children.get(0).materializeAtMostOneItemOrNull(dynamicContext);
+            if (value == null) {
                 throw new SequenceExceptionExactlyOne(
                         "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
                         getMetadata()
                 );
-            } else {
-                this.nextResult = sequenceIterator.next();
-                if (sequenceIterator.hasNext()) {
-                    throw new SequenceExceptionExactlyOne(
-                            "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                            getMetadata()
-                    );
-                } else {
-                    this.hasNext = true;
-                }
+
             }
-            sequenceIterator.close();
-        } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution);
-            List<Item> results = rdd.take(2);
-            if (results.size() == 1) {
-                this.hasNext = true;
-                this.nextResult = results.get(0);
-            } else {
-                throw new SequenceExceptionExactlyOne(
-                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                        getMetadata()
-                );
-            }
+            return value;
+        } catch (MoreThanOneItemException e) {
+            throw new SequenceExceptionExactlyOne(
+                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
+                    getMetadata()
+            );
         }
     }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        return value;
+    }
+
 }

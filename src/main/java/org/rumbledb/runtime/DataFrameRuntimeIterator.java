@@ -20,9 +20,7 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 
 import java.util.List;
 
@@ -32,13 +30,9 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
     protected DataFrameRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.DATAFRAME) {
-            throw new OurBadException("DF runtime iterators support only dataframe execution mode");
-        }
+        super(children, staticContext);
     }
 
     @Override

@@ -25,14 +25,16 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.List;
 
 public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -41,32 +43,36 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
 
     public StructuredJsonFileFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.children.get(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         try {
-            return SparkSessionManager.getInstance()
+            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
                 .option("mode", "FAILFAST")
-                .json(url);
+                .json(uri.toString());
+            return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             if (e instanceof SparkException) {
                 throw new RumbleException(
                         "File "
-                            + url
+                            + uri
                             + " contains a malformed JSON document that does not fit into the JSON lines format.",
                         getMetadata()
                 );

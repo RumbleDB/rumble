@@ -21,31 +21,38 @@
 package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
+public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private int item;
+    private Item item;
 
-    public IntegerRuntimeIterator(int value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
-        this.item = value;
-
+    public IntegerRuntimeIterator(
+            String lexicalValue,
+            RuntimeStaticContext staticContext
+    ) {
+        super(null, staticContext);
+        this.item = ItemFactory.getInstance().createIntegerItem(lexicalValue);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.item);
-        }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return this.item;
+    }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getIntValue(),
+                SequenceType.INTEGER
+        );
     }
 }

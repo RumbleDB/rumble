@@ -21,75 +21,66 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-public class TranslateFunctionIterator extends LocalFunctionCallIterator {
+public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public TranslateFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item inputItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item mapStringItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item transStringItem = this.children.get(2)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item inputItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+        Item mapStringItem = this.children.get(1)
+            .materializeFirstItemOrNull(context);
+        Item transStringItem = this.children.get(2)
+            .materializeFirstItemOrNull(context);
 
-            if (inputItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
+        if (inputItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
+        }
+
+        String input = inputItem.getStringValue();
+        String mapString = mapStringItem.getStringValue();
+        String transString = transStringItem.getStringValue();
+
+        HashMap<Character, Character> mp = new HashMap<>();
+        for (int i = 0; i < mapString.length(); i++) {
+            char c = mapString.charAt(i);
+            if (!(mp.containsKey(c))) {
+                mp.put(c, i < transString.length() ? transString.charAt(i) : '\0');
             }
+        }
 
-            String input = inputItem.getStringValue();
-            String mapString = mapStringItem.getStringValue();
-            String transString = transStringItem.getStringValue();
-
-            HashMap<Character, Character> mp = new HashMap<>();
-            for (int i = 0; i < mapString.length(); i++) {
-                char c = mapString.charAt(i);
-                if (!(mp.containsKey(c))) {
-                    mp.put(c, i < transString.length() ? transString.charAt(i) : '\0');
+        String output = input
+            .codePoints()
+            .mapToObj(c -> (char) c)
+            .filter(s -> !(mp.containsKey(s) && mp.get(s) == '\0'))
+            .map(s -> {
+                if (mp.containsKey(s)) {
+                    return mp.get(s);
                 }
-            }
+                return s;
+            })
+            .map(String::valueOf)
+            .collect(Collectors.joining());
 
-            String output = input
-                .codePoints()
-                .mapToObj(c -> (char) c)
-                .filter(s -> !(mp.containsKey(s) && mp.get(s) == '\0'))
-                .map(s -> {
-                    if (mp.containsKey(s)) {
-                        return mp.get(s);
-                    }
-                    return s;
-                })
-                .map(String::valueOf)
-                .collect(Collectors.joining());
-
-            return ItemFactory.getInstance().createStringItem(output);
-
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
-                    getMetadata()
-            );
+        return ItemFactory.getInstance().createStringItem(output);
     }
+
 }

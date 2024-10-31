@@ -19,66 +19,59 @@
  */
 package org.rumbledb.cli;
 
+import java.io.IOException;
+import java.net.ConnectException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.server.RumbleServer;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.server.RumbleServer;
 import org.rumbledb.shell.RumbleJLineShell;
-import sparksoniq.spark.SparkSessionManager;
 
-import java.io.IOException;
+import javassist.CannotCompileException;
 
 public class Main {
     public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
+        String javaVersion = System.getProperty("java.version");
+        if (!javaVersion.startsWith("11.") && !javaVersion.startsWith("17.")) {
+            System.err.println("[Error] RumbleDB requires Java 11 or 17.");
+            System.err.println("Your Java version: " + System.getProperty("java.version"));
+            System.err.println("You can download Java 11 or 17 from https://adoptium.net/");
+            System.err.println(
+                "If you do have Java 11 or 17, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 11 or 17."
+            );
+            System.exit(43);
+        }
         RumbleRuntimeConfiguration sparksoniqConf = null;
         // Parse arguments
         try {
             sparksoniqConf = new RumbleRuntimeConfiguration(args);
 
             if (sparksoniqConf.isShell()) {
-                initializeApplication();
                 launchShell(sparksoniqConf);
             } else if (sparksoniqConf.isServer()) {
-                initializeApplication();
                 launchServer(sparksoniqConf);
-            } else if (sparksoniqConf.getQueryPath() != null) {
-                initializeApplication();
+            } else if (sparksoniqConf.getQuery() != null || sparksoniqConf.getQueryPath() != null) {
                 runQueryExecutor(sparksoniqConf);
             } else {
-                System.out.println("    ____                  __    __   ");
-                System.out.println("   / __ \\__  ______ ___  / /_  / /__ ");
-                System.out.println("  / /_/ / / / / __ `__ \\/ __ \\/ / _ \\");
-                System.out.println(" / _, _/ /_/ / / / / / / /_/ / /  __/");
-                System.out.println("/_/ |_|\\__,_/_/ /_/ /_/_.___/_/\\___/ ");
-                System.out.println("Usage:");
-                System.out.println("spark-submit <Spark arguments> <path to rumble jar> <Rumble arguments>");
-                System.out.println("");
-                System.out.println("Example usage:");
-                System.out.println("spark-submit spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[2] spark-rumble-1.0.jar --shell yes");
+                System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"));
+                System.out.println();
                 System.out.println(
-                    "spark-submit --master local[*] --driver-memory 10G spark-rumble-1.0.jar --shell yes"
-                );
-                System.out.println("");
-                System.out.println("spark-submit --master yarn sparksoniq-0.9.7.jar --shell yes");
-                System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --shell yes"
-                );
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq");
-                System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --query-path hdfs:///my-query.jq --output-path hdfs:///my-output.json"
-                );
-                System.out.println(
-                    "spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
+                    IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8")
                 );
             }
+            System.exit(0);
         } catch (Exception ex) {
+            boolean showErrorInfo = false;
+            if (sparksoniqConf != null) {
+                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            }
+            handleException(ex, showErrorInfo);
+        } catch (OutOfMemoryError ex) {
             boolean showErrorInfo = false;
             if (sparksoniqConf != null) {
                 showErrorInfo = sparksoniqConf.getShowErrorInfo();
@@ -94,33 +87,96 @@ public class Main {
                 if (sparkExceptionCause != null) {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
-                    handleException(new RumbleException(ex.getMessage()), showErrorInfo);
+                    if (showErrorInfo) {
+                        ex.printStackTrace();
+                    }
+                    handleException(
+                        new OurBadException(
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                    + ex.getMessage()
+                        ),
+                        showErrorInfo
+                    );
                 }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-            } else {
-                System.out.println("An error has occured: " + ex.getMessage());
-                System.out.println(
-                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
+                System.exit(42);
+            } else if (ex instanceof OutOfMemoryError) {
+                System.err.println(
+                    "⚠️  Java went out of memory."
                 );
-                System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println(
+                    "If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go."
+                );
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(46);
+            } else if (ex instanceof CannotCompileException) {
+                System.err.println("⚠️  There was a CannotCompileException.");
+                System.err.println(
+                    "There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
+                );
+                System.err.println(
+                    "We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
+                );
+                System.err.println(
+                    "For more debug info, please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(44);
+            } else if (ex instanceof ConnectException) {
+                System.err.println("⚠️  There was a problem with the connection to the cluster.");
+                System.err.println(
+                    "For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(45);
+            } else if (ex instanceof NullPointerException) {
+                System.err.println(
+                    "Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈"
+                );
+                System.err.println(
+                    "We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query."
+                );
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println(
+                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(-42);
+            } else {
+                System.err.println(
+                    "We are very embarrassed, because an error has occured that we did not anticipate 🙈: "
+                        + ex.getMessage()
+                );
+                System.err.println(
+                    "We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query."
+                );
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println(
+                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(-42);
             }
         }
     }
 
     private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
         JsoniqQueryExecutor translator = new JsoniqQueryExecutor(sparksoniqConf);
-        translator.runQuery(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
-    }
-
-    private static void initializeApplication() {
-        SparkSessionManager.getInstance().initializeConfigurationAndSession();
+        translator.runQuery();
     }
 
     private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {

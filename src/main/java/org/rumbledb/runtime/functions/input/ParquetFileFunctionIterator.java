@@ -24,13 +24,15 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.List;
 
 public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -39,26 +41,36 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
 
     public ParquetFileFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this.children.get(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+
+        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
+
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
+        int partitions = -1;
+        if (this.children.size() > 1) {
+            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        }
         try {
-            return SparkSessionManager.getInstance()
+            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
-                .parquet(url);
+                .parquet(uri.toString());
+            if (partitions != -1) {
+                dataFrame = dataFrame.repartition(partitions);
+            }
+            return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             throw e;
         }

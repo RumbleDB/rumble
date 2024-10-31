@@ -20,18 +20,18 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
 public class GroupByVariableDeclaration {
 
-    protected String variableName;
+    protected Name variableName;
     protected Expression expression;
     protected SequenceType sequenceType;
 
     public GroupByVariableDeclaration(
-            String variableName,
+            Name variableName,
             SequenceType sequenceType,
             Expression expression
     ) {
@@ -40,15 +40,10 @@ public class GroupByVariableDeclaration {
         }
         this.variableName = variableName;
         this.sequenceType = sequenceType;
-        if (this.sequenceType == null) {
-            throw new OurBadException("A sequence type cannot be null");
-        }
         this.expression = expression;
-
-        sequenceType = this.sequenceType;
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 
@@ -57,6 +52,10 @@ public class GroupByVariableDeclaration {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.ITEM_STAR : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 }

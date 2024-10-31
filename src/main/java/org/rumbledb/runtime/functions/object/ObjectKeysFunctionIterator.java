@@ -22,16 +22,16 @@ package org.rumbledb.runtime.functions.object;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -47,10 +47,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     public ObjectKeysFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
 
@@ -68,10 +67,26 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void setResultsFromDF() {
-        Dataset<Row> childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
-        String[] keys = childDF.schema().fieldNames();
-        for (String key : keys) {
-            this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
+        JSoundDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
+        for (String key : childDF.getKeys()) {
+            if (key.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.rowIdColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.tableLocationColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.pathInColumnName)) {
+                continue;
+            }
+            if (
+                !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                    && !key.equals(SparkSessionManager.atomicJSONiqItemColumnName)
+            ) {
+                this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
+            }
         }
     }
 
@@ -95,7 +110,6 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -126,7 +140,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.alreadyFoundKeys = new ArrayList<>();
         this.nextResults = new LinkedList<>();
 
@@ -140,7 +154,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        this.iterator.close();
+        if (!this.iterator.isDataFrame()) {
+            this.iterator.close();
+        }
     }
 
     @Override

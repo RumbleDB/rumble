@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="([ 1, [ 2, 3 ] ], [ 2, 3 ], [ "alice", [ "bob", [ "eve" ] ] ], [ "bob", [ "eve" ] ], [ "eve" ], [ "lala", [ 1 ], { "foo" : [ "bar" ] } ], [ 1 ], [ "bar" ], [ [ "foo" ] ], [ "foo" ])" :)
+descendant-arrays(parallelize(for $ i in 1 to 1000 return {"foobar": {"1": [1, [2, 3]], "2": ["alice", ["bob", ["eve"]]], "3": ["lala", [1], {"foo": ["bar"]}]}, "foo": "bar", "bar": [["foo"]]}))[position() ge 501 and position() le 510]

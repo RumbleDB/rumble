@@ -24,10 +24,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -39,12 +39,21 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     private Item nextResult;
     private int childIndex;
 
+
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            boolean isUpdating,
+            RuntimeStaticContext staticContext
     ) {
-        super(childIterators, executionMode, iteratorMetadata);
+        super(childIterators, staticContext);
+        this.isUpdating = isUpdating;
+    }
+
+    public CommaExpressionIterator(
+            List<RuntimeIterator> childIterators,
+            RuntimeStaticContext staticContext
+    ) {
+        this(childIterators, false, staticContext);
     }
 
     @Override
@@ -89,6 +98,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             } else {
                 this.currentChild.close();
                 if (++this.childIndex == this.children.size()) {
+                    this.currentChild = null;
                     break;
                 }
                 this.currentChild = this.children.get(this.childIndex);
@@ -105,14 +115,15 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         startLocal();
     }
 
     @Override
     protected void closeLocal() {
-        for (int i = 0; i < this.children.size(); i++)
-            this.children.get(i).close();
+        if (this.currentChild != null) {
+            this.currentChild.close();
+        }
     }
 
     @Override
@@ -135,5 +146,18 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             return sparkContext.emptyRDD();
         }
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+
+        PendingUpdateList pul = new PendingUpdateList();
+        for (RuntimeIterator child : this.children) {
+            pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
+        }
+        return pul;
     }
 }

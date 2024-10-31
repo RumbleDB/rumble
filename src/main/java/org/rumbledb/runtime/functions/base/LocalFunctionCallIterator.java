@@ -20,10 +20,9 @@
 
 package org.rumbledb.runtime.functions.base;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
@@ -33,9 +32,8 @@ public abstract class LocalFunctionCallIterator extends LocalRuntimeIterator {
 
     protected LocalFunctionCallIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 }

@@ -22,69 +22,33 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class HeadFunctionIterator extends LocalFunctionCallIterator {
+public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private Item result;
 
     public HeadFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
-        this.iterator = this.children.get(0);
+        super(parameters, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.hasNext = false;
-            return this.result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "head function", getMetadata());
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setResult();
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        setResult();
-    }
-
-    public void setResult() {
-        if (this.iterator.isRDD()) {
-            List<Item> i = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (this.children.get(0).isRDDOrDataFrame()) {
+            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
             if (i.isEmpty()) {
-                this.hasNext = false;
-                return;
+                return null;
             }
-            this.hasNext = true;
-            this.result = i.get(0);
-        } else {
-            this.iterator.open(this.currentDynamicContextForLocalExecution);
-            if (this.iterator.hasNext()) {
-                this.hasNext = true;
-                this.result = this.iterator.next();
-            } else {
-                this.hasNext = false;
-            }
-            this.iterator.close();
+            return i.get(0);
         }
+        return this.children.get(0).materializeFirstItemOrNull(dynamicContext);
     }
 }

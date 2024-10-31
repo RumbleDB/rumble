@@ -21,17 +21,24 @@
 package org.rumbledb.runtime.primary;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.types.TypeMappings;
 
 import java.util.List;
 import java.util.Map;
@@ -41,25 +48,21 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private SequenceType sequence;
-    private String variableName;
+    private Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
     public VariableReferenceIterator(
-            String variableName,
-            SequenceType seq,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            Name variableName,
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.variableName = variableName;
-        this.sequence = seq;
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return context.getRDDVariableValue(this.variableName, getMetadata());
+        return context.getVariableValues().getRDDVariableValue(this.variableName, getMetadata());
     }
 
     @Override
@@ -68,13 +71,48 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        return context.getDataFrameVariableValue(this.variableName, getMetadata());
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        String name = this.variableName.toString();
+        DataType schema = nativeClauseContext.getSchema();
+        if (!(schema instanceof StructType)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        // check if name is in the schema
+        StructType structSchema = (StructType) schema;
+        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, this.variableName)) {
+            List<Item> items = nativeClauseContext.getContext()
+                .getVariableValues()
+                .getLocalVariableValue(this.variableName, getMetadata());
+            if (items.size() != 1) {
+                // only possible to turn into native, sequence of length 1
+                return NativeClauseContext.NoNativeQuery;
+            }
+            return items.get(0).generateNativeQuery(nativeClauseContext);
+        }
+        if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
+        StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
+        DataType fieldType = field.dataType();
+        ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
+        NativeClauseContext newContext = new NativeClauseContext(
+                nativeClauseContext,
+                "`" + escapedName + "`",
+                new SequenceType(variableType, Arity.One)
+        );
+        newContext.setSchema(fieldType);
+        return newContext;
     }
 
     @Override
@@ -96,7 +134,9 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.currentIndex = 0;
-        this.items = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
+        DynamicContext context = this.currentDynamicContextForLocalExecution;
+        VariableValues values = context.getVariableValues();
+        this.items = values.getLocalVariableValue(
             this.variableName,
             getMetadata()
         );
@@ -109,21 +149,17 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal(DynamicContext context) {
+    public void resetLocal() {
         this.currentIndex = 0;
         this.items = null;
     }
 
-    public SequenceType getSequence() {
-        return this.sequence;
-    }
-
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }

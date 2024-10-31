@@ -1,4 +1,4 @@
-spark-submit target/spark-rumble-1.6.0-jar-with-dependencies.jar --server yes --port 8000
+spark-submit target/spark-rumble-1.8.0.jar --server yes --port 8000
 (remains open)
 
 curl --data "parallelize(1 to 10)[2]" -X GET "http://localhost:8000/jsoniq"

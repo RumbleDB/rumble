@@ -58,8 +58,8 @@ public class OrderByClauseSortingKey {
     }
 
     public enum EMPTY_ORDER {
-        NONE,
-        FIRST,
-        LAST
+        LEAST,
+        GREATEST,
+        NONE
     }
 }

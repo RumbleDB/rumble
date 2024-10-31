@@ -23,18 +23,35 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-public class NullItem extends AtomicItem {
+public class NullItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
 
     public NullItem() {
         super();
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     @Override
@@ -48,34 +65,6 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.nullItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.nullItem)
-            ||
-            itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.nullItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public String serialize() {
-        return "null";
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, null, Item.class);
     }
@@ -86,37 +75,32 @@ public class NullItem extends AtomicItem {
 
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        return o.isNull();
-    }
-
     public int hashCode() {
         return 0;
     }
 
     @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 0;
-        }
-        return -1;
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return ItemType.nullItem;
+        return BuiltinTypesCatalogue.nullItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public String getStringValue() {
+        return "null";
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return "NULL";
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return "NULL";
     }
 }

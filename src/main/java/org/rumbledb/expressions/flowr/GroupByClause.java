@@ -20,7 +20,6 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -47,18 +46,14 @@ public class GroupByClause extends Clause {
     }
 
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
-    }
-
-    @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.variables.forEach(e -> {
-            if (e != null) {
+            if (e != null && e.getExpression() != null) {
                 result.add(e.getExpression());
             }
         });
+        result.add(this.getPreviousClause());
         return result;
     }
 
@@ -73,9 +68,13 @@ public class GroupByClause extends Clause {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (");
+        int i = 0;
         for (GroupByVariableDeclaration var : this.variables) {
-            buffer.append(var.getVariableName());
-            buffer.append(", ");
+            buffer.append("$" + var.getVariableName());
+            if (i < this.variables.size() - 1) {
+                buffer.append(", ");
+            }
+            ++i;
         }
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
@@ -83,8 +82,28 @@ public class GroupByClause extends Clause {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("group by ");
+        int i = 0;
+        for (GroupByVariableDeclaration groupby : this.variables) {
+            sb.append("$" + groupby.variableName.toString());
+            if (groupby.sequenceType != null)
+                sb.append(" as " + groupby.sequenceType.toString());
+            if (groupby.expression != null) {
+                sb.append(" := (");
+                groupby.expression.serializeToJSONiq(sb, 0);
+                sb.append(")");
+            }
+            if (i == this.variables.size() - 1) {
+                sb.append("\n");
+            } else {
+                sb.append(", ");
+            }
+            i++;
         }
     }
 }

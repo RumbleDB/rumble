@@ -73,6 +73,25 @@ public class ComparisonExpression extends Expression {
             return this.isValueComparison;
         }
 
+        public ComparisonOperator getCorrespondingValueComparison() {
+            switch (this) {
+                case GC_EQ:
+                    return VC_EQ;
+                case GC_NE:
+                    return VC_NE;
+                case GC_LE:
+                    return VC_LE;
+                case GC_LT:
+                    return VC_LT;
+                case GC_GE:
+                    return VC_GE;
+                case GC_GT:
+                    return VC_GT;
+                default:
+                    throw new OurBadException("Only works on general comparisons.");
+            }
+        }
+
         public static ComparisonOperator fromSymbol(String symbol) {
             if (symbol.equals(VC_EQ.toString())) {
                 return VC_EQ;
@@ -111,6 +130,31 @@ public class ComparisonExpression extends Expression {
                 return GC_GE;
             }
             throw new OurBadException("Unrecognized comparison symbol: " + symbol);
+        }
+
+        public static ComparisonOperator getValueComparisonFromComparison(ComparisonOperator operator) {
+            switch (operator) {
+                case VC_EQ:
+                case GC_EQ:
+                    return VC_EQ;
+                case VC_NE:
+                case GC_NE:
+                    return VC_NE;
+                case VC_LT:
+                case GC_LT:
+                    return VC_LT;
+                case VC_LE:
+                case GC_LE:
+                    return VC_LE;
+                case VC_GT:
+                case GC_GT:
+                    return VC_GT;
+                case VC_GE:
+                case GC_GE:
+                    return VC_GE;
+                default:
+                    return operator;
+            }
         }
     };
 
@@ -151,9 +195,33 @@ public class ComparisonExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.comparisonOperator) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append(this.comparisonOperator.toString() + "\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
     }
 }

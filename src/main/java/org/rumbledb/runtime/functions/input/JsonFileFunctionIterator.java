@@ -23,54 +23,194 @@ package org.rumbledb.runtime.functions.input;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
+import com.google.gson.stream.JsonReader;
+
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
-public class JsonFileFunctionIterator extends RDDRuntimeIterator {
+public class JsonFileFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    RuntimeIterator iterator;
+    BufferedReader reader;
+    Item path;
+    Item nextItem;
 
     public JsonFileFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
+        this.iterator = this.children.get(0);
+        this.reader = null;
+        this.nextItem = null;
+        this.path = null;
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<String> strings;
-        RuntimeIterator urlIterator = this.children.get(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
-        if (!FileSystemUtil.exists(url, getMetadata())) {
-            throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
+        url = url.replaceAll(" ", "%20");
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+
+        int partitions = -1;
+        if (this.children.size() > 1) {
+            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
-        if (this.children.size() == 1) {
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(url);
+        JavaRDD<String> strings;
+        if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+            InputStream is = FileSystemUtil.getDataInputStream(
+                uri,
+                context.getRumbleRuntimeConfiguration(),
+                getMetadata()
+            );
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            List<String> lines = new ArrayList<>();
+            String line = null;
+            try {
+                while ((line = br.readLine()) != null) {
+                    lines.add(line);
+                }
+            } catch (IOException e) {
+                throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+            }
+            if (partitions == -1) {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .parallelize(lines);
+            } else {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .parallelize(
+                        lines,
+                        partitions
+                    );
+            }
         } else {
-            RuntimeIterator partitionsIterator = this.children.get(1);
-            partitionsIterator.open(this.currentDynamicContextForLocalExecution);
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(
-                    url,
-                    partitionsIterator.next().getIntegerValue()
-                );
-            partitionsIterator.close();
+            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+            }
+
+            String path = uri.toString();
+            if (uri.getScheme().contentEquals("file")) {
+                path = path.replaceAll("%20", " ");
+            }
+
+            if (partitions == -1) {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .textFile(path);
+            } else {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .textFile(
+                        path,
+                        partitions
+                    );
+            }
         }
         return strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata()));
+    }
+
+    protected void init() {
+        try {
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticURI,
+                this.path.getStringValue(),
+                getMetadata()
+            );
+            InputStream is = FileSystemUtil.getDataInputStream(
+                uri,
+                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                getMetadata()
+            );
+            this.reader = new BufferedReader(new InputStreamReader(is));
+            fetchNext();
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
+    }
+
+    @Override
+    protected void openLocal() {
+        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        init();
+    }
+
+    @Override
+    protected void closeLocal() {
+        try {
+            this.reader.close();
+        } catch (IOException e) {
+            handleException(e);
+        }
+        this.reader = null;
+        this.nextItem = null;
+    }
+
+    @Override
+    protected void resetLocal() {
+        try {
+            this.reader.close();
+        } catch (IOException e) {
+            handleException(e);
+        }
+        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        init();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
+        Item result = this.nextItem;
+        fetchNext();
+        return result;
+    }
+
+    public void fetchNext() {
+        try {
+            String line = this.reader.readLine();
+            this.hasNext = (line != null);
+            if (this.hasNext) {
+                JsonReader object = new JsonReader(new StringReader(line));
+                this.nextItem = ItemParser.getItemFromObject(object, getMetadata());
+            }
+        } catch (IOException e) {
+            handleException(e);
+        }
+    }
+
+    public void handleException(IOException e) {
+        RumbleException rumbleException = new CannotRetrieveResourceException(
+                "I/O error while accessing file: "
+                    + this.path.getStringValue()
+                    + " Cause: "
+                    + e.getMessage(),
+                getMetadata()
+        );
+        rumbleException.initCause(e);
+        throw rumbleException;
     }
 }

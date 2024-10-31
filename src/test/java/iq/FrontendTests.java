@@ -24,11 +24,16 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,17 +43,17 @@ public class FrontendTests extends AnnotationsTestsBase {
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/parser"
+                "/src/test/resources/test_files/parser"
     );
     public static final File astTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/ast"
+                "/src/test/resources/test_files/ast"
     );
     public static final File semanticTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/semantics"
+                "/src/test/resources/test_files/semantics"
     );
     public static final String[] manualSemanticChecksFiles = new String[] { "TypesCheck.jq" };
 
@@ -63,7 +68,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(testFile.getAbsolutePath());
+            testAnnotations(testFile.getAbsolutePath(), getConfiguration());
         }
 
     }
@@ -98,9 +103,20 @@ public class FrontendTests extends AnnotationsTestsBase {
         initializeTests(semanticTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            MainModule mainModule = testAnnotations(testFile.getAbsolutePath());
-            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName()))
-                testVariableTypes(testFile, mainModule);
+            testAnnotations(testFile.getAbsolutePath(), getConfiguration());
+            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
+                URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                    testFile.getAbsolutePath(),
+                    getConfiguration(),
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
+                    uri,
+                    getConfiguration()
+                );
+
+                testVariableTypes(mainModule);
+            }
         }
     }
 
@@ -180,51 +196,55 @@ public class FrontendTests extends AnnotationsTestsBase {
      * }
      */
 
-    private void testVariableTypes(File testFile, MainModule mainModule) {
+    private void testVariableTypes(MainModule mainModule) {
 
         List<Node> vars = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("var")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(Name.createVariableInNoNamespace("var"))
             );
         vars.forEach(
             var -> Assert.assertTrue(
-                ((VariableReferenceExpression) var).getType().getItemType().equals(ItemType.integerItem)
+                ((VariableReferenceExpression) var).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
 
         List<Node> js = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("j")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(Name.createVariableInNoNamespace("j"))
             );
         js.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.item)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
                     ||
-                    ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.stringItem)
+                    ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
             )
         );
 
         List<Node> internals = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("internal")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(Name.createVariableInNoNamespace("internal"))
             );
         internals.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.integerItem)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
 
         List<Node> arry = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("arry")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(Name.createVariableInNoNamespace("arry"))
             );
         arry.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.arrayItem)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.arrayItem)
             )
         );
 

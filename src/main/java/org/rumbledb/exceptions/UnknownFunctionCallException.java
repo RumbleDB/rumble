@@ -20,19 +20,34 @@
 
 package org.rumbledb.exceptions;
 
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
 public class UnknownFunctionCallException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownFunctionCallException(String fnName, int arity, ExceptionMetadata metadata) {
+    public UnknownFunctionCallException(Name fnName, int arity, ExceptionMetadata metadata) {
         super(
             "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
                 +
                 fnName
                 + "\" called with "
                 + arity
+                + " parameters.",
+            ErrorCode.InvalidFunctionCallErrorCode,
+            metadata
+        );
+    }
+
+    public UnknownFunctionCallException(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+        super(
+            "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
+                +
+                identifier.getName()
+                + "\" called with "
+                + identifier.getArity()
                 + " parameters.",
             ErrorCode.InvalidFunctionCallErrorCode,
             metadata

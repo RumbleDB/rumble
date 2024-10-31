@@ -23,13 +23,15 @@ package org.rumbledb.runtime.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.util.List;
 import java.util.Map;
@@ -46,29 +48,46 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     // calculated fields
     private RuntimeIterator userDefinedFunctionCallIterator;
     private Item nextResult;
+    private List<Item> exitStatementLocalResult;
+    private boolean encounteredExitStatement;
+    private int nextExitStatementResult;
 
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext,
+            boolean isUpdating
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
+        this.userDefinedFunctionCallIterator = null;
+        this.nextExitStatementResult = 0;
+        this.isUpdating = isUpdating;
+    }
 
+    protected boolean implementsDataFrames() {
+        return true;
     }
 
     @Override
     public void openLocal() {
-        this.userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            this.functionIdentifier,
-            this.getHighestExecutionMode(),
-            getMetadata(),
-            this.functionArguments
-        );
-        this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
+        try {
+            if (this.userDefinedFunctionCallIterator == null) {
+                this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getNamedFunctions()
+                    .getUserDefinedFunctionCallIterator(
+                        this.functionIdentifier,
+                        this.getHighestExecutionMode(),
+                        getMetadata(),
+                        this.functionArguments
+                    );
+            }
+            this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
+        } catch (ExitStatementException exitStatementException) {
+            this.encounteredExitStatement = true;
+            this.exitStatementLocalResult = exitStatementException.getLocalResult();
+        }
         setNextResult();
     }
 
@@ -91,8 +110,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.userDefinedFunctionCallIterator.reset(this.currentDynamicContextForLocalExecution);
+        this.encounteredExitStatement = false;
+        this.nextExitStatementResult = 0;
         setNextResult();
     }
 
@@ -100,38 +121,78 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.isOpen()) {
+        if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
             this.userDefinedFunctionCallIterator.close();
         }
+        this.userDefinedFunctionCallIterator = null;
+        this.encounteredExitStatement = false;
+        this.nextExitStatementResult = 0;
     }
 
     public void setNextResult() {
         this.nextResult = null;
-        if (this.userDefinedFunctionCallIterator.hasNext()) {
-            this.nextResult = this.userDefinedFunctionCallIterator.next();
+        if (!this.encounteredExitStatement) {
+            try {
+                if (this.userDefinedFunctionCallIterator.hasNext()) {
+                    this.nextResult = this.userDefinedFunctionCallIterator.next();
+                }
+            } catch (ExitStatementException exitStatementException) {
+                this.encounteredExitStatement = true;
+                this.exitStatementLocalResult = exitStatementException.getLocalResult();
+            }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.userDefinedFunctionCallIterator.close();
+        if (this.encounteredExitStatement) {
+            if (this.nextExitStatementResult < this.exitStatementLocalResult.size()) {
+                this.hasNext = true;
+                this.nextResult = this.exitStatementLocalResult.get(this.nextExitStatementResult++);
+            } else {
+                this.hasNext = false;
+            }
         } else {
-            this.hasNext = true;
+            if (this.nextResult == null) {
+                this.hasNext = false;
+                this.userDefinedFunctionCallIterator.close();
+            } else {
+                this.hasNext = true;
+            }
         }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        this.userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            this.functionIdentifier,
-            this.getHighestExecutionMode(),
-            getMetadata(),
-            this.functionArguments
-        );
-        return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
+        try {
+            this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
+                .getUserDefinedFunctionCallIterator(
+                    this.functionIdentifier,
+                    this.getHighestExecutionMode(),
+                    getMetadata(),
+                    this.functionArguments
+                );
+            return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
+        } catch (ExitStatementException exitStatementException) {
+            return exitStatementException.getRddResult();
+        }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        try {
+            this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
+                .getUserDefinedFunctionCallIterator(
+                    this.functionIdentifier,
+                    this.getHighestExecutionMode(),
+                    getMetadata(),
+                    this.functionArguments
+                );
+            return this.userDefinedFunctionCallIterator.getDataFrame(dynamicContext);
+        } catch (ExitStatementException exitStatementException) {
+            return exitStatementException.getDataFrameResult();
+        }
+    }
+
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());
         for (RuntimeIterator iterator : this.functionArguments) {
             if (iterator == null) {
@@ -140,5 +201,20 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             result.putAll(iterator.getVariableDependencies());
         }
         return result;
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+        this.userDefinedFunctionCallIterator = context.getNamedFunctions()
+            .getUserDefinedFunctionCallIterator(
+                this.functionIdentifier,
+                this.getHighestExecutionMode(),
+                getMetadata(),
+                this.functionArguments
+            );
+        return this.userDefinedFunctionCallIterator.getPendingUpdateList(context);
     }
 }

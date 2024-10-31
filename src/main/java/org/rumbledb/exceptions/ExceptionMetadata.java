@@ -30,19 +30,25 @@ import java.io.Serializable;
 public class ExceptionMetadata implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private final String location;
     private final int tokenLineNumber;
     private final int tokenColumnNumber;
+    private final String code;
+    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 1, 0, "");
 
     /**
      * Builds a new metadata object
      *
+     * @param location the URI of the JSONiq module at which the exception occurred.
      * @param line the line number at which the error occurred.
      * @param column the column number at which the error occurred.
+     * @param code the query code around the error.
      */
-    public ExceptionMetadata(int line, int column) {
+    public ExceptionMetadata(String location, int line, int column, String code) {
+        this.location = location;
         this.tokenLineNumber = line;
         this.tokenColumnNumber = column;
-
+        this.code = code;
     }
 
     /**
@@ -61,5 +67,55 @@ public class ExceptionMetadata implements Serializable {
      */
     public int getTokenColumnNumber() {
         return this.tokenColumnNumber;
+    }
+
+    /**
+     * Returns the location.
+     * 
+     * @return the location.
+     */
+    public String getLocation() {
+        return this.location;
+    }
+
+    /**
+     * Returns the the query code around the error.
+     *
+     * @return the the query code around the error.
+     */
+    public String getCode() {
+        return this.code;
+    }
+
+    /**
+     * Returns the error location in context.
+     *
+     * @return the code with a pointer to the error location.
+     */
+    public String getLineInContext() {
+        StringBuffer buffer = new StringBuffer();
+        String[] lines = this.code.split("\n");
+        if (lines.length < this.tokenLineNumber) {
+            return "";
+        } else {
+            buffer.append(lines[this.tokenLineNumber - 1]);
+        }
+        buffer.append("\n");
+        for (int i = 0; i < this.tokenColumnNumber; ++i) {
+            buffer.append(" ");
+        }
+        buffer.append("^\n");
+        return buffer.toString();
+    }
+
+    public String toString() {
+        return this.location
+            + ":"
+            + "LINE:"
+            + getTokenLineNumber()
+            +
+            ":COLUMN:"
+            + getTokenColumnNumber()
+            + ":";
     }
 }

@@ -1,385 +1,55 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Authors: Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
- *
- */
-
 package org.rumbledb.api;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.FunctionSignature;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.serialization.Serializer;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigDecimal;
-import java.util.List;
+
+import com.esotericsoftware.kryo.KryoSerializable;
+
 
 /**
  * An instance of this class is an item in the JSONiq data model.
  *
  * JSONiq manipulates sequences of items.
  *
- * An item can be structured or atomic.
+ * All calls should be made via this interface. Objects of type Item should never be cast to a subclass (in a subsequent
+ * version,
+ * we will make the classes implementing this interface visible only at the package level).
+ *
+ * An item can be structured or atomic or a function.
  *
  * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
  * lists of items.
  *
- * Atomic items have a lexical value and a type. Currently, Rumble only supports strings, numbers, booleans and null.
- *
- * Numbers can be decimals, integers or doubles.
- *
- * This class provides methods to identify what kind of item the instance is, and to access its properties.
+ * Atomic items have a lexical value and a type. Rumble does not support all atomic types yet.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
-public abstract class Item implements SerializableItem {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Please do not use. Items are produced by a JSONiq query via the Rumble API.
-     */
-    protected Item() {
-    }
-
-    /**
-     * Tests whether the item is a number (integer, decimal or double).
-     *
-     * @return true if it is a number, false otherwise.
-     */
-    public boolean isNumeric() {
-        return this.isInteger() || this.isDecimal() || this.isDouble();
-    }
-
-    /**
-     * Casts the item to a double value.
-     *
-     * @return the double value.
-     */
-    public double castToDoubleValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
-    }
-
-    /**
-     * Casts the item to a decimal value.
-     *
-     * @return the BigDecimal value.
-     */
-    public BigDecimal castToDecimalValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
-    }
-
-    /**
-     * Casts the item to an integer value.
-     *
-     * @return the int value.
-     */
-    public int castToIntegerValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
-    }
-
-    /**
-     * Returns the effective boolean value of the item, if atomic.
-     *
-     * @return the effective boolean value.
-     */
-    public abstract boolean getEffectiveBooleanValue();
-
-    /**
-     * Function that compares 2 items.
-     * Non-atomics can't be compared.
-     * Items have to be of the same type or one them has to be null.
-     *
-     * @param other another item.
-     * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
-     */
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        return this.serialize().compareTo(other.serialize());
-    }
-
-    /**
-     * Function that compare two items according to the operator defined for the comparison.
-     *
-     * @param other another Item
-     * @param comparisonOperator the operator used for the comparison
-     * @param metadata Metadata useful for throwing exceptions
-     * @return BooleanItem result of the comparison
-     */
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        // Subclasses should override this method to perform additional typechecks,
-        // and then invoke it on super.
-        switch (comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
-            }
-            case VC_NE:
-            case GC_NE: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
-            }
-            case VC_LT:
-            case GC_LT: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
-            }
-            case VC_LE:
-            case GC_LE: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison <= 0);
-            }
-            case VC_GT:
-            case GC_GT: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
-            }
-            case VC_GE:
-            case GC_GE: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison >= 0);
-            }
-        }
-        throw new IteratorFlowException("Unrecognized operator found", metadata);
-    }
-
-    /**
-     * Returns the members of the item if it is an array.
-     *
-     * @return the list of the array members.
-     */
-    public List<Item> getItems() {
-        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Returns the member of the item at the specified position if it is an array.
-     *
-     * @param position a position.
-     * @return the member at position position.
-     */
-    public Item getItemAt(int position) {
-        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Appends an item, if it is an array.
-     *
-     * @param item an item.
-     */
-    public void putItem(Item item) {
-        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Returns the keys of the item, if it is an object item.
-     *
-     * @return the list of the keys.
-     */
-    public List<String> getKeys() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Returns the values of the item, if it is an object item.
-     *
-     * @return the list of the value items.
-     */
-    public List<Item> getValues() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Returns the value associated with a specific key, if it is an object item.
-     *
-     * @param key a key.
-     * @return the value associated with key.
-     */
-    public Item getItemByKey(String key) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Adds a value pair, if it is an array item.
-     *
-     * @param value a value.
-     */
-    public void append(Item value) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Adds a key-value pair, if it is an object item.
-     *
-     * @param key a key.
-     * @param value a value.
-     */
-    public void putItemByKey(String key, Item value) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Returns the size of the item, if it is an array item.
-     *
-     * @return the size as an int.
-     */
-    public int getSize() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Returns the string value of the item, if it is a atomic item of type string.
-     *
-     * @return the string value.
-     */
-    public String getStringValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a string.");
-    }
-
-    /**
-     * Returns the boolean value of the item, if it is a atomic item of type boolean.
-     *
-     * @return the boolean value.
-     */
-    public boolean getBooleanValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a boolean.");
-    }
-
-    /**
-     * Returns the double value of the item, if it is a atomic item of type double.
-     *
-     * @return the double value.
-     */
-    public double getDoubleValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a double.");
-    }
-
-    /**
-     * Returns the integer value of the item, if it is a atomic item of type integer.
-     *
-     * @return the integer value as an int.
-     */
-    public int getIntegerValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
-    }
-
-    /**
-     * Returns the decimal value of the item, if it is a atomic item of type decimal.
-     *
-     * @return the decimal value as a BigDecimal.
-     */
-    public BigDecimal getDecimalValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a big decimal.");
-    }
-
-    /**
-     * Returns the period value of the item, if it is a atomic item of type duration.
-     *
-     * @return the period value as a Period.
-     */
-    public Period getDurationValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a duration.");
-    }
-
-    /**
-     * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem or dateItem or timeItem.
-     *
-     * @return the dateTime value as a DateTime.
-     */
-    public DateTime getDateTimeValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' does not have a DateTime.");
-    }
-
-    /**
-     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
-     *
-     * @return the binary value as an array of bytes.
-     */
-    public byte[] getBinaryValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a hexBinary.");
-    }
-
-    /**
-     * @return true if the Item has a timeZone, false otherwise
-     */
-    public boolean hasTimeZone() {
-        return false;
-    }
-
-    /**
-     * Please do not use, item type API not publicly released yet.
-     *
-     * @param type an ItemType.
-     * @return true if it matches the item type.
-     */
-    public abstract boolean isTypeOf(ItemType type);
-
-    /**
-     * Please do not use, item type API not publicly released yet.
-     *
-     * @param type an ItemType.
-     * @return true if the item can be promoted to the type passed in as argument.
-     */
-    public boolean canBePromotedTo(ItemType type) {
-        return this.isTypeOf(type);
-    }
-
-
-    public Item promoteTo(ItemType type) {
-        if (!this.canBePromotedTo(type)) {
-            throw new RuntimeException(
-                    this.getDynamicType().toString()
-                        + " cannot be promoted to type "
-                        + type.toString()
-            );
-        }
-        return this;
-    }
-
-    /**
-     * Tests whether the item is a function.
-     *
-     * @return true if it is a function, false otherwise
-     */
-    public boolean isFunction() {
-        return false;
-    }
+public interface Item extends Serializable, KryoSerializable {
 
     /**
      * Tests whether the item is an array.
      *
      * @return true if it is an array, false otherwise.
      */
-    public boolean isArray() {
+    default boolean isArray() {
         return false;
     }
 
@@ -388,7 +58,16 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an object, false otherwise.
      */
-    public boolean isObject() {
+    default boolean isObject() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is a function.
+     *
+     * @return true if it is a function, false otherwise
+     */
+    default boolean isFunction() {
         return false;
     }
 
@@ -397,7 +76,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item, false otherwise.
      */
-    public boolean isAtomic() {
+    default boolean isAtomic() {
         return false;
     }
 
@@ -406,16 +85,16 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type string, false otherwise.
      */
-    public boolean isString() {
+    default boolean isString() {
         return false;
     }
 
     /**
-     * Tests whether the item is an atomic item of type boolean.
+     * Tests whether the item is an atomic item of type default boolean.
      *
-     * @return true if it is an atomic item of type boolean, false otherwise.
+     * @return true if it is an atomic item of type default boolean, false otherwise.
      */
-    public boolean isBoolean() {
+    default boolean isBoolean() {
         return false;
     }
 
@@ -424,25 +103,16 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is the null item, false otherwise.
      */
-    public boolean isNull() {
+    default boolean isNull() {
         return false;
     }
 
     /**
-     * Tests whether the item is an atomic item of type integer.
+     * Tests whether the item is a number (decimal or double).
      *
-     * @return true if it is an atomic item of type integer, false otherwise.
+     * @return true if it is a number, false otherwise.
      */
-    public boolean isInteger() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type double.
-     *
-     * @return true if it is an atomic item of type double, false otherwise.
-     */
-    public boolean isDouble() {
+    default boolean isNumeric() {
         return false;
     }
 
@@ -451,7 +121,43 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type decimal, false otherwise.
      */
-    public boolean isDecimal() {
+    default boolean isDecimal() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type integer.
+     *
+     * @return true if it is an atomic item of type integer, false otherwise.
+     */
+    default boolean isInteger() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type int.
+     *
+     * @return true if it is an atomic item of type int, false otherwise.
+     */
+    default boolean isInt() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type double.
+     *
+     * @return true if it is an atomic item of type double, false otherwise.
+     */
+    default boolean isDouble() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type float.
+     *
+     * @return true if it is an atomic item of type float, false otherwise.
+     */
+    default boolean isFloat() {
         return false;
     }
 
@@ -460,7 +166,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type duration, false otherwise.
      */
-    public boolean isDuration() {
+    default boolean isDuration() {
         return false;
     }
 
@@ -469,7 +175,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type yearMonthDuration, false otherwise.
      */
-    public boolean isYearMonthDuration() {
+    default boolean isYearMonthDuration() {
         return false;
     }
 
@@ -478,7 +184,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
      */
-    public boolean isDayTimeDuration() {
+    default boolean isDayTimeDuration() {
         return false;
     }
 
@@ -487,7 +193,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type dateTime, false otherwise.
      */
-    public boolean isDateTime() {
+    default boolean isDateTime() {
         return false;
     }
 
@@ -496,7 +202,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type date, false otherwise.
      */
-    public boolean isDate() {
+    default boolean isDate() {
         return false;
     }
 
@@ -505,43 +211,62 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type time, false otherwise.
      */
-    public boolean isTime() {
+    default boolean isTime() {
         return false;
     }
 
     /**
-     * Tests whether the item contains a representation of date or time (or both).
+     * Tests whether the item is an atomic item of type gDay.
      *
-     * @return true if it is an atomic item of type time, date or dateTime, false otherwise.
+     * @return true if it is an atomic item of type gDay, false otherwise.
      */
-    public boolean hasDateTime() {
+    default boolean isGDay() {
         return false;
     }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonth.
+     *
+     * @return true if it is an atomic item of type gMonth, false otherwise.
+     */
+    default boolean isGMonth() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gYear.
+     *
+     * @return true if it is an atomic item of type gYear, false otherwise.
+     */
+    default boolean isGYear() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonthDay.
+     *
+     * @return true if it is an atomic item of type gMonthDay, false otherwise.
+     */
+    default boolean isGMonthDay() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonthDay.
+     *
+     * @return true if it is an atomic item of type gMonthDay, false otherwise.
+     */
+    default boolean isGYearMonth() {
+        return false;
+    }
+
 
     /**
      * Tests whether the item is an atomic item of type anyURI.
      *
      * @return true if it is an atomic item of type anyURI, false otherwise.
      */
-    public boolean isAnyURI() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type hexBinary.
-     *
-     * @return true if it is an atomic item of type hexBinary, false otherwise.
-     */
-    public boolean isHexBinary() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type base64Binary.
-     *
-     * @return true if it is an atomic item of type base64Binary, false otherwise.
-     */
-    public boolean isBase64Binary() {
+    default boolean isAnyURI() {
         return false;
     }
 
@@ -550,81 +275,572 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type base64Binary or hexBinary, false otherwise.
      */
-    public boolean isBinary() {
-        return this.isHexBinary() || this.isBase64Binary();
-    }
-
-    private void readObject(ObjectInputStream aInputStream)
-            throws ClassNotFoundException,
-                IOException {
-        aInputStream.defaultReadObject();
-    }
-
-    private void writeObject(ObjectOutputStream aOutputStream)
-            throws IOException {
-        aOutputStream.defaultWriteObject();
+    default boolean isBinary() {
+        return false;
     }
 
     /**
-     * Tests for logical equality.
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    default boolean isHexBinary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type base64Binary.
+     *
+     * @return true if it is an atomic item of type base64Binary, false otherwise.
+     */
+    default boolean isBase64Binary() {
+        return false;
+    }
+
+    /**
+     * Returns the members of the item if it is an array.
+     *
+     * @return the list of the array members.
+     */
+    default List<Item> getItems() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the member of the item at the specified position if it is an array.
+     *
+     * @param position a position.
+     * @return the member at position position.
+     */
+    default Item getItemAt(int position) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the keys of the item, if it is an object.
+     *
+     * @return the list of the keys.
+     */
+    default List<String> getKeys() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the values of the item, if it is an object.
+     *
+     * @return the list of the value items.
+     */
+    default List<Item> getValues() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the value associated with a specific key, if it is an object.
+     *
+     * @param key a key.
+     * @return the value associated with key.
+     */
+    default Item getItemByKey(String key) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the size of the item, if it is an array.
+     *
+     * @return the size as an int.
+     */
+    default int getSize() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the string value of the item, if it is an atomic item.
+     *
+     * @return the string value.
+     */
+    default String getStringValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the boolean value of the item, if it is a boolean.
+     *
+     * @return the boolean value.
+     */
+    default boolean getBooleanValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the double value of the item, if it is a double.
+     *
+     * @return the double value.
+     */
+    default double getDoubleValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the float value of the item, if it is a float.
+     *
+     * @return the float value.
+     */
+    default float getFloatValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the int value of the item, if it is an int.
+     *
+     * @return the integer value as an int.
+     */
+    default int getIntValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the integer value of the item as a bit integer, if it is an integer.
+     *
+     * @return the integer value as a BigInteger.
+     */
+    default BigInteger getIntegerValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the decimal value of the item, if it is a decimal.
+     *
+     * @return the decimal value as a BigDecimal.
+     */
+    default BigDecimal getDecimalValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the period value of the item, if it is a duration.
+     *
+     * @return the period value as a Period.
+     */
+    default Period getDurationValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem or dateItem or timeItem.
+     *
+     * @return the dateTime value as a DateTime.
+     */
+    default DateTime getDateTimeValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
+     *
+     * @return the binary value as an array of bytes.
+     */
+    default byte[] getBinaryValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the dynamic type of the item (only for error message purposes).
+     * 
+     * @return the dynamic type as an item type.
+     */
+    default ItemType getDynamicType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the identifier (name and arity) of the function, if it is a function item.
+     * 
+     * @return the function identifier.
+     */
+    default FunctionIdentifier getIdentifier() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the names of the parameters of the function, if it is a function item.
+     * 
+     * @return the function parameter names.
+     */
+    default List<Name> getParameterNames() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the signature of the function, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    default FunctionSignature getSignature() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the body iterator, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    default public RuntimeIterator getBodyIterator() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the local variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    default public Map<Name, List<Item>> getLocalVariablesInClosure() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the RDD variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    default public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the DataFrame variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    default public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the module dynamic context, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    default public DynamicContext getModuleDynamicContext() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * @return true if the Item has a timeZone, false otherwise
+     */
+    default boolean hasTimeZone() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item contains a representation of date or time (or both).
+     *
+     * @return true if it is an atomic item of type time, date or dateTime, false otherwise.
+     */
+    default boolean hasDateTime() {
+        return false;
+    }
+
+    /**
+     * Returns the effective boolean value of the item, if atomic.
+     *
+     * @return the effective boolean value.
+     */
+    default boolean getEffectiveBooleanValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Appends an item, if it is an array.
+     *
+     * @param item an item.
+     */
+    default void putItem(Item item) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Add an item at index i, if it is an array.
+     *
+     * @param item an item.
+     * @param i an integer.
+     */
+    default void putItemAt(Item item, int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Add all items in items at index i, if it is an array.
+     *
+     * @param items a list of items.
+     * @param i an integer.
+     */
+    default void putItemsAt(List<Item> items, int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Remove the item at index i, if it is an array.
+     *
+     * @param i an integer.
+     */
+    default void removeItemAt(int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a value pair, if it is an array item.
+     *
+     * @param value a value.
+     */
+    default void append(Item value) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-value pair, if it is an object item.
+     *
+     * @param key a key.
+     * @param value a value.
+     */
+    default void putItemByKey(String key, Item value) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Removes a key-value pair, if it is an object item.
+     *
+     * @param key a key.
+     */
+    default void removeItemByKey(String key) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-value pair, if it is an object item. The value is lazily computed.
+     *
+     * @param key a key.
+     * @param iterator a runtime iterator.
+     * @param context a dynamic context.
+     * @param isArray whether to always wrap the result in an array.
+     */
+    default public void putLazyItemByKey(
+            String key,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            boolean isArray
+    ) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Casts the item to a double value (must be a numeric).
+     *
+     * @return the double value.
+     */
+    default double castToDoubleValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Casts the item to a float value (must be a numeric).
+     *
+     * @return the float value.
+     */
+    default float castToFloatValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Casts the item to a decimal value (must be a numeric).
+     *
+     * @return the BigDecimal value.
+     */
+    default BigDecimal castToDecimalValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Casts the item to a big integer value (must be a numeric).
+     *
+     * @return the BigInteger value.
+     */
+    default BigInteger castToIntegerValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Casts the item to an integer value (must be a numeric).
+     *
+     * @return the int value.
+     */
+    default int castToIntValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Checks doubles and floats for NaN.
+     *
+     * @return true if NaN, false if not NaN.
+     */
+    default boolean isNaN() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the mutability level of the item.
+     *
+     * @return an int representing nestedness of the item inside transform expressions.
+     */
+    default int getMutabilityLevel() {
+        return -1;
+    }
+
+    /**
+     * Sets the mutability level of the item to a supplied value.
+     *
+     * @param mutabilityLevel new mutability level.
+     */
+    default void setMutabilityLevel(int mutabilityLevel) {
+    }
+
+    /**
+     * Returns the top level ID of the item.
+     *
+     * @return int representing the rowID of the item within a DeltaFile.
+     */
+    default long getTopLevelID() {
+        return -1;
+    }
+
+    /**
+     * Sets the top level ID of the item to a supplied value.
+     *
+     * @param topLevelID new top level ID.
+     */
+    default void setTopLevelID(long topLevelID) {
+    }
+
+    /**
+     * Returns the path from the top level object of a DeltaFile for the item.
+     *
+     * @return String representing the path of the item from the top level within a DeltaFile.
+     */
+    default String getPathIn() {
+        return "null";
+    }
+
+    /**
+     * Sets the path from the top level object of a DeltaFile for the item to a supplied value.
+     *
+     * @param pathIn new path from top level.
+     */
+    default void setPathIn(String pathIn) {
+    }
+
+    /**
+     * Returns the location of the DeltaFile for the item.
+     *
+     * @return String representing the location of the DeltaFile for the item.
+     */
+    default String getTableLocation() {
+        return null;
+    }
+
+
+    /**
+     * Sets the location of the DeltaFile for the item to a supplied value.
+     *
+     * @param location new location of the DeltaFile for the item.
+     */
+    default void setTableLocation(String location) {
+    }
+
+    /**
+     * Returns the SparkSQL value of the item for use in a query.
+     *
+     * @return String representing the SparkSQL value of the item.
+     */
+    default String getSparkSQLValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the SparkSQL value of the item for use in a query.
+     *
+     * @return String representing the SparkSQL value of the item.
+     */
+    default String getSparkSQLValue(ItemType itemType) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the SparkSQL type of the item for use in a query.
+     *
+     * @return String representing the SparkSQL type of the item.
+     */
+    default String getSparkSQLType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Tests for physical equality. The semantics are that of the eq operator.
      *
      * @param other another item.
      * @return true it is equal to other, false otherwise.
      */
-    @Override
-    public abstract boolean equals(Object other);
+    default boolean physicalEquals(Object other) {
+        if (!(other instanceof Item)) {
+            return false;
+        }
+        Item otherItem = (Item) other;
+        if (this.getTopLevelID() == -1 || otherItem.getTopLevelID() == -1) {
+            return System.identityHashCode(this) == System.identityHashCode(otherItem);
+        }
+        return this.getTopLevelID() == otherItem.getTopLevelID() && this.getPathIn().equals(otherItem.getPathIn());
+    }
+
+    /**
+     * Tests for logical equality. The semantics are that of the eq operator.
+     *
+     * @param other another item.
+     * @return true it is equal to other, false otherwise.
+     */
+    boolean equals(Object other);
 
     /**
      * Computes a hash code.
      *
      * @return a hash code as an int.
      */
-    @Override
-    public abstract int hashCode();
+    int hashCode();
 
-
-    public Item add(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item subtract(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item multiply(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item divide(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item modulo(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item idivide(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
+    default String serialize() {
+        return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
     }
 
     /**
-     * Returns the dynamic type of the item (for error message purposes).
+     * Get sparkSql string for the item
      * 
-     * @return the dynamic type as an item type.
+     * @param context input context
+     * @return String representing the item in a sparksql query or null if it is not supported for the item
      */
-    public ItemType getDynamicType() {
-        throw new UnsupportedOperationException("Operation not defined");
+    default NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 
-    public FunctionIdentifier getIdentifier() {
-        throw new UnsupportedOperationException("Operation not defined");
+    default boolean isEstimator() {
+        return false;
     }
 
-    public List<String> getParameterNames() {
-        throw new UnsupportedOperationException("Operation not defined");
+    default Estimator<?> getEstimator() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    public FunctionSignature getSignature() {
-        throw new UnsupportedOperationException("Operation not defined");
+    default boolean isTransformer() {
+        return false;
+    }
+
+    default Transformer getTransformer() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }

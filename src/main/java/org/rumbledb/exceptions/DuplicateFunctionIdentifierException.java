@@ -20,8 +20,8 @@
 
 package org.rumbledb.exceptions;
 
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 public class DuplicateFunctionIdentifierException extends RumbleException {
 

@@ -5,25 +5,113 @@ grammar Jsoniq;
 package org.rumbledb.parser;
 }
 
+moduleAndThisIsIt       : module EOF;
+
 module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
-mainModule              : prolog expr;
+mainModule              : prolog program;
 
 libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 
-prolog                  : ((defaultCollationDecl | orderingModeDecl | emptyOrderDecl | decimalFormatDecl | moduleImport) ';')*
-                          ((functionDecl | varDecl ) ';')* ;
+prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
+                          (annotatedDecl ';')*;
 
-defaultCollationDecl    : 'declare' Kdefault Kcollation uriLiteral;
+///////////////////////// Scripting addition - begin
 
-orderingModeDecl        : 'declare' 'ordering' ('ordered' | 'unordered');
+program                 : statementsAndOptionalExpr ;
 
-emptyOrderDecl          : 'declare' Kdefault 'order' Kempty (Kgreatest | Kleast);
+///////////////////////// Statements
 
-decimalFormatDecl       : 'declare'
-                          (('decimal-format' (NCName ':')? NCName) | (Kdefault 'decimal-format'))
+statements                  : statement* ;
+
+statementsAndExpr           : statements expr ;
+
+statementsAndOptionalExpr   : statements expr? ;
+
+statement                   : applyStatement
+                            | assignStatement
+                            | blockStatement
+                            | breakStatement
+                            | continueStatement
+                            | exitStatement
+                            | flowrStatement
+                            | ifStatement
+                            | switchStatement
+                            | tryCatchStatement
+                            | typeSwitchStatement
+                            | varDeclStatement
+                            | whileStatement
+                            ;
+
+applyStatement              : exprSimple ';' ;
+
+assignStatement             : '$' qname ':=' exprSingle ';' ;
+
+blockStatement              : '{' statements '}' ;
+
+breakStatement              : Kbreak Kloop ';' ;
+
+continueStatement           : Kcontinue Kloop ';' ;
+
+exitStatement               : Kexit Kreturning exprSingle ';' ;
+
+flowrStatement              : (start_for=forClause| start_let=letClause)
+                              (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                              Kreturn returnStmt=statement ;
+
+ifStatement:                Kif '(' test_expr=expr ')'
+                            Kthen branch=statement
+                            Kelse else_branch=statement ;
+
+switchStatement             : Kswitch '(' condExpr=expr ')' cases+=switchCaseStatement+ Kdefault Kreturn def=statement ;
+
+switchCaseStatement         : (Kcase cond+=exprSingle)+ Kreturn ret=statement ;
+
+tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseStatement+ ;
+
+catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
+
+typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement+ Kdefault (var_ref=varRef)? Kreturn def=statement ;
+
+caseStatement               : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=statement ;
+
+annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
+
+annotations                 : annotation* ;
+
+varDeclStatement            : annotations Kvariable varDeclForStatement (',' varDeclForStatement)* ';' ;
+
+varDeclForStatement         : var_ref=varRef (Kas sequenceType)? (':=' expr_vals+=exprSingle)? ;
+
+whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
+
+///////////////////////// Scripting addition - end
+
+setter                  : defaultCollationDecl
+                        | orderingModeDecl
+                        | emptyOrderDecl
+                        | decimalFormatDecl;
+
+namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
+
+annotatedDecl           : functionDecl
+                        | varDecl
+                        | typeDecl
+                        | contextItemDecl;
+
+defaultCollationDecl    : Kdeclare Kdefault Kcollation uriLiteral;
+
+orderingModeDecl        : Kdeclare 'ordering' ('ordered' | 'unordered');
+
+emptyOrderDecl          : Kdeclare Kdefault 'order' Kempty (emptySequenceOrder=(Kgreatest | Kleast));
+
+decimalFormatDecl       : Kdeclare
+                          (('decimal-format' qname) | (Kdefault 'decimal-format'))
                           (dfPropertyName '=' stringLiteral)*;
+
+qname                   : ((ns=NCName | nskw=keyWords)':')?
+                          (local_name=NCName | local_namekw = keyWords);
 
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
@@ -36,32 +124,50 @@ dfPropertyName          : 'decimal-separator'
                         | 'digit'
                         | 'pattern-separator';
 
-moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
+moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
-varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+// TODO: Assignable variable decl
+varDecl                 : Kdeclare annotations Kvariable varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
-functionDecl            : 'declare' 'function' (namespace=NCName ':')? fn_name=NCName '(' paramList? ')'
+contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+
+functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' fn_body=expr '}' | 'external');
+                          ('{' (fn_body=statementsAndOptionalExpr) '}' | is_external='external');
+
+typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+
+schemaLanguage          : 'jsound' 'compact'
+                        | 'jsound' 'verbose'
+                        | 'json' 'schema';
 
 paramList               : param (',' param)*;
 
-param                   : '$' NCName (Kas sequenceType)?;
-
+param                   : '$' qname (Kas sequenceType)?;
 ///////////////////////// constructs, expression
 
 expr                    : exprSingle (',' exprSingle)*;     // expr -> CommaExpression in visitor
 
-exprSingle              : flowrExpr
-                        | quantifiedExpr
+exprSingle              : exprSimple
+                        | flowrExpr
                         | switchExpr
                         | typeSwitchExpr
                         | ifExpr
                         | tryCatchExpr
-                        | orExpr;
+                        ;
+
+exprSimple              : quantifiedExpr
+                        | orExpr
+                        | insertExpr
+                        | deleteExpr
+                        | renameExpr
+                        | replaceExpr
+                        | transformExpr
+                        | appendExpr
+                        ;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
-                          (forClause | whereClause | letClause | groupByClause | orderByClause | countClause)*
+                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
                           Kreturn return_expr=exprSingle;
 
 forClause               : Kfor vars+=forVar (',' vars+=forVar)*;
@@ -111,8 +217,9 @@ ifExpr                  : Kif '(' test_condition=expr ')'
                           Kthen branch=exprSingle
                           Kelse else_branch=exprSingle;
 
-tryCatchExpr            : Ktry '{' expr '}'
-                          Kcatch '*' '{' expr '}';
+tryCatchExpr            : Ktry '{' try_expression=expr '}' catches+=catchClause+;
+
+catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* '{' catch_expression=expr '}';
 
 ///////////////////////// expression
 
@@ -134,7 +241,9 @@ additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=mu
 
 multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
-instanceOfExpr          : main_expr=treatExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
+
+isStaticallyExpr        : main_expr=treatExpr ( Kis Kstatically seq=sequenceType)?;
 
 treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 
@@ -142,9 +251,19 @@ castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )
 
 castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
 
-arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=functionCall)*;
+arrowExpr               : main_expr=unaryExpr (('=' '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
 
-unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
+arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
+
+unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
+
+valueExpr               : simpleMap_expr=simpleMapExpr
+                        | validate_expr=validateExpr
+                        | annotate_expr=annotateExpr;
+
+validateExpr            : Kvalidate Ktype sequenceType '{' expr '}';
+
+annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
@@ -156,9 +275,11 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw=typesKeywords);
+objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
+                        | Ktrue
+                        | Kfalse
                         | Literal
                         | stringLiteral
                         | varRef
@@ -170,10 +291,13 @@ primaryExpr             : NullLiteral
                         | unorderedExpr
                         | arrayConstructor
                         | functionItemExpr
+                        | blockExpr
                         ;
 
+blockExpr : '{' statementsAndExpr '}' ;
 
-varRef                  : '$' (ns=NCName ':')? name=NCName;
+
+varRef                  : '$' var_name=qname;
 
 parenthesizedExpr       : '(' expr? ')';
 
@@ -183,8 +307,7 @@ orderedExpr             : 'ordered' '{' expr '}';
 
 unorderedExpr           : 'unordered' '{' expr '}';
 
-functionCall            : ((ns=NCName | kw=keyWords |  )':')?
-                          (fn_name=nCNameOrKeyWord | kw = keyWords) argumentList;
+functionCall            : fn_name=qname argumentList;
 
 argumentList            : '('  (args+=argument ','?)* ')';
 
@@ -192,11 +315,32 @@ argument                : exprSingle | ArgumentPlaceholder;
 
 functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
-namedFunctionRef        : fn_name=NCName '#' arity=Literal;
+namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
-inlineFunctionExpr      : 'function' '(' paramList? ')'
+inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
-                           ('{' fn_body=expr '}');
+                           ('{' (fn_body=statementsAndOptionalExpr) '}');
+
+///////////////////////// Updating Expressions
+
+insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
+                        | Kinsert Kjson pairConstructor ( ',' pairConstructor )* Kinto main_expr=exprSingle;
+
+deleteExpr              : Kdelete Kjson updateLocator;
+
+renameExpr              : Krename Kjson updateLocator Kas name_expr=exprSingle;
+
+replaceExpr             : Kreplace Kvalue Kof Kjson updateLocator Kwith replacer_expr=exprSingle;
+
+transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=exprSingle Kreturn ret_expr=exprSingle;
+
+appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
+
+updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+
+copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
+
+// TODO: Direct element constructors
 
 ///////////////////////// Types
 
@@ -206,65 +350,17 @@ sequenceType            : '(' ')'
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
-itemType                : 'item'
-                        | jSONItemTest
-                        | atomicType;
+itemType                : qname
+                        | NullLiteral
+                        | functionTest;
 
-jSONItemTest            : 'object'
-                        | 'array'
-                        | Kjson;
+functionTest	        : (anyFunctionTest | typedFunctionTest);
 
-keyWordString           : 'string';
+anyFunctionTest         : 'function' '(' '*' ')';
 
-keyWordInteger          : 'integer';
+typedFunctionTest	    : 'function' '(' (st+=sequenceType (',' st+=sequenceType)*)? ')' 'as' rt=sequenceType;
 
-keyWordDecimal          : 'decimal';
-
-keyWordDouble           : 'double';
-
-keyWordBoolean          : 'boolean';
-
-keyWordDuration         : 'duration';
-
-keyWordYearMonthDuration: 'yearMonthDuration';
-
-keyWordDayTimeDuration  : 'dayTimeDuration';
-
-keyWordHexBinary        : 'hexBinary';
-
-keyWordBase64Binary     : 'base64Binary';
-
-keyWordDateTime         : 'dateTime';
-
-keyWordDate             : 'date';
-
-keyWordTime             : 'time';
-
-keyWordAnyURI           : 'anyURI';
-
-typesKeywords           : keyWordString
-                        | keyWordInteger
-                        | keyWordDecimal
-                        | keyWordDouble
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordDate
-                        | keyWordTime
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
-                        | keyWordAnyURI;
-
-singleType              : item=atomicType (question +='?')?;
-
-atomicType              : 'atomic'
-                        | typesKeywords
-                        | NullLiteral;
-
-nCNameOrKeyWord         : NCName
-                        | typesKeywords;
+singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
@@ -275,24 +371,29 @@ uriLiteral              : stringLiteral;
 stringLiteral           : STRING;
 
 keyWords                : Kjsoniq
-                        | Kjson
-                        | Kversion
-                        | Ktypeswitch
-                        | Kor
                         | Kand
-                        | Knot
-                        | Kto
-                        | Kinstance
-                        | Kof
-                        | Ktreat
                         | Kcast
                         | Kcastable
-                        | Kdefault
-                        | Kthen
-                        | Kelse
                         | Kcollation
+                        | Kcontext
+                        | Kdeclare
+                        | Kdefault
+                        | Kelse
                         | Kgreatest
+                        | Kinstance
+                        | Kstatically
+                        | Kis
+                        | Kitem
                         | Kleast
+                        | Knot
+                        | NullLiteral
+                        | Kof
+                        | Kor
+                        | Kthen
+                        | Kto
+                        | Ktreat
+                        | Ktypeswitch
+                        | Kversion
                         | Kswitch
                         | Kcase
                         | Ktry
@@ -301,6 +402,7 @@ keyWords                : Kjsoniq
                         | Kevery
                         | Ksatisfies
                         | Kstable
+                        | Kvariable
                         | Kascending
                         | Kdescending
                         | Kempty
@@ -317,6 +419,31 @@ keyWords                : Kjsoniq
                         | Korder
                         | Kcount
                         | Kreturn
+                        | Kunordered
+                        | Ktrue
+                        | Kfalse
+                        | Ktype
+                        | Kinsert
+                        | Kdelete
+                        | Krename
+                        | Kreplace
+                        | Kappend
+                        | Kcopy
+                        | Kmodify
+                        | Kinto
+                        | Kvalue
+                        | Kwith
+                        | Kposition
+                        | Kvalidate
+                        | Kannotate
+                        | Kbreak
+                        | Kloop
+                        | Kcontinue
+                        | Kexit
+                        | Kreturning
+                        | Kwhile
+                        | Kjson
+                        | Kupdating
                         ;
 
 ///////////////////////// literals
@@ -395,6 +522,10 @@ Kinstance               : 'instance' ;
 
 Kof                     : 'of' ;
 
+Kstatically             : 'statically' ;
+
+Kis                     : 'is' ;
+
 Ktreat                  : 'treat';
 
 Kcast                   : 'cast';
@@ -405,7 +536,59 @@ Kversion                : 'version';
 
 Kjsoniq                 : 'jsoniq';
 
-Kjson                   : 'json-item';
+Kunordered              : 'unordered';
+
+Ktrue                   : 'true';
+
+Kfalse                  : 'false';
+
+Ktype                   : 'type';
+
+Kvalidate               : 'validate';
+
+Kannotate               : 'annotate';
+
+Kdeclare                : 'declare';
+
+Kcontext                : 'context';
+
+Kitem                   : 'item';
+
+Kvariable               : 'variable';
+
+Kinsert                 : 'insert';
+
+Kdelete                 : 'delete';
+
+Krename                 : 'rename';
+
+Kreplace                : 'replace';
+
+Kcopy                   : 'copy';
+
+Kmodify                 : 'modify';
+
+Kappend                 : 'append';
+
+Kinto                   : 'into';
+
+Kvalue                  : 'value';
+
+Kwith                   : 'with';
+
+Kposition               : 'position';
+
+Kjson                   : 'json';
+
+Kupdating               :  'updating';
+
+///////////////////////// Scripting keywords
+Kbreak                  : 'break' ;
+Kloop                   : 'loop' ;
+Kcontinue               : 'continue' ;
+Kexit                   : 'exit' ;
+Kreturning              : 'returning' ;
+Kwhile                  : 'while' ;
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
@@ -419,11 +602,9 @@ ArgumentPlaceholder     : '?';
 
 NullLiteral             : 'null';
 
-Literal                 : NumericLiteral | BooleanLiteral;
+Literal                 : NumericLiteral;
 
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
-
-BooleanLiteral          : 'true' | 'false';
 
 IntegerLiteral          : Digits ;
 
@@ -463,3 +644,4 @@ fragment NameChar       : NameStartChar
 XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 
 ContentChar             :  ~["'{}<&]  ;
+

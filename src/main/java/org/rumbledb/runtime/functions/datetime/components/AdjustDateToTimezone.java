@@ -4,17 +4,15 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidTimezoneException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class AdjustDateToTimezone extends LocalFunctionCallIterator {
+public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item dateItem = null;
@@ -22,52 +20,45 @@ public class AdjustDateToTimezone extends LocalFunctionCallIterator {
 
     public AdjustDateToTimezone(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            if (this.timezone == null && this.children.size() == 1) {
-                return ItemFactory.getInstance()
-                    .createDateItem(this.dateItem.getDateTimeValue().withZone(DateTimeZone.UTC), true);
-            }
-            if (this.timezone == null) {
-                if (this.dateItem.hasTimeZone()) {
-                    return ItemFactory.getInstance()
-                        .createDateItem(
-                            this.dateItem.getDateTimeValue()
-                                .withZoneRetainFields(this.dateItem.getDateTimeValue().getZone()),
-                            false
-                        );
-                }
-                return ItemFactory.getInstance()
-                    .createDateItem(this.dateItem.getDateTimeValue(), this.dateItem.hasTimeZone());
-            } else {
-                if (this.checkTimeZoneArgument()) {
-                    throw new InvalidTimezoneException("Invalid timezone", getMetadata());
-                }
-                if (this.dateItem.hasTimeZone()) {
-                    return ItemFactory.getInstance()
-                        .createDateItem(
-                            this.dateItem.getDateTimeValue()
-                                .withZone(
-                                    DateTimeZone.forOffsetHoursMinutes(
-                                        this.timezone.getDurationValue().getHours(),
-                                        this.timezone.getDurationValue().getMinutes()
-                                    )
-                                ),
-                            true
-                        );
-                }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        this.dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (this.children.size() == 2) {
+            this.timezone = this.children.get(1)
+                .materializeFirstItemOrNull(context);
+        }
+        if (this.dateItem == null) {
+            return null;
+        }
+        if (this.timezone == null && this.children.size() == 1) {
+            return ItemFactory.getInstance()
+                .createDateItem(this.dateItem.getDateTimeValue().withZone(DateTimeZone.UTC), true);
+        }
+        if (this.timezone == null) {
+            if (this.dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateItem(
                         this.dateItem.getDateTimeValue()
-                            .withZoneRetainFields(
+                            .withZoneRetainFields(this.dateItem.getDateTimeValue().getZone()),
+                        false
+                    );
+            }
+            return ItemFactory.getInstance()
+                .createDateItem(this.dateItem.getDateTimeValue(), this.dateItem.hasTimeZone());
+        } else {
+            if (this.checkTimeZoneArgument()) {
+                throw new InvalidTimezoneException("Invalid timezone", getMetadata());
+            }
+            if (this.dateItem.hasTimeZone()) {
+                return ItemFactory.getInstance()
+                    .createDateItem(
+                        this.dateItem.getDateTimeValue()
+                            .withZone(
                                 DateTimeZone.forOffsetHoursMinutes(
                                     this.timezone.getDurationValue().getHours(),
                                     this.timezone.getDurationValue().getMinutes()
@@ -76,24 +67,18 @@ public class AdjustDateToTimezone extends LocalFunctionCallIterator {
                         true
                     );
             }
-
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " adjust-date-to-timezone function",
-                    getMetadata()
-            );
+            return ItemFactory.getInstance()
+                .createDateItem(
+                    this.dateItem.getDateTimeValue()
+                        .withZoneRetainFields(
+                            DateTimeZone.forOffsetHoursMinutes(
+                                this.timezone.getDurationValue().getHours(),
+                                this.timezone.getDurationValue().getMinutes()
+                            )
+                        ),
+                    true
+                );
         }
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.dateItem = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        if (this.children.size() == 2) {
-            this.timezone = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        }
-        this.hasNext = this.dateItem != null;
     }
 
     private boolean checkTimeZoneArgument() {

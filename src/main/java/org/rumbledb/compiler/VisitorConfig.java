@@ -8,11 +8,14 @@ public class VisitorConfig {
     private boolean suppressErrorsForCallingMissingFunctions;
     // flag to suppress errors when an unset execution mode value is fetched from a node
     private boolean suppressErrorsForAccessingUnsetExecutionModes;
+    // flag to set unset expressions (actually, variable references) to local
+    private boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
 
     public static class Builder {
         private boolean suppressErrorsForFunctionSignatureCollision = false;
         private boolean suppressErrorsForCallingMissingFunctions = false;
         private boolean suppressErrorsForAccessingUnsetExecutionModes = false;
+        private boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = false;
 
         Builder withsuppressErrorsForFunctionSignatureCollision(boolean value) {
             this.suppressErrorsForFunctionSignatureCollision = value;
@@ -29,11 +32,17 @@ public class VisitorConfig {
             return this;
         }
 
+        Builder withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(boolean value) {
+            this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = value;
+            return this;
+        }
+
         VisitorConfig build() {
             return new VisitorConfig(
                     this.suppressErrorsForFunctionSignatureCollision,
                     this.suppressErrorsForCallingMissingFunctions,
-                    this.suppressErrorsForAccessingUnsetExecutionModes
+                    this.suppressErrorsForAccessingUnsetExecutionModes,
+                    this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal
             );
         }
     }
@@ -41,11 +50,13 @@ public class VisitorConfig {
     private VisitorConfig(
             boolean suppressErrorsForFunctionSignatureCollision,
             boolean suppressErrorsForCallingMissingFunctions,
-            boolean suppressErrorsForAccessingUnsetExecutionModes
+            boolean suppressErrorsForAccessingUnsetExecutionModes,
+            boolean setUnsetToLocal
     ) {
         this.suppressErrorsForFunctionSignatureCollision = suppressErrorsForFunctionSignatureCollision;
         this.suppressErrorsForCallingMissingFunctions = suppressErrorsForCallingMissingFunctions;
         this.suppressErrorsForAccessingUnsetExecutionModes = suppressErrorsForAccessingUnsetExecutionModes;
+        this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal = setUnsetToLocal;
     }
 
     public boolean suppressErrorsForFunctionSignatureCollision() {
@@ -60,6 +71,10 @@ public class VisitorConfig {
         return this.suppressErrorsForAccessingUnsetExecutionModes;
     }
 
+    public boolean setUnsetToLocal() {
+        return this.setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
+    }
+
 
     /**
      * The initial pass should collect all function declaration information to support hoisting.
@@ -71,6 +86,7 @@ public class VisitorConfig {
         .withsuppressErrorsForFunctionSignatureCollision(false)
         .withSuppressErrorsForCallingMissingFunctions(true)
         .withSuppressErrorsForAccessingUnsetExecutionModes(true)
+        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
         .build();
 
     /**
@@ -82,6 +98,7 @@ public class VisitorConfig {
         .withsuppressErrorsForFunctionSignatureCollision(true)
         .withSuppressErrorsForCallingMissingFunctions(false)
         .withSuppressErrorsForAccessingUnsetExecutionModes(true)
+        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
         .build();
 
     /**
@@ -91,12 +108,14 @@ public class VisitorConfig {
         .withsuppressErrorsForFunctionSignatureCollision(true)
         .withSuppressErrorsForCallingMissingFunctions(false)
         .withSuppressErrorsForAccessingUnsetExecutionModes(false)
+        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(true)
         .build();
 
     static final VisitorConfig runtimeIteratorVisitorConfig = new VisitorConfig.Builder()
         .withsuppressErrorsForFunctionSignatureCollision(false)
         .withSuppressErrorsForCallingMissingFunctions(false)
         .withSuppressErrorsForAccessingUnsetExecutionModes(false)
+        .withSetUnsetExecutionModeOfVariableReferenceExpressionsToLocal(false)
         .build();
 
 }

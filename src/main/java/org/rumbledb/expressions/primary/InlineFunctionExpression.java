@@ -22,31 +22,45 @@ package org.rumbledb.expressions.primary;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAnnotationException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
+import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_SEQUENTIAL;
+import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.SEQUENTIAL;
+
 public class InlineFunctionExpression extends Expression {
 
-    private final String name;
+    private final Name name;
     private final FunctionIdentifier functionIdentifier;
-    private final Map<String, SequenceType> params;
+    private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
-    private final Expression body;
+    private final StatementsAndOptionalExpr body;
+    private final List<Annotation> annotations;
+    private boolean hasSequentialPropertyAnnotation;
+    private boolean hasExitStatement;
+    private final boolean isExternal;
 
     public InlineFunctionExpression(
-            String name,
-            Map<String, SequenceType> params,
+            List<Annotation> annotations,
+            Name name,
+            Map<Name, SequenceType> params,
             SequenceType returnType,
-            Expression body,
+            StatementsAndOptionalExpr body,
+            boolean isExternal,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -54,10 +68,51 @@ public class InlineFunctionExpression extends Expression {
         this.params = params;
         this.returnType = returnType;
         this.body = body;
+        this.annotations = annotations;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
+        this.isExternal = isExternal;
+        this.hasExitStatement = false;
+        if (annotations != null) {
+            this.setSequentialFromAnnotations();
+        } else {
+            this.hasSequentialPropertyAnnotation = false;
+        }
     }
 
-    public String getName() {
+    private void setSequentialFromAnnotations() {
+        boolean foundSeqAnnotation = false;
+        boolean foundNonSeqAnnotation = false;
+        for (Annotation annotation : this.annotations) {
+            if (annotation.getAnnotationName().equals(SEQUENTIAL)) {
+                foundSeqAnnotation = true;
+                this.hasSequentialPropertyAnnotation = true;
+            }
+            if (annotation.getAnnotationName().equals(NON_SEQUENTIAL)) {
+                foundNonSeqAnnotation = true;
+                this.hasSequentialPropertyAnnotation = true;
+            }
+        }
+        if (foundSeqAnnotation && foundNonSeqAnnotation) {
+            throw new InvalidAnnotationException(
+                    "A function cannot be declared as both sequential and non-sequential!",
+                    this.getMetadata()
+            );
+        }
+        this.setSequential(foundSeqAnnotation);
+    }
+
+    public InlineFunctionExpression(
+            List<Annotation> annotations,
+            Name name,
+            Map<Name, SequenceType> params,
+            SequenceType returnType,
+            StatementsAndOptionalExpr body,
+            ExceptionMetadata metadata
+    ) {
+        this(annotations, name, params, returnType, body, false, metadata);
+    }
+
+    public Name getName() {
         return this.name;
     }
 
@@ -65,21 +120,44 @@ public class InlineFunctionExpression extends Expression {
         return this.functionIdentifier;
     }
 
-    public Map<String, SequenceType> getParams() {
+    public Map<Name, SequenceType> getParams() {
         return this.params;
     }
 
     public SequenceType getReturnType() {
+        return this.returnType == null ? SequenceType.ITEM_STAR : this.returnType;
+    }
+
+    public SequenceType getActualReturnType() {
         return this.returnType;
     }
 
-    public Expression getBody() {
+    public StatementsAndOptionalExpr getBody() {
         return this.body;
+    }
+
+    @Nullable
+    public List<Annotation> getAnnotations() {
+        return this.annotations;
+    }
+
+    @Override
+    public boolean isUpdating() {
+        for (Annotation a : this.annotations) {
+            if (a.getAnnotationName().equals(AnnotationConstants.UPDATING)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isExternal() {
+        return this.isExternal;
     }
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>();
+        return Arrays.asList(this.body);
     }
 
     public void registerUserDefinedFunctionExecutionMode(
@@ -87,13 +165,14 @@ public class InlineFunctionExpression extends Expression {
     ) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
-        if (!this.name.equals("")) {
-            Functions.addUserDefinedFunctionExecutionMode(
-                identifier,
-                this.body.getHighestExecutionMode(visitorConfig),
-                visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                this.getMetadata()
-            );
+        if (this.name != null) {
+            getStaticContext().getUserDefinedFunctionsExecutionModes()
+                .setExecutionMode(
+                    identifier,
+                    this.body.getHighestExecutionMode(visitorConfig),
+                    visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                    this.getMetadata()
+                );
         }
     }
 
@@ -108,18 +187,80 @@ public class InlineFunctionExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append("(");
-        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
+        for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
             buffer.append(entry.getKey());
             buffer.append(", ");
-            buffer.append(entry.getValue().toString());
+            buffer.append(
+                entry.getValue().toString() + (entry.getValue().isResolved() ? " (resolved)" : " (unresolved)")
+            );
             buffer.append(", ");
         }
-        buffer.append(this.returnType.toString());
+        buffer.append(
+            this.returnType == null
+                ? "not set"
+                : this.returnType.toString() + (this.returnType.isResolved() ? " (resolved)" : " (unresolved)")
+        );
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
+        for (int i = 0; i < indent + 2; ++i) {
+            buffer.append("  ");
+        }
         buffer.append("Body:\n");
-        this.body.print(buffer, indent + 2);
+        this.body.print(buffer, indent + 4);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        String updating = isUpdating() ? "%an:updating" : "";
+        if (this.name != null) {
+            sb.append("declare " + updating + " function " + this.name.toString() + "(");
+        } else {
+            sb.append("function (");
+        }
+        if (this.params != null) {
+            int i = 0;
+            for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
+                indentIt(sb, indent);
+                sb.append("$" + entry.getKey() + " as " + entry.getValue().toString());
+                if (i == this.params.size() - 1) {
+                    sb.append(")");
+                } else {
+                    sb.append(", ");
+                }
+                i++;
+            }
+            if (this.returnType != null)
+                sb.append(" as " + this.returnType.toString());
+            else
+                sb.append("\n");
+            indentIt(sb, indent);
+            sb.append("{\n");
+            this.body.serializeToJSONiq(sb, indent + 1);
+            indentIt(sb, indent);
+            sb.append("}\n");
+        }
+    }
+
+    public boolean hasSequentialPropertyAnnotation() {
+        return this.hasSequentialPropertyAnnotation;
+    }
+
+    public void setHasExitStatement(boolean hasExitStatement) {
+        this.hasExitStatement = hasExitStatement;
+    }
+
+    public boolean hasExitStatement() {
+        return this.hasExitStatement;
     }
 }
 

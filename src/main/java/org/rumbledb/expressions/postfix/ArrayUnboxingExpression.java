@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.postfix;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -55,13 +54,16 @@ public class ArrayUnboxingExpression extends Expression {
         return result;
     }
 
-    public Expression getMainExpression() {
-        return this.mainExpression;
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(");
+        this.mainExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
+    public Expression getMainExpression() {
+        return this.mainExpression;
     }
 
 }

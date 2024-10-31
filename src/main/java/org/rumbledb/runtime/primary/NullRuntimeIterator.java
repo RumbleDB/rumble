@@ -21,27 +21,24 @@
 package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-public class NullRuntimeIterator extends AtomicRuntimeIterator {
+public class NullRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
+    private Item item;
 
-    public NullRuntimeIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public NullRuntimeIterator(RuntimeStaticContext staticContext) {
+        super(null, staticContext);
+        this.item = ItemFactory.getInstance().createNullItem();
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance().createNullItem();
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "\"null\"", getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return this.item;
     }
 }

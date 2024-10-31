@@ -20,11 +20,11 @@
 
 package org.rumbledb.expressions.primary;
 
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +60,13 @@ public class NamedFunctionReferenceExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + this.identifier.getName() + "#" + this.identifier.getArity() + ") ");
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.identifier.toString() + "\n");
     }
 }

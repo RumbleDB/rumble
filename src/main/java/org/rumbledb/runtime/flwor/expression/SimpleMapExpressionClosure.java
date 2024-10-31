@@ -23,6 +23,8 @@ package org.rumbledb.runtime.flwor.expression;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
@@ -38,16 +40,22 @@ public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
 
     public SimpleMapExpressionClosure(RuntimeIterator rightIterator, DynamicContext dynamicContext) {
         this.rightIterator = rightIterator;
+        if (this.rightIterator.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this simple map requires parallel execution, but the simple map is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.rightIterator.getMetadata()
+            );
+        }
         this.dynamicContext = new DynamicContext(dynamicContext);
     }
 
     public Iterator<Item> call(Item item) throws Exception {
         List<Item> currentItems = new ArrayList<>();
 
-        this.dynamicContext.addVariableValue("$$", currentItems);
+        this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.dynamicContext);
-        this.dynamicContext.removeVariable("$$");
+        this.dynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
         return mapValuesRaw.iterator();
     }
 }

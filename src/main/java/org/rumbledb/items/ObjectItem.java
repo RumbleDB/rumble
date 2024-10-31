@@ -23,27 +23,34 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-public class ObjectItem extends JsonItem {
+import java.util.*;
+
+public class ObjectItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
     private List<Item> values;
     private List<String> keys;
+    private int mutabilityLevel;
+    private long topLevelID;
+    private String pathIn;
+    private String location;
 
     public ObjectItem() {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -51,6 +58,39 @@ public class ObjectItem extends JsonItem {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
+    }
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
+            return false;
+        }
+        Item o = (Item) otherItem;
+        if (!o.isObject()) {
+            return false;
+        }
+        for (String s : getKeys()) {
+            Item v = o.getItemByKey(s);
+            if (v == null) {
+                return false;
+            }
+            if (!getItemByKey(s).equals(v)) {
+                return false;
+            }
+        }
+        for (String s : o.getKeys()) {
+            Item v = getItemByKey(s);
+            if (v == null) {
+                return false;
+            }
+            if (!o.getItemByKey(s).equals(v)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -72,7 +112,7 @@ public class ObjectItem extends JsonItem {
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
-                Item valuesArray = ItemFactory.getInstance().createArrayItem(values);
+                Item valuesArray = ItemFactory.getInstance().createArrayItem(values, false);
                 valueList.add(valuesArray);
             } else if (values.size() == 1) {
                 Item value = values.get(0);
@@ -84,6 +124,10 @@ public class ObjectItem extends JsonItem {
 
         this.keys = keyList;
         this.values = valueList;
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
     }
 
     @Override
@@ -120,7 +164,16 @@ public class ObjectItem extends JsonItem {
     public void putItemByKey(String s, Item value) {
         this.keys.add(s);
         this.values.add(value);
-        checkForDuplicateKeys(this.keys, new ExceptionMetadata(0, 0));
+        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public void removeItemByKey(String s) {
+        if (this.keys.contains(s)) {
+            int index = this.keys.indexOf(s);
+            this.values.remove(index);
+            this.keys.remove(index);
+        }
     }
 
     @Override
@@ -129,41 +182,13 @@ public class ObjectItem extends JsonItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.objectItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public String serialize() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{ ");
-        for (int i = 0; i < this.keys.size(); ++i) {
-            String key = this.keys.get(i);
-            Item value = this.values.get(i);
-            boolean isStringValue = value.isString();
-            sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
-            if (isStringValue) {
-                sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(value.serialize()));
-                sb.append("\"");
-            } else {
-                sb.append(value.serialize());
-            }
-
-            if (i < this.keys.size() - 1) {
-                sb.append(", ");
-            } else {
-                sb.append(" ");
-            }
-        }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.keys);
         kryo.writeObject(output, this.values);
+        output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        kryo.writeObject(output, this.pathIn);
+        kryo.writeObject(output, this.location);
     }
 
     @SuppressWarnings("unchecked")
@@ -171,35 +196,10 @@ public class ObjectItem extends JsonItem {
     public void read(Kryo kryo, Input input) {
         this.keys = kryo.readObject(input, ArrayList.class);
         this.values = kryo.readObject(input, ArrayList.class);
-    }
-
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
-            return false;
-        }
-        for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : o.getKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!o.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
+        this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = kryo.readObject(input, String.class);
+        this.location = kryo.readObject(input, String.class);
     }
 
     public int hashCode() {
@@ -213,7 +213,135 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.objectItem;
+        return BuiltinTypesCatalogue.objectItem;
     }
 
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (Item item : this.values) {
+            item.setMutabilityLevel(mutabilityLevel);
+        }
+    }
+
+    @Override
+    public long getTopLevelID() {
+        return this.topLevelID;
+    }
+
+    @Override
+    public void setTopLevelID(long topLevelID) {
+        this.topLevelID = topLevelID;
+        for (Item item : this.values) {
+            item.setTopLevelID(topLevelID);
+        }
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.pathIn;
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.pathIn = pathIn;
+        for (int i = 0; i < this.keys.size(); i++) {
+            String key = this.keys.get(i);
+            Item item = this.values.get(i);
+            item.setPathIn(pathIn + "." + key);
+        }
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.location;
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.location = location;
+        for (Item item : this.values) {
+            item.setTableLocation(location);
+        }
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("named_struct(");
+        for (int i = 0; i < this.keys.size(); i++) {
+            sb.append("\"");
+            sb.append(this.keys.get(i));
+            sb.append("\"");
+            sb.append(", ");
+            sb.append(this.values.get(i).getSparkSQLValue());
+            if (i + 1 < this.keys.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        StringBuilder sb = new StringBuilder();
+
+        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
+        String[] keys = content.keySet().toArray(new String[0]);
+
+        sb.append("named_struct(");
+
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            FieldDescriptor field = content.get(key);
+            int keyIndex = this.keys.indexOf(key);
+
+            sb.append("\"");
+            sb.append(key);
+            sb.append("\"");
+            sb.append(", ");
+
+            if (keyIndex == -1) {
+                if (!field.isRequired()) {
+                    sb.append("NULL");
+                }
+            } else {
+                sb.append(this.values.get(keyIndex).getSparkSQLValue(field.getType()));
+            }
+
+            if (i + 1 < keys.length) {
+                sb.append(", ");
+            }
+        }
+
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("STRUCT<");
+        for (int i = 0; i < this.keys.size(); i++) {
+            sb.append(this.keys.get(i));
+            sb.append(": ");
+            sb.append(this.values.get(i).getSparkSQLType());
+            if (i + 1 < this.keys.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(">");
+        return sb.toString();
+    }
 }

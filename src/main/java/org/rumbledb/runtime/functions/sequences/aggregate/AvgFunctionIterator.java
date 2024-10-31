@@ -22,84 +22,67 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class AvgFunctionIterator extends LocalFunctionCallIterator {
+public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private Item item;
 
     public AvgFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
-            this.hasNext = false;
-            results.forEach(r -> {
-                if (!r.isNumeric()) {
-                    throw new InvalidArgumentTypeException(
-                            "Average expression has non numeric args "
-                                +
-                                r.serialize(),
-                            getMetadata()
-                    );
-                }
-            });
-            try {
-                // TODO check numeric types conversions
-                BigDecimal sum = new BigDecimal(0);
-                for (Item r : results) {
-                    sum = sum.add(r.castToDecimalValue());
-                }
-
-                return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size())));
-
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
-        }
-        throw new IteratorFlowException(
-                FLOW_EXCEPTION_MESSAGE + "AVG function",
-                getMetadata()
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item count = CountFunctionIterator.computeCount(
+            this.children.get(0),
+            context,
+            getMetadata()
         );
+        if (count.isInt() && count.getIntValue() == 0) {
+            return null;
+        }
+        if (count.isInteger() && count.getIntegerValue().equals(BigInteger.ZERO)) {
+            return null;
+        }
+        Item sum = SumFunctionIterator.computeSum(
+            ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
+            this.children.get(0),
+            context,
+            getMetadata()
+        );
+        this.item = MultiplicativeOperationIterator.processItem(
+            sum,
+            count,
+            MultiplicativeExpression.MultiplicativeOperator.DIV,
+            getMetadata()
+        );
+        return this.item;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
-            Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<String, DynamicContext.VariableDependency>();
-            result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);
+            Map<Name, DynamicContext.VariableDependency> result =
+                new TreeMap<Name, DynamicContext.VariableDependency>();
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVERAGE);
             return result;
         } else {
             return super.getVariableDependencies();

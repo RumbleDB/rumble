@@ -23,8 +23,8 @@ package iq;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,8 +37,21 @@ public class SparkRuntimeTests extends RuntimeTests {
     public static final File sparkRuntimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/runtime-spark"
+                "/src/test/resources/test_files/runtime-spark"
     );
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--dates-with-timezone",
+                    "yes"
+                }
+        );
+    }
 
     public SparkRuntimeTests(File testFile) {
         super(testFile);
@@ -56,10 +69,9 @@ public class SparkRuntimeTests extends RuntimeTests {
     @Override
     protected void checkExpectedOutput(
             String expectedOutput,
-            RuntimeIterator runtimeIterator,
-            DynamicContext dynamicContext
+            SequenceOfItems sequence
     ) {
-        String actualOutput = runIterators(runtimeIterator, dynamicContext);
+        String actualOutput = runIterators(sequence);
         Assert.assertTrue(
             "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
             expectedOutput.equals(actualOutput)

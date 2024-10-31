@@ -22,12 +22,11 @@ package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
@@ -40,10 +39,9 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
 
     public StringToCodepointsFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -83,7 +81,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
             this.currentPosition = 0;
         }
         if (this.currentPosition < this.input.length()) {
-            this.nextResult = ItemFactory.getInstance().createIntegerItem(this.input.codePointAt(this.currentPosition));
+            this.nextResult = ItemFactory.getInstance().createIntItem(this.input.codePointAt(this.currentPosition));
             this.currentPosition++;
             this.hasNext = true;
         } else {

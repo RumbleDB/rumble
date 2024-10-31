@@ -20,36 +20,78 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
+import sparksoniq.spark.SparkSessionManager;
+
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class ContextExpressionIterator extends LocalRuntimeIterator {
+public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ContextExpressionIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public ContextExpressionIterator(RuntimeStaticContext staticContext) {
+        super(null, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (hasNext()) {
-            this.hasNext = false;
-            return this.currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
-        }
-        throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        return dynamicContext.getVariableValues()
+            .getLocalVariableValue(
+                Name.CONTEXT_ITEM,
+                getMetadata()
+            )
+            .get(0);
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        result.put("$", DynamicContext.VariableDependency.FULL);
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
+        result.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
         return result;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        DataType schema = nativeClauseContext.getSchema();
+        if (!(schema instanceof StructType)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        // check if name is in the schema
+        StructType structSchema = (StructType) schema;
+        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, Name.CONTEXT_ITEM)) {
+            List<Item> items = nativeClauseContext.getContext()
+                .getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return items.get(0).generateNativeQuery(nativeClauseContext);
+        }
+        if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, Name.CONTEXT_ITEM)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        StructField field = structSchema.fields()[structSchema.fieldIndex(
+            SparkSessionManager.atomicJSONiqItemColumnName
+        )];
+        DataType fieldType = field.dataType();
+        ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
+                new SequenceType(variableType, SequenceType.Arity.One)
+        );
     }
 }

@@ -23,10 +23,8 @@ package org.rumbledb.runtime;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.parsing.ItemParser;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
@@ -36,18 +34,23 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     protected RDDRuntimeIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.RDD && executionMode != ExecutionMode.DATAFRAME) {
-            throw new OurBadException("RDD runtime iterators support either RDD or DF execution modes");
-        }
-        this.parser = new ItemParser();
+        super(children, staticContext);
     }
 
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
+    protected boolean implementsLocal() {
+        return false;
+    }
+
+    @Override
+    protected boolean implementsRDD() {
+        return false;
     }
 
     @Override
@@ -61,7 +64,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 

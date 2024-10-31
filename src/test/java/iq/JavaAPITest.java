@@ -27,11 +27,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
-import org.rumbledb.api.RumbleConf;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
+
+import static org.apache.spark.sql.functions.*;
 
 public class JavaAPITest {
 
@@ -45,13 +48,18 @@ public class JavaAPITest {
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
+        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
+        sparkConfiguration.set("spark.driver.bindAddress", "127.0.0.1");
+        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
+        sparkConfiguration.set("spark.databricks.delta.schema.autoMerge.enabled", "true");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
 
     }
 
     @Test(timeout = 1000000)
     public void testLocal() throws Throwable {
-        Rumble rumble = new Rumble(new RumbleConf());
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(!iterator.availableAsRDD());
@@ -68,7 +76,7 @@ public class JavaAPITest {
             Assert.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
             Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntegerValue() == i);
+            Assert.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
         Assert.assertTrue(!iterator.isOpen());
@@ -76,7 +84,7 @@ public class JavaAPITest {
 
     @Test(timeout = 1000000)
     public void testCollect() throws Throwable {
-        Rumble rumble = new Rumble(new RumbleConf());
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
@@ -93,7 +101,7 @@ public class JavaAPITest {
             Assert.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
             Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntegerValue() == i);
+            Assert.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
         Assert.assertTrue(!iterator.isOpen());
@@ -101,7 +109,7 @@ public class JavaAPITest {
 
     @Test(timeout = 1000000)
     public void testRDD() throws Throwable {
-        Rumble rumble = new Rumble(new RumbleConf());
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
@@ -116,7 +124,7 @@ public class JavaAPITest {
             Assert.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
             Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntegerValue() == i);
+            Assert.assertTrue(value.getIntValue() == i);
         }
     }
 }

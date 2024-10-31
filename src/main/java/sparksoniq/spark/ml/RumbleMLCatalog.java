@@ -66,7 +66,7 @@ public class RumbleMLCatalog {
             "org.apache.spark.ml.classification.MultilayerPerceptronClassifier"
         );
         estimatorFullClassNames.put("NaiveBayes", "org.apache.spark.ml.classification.NaiveBayes");
-        estimatorFullClassNames.put("OneHotEncoderEstimator", "org.apache.spark.ml.feature.OneHotEncoderEstimator");
+        estimatorFullClassNames.put("OneHotEncoder", "org.apache.spark.ml.feature.OneHotEncoder");
         estimatorFullClassNames.put("OneVsRest", "org.apache.spark.ml.classification.OneVsRest");
         estimatorFullClassNames.put("PCA", "org.apache.spark.ml.feature.PCA");
         estimatorFullClassNames.put("Pipeline", "org.apache.spark.ml.Pipeline");
@@ -150,7 +150,6 @@ public class RumbleMLCatalog {
         transformerFullClassNames.put("NGram", "org.apache.spark.ml.feature.NGram");
         transformerFullClassNames.put("NaiveBayesModel", "org.apache.spark.ml.classification.NaiveBayesModel");
         transformerFullClassNames.put("Normalizer", "org.apache.spark.ml.feature.Normalizer");
-        transformerFullClassNames.put("OneHotEncoder", "org.apache.spark.ml.feature.OneHotEncoder");
         transformerFullClassNames.put("OneHotEncoderModel", "org.apache.spark.ml.feature.OneHotEncoderModel");
         transformerFullClassNames.put("OneVsRestModel", "org.apache.spark.ml.classification.OneVsRestModel");
         transformerFullClassNames.put("PCAModel", "org.apache.spark.ml.feature.PCAModel");
@@ -311,6 +310,7 @@ public class RumbleMLCatalog {
         paramJavaTypeNames.put("solver", "String");
         paramJavaTypeNames.put("splits", "double[]");
         paramJavaTypeNames.put("splitsArray", "double[][]");
+        paramJavaTypeNames.put("stages", "PipelineStage[]");
         paramJavaTypeNames.put("standardization", "boolean");
         paramJavaTypeNames.put("statement", "String");
         paramJavaTypeNames.put("stepSize", "double");
@@ -718,7 +718,7 @@ public class RumbleMLCatalog {
             )
         );
         estimatorParams.put(
-            "OneHotEncoderEstimator",
+            "OneHotEncoder",
             new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols"))
         );
         estimatorParams.put(
@@ -735,7 +735,7 @@ public class RumbleMLCatalog {
             )
         );
         estimatorParams.put("PCA", new ArrayList<>(Arrays.asList("inputCol", "k", "outputCol")));
-        estimatorParams.put("Pipeline", new ArrayList<>(Arrays.asList()));
+        estimatorParams.put("Pipeline", new ArrayList<>(Arrays.asList("stages")));
         estimatorParams.put(
             "QuantileDiscretizer",
             new ArrayList<>(
@@ -1089,7 +1089,6 @@ public class RumbleMLCatalog {
             )
         );
         transformerParams.put("Normalizer", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "p")));
-        transformerParams.put("OneHotEncoder", new ArrayList<>(Arrays.asList("dropLast", "inputCol", "outputCol")));
         transformerParams.put(
             "OneHotEncoderModel",
             new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols", "parent"))
@@ -1290,8 +1289,8 @@ public class RumbleMLCatalog {
     private static final String featuresColParamName = "featuresCol";
     private static final String inputColParamName = "inputCol";
     static {
-        specialParamsThatMayReferToAColumnOfVectors.add(featuresColParamName);
-        specialParamsThatMayReferToAColumnOfVectors.add(inputColParamName);
+        // specialParamsThatMayReferToAColumnOfVectors.add(featuresColParamName);
+        // specialParamsThatMayReferToAColumnOfVectors.add(inputColParamName);
 
         defaultSparkMLValuesOfSpecialParams.put(featuresColParamName, "features");
 

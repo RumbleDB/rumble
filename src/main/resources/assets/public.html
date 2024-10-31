@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <title>Public Rumble page</title>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $('#submit').click(function() {
+
+          query = $('#query').val();
+          $.post(
+            '/jsoniq',
+            query,
+            function(data) {
+              if(data.values) {
+                $("#result").html(data.values.map(x => JSON.stringify(x)).join('\n'))
+              } else if (data["error-message"])
+              {
+                $("#result").html(data["error-message"])
+              }
+            },
+            'json'
+          );
+
+          return false;       
+          
+        });
+
+      });
+</script>
+  </head>
+  <body>
+  <div style="margin: auto; text-align: center; ">
+    <div id="div-in-row" style="display: inline-block; margin-top: 80px;">
+    <span style="float: left; margin-right: 80px;">
+      <h2 style="text-align: center; font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699; font-weight: bold; ">JSONiq query</h2>
+    <textarea id="query" placeholder="Type your query here" rows="25" cols="60" style="margin-top: 40px;">
+      1+1
+    </textarea>
+    </span>
+    <span style="float: right; margin-left: 80px;">
+      <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Results</h2>
+      <textarea id="result" placeholder="Results" rows="25" cols="60" style="margin-top: 40px;">
+      </textarea>
+    </span>
+    </div>
+    <div>
+      <button id="submit" style="margin: 20px; padding: 10px;">Evaluate with RumbleDB 1.22.0</button>
+    </div>
+
+  </div>
+  </body>
+</html>

@@ -20,26 +20,43 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.DynamicContext.VariableDependency;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
@@ -53,18 +70,28 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            boolean isUpdating,
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(expression), executionMode, iteratorMetadata);
+        super(Collections.singletonList(expression), staticContext);
         this.child = child;
         this.expression = expression;
+        this.isUpdating = isUpdating;
+        setInputAndOutputTupleVariableDependencies();
+    }
+
+    public ReturnClauseSparkIterator(
+            RuntimeTupleIterator child,
+            RuntimeIterator expression,
+            RuntimeStaticContext staticContext
+    ) {
+        this(child, expression, false, staticContext);
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
-        if (expression.isRDD()) {
+        if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -77,7 +104,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                                                                                               // from new tuple
 
                 JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
                 if (result == null) {
@@ -91,16 +119,38 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             return result;
         }
-
-        Dataset<Row> df = this.child.getDataFrame(context, expression.getVariableDependencies());
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType oldSchema = df.schema();
-        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
+        List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
+            oldSchema,
+            this.expression.getVariableDependencies(),
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
+        );
+        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumns));
+    }
+
+    private void setInputAndOutputTupleVariableDependencies() {
+        Map<Name, VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
+        Map<Name, VariableDependency> projection = new HashMap<>();
+        for (Name n : dependencies.keySet()) {
+            if (allTupleNames.contains(n)) {
+                projection.put(n, dependencies.get(n));
+            }
+        }
+        this.child.setInputAndOutputTupleVariableDependencies(projection);
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
-        if (expression.isRDD()) {
+        if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -108,14 +158,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 );
             // context
             this.child.open(context);
-            Dataset<Row> result = null;
+            JSoundDataFrame result = null;
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                                                                                               // from new tuple
 
-                Dataset<Row> intermediateResult = this.expression.getDataFrame(dynamicContext);
+                JSoundDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -123,14 +174,54 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 }
             }
             if (result == null) {
-                return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+                return JSoundDataFrame.emptyDataFrame();
             }
             return result;
         }
+        if (!this.child.isDataFrame()) {
+            throw new OurBadException(
+                    "Unexpected application state: a dataframe was expected even though the previous tuple does not produce one.",
+                    getMetadata()
+            );
+        }
 
-        throw new OurBadException(
-                "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
-                getMetadata()
+        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        StructType inputSchema = df.schema();
+        Dataset<Row> nativeQueryResult = null;
+        if (getConfiguration().nativeExecution()) {
+            nativeQueryResult = tryNativeQuery(
+                df,
+                this.expression,
+                inputSchema,
+                context
+            );
+        }
+        if (nativeQueryResult != null) {
+            if (this.expression.getStaticType().getItemType().isObjectItemType()) {
+                String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
+                nativeQueryResult =
+                    nativeQueryResult.sparkSession()
+                        .sql(
+                            String.format(
+                                "SELECT `%s`.* FROM %s",
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                input
+                            )
+                        );
+            }
+            JSoundDataFrame result = new JSoundDataFrame(
+                    nativeQueryResult,
+                    this.expression.getStaticType().getItemType()
+            );
+            return result;
+        }
+
+        JavaRDD<Item> rdd = getRDDAux(context);
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+            rdd,
+            this.expression.getStaticType().getItemType(),
+            context,
+            false
         );
     }
 
@@ -167,8 +258,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
         while (this.child.hasNext()) {
             FlworTuple tuple = this.child.next();
-            this.tupleContext.removeAllVariables(); // clear the previous variables
-            this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                                                                                              // from new tuple
 
             this.expression.open(this.tupleContext);
             boolean isResultSet = setResultFromExpression();
@@ -178,7 +270,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
 
         // execution reaches here when there are no more results
-        this.child.close();
         this.hasNext = false;
     }
 
@@ -201,23 +292,28 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.child.close();
-        this.expression.close();
+        if (this.expression.isOpen()) {
+            this.expression.close();
+        }
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.child.reset(this.currentDynamicContextForLocalExecution);
-        this.expression.close();
+        if (this.expression.isOpen()) {
+            this.expression.close();
+        }
+        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
         setNextResult();
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());
-        for (String variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -226,8 +322,114 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
+        buffer.append(" | ");
+        buffer.append(getHighestExecutionMode());
+        buffer.append(" | ");
+
+        buffer.append("Variable dependencies: ");
+        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (Name v : dependencies.keySet()) {
+            buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
+        }
         buffer.append("\n");
+
         this.child.print(buffer, indent + 1);
         this.expression.print(buffer, indent + 1);
+    }
+
+    private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
+        i.defaultReadObject();
+        setInputAndOutputTupleVariableDependencies();
+    }
+
+    private void writeObject(ObjectOutputStream i) throws IOException {
+        i.defaultWriteObject();
+    }
+
+    /**
+     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param iterator where filtering expression iterator
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the let clause if successful, null otherwise
+     */
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            RuntimeIterator iterator,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
+        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            return null;
+        }
+        LogManager.getLogger("ReturnClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a return clause to a native SQL query."
+            );
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
+        Dataset<Row> result = dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s as `%s` from %s",
+                    nativeQuery.getResultingQuery(),
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    input
+                )
+            );
+        return result;
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+        PendingUpdateList result = new PendingUpdateList();
+
+        if (!this.expression.isRDDOrDataFrame()) {
+            this.child.open(context);
+            this.tupleContext = new DynamicContext(context); // assign current context
+
+            while (this.child.hasNext()) {
+                FlworTuple tuple = this.child.next();
+                this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
+                                                                                                  // variables
+                // from new tuple
+                result.mergeUpdates(this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
+
+            }
+            this.child.close();
+            return result;
+
+            // execution reaches here when there are no more results
+        }
+
+        RuntimeIterator expression = this.children.get(0);
+        if (expression.isRDDOrDataFrame()) {
+            if (this.child.isDataFrame())
+                throw new JobWithinAJobException(
+                        "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata()
+                );
+            // context
+            this.child.open(context);
+            while (this.child.hasNext()) {
+                FlworTuple tuple = this.child.next();
+                // We need a fresh context every time, because the evaluation of RDD is lazy.
+                DynamicContext dynamicContext = new DynamicContext(context);
+                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
+                // from new tuple
+
+                PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
+                result.mergeUpdates(intermediateResult, this.getMetadata());
+            }
+        }
+        return result;
     }
 }

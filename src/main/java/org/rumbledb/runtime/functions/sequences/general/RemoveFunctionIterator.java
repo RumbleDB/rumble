@@ -24,11 +24,10 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
@@ -45,10 +44,9 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     public RemoveFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
         this.sequenceIterator = this.children.get(0);
         this.positionIterator = this.children.get(1);
     }
@@ -78,7 +76,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.currentPosition = 1;
 
         this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
@@ -102,7 +100,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     private void init(DynamicContext context) {
         Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
-        this.removePosition = positionItem.getIntegerValue();
+        this.removePosition = positionItem.getIntValue();
     }
 
     public void setNextResult() {

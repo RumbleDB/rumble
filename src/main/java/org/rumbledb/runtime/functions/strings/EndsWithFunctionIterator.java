@@ -21,51 +21,49 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
-public class EndsWithFunctionIterator extends LocalFunctionCallIterator {
+public class EndsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public EndsWithFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item substringItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            if (substringItem == null || substringItem.getStringValue().isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(true);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            if (stringItem == null || stringItem.getStringValue().isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-            boolean result = stringItem.getStringValue()
-                .endsWith(
-                    substringItem.getStringValue()
-                );
-            return ItemFactory.getInstance().createBooleanItem(result);
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ends-with function",
-                    getMetadata()
-            );
         }
+        Item substringItem = this.children.get(1)
+            .materializeFirstItemOrNull(context);
+        if (substringItem == null || substringItem.getStringValue().isEmpty()) {
+            return ItemFactory.getInstance().createBooleanItem(true);
+        }
+        Item stringItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+        if (stringItem == null || stringItem.getStringValue().isEmpty()) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+        boolean result = stringItem.getStringValue()
+            .endsWith(
+                substringItem.getStringValue()
+            );
+        return ItemFactory.getInstance().createBooleanItem(result);
     }
+
 }

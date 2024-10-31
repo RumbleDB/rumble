@@ -23,12 +23,14 @@ package org.rumbledb.runtime.control;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.Map;
 
@@ -45,10 +47,9 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator test,
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.add(test);
         this.children.addAll(cases.keySet());
         this.children.addAll(cases.values());
@@ -60,16 +61,16 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        initializeIterator(this.testField, this.cases, this.defaultReturn);
+        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
     }
 
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
             Item nextItem = this.matchingIterator.next();
-            this.matchingIterator.close();
-            this.hasNext = false;
+            this.hasNext = this.matchingIterator.hasNext();
             return nextItem;
         }
         throw new IteratorFlowException(
@@ -79,94 +80,32 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal(DynamicContext context) {
-        this.matchingIterator = null;
-        initializeIterator(this.testField, this.cases, this.defaultReturn);
-    }
-
-    private void initializeIterator(
-            RuntimeIterator test,
-            Map<RuntimeIterator, RuntimeIterator> cases,
-            RuntimeIterator defaultReturn
-    ) {
-        Item testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-        if (testValue != null) {
-            if (testValue.isArray()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition can't be an array type",
-                        getMetadata()
-                );
-            } else if (testValue.isObject()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition  can't be an object type",
-                        getMetadata()
-                );
-            }
-        }
-
-        for (RuntimeIterator caseKey : cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (caseValue != null) {
-                if (caseValue.isArray()) {
-                    throw new NonAtomicKeyException(
-                            "Invalid args. Switch case can't be an array type",
-                            getMetadata()
-                    );
-                } else if (caseValue.isObject()) {
-                    throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  can't be an object type",
-                            getMetadata()
-                    );
-                }
-            }
-
-            // both are empty sequences
-            if (testValue == null) {
-                if (caseValue == null) {
-                    this.matchingIterator = cases.get(caseKey);
-                    break;
-                } else {
-                    // no match, do nothing
-                }
-            } else if (testValue.equals(caseValue)) {
-                this.matchingIterator = cases.get(caseKey);
-                break;
-            }
-        }
-
-        if (this.matchingIterator == null) {
-            this.matchingIterator = defaultReturn;
-        }
-
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
+    public void closeLocal() {
         this.matchingIterator.close();
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
+    public void resetLocal() {
+        this.matchingIterator.close();
+        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
     }
 
-    @Override
-    protected void closeLocal() {
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+    private RuntimeIterator selectApplicableIterator(
+            DynamicContext dynamicContext
+    ) {
         Item testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition can't be an array type",
+                        "Invalid args. Switch condition cannot be an array type",
                         getMetadata()
                 );
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition  can't be an object type",
+                        "Invalid args. Switch condition cannot be an object type",
                         getMetadata()
                 );
             }
@@ -178,12 +117,12 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             if (caseValue != null) {
                 if (caseValue.isArray()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case can't be an array type",
+                            "Invalid args. Switch case cannot be an array type",
                             getMetadata()
                     );
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  can't be an object type",
+                            "Invalid args. Switch case  cannot be an object type",
                             getMetadata()
                     );
                 }
@@ -192,15 +131,46 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             // both are empty sequences
             if (testValue == null) {
                 if (caseValue == null) {
-                    return this.cases.get(caseKey).getRDD(dynamicContext);
+                    return this.cases.get(caseKey);
                 } else {
-                    // no match, do nothing
+                    break;
                 }
-            } else if (testValue.equals(caseValue)) {
-                return this.cases.get(caseKey).getRDD(dynamicContext);
+            }
+            long comparison = ComparisonIterator.compareItems(
+                testValue,
+                caseValue,
+                ComparisonOperator.VC_EQ,
+                getMetadata()
+            );
+            if (comparison == 0) {
+                return this.cases.get(caseKey);
             }
         }
 
-        return this.defaultReturn.getRDD(dynamicContext);
+        return this.defaultReturn;
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+
+        return iterator.getRDD(dynamicContext);
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+
+        return iterator.getDataFrame(dynamicContext);
     }
 }
