@@ -12,6 +12,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import scala.util.Properties;
+import scala.Function0;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.BufferedWriter;
@@ -28,7 +29,13 @@ public class UpdatesForRumbleBenchmark {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", "unknown");
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
+
 
     public List<FileTuple> benchmarkFiles;
 
