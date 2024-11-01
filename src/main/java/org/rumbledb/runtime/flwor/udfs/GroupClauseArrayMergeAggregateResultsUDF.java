@@ -25,12 +25,14 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
-import scala.collection.mutable.WrappedArray;
+import scala.collection.immutable.ArraySeq;
+import scala.collection.Iterator;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<WrappedArray<Object>, Object[]> {
+public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
 
 
     private static final long serialVersionUID = 1L;
@@ -43,22 +45,23 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<WrappedArr
     }
 
     @Override
-    public Object[] call(WrappedArray<Object> wrappedParameters) {
+    public Object[] call(ArraySeq<Object> wrappedParameters) {
         this.nextResult.clear();
         this.deserializedParams.clear();
         List<Object> result = new ArrayList<Object>();
-        Object[] insideArrays = (Object[]) wrappedParameters.array();
-        for (Object o : insideArrays) {
+        Iterator<Object> iterator = wrappedParameters.iterator();
+        while (iterator.hasNext()) {
+            Object o = iterator.next();
             if (o instanceof Row) {
                 Row row = (Row) o;
                 result.add(row);
             }
-            if (o instanceof WrappedArray) {
-                @SuppressWarnings("rawtypes")
-                WrappedArray wrappedArray = (WrappedArray) o;
-                Object[] insideArrays2 = (Object[]) wrappedArray.array();
-                for (Object p : insideArrays2)
-                    result.add(p);
+            if (o instanceof ArraySeq) {
+                @SuppressWarnings("unchecked")
+                ArraySeq<Object> arraySeq = (ArraySeq<Object>) o;
+                Iterator<Object> iterator2 = arraySeq.iterator();
+                while (iterator2.hasNext())
+                    result.add(iterator2.next());
             } else {
                 throw new OurBadException("We cannot process " + o.getClass().getCanonicalName());
             }
