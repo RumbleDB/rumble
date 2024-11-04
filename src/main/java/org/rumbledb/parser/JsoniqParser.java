@@ -444,6 +444,7 @@ public class JsoniqParser extends Parser {
 			case Kpreceding_sibling:
 			case Kpreceding:
 			case Kancestor_or_self:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -842,7 +843,7 @@ public class JsoniqParser extends Parser {
 			setState(384);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Ktext - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
 				{
 				setState(383);
 				expr();
@@ -1816,6 +1817,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -1918,6 +1920,7 @@ public class JsoniqParser extends Parser {
 				case Kposition:
 				case Kjson:
 				case Kupdating:
+				case Ktext:
 				case Kbreak:
 				case Kloop:
 				case Kcontinue:
@@ -3023,6 +3026,7 @@ public class JsoniqParser extends Parser {
 				case Kposition:
 				case Kjson:
 				case Kupdating:
+				case Ktext:
 				case Kbreak:
 				case Kloop:
 				case Kcontinue:
@@ -3119,6 +3123,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -5698,6 +5703,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -5800,6 +5806,7 @@ public class JsoniqParser extends Parser {
 				case Kposition:
 				case Kjson:
 				case Kupdating:
+				case Ktext:
 				case Kbreak:
 				case Kloop:
 				case Kcontinue:
@@ -6834,6 +6841,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -7515,6 +7523,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -7853,7 +7862,7 @@ public class JsoniqParser extends Parser {
 			setState(1205);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Ktext - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
 				{
 				setState(1204);
 				expr();
@@ -8067,7 +8076,7 @@ public class JsoniqParser extends Parser {
 			setState(1231);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (ArgumentPlaceholder - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Ktext - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (ArgumentPlaceholder - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
 				{
 				{
 				setState(1225);
@@ -8221,6 +8230,7 @@ public class JsoniqParser extends Parser {
 			case Kpreceding_sibling:
 			case Kpreceding:
 			case Kancestor_or_self:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -9109,6 +9119,7 @@ public class JsoniqParser extends Parser {
 			case Kpreceding_sibling:
 			case Kpreceding:
 			case Kancestor_or_self:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -9322,6 +9333,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -9777,108 +9789,21 @@ public class JsoniqParser extends Parser {
 		try {
 			setState(1391);
 			_errHandler.sync(this);
-			switch (_input.LA(1)) {
-			case T__9:
-			case Kfor:
-			case Klet:
-			case Kwhere:
-			case Kgroup:
-			case Kby:
-			case Korder:
-			case Kreturn:
-			case Kif:
-			case Kin:
-			case Kas:
-			case Kat:
-			case Kallowing:
-			case Kempty:
-			case Kcount:
-			case Kstable:
-			case Kascending:
-			case Kdescending:
-			case Ksome:
-			case Kevery:
-			case Ksatisfies:
-			case Kcollation:
-			case Kgreatest:
-			case Kleast:
-			case Kswitch:
-			case Kcase:
-			case Ktry:
-			case Kcatch:
-			case Kdefault:
-			case Kthen:
-			case Kelse:
-			case Ktypeswitch:
-			case Kor:
-			case Kand:
-			case Knot:
-			case Kto:
-			case Kinstance:
-			case Kof:
-			case Kstatically:
-			case Kis:
-			case Ktreat:
-			case Kcast:
-			case Kcastable:
-			case Kversion:
-			case Kjsoniq:
-			case Kunordered:
-			case Ktrue:
-			case Kfalse:
-			case Ktype:
-			case Kvalidate:
-			case Kannotate:
-			case Kdeclare:
-			case Kcontext:
-			case Kitem:
-			case Kvariable:
-			case Kinsert:
-			case Kdelete:
-			case Krename:
-			case Kreplace:
-			case Kcopy:
-			case Kmodify:
-			case Kappend:
-			case Kinto:
-			case Kvalue:
-			case Kwith:
-			case Kposition:
-			case Kjson:
-			case Kupdating:
-			case Kbreak:
-			case Kloop:
-			case Kcontinue:
-			case Kexit:
-			case Kreturning:
-			case Kwhile:
-			case NullLiteral:
-			case NCName:
+			switch ( getInterpreter().adaptivePredict(_input,128,_ctx) ) {
+			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(1389);
 				nameTest();
 				}
 				break;
-			case Kelement:
-			case Kattribute:
-			case Knode:
-			case Kbinary:
-			case Kdocument_node:
-			case Ktext:
-			case Kpi:
-			case Knamespace_node:
-			case Kschema_attribute:
-			case Kschema_element:
-			case Kcomment:
+			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(1390);
 				kindTest();
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -10654,7 +10579,7 @@ public class JsoniqParser extends Parser {
 			setState(1472);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__9) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 160)) & ~0x3f) == 0 && ((1L << (_la - 160)) & ((1L << (Kbreak - 160)) | (1L << (Kloop - 160)) | (1L << (Kcontinue - 160)) | (1L << (Kexit - 160)) | (1L << (Kreturning - 160)) | (1L << (Kwhile - 160)) | (1L << (NullLiteral - 160)) | (1L << (NCName - 160)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__9) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 149)) & ~0x3f) == 0 && ((1L << (_la - 149)) & ((1L << (Ktext - 149)) | (1L << (Kbreak - 149)) | (1L << (Kloop - 149)) | (1L << (Kcontinue - 149)) | (1L << (Kexit - 149)) | (1L << (Kreturning - 149)) | (1L << (Kwhile - 149)) | (1L << (NullLiteral - 149)) | (1L << (NCName - 149)))) != 0)) {
 				{
 				setState(1467);
 				attributeNameOrWildcard();
@@ -10777,6 +10702,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -10928,7 +10854,7 @@ public class JsoniqParser extends Parser {
 			setState(1497);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__9) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 160)) & ~0x3f) == 0 && ((1L << (_la - 160)) & ((1L << (Kbreak - 160)) | (1L << (Kloop - 160)) | (1L << (Kcontinue - 160)) | (1L << (Kexit - 160)) | (1L << (Kreturning - 160)) | (1L << (Kwhile - 160)) | (1L << (NullLiteral - 160)) | (1L << (NCName - 160)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__9) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 149)) & ~0x3f) == 0 && ((1L << (_la - 149)) & ((1L << (Ktext - 149)) | (1L << (Kbreak - 149)) | (1L << (Kloop - 149)) | (1L << (Kcontinue - 149)) | (1L << (Kexit - 149)) | (1L << (Kreturning - 149)) | (1L << (Kwhile - 149)) | (1L << (NullLiteral - 149)) | (1L << (NCName - 149)))) != 0)) {
 				{
 				setState(1489);
 				elementNameOrWildcard();
@@ -11061,6 +10987,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -11427,6 +11354,7 @@ public class JsoniqParser extends Parser {
 			case Kposition:
 			case Kjson:
 			case Kupdating:
+			case Ktext:
 			case Kbreak:
 			case Kloop:
 			case Kcontinue:
@@ -11520,7 +11448,7 @@ public class JsoniqParser extends Parser {
 				setState(1539);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Ktext - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
 					{
 					setState(1531);
 					pairConstructor();
@@ -11762,7 +11690,7 @@ public class JsoniqParser extends Parser {
 			setState(1572);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__7) | (1L << T__28) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 160)) & ~0x3f) == 0 && ((1L << (_la - 160)) & ((1L << (Kbreak - 160)) | (1L << (Kloop - 160)) | (1L << (Kcontinue - 160)) | (1L << (Kexit - 160)) | (1L << (Kreturning - 160)) | (1L << (Kwhile - 160)) | (1L << (NullLiteral - 160)) | (1L << (NCName - 160)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__7) | (1L << T__28) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 149)) & ~0x3f) == 0 && ((1L << (_la - 149)) & ((1L << (Ktext - 149)) | (1L << (Kbreak - 149)) | (1L << (Kloop - 149)) | (1L << (Kcontinue - 149)) | (1L << (Kexit - 149)) | (1L << (Kreturning - 149)) | (1L << (Kwhile - 149)) | (1L << (NullLiteral - 149)) | (1L << (NCName - 149)))) != 0)) {
 				{
 				setState(1564);
 				((TypedFunctionTestContext)_localctx).sequenceType = sequenceType();
@@ -11955,7 +11883,7 @@ public class JsoniqParser extends Parser {
 			setState(1591);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__5) | (1L << T__7) | (1L << T__11) | (1L << T__14) | (1L << T__28) | (1L << T__44) | (1L << T__45) | (1L << T__50) | (1L << T__53) | (1L << T__55) | (1L << T__56) | (1L << Kfor) | (1L << Klet) | (1L << Kwhere) | (1L << Kgroup) | (1L << Kby))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (Korder - 64)) | (1L << (Kreturn - 64)) | (1L << (Kif - 64)) | (1L << (Kin - 64)) | (1L << (Kas - 64)) | (1L << (Kat - 64)) | (1L << (Kallowing - 64)) | (1L << (Kempty - 64)) | (1L << (Kcount - 64)) | (1L << (Kstable - 64)) | (1L << (Kascending - 64)) | (1L << (Kdescending - 64)) | (1L << (Ksome - 64)) | (1L << (Kevery - 64)) | (1L << (Ksatisfies - 64)) | (1L << (Kcollation - 64)) | (1L << (Kgreatest - 64)) | (1L << (Kleast - 64)) | (1L << (Kswitch - 64)) | (1L << (Kcase - 64)) | (1L << (Ktry - 64)) | (1L << (Kcatch - 64)) | (1L << (Kdefault - 64)) | (1L << (Kthen - 64)) | (1L << (Kelse - 64)) | (1L << (Ktypeswitch - 64)) | (1L << (Kor - 64)) | (1L << (Kand - 64)) | (1L << (Knot - 64)) | (1L << (Kto - 64)) | (1L << (Kinstance - 64)) | (1L << (Kof - 64)) | (1L << (Kstatically - 64)) | (1L << (Kis - 64)) | (1L << (Ktreat - 64)) | (1L << (Kcast - 64)) | (1L << (Kcastable - 64)) | (1L << (Kversion - 64)) | (1L << (Kjsoniq - 64)) | (1L << (Kunordered - 64)) | (1L << (Ktrue - 64)) | (1L << (Kfalse - 64)) | (1L << (Ktype - 64)) | (1L << (Kvalidate - 64)) | (1L << (Kannotate - 64)) | (1L << (Kdeclare - 64)) | (1L << (Kcontext - 64)) | (1L << (Kitem - 64)) | (1L << (Kvariable - 64)) | (1L << (Kinsert - 64)) | (1L << (Kdelete - 64)) | (1L << (Krename - 64)) | (1L << (Kreplace - 64)) | (1L << (Kcopy - 64)) | (1L << (Kmodify - 64)) | (1L << (Kappend - 64)) | (1L << (Kinto - 64)) | (1L << (Kvalue - 64)) | (1L << (Kwith - 64)) | (1L << (Kposition - 64)) | (1L << (Kjson - 64)) | (1L << (Kupdating - 64)))) != 0) || ((((_la - 130)) & ~0x3f) == 0 && ((1L << (_la - 130)) & ((1L << (Kslash - 130)) | (1L << (Kdslash - 130)) | (1L << (Kat_symbol - 130)) | (1L << (Kchild - 130)) | (1L << (Kdescendant - 130)) | (1L << (Kattribute - 130)) | (1L << (Kself - 130)) | (1L << (Kdescendant_or_self - 130)) | (1L << (Kfollowing_sibling - 130)) | (1L << (Kfollowing - 130)) | (1L << (Kparent - 130)) | (1L << (Kancestor - 130)) | (1L << (Kpreceding_sibling - 130)) | (1L << (Kpreceding - 130)) | (1L << (Kancestor_or_self - 130)) | (1L << (Ktext - 130)) | (1L << (Kbreak - 130)) | (1L << (Kloop - 130)) | (1L << (Kcontinue - 130)) | (1L << (Kexit - 130)) | (1L << (Kreturning - 130)) | (1L << (Kwhile - 130)) | (1L << (STRING - 130)) | (1L << (NullLiteral - 130)) | (1L << (Literal - 130)) | (1L << (NCName - 130)))) != 0)) {
 				{
 				setState(1590);
 				expr();
@@ -12121,6 +12049,7 @@ public class JsoniqParser extends Parser {
 		public TerminalNode Kreturning() { return getToken(JsoniqParser.Kreturning, 0); }
 		public TerminalNode Kwhile() { return getToken(JsoniqParser.Kwhile, 0); }
 		public TerminalNode Kjson() { return getToken(JsoniqParser.Kjson, 0); }
+		public TerminalNode Ktext() { return getToken(JsoniqParser.Ktext, 0); }
 		public TerminalNode Kupdating() { return getToken(JsoniqParser.Kupdating, 0); }
 		public KeyWordsContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -12142,7 +12071,7 @@ public class JsoniqParser extends Parser {
 			{
 			setState(1599);
 			_la = _input.LA(1);
-			if ( !(((((_la - 59)) & ~0x3f) == 0 && ((1L << (_la - 59)) & ((1L << (Kfor - 59)) | (1L << (Klet - 59)) | (1L << (Kwhere - 59)) | (1L << (Kgroup - 59)) | (1L << (Kby - 59)) | (1L << (Korder - 59)) | (1L << (Kreturn - 59)) | (1L << (Kif - 59)) | (1L << (Kin - 59)) | (1L << (Kas - 59)) | (1L << (Kat - 59)) | (1L << (Kallowing - 59)) | (1L << (Kempty - 59)) | (1L << (Kcount - 59)) | (1L << (Kstable - 59)) | (1L << (Kascending - 59)) | (1L << (Kdescending - 59)) | (1L << (Ksome - 59)) | (1L << (Kevery - 59)) | (1L << (Ksatisfies - 59)) | (1L << (Kcollation - 59)) | (1L << (Kgreatest - 59)) | (1L << (Kleast - 59)) | (1L << (Kswitch - 59)) | (1L << (Kcase - 59)) | (1L << (Ktry - 59)) | (1L << (Kcatch - 59)) | (1L << (Kdefault - 59)) | (1L << (Kthen - 59)) | (1L << (Kelse - 59)) | (1L << (Ktypeswitch - 59)) | (1L << (Kor - 59)) | (1L << (Kand - 59)) | (1L << (Knot - 59)) | (1L << (Kto - 59)) | (1L << (Kinstance - 59)) | (1L << (Kof - 59)) | (1L << (Kstatically - 59)) | (1L << (Kis - 59)) | (1L << (Ktreat - 59)) | (1L << (Kcast - 59)) | (1L << (Kcastable - 59)) | (1L << (Kversion - 59)) | (1L << (Kjsoniq - 59)) | (1L << (Kunordered - 59)) | (1L << (Ktrue - 59)) | (1L << (Kfalse - 59)) | (1L << (Ktype - 59)) | (1L << (Kvalidate - 59)) | (1L << (Kannotate - 59)) | (1L << (Kdeclare - 59)) | (1L << (Kcontext - 59)) | (1L << (Kitem - 59)) | (1L << (Kvariable - 59)) | (1L << (Kinsert - 59)) | (1L << (Kdelete - 59)) | (1L << (Krename - 59)) | (1L << (Kreplace - 59)) | (1L << (Kcopy - 59)) | (1L << (Kmodify - 59)) | (1L << (Kappend - 59)) | (1L << (Kinto - 59)) | (1L << (Kvalue - 59)) | (1L << (Kwith - 59)))) != 0) || ((((_la - 123)) & ~0x3f) == 0 && ((1L << (_la - 123)) & ((1L << (Kposition - 123)) | (1L << (Kjson - 123)) | (1L << (Kupdating - 123)) | (1L << (Kbreak - 123)) | (1L << (Kloop - 123)) | (1L << (Kcontinue - 123)) | (1L << (Kexit - 123)) | (1L << (Kreturning - 123)) | (1L << (Kwhile - 123)) | (1L << (NullLiteral - 123)))) != 0)) ) {
+			if ( !(((((_la - 59)) & ~0x3f) == 0 && ((1L << (_la - 59)) & ((1L << (Kfor - 59)) | (1L << (Klet - 59)) | (1L << (Kwhere - 59)) | (1L << (Kgroup - 59)) | (1L << (Kby - 59)) | (1L << (Korder - 59)) | (1L << (Kreturn - 59)) | (1L << (Kif - 59)) | (1L << (Kin - 59)) | (1L << (Kas - 59)) | (1L << (Kat - 59)) | (1L << (Kallowing - 59)) | (1L << (Kempty - 59)) | (1L << (Kcount - 59)) | (1L << (Kstable - 59)) | (1L << (Kascending - 59)) | (1L << (Kdescending - 59)) | (1L << (Ksome - 59)) | (1L << (Kevery - 59)) | (1L << (Ksatisfies - 59)) | (1L << (Kcollation - 59)) | (1L << (Kgreatest - 59)) | (1L << (Kleast - 59)) | (1L << (Kswitch - 59)) | (1L << (Kcase - 59)) | (1L << (Ktry - 59)) | (1L << (Kcatch - 59)) | (1L << (Kdefault - 59)) | (1L << (Kthen - 59)) | (1L << (Kelse - 59)) | (1L << (Ktypeswitch - 59)) | (1L << (Kor - 59)) | (1L << (Kand - 59)) | (1L << (Knot - 59)) | (1L << (Kto - 59)) | (1L << (Kinstance - 59)) | (1L << (Kof - 59)) | (1L << (Kstatically - 59)) | (1L << (Kis - 59)) | (1L << (Ktreat - 59)) | (1L << (Kcast - 59)) | (1L << (Kcastable - 59)) | (1L << (Kversion - 59)) | (1L << (Kjsoniq - 59)) | (1L << (Kunordered - 59)) | (1L << (Ktrue - 59)) | (1L << (Kfalse - 59)) | (1L << (Ktype - 59)) | (1L << (Kvalidate - 59)) | (1L << (Kannotate - 59)) | (1L << (Kdeclare - 59)) | (1L << (Kcontext - 59)) | (1L << (Kitem - 59)) | (1L << (Kvariable - 59)) | (1L << (Kinsert - 59)) | (1L << (Kdelete - 59)) | (1L << (Krename - 59)) | (1L << (Kreplace - 59)) | (1L << (Kcopy - 59)) | (1L << (Kmodify - 59)) | (1L << (Kappend - 59)) | (1L << (Kinto - 59)) | (1L << (Kvalue - 59)) | (1L << (Kwith - 59)))) != 0) || ((((_la - 123)) & ~0x3f) == 0 && ((1L << (_la - 123)) & ((1L << (Kposition - 123)) | (1L << (Kjson - 123)) | (1L << (Kupdating - 123)) | (1L << (Ktext - 123)) | (1L << (Kbreak - 123)) | (1L << (Kloop - 123)) | (1L << (Kcontinue - 123)) | (1L << (Kexit - 123)) | (1L << (Kreturning - 123)) | (1L << (Kwhile - 123)) | (1L << (NullLiteral - 123)))) != 0)) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -12294,61 +12223,61 @@ public class JsoniqParser extends Parser {
 		"\u011e\u0120\u0122\u0124\u0126\u0128\u012a\u012c\u012e\u0130\u0132\u0134"+
 		"\u0136\u0138\u013a\u013c\u013e\u0140\u0142\u0144\u0146\2\r\4\2\21\21i"+
 		"i\3\2RS\3\2\24\35\4\2\5\5#-\3\2/\60\4\2\f\f\61\63\3\2\u0084\u0085\3\2"+
-		"\u0087\u008d\3\2\u008e\u0092\4\2\23\23\u00a9\u00a9\5\2=\177\u00a2\u00a7"+
-		"\u00aa\u00aa\2\u0684\2\u0148\3\2\2\2\4\u0150\3\2\2\2\6\u0156\3\2\2\2\b"+
-		"\u0159\3\2\2\2\n\u016a\3\2\2\2\f\u0175\3\2\2\2\16\u017a\3\2\2\2\20\u017d"+
-		"\3\2\2\2\22\u0180\3\2\2\2\24\u0191\3\2\2\2\26\u0193\3\2\2\2\30\u0196\3"+
-		"\2\2\2\32\u019c\3\2\2\2\34\u01a0\3\2\2\2\36\u01a4\3\2\2\2 \u01a8\3\2\2"+
-		"\2\"\u01af\3\2\2\2$\u01bf\3\2\2\2&\u01c8\3\2\2\2(\u01d7\3\2\2\2*\u01de"+
-		"\3\2\2\2,\u01e5\3\2\2\2.\u01f6\3\2\2\2\60\u0206\3\2\2\2\62\u0226\3\2\2"+
-		"\2\64\u022b\3\2\2\2\66\u022e\3\2\2\28\u023a\3\2\2\2:\u0243\3\2\2\2<\u024d"+
-		"\3\2\2\2>\u024f\3\2\2\2@\u0259\3\2\2\2B\u025b\3\2\2\2D\u0260\3\2\2\2F"+
-		"\u0264\3\2\2\2H\u026a\3\2\2\2J\u027f\3\2\2\2L\u0285\3\2\2\2N\u0287\3\2"+
-		"\2\2P\u029a\3\2\2\2R\u02ab\3\2\2\2T\u02bb\3\2\2\2V\u02cf\3\2\2\2X\u02de"+
-		"\3\2\2\2Z\u02e0\3\2\2\2\\\u02e8\3\2\2\2^\u02ee\3\2\2\2`\u02fc\3\2\2\2"+
-		"b\u0306\3\2\2\2d\u030a\3\2\2\2f\u031a\3\2\2\2h\u0323\3\2\2\2j\u0333\3"+
-		"\2\2\2l\u033c\3\2\2\2n\u0344\3\2\2\2p\u0347\3\2\2\2r\u0351\3\2\2\2t\u0363"+
-		"\3\2\2\2v\u036d\3\2\2\2x\u037d\3\2\2\2z\u0382\3\2\2\2|\u038f\3\2\2\2~"+
-		"\u0397\3\2\2\2\u0080\u03a6\3\2\2\2\u0082\u03ad\3\2\2\2\u0084\u03bd\3\2"+
-		"\2\2\u0086\u03ce\3\2\2\2\u0088\u03d7\3\2\2\2\u008a\u03e0\3\2\2\2\u008c"+
-		"\u03f3\3\2\2\2\u008e\u03fb\3\2\2\2\u0090\u0404\3\2\2\2\u0092\u0408\3\2"+
-		"\2\2\u0094\u040d\3\2\2\2\u0096\u0415\3\2\2\2\u0098\u041a\3\2\2\2\u009a"+
-		"\u0422\3\2\2\2\u009c\u042a\3\2\2\2\u009e\u0430\3\2\2\2\u00a0\u0436\3\2"+
-		"\2\2\u00a2\u043c\3\2\2\2\u00a4\u0442\3\2\2\2\u00a6\u0448\3\2\2\2\u00a8"+
-		"\u0457\3\2\2\2\u00aa\u045c\3\2\2\2\u00ac\u0464\3\2\2\2\u00ae\u0466\3\2"+
-		"\2\2\u00b0\u046d\3\2\2\2\u00b2\u0474\3\2\2\2\u00b4\u047c\3\2\2\2\u00b6"+
-		"\u0487\3\2\2\2\u00b8\u048d\3\2\2\2\u00ba\u0490\3\2\2\2\u00bc\u0494\3\2"+
-		"\2\2\u00be\u04ac\3\2\2\2\u00c0\u04ae\3\2\2\2\u00c2\u04b2\3\2\2\2\u00c4"+
-		"\u04b5\3\2\2\2\u00c6\u04bb\3\2\2\2\u00c8\u04bd\3\2\2\2\u00ca\u04c2\3\2"+
-		"\2\2\u00cc\u04c7\3\2\2\2\u00ce\u04ca\3\2\2\2\u00d0\u04d8\3\2\2\2\u00d2"+
-		"\u04dc\3\2\2\2\u00d4\u04de\3\2\2\2\u00d6\u04e2\3\2\2\2\u00d8\u0508\3\2"+
-		"\2\2\u00da\u050a\3\2\2\2\u00dc\u050e\3\2\2\2\u00de\u0514\3\2\2\2\u00e0"+
-		"\u051c\3\2\2\2\u00e2\u052a\3\2\2\2\u00e4\u0530\3\2\2\2\u00e6\u0537\3\2"+
-		"\2\2\u00e8\u0542\3\2\2\2\u00ea\u0544\3\2\2\2\u00ec\u054e\3\2\2\2\u00ee"+
-		"\u0552\3\2\2\2\u00f0\u055a\3\2\2\2\u00f2\u055c\3\2\2\2\u00f4\u0560\3\2"+
-		"\2\2\u00f6\u0567\3\2\2\2\u00f8\u0569\3\2\2\2\u00fa\u056d\3\2\2\2\u00fc"+
-		"\u0571\3\2\2\2\u00fe\u0575\3\2\2\2\u0100\u057a\3\2\2\2\u0102\u057c\3\2"+
-		"\2\2\u0104\u0580\3\2\2\2\u0106\u0587\3\2\2\2\u0108\u0595\3\2\2\2\u010a"+
-		"\u0597\3\2\2\2\u010c\u059b\3\2\2\2\u010e\u059f\3\2\2\2\u0110\u05a7\3\2"+
-		"\2\2\u0112\u05ab\3\2\2\2\u0114\u05af\3\2\2\2\u0116\u05b3\3\2\2\2\u0118"+
-		"\u05bb\3\2\2\2\u011a\u05c8\3\2\2\2\u011c\u05ca\3\2\2\2\u011e\u05cf\3\2"+
-		"\2\2\u0120\u05d1\3\2\2\2\u0122\u05e1\3\2\2\2\u0124\u05e3\3\2\2\2\u0126"+
-		"\u05e8\3\2\2\2\u0128\u05ea\3\2\2\2\u012a\u05ec\3\2\2\2\u012c\u05ee\3\2"+
-		"\2\2\u012e\u05f0\3\2\2\2\u0130\u05fa\3\2\2\2\u0132\u060c\3\2\2\2\u0134"+
-		"\u0611\3\2\2\2\u0136\u0615\3\2\2\2\u0138\u0617\3\2\2\2\u013a\u061c\3\2"+
-		"\2\2\u013c\u062c\3\2\2\2\u013e\u0632\3\2\2\2\u0140\u0637\3\2\2\2\u0142"+
-		"\u063d\3\2\2\2\u0144\u063f\3\2\2\2\u0146\u0641\3\2\2\2\u0148\u0149\5\4"+
-		"\3\2\u0149\u014a\7\2\2\3\u014a\3\3\2\2\2\u014b\u014c\7h\2\2\u014c\u014d"+
-		"\7g\2\2\u014d\u014e\5\u0144\u00a3\2\u014e\u014f\7\3\2\2\u014f\u0151\3"+
-		"\2\2\2\u0150\u014b\3\2\2\2\u0150\u0151\3\2\2\2\u0151\u0154\3\2\2\2\u0152"+
-		"\u0155\5\b\5\2\u0153\u0155\5\6\4\2\u0154\u0152\3\2\2\2\u0154\u0153\3\2"+
-		"\2\2\u0155\5\3\2\2\2\u0156\u0157\5\n\6\2\u0157\u0158\5\f\7\2\u0158\7\3"+
-		"\2\2\2\u0159\u015a\7\4\2\2\u015a\u015b\7\u0082\2\2\u015b\u015c\7\u00b1"+
-		"\2\2\u015c\u015d\7\5\2\2\u015d\u015e\5\u0142\u00a2\2\u015e\u015f\7\3\2"+
-		"\2\u015f\u0160\5\n\6\2\u0160\t\3\2\2\2\u0161\u0165\5<\37\2\u0162\u0165"+
-		"\5> \2\u0163\u0165\5N(\2\u0164\u0161\3\2\2\2\u0164\u0162\3\2\2\2\u0164"+
-		"\u0163\3\2\2\2\u0165\u0166\3\2\2\2\u0166\u0167\7\3\2\2\u0167\u0169\3\2"+
-		"\2\2\u0168\u0164\3\2\2\2\u0169\u016c\3\2\2\2\u016a\u0168\3\2\2\2\u016a"+
+		"\u0087\u008d\3\2\u008e\u0092\4\2\23\23\u00a9\u00a9\6\2=\177\u0097\u0097"+
+		"\u00a2\u00a7\u00aa\u00aa\2\u0684\2\u0148\3\2\2\2\4\u0150\3\2\2\2\6\u0156"+
+		"\3\2\2\2\b\u0159\3\2\2\2\n\u016a\3\2\2\2\f\u0175\3\2\2\2\16\u017a\3\2"+
+		"\2\2\20\u017d\3\2\2\2\22\u0180\3\2\2\2\24\u0191\3\2\2\2\26\u0193\3\2\2"+
+		"\2\30\u0196\3\2\2\2\32\u019c\3\2\2\2\34\u01a0\3\2\2\2\36\u01a4\3\2\2\2"+
+		" \u01a8\3\2\2\2\"\u01af\3\2\2\2$\u01bf\3\2\2\2&\u01c8\3\2\2\2(\u01d7\3"+
+		"\2\2\2*\u01de\3\2\2\2,\u01e5\3\2\2\2.\u01f6\3\2\2\2\60\u0206\3\2\2\2\62"+
+		"\u0226\3\2\2\2\64\u022b\3\2\2\2\66\u022e\3\2\2\28\u023a\3\2\2\2:\u0243"+
+		"\3\2\2\2<\u024d\3\2\2\2>\u024f\3\2\2\2@\u0259\3\2\2\2B\u025b\3\2\2\2D"+
+		"\u0260\3\2\2\2F\u0264\3\2\2\2H\u026a\3\2\2\2J\u027f\3\2\2\2L\u0285\3\2"+
+		"\2\2N\u0287\3\2\2\2P\u029a\3\2\2\2R\u02ab\3\2\2\2T\u02bb\3\2\2\2V\u02cf"+
+		"\3\2\2\2X\u02de\3\2\2\2Z\u02e0\3\2\2\2\\\u02e8\3\2\2\2^\u02ee\3\2\2\2"+
+		"`\u02fc\3\2\2\2b\u0306\3\2\2\2d\u030a\3\2\2\2f\u031a\3\2\2\2h\u0323\3"+
+		"\2\2\2j\u0333\3\2\2\2l\u033c\3\2\2\2n\u0344\3\2\2\2p\u0347\3\2\2\2r\u0351"+
+		"\3\2\2\2t\u0363\3\2\2\2v\u036d\3\2\2\2x\u037d\3\2\2\2z\u0382\3\2\2\2|"+
+		"\u038f\3\2\2\2~\u0397\3\2\2\2\u0080\u03a6\3\2\2\2\u0082\u03ad\3\2\2\2"+
+		"\u0084\u03bd\3\2\2\2\u0086\u03ce\3\2\2\2\u0088\u03d7\3\2\2\2\u008a\u03e0"+
+		"\3\2\2\2\u008c\u03f3\3\2\2\2\u008e\u03fb\3\2\2\2\u0090\u0404\3\2\2\2\u0092"+
+		"\u0408\3\2\2\2\u0094\u040d\3\2\2\2\u0096\u0415\3\2\2\2\u0098\u041a\3\2"+
+		"\2\2\u009a\u0422\3\2\2\2\u009c\u042a\3\2\2\2\u009e\u0430\3\2\2\2\u00a0"+
+		"\u0436\3\2\2\2\u00a2\u043c\3\2\2\2\u00a4\u0442\3\2\2\2\u00a6\u0448\3\2"+
+		"\2\2\u00a8\u0457\3\2\2\2\u00aa\u045c\3\2\2\2\u00ac\u0464\3\2\2\2\u00ae"+
+		"\u0466\3\2\2\2\u00b0\u046d\3\2\2\2\u00b2\u0474\3\2\2\2\u00b4\u047c\3\2"+
+		"\2\2\u00b6\u0487\3\2\2\2\u00b8\u048d\3\2\2\2\u00ba\u0490\3\2\2\2\u00bc"+
+		"\u0494\3\2\2\2\u00be\u04ac\3\2\2\2\u00c0\u04ae\3\2\2\2\u00c2\u04b2\3\2"+
+		"\2\2\u00c4\u04b5\3\2\2\2\u00c6\u04bb\3\2\2\2\u00c8\u04bd\3\2\2\2\u00ca"+
+		"\u04c2\3\2\2\2\u00cc\u04c7\3\2\2\2\u00ce\u04ca\3\2\2\2\u00d0\u04d8\3\2"+
+		"\2\2\u00d2\u04dc\3\2\2\2\u00d4\u04de\3\2\2\2\u00d6\u04e2\3\2\2\2\u00d8"+
+		"\u0508\3\2\2\2\u00da\u050a\3\2\2\2\u00dc\u050e\3\2\2\2\u00de\u0514\3\2"+
+		"\2\2\u00e0\u051c\3\2\2\2\u00e2\u052a\3\2\2\2\u00e4\u0530\3\2\2\2\u00e6"+
+		"\u0537\3\2\2\2\u00e8\u0542\3\2\2\2\u00ea\u0544\3\2\2\2\u00ec\u054e\3\2"+
+		"\2\2\u00ee\u0552\3\2\2\2\u00f0\u055a\3\2\2\2\u00f2\u055c\3\2\2\2\u00f4"+
+		"\u0560\3\2\2\2\u00f6\u0567\3\2\2\2\u00f8\u0569\3\2\2\2\u00fa\u056d\3\2"+
+		"\2\2\u00fc\u0571\3\2\2\2\u00fe\u0575\3\2\2\2\u0100\u057a\3\2\2\2\u0102"+
+		"\u057c\3\2\2\2\u0104\u0580\3\2\2\2\u0106\u0587\3\2\2\2\u0108\u0595\3\2"+
+		"\2\2\u010a\u0597\3\2\2\2\u010c\u059b\3\2\2\2\u010e\u059f\3\2\2\2\u0110"+
+		"\u05a7\3\2\2\2\u0112\u05ab\3\2\2\2\u0114\u05af\3\2\2\2\u0116\u05b3\3\2"+
+		"\2\2\u0118\u05bb\3\2\2\2\u011a\u05c8\3\2\2\2\u011c\u05ca\3\2\2\2\u011e"+
+		"\u05cf\3\2\2\2\u0120\u05d1\3\2\2\2\u0122\u05e1\3\2\2\2\u0124\u05e3\3\2"+
+		"\2\2\u0126\u05e8\3\2\2\2\u0128\u05ea\3\2\2\2\u012a\u05ec\3\2\2\2\u012c"+
+		"\u05ee\3\2\2\2\u012e\u05f0\3\2\2\2\u0130\u05fa\3\2\2\2\u0132\u060c\3\2"+
+		"\2\2\u0134\u0611\3\2\2\2\u0136\u0615\3\2\2\2\u0138\u0617\3\2\2\2\u013a"+
+		"\u061c\3\2\2\2\u013c\u062c\3\2\2\2\u013e\u0632\3\2\2\2\u0140\u0637\3\2"+
+		"\2\2\u0142\u063d\3\2\2\2\u0144\u063f\3\2\2\2\u0146\u0641\3\2\2\2\u0148"+
+		"\u0149\5\4\3\2\u0149\u014a\7\2\2\3\u014a\3\3\2\2\2\u014b\u014c\7h\2\2"+
+		"\u014c\u014d\7g\2\2\u014d\u014e\5\u0144\u00a3\2\u014e\u014f\7\3\2\2\u014f"+
+		"\u0151\3\2\2\2\u0150\u014b\3\2\2\2\u0150\u0151\3\2\2\2\u0151\u0154\3\2"+
+		"\2\2\u0152\u0155\5\b\5\2\u0153\u0155\5\6\4\2\u0154\u0152\3\2\2\2\u0154"+
+		"\u0153\3\2\2\2\u0155\5\3\2\2\2\u0156\u0157\5\n\6\2\u0157\u0158\5\f\7\2"+
+		"\u0158\7\3\2\2\2\u0159\u015a\7\4\2\2\u015a\u015b\7\u0082\2\2\u015b\u015c"+
+		"\7\u00b1\2\2\u015c\u015d\7\5\2\2\u015d\u015e\5\u0142\u00a2\2\u015e\u015f"+
+		"\7\3\2\2\u015f\u0160\5\n\6\2\u0160\t\3\2\2\2\u0161\u0165\5<\37\2\u0162"+
+		"\u0165\5> \2\u0163\u0165\5N(\2\u0164\u0161\3\2\2\2\u0164\u0162\3\2\2\2"+
+		"\u0164\u0163\3\2\2\2\u0165\u0166\3\2\2\2\u0166\u0167\7\3\2\2\u0167\u0169"+
+		"\3\2\2\2\u0168\u0164\3\2\2\2\u0169\u016c\3\2\2\2\u016a\u0168\3\2\2\2\u016a"+
 		"\u016b\3\2\2\2\u016b\u0172\3\2\2\2\u016c\u016a\3\2\2\2\u016d\u016e\5@"+
 		"!\2\u016e\u016f\7\3\2\2\u016f\u0171\3\2\2\2\u0170\u016d\3\2\2\2\u0171"+
 		"\u0174\3\2\2\2\u0172\u0170\3\2\2\2\u0172\u0173\3\2\2\2\u0173\13\3\2\2"+

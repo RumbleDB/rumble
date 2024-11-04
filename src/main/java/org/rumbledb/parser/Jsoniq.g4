@@ -546,6 +546,7 @@ keyWords                : Kjsoniq
                         | Kreturning
                         | Kwhile
                         | Kjson
+                        | Ktext
                         | Kupdating
                         ;
 
