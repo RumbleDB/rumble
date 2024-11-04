@@ -17,7 +17,8 @@ public class AttributeItem implements Item {
 
     public AttributeItem(Node attributeNode) {
         this.attributeNode = attributeNode;
-        attributeNode.getNodeValue(); // has side effects that synchronize something internal. DONT DELETE, otherwise kryo serialization breaks
+        attributeNode.getNodeValue(); // has side effects that synchronize something internal. DONT DELETE, otherwise
+                                      // kryo serialization breaks
     }
 
     @Override
