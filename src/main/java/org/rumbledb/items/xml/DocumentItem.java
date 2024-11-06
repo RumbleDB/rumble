@@ -30,15 +30,15 @@ public class DocumentItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
+        kryo.writeClassAndObject(output, this.documentNode);
         kryo.writeObject(output, this.children);
-        kryo.writeObject(output, this.documentNode);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
+        this.documentNode = (Node) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
-        this.documentNode = kryo.readObject(input, Node.class);
     }
 
 

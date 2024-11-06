@@ -34,18 +34,18 @@ public class ElementItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
+        kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
-        kryo.writeObject(output, this.parent);
         kryo.writeObject(output, this.elementNode);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
+        this.parent = (Item) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
-        this.parent = kryo.readObject(input, Item.class);
         this.elementNode = kryo.readObject(input, Node.class);
     }
 
