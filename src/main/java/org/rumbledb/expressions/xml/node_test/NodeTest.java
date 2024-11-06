@@ -1,4 +1,8 @@
 package org.rumbledb.expressions.xml.node_test;
 
-public interface NodeTest {
+import com.esotericsoftware.kryo.KryoSerializable;
+
+import java.io.Serializable;
+
+public interface NodeTest extends Serializable, KryoSerializable {
 }

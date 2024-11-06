@@ -1,5 +1,9 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 public class DocumentTest implements NodeTest {
     // TODO: schemaElement test unsupported yet.
     private NodeTest nodeTest;
@@ -24,5 +28,15 @@ public class DocumentTest implements NodeTest {
 
     public NodeTest getNodeTest() {
         return this.nodeTest;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, nodeTest);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        nodeTest = kryo.readObject(input, NodeTest.class);
     }
 }

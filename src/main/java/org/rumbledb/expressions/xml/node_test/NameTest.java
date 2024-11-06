@@ -1,5 +1,8 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
 // TODO: Add support for name test
@@ -39,5 +42,17 @@ public class NameTest implements NodeTest {
 
     public String getWildcardQName() {
         return this.wildcardWithNCName;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, qname);
+        kryo.writeObject(output, wildcardWithNCName);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        qname = kryo.readObject(input, Name.class);
+        wildcardWithNCName = kryo.readObject(input, String.class);
     }
 }

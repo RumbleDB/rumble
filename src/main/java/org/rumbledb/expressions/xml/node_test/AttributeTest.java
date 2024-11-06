@@ -1,5 +1,8 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
 public class AttributeTest implements NodeTest {
@@ -61,5 +64,19 @@ public class AttributeTest implements NodeTest {
 
     public boolean isWildcardOnly() {
         return this.attributeName == null && this.typeName == null && this.hasWildcard;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, attributeName);
+        kryo.writeObject(output, typeName);
+        output.writeBoolean(hasWildcard);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        attributeName = kryo.readObject(input, Name.class);
+        typeName = kryo.readObject(input, Name.class);
+        hasWildcard = input.readBoolean();
     }
 }
