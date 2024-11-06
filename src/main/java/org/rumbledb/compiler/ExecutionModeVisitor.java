@@ -80,6 +80,7 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -651,6 +652,14 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         visitDescendants(prolog, argument);
         prolog.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitPathExpr(PathExpr pathExpr, StaticContext argument) {
+        visitDescendants(pathExpr, argument);
+        // TODO check if this works with root and everything
+        pathExpr.setHighestExecutionMode(pathExpr.getChildren().get(0).getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
