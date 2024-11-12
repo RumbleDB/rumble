@@ -424,6 +424,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
+    public List<Item> applyInPath(DynamicContext context) {
+        throw new OurBadException(
+                getClass().getCanonicalName()
+                    + " was used in a RDD PathExpr but applyInPath is not implemented for it ",
+                getMetadata()
+        );
+    }
+
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

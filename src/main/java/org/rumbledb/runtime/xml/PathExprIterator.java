@@ -120,13 +120,12 @@ public class PathExprIterator extends HybridRuntimeIterator {
                     )
                 );
             } else {
-                StepExprIterator itr = (StepExprIterator) stepIterator;
                 RDDwCon = RDDwCon.mapToPair(
                     tuple -> {
                         List<Item> items = tuple._1;
                         DynamicContext ctx = tuple._2;
                         ctx.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, items);
-                        List<Item> result = itr.applyStep(ctx);
+                        List<Item> result = stepIterator.applyInPath(ctx);
                         return new Tuple2<>(result, ctx);
                     }
                 );
