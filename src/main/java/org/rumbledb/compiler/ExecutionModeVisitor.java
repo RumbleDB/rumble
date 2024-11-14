@@ -80,8 +80,10 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -1068,6 +1070,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         ExecutionMode mergedExecutionMode = getHighestExecutionMode(statementsExecMode, exprExecutionMode);
 
         statementsAndExpr.setHighestExecutionMode(mergedExecutionMode);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
+        visitDescendants(slashExpr, argument);
+        slashExpr.setHighestExecutionMode(slashExpr.getLeftExpression().getHighestExecutionMode());
         return argument;
     }
 

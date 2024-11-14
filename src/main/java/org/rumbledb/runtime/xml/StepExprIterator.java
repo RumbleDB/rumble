@@ -68,11 +68,6 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return this.axisIterator.materialize(this.currentDynamicContextForLocalExecution);
     }
 
-    public List<Item> applyInPath(DynamicContext ctx) {
-        List<Item> result = this.axisIterator.materialize(ctx);
-        return applyNodeTest(result);
-    }
-
     private void storeNextResult() {
         if (this.resultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.resultCounter++);
