@@ -115,7 +115,6 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.PathExpr;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
@@ -193,7 +192,6 @@ import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.runtime.xml.AtomizationIterator;
-import org.rumbledb.runtime.xml.PathExprIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
@@ -1487,29 +1485,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 )
         );
         runtimeIterator.setStaticContext(statement.getStaticContext());
-        return runtimeIterator;
-    }
-
-    @Override
-    public RuntimeIterator visitPathExpr(PathExpr pathExpr, RuntimeIterator argument) {
-        List<RuntimeIterator> stepExprIterators = new ArrayList<>();
-        pathExpr.getRelativePathExpressions()
-            .forEach(relativePathExpr -> stepExprIterators.add(this.visit(relativePathExpr, argument)));
-        RuntimeIterator getRootIterator = null;
-        if (pathExpr.needsRoot()) {
-            getRootIterator = this.visitFunctionCall(pathExpr.getFetchRootFunction(), argument);
-        }
-        RuntimeIterator runtimeIterator = new PathExprIterator(
-                stepExprIterators,
-                getRootIterator,
-                new RuntimeStaticContext(
-                        this.config,
-                        pathExpr.getStaticSequenceType(),
-                        pathExpr.getHighestExecutionMode(this.visitorConfig),
-                        pathExpr.getMetadata()
-                )
-        );
-        runtimeIterator.setStaticContext(pathExpr.getStaticContext());
         return runtimeIterator;
     }
 

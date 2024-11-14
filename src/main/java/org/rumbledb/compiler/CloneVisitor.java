@@ -1045,43 +1045,4 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
     // end region scripting
-
-    // begin region xml
-
-    // @Override
-    // public Node visitPathExpr(PathExpr expression, Node argument) {
-    // List<Expression> intermediaryPaths = new ArrayList<>();
-    // for (IntermediaryPath path : expression.getRelativePathExpressions()) {
-    // Dash dash = null;
-    // if (path.getPreStepExprDash() != null) {
-    // dash = new Dash(
-    // path.getPreStepExprDash().requiresRoot(),
-    // (StepExpr) this.visitAxisStep(path.getPreStepExprDash().getAxisStep(), argument)
-    // );
-    // }
-    // StepExpr stepExpr = (StepExpr) this.visitStepExpr(path.getStepExpr(), argument);
-    // intermediaryPaths.add(new IntermediaryPath(dash, stepExpr));
-    // }
-    // PathExpr result = new PathExpr(intermediaryPaths, expression.getMetadata());
-    // result.setStaticSequenceType(expression.getStaticSequenceType());
-    // result.setStaticContext(expression.getStaticContext());
-    // return result;
-    // }
-
-    // @Override
-    // public Node visitStepExpr(StepExpr expression, Node argument) {
-    // StepExpr result;
-    // if (expression.getPostFixExpr() != null) {
-    // Expression postFixExpr = (Expression) this.visit(expression.getPostFixExpr(), argument);
-    // result = new StepExpr(postFixExpr, expression.getMetadata());
-    // } else {
-    // StepExpr stepExpr = (StepExpr) this.visitAxisStep(expression.getAxisStep(), argument);
-    // result = new StepExpr(stepExpr, expression.getMetadata());
-    // }
-    // result.setStaticSequenceType(expression.getStaticSequenceType());
-    // result.setStaticContext(expression.getStaticContext());
-    // return result;
-    // }
-
-    // end region xml
 }
