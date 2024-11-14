@@ -138,7 +138,7 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.PathExpr;
+import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.EmptyStepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
@@ -2312,14 +2312,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        StepExpr stepExpr = new EmptyStepExpr(createMetadataFromContext(ctx));
-        List<Expression> intermediaryPaths = Collections.singletonList(stepExpr);
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultXQueryTypeNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
-        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(ctx));
+        StepExpr stepExpr = new EmptyStepExpr(createMetadataFromContext(ctx));
+        return new SlashExpr(functionCallExpression, stepExpr, createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
@@ -2327,64 +2326,42 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             // We only have a postfix expression, not a path expression
             return this.visitPostFixExpr(relativeContext.stepExpr(0).postFixExpr());
         }
-        List<Expression> intermediaryPaths = getIntermediaryPaths(relativeContext);
-        return new PathExpr(null, intermediaryPaths, createMetadataFromContext(relativeContext));
+        return getSlashes(relativeContext, null);
     }
 
     private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(doubleSlashContext)
+        );
         StepExpr stepExpr = new ForwardStepExpr(
                 ForwardAxis.DESCENDANT_OR_SELF,
                 new AnyKindTest(),
                 createMetadataFromContext(doubleSlashContext)
         );
-        List<Expression> intermediaryPaths = getIntermediaryPaths(stepExpr, doubleSlashContext);
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
-                Collections.emptyList(),
+        Expression starter = new SlashExpr(
+                functionCallExpression,
+                stepExpr,
                 createMetadataFromContext(doubleSlashContext)
         );
-        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(doubleSlashContext));
+        return getSlashes(doubleSlashContext, starter);
     }
 
     private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
-        List<Expression> intermediaryPaths = getIntermediaryPaths(singleSlashContext);
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultXQueryTypeNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(singleSlashContext)
         );
-        return new PathExpr(functionCallExpression, intermediaryPaths, createMetadataFromContext(singleSlashContext));
+        return getSlashes(singleSlashContext, functionCallExpression);
     }
 
-
-    // The path may start with a '/' or '//' which should be already converted to a StepExpr.
-    private List<Expression> getIntermediaryPaths(
-            StepExpr stepExpr,
-            JsoniqParser.RelativePathExprContext relativePathExprContext
+    private Expression getSlashes(
+            JsoniqParser.RelativePathExprContext relativePathExprContext,
+            Expression leftMost
     ) {
-        List<Expression> intermediaryPaths = new ArrayList<>();
-        Expression currentStepExpr;
-        intermediaryPaths.add(stepExpr);
-        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
-            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
-            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
-                // Unroll '//' to forward axis
-                StepExpr intermediaryStepExpr = new ForwardStepExpr(
-                        ForwardAxis.DESCENDANT_OR_SELF,
-                        new AnyKindTest(),
-                        createMetadataFromContext(relativePathExprContext)
-                );
-                intermediaryPaths.add(intermediaryStepExpr);
-            }
-            intermediaryPaths.add(currentStepExpr);
-        }
-        return intermediaryPaths;
-    }
-
-    private List<Expression> getIntermediaryPaths(
-            JsoniqParser.RelativePathExprContext relativePathExprContext
-    ) {
-        List<Expression> intermediaryPaths = new ArrayList<>();
+        Expression currentTop = leftMost;
         Expression currentStepExpr;
         for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
             currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
@@ -2395,11 +2372,28 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                         new AnyKindTest(),
                         createMetadataFromContext(relativePathExprContext)
                 );
-                intermediaryPaths.add(intermediaryStepExpr);
+                if (currentTop == null) {
+                    currentTop = intermediaryStepExpr;
+                } else {
+                    currentTop = new SlashExpr(
+                            currentTop,
+                            intermediaryStepExpr,
+                            createMetadataFromContext(relativePathExprContext)
+                    );
+
+                }
             }
-            intermediaryPaths.add(currentStepExpr);
+            if (currentTop == null) {
+                currentTop = currentStepExpr;
+            } else {
+                currentTop = new SlashExpr(
+                        currentTop,
+                        currentStepExpr,
+                        createMetadataFromContext(relativePathExprContext)
+                );
+            }
         }
-        return intermediaryPaths;
+        return currentTop;
     }
 
     @Override
