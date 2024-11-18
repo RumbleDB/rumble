@@ -683,6 +683,7 @@ public class ItemParser implements Serializable {
         List<Item> children = getChildren(currentNode);
         Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
         addParentToChildrenAndAttributes(documentItem);
+        documentItem.setXmlDocumentPosition(0);
         return documentItem;
     }
 

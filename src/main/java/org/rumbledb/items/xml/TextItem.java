@@ -13,9 +13,21 @@ public class TextItem implements Item {
     private static final long serialVersionUID = 1L;
     private Node textNode;
     private Item parent;
+    private int documentPos;
 
     public TextItem(Node textNode) {
         this.textNode = textNode;
+    }
+
+    @Override
+    public int setXmlDocumentPosition(int current) {
+        this.documentPos = current;
+        return ++current;
+    }
+
+    @Override
+    public int getXmlDocumentPosition() {
+        return documentPos;
     }
 
     @Override
@@ -43,12 +55,14 @@ public class TextItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
+        output.writeInt(documentPos);
         kryo.writeClassAndObject(output, this.textNode);
         kryo.writeClassAndObject(output, this.parent);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
+        this.documentPos = input.readInt();
         this.textNode = (Node) kryo.readClassAndObject(input);
         this.parent = (Item) kryo.readClassAndObject(input);
     }

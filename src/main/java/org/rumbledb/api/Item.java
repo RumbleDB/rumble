@@ -976,4 +976,13 @@ public interface Item extends Serializable, KryoSerializable {
     default Node getXmlNode() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
+
+    default int getXmlDocumentPosition() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default int setXmlDocumentPosition(int current) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
 }

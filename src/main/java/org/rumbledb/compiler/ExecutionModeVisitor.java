@@ -83,7 +83,6 @@ import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
-import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;

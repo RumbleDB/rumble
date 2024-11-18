@@ -13,6 +13,7 @@ public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
     private Node attributeNode;
     private Item parent;
+    private int documentPos;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
 
     public AttributeItem(Node attributeNode) {
@@ -22,14 +23,28 @@ public class AttributeItem implements Item {
     }
 
     @Override
+    public int setXmlDocumentPosition(int current) {
+        documentPos = current;
+        return ++current;
+    }
+
+    @Override
+    public int getXmlDocumentPosition() {
+        return documentPos;
+    }
+
+
+    @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.parent);
+        output.writeInt(documentPos);
+        kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.attributeNode);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.parent = kryo.readObject(input, Item.class);
+        this.documentPos = input.readInt();
+        this.parent = (Item) kryo.readClassAndObject(input);
         this.attributeNode = kryo.readObject(input, Node.class);
     }
 

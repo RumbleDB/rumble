@@ -16,11 +16,26 @@ public class DocumentItem implements Item {
     private static final long serialVersionUID = 1L;
     private Node documentNode;
     private List<Item> children;
+    private int documentPos;
     // TODO: add base-uri, document-uri, typed-value
 
     public DocumentItem(Node documentNode, List<Item> children) {
         this.documentNode = documentNode;
         this.children = children;
+    }
+
+    @Override
+    public int setXmlDocumentPosition(int current) {
+        this.documentPos = current;
+        current++;
+        for (Item child : this.children)
+            current = child.setXmlDocumentPosition(current);
+        return current;
+    }
+
+    @Override
+    public int getXmlDocumentPosition() {
+        return documentPos;
     }
 
     @Override
@@ -32,6 +47,7 @@ public class DocumentItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.documentNode);
         kryo.writeObject(output, this.children);
+        output.writeInt(documentPos);
     }
 
     @SuppressWarnings("unchecked")
@@ -39,6 +55,7 @@ public class DocumentItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.documentNode = (Node) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
+        this.documentPos = input.readInt();
     }
 
 

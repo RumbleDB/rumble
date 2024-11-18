@@ -19,11 +19,31 @@ public class ElementItem implements Item {
     private Node elementNode;
     private Item parent;
     // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
+    private int documentPos;
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
         this.elementNode = elementNode;
         this.children = children;
         this.attributes = attributes;
+    }
+
+    @Override
+    public int setXmlDocumentPosition(int current) {
+        this.documentPos = current;
+        for (Item attribute : this.attributes) {
+            current++;
+            current = attribute.setXmlDocumentPosition(current);
+        }
+        for (Item child : children) {
+            current++;
+            current = child.setXmlDocumentPosition(current);
+        }
+        return ++current;
+    }
+
+    @Override
+    public int getXmlDocumentPosition() {
+        return documentPos;
     }
 
     @Override
@@ -34,6 +54,7 @@ public class ElementItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
+        output.writeInt(documentPos);
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
@@ -43,6 +64,7 @@ public class ElementItem implements Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
+        documentPos = input.readInt();
         this.parent = (Item) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
