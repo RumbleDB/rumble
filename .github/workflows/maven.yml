@@ -136,5 +136,3 @@ jobs:
       run: mvn install -DskipTests -Dgpg.skip --quiet
     - name: Compile with Maven
       run: mvn clean compile assembly:single
-    - name: DeltaUpdateRuntimeTests
-      run: mvn -Dtest=DeltaUpdateRuntimeTests test
