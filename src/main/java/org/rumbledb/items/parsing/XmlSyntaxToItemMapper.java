@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import scala.Tuple2;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,7 +36,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Iterator;
 
-public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
+public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
 
     private static final long serialVersionUID = 1L;
     private final ExceptionMetadata metadata;
@@ -45,7 +46,7 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, 
     }
 
     @Override
-    public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
+    public Iterator<Item> call(Iterator<Tuple2<String, String>> stringIterator) throws Exception {
         return new Iterator<Item>() {
             @Override
             public boolean hasNext() {
@@ -54,12 +55,14 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, 
 
             @Override
             public Item next() {
-                String content = stringIterator.next();
+                Tuple2<String, String> tuple = stringIterator.next();
+                String path = tuple._1;
+                String content = tuple._2;
                 try {
                     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                     Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
-                    return ItemParser.getItemFromXML(xmlDocument);
+                    return ItemParser.getItemFromXML(xmlDocument, path);
                 } catch (ParserConfigurationException e) {
                     throw new OurBadException("Document builder creation failed with: " + e);
                 } catch (IOException e) {

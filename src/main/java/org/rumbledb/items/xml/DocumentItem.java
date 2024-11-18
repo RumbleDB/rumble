@@ -8,6 +8,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ public class DocumentItem implements Item {
     private Node documentNode;
     private List<Item> children;
     private int documentPos;
+    private String path;
     // TODO: add base-uri, document-uri, typed-value
 
     public DocumentItem(Node documentNode, List<Item> children) {
@@ -25,17 +27,18 @@ public class DocumentItem implements Item {
     }
 
     @Override
-    public int setXmlDocumentPosition(int current) {
+    public int setXmlDocumentPosition(String path, int current) {
+        this.path = path;
         this.documentPos = current;
         current++;
         for (Item child : this.children)
-            current = child.setXmlDocumentPosition(current);
+            current = child.setXmlDocumentPosition(path, current);
         return current;
     }
 
     @Override
-    public int getXmlDocumentPosition() {
-        return documentPos;
+    public Tuple2<String, Integer> getXmlDocumentPosition() {
+        return new Tuple2<>(this.path, this.documentPos);
     }
 
     @Override

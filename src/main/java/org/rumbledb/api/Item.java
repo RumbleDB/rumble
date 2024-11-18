@@ -16,6 +16,7 @@ import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -978,16 +979,18 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Method gets the position of the Node inside the XML document for sorting / uniqueness
+     * Method gets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * uniqueness
      */
-    default int getXmlDocumentPosition() {
+    default Tuple2<String, Integer> getXmlDocumentPosition() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Method sets the position of the Node inside the XML document for sorting / uniqueness
+     * Method sets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * uniqueness
      */
-    default int setXmlDocumentPosition(int current) {
+    default int setXmlDocumentPosition(String path, int current) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

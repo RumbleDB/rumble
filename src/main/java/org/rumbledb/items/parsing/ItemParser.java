@@ -668,31 +668,33 @@ public class ItemParser implements Serializable {
      * Parses an XML document to an item.
      *
      * @param currentNode The current node
+     * @param path The path of the original file
      * @return the parsed item
      */
-    public static Item getItemFromXML(Node currentNode) {
+    public static Item getItemFromXML(Node currentNode, String path) {
         if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
-            return getTextNodeItem(currentNode);
+            return getTextNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
-            return getDocumentNodeItem(currentNode);
+            return getDocumentNodeItem(currentNode, path);
         }
-        return getElementNodeItem(currentNode);
+        return getElementNodeItem(currentNode, path);
     }
 
-    private static Item getDocumentNodeItem(Node currentNode) {
-        List<Item> children = getChildren(currentNode);
+    private static Item getDocumentNodeItem(Node currentNode, String path) {
+        List<Item> children = getChildren(currentNode, path);
         Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
         addParentToChildrenAndAttributes(documentItem);
-        documentItem.setXmlDocumentPosition(0);
+        documentItem.setXmlDocumentPosition(path, 0);
         return documentItem;
     }
 
-    private static Item getElementNodeItem(Node currentNode) {
-        List<Item> children = getChildren(currentNode);
+    private static Item getElementNodeItem(Node currentNode, String path) {
+        List<Item> children = getChildren(currentNode, path);
         List<Item> attributes = getAttributes(currentNode);
         Item elementItem = ItemFactory.getInstance()
             .createXmlElementNode(currentNode, children, attributes);
         addParentToChildrenAndAttributes(elementItem);
+        elementItem.setXmlDocumentPosition(path, 0);
         return elementItem;
     }
 
@@ -702,13 +704,13 @@ public class ItemParser implements Serializable {
         return content.trim().isEmpty();
     }
 
-    private static List<Item> getChildren(Node currentNode) {
+    private static List<Item> getChildren(Node currentNode, String path) {
         List<Item> children = new ArrayList<>();
         NodeList nodeList = currentNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); ++i) {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                children.add(getItemFromXML(childNode));
+                children.add(getItemFromXML(childNode, path));
             } else if (childNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(childNode)) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
@@ -731,7 +733,9 @@ public class ItemParser implements Serializable {
         nodeItem.addParentToDescendants();
     }
 
-    private static Item getTextNodeItem(Node currentNode) {
-        return ItemFactory.getInstance().createXmlTextNode(currentNode);
+    private static Item getTextNodeItem(Node currentNode, String path) {
+        Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
+        textItem.setXmlDocumentPosition(path, 0);
+        return textItem;
     }
 }

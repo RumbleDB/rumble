@@ -8,26 +8,29 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
+import scala.Tuple2;
 
 public class TextItem implements Item {
     private static final long serialVersionUID = 1L;
     private Node textNode;
     private Item parent;
     private int documentPos;
+    private String path;
 
     public TextItem(Node textNode) {
         this.textNode = textNode;
     }
 
     @Override
-    public int setXmlDocumentPosition(int current) {
+    public int setXmlDocumentPosition(String path, int current) {
+        this.path = path;
         this.documentPos = current;
         return ++current;
     }
 
     @Override
-    public int getXmlDocumentPosition() {
-        return documentPos;
+    public Tuple2<String, Integer> getXmlDocumentPosition() {
+        return new Tuple2<>(this.path, this.documentPos);
     }
 
     @Override

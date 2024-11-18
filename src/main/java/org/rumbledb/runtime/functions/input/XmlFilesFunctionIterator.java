@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.input;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,11 +29,13 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
@@ -65,7 +68,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
             partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
-        JavaRDD<String> strings;
+        JavaPairRDD<String, String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
@@ -82,15 +85,16 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
             } catch (IOException e) {
                 throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
             }
+            String fileContent = String.join("", lines);
             if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .parallelize(lines);
+                    .parallelizePairs(Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)));
             } else {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .parallelize(
-                        lines,
+                    .parallelizePairs(
+                        Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)),
                         partitions
                     );
             }
@@ -107,16 +111,14 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
             if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .wholeTextFiles(path)
-                    .values();
+                    .wholeTextFiles(path);
             } else {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .wholeTextFiles(
                         path,
                         partitions
-                    )
-                    .values();
+                    );
             }
         }
         return strings.mapPartitions(new XmlSyntaxToItemMapper(getMetadata()));
