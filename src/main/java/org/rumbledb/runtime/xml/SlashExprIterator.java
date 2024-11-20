@@ -1,3 +1,23 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Authors: Marco Schöb
+ *
+ */
+
 package org.rumbledb.runtime.xml;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -44,8 +64,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         // get unique items based on unique document position
         JavaRDD<Item> res = result.mapToPair(item -> new Tuple2<>(item.getXmlDocumentPosition(), item))
             .groupByKey()
-            .values()
-            .map(it -> it.iterator().next());
+            .map(value -> value._2.iterator().next());
 
         // sort because spark doesnt guarantee any ordering
         return res.sortBy(Item::getXmlDocumentPosition, true, 1);

@@ -2357,11 +2357,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return getSlashes(singleSlashContext, functionCallExpression);
     }
 
+    /**
+     * This method takes a leftMost expression and a path and returns a nested tree of slash expressions which
+     * correspond to the steps in the path applied to the leftMost expression
+     */
     private Expression getSlashes(
             JsoniqParser.RelativePathExprContext relativePathExprContext,
             Expression leftMost
     ) {
-        Expression currentTop = leftMost;
+        Expression currentTop = leftMost; // can be null
         Expression currentStepExpr;
         for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
             currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));

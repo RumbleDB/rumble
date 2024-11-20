@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Author: Marco Schöb
+ * Authors: Marco Schöb
  *
  */
 
@@ -25,11 +25,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -38,7 +35,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class XmlFilesFunctionIterator extends HybridRuntimeIterator {
+public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     RuntimeIterator iterator;
@@ -123,90 +120,5 @@ public class XmlFilesFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return strings.mapPartitions(new XmlSyntaxToItemMapper(getMetadata()));
-    }
-
-    protected void init() {
-        try {
-            URI uri = FileSystemUtil.resolveURI(
-                this.staticURI,
-                this.path.getStringValue(),
-                getMetadata()
-            );
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                getMetadata()
-            );
-            this.reader = new BufferedReader(new InputStreamReader(is));
-            fetchNext();
-        } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-        }
-    }
-
-    @Override
-    protected void openLocal() {
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        init();
-    }
-
-    @Override
-    protected void closeLocal() {
-        try {
-            this.reader.close();
-        } catch (IOException e) {
-            handleException(e);
-        }
-        this.reader = null;
-        this.nextItem = null;
-    }
-
-    @Override
-    protected void resetLocal() {
-        try {
-            this.reader.close();
-        } catch (IOException e) {
-            handleException(e);
-        }
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        init();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        Item result = this.nextItem;
-        fetchNext();
-        return result;
-    }
-
-    public void fetchNext() {
-        throw new OurBadException("TODO");
-        // try {
-        // String line = this.reader.readLine();
-        // this.hasNext = (line != null);
-        // if (this.hasNext) {
-        // JsonReader object = new JsonReader(new StringReader(line));
-        // this.nextItem = ItemParser.getItemFromObject(object, getMetadata());
-        // }
-        // } catch (IOException e) {
-        // handleException(e);
-        // }
-    }
-
-    public void handleException(IOException e) {
-        RumbleException rumbleException = new CannotRetrieveResourceException(
-                "I/O error while accessing file: "
-                    + this.path.getStringValue()
-                    + " Cause: "
-                    + e.getMessage(),
-                getMetadata()
-        );
-        rumbleException.initCause(e);
-        throw rumbleException;
     }
 }
