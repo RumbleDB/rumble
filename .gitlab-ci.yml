@@ -17,77 +17,77 @@ Build:
 SparkRuntimeTest:
   stage: spark-tests
   script:
-    - mvn -Dtest=SparkRuntimeTests test
+    - mvn -Dtest=SparkRuntimeTests test  -Dmaven.test.redirectTestOutputToFile=true
 
 SparkRuntimeTestsNativeDeactivated:
   stage: spark-tests
   script:
-    - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
+    - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test -Dmaven.test.redirectTestOutputToFile=true
 
 SparkRuntimeTestsDataFramesDeactivated:
   stage: spark-tests
   script:
-    - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
+    - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test -Dmaven.test.redirectTestOutputToFile=true
 
 SparkRuntimeTestsParallelismDeactivated:
   stage: spark-tests
   script:
-    - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
+    - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test -Dmaven.test.redirectTestOutputToFile=true
 
 JavaAPITest:
   stage: other-tests
   script:
-    - mvn -Dtest=JavaAPITest test
+    - mvn -Dtest=JavaAPITest test -Dmaven.test.redirectTestOutputToFile=true
 
 FrontendTests:
   stage: other-tests
   script:
-    - mvn -Dtest=FrontendTests test
+    - mvn -Dtest=FrontendTests test -Dmaven.test.redirectTestOutputToFile=true
 
 RuntimeTests:
   stage: other-tests
   script:
-    - mvn -Dtest=RuntimeTests test
+    - mvn -Dtest=RuntimeTests test -Dmaven.test.redirectTestOutputToFile=true
 
 RuntimeTestsNoParallelism:
   stage: other-tests
   script:
-    - mvn -Dtest=RuntimeTestsNoParallelism test
+    - mvn -Dtest=RuntimeTestsNoParallelism test -Dmaven.test.redirectTestOutputToFile=true
 
 RuntimeTestsNoInlining:
   stage: other-tests
   script:
-    - mvn -Dtest=RuntimeTestsNoInlining test
+    - mvn -Dtest=RuntimeTestsNoInlining test -Dmaven.test.redirectTestOutputToFile=true
 
 NativeFLWORRuntimeTests:
   stage: other-tests
   script:
-    - mvn -Dtest=NativeFLWORRuntimeTests test
+    - mvn -Dtest=NativeFLWORRuntimeTests test -Dmaven.test.redirectTestOutputToFile=true
 
 NativeFLWORRuntimeTestsNativeDeactivated:
   stage: other-tests
   script:
-    - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
+    - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test -Dmaven.test.redirectTestOutputToFile=true
 
 NativeFLWORRuntimeTestsDataFramesDeactivated:
   stage: other-tests
   script:
-    - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
+    - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test -Dmaven.test.redirectTestOutputToFile=true
 
 NativeFLWORRuntimeTestsParallelismDeactivated:
   stage: other-tests
   script:
-    - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
+    - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test -Dmaven.test.redirectTestOutputToFile=true
 
 StaticTypingTest:
   stage: other-tests
   script:
-    - mvn -Dtest=StaticTypeTests test
+    - mvn -Dtest=StaticTypeTests test -Dmaven.test.redirectTestOutputToFile=true
 
 SpotlessTest:
   stage: other-tests
   script:
-    - mvn spotless:check
+    - mvn spotless:check -Dmaven.test.redirectTestOutputToFile=true
 
 MLTests:
   stage: other-tests
@@ -99,9 +99,9 @@ MLTests:
       always
     expire_in: 2 days
   script:
-    - mvn -Dtest=MLTests test --log-file target/ml_test.log
+    - mvn -Dtest=MLTests test --log-file target/ml_test.log -Dmaven.test.redirectTestOutputToFile=true
 
 MLTestsNativeDeactivated:
   stage: other-tests
   script:
-    - mvn -Dtest=MLTestsNativeDeactivated test
+    - mvn -Dtest=MLTestsNativeDeactivated test -Dmaven.test.redirectTestOutputToFile=true
