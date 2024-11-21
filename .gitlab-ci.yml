@@ -14,13 +14,14 @@ Build:
     - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.9.3-complete.jar
     - mvn clean compile assembly:single
 
-SparkRuntimeTest:
-  stage: spark-tests
+
+StaticTypingTest:
+  stage: other-tests
   script:
-    - mvn -Dtest=SparkRuntimeTests test  -Dmaven.test.redirectTestOutputToFile=true
+    - mvn -Dtest=StaticTypeTests test -Dmaven.test.redirectTestOutputToFile=true
   artifacts:
     when: always
     paths:
-      - target/TEST-iq.SparkRuntimeTests.xml
+      - target/surefire-reports/TEST-iq.StaticTypeTests.xml
     reports:
-      junit: target/TEST-iq.SparkRuntimeTests.xml
+      junit: target/surefire-reports/TEST-iq.StaticTypeTests.xml
