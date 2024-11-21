@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
@@ -114,6 +115,9 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.*;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
@@ -187,6 +191,11 @@ import org.rumbledb.runtime.update.expression.InsertExpressionIterator;
 import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
+import org.rumbledb.runtime.xml.AtomizationIterator;
+import org.rumbledb.runtime.xml.SlashExprIterator;
+import org.rumbledb.runtime.xml.StepExprIterator;
+import org.rumbledb.runtime.xml.axis.AxisIterator;
+import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -1000,6 +1009,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
+        if (left instanceof StepExprIterator) {
+            // We potentially need to atomize
+            left = new AtomizationIterator(
+                    left,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,
@@ -1471,4 +1487,55 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         runtimeIterator.setStaticContext(statement.getStaticContext());
         return runtimeIterator;
     }
+
+    @Override
+    public RuntimeIterator visitSlashExpr(SlashExpr slashExpr, RuntimeIterator argument) {
+        Expression leftExpression = (Expression) slashExpr.getChildren().get(0);
+        Expression rightExpression = (Expression) slashExpr.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
+
+        RuntimeIterator runtimeIterator = new SlashExprIterator(
+                left,
+                right,
+                slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(slashExpr.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitStepExpr(StepExpr stepExpr, RuntimeIterator argument) {
+        AxisIterator axisIterator = this.visitAxisStep(stepExpr, stepExpr.getMetadata());
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        return new StepExprIterator(
+                axisIterator,
+                nodeTest,
+                new RuntimeStaticContext(
+                        this.config,
+                        SequenceType.ITEM,
+                        stepExpr.getHighestExecutionMode(this.visitorConfig),
+                        stepExpr.getMetadata()
+                )
+        );
+    }
+
+    private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
+        return stepExpr.accept(
+            new AxisIteratorVisitor(),
+            new RuntimeStaticContext(
+                    this.config,
+                    SequenceType.STRING,
+                    ExecutionMode.LOCAL,
+                    metadata
+            )
+        );
+    }
+
 }

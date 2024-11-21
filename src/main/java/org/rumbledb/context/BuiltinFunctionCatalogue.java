@@ -19,6 +19,7 @@ import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.TimeInMillis;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustTimeToTimezone;
@@ -44,24 +45,17 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
-import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.DeltaFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
-import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.RepartitionFunctionIterator;
-import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
+import org.rumbledb.runtime.functions.error.ThrowErrorIterator;
+import org.rumbledb.runtime.functions.input.*;
 import org.rumbledb.runtime.functions.io.DebugFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
+import org.rumbledb.runtime.functions.io.XmlDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
+import org.rumbledb.runtime.functions.nullable.IsNullIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
@@ -92,6 +86,10 @@ import org.rumbledb.runtime.functions.object.ObjectKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectProjectFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
+import org.rumbledb.runtime.functions.random.RandomNumberGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceGeneratorIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceWithBoundsAndSeedIterator;
+import org.rumbledb.runtime.functions.random.RandomSequenceWithBoundsIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.MaxFunctionIterator;
@@ -138,6 +136,8 @@ import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
+import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
+import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -355,6 +355,36 @@ public class BuiltinFunctionCatalogue {
         );
     }
 
+    private static BuiltinFunction createBuiltinFunction(
+            Name functionName,
+            String param1Type,
+            String param2Type,
+            String param3Type,
+            String param4Type,
+            String param5Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 5),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(
+                                SequenceType.createSequenceType(param1Type),
+                                SequenceType.createSequenceType(param2Type),
+                                SequenceType.createSequenceType(param3Type),
+                                SequenceType.createSequenceType(param4Type),
+                                SequenceType.createSequenceType(param5Type)
+                            )
+                        ),
+                        SequenceType.createSequenceType(returnType)
+                ),
+                functionIteratorClass,
+                builtInFunctionExecutionMode
+        );
+    }
+
     /**
      * function that returns the context position
      */
@@ -402,6 +432,16 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
     /**
+     * function that parses multiple xml files into an RDD in parallel
+     */
+    static final BuiltinFunction xml_files = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "xml-files"),
+        "string",
+        "item*",
+        XmlFilesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
+    /**
      * function that parses a libSVM formatted file into a DataFrame
      */
     static final BuiltinFunction libsvm_file = createBuiltinFunction(
@@ -433,6 +473,28 @@ public class BuiltinFunctionCatalogue {
         "string?",
         "item?",
         ParseJsonFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction xml_doc = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "xml-doc"),
+        "string",
+        "item*",
+        XmlDocFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction root_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "root"),
+        "item",
+        "item",
+        GetRootFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction root_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "root"),
+        "item",
+        GetRootFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2688,6 +2750,173 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
+    /**
+     * function that returns a random number
+     */
+    static final BuiltinFunction random_number_generator = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random"
+        ),
+        "double",
+        RandomNumberGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a sequence of random numbers
+     */
+    static final BuiltinFunction random_sequence_generator = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random"
+        ),
+        "integer",
+        "item*",
+        RandomSequenceGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a sequence of random numbers using a seed
+     */
+    static final BuiltinFunction random_sequence_generator_with_seed = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "seeded_random"
+        ),
+        "integer",
+        "integer",
+        "item*",
+        RandomSequenceGeneratorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a sequence of random numbers using a low and high bound, while also allowing to limit the
+     * number of elements generated and their type
+     */
+    static final BuiltinFunction random_sequence_with_bounds = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random-between"
+        ),
+        "integer",
+        "integer",
+        "integer",
+        "string",
+        "integer",
+        "item*",
+        RandomSequenceWithBoundsIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction random_sequence_with_bounds_double = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random-between"
+        ),
+        "double",
+        "double",
+        "integer",
+        "string",
+        "item*",
+        RandomSequenceWithBoundsIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction random_sequence_with_bounds_seeded_int = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "random-between"
+        ),
+        "integer",
+        "integer",
+        "integer",
+        "string",
+        "integer",
+        "item*",
+        RandomSequenceWithBoundsAndSeedIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction error = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "null?",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction error_with_code = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "string",
+        "null?",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction error_with_code_and_description = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "string",
+        "string",
+        "null?",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction item_type = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "item-type"
+        ),
+        "item*",
+        "string",
+        DynamicItemTypeIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction is_null = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "is-null"
+        ),
+        "item*",
+        "boolean",
+        IsNullIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction current_time_millis = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "current-time-milis"
+        ),
+        "integer",
+        TimeInMillis.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
     static {
         builtinFunctions = new HashMap<>();
 
@@ -2697,6 +2926,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(json_file1.getIdentifier(), json_file1);
         builtinFunctions.put(json_file2.getIdentifier(), json_file2);
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
+        builtinFunctions.put(xml_files.getIdentifier(), xml_files);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
         builtinFunctions.put(yaml_doc.getIdentifier(), yaml_doc);
@@ -2892,6 +3122,24 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(binary_classification_metrics1.getIdentifier(), binary_classification_metrics1);
         builtinFunctions.put(binary_classification_metrics2.getIdentifier(), binary_classification_metrics2);
         builtinFunctions.put(print_variable_values.getIdentifier(), print_variable_values);
+        builtinFunctions.put(random_number_generator.getIdentifier(), random_number_generator);
+        builtinFunctions.put(random_sequence_generator.getIdentifier(), random_sequence_generator);
+        builtinFunctions.put(random_sequence_generator_with_seed.getIdentifier(), random_sequence_generator_with_seed);
+        builtinFunctions.put(random_sequence_with_bounds.getIdentifier(), random_sequence_with_bounds);
+        builtinFunctions.put(random_sequence_with_bounds_double.getIdentifier(), random_sequence_with_bounds_double);
+        builtinFunctions.put(error.getIdentifier(), error);
+        builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
+        builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
+        builtinFunctions.put(item_type.getIdentifier(), item_type);
+        builtinFunctions.put(is_null.getIdentifier(), is_null);
+        builtinFunctions.put(
+            random_sequence_with_bounds_seeded_int.getIdentifier(),
+            random_sequence_with_bounds_seeded_int
+        );
+        builtinFunctions.put(xml_doc.getIdentifier(), xml_doc);
+        builtinFunctions.put(root_with_arg.getIdentifier(), root_with_arg);
+        builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
+        builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);
     }
 
 

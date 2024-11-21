@@ -1,15 +1,14 @@
 package org.rumbledb.serialization;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 public class Serializer {
     public enum Method {
@@ -163,6 +162,55 @@ public class Serializer {
                 sb.append(" ");
             }
             sb.append("}");
+        }
+        if (item.isDocumentNode()) {
+            for (Item child : item.children()) {
+                sb.append("<");
+                sb.append(child.nodeName());
+                sb.append(">");
+                sb.append("\n");
+
+                for (Item descendant : child.children()) {
+                    serialize(descendant, sb, indent + "  ", isTopLevel);
+                }
+                sb.append("</");
+                sb.append(child.nodeName());
+                sb.append(">");
+            }
+        }
+        if (item.isElementNode()) {
+            sb.append(indent);
+            sb.append("<");
+            sb.append(item.nodeName());
+            for (Item attribute : item.attributes()) {
+                serialize(attribute, sb, indent, isTopLevel);
+            }
+            sb.append(">");
+            sb.append("\n");
+
+            for (Item child : item.children()) {
+                serialize(child, sb, indent + "  ", isTopLevel);
+            }
+            sb.append(indent);
+            sb.append("</");
+            sb.append(item.nodeName());
+            sb.append(">");
+            sb.append("\n");
+        }
+
+        if (item.isAttributeNode()) {
+            sb.append(" ");
+            sb.append(item.nodeName());
+            sb.append("=");
+            sb.append("\"");
+            sb.append(item.stringValue());
+            sb.append("\"");
+        }
+
+        if (item.isTextNode()) {
+            sb.append(indent);
+            sb.append(item.stringValue());
+            sb.append("\n");
         }
     }
 

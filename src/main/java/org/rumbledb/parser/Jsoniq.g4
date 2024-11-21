@@ -265,7 +265,7 @@ validateExpr            : Kvalidate Ktype sequenceType '{' expr '}';
 
 annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
-simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
+simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
 postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
 
@@ -341,6 +341,109 @@ updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
 // TODO: Direct element constructors
+
+
+///////////////////////// XPath
+
+// PATHS ///////////////////////////////////////////////////////////////////////
+
+pathExpr: (Kslash singleslash=relativePathExpr?) | (Kdslash doubleslash=relativePathExpr) | relative=relativePathExpr ;
+
+relativePathExpr: stepExpr (sep+=(Kslash|Kdslash) stepExpr)* ;
+
+stepExpr: postFixExpr | axisStep ;
+
+axisStep: (reverseStep | forwardStep) predicateList ;
+
+forwardStep: (forwardAxis nodeTest) | abbrevForwardStep ;
+
+forwardAxis: ( Kchild
+             | Kdescendant
+             | Kattribute
+             | Kself
+             | Kdescendant_or_self
+             | Kfollowing_sibling
+             | Kfollowing ) ':' ':' ;
+
+abbrevForwardStep: Kat_symbol nodeTest ;
+
+reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
+
+reverseAxis: ( Kparent
+             | Kancestor
+             | Kpreceding_sibling
+             | Kpreceding
+             | Kancestor_or_self ) ':' ':';
+
+abbrevReverseStep: '..' ;
+
+// Causes issues
+nodeTest: nameTest | kindTest ;
+
+//nodeTest: kindTest;
+
+nameTest: qname | wildcard ;
+
+wildcard: '*'            # allNames
+        | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
+        | nCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
+        ;
+nCNameWithLocalWildcard :  NCName ':' '*' ;
+nCNameWithPrefixWildcard: '*' ':' NCName ;
+
+
+predicateList: predicate*;
+
+kindTest: documentTest
+        | elementTest
+        | attributeTest
+        | schemaElementTest
+        | schemaAttributeTest
+        | piTest
+        | commentTest
+        | textTest
+        | namespaceNodeTest
+        | binaryNodeTest
+        | anyKindTest
+        ;
+
+anyKindTest: Knode '(' ')' ;
+
+binaryNodeTest: Kbinary '(' ')' ;
+
+documentTest: Kdocument_node '(' (elementTest | schemaElementTest)? ')' ;
+
+textTest: Ktext '(' ')' ;
+
+commentTest: Kcomment '(' ')' ;
+
+namespaceNodeTest: Knamespace_node '(' ')' ;
+
+piTest: Kpi '(' (NCName | stringLiteral)? ')' ;
+
+attributeTest: Kattribute '(' (attributeNameOrWildcard (',' type=typeName)?)? ')' ;
+
+attributeNameOrWildcard: attributeName | '*' ;
+
+schemaAttributeTest: Kschema_attribute '(' attributeDeclaration ')' ;
+
+attributeDeclaration: attributeName ;
+
+elementTest: Kelement '(' (elementNameOrWildcard (',' type=typeName optional='?'?)?)? ')' ;
+
+elementNameOrWildcard: elementName | '*' ;
+
+schemaElementTest: Kschema_element '(' elementDeclaration ')' ;
+
+elementDeclaration: elementName ;
+
+attributeName: qname ;
+
+elementName: qname ;
+
+simpleTypeName: typeName ;
+
+typeName: qname;
 
 ///////////////////////// Types
 
@@ -443,6 +546,7 @@ keyWords                : Kjsoniq
                         | Kreturning
                         | Kwhile
                         | Kjson
+                        | Ktext
                         | Kupdating
                         ;
 
@@ -581,6 +685,43 @@ Kposition               : 'position';
 Kjson                   : 'json';
 
 Kupdating               :  'updating';
+
+
+///////////////////////// XPath
+Kimport                 : 'import';
+Kschema                 : 'schema';
+Knamespace              : 'namespace';
+Kelement                : 'element';
+Kslash                  : '/';
+Kdslash                 : '//';
+Kat_symbol              : '@';
+Kchild                  : 'child';
+Kdescendant             : 'descendant';
+Kattribute              : 'attribute';
+Kself                   : 'self';
+Kdescendant_or_self     : 'descendant-or-self';
+Kfollowing_sibling      : 'following-sibling';
+Kfollowing              : 'following';
+Kparent                 : 'parent';
+Kancestor               : 'ancestor';
+Kpreceding_sibling      : 'preceding-sibling';
+Kpreceding              : 'preceding';
+Kancestor_or_self       : 'ancestor-or-self';
+Knode                   : 'node';
+Kbinary                 : 'binary';
+Kdocument               : 'document';
+Kdocument_node          : 'document-node';
+Ktext                   : 'text';
+Kpi                     : 'processing-instruction';
+Knamespace_node         : 'namespace-node';
+Kschema_attribute       : 'schema-attribute';
+Kschema_element         : 'schema-element';
+Karray_node             : 'array-node';
+Kboolean_node           : 'boolean-node';
+Knull_node              : 'null-node';
+Knumber_node            : 'number-node';
+Kobject_node            : 'object-node';
+Kcomment                : 'comment';
 
 ///////////////////////// Scripting keywords
 Kbreak                  : 'break' ;

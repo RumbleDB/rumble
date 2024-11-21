@@ -556,7 +556,7 @@ whileStatement
 pathExpr
 relativePathExpr
 stepExpr
-axisStep
+stepExpr
 forwardStep
 forwardAxis
 abbrevForwardStep

@@ -20,16 +20,15 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -139,7 +138,11 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
                 continue;
             }
             throw new OurBadException(
-                    "Conflicting execution modes in user-defined function parameters. This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize."
+                    "Conflicting execution modes in user-defined function parameters for function: "
+                        + functionIdentifier.getName()
+                        + " with arity: "
+                        + functionIdentifier.getArity()
+                        + ". This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize."
             );
         }
         if (oldModes.hasNext() || updatedModes.hasNext()) {

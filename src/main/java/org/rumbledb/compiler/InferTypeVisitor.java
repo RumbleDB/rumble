@@ -103,6 +103,8 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -2625,4 +2627,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     // endregion
+
+    // region xml
+
+
+    @Override
+    public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
+        visitDescendants(slashExpr, argument);
+        slashExpr.setStaticSequenceType(SequenceType.ITEM_STAR);
+        return argument;
+    }
+
+    // TODO: Currently, step expressions are marked as string, but this type may differ. Update to relevant type.
+    @Override
+    public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
+        stepExpr.setStaticSequenceType(SequenceType.ITEM_STAR);
+        return argument;
+    }
+
+    // end xml
 }
