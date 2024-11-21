@@ -1101,7 +1101,7 @@ returns false.
 This is pushed down to Spark and works on big sequences.
 
 ```
-exists(json-file("file.json"))
+exists(json-lines("file.json"))
 ```
 
 ### head
@@ -1129,7 +1129,7 @@ returns ().
 This is pushed down to Spark and works on big sequences.
 
 ```
-head(json-file("file.json"))
+head(json-lines("file.json"))
 ```
 
 ### tail
@@ -1156,7 +1156,7 @@ returns ().
 This is pushed down to Spark and works on big sequences.
 
 ```
-tail(json-file("file.json"))
+tail(json-lines("file.json"))
 ```
 
 
@@ -1240,7 +1240,7 @@ returns (1, 4, 3, "foo", true, 5).
 This is pushed down to Spark and works on big sequences.
 
 ```
-distinct-values(json-file("file.json").foo)
+distinct-values(json-lines("file.json").foo)
 ```
 
 ```
@@ -1349,12 +1349,12 @@ returns 4.
 Count calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-count(json-file("file.json"))
+count(json-lines("file.json"))
 ```
 
 ```
 count(
-  for $i in json-file("file.json")
+  for $i in json-lines("file.json")
   where $i.foo eq "bar"
   return $i
 )
@@ -1376,7 +1376,7 @@ returns 2.5.
 Avg calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-avg(json-file("file.json").foo)
+avg(json-lines("file.json").foo)
 ```
 
 
@@ -1406,7 +1406,7 @@ returns (1, 2, 3).
 Max calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-max(json-file("file.json").foo)
+max(json-lines("file.json").foo)
 ```
 
 ### min
@@ -1432,7 +1432,7 @@ returns (1, 2, 3).
 Min calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-min(json-file("file.json").foo)
+min(json-lines("file.json").foo)
 ```
 
 
@@ -1452,7 +1452,7 @@ returns 10.
 Sum calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-sum(json-file("file.json").foo)
+sum(json-lines("file.json").foo)
 ```
 
 
@@ -1634,7 +1634,7 @@ keys(({"foo" : "bar", "bar" : "foobar"}, {"foo": "bar2"}))
 Keys calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-keys(json-file("file.json"))
+keys(json-lines("file.json"))
 ```
 
 ### members
@@ -1816,7 +1816,7 @@ values(({"foo" : "bar", "bar" : "foobar"}, {"foo" : "bar2"}))
 Values calls are pushed down to Spark, so this works on billions of items as well:
 
 ```
-values(json-file("file.json"))
+values(json-lines("file.json"))
 ```
 
 ### encode-for-roundtrip

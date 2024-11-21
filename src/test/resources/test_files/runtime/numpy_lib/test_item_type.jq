@@ -18,5 +18,5 @@ fn:item-type(anyURI("example.com/")),
 fn:item-type(dateTimeStamp("2004-04-12T13:20:00-05:00")),
 fn:item-type(dayTimeDuration("P3DT5H6.001S")),
 fn:item-type(yearMonthDuration("P2Y4M")),
-fn:item-type(json-file("../../../queries/rumbleML/sample-ml-data-age-weight.json")),
-fn:item-type(json-file("../../../queries/rumbleML/sample-ml-data-age-weight.json")."age")
+fn:item-type(json-lines("../../../queries/rumbleML/sample-ml-data-age-weight.json")),
+fn:item-type(json-lines("../../../queries/rumbleML/sample-ml-data-age-weight.json")."age")

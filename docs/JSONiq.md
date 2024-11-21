@@ -19,7 +19,7 @@ A tutorial aimed at Python users can be found [here](https://github.com/ghislain
 FLWOR expressions now support nestedness, for example like so:
 
 ```
-let $x := for $x in json-file("file.json")
+let $x := for $x in json-lines("file.json")
           where $x.field eq "foo"
           return $x
 return count($x)
@@ -28,8 +28,8 @@ return count($x)
 However, keep in mind that parallelization cannot be nested in Spark (there cannot be a job within a job), that is, the following will not work:
 
 ```
-for $x in json-file("file1.json")
-let $z := for $y in json-file("file2.json")
+for $x in json-lines("file1.json")
+let $z := for $y in json-lines("file2.json")
           where $y.foo eq $x.fbar
           return $y
 return count($z)
@@ -41,12 +41,12 @@ return count($z)
 Many expressions are pushed down to Spark out of the box. For example, this will work on a large file leveraging the parallelism of Spark:
 
 ```
-count(json-file("file.json")[$$.field eq "foo"].bar[].foo[[1]])
+count(json-lines("file.json")[$$.field eq "foo"].bar[].foo[[1]])
 ```
 
 What is pushed down so far is:
 
-- FLWOR expressions (as soon as a for clause is encountered, binding a variable to a sequence generated with json-file() or parallelize())
+- FLWOR expressions (as soon as a for clause is encountered, binding a variable to a sequence generated with json-lines() or parallelize())
 - aggregation functions such as count
 - JSON navigation expressions: object lookup (as well as keys() call), array lookup, array unboxing, filtering predicates
 - predicates on positions, include use of context-dependent functions position() and last(), e.g.,
@@ -54,12 +54,12 @@ What is pushed down so far is:
 - many builtin function calls (head, tail, exist, etc)
 
 ```
-json-file("file.json")[position() ge 10 and position() le last() - 2]
+json-lines("file.json")[position() ge 10 and position() le last() - 2]
 ```
 
 More expressions working on sequences will be pushed down in the future, prioritized on the feedback we receive.
 
-We also started to push down some expressions to DataFrames and Spark SQL (obtained via structured-json-file, csv-file and parquet-file calls). In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() as well as object lookup, array unboxing and array lookup is also pushed down on DataFrames.
+We also started to push down some expressions to DataFrames and Spark SQL (obtained via structured-json-lines, csv-file and parquet-file calls). In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-lines(). Likewise, count() as well as object lookup, array unboxing and array lookup is also pushed down on DataFrames.
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 200 items, but this can be changed on the command line with --materialization-cap. A warning is issued if a materialization happened and the sequence was truncated on screen. An error is thrown if this happens within a query.
 

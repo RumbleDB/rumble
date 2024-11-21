@@ -15,6 +15,6 @@ declare type local:sample-type-with-arrays as {
     "doubleArrayArrayCol": [["double"]]
 };
 
-declare variable $file_data := json-file("../../../queries/sample-na-data-4.json");
+declare variable $file_data := json-lines("../../../queries/sample-na-data-4.json");
 let $data := validate type local:sample-type-with-arrays* {$file_data}
 return $data=>pandas:fillna({"value": 1})

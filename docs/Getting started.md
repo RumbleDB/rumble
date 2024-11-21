@@ -184,24 +184,24 @@ or
      
 The above queries do not actually use Spark. Spark is used when the I/O workload can be parallelized. The following query should output the file created above.
      
-     json-file("data.json")
+     json-lines("data.json")
      
-json-file() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
+json-lines() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     return $i
 
 The above creates a very simple Spark job and executes it. More complex queries will create several Spark jobs. But you will not see anything of it: this is all done behind the scenes. If you are curious, you can go to [localhost:4040](http://localhost:4040) in your browser while your query is running (it will not be available once the job is complete) and look at what is going on behind the scenes.
 
 Data can be filtered with the where clause. Again, below the hood, a Spark transformation will be used:
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     where $i.quantity gt 99
     return $i
     
 RumbleDB also supports grouping and aggregation, like so:
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     return { "product" : $product, "total-quantity" : sum($quantity) }
@@ -210,7 +210,7 @@ RumbleDB also supports grouping and aggregation, like so:
 RumbleDB also supports ordering. Note that clauses (where, let, group by, order by) can appear in any order.
 The only constraint is that the first clause should be a for or a let clause.
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     let $sum := sum($quantity)
