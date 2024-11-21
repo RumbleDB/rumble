@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="(false, false, true, true, false, true)" :)
-deep-equal(csv-file("../../../../queries/cities.csv"), json-file("../../../../queries/conf-ex.json", 10)),
+deep-equal(csv-file("../../../../queries/cities.csv"), json-lines("../../../../queries/conf-ex.json", 10)),
 deep-equal(json-file("../../../../queries/conf-ex.json", 10), csv-file("../../../../queries/cities.csv")),
 deep-equal(json-file("../../../../queries/conf-ex.json", 4), json-file("../../../../queries/conf-ex.json", 5)),
 deep-equal(json-file("../../../../queries/conf-ex.json", 5), json-file("../../../../queries/conf-ex.json", 4)),

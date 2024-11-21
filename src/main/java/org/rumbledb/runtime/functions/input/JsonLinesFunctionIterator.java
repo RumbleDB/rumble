@@ -45,7 +45,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JsonFileFunctionIterator extends HybridRuntimeIterator {
+public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     RuntimeIterator iterator;
@@ -53,7 +53,7 @@ public class JsonFileFunctionIterator extends HybridRuntimeIterator {
     Item path;
     Item nextItem;
 
-    public JsonFileFunctionIterator(
+    public JsonLinesFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {

@@ -8,9 +8,9 @@ A few example queries you could try out to get started:
 
 1 + 1
 
-json-file("http://rumbledb.org/samples/products-small.json", 10)[1]
+json-lines("http://rumbledb.org/samples/products-small.json", 10)[1]
 
-count(json-file("http://rumbledb.org/samples/products-small.json", 10))
+count(json-lines("http://rumbledb.org/samples/products-small.json", 10))
 
 for $product in json-file("http://rumbledb.org/samples/products-small.json", 10)
 where $product.quantity ge 995
