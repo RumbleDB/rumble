@@ -20,7 +20,6 @@ SparkRuntimeTest:
     - mvn -Dtest=SparkRuntimeTests test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.SparkRuntimeTests.xml
     reports:
@@ -32,7 +31,6 @@ SparkRuntimeTestsNativeDeactivated:
     - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.SparkRuntimeTestsNativeDeactivated.xml
     reports:
@@ -44,7 +42,6 @@ SparkRuntimeTestsDataFramesDeactivated:
     - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.SparkRuntimeTestsDataFramesDeactivated.xml
     reports:
@@ -56,7 +53,6 @@ SparkRuntimeTestsParallelismDeactivated:
     - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.SparkRuntimeTestsParallelismDeactivated.xml
     reports:
@@ -68,7 +64,6 @@ JavaAPITest:
     - mvn -Dtest=JavaAPITest test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.JavaAPITest.xml
     reports:
@@ -80,7 +75,6 @@ FrontendTests:
     - mvn -Dtest=FrontendTests test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.FrontendTests.xml
     reports:
@@ -92,7 +86,6 @@ RuntimeTests:
     - mvn -Dtest=RuntimeTests test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.RuntimeTests.xml
     reports:
@@ -104,7 +97,6 @@ RuntimeTestsNoParallelism:
     - mvn -Dtest=RuntimeTestsNoParallelism test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.RuntimeTestsNoParallelism.xml
     reports:
@@ -116,7 +108,6 @@ RuntimeTestsNoInlining:
     - mvn -Dtest=RuntimeTestsNoInlining test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.RuntimeTestsNoInlining.xml
     reports:
@@ -128,7 +119,6 @@ NativeFLWORRuntimeTests:
     - mvn -Dtest=NativeFLWORRuntimeTests test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTests.xml
     reports:
@@ -140,7 +130,6 @@ NativeFLWORRuntimeTestsNativeDeactivated:
     - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsNativeDeactivated.xml
     reports:
@@ -152,7 +141,6 @@ NativeFLWORRuntimeTestsDataFramesDeactivated:
     - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsDataFramesDeactivated.xml
     reports:
@@ -164,7 +152,6 @@ NativeFLWORRuntimeTestsParallelismDeactivated:
     - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsParallelismDeactivated.xml
     reports:
@@ -176,7 +163,6 @@ StaticTypingTest:
     - mvn -Dtest=StaticTypeTests test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.StaticTypeTests.xml
     reports:
@@ -192,11 +178,8 @@ MLTests:
   script:
     - mvn -Dtest=MLTests test --log-file target/ml_test.log
   artifacts:
-    name: "ML Tests log and report"
     when: always
-    expire_in: 2 days
     paths:
-      - target/ml_test.log
       - target/surefire-reports/TEST-iq.MLTests.xml
     reports:
       junit: target/surefire-reports/TEST-iq.MLTests.xml
@@ -207,7 +190,6 @@ MLTestsNativeDeactivated:
     - mvn -Dtest=MLTestsNativeDeactivated test
   artifacts:
     when: always
-    expire_in: 2 days
     paths:
       - target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
     reports:
