@@ -31,20 +31,20 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
     }
 
     private GeneratedRandomsIterator createRandomNumberStream() {
-        if (type.getStringValue().equals("integer")) {
+        if (this.type.getStringValue().equals("integer")) {
             return new GeneratedRandomIntegersIterator(
-                    size,
-                    low.castToIntValue(),
-                    high.castToIntValue(),
-                    seed
+                    this.size,
+                    this.low.castToIntValue(),
+                    this.high.castToIntValue(),
+                    this.seed
             );
         } else {
             // Generate doubles otherwise
             return new GeneratedRandomDoublesIterator(
-                    size,
-                    low.castToDoubleValue(),
-                    high.castToDoubleValue(),
-                    seed
+                    this.size,
+                    this.low.castToDoubleValue(),
+                    this.high.castToDoubleValue(),
+                    this.seed
             );
         }
     }

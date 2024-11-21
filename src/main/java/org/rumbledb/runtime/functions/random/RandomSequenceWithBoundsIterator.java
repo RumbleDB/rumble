@@ -32,18 +32,18 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
     }
 
     private GeneratedRandomsIterator createRandomNumberStream() {
-        if (type.getStringValue().equals("integer")) {
+        if (this.type.getStringValue().equals("integer")) {
             return new GeneratedRandomIntegersIterator(
-                    size,
-                    low.castToIntValue(),
-                    high.castToIntValue()
+                    this.size,
+                    this.low.castToIntValue(),
+                    this.high.castToIntValue()
             );
         } else {
             // Generate doubles otherwise
             return new GeneratedRandomDoublesIterator(
-                    size,
-                    low.castToDoubleValue(),
-                    high.castToDoubleValue()
+                    this.size,
+                    this.low.castToDoubleValue(),
+                    this.high.castToDoubleValue()
             );
         }
     }

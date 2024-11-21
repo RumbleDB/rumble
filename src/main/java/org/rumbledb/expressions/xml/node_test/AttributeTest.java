@@ -42,7 +42,7 @@ public class AttributeTest implements NodeTest {
         } else if (this.attributeName != null) {
             sb.append(this.attributeName);
         }
-        if (typeName != null) {
+        if (this.typeName != null) {
             sb.append(",");
             sb.append(this.typeName);
         }
@@ -68,15 +68,15 @@ public class AttributeTest implements NodeTest {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, attributeName);
-        kryo.writeObject(output, typeName);
-        output.writeBoolean(hasWildcard);
+        kryo.writeObject(output, this.attributeName);
+        kryo.writeObject(output, this.typeName);
+        output.writeBoolean(this.hasWildcard);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        attributeName = kryo.readObject(input, Name.class);
-        typeName = kryo.readObject(input, Name.class);
-        hasWildcard = input.readBoolean();
+        this.attributeName = kryo.readObject(input, Name.class);
+        this.typeName = kryo.readObject(input, Name.class);
+        this.hasWildcard = input.readBoolean();
     }
 }

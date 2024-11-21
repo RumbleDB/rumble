@@ -23,7 +23,7 @@ public class DocumentTest implements NodeTest {
     }
 
     public boolean isEmptyCheck() {
-        return nodeTest == null;
+        return this.nodeTest == null;
     }
 
     public NodeTest getNodeTest() {
@@ -32,11 +32,11 @@ public class DocumentTest implements NodeTest {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, nodeTest);
+        kryo.writeObject(output, this.nodeTest);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        nodeTest = kryo.readObject(input, NodeTest.class);
+        this.nodeTest = kryo.readObject(input, NodeTest.class);
     }
 }

@@ -14,7 +14,7 @@ public enum ReverseAxis {
     }
 
     public String getAxisValue() {
-        return axisValue;
+        return this.axisValue;
     }
 
     public static ReverseAxis fromString(String text) {

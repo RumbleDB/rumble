@@ -126,7 +126,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             this.results.sort(Item::compareXmlNode);
         }
         if (this.nextResultCounter < this.results.size()) {
-            this.nextResult = this.results.get(nextResultCounter++);
+            this.nextResult = this.results.get(this.nextResultCounter++);
         } else {
             this.hasNext = false;
         }

@@ -45,8 +45,8 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(path);
-        output.writeInt(docPosition);
+        output.writeString(this.path);
+        output.writeInt(this.docPosition);
     }
 
     @Override
@@ -56,11 +56,11 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
     }
 
     public String getPath() {
-        return path;
+        return this.path;
     }
 
     public int getDocPosition() {
-        return docPosition;
+        return this.docPosition;
     }
 
     @Override

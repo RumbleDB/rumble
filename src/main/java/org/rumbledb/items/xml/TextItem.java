@@ -55,7 +55,7 @@ public class TextItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, documentPos);
+        kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.textNode);
         kryo.writeClassAndObject(output, this.parent);
     }

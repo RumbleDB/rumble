@@ -47,7 +47,7 @@ public class DocumentItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.documentNode);
         kryo.writeObject(output, this.children);
-        kryo.writeObject(output, documentPos);
+        kryo.writeObject(output, this.documentPos);
     }
 
     @SuppressWarnings("unchecked")

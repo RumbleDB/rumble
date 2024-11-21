@@ -29,12 +29,12 @@ public class ForwardStepExpr extends StepExpr {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append(forwardAxis.getAxisValue());
-        sb.append(nodeTest.toString());
+        sb.append(this.forwardAxis.getAxisValue());
+        sb.append(this.nodeTest.toString());
     }
 
     public ForwardAxis getForwardAxis() {
-        return forwardAxis;
+        return this.forwardAxis;
     }
 
     @Override
@@ -44,6 +44,6 @@ public class ForwardStepExpr extends StepExpr {
 
     @Override
     public NodeTest getNodeTest() {
-        return nodeTest;
+        return this.nodeTest;
     }
 }

@@ -10,17 +10,17 @@ public class GeneratedRandomIntegersIterator extends GeneratedRandomsIterator {
 
     public GeneratedRandomIntegersIterator(int size, int low, int high) {
         super();
-        this.iterator = random.ints(size, low, high).iterator();
+        this.iterator = this.random.ints(size, low, high).iterator();
     }
 
     public GeneratedRandomIntegersIterator(int size, int low, int high, int seed) {
         super(seed);
-        this.iterator = random.ints(size, low, high).iterator();
+        this.iterator = this.random.ints(size, low, high).iterator();
     }
 
     @Override
     public Item getNextRandom() {
-        return ItemFactory.getInstance().createIntItem(iterator.next());
+        return ItemFactory.getInstance().createIntItem(this.iterator.next());
     }
 
     @Override

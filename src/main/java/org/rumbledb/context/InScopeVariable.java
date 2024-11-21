@@ -83,6 +83,6 @@ public class InScopeVariable implements Serializable, KryoSerializable {
     }
 
     public boolean isAssignable() {
-        return isAssignable;
+        return this.isAssignable;
     }
 }

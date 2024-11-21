@@ -26,7 +26,7 @@ public class SlashExprClosure implements FlatMapFunction<Item, Item> {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(item);
         this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
-        List<Item> result = rightIterator.materialize(this.dynamicContext);
+        List<Item> result = this.rightIterator.materialize(this.dynamicContext);
         return result.iterator();
     }
 }

@@ -34,7 +34,7 @@ public class ExitStatement extends Statement {
     }
 
     public Expression getExitExpression() {
-        return exitExpression;
+        return this.exitExpression;
     }
 
 }
