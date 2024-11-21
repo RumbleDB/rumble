@@ -8,14 +8,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
-import scala.Tuple2;
 
 public class TextItem implements Item {
     private static final long serialVersionUID = 1L;
     private Node textNode;
     private Item parent;
-    private int documentPos;
-    private String path;
+    private XMLDocumentPosition documentPos;
 
     public TextItem(Node textNode) {
         this.textNode = textNode;
@@ -23,14 +21,13 @@ public class TextItem implements Item {
 
     @Override
     public int setXmlDocumentPosition(String path, int current) {
-        this.path = path;
-        this.documentPos = current;
+        this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
     }
 
     @Override
-    public Tuple2<String, Integer> getXmlDocumentPosition() {
-        return new Tuple2<>(this.path, this.documentPos);
+    public XMLDocumentPosition getXmlDocumentPosition() {
+        return this.documentPos;
     }
 
     @Override
@@ -58,14 +55,14 @@ public class TextItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeInt(documentPos);
+        kryo.writeObject(output, documentPos);
         kryo.writeClassAndObject(output, this.textNode);
         kryo.writeClassAndObject(output, this.parent);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.documentPos = input.readInt();
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.textNode = (Node) kryo.readClassAndObject(input);
         this.parent = (Item) kryo.readClassAndObject(input);
     }

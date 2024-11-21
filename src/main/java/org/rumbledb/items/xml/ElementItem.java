@@ -8,7 +8,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
-import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +19,7 @@ public class ElementItem implements Item {
     private Node elementNode;
     private Item parent;
     // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
-    private int documentPos;
-    private String path;
+    private XMLDocumentPosition documentPos;
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
         this.elementNode = elementNode;
@@ -31,8 +29,7 @@ public class ElementItem implements Item {
 
     @Override
     public int setXmlDocumentPosition(String path, int current) {
-        this.path = path;
-        this.documentPos = current;
+        this.documentPos = new XMLDocumentPosition(path, current);
         for (Item attribute : this.attributes) {
             current++;
             current = attribute.setXmlDocumentPosition(path, current);
@@ -45,8 +42,8 @@ public class ElementItem implements Item {
     }
 
     @Override
-    public Tuple2<String, Integer> getXmlDocumentPosition() {
-        return new Tuple2<>(this.path, this.documentPos);
+    public XMLDocumentPosition getXmlDocumentPosition() {
+        return this.documentPos;
     }
 
     @Override
@@ -57,7 +54,7 @@ public class ElementItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeInt(documentPos);
+        kryo.writeObject(output, documentPos);
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
@@ -67,7 +64,7 @@ public class ElementItem implements Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        documentPos = input.readInt();
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);

@@ -10,13 +10,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
-import scala.Tuple2;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -982,7 +982,7 @@ public interface Item extends Serializable, KryoSerializable {
      * Method gets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
      */
-    default Tuple2<String, Integer> getXmlDocumentPosition() {
+    default XMLDocumentPosition getXmlDocumentPosition() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

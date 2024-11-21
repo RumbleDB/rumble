@@ -8,14 +8,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
-import scala.Tuple2;
 
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
     private Node attributeNode;
     private Item parent;
-    private int documentPos;
-    private String path;
+    private XMLDocumentPosition documentPos;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
 
     public AttributeItem(Node attributeNode) {
@@ -26,27 +24,26 @@ public class AttributeItem implements Item {
 
     @Override
     public int setXmlDocumentPosition(String path, int current) {
-        this.path = path;
-        documentPos = current;
+        this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
     }
 
     @Override
-    public Tuple2<String, Integer> getXmlDocumentPosition() {
-        return new Tuple2<>(this.path, this.documentPos);
+    public XMLDocumentPosition getXmlDocumentPosition() {
+        return this.documentPos;
     }
 
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeInt(documentPos);
+        kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.attributeNode);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.documentPos = input.readInt();
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
         this.attributeNode = kryo.readObject(input, Node.class);
     }
