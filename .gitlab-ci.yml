@@ -198,8 +198,8 @@ MLTests:
     paths:
       - target/ml_test.log
       - target/surefire-reports/TEST-iq.MLTests.xml
-      - reports:
-          junit: target/surefire-reports/TEST-iq.MLTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.MLTests.xml
 
 MLTestsNativeDeactivated:
   stage: other-tests
