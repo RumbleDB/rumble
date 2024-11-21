@@ -20,11 +20,15 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
-public class XmlDocFunctionIterator extends LocalFunctionCallIterator {
+/**
+ * The `DocFunctionIterator` class implements the `doc` function from XQuery.
+ * It retrieves and parses an XML document from a given URI.
+ */
+public class DocFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator pathIterator;
 
-    public XmlDocFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public DocFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }
 

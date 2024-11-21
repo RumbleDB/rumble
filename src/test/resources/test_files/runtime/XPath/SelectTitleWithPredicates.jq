@@ -1,2 +1,2 @@
 (:JIQS: ShouldRun; Output="(<title lang="en">\n  XQuery Kick Start\n</title>\n, <title lang="en">\n  Learning XML\n</title>\n)":)
-xml-doc("../../../queries/xml/books.xml")//child::book[@category eq "web"]/child::title[@lang eq "en"]
+doc("../../../queries/xml/books.xml")//child::book[@category eq "web"]/child::title[@lang eq "en"]
