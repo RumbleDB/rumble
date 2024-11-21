@@ -423,22 +423,22 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
-     *  function that parses a JSON lines file
+     * function that parses a JSON lines file
      */
     static final BuiltinFunction json_lines1 = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "json-lines"),
-            "string",
-            "item*",
-            JsonLinesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+        new Name(Name.JN_NS, "jn", "json-lines"),
+        "string",
+        "item*",
+        JsonLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction json_lines2 = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "json-lines"),
-            "string",
-            "integer?",
-            "item*",
-            JsonLinesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+        new Name(Name.JN_NS, "jn", "json-lines"),
+        "string",
+        "integer?",
+        "item*",
+        JsonLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
      * deprecated function that parses a structured JSON lines file into a DataFrame
@@ -455,11 +455,11 @@ public class BuiltinFunctionCatalogue {
      * function that parses a structured JSON lines file into a DataFrame
      */
     static final BuiltinFunction structured_json_lines = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "structured-json-lines"),
-            "string",
-            "item*",
-            StructuredJsonLinesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        new Name(Name.JN_NS, "jn", "structured-json-lines"),
+        "string",
+        "item*",
+        StructuredJsonLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
     /**
      * function that parses a libSVM formatted file into a DataFrame
@@ -509,11 +509,11 @@ public class BuiltinFunctionCatalogue {
      * function that parses multiple xml files into an RDD
      */
     static final BuiltinFunction xml_files = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "xml-files"),
-            "string",
-            "item*",
-            XmlFilesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+        new Name(Name.JN_NS, "jn", "xml-files"),
+        "string",
+        "item*",
+        XmlFilesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
