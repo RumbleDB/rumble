@@ -1048,7 +1048,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private ExecutionMode getHighestExecutionMode(ExecutionMode firstExecMode, ExecutionMode secondExecMode) {
+    private static ExecutionMode getHighestExecutionMode(ExecutionMode firstExecMode, ExecutionMode secondExecMode) {
         if (firstExecMode == ExecutionMode.UNSET || secondExecMode == ExecutionMode.UNSET) {
             return ExecutionMode.UNSET;
         }
