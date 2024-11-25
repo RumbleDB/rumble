@@ -49,7 +49,7 @@ Then, you can execute queries in subsequent cells with:
 or on multiple lines:
 
     %%jsoniq
-    for $doc in json-file("my-file")
+    for $doc in json-lines("my-file")
     where $doc.foo eq "bar"
     return $doc
 

@@ -16,7 +16,7 @@ public enum ForwardAxis {
     }
 
     public String getAxisValue() {
-        return axisValue;
+        return this.axisValue;
     }
 
     public static ForwardAxis fromString(String text) {

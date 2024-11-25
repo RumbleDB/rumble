@@ -29,8 +29,8 @@ public class ReverseStepExpr extends StepExpr {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append(reverseAxis.getAxisValue());
-        sb.append(nodeTest.toString());
+        sb.append(this.reverseAxis.getAxisValue());
+        sb.append(this.nodeTest.toString());
     }
 
     public ReverseAxis getReverseAxis() {
@@ -44,6 +44,6 @@ public class ReverseStepExpr extends StepExpr {
 
     @Override
     public NodeTest getNodeTest() {
-        return nodeTest;
+        return this.nodeTest;
     }
 }

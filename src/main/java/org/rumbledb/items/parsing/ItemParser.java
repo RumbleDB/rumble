@@ -143,7 +143,7 @@ public class ItemParser implements Serializable {
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
             RumbleException r = new ParsingException(
-                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-lines(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
             );
             r.initCause(e);

@@ -46,9 +46,10 @@
                     <compilerId>eclipse</compilerId>
                     <source>1.8</source>
                     <target>1.8</target>
-                    <compilerArguments>
-                        <properties>${project.basedir}/org.eclipse.jdt.core.prefs</properties>
-                    </compilerArguments>
+                    <compilerArgs>
+                        <arg>-properties</arg>
+                        <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                    </compilerArgs>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -62,6 +63,14 @@
                         <version>3.20.0</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

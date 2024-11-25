@@ -59,7 +59,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         // we can do an optimization using SparkSQL OFFSET if it is a DataFrame
         if (this.iterator.isDataFrame()) {
-            JSoundDataFrame df = iterator.getDataFrame(dynamicContext);
+            JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             df = df.evaluateSQL(
                 String.format(

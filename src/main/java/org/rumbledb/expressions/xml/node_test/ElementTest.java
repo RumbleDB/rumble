@@ -60,7 +60,7 @@ public class ElementTest implements NodeTest {
     }
 
     public String getElementName() {
-        return elementName.getLocalName();
+        return this.elementName.getLocalName();
     }
 
     public boolean isWildcardOnly() {

@@ -53,7 +53,7 @@ import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
-import org.rumbledb.runtime.functions.io.XmlDocFunctionIterator;
+import org.rumbledb.runtime.functions.io.DocFunctionIterator;
 import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
 import org.rumbledb.runtime.functions.nullable.IsNullIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
@@ -404,13 +404,14 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
-     * function that parses a JSON lines file
+     * deprecated function that parses a JSON lines file
+     * replaced by 'json-lines'
      */
     static final BuiltinFunction json_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "json-file"),
         "string",
         "item*",
-        JsonFileFunctionIterator.class,
+        JsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction json_file2 = createBuiltinFunction(
@@ -418,28 +419,47 @@ public class BuiltinFunctionCatalogue {
         "string",
         "integer?",
         "item*",
-        JsonFileFunctionIterator.class,
+        JsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
-     * function that parses a structured JSON lines file into a DataFrame
+     * function that parses a JSON lines file
+     */
+    static final BuiltinFunction json_lines1 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "json-lines"),
+        "string",
+        "item*",
+        JsonLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
+    static final BuiltinFunction json_lines2 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "json-lines"),
+        "string",
+        "integer?",
+        "item*",
+        JsonLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
+    /**
+     * deprecated function that parses a structured JSON lines file into a DataFrame
+     * replaced by 'structured-json-lines'
      */
     static final BuiltinFunction structured_json_file = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "structured-json-file"),
         "string",
         "item*",
-        StructuredJsonFileFunctionIterator.class,
+        StructuredJsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
     /**
-     * function that parses multiple xml files into an RDD in parallel
+     * function that parses a structured JSON lines file into a DataFrame
      */
-    static final BuiltinFunction xml_files = createBuiltinFunction(
-        new Name(Name.JN_NS, "jn", "xml-files"),
+    static final BuiltinFunction structured_json_lines = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "structured-json-lines"),
         "string",
         "item*",
-        XmlFilesFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+        StructuredJsonLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
     /**
      * function that parses a libSVM formatted file into a DataFrame
@@ -475,12 +495,25 @@ public class BuiltinFunctionCatalogue {
         ParseJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
-    static final BuiltinFunction xml_doc = createBuiltinFunction(
-        new Name(Name.FN_NS, "fn", "xml-doc"),
+    /**
+     * function that parses a xml file
+     */
+    static final BuiltinFunction doc = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "doc"),
+        "string?",
+        "item*",
+        DocFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that parses multiple xml files into an RDD
+     */
+    static final BuiltinFunction xml_files = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "xml-files"),
         "string",
         "item*",
-        XmlDocFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        XmlFilesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
@@ -2925,7 +2958,10 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(json_file1.getIdentifier(), json_file1);
         builtinFunctions.put(json_file2.getIdentifier(), json_file2);
+        builtinFunctions.put(json_lines1.getIdentifier(), json_lines1);
+        builtinFunctions.put(json_lines2.getIdentifier(), json_lines2);
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
+        builtinFunctions.put(structured_json_lines.getIdentifier(), structured_json_lines);
         builtinFunctions.put(xml_files.getIdentifier(), xml_files);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
@@ -3136,7 +3172,7 @@ public class BuiltinFunctionCatalogue {
             random_sequence_with_bounds_seeded_int.getIdentifier(),
             random_sequence_with_bounds_seeded_int
         );
-        builtinFunctions.put(xml_doc.getIdentifier(), xml_doc);
+        builtinFunctions.put(doc.getIdentifier(), doc);
         builtinFunctions.put(root_with_arg.getIdentifier(), root_with_arg);
         builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
         builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);

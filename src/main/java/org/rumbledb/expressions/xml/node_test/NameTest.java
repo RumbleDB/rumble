@@ -46,13 +46,13 @@ public class NameTest implements NodeTest {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, qname);
-        kryo.writeObject(output, wildcardWithNCName);
+        kryo.writeObject(output, this.qname);
+        kryo.writeObject(output, this.wildcardWithNCName);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        qname = kryo.readObject(input, Name.class);
-        wildcardWithNCName = kryo.readObject(input, String.class);
+        this.qname = kryo.readObject(input, Name.class);
+        this.wildcardWithNCName = kryo.readObject(input, String.class);
     }
 }

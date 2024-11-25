@@ -34,7 +34,7 @@ public class ElementItem implements Item {
             current++;
             current = attribute.setXmlDocumentPosition(path, current);
         }
-        for (Item child : children) {
+        for (Item child : this.children) {
             current++;
             current = child.setXmlDocumentPosition(path, current);
         }
@@ -54,7 +54,7 @@ public class ElementItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, documentPos);
+        kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);

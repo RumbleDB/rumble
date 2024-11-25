@@ -30,7 +30,7 @@ public class GeneratedRandomDoublesIterator extends GeneratedRandomsIterator {
 
     @Override
     public Item getNextRandom() {
-        return ItemFactory.getInstance().createDoubleItem(iterator.next());
+        return ItemFactory.getInstance().createDoubleItem(this.iterator.next());
     }
 
     @Override
