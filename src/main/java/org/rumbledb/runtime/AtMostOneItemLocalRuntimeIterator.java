@@ -173,12 +173,14 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
             return !item.getStringValue().isEmpty();
         }
-        if (item.isObject()) {
-            return true;
-        }
-        if (item.isArray()) {
-            return true;
-        }
+        /*
+         * if (item.isObject()) {
+         * return true;
+         * }
+         * if (item.isArray()) {
+         * return true;
+         * }
+         */
         throw new InvalidArgumentTypeException(
                 "Effective boolean value not defined for items of type "
                     +

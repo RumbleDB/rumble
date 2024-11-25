@@ -152,12 +152,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = false;
             } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
-            } else if (item.isObject()) {
-                this.close();
-                return true;
-            } else if (item.isArray()) {
-                this.close();
-                return true;
+                /*
+                 * } else if (item.isObject()) {
+                 * this.close();
+                 * return true;
+                 * } else if (item.isArray()) {
+                 * this.close();
+                 * return true;
+                 */
             } else {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
