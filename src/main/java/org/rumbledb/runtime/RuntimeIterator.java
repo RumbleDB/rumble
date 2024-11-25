@@ -132,9 +132,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     } else if (item.isDouble()) {
                         result = !item.isNaN() && item.getDoubleValue() != 0;
                     } else if (item.isFloat()) {
-                        result = !item.isNaN() &&  item.getFloatValue() != 0;
+                        result = !item.isNaN() && item.getFloatValue() != 0;
                     } else if (item.isDecimal()) {
-                        result = !item.getDecimalValue().equals(BigDecimal.ZERO);
+                        return !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                     } else {
                         throw new OurBadException(
                                 "Unexpected numeric type found while calculating effective boolean value."
