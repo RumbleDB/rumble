@@ -153,9 +153,9 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
                 } else if (item.isInteger()) {
                     return !item.getIntegerValue().equals(BigInteger.ZERO);
                 } else if (item.isDouble()) {
-                    return item.getDoubleValue() != 0;
+                    return !item.isNaN() && item.getDoubleValue() != 0;
                 } else if (item.isFloat()) {
-                    return item.getFloatValue() != 0;
+                    return !item.isNaN() &&  item.getFloatValue() != 0;
                 } else if (item.isDecimal()) {
                     return !item.getDecimalValue().equals(BigDecimal.ZERO);
                 } else {
