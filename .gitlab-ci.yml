@@ -1,4 +1,4 @@
-image: eclipse-temurin:11
+image: marioarduini/rumble-source:2020-11-23
 
 stages:
   - build
