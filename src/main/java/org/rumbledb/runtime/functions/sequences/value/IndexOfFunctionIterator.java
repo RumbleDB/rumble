@@ -131,7 +131,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                     ExceptionMetadata.EMPTY_METADATA
                 );
 
-                if (c == 0) {
+                if (c == 0 && !this.search.isNaN()) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }
