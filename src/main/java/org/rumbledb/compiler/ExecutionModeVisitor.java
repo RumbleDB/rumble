@@ -663,7 +663,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (Statement statement : exitStatementChildren) {
             ExecutionMode statementExecMode = statement.getHighestExecutionMode(this.visitorConfig);
             mergedExecutionMode = getHighestExecutionMode(mergedExecutionMode, statementExecMode);
-        }        program.setHighestExecutionMode(mergedExecutionMode);
+        }
+        program.setHighestExecutionMode(mergedExecutionMode);
         return argument;
     }
 
