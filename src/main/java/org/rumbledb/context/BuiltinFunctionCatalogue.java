@@ -3056,7 +3056,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(substring_before2.getIdentifier(), substring_before2);
         builtinFunctions.put(substring_after1.getIdentifier(), substring_after1);
         builtinFunctions.put(substring_after2.getIdentifier(), substring_after2);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 2; i < 100; i++) {
             builtinFunctions.put(
                 new FunctionIdentifier(concat.getIdentifier().getName(), i),
                 concat
