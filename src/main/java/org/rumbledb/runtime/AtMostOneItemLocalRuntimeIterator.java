@@ -175,8 +175,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         }
         if (item.isAttributeNode() || item.isDocumentNode() || item.isElementNode() || item.isTextNode()) {
             return true;
-        }
-        if (/* jsoniq version == 1.0 */true) { // TODO
+        if (getConfiguration().jsoniqVersion().equals("1.0")) {
             if (item.isObject()) {
                 return true;
             }
@@ -186,15 +185,16 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         } else {
             if (item.isObject()) {
                 System.out.println(
-                    "effective boolean value of Object accessed which throws error in allignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
+                    "Note: effective boolean value of Object accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
                 );
             }
             if (item.isArray()) {
                 System.out.println(
-                    "effective boolean value of Array accessed which throws error in allignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
+                    "Note: effective boolean value of Array accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
                 );
             }
         }
+
         throw new InvalidArgumentTypeException(
                 "Effective boolean value not defined for items of type "
                     +

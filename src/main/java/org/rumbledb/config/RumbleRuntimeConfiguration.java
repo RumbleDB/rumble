@@ -74,6 +74,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean functionInlining;
     private boolean thirdFeature;
     private boolean applyUpdates;
+    private String jsoniqVersion;
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -436,6 +437,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.optimizeGeneralComparisonToValueComparison = true;
         }
+
+        if (this.arguments.containsKey("jsoniq-version")) {
+            this.jsoniqVersion = this.arguments.get("jsoniq-version");
+        } else {
+            this.jsoniqVersion = "3.1";
+        }
     }
 
     public boolean getOverwrite() {
@@ -665,6 +672,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setOptimizeGeneralComparisonToValueComparison(boolean b) {
         this.optimizeGeneralComparisonToValueComparison = b;
+    }
+
+    public String jsoniqVersion() {
+        return this.jsoniqVersion;
     }
 
     public boolean isLocal() {
