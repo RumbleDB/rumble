@@ -11,6 +11,8 @@ Build:
     paths:
       - target/
   script:
+    - sudo apt-get update
+    - sudo apt-get install ant
     - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.9.3-complete.jar
     - mvn clean compile assembly:single
 
