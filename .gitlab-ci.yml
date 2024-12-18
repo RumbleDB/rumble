@@ -13,6 +13,11 @@ Build:
   script:
     - mvn clean compile assembly:single
 
+trigger_job:
+  stage: spark-tests
+  trigger:
+    project: gfourny/rumble-test-suite
+
 SparkRuntimeTest:
   stage: spark-tests
   script:
