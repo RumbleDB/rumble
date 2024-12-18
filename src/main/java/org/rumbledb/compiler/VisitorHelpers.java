@@ -22,10 +22,10 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
-import org.rumbledb.parser.XQueryLexer;
-import org.rumbledb.parser.XQueryParser;
+import org.rumbledb.parser.jsoniq.JsoniqLexer;
+import org.rumbledb.parser.jsoniq.JsoniqParser;
+import org.rumbledb.parser.xquery.XQueryLexer;
+import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 

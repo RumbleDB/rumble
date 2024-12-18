@@ -2,7 +2,7 @@ grammar Jsoniq;
 
 @header {
 // Java header
-package org.rumbledb.parser;
+package org.rumbledb.parser.jsoniq;
 }
 
 moduleAndThisIsIt       : module EOF;

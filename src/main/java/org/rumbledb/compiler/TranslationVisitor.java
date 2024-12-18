@@ -153,11 +153,12 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.parser.JsoniqParser;
-import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
-import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.JsoniqParser.SetterContext;
-import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
+import org.rumbledb.parser.jsoniq.JsoniqBaseVisitor;
+import org.rumbledb.parser.jsoniq.JsoniqParser;
+import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
+import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
+import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
+import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -188,7 +189,7 @@ import static org.rumbledb.types.SequenceType.ITEM_STAR;
  *
  * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
-public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Node> {
+public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;

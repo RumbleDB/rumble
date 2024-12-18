@@ -85,7 +85,7 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.parser.XQueryParser;
+import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -105,7 +105,7 @@ import java.util.Set;
 
 import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
-public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBaseVisitor<Node> {
+public class XQueryTranslationVisitor extends org.rumbledb.parser.xquery.XQueryParserBaseVisitor<Node> {
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;

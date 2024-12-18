@@ -1,7 +1,7 @@
 // Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.9.3
 
 // Java header
-package org.rumbledb.parser;
+package org.rumbledb.parser.xquery;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
