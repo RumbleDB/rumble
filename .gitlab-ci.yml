@@ -16,7 +16,7 @@ Build:
 trigger_job:
   stage: spark-tests
   variables:
-    TESTED_BRANCH ${CI_COMMIT_BRANCH}
+    TESTED_BRANCH: $CI_COMMIT_BRANCH
   trigger:
     project: gfourny/rumble-test-suite
 
