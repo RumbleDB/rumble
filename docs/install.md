@@ -46,15 +46,7 @@ Go to the root of this repository:
 
 ### ANTLRv4
 
-For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib directory of the repository (see corresponding license). In the most recent and supported Spark versions, 4.7 is the correct ANTLR version to use.
-
-From the root directory of the rumble local checkout, you first need to build the parser:
-
-    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
-    
-### RumbleDB
-
-Once the ANTLR sources have been generated, you can compile the entire project like so:
+You can compile the entire project like so:
 
     $ mvn clean compile assembly:single
     

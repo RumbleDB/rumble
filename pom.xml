@@ -212,9 +212,7 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <target>
-                                <ant antfile="build_antlr_parser.xml" target="generate-parser">
-                                    <property name="antlr.jar" value="lib/antlr-4.9.3-complete.jar"/>
-                                </ant>
+                                <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
                             </target>
                         </configuration>
                         <goals>
