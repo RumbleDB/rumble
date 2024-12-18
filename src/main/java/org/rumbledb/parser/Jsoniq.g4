@@ -731,9 +731,10 @@ Kexit                   : 'exit' ;
 Kreturning              : 'returning' ;
 Kwhile                  : 'while' ;
 
-STRING                  : '"' (ESC | ~ ["\\])* '"';
+STRING                  : '"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'';
 
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
+fragment ESCapos            : '\\' (['\\/bfnrt] | UNICODE);
 
 fragment UNICODE        : 'u' HEX HEX HEX HEX;
 
