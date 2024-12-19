@@ -1513,7 +1513,7 @@ public class BuiltinFunctionCatalogue {
                 new FunctionSignature(
                         Collections.nCopies(
                             100,
-                            SequenceType.createSequenceType("atomic*")
+                            SequenceType.createSequenceType("atomic?")
                         ),
                         SequenceType.createSequenceType("string")
                 ),
