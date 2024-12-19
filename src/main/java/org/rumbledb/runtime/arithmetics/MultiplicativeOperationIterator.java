@@ -371,7 +371,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createIntegerItem(l.mod(r));
+                    .createIntegerItem(l.remainder(r));
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
