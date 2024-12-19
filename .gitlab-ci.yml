@@ -2,8 +2,8 @@ image: maven:3.9.9-eclipse-temurin-11
 
 stages:
   - build
-  - spark-tests
-  - other-tests
+  - tests
+  - downstream-tests
 
 Build:
   stage: build
@@ -13,15 +13,8 @@ Build:
   script:
     - mvn clean compile assembly:single
 
-trigger_job:
-  stage: spark-tests
-  variables:
-    TESTED_BRANCH: $CI_COMMIT_BRANCH
-  trigger:
-    project: gfourny/rumble-test-suite
-
 SparkRuntimeTest:
-  stage: spark-tests
+  stage: tests
   script:
     - mvn -Dtest=SparkRuntimeTests test
   artifacts:
@@ -32,7 +25,7 @@ SparkRuntimeTest:
       junit: target/surefire-reports/TEST-iq.SparkRuntimeTests.xml
 
 SparkRuntimeTestsNativeDeactivated:
-  stage: spark-tests
+  stage: tests
   script:
     - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
   artifacts:
@@ -43,7 +36,7 @@ SparkRuntimeTestsNativeDeactivated:
       junit: target/surefire-reports/TEST-iq.SparkRuntimeTestsNativeDeactivated.xml
 
 SparkRuntimeTestsDataFramesDeactivated:
-  stage: spark-tests
+  stage: tests
   script:
     - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
   artifacts:
@@ -54,7 +47,7 @@ SparkRuntimeTestsDataFramesDeactivated:
       junit: target/surefire-reports/TEST-iq.SparkRuntimeTestsDataFramesDeactivated.xml
 
 SparkRuntimeTestsParallelismDeactivated:
-  stage: spark-tests
+  stage: tests
   script:
     - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
   artifacts:
@@ -65,7 +58,7 @@ SparkRuntimeTestsParallelismDeactivated:
       junit: target/surefire-reports/TEST-iq.SparkRuntimeTestsParallelismDeactivated.xml
 
 JavaAPITest:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=JavaAPITest test
   artifacts:
@@ -76,7 +69,7 @@ JavaAPITest:
       junit: target/surefire-reports/TEST-iq.JavaAPITest.xml
 
 FrontendTests:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=FrontendTests test
   artifacts:
@@ -87,7 +80,7 @@ FrontendTests:
       junit: target/surefire-reports/TEST-iq.FrontendTests.xml
 
 RuntimeTests:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=RuntimeTests test
   artifacts:
@@ -98,7 +91,7 @@ RuntimeTests:
       junit: target/surefire-reports/TEST-iq.RuntimeTests.xml
 
 RuntimeTestsNoParallelism:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=RuntimeTestsNoParallelism test
   artifacts:
@@ -109,7 +102,7 @@ RuntimeTestsNoParallelism:
       junit: target/surefire-reports/TEST-iq.RuntimeTestsNoParallelism.xml
 
 RuntimeTestsNoInlining:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=RuntimeTestsNoInlining test
   artifacts:
@@ -120,7 +113,7 @@ RuntimeTestsNoInlining:
       junit: target/surefire-reports/TEST-iq.RuntimeTestsNoInlining.xml
 
 NativeFLWORRuntimeTests:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTests test
   artifacts:
@@ -131,7 +124,7 @@ NativeFLWORRuntimeTests:
       junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTests.xml
 
 NativeFLWORRuntimeTestsNativeDeactivated:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
   artifacts:
@@ -142,7 +135,7 @@ NativeFLWORRuntimeTestsNativeDeactivated:
       junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsNativeDeactivated.xml
 
 NativeFLWORRuntimeTestsDataFramesDeactivated:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
   artifacts:
@@ -153,7 +146,7 @@ NativeFLWORRuntimeTestsDataFramesDeactivated:
       junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsDataFramesDeactivated.xml
 
 NativeFLWORRuntimeTestsParallelismDeactivated:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
   artifacts:
@@ -164,7 +157,7 @@ NativeFLWORRuntimeTestsParallelismDeactivated:
       junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsParallelismDeactivated.xml
 
 StaticTypingTest:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=StaticTypeTests test
   artifacts:
@@ -174,13 +167,8 @@ StaticTypingTest:
     reports:
       junit: target/surefire-reports/TEST-iq.StaticTypeTests.xml
 
-SpotlessTest:
-  stage: other-tests
-  script:
-    - mvn spotless:check
-
 MLTests:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=MLTests test --log-file target/ml_test.log
   artifacts:
@@ -191,7 +179,7 @@ MLTests:
       junit: target/surefire-reports/TEST-iq.MLTests.xml
 
 MLTestsNativeDeactivated:
-  stage: other-tests
+  stage: tests
   script:
     - mvn -Dtest=MLTestsNativeDeactivated test
   artifacts:
@@ -201,4 +189,14 @@ MLTestsNativeDeactivated:
     reports:
       junit: target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
 
+SpotlessTest:
+  stage: tests
+  script:
+    - mvn spotless:check
 
+RunQt3tests:
+  stage: downstream-tests
+  variables:
+    TESTED_BRANCH: $CI_COMMIT_BRANCH
+  trigger:
+    project: gfourny/rumble-test-suite
