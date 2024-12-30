@@ -1647,7 +1647,7 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
-     * function that turns all upper-case characters to upper-case
+     * function that turns all lower-case characters to upper-case
      */
     static final BuiltinFunction upper_case = createBuiltinFunction(
         new Name(
