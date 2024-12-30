@@ -124,17 +124,48 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().equals(SequenceType.FLOAT)) {
-            return NativeClauseContext.NoNativeQuery;
+        if (value.getResultingType().getItemType().isSubtypeOf(this.itemType)) {
+            return value;
         }
         if (
-            !this.itemType.equals(BuiltinTypesCatalogue.numericItem)
-                && !this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+            this.itemType.equals(BuiltinTypesCatalogue.stringItem)
+                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
         ) {
-            return NativeClauseContext.NoNativeQuery;
+            return new NativeClauseContext(
+                    value,
+                    "CAST (" + value.getResultingQuery() + " AS STRING)",
+                    new SequenceType(BuiltinTypesCatalogue.stringItem, value.getResultingType().getArity())
+            );
         }
-        // @TODO
-        return value;
+        if (
+            this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+                && (value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    || value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem))
+        ) {
+            return new NativeClauseContext(
+                    value,
+                    "CAST (" + value.getResultingQuery() + " AS DOUBLE)",
+                    new SequenceType(BuiltinTypesCatalogue.doubleItem, value.getResultingType().getArity())
+            );
+        }
+        if (
+            this.itemType.equals(BuiltinTypesCatalogue.floatItem)
+                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem)
+        ) {
+            return new NativeClauseContext(
+                    value,
+                    "CAST (" + value.getResultingQuery() + " AS FLOAT)",
+                    new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
+            );
+        }
+        throw new UnexpectedTypeException(
+                this.exceptionMessage
+                    + value.getResultingType().getItemType().toString()
+                    + " cannot be promoted to type "
+                    + this.sequenceType
+                    + ".",
+                getMetadata()
+        );
     }
 
 }

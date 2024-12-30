@@ -26,6 +26,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -51,6 +54,25 @@ public class SqrtFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return value;
         }
         return ItemFactory.getInstance().createDoubleItem(Math.sqrt(value.getDoubleValue()));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "sqrt( "
+            + childQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(
+                childQuery,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
+        );
     }
 }
 

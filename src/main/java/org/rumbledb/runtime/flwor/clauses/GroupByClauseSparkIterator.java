@@ -44,10 +44,12 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -60,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -656,5 +659,186 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        List<FlworDataFrameColumn> dfColumns = FlworDataFrameUtils.getColumns(
+            (StructType) nativeClauseContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) childContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        String view = childContext.getView();
+        childContext.setView(null);
+        // get all variables, get expressions for grouping
+        Map<Name, String> bindingColumns = new HashMap<>();
+        List<String> groupingVars = new ArrayList<>();
+        groupingVars.add(nativeClauseContext.getRowIdField());
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getExpression() != null) {
+                NativeClauseContext expressionContext = expression.getExpression()
+                    .generateNativeQuery(childContext);
+                if (expressionContext == NativeClauseContext.NoNativeQuery) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                Name name = childContext.addVariable(expression.getVariableName());
+                bindingColumns.put(name, expressionContext.getResultingQuery());
+                childContext.setSchema(
+                    ((StructType) childContext.getSchema()).add(
+                        name.toString(),
+                        TypeMappings.getDataFrameDataTypeFromItemType(
+                            expressionContext.getResultingType().getItemType()
+                        )
+                    )
+                );
+                groupingVars.add(name.toString());
+            } else {
+                Name name = childContext.getVariable(expression.getVariableName());
+                if (
+                    !FlworDataFrameUtils.hasColumnForVariable(
+                        (StructType) childContext.getSchema(),
+                        name
+                    )
+                ) {
+                    throw new InvalidGroupVariableException(
+                            "Variable "
+                                + name
+                                + " cannot be used as a grouping key because it is not in the input tuple stream. It must be a variable from the same FLWOR expression.",
+                            getMetadata()
+                    );
+                }
+                groupingVars.add(name.toString());
+            }
+        }
+        // bind variables that have an expression
+        if (!bindingColumns.isEmpty()) {
+            view = String.format(
+                "select %s %s from (%s)",
+                FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+                bindingColumns.entrySet()
+                    .stream()
+                    .map(entry -> String.format("(%s) as `%s`", entry.getValue(), entry.getKey().toString()))
+                    .collect(Collectors.joining(", ")),
+                view
+            );
+            allColumns = FlworDataFrameUtils.getColumns(
+                (StructType) childContext.getSchema(),
+                null,
+                null,
+                null
+            );
+        }
+        // create aggregation for each column
+        List<String> selectionStrings = new ArrayList<>();
+        String conditionString = childContext.getConditionalColumns()
+            .stream()
+            .map(name -> "`" + name + "`")
+            .collect(Collectors.joining(" and "));
+        StructType ungroupedSchema = (StructType) childContext.getSchema();
+        StructType newSchema = (StructType) nativeClauseContext.getSchema();
+        for (FlworDataFrameColumn column : allColumns) {
+            // group by doesn't preserve ordering
+            if (nativeClauseContext.getSortingColumns().containsKey(column.getColumnName())) {
+                continue;
+            }
+            DataType type = ungroupedSchema.fields()[ungroupedSchema.fieldIndex(column.getColumnName())].dataType();
+            if (groupingVars.contains(column.getVariableName().toString())) {
+                // if it's a grouping variable, don't aggregate
+                selectionStrings.add("`" + column.getColumnName() + "`");
+                if (dfColumns.stream().noneMatch(dfColumn -> dfColumn.getColumnName().equals(column.getColumnName()))) {
+                    newSchema = newSchema.add(column.getColumnName(), type);
+                }
+            } else if (
+                dfColumns.stream().anyMatch(dfColumn -> dfColumn.getColumnName().equals(column.getColumnName()))
+            ) {
+                // if it's in the original dataframe, don't aggregate
+                selectionStrings.add(
+                    String.format("first(`%s`) as `%s`", column.getColumnName(), column.getColumnName())
+                );
+            } else {
+                if (column.isCount()) {
+                    selectionStrings.add(
+                        String.format("sum(`%s`) as `%s`", column.getColumnName(), column.getColumnName())
+                    );
+                    newSchema = newSchema.add(column.getColumnName(), type);
+                } else if (
+                    this.outputTupleProjection.entrySet()
+                        .stream()
+                        .filter(
+                            out -> nativeClauseContext.getVariable(out.getKey())
+                                .toString()
+                                .equals(column.getColumnName())
+                        )
+                        .map(entry -> entry.getValue() == DynamicContext.VariableDependency.COUNT)
+                        .findFirst()
+                        .orElse(false)
+                ) {
+                    FlworDataFrameColumn countColumn = new FlworDataFrameColumn(
+                            column.getVariableName(),
+                            ColumnFormat.COUNT
+                    );
+                    selectionStrings.add(
+                        String.format("count(`%s`) as `%s`", column.getColumnName(), countColumn.getColumnName())
+                    );
+                    newSchema = newSchema.add(countColumn.getColumnName(), DataTypes.IntegerType);
+                } else if (column.isNativeSequence()) {
+                    // if it's a sequence, use flatten
+                    selectionStrings.add(
+                        String.format(
+                            "flatten(collect_list(`%s`)) as `%s`",
+                            column.getColumnName(),
+                            column.getColumnName()
+                        )
+                    );
+                    newSchema = newSchema.add(column.getColumnName(), type);
+                } else {
+                    if (!childContext.getConditionalColumns().contains(column.getColumnName())) {
+                        String groupedColumnName = column.getColumnName() + ".sequence";
+                        if (childContext.getConditionalColumns().size() > 0) {
+                            selectionStrings.add(
+                                String.format(
+                                    "collect_list(if(%s, `%s`, null)) as `%s`",
+                                    conditionString,
+                                    column.getColumnName(),
+                                    groupedColumnName
+                                )
+                            );
+                        } else {
+                            selectionStrings.add(
+                                String.format(
+                                    "collect_list(`%s`) as `%s`",
+                                    column.getColumnName(),
+                                    groupedColumnName
+                                )
+                            );
+                        }
+                        newSchema = newSchema.add(groupedColumnName, type);
+                    }
+                }
+            }
+        }
+        childContext.clearConditionalColumns();
+        childContext.clearSortingColumns();
+        childContext.setGrouped(true);
+        childContext.setSchema(newSchema);
+        String groupingString = String.format(
+            "select %s from (%s) group by %s",
+            String.join(",", selectionStrings),
+            view,
+            groupingVars.stream().map(name -> "`" + name + "`").collect(Collectors.joining(","))
+        );
+        childContext.setView(groupingString);
+        return new NativeClauseContext(childContext, null, null);
     }
 }
