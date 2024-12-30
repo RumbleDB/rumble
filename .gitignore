@@ -9,6 +9,7 @@ target/
 /bin/
 *.jar
 *.*~
+/.rumble_shell_history
 
 # for now ignore jsound package
 src/main/java/jsound/
