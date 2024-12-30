@@ -110,32 +110,7 @@ import org.rumbledb.runtime.functions.sequences.general.UnorderedFunctionIterato
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
-import org.rumbledb.runtime.functions.strings.CodepointEqualFunctionIterator;
-import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
-import org.rumbledb.runtime.functions.strings.DefaultCollationFunctionIterator;
-import org.rumbledb.runtime.functions.strings.EncodeForURIFunctionIterator;
-import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
-import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
-import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
-import org.rumbledb.runtime.functions.strings.NormalizeUnicodeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ResolveURIFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StaticBaseURIFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
-import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
+import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
@@ -1865,6 +1840,34 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that checks whether a string collates before or after another string
+     */
+    static final BuiltinFunction compare1 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "compare"
+        ),
+        "string?",
+        "string?",
+        "integer",
+        CompareFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction compare2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "compare"
+        ),
+        "string?",
+        "string?",
+        "string",
+        "integer",
+        CompareFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that checks whether a string matches a regular expression
      */
     static final BuiltinFunction matches1 = createBuiltinFunction(
@@ -3079,6 +3082,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(matches1.getIdentifier(), matches1);
         builtinFunctions.put(contains1.getIdentifier(), contains1);
         builtinFunctions.put(contains2.getIdentifier(), contains2);
+        builtinFunctions.put(compare1.getIdentifier(), compare1);
+        builtinFunctions.put(compare2.getIdentifier(), compare2);
         builtinFunctions.put(normalize_space0.getIdentifier(), normalize_space0);
         builtinFunctions.put(normalize_space1.getIdentifier(), normalize_space1);
         builtinFunctions.put(normalize_unicode1.getIdentifier(), normalize_unicode1);
