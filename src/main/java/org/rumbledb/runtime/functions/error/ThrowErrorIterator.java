@@ -22,7 +22,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             // No argument case.
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
-                    ExceptionMetadata.EMPTY_METADATA
+                    ErrorCode.UnidentifiedErrorExceptionCode
             );
         } else if (this.children.size() == 1) {
             // Error code argument case.
