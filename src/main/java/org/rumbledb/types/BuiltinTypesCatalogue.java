@@ -32,10 +32,9 @@ public class BuiltinTypesCatalogue {
             )
     );
 
-    // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
-    // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
+    // numeric is a union type for xs:double, xs:float, xs:decimal
     public static final ItemType numericItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "numeric"),
+            new Name(Name.XS_NS, "xs", "numeric"),
             Collections.emptySet()
     );
 

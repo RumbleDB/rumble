@@ -533,6 +533,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
+                if (item.isString()) {
+                    result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+                    return result;
+                }
+            }
+
             return null;
         } catch (InvalidLexicalValueException i) {
             throw new InvalidLexicalValueException(
