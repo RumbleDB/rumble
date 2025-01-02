@@ -2719,7 +2719,19 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
-    static final BuiltinFunction trace = createBuiltinFunction(
+    static final BuiltinFunction trace1 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "trace"
+        ),
+        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        TraceFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction trace2 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -3157,7 +3169,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(get_estimator2.getIdentifier(), get_estimator2);
         builtinFunctions.put(annotate.getIdentifier(), annotate);
 
-        builtinFunctions.put(trace.getIdentifier(), trace);
+        builtinFunctions.put(trace2.getIdentifier(), trace2);
+        builtinFunctions.put(trace1.getIdentifier(), trace1);
 
         builtinFunctions.put(repartition.getIdentifier(), repartition);
         builtinFunctions.put(binary_classification_metrics1.getIdentifier(), binary_classification_metrics1);
