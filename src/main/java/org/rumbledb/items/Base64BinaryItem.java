@@ -11,24 +11,25 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class Base64BinaryItem implements Item {
 
-    private static final String b04char = "([AQgw])";
-    private static final String b04 = "(" + b04char + "(\\s)?)";
-    private static final String b16char = "([AEIMQUYcgkosw048])";
-    private static final String b16 = "(" + b16char + "(\\s)?)";
-    private static final String b64char = "([A-Za-z0-9+/])";
-    private static final String b64 = "(" + b64char + "(\\s)?)";
-    private static final String padded8 = "(" + b64 + b04 + "=(\\s)?=)";
-    private static final String padded16 = "(" + b64 + b64 + b16 + "=)";
-    private static final String b64finalQuad = "(" + b64 + b64 + b64 + b64char + ")";
+    private static final String B64 = "[A-Za-z0-9+/]";
+    private static final String B64S = B64 + "\\s?";
+    private static final String B16 = "[AEIMQUYcgkosw048]";
+    private static final String B16S = B16 + "\\s?";
+    private static final String B04 = "[AQgw]";
+    private static final String B04S = B04 + "\\s?";
+    private static final String padded8 = B64S + B64S + B04S + "=\\s?=\\s?";
+    private static final String padded16 = B64S + B64S + B16S + "=\\s?";
+    private static final String b64finalQuad = B64S + B64S + B64S + B64;
     private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
-    private static final String b64quad = "(" + b64 + b64 + b64 + b64 + ")";
-    private static final String base64Binary = "((" + b64quad + ")*" + "(" + b64final + "))?";
+    private static final String b64quad = B64S + B64S + B64S + B64S;
+    private static final String base64Binary = "((" + b64quad + ")*" + b64final + ")?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
     private static final long serialVersionUID = 1L;
@@ -82,7 +83,7 @@ public class Base64BinaryItem implements Item {
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) {
+        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString.replaceAll("\\s", ""))) {
             throw new IllegalArgumentException();
         }
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
