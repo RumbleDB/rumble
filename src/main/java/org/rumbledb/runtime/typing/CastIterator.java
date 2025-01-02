@@ -535,8 +535,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
             if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
                 if (item.isString()) {
-                    result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
-                    return result;
+                    return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+                }
+                if (item.isBoolean()) {
+                    return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
                 }
             }
 
