@@ -82,7 +82,7 @@ FrontendTests:
 RuntimeTests:
   stage: tests
   script:
-    - mvn -Dtest=RuntimeTests test
+    - mvn -Dtest=RuntimeTests test -Dsurefire.enableOutErrElements=false # tests debug output and report would get too large
   artifacts:
     when: always
     paths:
@@ -93,7 +93,7 @@ RuntimeTests:
 RuntimeTestsNoParallelism:
   stage: tests
   script:
-    - mvn -Dtest=RuntimeTestsNoParallelism test
+    - mvn -Dtest=RuntimeTestsNoParallelism test -Dsurefire.enableOutErrElements=false # tests debug output and report would get too large
   artifacts:
     when: always
     paths:
@@ -104,7 +104,7 @@ RuntimeTestsNoParallelism:
 RuntimeTestsNoInlining:
   stage: tests
   script:
-    - mvn -Dtest=RuntimeTestsNoInlining test
+    - mvn -Dtest=RuntimeTestsNoInlining test -Dsurefire.enableOutErrElements=false # tests debug output and report would get too large
   artifacts:
     when: always
     paths:

@@ -33,6 +33,7 @@
     <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
+        <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
     </properties>
 
     <build>
@@ -220,6 +221,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
+                </configuration>
             </plugin>
         </plugins>
     </build>
