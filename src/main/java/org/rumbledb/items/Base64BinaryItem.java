@@ -24,7 +24,7 @@ public class Base64BinaryItem implements Item {
     private static final String B16S = B16 + "\\s?";
     private static final String B04 = "[AQgw]";
     private static final String B04S = B04 + "\\s?";
-    private static final String padded8 = B64S + B64S + B04S + "=\\s?=\\s?";
+    private static final String padded8 = B64S + B04S + "=\\s?=\\s?";
     private static final String padded16 = B64S + B64S + B16S + "=\\s?";
     private static final String b64finalQuad = B64S + B64S + B64S + B64;
     private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
