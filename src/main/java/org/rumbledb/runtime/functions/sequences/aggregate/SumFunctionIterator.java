@@ -118,17 +118,17 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item result = null;
         while (iterator.hasNext()) {
             Item nextValue = iterator.next();
-            if (result  == null) {
+            if (result == null) {
                 result = nextValue;
             } else {
                 Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
                 if (sum == null) {
                     throw new InvalidArgumentTypeException(
                             " \"+\": operation not possible with parameters of type \""
-                                    + result.getDynamicType().toString()
-                                    + "\" and \""
-                                    + nextValue.getDynamicType().toString()
-                                    + "\"",
+                                + result.getDynamicType().toString()
+                                + "\" and \""
+                                + nextValue.getDynamicType().toString()
+                                + "\"",
                             metadata
                     );
                 }
