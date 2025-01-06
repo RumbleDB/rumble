@@ -134,7 +134,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     } else if (item.isFloat()) {
                         result = !item.isNaN() && item.getFloatValue() != 0;
                     } else if (item.isDecimal()) {
-                        return !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
+                        result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                     } else {
                         throw new OurBadException(
                                 "Unexpected numeric type found while calculating effective boolean value."
@@ -152,6 +152,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = false;
             } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
+            } else if (item.isAttributeNode() || item.isDocumentNode() || item.isElementNode() || item.isTextNode()) {
+                // returns true even if sequence has more items according to spec
+                return true;
             } else if (item.isObject()) {
                 this.close();
                 return true;
