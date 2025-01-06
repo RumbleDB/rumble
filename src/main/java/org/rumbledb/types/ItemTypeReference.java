@@ -38,11 +38,14 @@ public class ItemTypeReference implements ItemType {
             this.resolvedItemType.resolve(context, metadata);
         }
     }
+
     private final Name oldAtomicName = new Name(Name.JS_NS, "js", "atomic");
     private final Name newAtomicName = new Name(Name.XS_NS, "xs", "anyAtomicType");
+
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
 
-        // in jsoniq 1.0 anyAtomicType was called atomic. This gives backwards compatibility by replacing atomic with anyAtomicType
+        // in jsoniq 1.0 anyAtomicType was called atomic. This gives backwards compatibility by replacing atomic with
+        // anyAtomicType
         if (context.getRumbleConfiguration().jsoniqVersion().equals("1.0")) {
             if (this.name.getNamespace() != null && this.name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (oldAtomicName.getLocalName().equals(this.name.getLocalName())) {
