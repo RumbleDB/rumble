@@ -111,7 +111,7 @@ declare function jsoniq_pandas:categorical_report($column as array) {
 
 declare function jsoniq_pandas:count_occurences($column) {
     let $column_values := $column[]
-    return if ($column_values instance of atomic*) then jsoniq_pandas:count_occurences_for_atomic($column_values)
+    return if ($column_values instance of anyAtomicType*) then jsoniq_pandas:count_occurences_for_atomic($column_values)
            else if ($column_values instance of json-item*) then jsoniq_pandas:count_occurences_for_structured_item($column_values)
            else fn:error("Unrecognized type for dataframe. Only atomic and item types are supported.")
 };
@@ -194,7 +194,7 @@ declare function jsoniq_pandas:isnull_row($row as object, $keys) as object {
     {|
         for $key in $keys
         return if (empty($row.$key)) then {$key: true}
-               else if ($row.$key instance of atomic) then 
+               else if ($row.$key instance of anyAtomicType) then
                     if ($row.$key eq null) then {$key: true}
                     else {$key: false}
                else {$key: false}
@@ -227,7 +227,7 @@ declare function jsoniq_pandas:fillna_row($row as object, $params as object, $ke
     {|
         for $key in $keys
         return if (empty($row.$key)) then {$key: $params.value}
-               else if ($row.$key instance of atomic) then 
+               else if ($row.$key instance of anyAtomicType) then
                     if ($row.$key eq null) then {$key: $params.value}
                     else {$key: $row.$key}
                else {$key: $row.$key}

@@ -1,2 +1,2 @@
 (:JIQS: ShouldCrash; ErrorCode="XPTY0004" :)
-("a" treat as atomic) eq "a"
+("a" treat as anyAtomicType) eq "a"

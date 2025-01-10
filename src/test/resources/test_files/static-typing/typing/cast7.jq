@@ -1,2 +1,2 @@
 (:JIQS: ShouldCrash; ErrorCode="XPST0080" :)
-3 cast as atomic
+3 cast as anyAtomicType
