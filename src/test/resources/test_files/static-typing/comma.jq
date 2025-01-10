@@ -1,2 +1,3 @@
+jsoniq version "3.1";
 (:JIQS: ShouldRun :)
 (1,2,3) is statically integer+ , (1) is statically integer, ("s",12) is statically anyAtomicType+, () is statically (), ((),()) is statically (), (1, (1,2)) is statically integer+, (1, (( )), ()) is statically integer, ((1,2,3)) is statically integer+, (null, null) is statically null+, (1 treat as integer?) is statically integer?, (1 treat as integer?, 2 treat as integer?) is statically integer*

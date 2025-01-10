@@ -1,3 +1,4 @@
+jsoniq version "3.1";
 (:JIQS: ShouldRun :)
 (switch(3)
 case 2 case 3 return "a"

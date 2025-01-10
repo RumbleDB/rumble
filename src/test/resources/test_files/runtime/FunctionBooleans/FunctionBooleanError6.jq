@@ -1,3 +1,4 @@
+jsoniq version "3.1";
 (:JIQS: ShouldCrash; ErrorCode="FORG0006" :)
 boolean([1,2]),
 boolean({"a":2}),

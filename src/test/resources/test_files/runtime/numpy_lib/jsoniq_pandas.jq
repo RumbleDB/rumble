@@ -1,3 +1,4 @@
+jsoniq version "3.1";
 (:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:1:COLUMN:0:" :)
 module namespace jsoniq_pandas = "jsoniq_pandas.jq";
 import module namespace jsoniq_numpy = "jsoniq_numpy.jq";
