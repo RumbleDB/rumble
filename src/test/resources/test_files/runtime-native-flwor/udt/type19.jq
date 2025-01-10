@@ -1,13 +1,13 @@
 (:JIQS: ShouldRun; Output="(Success, 15, Success, tree)" :)
 declare type local:myPosInt as jsound verbose {
     "name": "local:myPosInt",
-    "kind": "anyAtomicType",
+    "kind": "atomic",
     "baseType": "xs:positiveInteger",
     "minInclusive": 10
 };
 declare type local:shortString as jsound verbose {
     "name": "local:shortString",
-    "kind": "anyAtomicType",
+    "kind": "atomic",
     "baseType": "xs:string",
     "maxLength" : 10
 };
