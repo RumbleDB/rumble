@@ -365,7 +365,7 @@ forwardAxis: ( Kchild
              | Kfollowing_sibling
              | Kfollowing ) ':' ':' ;
 
-abbrevForwardStep: Kat_symbol nodeTest ;
+abbrevForwardStep: Kat_symbol? nodeTest ;
 
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
@@ -465,7 +465,7 @@ typedFunctionTest	    : 'function' '(' (st+=sequenceType (',' st+=sequenceType)*
 
 singleType              : item=itemType (question +='?')?;
 
-pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
+pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
 
 arrayConstructor        :  '[' expr? ']';
 

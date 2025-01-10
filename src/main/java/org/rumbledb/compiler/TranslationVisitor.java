@@ -1230,10 +1230,23 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                if (currentPair.lhs != null) {
-                    keys.add((Expression) this.visitExprSingle(currentPair.lhs));
+                Node lhs = this.visitExprSingle(currentPair.lhs);
+                if (lhs instanceof StepExpr) {
+                    if (configuration.jsoniqVersion().equals("1.0")) {
+                        keys.add(
+                            new StringLiteralExpression(
+                                    ((StepExpr) lhs).getNodeTest().toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                    } else {
+                        throw new ParsingException(
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --jsoniq-version CLI option.",
+                                createMetadataFromContext(ctx)
+                        );
+                    }
                 } else {
-                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                    keys.add((Expression) lhs);
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
@@ -1504,10 +1517,23 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                if (currentPair.lhs != null) {
-                    keys.add((Expression) this.visitExprSingle(currentPair.lhs));
+                Node lhs = this.visitExprSingle(currentPair.lhs);
+                if (lhs instanceof StepExpr) {
+                    if (configuration.jsoniqVersion().equals("1.0")) {
+                        keys.add(
+                            new StringLiteralExpression(
+                                    ((StepExpr) lhs).getNodeTest().toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                    } else {
+                        throw new ParsingException(
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --jsoniq-version CLI option.",
+                                createMetadataFromContext(ctx)
+                        );
+                    }
                 } else {
-                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                    keys.add((Expression) lhs);
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
