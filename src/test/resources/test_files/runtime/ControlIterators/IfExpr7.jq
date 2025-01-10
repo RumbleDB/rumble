@@ -1,5 +1,5 @@
-(:JIQS: ShouldRun; Output="first branch" :)
-if((3, "test", [1,2], null))
+(:JIQS: ShouldRun; Output="else branch" :)
+if((null))
 then
 "first branch"
 else
