@@ -74,9 +74,7 @@ public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--apply-updates",
-                    "yes",
-                    "--jsoniq-version",
-                    "1.0" }
+                    "yes" }
         ).setExternalVariableValue(
             Name.createVariableInNoNamespace("externalStringItem"),
             Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))

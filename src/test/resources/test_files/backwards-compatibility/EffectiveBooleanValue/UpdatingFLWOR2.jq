@@ -1,3 +1,4 @@
+jsoniq version "1.0";
 (:JIQS: ShouldRun; Output="({ "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } }, { "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } })" :)
 copy $je := for $i in (1 to 4)
                  return

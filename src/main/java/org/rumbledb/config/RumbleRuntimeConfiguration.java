@@ -678,6 +678,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.jsoniqVersion;
     }
 
+    public void setJsoniqVersion(String version) {
+        this.jsoniqVersion = version;
+    }
+
     public boolean isLocal() {
         String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
         return masterConfig.contains("local");

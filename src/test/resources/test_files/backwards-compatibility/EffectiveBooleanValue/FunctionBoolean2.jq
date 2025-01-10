@@ -1,3 +1,4 @@
+jsoniq version "1.0";
 (:JIQS: ShouldRun; Output="(true, true, true, true)" :)
 boolean([1,2]),
 boolean({"a":2}),

@@ -1,3 +1,4 @@
+jsoniq version "1.0";
 (:JIQS: ShouldRun; Output="first branch" :)
 if(({"a":2}, 3, "test", null))
 then
