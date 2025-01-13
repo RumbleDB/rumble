@@ -130,6 +130,12 @@ public class VisitorHelpers {
         if (sb.toString().equals("xquery")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
+            // overwrite default version if query specifies jsoniq version
+            if (query.startsWith("jsoniq version \"3.1\"")) {
+                configuration.setJsoniqVersion("3.1");
+            } else if (query.startsWith("jsoniq version \"1.0\"")) {
+                configuration.setJsoniqVersion("1.0");
+            }
             return parseJSONiqMainModule(query, uri, configuration);
         }
 
@@ -302,6 +308,12 @@ public class VisitorHelpers {
         if (sb.toString().equals("xquery")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
+            // overwrite default version if query specifies jsoniq version
+            if (query.startsWith("jsoniq version \"3.1\"")) {
+                configuration.setJsoniqVersion("3.1");
+            } else if (query.startsWith("jsoniq version \"1.0\"")) {
+                configuration.setJsoniqVersion("1.0");
+            }
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }
 

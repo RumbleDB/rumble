@@ -1625,7 +1625,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // must be castable to string
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("atomic"))) {
+        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
             throwStaticTypeException(
                 "the lookup expression type must be castable to string (i.e. must match atomic), instead "
                     + lookupType
@@ -2039,7 +2039,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
             }
-            if (!expectedType.isSubtypeOf(SequenceType.createSequenceType("atomic?"))) {
+            if (!expectedType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType?"))) {
                 throwStaticTypeException(
                     "group by variable "
                         + groupByVar.getVariableName()
@@ -2074,7 +2074,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
             if (
-                !orderType.isSubtypeOf(SequenceType.createSequenceType("atomic?"))
+                !orderType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType?"))
                     ||
                     orderType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)
                     ||

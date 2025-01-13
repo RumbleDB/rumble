@@ -1,3 +1,4 @@
+jsoniq version "1.0";
 (:JIQS: ShouldRun; Output="({ "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } }, { "a" : { "bar" : 1 } }, { "b" : { "foo" : 2 } })" :)
 copy $je := for $i in (1 to 4)
                  return
@@ -9,9 +10,11 @@ copy $je := for $i in (1 to 4)
 modify
     for $l in $je
     return
-        if($l.a.foo)
+        if($l.a)
         then
             rename json $l.a.foo as "bar"
         else
             replace value of json $l.b.foo with 2
 return $je
+
+(: arrays and objects, along with sequences where first item is array or object had effective boolean value true in jsoniq1.0 :)

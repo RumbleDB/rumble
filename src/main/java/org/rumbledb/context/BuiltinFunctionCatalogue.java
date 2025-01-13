@@ -722,7 +722,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction min1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
         "item*",
-        "atomic?",
+        "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -730,7 +730,7 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.FN_NS, "fn", "min"),
         "item*",
         "string",
-        "atomic?",
+        "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -740,7 +740,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction max1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
         "item*",
-        "atomic?",
+        "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -748,7 +748,7 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.FN_NS, "fn", "max"),
         "item*",
         "string",
-        "atomic?",
+        "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -758,7 +758,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction avg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "avg"),
         "item*",
-        "atomic?",
+        "anyAtomicType?",
         AvgFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -767,16 +767,16 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction sum1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sum"),
-        "atomic*",
-        "atomic?",
+        "anyAtomicType*",
+        "anyAtomicType?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction sum2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sum"),
-        "atomic*",
-        "atomic?",
-        "atomic?",
+        "anyAtomicType*",
+        "anyAtomicType?",
+        "anyAtomicType?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -970,8 +970,8 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "distinct-values"
         ),
-        "atomic*",
-        "atomic*",
+        "anyAtomicType*",
+        "anyAtomicType*",
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
@@ -981,9 +981,9 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "distinct-values"
         ),
-        "atomic*",
+        "anyAtomicType*",
         "string",
-        "atomic*",
+        "anyAtomicType*",
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
@@ -997,8 +997,8 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "index-of"
         ),
-        "atomic*",
-        "atomic",
+        "anyAtomicType*",
+        "anyAtomicType",
         "integer*",
         IndexOfFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1009,8 +1009,8 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "index-of"
         ),
-        "atomic*",
-        "atomic",
+        "anyAtomicType*",
+        "anyAtomicType",
         "string",
         "integer*",
         IndexOfFunctionIterator.class,
@@ -1488,7 +1488,7 @@ public class BuiltinFunctionCatalogue {
                 new FunctionSignature(
                         Collections.nCopies(
                             100,
-                            SequenceType.createSequenceType("atomic?")
+                            SequenceType.createSequenceType("anyAtomicType?")
                         ),
                         SequenceType.createSequenceType("string")
                 ),
@@ -1956,7 +1956,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "number"
         ),
-        "atomic?",
+        "anyAtomicType?",
         "double",
         NumberFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL

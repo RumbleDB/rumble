@@ -441,7 +441,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         if (this.arguments.containsKey("jsoniq-version")) {
             this.jsoniqVersion = this.arguments.get("jsoniq-version");
         } else {
-            this.jsoniqVersion = "3.1";
+            this.jsoniqVersion = "1.0";
         }
     }
 
@@ -676,6 +676,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public String jsoniqVersion() {
         return this.jsoniqVersion;
+    }
+
+    public void setJsoniqVersion(String version) {
+        this.jsoniqVersion = version;
     }
 
     public boolean isLocal() {

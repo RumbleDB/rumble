@@ -163,9 +163,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     }
                 } else {
                     if (item.isObject() || item.isArray()) {
-                        System.out.println(
+                        System.err.println(
                             "Note: effective boolean value of "
-                                + (item.isObject() ? "Object" : "Array")
+                                + (item.isObject() ? "Object " : "Array ")
                                 + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
                         );
                     }
