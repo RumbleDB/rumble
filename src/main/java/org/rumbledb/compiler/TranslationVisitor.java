@@ -1639,6 +1639,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             }
         }
         Name name = parseName(itemTypeContext.qname(), false, true, false);
+        name = ItemTypeReference.renameAtomic(configuration, name);
         if (!BuiltinTypesCatalogue.typeExists(name)) {
             return new ItemTypeReference(name);
         }
