@@ -8,7 +8,8 @@ public class NumericOverflowOrUnderflow extends RumbleException {
     private static final long serialVersionUID = 1L;
 
     public NumericOverflowOrUnderflow(String message, ExceptionMetadata metadata) {
-        super(message,
+        super(
+            message,
             ErrorCode.NumericOverflowOrUnderflow,
             metadata
         );
