@@ -312,7 +312,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+                    .createDecimalItem(l.divide(r, 18, BigDecimal.ROUND_HALF_UP));
             case IDIV:
                 if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
@@ -348,7 +348,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                    .divide(new BigDecimal(r), 18, BigDecimal.ROUND_HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
                 } else {
@@ -390,7 +390,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                    .divide(new BigDecimal(r), 18, BigDecimal.ROUND_HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
                 } else {
