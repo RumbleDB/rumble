@@ -429,6 +429,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 int months = l.getYears() * 12 + l.getMonths();
                 int otherMonths = 12 * r.getYears() + r.getMonths();
+                if (otherMonths == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
                 return ItemFactory.getInstance()
                     .createDecimalItem(
                         BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
