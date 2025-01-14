@@ -287,11 +287,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 return ItemFactory.getInstance().createFloatItem(l / r);
             case IDIV:
-                if (r == 0) {
-                    throw new DivisionByZeroException(metadata);
-                }
-                return ItemFactory.getInstance()
-                    .createLongItem((long) (l / r));
+                return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createFloatItem(l % r);
             default:
