@@ -10,6 +10,7 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.DateTimeParser;
 import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -221,7 +222,14 @@ public class DateTimeItem implements Item {
             throw new IllegalArgumentException();
         }
         dateTime = fixEndOfDay(dateTime);
-        return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+        try {
+            return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+        } catch (IllegalArgumentException e) {
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid datetime: \"" + dateTime + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     @Override

@@ -91,476 +91,459 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             );
             throw new UnexpectedTypeException(message, getMetadata());
         }
-        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
-        if (result == null) {
-            ItemType target = this.sequenceType.getItemType();
-            if (target.equals(BuiltinTypesCatalogue.dateTimeItem) || target.equals(BuiltinTypesCatalogue.dateItem)) {
-                throw new DatetimeOverflowOrUnderflow("Invalid date: " + item.serialize(), getMetadata());
-            }
-            if (
-                target.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
-                    || target.equals(BuiltinTypesCatalogue.durationItem)
-            ) {
-                throw new DurationOverflowOrUnderflow("Invalid duration: " + item.serialize(), getMetadata());
-            }
+        try {
+            return castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        } catch (DatetimeOverflowOrUnderflow | DurationOverflowOrUnderflow | InvalidLexicalValueException e) {
+            throw e;
+        } catch (Exception e) {
             String message = String.format(
-                "\"%s\": this literal is not castable to type %s",
+                "\"%s\": this literal is not castable to type %s. %s",
                 item.serialize(),
-                this.sequenceType.getItemType()
+                this.sequenceType.getItemType(),
+                e
             );
             throw new CastException(message, getMetadata());
         }
-        return result;
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
         Item result = null;
-        try {
-            ItemType itemType = item.getDynamicType();
+        ItemType itemType = item.getDynamicType();
 
-            if (itemType.isSubtypeOf(targetType)) {
-                return item;
+        if (itemType.isSubtypeOf(targetType)) {
+            return item;
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+            if (item.isString() && item.getStringValue().trim().equals("null")) {
+                result = ItemFactory.getInstance().createNullItem();
+            } else {
+                return null;
             }
+            if (!checkFacetsNull(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.nullItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                if (item.isString() && item.getStringValue().trim().equals("null")) {
-                    result = ItemFactory.getInstance().createNullItem();
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+            result = ItemFactory.getInstance().createStringItem(item.serialize());
+            if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
+                return result;
+            }
+            if (!checkFacetsString(result, targetType)) {
+                return null;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
+            if (item.isString()) {
+                if (StringUtils.isNumeric(item.getStringValue())) {
+                    result = ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
                 } else {
-                    return null;
-                }
-                if (!checkFacetsNull(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.nullItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-                result = ItemFactory.getInstance().createStringItem(item.serialize());
-                if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
-                    return result;
-                }
-                if (!checkFacetsString(result, targetType)) {
-                    return null;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
-                if (item.isString()) {
-                    if (StringUtils.isNumeric(item.getStringValue())) {
-                        result = ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
-                    } else {
-                        result = ItemFactory.getInstance()
-                            .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
-                    }
-                } else if (item.isInt()) {
-                    result = ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
-                } else if (item.isInteger()) {
                     result = ItemFactory.getInstance()
-                        .createBooleanItem(!item.getIntegerValue().equals(BigInteger.ZERO));
-                } else if (item.isDecimal()) {
-                    result = ItemFactory.getInstance()
-                        .createBooleanItem(!item.getDecimalValue().equals(BigDecimal.ZERO));
-                } else if (item.isDouble()) {
-                    result = ItemFactory.getInstance().createBooleanItem(item.getDoubleValue() != 0);
-                } else if (item.isFloat()) {
-                    result = ItemFactory.getInstance().createBooleanItem(item.getFloatValue() != 0);
-                } else {
-                    return null;
+                        .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
                 }
-                if (!checkFacetsBoolean(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
+            } else if (item.isInt()) {
+                result = ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
+            } else if (item.isInteger()) {
+                result = ItemFactory.getInstance()
+                    .createBooleanItem(!item.getIntegerValue().equals(BigInteger.ZERO));
+            } else if (item.isDecimal()) {
+                result = ItemFactory.getInstance()
+                    .createBooleanItem(!item.getDecimalValue().equals(BigDecimal.ZERO));
+            } else if (item.isDouble()) {
+                result = ItemFactory.getInstance().createBooleanItem(item.getDoubleValue() != 0);
+            } else if (item.isFloat()) {
+                result = ItemFactory.getInstance().createBooleanItem(item.getFloatValue() != 0);
+            } else {
+                return null;
             }
+            if (!checkFacetsBoolean(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
-                } else if (item.isBoolean()) {
-                    result = ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
-                } else if (item.isNumeric()) {
-                    result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDouble(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.doubleItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+            } else if (item.isBoolean()) {
+                result = ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
+            } else if (item.isNumeric()) {
+                result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+            } else {
+                return null;
             }
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
-                } else if (item.isBoolean()) {
-                    result = ItemFactory.getInstance().createFloatItem(item.getBooleanValue() ? 1 : 0);
-                } else if (item.isNumeric()) {
-                    result = ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsFloat(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.floatItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
+            if (!checkFacetsDouble(result, targetType)) {
+                return null;
             }
+            if (targetType.equals(BuiltinTypesCatalogue.doubleItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
+            } else if (item.isBoolean()) {
+                result = ItemFactory.getInstance().createFloatItem(item.getBooleanValue() ? 1 : 0);
+            } else if (item.isNumeric()) {
+                result = ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
+            } else {
+                return null;
+            }
+            if (!checkFacetsFloat(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.floatItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
 
-            if (
-                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
-                    || (item.isDouble()
-                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
-            ) {
-                throw new InvalidLexicalValueException(
-                        "NaN or INF cannot be cast to another type than Float or Double",
-                        metadata
-                );
-            }
-
-            if (
-                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
-                    || (item.isDouble()
-                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
-            ) {
-                throw new InvalidLexicalValueException(
-                        "NaN or INF cannot be cast to another type than Float or Double",
-                        metadata
-                );
-            }
-            if (
-                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
-                    || (item.isDouble()
-                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
-            ) {
-                throw new InvalidLexicalValueException(
-                        "NaN or INF cannot be cast to another type than Float or Double",
-                        metadata
-                );
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
-                } else if (item.isBoolean()) {
-                    result = ItemFactory.getInstance()
-                        .createIntegerItem(item.getBooleanValue() ? BigInteger.ONE : BigInteger.ZERO);
-                } else if (item.isNumeric()) {
-                    result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsInteger(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
-                    return result;
-                }
-                if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-                    result = ItemFactory.getInstance().createIntItem(item.castToIntValue());
-                    if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
-                        return result;
-                    }
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
-                } else if (item.isBoolean()) {
-                    result = ItemFactory.getInstance()
-                        .createDecimalItem(item.getBooleanValue() ? BigDecimal.ONE : BigDecimal.ZERO);
-                } else if (item.isNumeric()) {
-                    result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDecimal(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.decimalItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createAnyURIItem(item.getStringValue().trim());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsAnyURI(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.anyURIItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.base64BinaryItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue().trim());
-                } else if (item.isHexBinary()) {
-                    result = ItemFactory.getInstance()
-                        .createBase64BinaryItem(Base64.encodeBase64String(item.getBinaryValue()));
-                } else {
-                    return null;
-                }
-                if (!checkFacetsBase64Binary(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createHexBinaryItem(item.getStringValue().trim());
-                } else if (item.isBase64Binary()) {
-                    result = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(item.getBinaryValue()));
-                } else {
-                    return null;
-                }
-                if (!checkFacetsHexBinary(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDate(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
-                } else if (item.isTime()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsTime(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDateTime(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDateTimeStamp(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance()
-                        .createYearMonthDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.yearMonthDurationItem
-                            )
-                        );
-                } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
-                } else if (item.isDayTimeDuration()) {
-                    result = ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDuration(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance()
-                        .createDayTimeDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.dayTimeDurationItem
-                            )
-                        );
-                } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
-                } else if (item.isYearMonthDuration()) {
-                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsDuration(result, targetType)) {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance()
-                        .createDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.durationItem
-                            )
-                        );
-                } else if (item.isDayTimeDuration()) {
-                    result = ItemFactory.getInstance().createDurationItem(item.getDurationValue());
-                } else if (item.isYearMonthDuration()) {
-                    return ItemFactory.getInstance().createDurationItem(item.getDurationValue());
-                } else {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
-                } else {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
-                } else {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
-                } else {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
-                } else {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
-                } else {
-                    return null;
-                }
-                if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
-                }
-                if (item.isBoolean()) {
-                    return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
-                }
-            }
-
-            return null;
-        } catch (InvalidLexicalValueException i) {
+        if (
+            (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                || (item.isDouble()
+                    && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+        ) {
             throw new InvalidLexicalValueException(
                     "NaN or INF cannot be cast to another type than Float or Double",
                     metadata
             );
-        } catch (Exception e) {
-            return null;
         }
+
+        if (
+            (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                || (item.isDouble()
+                    && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+        ) {
+            throw new InvalidLexicalValueException(
+                    "NaN or INF cannot be cast to another type than Float or Double",
+                    metadata
+            );
+        }
+        if (
+            (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                || (item.isDouble()
+                    && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+        ) {
+            throw new InvalidLexicalValueException(
+                    "NaN or INF cannot be cast to another type than Float or Double",
+                    metadata
+            );
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
+            } else if (item.isBoolean()) {
+                result = ItemFactory.getInstance()
+                    .createIntegerItem(item.getBooleanValue() ? BigInteger.ONE : BigInteger.ZERO);
+            } else if (item.isNumeric()) {
+                result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
+            } else {
+                return null;
+            }
+            if (!checkFacetsInteger(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
+                return result;
+            }
+            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
+                result = ItemFactory.getInstance().createIntItem(item.castToIntValue());
+                if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
+                    return result;
+                }
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
+            } else if (item.isBoolean()) {
+                result = ItemFactory.getInstance()
+                    .createDecimalItem(item.getBooleanValue() ? BigDecimal.ONE : BigDecimal.ZERO);
+            } else if (item.isNumeric()) {
+                result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
+            } else {
+                return null;
+            }
+            if (!checkFacetsDecimal(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.decimalItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createAnyURIItem(item.getStringValue().trim());
+            } else {
+                return null;
+            }
+            if (!checkFacetsAnyURI(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.anyURIItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.base64BinaryItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue().trim());
+            } else if (item.isHexBinary()) {
+                result = ItemFactory.getInstance()
+                    .createBase64BinaryItem(Base64.encodeBase64String(item.getBinaryValue()));
+            } else {
+                return null;
+            }
+            if (!checkFacetsBase64Binary(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createHexBinaryItem(item.getStringValue().trim());
+            } else if (item.isBase64Binary()) {
+                result = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(item.getBinaryValue()));
+            } else {
+                return null;
+            }
+            if (!checkFacetsHexBinary(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
+            } else if (item.isDate()) {
+                result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+            } else if (item.isDateTime()) {
+                result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+            } else {
+                return null;
+            }
+            if (!checkFacetsDate(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
+            } else if (item.isTime()) {
+                result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+            } else if (item.isDateTime()) {
+                result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+            } else {
+                return null;
+            }
+            if (!checkFacetsTime(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
+            } else if (item.isDate()) {
+                result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+            } else if (item.isDateTime()) {
+                result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+            } else {
+                return null;
+            }
+            if (!checkFacetsDateTime(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
+            } else if (item.isDate()) {
+                result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
+            } else if (item.isDateTime()) {
+                result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
+            } else {
+                return null;
+            }
+            if (!checkFacetsDateTimeStamp(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        DurationItem.getDurationFromString(
+                            item.getStringValue().trim(),
+                            BuiltinTypesCatalogue.yearMonthDurationItem
+                        )
+                    );
+            } else if (item.isDuration()) {
+                result = ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
+            } else if (item.isDayTimeDuration()) {
+                result = ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
+            } else {
+                return null;
+            }
+            if (!checkFacetsDuration(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance()
+                    .createDayTimeDurationItem(
+                        DurationItem.getDurationFromString(
+                            item.getStringValue().trim(),
+                            BuiltinTypesCatalogue.dayTimeDurationItem
+                        )
+                    );
+            } else if (item.isDuration()) {
+                result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+            } else if (item.isYearMonthDuration()) {
+                result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+            } else {
+                return null;
+            }
+            if (!checkFacetsDuration(result, targetType)) {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance()
+                    .createDurationItem(
+                        DurationItem.getDurationFromString(
+                            item.getStringValue().trim(),
+                            BuiltinTypesCatalogue.durationItem
+                        )
+                    );
+            } else if (item.isDayTimeDuration()) {
+                result = ItemFactory.getInstance().createDurationItem(item.getDurationValue());
+            } else if (item.isYearMonthDuration()) {
+                return ItemFactory.getInstance().createDurationItem(item.getDurationValue());
+            } else {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
+            } else {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
+            } else {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
+            } else {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
+            } else {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
+            if (item.isString()) {
+                result = ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
+            } else {
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
+                return result;
+            }
+            return new AnnotatedItem(result, targetType);
+        }
+
+        if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+            }
+            if (item.isBoolean()) {
+                return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
+            }
+        }
+        return null;
     }
 
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
