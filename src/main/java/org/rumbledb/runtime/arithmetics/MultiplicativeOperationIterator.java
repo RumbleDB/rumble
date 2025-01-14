@@ -287,6 +287,12 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 return ItemFactory.getInstance().createFloatItem(l / r);
             case IDIV:
+                if (Float.isNaN(l) || Float.isInfinite(l) || Float.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
+                }
+                if (Float.isInfinite(r)) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
                 return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createFloatItem(l % r);

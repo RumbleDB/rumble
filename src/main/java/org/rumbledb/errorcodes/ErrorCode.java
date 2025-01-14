@@ -23,6 +23,7 @@ package org.rumbledb.errorcodes;
 public enum ErrorCode {
 
     DivisionByZero("FOAR0001"),
+    NumericOverflowOrUnderflow("FOAR0002"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
