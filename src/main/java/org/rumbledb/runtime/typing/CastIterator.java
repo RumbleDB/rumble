@@ -91,7 +91,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             );
             throw new UnexpectedTypeException(message, getMetadata());
         }
-        return castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        if (result == null) {
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s.",
+                item.serialize(),
+                this.sequenceType.getItemType()
+            );
+            throw new CastException(message, getMetadata());
+        }
+        return result;
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
