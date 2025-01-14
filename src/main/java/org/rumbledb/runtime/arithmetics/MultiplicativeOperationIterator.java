@@ -451,6 +451,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (Double.isNaN(r)) {
             throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
         }
+        if (Double.isInfinite(r)) {
+            throw new ArithmeticOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
+        }
         switch (multiplicativeOperator) {
             case MUL: {
                 int months = l.getYears() * 12 + l.getMonths();
