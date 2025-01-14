@@ -452,7 +452,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
         }
         if (Double.isInfinite(r)) {
-            throw new ArithmeticOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
+            throw new DurationOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
         }
         switch (multiplicativeOperator) {
             case MUL: {
@@ -466,7 +466,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV: {
                 int months = l.getYears() * 12 + l.getMonths();
                 if (r == 0 || r == -0) {
-                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                    throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 int totalMonths = (int) Math.round(months / r);
                 return ItemFactory.getInstance()
@@ -531,7 +531,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 long durationInMillis = l.toStandardDuration().getMillis();
                 // Check r is 0 and throw exception
                 if (r == 0) {
-                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                    throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 long durationResult = Math.round(durationInMillis / r);
                 return ItemFactory.getInstance()

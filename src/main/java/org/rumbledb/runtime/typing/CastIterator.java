@@ -93,6 +93,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
+            ItemType target = this.sequenceType.getItemType();
+            if (target.equals(BuiltinTypesCatalogue.dateTimeItem) || target.equals(BuiltinTypesCatalogue.dateItem)) {
+                throw new DatetimeOverflowOrUnderflow("Invalid date: " + item.serialize(), getMetadata());
+            }
+            if (
+                target.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
+                    || target.equals(BuiltinTypesCatalogue.durationItem)
+            ) {
+                throw new DurationOverflowOrUnderflow("Invalid duration: " + item.serialize(), getMetadata());
+            }
             String message = String.format(
                 "\"%s\": this literal is not castable to type %s",
                 item.serialize(),
