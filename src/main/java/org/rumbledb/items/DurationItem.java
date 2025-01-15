@@ -11,7 +11,7 @@ import org.joda.time.format.ISOPeriodFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
+import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -214,7 +214,7 @@ public class DurationItem implements Item {
                 ? period.negated().normalizedStandard(getPeriodType(durationType))
                 : period.normalizedStandard(getPeriodType(durationType));
         } catch (IllegalArgumentException e) {
-            throw new DatetimeOverflowOrUnderflow(
+            throw new DurationOverflowOrUnderflow(
                     "Invalid duration: \"" + duration + "\"",
                     ExceptionMetadata.EMPTY_METADATA
             );
