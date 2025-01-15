@@ -260,6 +260,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 return ItemFactory.getInstance().createDoubleItem(l / r);
             case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
                 if (Double.isNaN(l) || Double.isInfinite(l)) {
                     throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
                 }
@@ -292,6 +295,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 return ItemFactory.getInstance().createFloatItem(l / r);
             case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
                 if (Float.isNaN(l) || Float.isInfinite(l)) {
                     throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
                 }
@@ -472,10 +478,14 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case MUL: {
                 int months = l.getYears() * 12 + l.getMonths();
                 int totalMonths = (int) Math.round(months * r);
-                return ItemFactory.getInstance()
-                    .createYearMonthDurationItem(
-                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                    );
+                try {
+                    return ItemFactory.getInstance()
+                            .createYearMonthDurationItem(
+                                    new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                            );
+                } catch (ArithmeticException e) {
+                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
+                }
             }
             case DIV: {
                 int months = l.getYears() * 12 + l.getMonths();
@@ -548,8 +558,12 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 long durationResult = Math.round(durationInMillis / r);
-                return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                try {
+                    return ItemFactory.getInstance()
+                            .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                } catch (ArithmeticException e) {
+                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
+                }
             }
             default:
                 throw new UnexpectedTypeException(
