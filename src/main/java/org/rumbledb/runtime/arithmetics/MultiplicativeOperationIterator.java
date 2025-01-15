@@ -260,11 +260,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 return ItemFactory.getInstance().createDoubleItem(l / r);
             case IDIV:
-                if (r == 0) {
-                    throw new DivisionByZeroException(metadata);
+                if (Double.isNaN(l) || Double.isInfinite(l)) {
+                    throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createLongItem((long) (l / r));
+                if (Double.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Right side of division is NaN: " + r, metadata);
+                }
+                if (Double.isInfinite(r)) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
+                return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createDoubleItem(l % r);
             default:
@@ -287,8 +292,11 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 return ItemFactory.getInstance().createFloatItem(l / r);
             case IDIV:
-                if (Float.isNaN(l) || Float.isInfinite(l) || Float.isNaN(r)) {
+                if (Float.isNaN(l) || Float.isInfinite(l)) {
                     throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
+                }
+                if (Float.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Right side of division is NaN: " + r, metadata);
                 }
                 if (Float.isInfinite(r)) {
                     return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
