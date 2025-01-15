@@ -480,9 +480,10 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 int totalMonths = (int) Math.round(months * r);
                 try {
                     return ItemFactory.getInstance()
-                            .createYearMonthDurationItem(
-                                    new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                            );
+                        .createYearMonthDurationItem(
+                            new Period().withMonths(totalMonths)
+                                .withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                        );
                 } catch (ArithmeticException e) {
                     throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
                 }
@@ -560,7 +561,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 long durationResult = Math.round(durationInMillis / r);
                 try {
                     return ItemFactory.getInstance()
-                            .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                        .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
                 } catch (ArithmeticException e) {
                     throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
                 }
