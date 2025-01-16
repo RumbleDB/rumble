@@ -5,7 +5,7 @@ let $raw-data := parallelize((
 ))
 
 let $data := annotate(
-    $raw-data
+    $raw-data,
     { "id": "integer", "v1": "double", "v2": "double" }
 )
 

@@ -131,7 +131,7 @@ Params is an object for optional arguments. These arguments are:
 To submit optional parameters to this method, a JSON object must be passed, where the argument is the key and its value the pertaining value:)
 declare function jsoniq_numpy:linspace($start as double, $end as double, $params as object) {
     let $params := validate type jsoniq_numpy:linspace_params {$params}
-    return {
+    return (
         if ($params.num lt 0) then
             error("InvalidFunctionCallErrorCode", "Function expects a num value to be greater than or equal to 0")
         else
@@ -139,7 +139,7 @@ declare function jsoniq_numpy:linspace($start as double, $end as double, $params
                 jsoniq_numpy:compute_linspace($start, $end, $params, $params.num - 1)
             else
                 jsoniq_numpy:compute_linspace($start, $end, $params, $params.num)
-    }
+    )
 };
 
 (:
@@ -195,12 +195,12 @@ To submit optional parameters to this method, a JSON object must be passed, wher
 :)
 declare function jsoniq_numpy:arange($stop as double, $params as object) {
     let $params := validate type jsoniq_numpy:arange_params {$params}
-    return {
+    return (
         if ($params.step lt 0) then
             jsoniq_numpy:arange_negative_range($stop, $params)
         else
             jsoniq_numpy:arange_positive_range($stop, $params)
-    }
+    )
 };
 
 (:
@@ -310,12 +310,12 @@ Params is an object for optional arguments. These arguments are:
     - axis UNSUPPORTED.:)
 declare function jsoniq_numpy:logspace($start as double, $end as double, $params as object) {
     let $params := validate type jsoniq_numpy:logspace_params {$params}
-    return {
+    return (
         if ($params.num lt 0) then
             error("InvalidFunctionCallErrorCode", "Function expects a num value to be greater than or equal to 0")
         else
             jsoniq_numpy:compute_logspace($start, $end, $params)
-    }
+    )
 };
 
 (:
@@ -497,7 +497,7 @@ Values outside of the bins bounds return position 1 or size(bins) + 1 according 
 declare function jsoniq_numpy:digitize($x as array, $bins as array, $params as object) {
     let $monotonic := jsoniq_numpy:monotonic($bins)
     let $params := validate type jsoniq_numpy:digitize_params {$params}
-    return {
+    return (
         if ($monotonic eq 0) then
             fn:error("Bins must be monotonically increasing or decreasing!")
         else
@@ -507,7 +507,7 @@ declare function jsoniq_numpy:digitize($x as array, $bins as array, $params as o
                     jsoniq_numpy:digitize_monotonically_increasing_right($x, $bins)
             else
                 jsoniq_numpy:digitize_in_reverse($x, $bins, $params.right)
-    }
+    )
 };
 
 declare function jsoniq_numpy:digitize($x as array, $bins as array) {
@@ -600,12 +600,12 @@ declare function jsoniq_numpy:reshape($arr as array, $shape as array) {
 (: Helper method for argwhere :)
 declare function jsoniq_numpy:argwhere($current_dimension, $positions_at_each_dimension as array) {
     typeswitch($current_dimension) 
-        case array return {
+        case array return (
             for $i in 1 to size($current_dimension)
             let $sub_dimension := $current_dimension[[$i]]
             let $positions_at_each_dimension := [$positions_at_each_dimension[], $i]
             return jsoniq_numpy:argwhere($sub_dimension, $positions_at_each_dimension)
-        }
+        )
         case integer return if ($current_dimension gt 0) then $positions_at_each_dimension
                             else ()
         default return ()
@@ -721,12 +721,12 @@ Params is an object for optional arguments. These arguments are:
 - initial (integer): The maximum value returned as output. If a minimum value is greater than initial, initial is returned. We reserve the value -2147483648 for the default, unset value of initial.:)
 declare function jsoniq_numpy:min($array as array, $params as object) {
     let $params := validate type jsoniq_numpy:min_params {$params}
-    return {
+    return (
         if ($params.initial eq -2147483648) then
             jsoniq_numpy:compute_min_along_axis_wrapper($array, $params.axis)
         else
             jsoniq_numpy:compute_min_along_axis_wrapper($array, $params.axis, $params.initial)
-    }
+    )
 };
 
 declare function jsoniq_numpy:min($array as array) {
@@ -838,12 +838,12 @@ Params is an object for optional arguments. These arguments are:
 - initial (integer): The maximum value returned as output. If a maximum value is smaller than initial, initial is returned. We reserve the value 2147483647 for the default, unset value of initial.:)
 declare function jsoniq_numpy:max($array as array, $params as object) {
     let $params := validate type jsoniq_numpy:max_params {$params}
-    return {
+    return (
         if ($params.initial eq 2147483647) then
             jsoniq_numpy:compute_max_along_axis_wrapper($array, $params.axis)
         else
             jsoniq_numpy:compute_max_along_axis_wrapper($array, $params.axis, $params.initial)
-    }
+    )
 };
 
 declare function jsoniq_numpy:max($array as array) {
