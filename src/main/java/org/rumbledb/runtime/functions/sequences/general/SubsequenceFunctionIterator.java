@@ -149,6 +149,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         int currentPosition = 1; // JSONiq indices start from 1
 
         this.currentLength = this.length;
+        if (this.startPosition <= 0) {
+            this.currentLength += this.startPosition - 1;
+        }
         // if length is 0, just return empty sequence
         if (this.currentLength == 0) {
             this.hasNext = false;
