@@ -94,7 +94,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
             String message = String.format(
-                "\"%s\": this literal is not castable to type %s",
+                "\"%s\": this literal is not castable to type %s.",
                 item.serialize(),
                 this.sequenceType.getItemType()
             );
@@ -104,8 +104,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
-        Item result = null;
         try {
+            Item result = null;
             ItemType itemType = item.getDynamicType();
 
             if (itemType.isSubtypeOf(targetType)) {
@@ -541,15 +541,17 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
                 }
             }
-
             return null;
-        } catch (InvalidLexicalValueException i) {
-            throw new InvalidLexicalValueException(
-                    "NaN or INF cannot be cast to another type than Float or Double",
-                    metadata
-            );
+        } catch (DatetimeOverflowOrUnderflow | DurationOverflowOrUnderflow | InvalidLexicalValueException e) {
+            throw e;
         } catch (Exception e) {
-            return null;
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s. %s",
+                item.serialize(),
+                targetType,
+                e
+            );
+            throw new CastException(message, metadata);
         }
     }
 

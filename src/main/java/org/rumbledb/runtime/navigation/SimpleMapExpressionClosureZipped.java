@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Marco Schöb
  *
  */
 
-package org.rumbledb.runtime.flwor.expression;
+package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
@@ -26,38 +26,46 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-// for now unused since we always use SimpleMapExpressionClosureZipped
-// can be used if the zipping with position is not needed as optimization, similar to PredicateIterator
-public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
-
+public class SimpleMapExpressionClosureZipped implements FlatMapFunction<Tuple2<Item, Long>, Item> {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator rightIterator;
     private final DynamicContext dynamicContext;
+    private final long contextSize;
 
-    public SimpleMapExpressionClosure(RuntimeIterator rightIterator, DynamicContext dynamicContext) {
+    public SimpleMapExpressionClosureZipped(
+            RuntimeIterator rightIterator,
+            DynamicContext dynamicContext,
+            long contextSize
+    ) {
         this.rightIterator = rightIterator;
         if (this.rightIterator.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
-                    "The expression in this simple map requires parallel execution, but the simple map is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    "The expression in this simple map requires parallel execution, but the predicate is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
                     this.rightIterator.getMetadata()
             );
         }
-        this.dynamicContext = new DynamicContext(dynamicContext);
+        this.dynamicContext = dynamicContext;
+        this.contextSize = contextSize;
     }
 
-    public Iterator<Item> call(Item item) throws Exception {
+    @Override
+    public Iterator<Item> call(Tuple2<Item, Long> v1) throws Exception {
         List<Item> currentItems = new ArrayList<>();
+        currentItems.add(v1._1());
+        DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
+        dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
+        dynamicContext.getVariableValues().setPosition(v1._2() + 1);
+        dynamicContext.getVariableValues().setLast(this.contextSize);
 
-        this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
-        currentItems.add(item);
-        List<Item> mapValuesRaw = this.rightIterator.materialize(this.dynamicContext);
-        this.dynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
+        List<Item> mapValuesRaw = this.rightIterator.materialize(dynamicContext);
         return mapValuesRaw.iterator();
     }
-}
+
+};

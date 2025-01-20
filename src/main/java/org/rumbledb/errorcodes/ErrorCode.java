@@ -23,6 +23,7 @@ package org.rumbledb.errorcodes;
 public enum ErrorCode {
 
     DivisionByZero("FOAR0001"),
+    NumericOverflowOrUnderflow("FOAR0002"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
@@ -120,7 +121,8 @@ public enum ErrorCode {
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
-    ArithmeticOverflowOrUnderflow("FODT0002"),
+    DatetimeOverflowOrUnderflow("FODT0001"),
+    DurationOverflowOrUnderflow("FODT0002"),
     InvalidTimezoneValue("FODT0003"),
 
     InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
