@@ -115,10 +115,10 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
             this.results = new ArrayList<>();
             for (Item currentItem : left) {
-                this.currentDynamicContextForLocalExecution.getVariableValues()
+                DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+                currentContext.getVariableValues()
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
-                this.results.addAll(this.rightIterator.materialize(this.currentDynamicContextForLocalExecution));
-                this.currentDynamicContextForLocalExecution.getVariableValues().removeVariable(Name.CONTEXT_POSITION);
+                this.results.addAll(this.rightIterator.materialize(currentContext));
             }
             // take unique
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
