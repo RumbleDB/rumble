@@ -1232,7 +1232,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (configuration.jsoniqVersion().equals("1.0")) {
+                    if (this.configuration.jsoniqVersion().equals("1.0")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1519,7 +1519,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (configuration.jsoniqVersion().equals("1.0")) {
+                    if (this.configuration.jsoniqVersion().equals("1.0")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1639,7 +1639,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             }
         }
         Name name = parseName(itemTypeContext.qname(), false, true, false);
-        name = ItemTypeReference.renameAtomic(configuration, name);
+        name = ItemTypeReference.renameAtomic(this.configuration, name);
         if (!BuiltinTypesCatalogue.typeExists(name)) {
             return new ItemTypeReference(name);
         }

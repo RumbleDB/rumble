@@ -170,7 +170,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(
-                    ComparisonOperator.getValueComparisonFromComparison(comparisonOperator)
+                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
                         .equals(ComparisonOperator.VC_NE)
                 );
         }
@@ -178,7 +178,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(
-                    ComparisonOperator.getValueComparisonFromComparison(comparisonOperator)
+                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
                         .equals(ComparisonOperator.VC_NE)
                 );
         }
