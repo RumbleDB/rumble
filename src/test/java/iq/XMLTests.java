@@ -31,22 +31,23 @@ import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import scala.Function0;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
-import scala.Function0;
-import scala.util.Properties;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @RunWith(Parameterized.class)
-public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
+public class XMLTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/test/resources/test_files/backwards-compatibility"
+                "/src/test/resources/test_files/xml"
     );
     public static final String javaVersion =
         System.getProperty("java.version");
@@ -60,7 +61,7 @@ public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
-    public BackwardsCompatibilityTests(File testFile) {
+    public XMLTests(File testFile) {
         this.testFile = testFile;
     }
 
@@ -77,14 +78,14 @@ public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
     }
 
     public static void readFileList(File dir) {
-        BackwardsCompatibilityTests._testFiles.addAll(FileManager.loadJiqFiles(dir));
+        XMLTests._testFiles.addAll(FileManager.loadJiqFiles(dir));
     }
 
     @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
-        BackwardsCompatibilityTests.readFileList(BackwardsCompatibilityTests.runtimeTestsDirectory);
-        BackwardsCompatibilityTests._testFiles.forEach(file -> result.add(new Object[] { file }));
+        XMLTests.readFileList(XMLTests.runtimeTestsDirectory);
+        XMLTests._testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
 
