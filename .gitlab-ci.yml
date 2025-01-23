@@ -200,6 +200,17 @@ BackwardsCompatibilityTests:
     reports:
       junit: target/surefire-reports/TEST-iq.BackwardsCompatibilityTests.xml
 
+XMLTests:
+  stage: tests
+  script:
+    - mvn -Dtest=XMLTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.XMLTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.XMLTests.xml
+
 SpotlessTest:
   stage: tests
   script:
