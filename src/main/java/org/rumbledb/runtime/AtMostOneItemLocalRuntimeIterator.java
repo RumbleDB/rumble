@@ -176,12 +176,20 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (item.isAttributeNode() || item.isDocumentNode() || item.isElementNode() || item.isTextNode()) {
             return true;
         }
-        if (item.isObject()) {
-            return true;
+        if (getConfiguration().jsoniqVersion().equals("1.0")) {
+            if (item.isObject() || item.isArray()) {
+                return true;
+            }
+        } else {
+            if (item.isObject() || item.isArray()) {
+                System.err.println(
+                    "Note: effective boolean value of "
+                        + (item.isObject() ? "Object " : "Array ")
+                        + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
+                );
+            }
         }
-        if (item.isArray()) {
-            return true;
-        }
+
         throw new InvalidArgumentTypeException(
                 "Effective boolean value not defined for items of type "
                     +

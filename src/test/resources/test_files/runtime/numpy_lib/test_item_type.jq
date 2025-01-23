@@ -1,4 +1,5 @@
-(:JIQS: ShouldRun; Output="(xs:string, js:atomic, js:object, xs:int, xs:dateTime, xs:string, xs:decimal, xs:date, xs:time, xs:duration, xs:boolean, js:null, xs:base64Binary, xs:hexBinary, xs:anyURI, xs:dateTimeStamp, xs:dayTimeDuration, xs:yearMonthDuration, js:object, xs:int)":)
+jsoniq version "3.1";
+(:JIQS: ShouldRun; Output="(xs:string, xs:anyAtomicType, js:object, xs:int, xs:dateTime, xs:string, xs:decimal, xs:date, xs:time, xs:duration, xs:boolean, js:null, xs:base64Binary, xs:hexBinary, xs:anyURI, xs:dateTimeStamp, xs:dayTimeDuration, xs:yearMonthDuration, js:object, xs:int)":)
 
 fn:item-type(["2", "3", "4"]),
 fn:item-type([1, "2", 3]),

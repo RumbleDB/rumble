@@ -15,7 +15,7 @@ public class AtomicItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     static final AtomicItemType atomicItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "atomic"),
+            new Name(Name.XS_NS, "xs", "anyAtomicType"),
             Collections.emptySet()
     );
     static final AtomicItemType stringItem = new AtomicItemType(

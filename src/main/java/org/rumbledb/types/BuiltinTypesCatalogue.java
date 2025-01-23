@@ -16,7 +16,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
 
     public static final ItemType atomicItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "atomic"),
+            new Name(Name.XS_NS, "xs", "anyAtomicType"),
             Collections.emptySet()
     );
     public static final ItemType stringItem = new AtomicItemType(
