@@ -51,7 +51,7 @@ public enum ErrorCode {
 
 
 
-    DuplicatePairNameErrorCode("JNDY0003"),
+    DuplicatePairNameErrorCode("XQDY0137"),
 
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),

@@ -16,9 +16,6 @@
 
 - [FOTY0012] - The argument has no typed value (objects, arrays, functions cannot be atomized).
 
-- [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
- constructor or in a simple object union have the same name.
-
 - [JNTY0004] - Unexpected non-atomic element. Raised when objects
 or arrays are supplied where an atomic element is expected.
 
@@ -102,6 +99,9 @@ Example: using subtraction on strings.
 - [XQDY0054] - It is a dynamic error if a cycle is encountered
 in the definition of a module's dynamic context components,
 for example because of a cycle in variable declarations.
+
+- [XQDY0137] - Duplicate pair name. It is a dynamic error if two pairs in an object
+  constructor or in a simple object union have the same name.
 
 - [XQST0016] - Module declaration error. 
 Current implementation does not support the Module Feature 
