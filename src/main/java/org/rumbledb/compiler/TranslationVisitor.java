@@ -215,7 +215,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
-            throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            throw new JsoniqVersionException(createMetadataFromContext(ctx)); // TODO CHECK
         }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {

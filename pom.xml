@@ -214,6 +214,7 @@
                         <configuration>
                             <target>
                                 <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
+                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-parser"/>
                             </target>
                         </configuration>
                         <goals>
