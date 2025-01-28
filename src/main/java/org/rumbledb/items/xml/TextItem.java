@@ -11,12 +11,14 @@ import org.w3c.dom.Node;
 
 public class TextItem implements Item {
     private static final long serialVersionUID = 1L;
-    private Node textNode;
+    private String textNodeValue;
+    private String textTextContent;
     private Item parent;
     private XMLDocumentPosition documentPos;
 
     public TextItem(Node textNode) {
-        this.textNode = textNode;
+        this.textNodeValue = textNode.getNodeValue();
+        this.textTextContent = textNode.getTextContent();
     }
 
     @Override
@@ -41,12 +43,12 @@ public class TextItem implements Item {
             return false;
         }
         TextItem otherTextItem = (TextItem) other;
-        return otherTextItem.textNode.isEqualNode(this.textNode);
+        return otherTextItem.textNodeValue.equals(this.textNodeValue);
     }
 
     @Override
     public String getTextValue() {
-        return this.textNode.getNodeValue();
+        return this.textNodeValue;
     }
 
     public boolean getEffectiveBooleanValue() {
@@ -56,19 +58,21 @@ public class TextItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.textNode);
         kryo.writeClassAndObject(output, this.parent);
+        output.writeString(this.textNodeValue);
+        output.writeString(this.textTextContent);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.textNode = (Node) kryo.readClassAndObject(input);
         this.parent = (Item) kryo.readClassAndObject(input);
+        this.textNodeValue = input.readString();
+        this.textTextContent = input.readString();
     }
 
     public int hashCode() {
-        return this.textNode.hashCode();
+        return this.textNodeValue.hashCode();
     }
 
     @Override
@@ -83,7 +87,7 @@ public class TextItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.textNode.getTextContent();
+        return this.textTextContent;
     }
 
     @Override
@@ -107,26 +111,7 @@ public class TextItem implements Item {
     }
 
     @Override
-    public int compareXmlNode(Item otherNode) {
-        int position = this.textNode.compareDocumentPosition(otherNode.getXmlNode());
-        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINED_BY) > 0) {
-            return -1;
-        } else if (
-            (position & Node.DOCUMENT_POSITION_PRECEDING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINS) > 0
-        ) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public Node getXmlNode() {
-        return this.textNode;
-    }
-
-    @Override
     public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.textNode.getNodeValue());
+        return ItemFactory.getInstance().createStringItem(this.textNodeValue);
     }
 }

@@ -16,7 +16,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.w3c.dom.Node;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -970,13 +969,6 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default int compareXmlNode(Item otherNode) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default Node getXmlNode() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
 
     /**
      * Method gets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /

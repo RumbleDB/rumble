@@ -14,13 +14,15 @@ import java.util.List;
 
 public class DocumentItem implements Item {
     private static final long serialVersionUID = 1L;
-    private Node documentNode;
+    private String documentNodeValue;
+    private String documentTextContent;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
     // TODO: add base-uri, document-uri, typed-value
 
     public DocumentItem(Node documentNode, List<Item> children) {
-        this.documentNode = documentNode;
+        this.documentNodeValue = documentNode.getNodeValue();
+        this.documentTextContent = documentNode.getTextContent();
         this.children = children;
     }
 
@@ -45,7 +47,8 @@ public class DocumentItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.documentNode);
+        output.writeString(this.documentNodeValue);
+        output.writeString(this.documentTextContent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.documentPos);
     }
@@ -53,7 +56,8 @@ public class DocumentItem implements Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.documentNode = (Node) kryo.readClassAndObject(input);
+        this.documentNodeValue = input.readString();
+        this.documentTextContent = input.readString();
         this.children = kryo.readObject(input, ArrayList.class);
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
     }
@@ -81,7 +85,7 @@ public class DocumentItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.documentNode.getTextContent();
+        return this.documentTextContent;
     }
 
     @Override
@@ -95,7 +99,7 @@ public class DocumentItem implements Item {
             return false;
         }
         DocumentItem otherDocumentItem = (DocumentItem) other;
-        return otherDocumentItem.documentNode.isEqualNode(this.documentNode);
+        return otherDocumentItem.documentNodeValue.equals(this.documentNodeValue);
     }
 
     @Override
@@ -105,30 +109,11 @@ public class DocumentItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.documentNode.hashCode();
-    }
-
-    @Override
-    public int compareXmlNode(Item otherNode) {
-        int position = this.documentNode.compareDocumentPosition(otherNode.getXmlNode());
-        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINED_BY) > 0) {
-            return -1;
-        } else if (
-            (position & Node.DOCUMENT_POSITION_PRECEDING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINS) > 0
-        ) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public Node getXmlNode() {
-        return this.documentNode;
+        return this.documentNodeValue.hashCode();
     }
 
     @Override
     public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.documentNode.getNodeValue());
+        return ItemFactory.getInstance().createStringItem(this.documentNodeValue);
     }
 }
