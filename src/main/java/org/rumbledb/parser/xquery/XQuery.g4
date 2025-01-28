@@ -7,7 +7,7 @@ package org.rumbledb.parser.xquery;
 
 moduleAndThisIsIt       : module EOF;
 
-module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
+module                  : (Kxquery Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
 mainModule              : prolog program;
@@ -277,10 +277,7 @@ predicate               : '[' expr ']';
 
 objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
-primaryExpr             : NullLiteral
-                        | Ktrue
-                        | Kfalse
-                        | Literal
+primaryExpr             : Literal
                         | stringLiteral
                         | varRef
                         | parenthesizedExpr
@@ -301,7 +298,7 @@ varRef                  : '$' var_name=qname;
 
 parenthesizedExpr       : '(' expr? ')';
 
-contextItemExpr         : '$$';
+contextItemExpr         : '.';
 
 orderedExpr             : 'ordered' '{' expr '}';
 
@@ -454,7 +451,6 @@ objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
-                        | NullLiteral
                         | functionTest;
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
@@ -473,7 +469,7 @@ uriLiteral              : stringLiteral;
 
 stringLiteral           : STRING;
 
-keyWords                : Kjsoniq
+keyWords                : Kxquery
                         | Kand
                         | Kcast
                         | Kcastable
@@ -489,7 +485,6 @@ keyWords                : Kjsoniq
                         | Kitem
                         | Kleast
                         | Knot
-                        | NullLiteral
                         | Kof
                         | Kor
                         | Kthen
@@ -523,8 +518,6 @@ keyWords                : Kjsoniq
                         | Kcount
                         | Kreturn
                         | Kunordered
-                        | Ktrue
-                        | Kfalse
                         | Ktype
                         | Kinsert
                         | Kdelete
@@ -638,13 +631,9 @@ Kcastable               : 'castable';
 
 Kversion                : 'version';
 
-Kjsoniq                 : 'jsoniq';
+Kxquery                 : 'xquery';
 
 Kunordered              : 'unordered';
-
-Ktrue                   : 'true';
-
-Kfalse                  : 'false';
 
 Ktype                   : 'type';
 
@@ -742,8 +731,6 @@ fragment HEX            : [0-9a-fA-F];
 
 ArgumentPlaceholder     : '?';
 
-NullLiteral             : 'null';
-
 Literal                 : NumericLiteral;
 
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
@@ -776,7 +763,7 @@ fragment NameStartChar  : [_a-zA-Z]
 
 fragment NameChar       : NameStartChar
                         | '-'
-                        // no . in JSONIQ names | '.'
+                        | '.'
                         | [0-9]
                         | '\u00B7'
                         | '\u0300'..'\u036F'
