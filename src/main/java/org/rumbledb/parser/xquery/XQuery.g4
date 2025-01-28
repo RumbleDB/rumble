@@ -447,7 +447,7 @@ typeName: qname;
 sequenceType            : '(' ')'
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
-objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
+objectConstructor       : 'map {' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
@@ -463,7 +463,7 @@ singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
 
-arrayConstructor        :  '[' expr? ']';
+arrayConstructor        :  'array' '{' expr? '}';
 
 uriLiteral              : stringLiteral;
 

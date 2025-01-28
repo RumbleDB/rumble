@@ -1596,9 +1596,6 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
-        if (itemTypeContext.NullLiteral() != null) {
-            return BuiltinTypesCatalogue.nullItem;
-        }
         XQueryParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
         if (fnCtx != null) {
             // we have a function item type
