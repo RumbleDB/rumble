@@ -21,7 +21,7 @@ public class DocumentItem implements Item {
     // TODO: add base-uri, document-uri, typed-value
 
     public DocumentItem(Node documentNode, List<Item> children) {
-        this.documentNodeValue = documentNode.getNodeValue();
+        this.documentNodeValue = documentNode.getNodeName();
         this.documentTextContent = documentNode.getTextContent();
         this.children = children;
     }
@@ -99,7 +99,7 @@ public class DocumentItem implements Item {
             return false;
         }
         DocumentItem otherDocumentItem = (DocumentItem) other;
-        return otherDocumentItem.documentNodeValue.equals(this.documentNodeValue);
+        return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
     @Override

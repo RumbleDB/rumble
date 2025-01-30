@@ -89,8 +89,7 @@ public class ElementItem implements Item {
             return false;
         }
         ElementItem otherElementItem = (ElementItem) other;
-        return otherElementItem.elementNodeName.equals(this.elementNodeName)
-            && otherElementItem.elementTextContent.equals(this.elementTextContent);
+        return this.getXmlDocumentPosition().equals(otherElementItem.getXmlDocumentPosition());
     }
 
     @Override

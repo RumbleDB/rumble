@@ -91,8 +91,7 @@ public class AttributeItem implements Item {
             return false;
         }
         AttributeItem otherAttributeItem = (AttributeItem) other;
-        return otherAttributeItem.attributeValue.equals(this.attributeValue)
-            && otherAttributeItem.attributeName.equals(this.attributeName);
+        return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
     }
 
     @Override

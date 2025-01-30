@@ -43,7 +43,7 @@ public class TextItem implements Item {
             return false;
         }
         TextItem otherTextItem = (TextItem) other;
-        return otherTextItem.textNodeValue.equals(this.textNodeValue);
+        return this.getXmlDocumentPosition().equals(otherTextItem.getXmlDocumentPosition());
     }
 
     @Override
