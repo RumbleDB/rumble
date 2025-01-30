@@ -98,15 +98,8 @@ import org.rumbledb.runtime.functions.sequences.aggregate.SumFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ExactlyOneIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.OneOrMoreIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ZeroOrOneIterator;
-import org.rumbledb.runtime.functions.sequences.general.EmptyFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.ExistsFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.HeadFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.InsertBeforeFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.RemoveFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.ReverseFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.SubsequenceFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.UnorderedFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.*;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
@@ -128,6 +121,7 @@ public class BuiltinFunctionCatalogue {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtinFunctions;
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
+        System.out.println("GGGEting function with identifier " + identifier);
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
         }
@@ -169,6 +163,7 @@ public class BuiltinFunctionCatalogue {
                 return builtinFunctions.get(array);
             }
         }
+        System.out.println("NO FUNC");
         return null;
     }
 
@@ -1921,7 +1916,31 @@ public class BuiltinFunctionCatalogue {
         SerializeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+    /**
+     * function that serializes a given input sequence
+     */
+    static final BuiltinFunction data0 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "data"
+        ),
+        "anyAtomicType*",
+        AtomizationIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
 
+    static final BuiltinFunction data1 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "data"
+        ),
+        "item*",
+        "anyAtomicType*",
+        AtomizationIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
     /**
      * function that returns the value of the default collation property
      */
@@ -3148,7 +3167,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(timezone_from_time.getIdentifier(), timezone_from_time);
         builtinFunctions.put(adjust_time_to_timezone1.getIdentifier(), adjust_time_to_timezone1);
         builtinFunctions.put(adjust_time_to_timezone2.getIdentifier(), adjust_time_to_timezone2);
-
+        builtinFunctions.put(data0.getIdentifier(), data0);
+        builtinFunctions.put(data1.getIdentifier(), data1);
         builtinFunctions.put(keys.getIdentifier(), keys);
         builtinFunctions.put(members.getIdentifier(), members);
         builtinFunctions.put(null_function.getIdentifier(), null_function);

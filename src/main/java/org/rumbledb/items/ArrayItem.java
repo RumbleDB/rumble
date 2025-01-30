@@ -254,4 +254,9 @@ public class ArrayItem implements Item {
         sb.append(">");
         return sb.toString();
     }
+
+    @Override
+    public List<Item> typedValue() {
+        return getItems();
+    }
 }

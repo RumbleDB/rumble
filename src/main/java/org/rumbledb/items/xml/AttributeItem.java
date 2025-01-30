@@ -9,6 +9,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.util.Collections;
+import java.util.List;
+
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
     private String attributeName;
@@ -105,7 +108,7 @@ public class AttributeItem implements Item {
     }
 
     @Override
-    public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.attributeValue);
+    public List<Item> typedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.attributeValue));
     }
 }

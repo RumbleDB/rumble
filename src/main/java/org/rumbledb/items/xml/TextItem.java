@@ -9,6 +9,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.util.Collections;
+import java.util.List;
+
 public class TextItem implements Item {
     private static final long serialVersionUID = 1L;
     private String textNodeValue;
@@ -111,7 +114,7 @@ public class TextItem implements Item {
     }
 
     @Override
-    public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.textNodeValue);
+    public List<Item> typedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.textNodeValue));
     }
 }

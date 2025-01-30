@@ -10,6 +10,7 @@ import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ElementItem implements Item {
@@ -145,7 +146,7 @@ public class ElementItem implements Item {
     }
 
     @Override
-    public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.elementTextContent);
+    public List<Item> typedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.elementTextContent));
     }
 }

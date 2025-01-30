@@ -21,6 +21,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -953,8 +954,8 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default Item typedValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    default List<Item> typedValue() {
+        return Collections.singletonList(this);
     }
 
     default String unparsedEntityPublicId() {
