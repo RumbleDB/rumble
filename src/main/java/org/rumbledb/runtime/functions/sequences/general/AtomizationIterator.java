@@ -74,7 +74,7 @@ public class AtomizationIterator extends HybridRuntimeIterator {
         }
 
         for (Item item : items) {
-            this.results.addAll(item.typedValue());
+            this.results.addAll(item.atomizedValue());
         }
 
         this.hasNext = !this.results.isEmpty();

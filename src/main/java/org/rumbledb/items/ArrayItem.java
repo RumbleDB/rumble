@@ -256,7 +256,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public List<Item> typedValue() {
+    public List<Item> atomizedValue() {
         return getItems();
     }
 }

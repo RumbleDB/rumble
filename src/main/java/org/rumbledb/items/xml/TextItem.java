@@ -14,14 +14,12 @@ import java.util.List;
 
 public class TextItem implements Item {
     private static final long serialVersionUID = 1L;
-    private String textNodeValue;
-    private String textTextContent;
+    private String content; // is also typed-value
     private Item parent;
     private XMLDocumentPosition documentPos;
 
     public TextItem(Node textNode) {
-        this.textNodeValue = textNode.getNodeValue();
-        this.textTextContent = textNode.getTextContent();
+        this.content = textNode.getTextContent();
     }
 
     @Override
@@ -51,31 +49,29 @@ public class TextItem implements Item {
 
     @Override
     public String getTextValue() {
-        return this.textNodeValue;
+        return this.content;
     }
 
     public boolean getEffectiveBooleanValue() {
-        return !this.getTextValue().isEmpty();
+        return !this.content.isEmpty();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.textNodeValue);
-        output.writeString(this.textTextContent);
+        output.writeString(this.content);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
-        this.textNodeValue = input.readString();
-        this.textTextContent = input.readString();
+        this.content = input.readString();
     }
 
     public int hashCode() {
-        return this.textNodeValue.hashCode();
+        return this.documentPos.hashCode();
     }
 
     @Override
@@ -90,7 +86,7 @@ public class TextItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.textTextContent;
+        return this.content;
     }
 
     @Override
@@ -114,7 +110,7 @@ public class TextItem implements Item {
     }
 
     @Override
-    public List<Item> typedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.textNodeValue));
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
     }
 }

@@ -14,15 +14,15 @@ import java.util.List;
 
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
-    private String attributeName;
-    private String attributeValue;
+    private String nodeName;
+    private String typedValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
 
     public AttributeItem(Node attributeNode) {
-        this.attributeName = attributeNode.getNodeName();
-        this.attributeValue = attributeNode.getNodeValue();
+        this.nodeName = attributeNode.getNodeName();
+        this.typedValue = attributeNode.getNodeValue();
     }
 
     @Override
@@ -41,16 +41,16 @@ public class AttributeItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.attributeName);
-        output.writeString(this.attributeValue);
+        output.writeString(this.nodeName);
+        output.writeString(this.typedValue);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
-        this.attributeName = input.readString();
-        this.attributeValue = input.readString();
+        this.nodeName = input.readString();
+        this.typedValue = input.readString();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class AttributeItem implements Item {
 
     @Override
     public String nodeName() {
-        return this.attributeName;
+        return this.nodeName;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class AttributeItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.attributeValue;
+        return this.typedValue;
     }
 
     @Override
@@ -104,11 +104,11 @@ public class AttributeItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.attributeValue.hashCode();
+        return this.documentPos.hashCode();
     }
 
     @Override
-    public List<Item> typedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.attributeValue));
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.typedValue));
     }
 }

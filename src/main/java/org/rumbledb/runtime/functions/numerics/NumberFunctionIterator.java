@@ -62,6 +62,5 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (Exception e) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
-
     }
 }

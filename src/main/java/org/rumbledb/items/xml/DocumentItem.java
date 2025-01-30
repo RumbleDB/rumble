@@ -15,15 +15,15 @@ import java.util.List;
 
 public class DocumentItem implements Item {
     private static final long serialVersionUID = 1L;
-    private String documentNodeValue;
-    private String documentTextContent;
+    private String nodeName;
+    private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
     // TODO: add base-uri, document-uri, typed-value
 
     public DocumentItem(Node documentNode, List<Item> children) {
-        this.documentNodeValue = documentNode.getNodeName();
-        this.documentTextContent = documentNode.getTextContent();
+        this.nodeName = documentNode.getNodeName();
+        this.stringValue = documentNode.getTextContent();
         this.children = children;
     }
 
@@ -48,8 +48,8 @@ public class DocumentItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.documentNodeValue);
-        output.writeString(this.documentTextContent);
+        output.writeString(this.nodeName);
+        output.writeString(this.stringValue);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.documentPos);
     }
@@ -57,8 +57,8 @@ public class DocumentItem implements Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.documentNodeValue = input.readString();
-        this.documentTextContent = input.readString();
+        this.nodeName = input.readString();
+        this.stringValue = input.readString();
         this.children = kryo.readObject(input, ArrayList.class);
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
     }
@@ -86,7 +86,7 @@ public class DocumentItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.documentTextContent;
+        return this.stringValue;
     }
 
     @Override
@@ -110,11 +110,11 @@ public class DocumentItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.documentNodeValue.hashCode();
+        return this.documentPos.hashCode();
     }
 
     @Override
-    public List<Item> typedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.documentNodeValue));
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
 }

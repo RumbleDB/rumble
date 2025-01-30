@@ -16,7 +16,7 @@ public class AtomizationClosure implements FlatMapFunction<Item, Item> {
         if (arg0.isArray()) {
             return arg0.getItems().iterator();
         } else {
-            return arg0.typedValue().iterator();
+            return arg0.atomizedValue().iterator();
         }
 
     }

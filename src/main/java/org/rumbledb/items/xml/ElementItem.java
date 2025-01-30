@@ -17,15 +17,15 @@ public class ElementItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
-    private String elementNodeName;
-    private String elementTextContent;
+    private String nodeName;
+    private String stringValue;
     private Item parent;
     // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
-        this.elementNodeName = elementNode.getNodeName();
-        this.elementTextContent = elementNode.getTextContent();
+        this.nodeName = elementNode.getNodeName();
+        this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
     }
@@ -61,8 +61,8 @@ public class ElementItem implements Item {
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
-        output.writeString(this.elementNodeName);
-        output.writeString(this.elementTextContent);
+        output.writeString(this.nodeName);
+        output.writeString(this.stringValue);
     }
 
     @SuppressWarnings("unchecked")
@@ -72,8 +72,8 @@ public class ElementItem implements Item {
         this.parent = (Item) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
-        this.elementNodeName = input.readString();
-        this.elementTextContent = input.readString();
+        this.nodeName = input.readString();
+        this.stringValue = input.readString();
     }
 
 
@@ -116,7 +116,7 @@ public class ElementItem implements Item {
 
     @Override
     public String nodeName() {
-        return this.elementNodeName;
+        return this.nodeName;
     }
 
     @Override
@@ -127,7 +127,7 @@ public class ElementItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.elementTextContent;
+        return this.stringValue;
     }
 
     @Override
@@ -142,11 +142,11 @@ public class ElementItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.elementNodeName.hashCode();
+        return this.documentPos.hashCode();
     }
 
     @Override
-    public List<Item> typedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.elementTextContent));
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
 }

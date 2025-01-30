@@ -121,7 +121,6 @@ public class BuiltinFunctionCatalogue {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtinFunctions;
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
-        System.out.println("GGGEting function with identifier " + identifier);
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
         }
@@ -163,7 +162,6 @@ public class BuiltinFunctionCatalogue {
                 return builtinFunctions.get(array);
             }
         }
-        System.out.println("NO FUNC");
         return null;
     }
 
