@@ -37,6 +37,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.FunctionAtomizationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
@@ -356,5 +357,10 @@ public class FunctionItem implements Item {
 
     public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
         this.dynamicModuleContext = dynamicModuleContext;
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        throw new FunctionAtomizationException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
     }
 }

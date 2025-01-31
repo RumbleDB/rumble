@@ -951,8 +951,10 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default List<Item> atomizedValue() {
-        // TODO check if its function and then throw error FOTY0013
-        return Collections.singletonList(this);
+        if (isAtomic())
+            return Collections.singletonList(this);
+        else
+            throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     default String unparsedEntityPublicId() {

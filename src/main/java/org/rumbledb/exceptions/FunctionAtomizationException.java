@@ -23,11 +23,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class NoTypedValueException extends RumbleException {
+public class FunctionAtomizationException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public NoTypedValueException(String message, ExceptionMetadata expressionMetadata) {
-        super(message, ErrorCode.NoTypedValueErrorCode, expressionMetadata);
+    public FunctionAtomizationException(String message, ExceptionMetadata expressionMetadata) {
+        super(message, ErrorCode.FunctionAtomizationErrorCode, expressionMetadata);
     }
 }
