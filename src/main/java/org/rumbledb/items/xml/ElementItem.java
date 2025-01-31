@@ -10,19 +10,22 @@ import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ElementItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
-    private Node elementNode;
+    private String nodeName;
+    private String stringValue;
     private Item parent;
     // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
-        this.elementNode = elementNode;
+        this.nodeName = elementNode.getNodeName();
+        this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
     }
@@ -58,7 +61,8 @@ public class ElementItem implements Item {
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
-        kryo.writeObject(output, this.elementNode);
+        output.writeString(this.nodeName);
+        output.writeString(this.stringValue);
     }
 
     @SuppressWarnings("unchecked")
@@ -68,7 +72,8 @@ public class ElementItem implements Item {
         this.parent = (Item) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
-        this.elementNode = kryo.readObject(input, Node.class);
+        this.nodeName = input.readString();
+        this.stringValue = input.readString();
     }
 
 
@@ -85,7 +90,7 @@ public class ElementItem implements Item {
             return false;
         }
         ElementItem otherElementItem = (ElementItem) other;
-        return otherElementItem.elementNode.isEqualNode(this.elementNode);
+        return this.getXmlDocumentPosition().equals(otherElementItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -111,7 +116,7 @@ public class ElementItem implements Item {
 
     @Override
     public String nodeName() {
-        return this.elementNode.getNodeName();
+        return this.nodeName;
     }
 
     @Override
@@ -122,7 +127,7 @@ public class ElementItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.elementNode.getTextContent();
+        return this.stringValue;
     }
 
     @Override
@@ -137,30 +142,11 @@ public class ElementItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.elementNode.hashCode();
+        return this.documentPos.hashCode();
     }
 
     @Override
-    public int compareXmlNode(Item otherNode) {
-        int position = this.elementNode.compareDocumentPosition(otherNode.getXmlNode());
-        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINED_BY) > 0) {
-            return -1;
-        } else if (
-            (position & Node.DOCUMENT_POSITION_PRECEDING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINS) > 0
-        ) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public Node getXmlNode() {
-        return this.elementNode;
-    }
-
-    @Override
-    public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.elementNode.getTextContent());
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
 }

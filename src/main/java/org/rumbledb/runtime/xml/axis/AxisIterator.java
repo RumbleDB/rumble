@@ -8,6 +8,7 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
             // Remove duplicates
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
             // Sort values in document order.
-            this.results.sort(Item::compareXmlNode);
+            this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
         }
         if (this.resultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.resultCounter++);
