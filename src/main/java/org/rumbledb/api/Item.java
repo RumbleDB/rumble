@@ -955,6 +955,7 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default List<Item> atomizedValue() {
+        // TODO check if its function and then throw error FOTY0013
         return Collections.singletonList(this);
     }
 

@@ -30,16 +30,17 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class AtomizationIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
-    private List<Item> results;
-    private int currentIndex = 0;
+    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private boolean usedContext = false;
 
     public AtomizationIterator(
             List<RuntimeIterator> parameters,
@@ -57,51 +58,66 @@ public class AtomizationIterator extends HybridRuntimeIterator {
         return childRDD.flatMap(transformation);
     }
 
+
     @Override
-    protected void openLocal() {
-        getList();
+    public Item nextLocal() {
+        if (this.hasNext) {
+            Item result = this.nextResults.remove(); // save the result to be returned
+            if (this.nextResults.isEmpty()) {
+                // if there are no more results left in the queue, trigger calculation for the next result
+                setNextResult();
+            }
+            return result;
+        }
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
+                getMetadata()
+        );
     }
 
-    private void getList() {
-        this.results = new ArrayList<>();
-        this.currentIndex = 0;
-        List<Item> items;
+    @Override
+    public void openLocal() {
+        if (this.sequenceIterator != null)
+            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
+        this.usedContext = false;
+        setNextResult();
+    }
+
+    public void setNextResult() {
         if (this.sequenceIterator != null) {
-            items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
-        } else {
-            items = this.currentDynamicContextForLocalExecution.getVariableValues()
+            if (this.sequenceIterator.hasNext()) {
+                this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
+            }
+        } else if (!this.usedContext) {
+            this.usedContext = true;
+            List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            for (Item item : items) {
+                this.nextResults.addAll(item.atomizedValue());
+            }
         }
-
-        for (Item item : items) {
-            this.results.addAll(item.atomizedValue());
-        }
-
-        this.hasNext = !this.results.isEmpty();
+        this.hasNext = !this.nextResults.isEmpty();
     }
 
     @Override
     protected void closeLocal() {
+        if (this.sequenceIterator != null) {
+            this.sequenceIterator.close();
+        }
     }
 
     @Override
     protected void resetLocal() {
-        getList();
+        if (this.sequenceIterator != null)
+            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
+        this.usedContext = false;
+        setNextResult();
     }
 
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            if (this.currentIndex == this.results.size() - 1) {
-                this.hasNext = false;
-            }
-            return this.results.get(this.currentIndex++);
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "atomization function", getMetadata());
     }
 }
