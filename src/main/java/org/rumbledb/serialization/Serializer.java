@@ -203,13 +203,13 @@ public class Serializer {
             sb.append(item.nodeName());
             sb.append("=");
             sb.append("\"");
-            sb.append(item.stringValue());
+            sb.append(item.getStringValue());
             sb.append("\"");
         }
 
         if (item.isTextNode()) {
             sb.append(indent);
-            sb.append(item.stringValue());
+            sb.append(item.getStringValue());
             sb.append("\n");
         }
     }

@@ -85,7 +85,7 @@ public class TextItem implements Item {
     }
 
     @Override
-    public String stringValue() {
+    public String getStringValue() {
         return this.content;
     }
 

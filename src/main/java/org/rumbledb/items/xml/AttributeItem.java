@@ -74,7 +74,7 @@ public class AttributeItem implements Item {
     }
 
     @Override
-    public String stringValue() {
+    public String getStringValue() {
         return this.typedValue;
     }
 

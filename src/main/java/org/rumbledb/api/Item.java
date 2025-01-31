@@ -946,10 +946,6 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default String stringValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
     default String typeName() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
