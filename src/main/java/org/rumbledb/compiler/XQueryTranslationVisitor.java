@@ -139,7 +139,6 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
-import org.rumbledb.expressions.xml.axis.EmptyStepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -2315,13 +2314,11 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+        return new FunctionCallExpression(
                 Name.createVariableInDefaultXQueryTypeNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
-        StepExpr stepExpr = new EmptyStepExpr(createMetadataFromContext(ctx));
-        return new SlashExpr(functionCallExpression, stepExpr, createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(XQueryParser.RelativePathExprContext relativeContext) {
