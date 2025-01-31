@@ -123,7 +123,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             // take unique
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
             // Sort values in document order.
-            this.results.sort(Item::compareXmlNode);
+            this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
         }
         if (this.nextResultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.nextResultCounter++);

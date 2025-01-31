@@ -9,17 +9,20 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.util.Collections;
+import java.util.List;
+
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
-    private Node attributeNode;
+    private String nodeName;
+    private String typedValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
 
     public AttributeItem(Node attributeNode) {
-        this.attributeNode = attributeNode;
-        attributeNode.getNodeValue(); // has side effects that synchronize something internal. DONT DELETE, otherwise
-                                      // kryo serialization breaks
+        this.nodeName = attributeNode.getNodeName();
+        this.typedValue = attributeNode.getNodeValue();
     }
 
     @Override
@@ -38,14 +41,16 @@ public class AttributeItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
-        kryo.writeObject(output, this.attributeNode);
+        output.writeString(this.nodeName);
+        output.writeString(this.typedValue);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
-        this.attributeNode = kryo.readObject(input, Node.class);
+        this.nodeName = input.readString();
+        this.typedValue = input.readString();
     }
 
     @Override
@@ -60,7 +65,7 @@ public class AttributeItem implements Item {
 
     @Override
     public String nodeName() {
-        return this.attributeNode.getNodeName();
+        return this.nodeName;
     }
 
     @Override
@@ -70,7 +75,7 @@ public class AttributeItem implements Item {
 
     @Override
     public String stringValue() {
-        return this.attributeNode.getNodeValue();
+        return this.typedValue;
     }
 
     @Override
@@ -89,7 +94,7 @@ public class AttributeItem implements Item {
             return false;
         }
         AttributeItem otherAttributeItem = (AttributeItem) other;
-        return otherAttributeItem.attributeNode.isEqualNode(this.attributeNode);
+        return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -99,30 +104,11 @@ public class AttributeItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.attributeNode.hashCode();
+        return this.documentPos.hashCode();
     }
 
     @Override
-    public int compareXmlNode(Item otherNode) {
-        int position = this.attributeNode.compareDocumentPosition(otherNode.getXmlNode());
-        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINED_BY) > 0) {
-            return -1;
-        } else if (
-            (position & Node.DOCUMENT_POSITION_PRECEDING) > 0 || (position & Node.DOCUMENT_POSITION_CONTAINS) > 0
-        ) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public Node getXmlNode() {
-        return this.attributeNode;
-    }
-
-    @Override
-    public Item typedValue() {
-        return ItemFactory.getInstance().createStringItem(this.attributeNode.getNodeValue());
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.typedValue));
     }
 }
