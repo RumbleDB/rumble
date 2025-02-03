@@ -1686,16 +1686,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        // must be castable to string
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
-            throwStaticTypeException(
-                "the lookup expression type must be castable to string (i.e. must match atomic), instead "
-                    + lookupType
-                    + " was inferred",
-                expression.getMetadata()
-            );
-        }
-
         if (!mainType.hasOverlapWith(SequenceType.createSequenceType("object*")) || mainType.isEmptySequence()) {
             throwStaticTypeException(
                 "Inferred type is empty sequence and this is not a CommaExpression",
@@ -1709,31 +1699,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             : SequenceType.Arity.ZeroOrMore;
 
         ItemType inferredType = BuiltinTypesCatalogue.item;
-        // if we have a specific object type and a string literal as key try perform better inference
-        if (
-            mainType.getItemType().isObjectItemType()
-                && (expression.getLookupExpression() instanceof StringLiteralExpression)
-        ) {
-            String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
-            boolean isObjectClosed = mainType.getItemType().getClosedFacet();
-            Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
-            if (objectSchema.containsKey(key)) {
-                FieldDescriptor field = objectSchema.get(key);
-                inferredType = field.getType();
-                if (field.isRequired()) {
-                    // if the field is required then any object will have it, so no need to include '0' arity if not
-                    // present
-                    inferredArity = mainType.getArity();
-                }
-            } else if (isObjectClosed) {
-                // if object is closed and key is not found then for sure we will return the empty sequence
-                throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata()
-                );
-            }
-        }
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
         return argument;

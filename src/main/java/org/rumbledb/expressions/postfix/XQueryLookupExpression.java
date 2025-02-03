@@ -57,7 +57,7 @@ public class XQueryLookupExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, 0);
-        sb.append(".");
+        sb.append("?");
         this.lookupExpression.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }

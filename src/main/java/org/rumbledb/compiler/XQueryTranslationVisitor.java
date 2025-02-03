@@ -85,7 +85,6 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.postfix.XQueryLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
@@ -1309,7 +1308,7 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
             if (child instanceof XQueryParser.LookupContext) {
                 Expression expr = (Expression) this.visitLookup((XQueryParser.LookupContext) child);
-                mainExpression = new ObjectLookupExpression(
+                mainExpression = new XQueryLookupExpression(
                         mainExpression,
                         expr,
                         createMetadataFromContext(ctx)
@@ -1381,20 +1380,17 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         }
+        if (ctx.in != null) {
+            return new IntegerLiteralExpression(
+                    ctx.in.getText(),
+                    createMetadataFromContext(ctx)
+            );
+        }
         if (ctx.nc != null) {
             return new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
         }
-        if (ctx.kw != null) {
-            return new StringLiteralExpression(ctx.kw.getText(), createMetadataFromContext(ctx));
-        }
         if (ctx.pe != null) {
             return this.visitParenthesizedExpr(ctx.pe);
-        }
-        if (ctx.vr != null) {
-            return this.visitVarRef(ctx.vr);
-        }
-        if (ctx.ci != null) {
-            return this.visitContextItemExpr(ctx.ci);
         }
 
         throw new OurBadException("Unrecognized lookup.");

@@ -271,7 +271,7 @@ postFixExpr             : main_expr=primaryExpr ( predicate | lookup | argumentL
 
 predicate               : '[' expr ']';
 
-lookup            : '?' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
+lookup            : '?' ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr );
 
 primaryExpr             : Literal
                         | stringLiteral

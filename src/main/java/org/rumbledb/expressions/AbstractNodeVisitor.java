@@ -184,6 +184,10 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitXQueryLookupExpression(XQueryLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     public T visitFilterExpression(FilterExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -458,9 +462,5 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitSlashExpr(SlashExpr slashExpr, T argument) {
         return defaultAction(slashExpr, argument);
-    }
-
-    public T visitXQueryLookupExpression(XQueryLookupExpression xqLookupExpr, T argument) {
-        return defaultAction(xqLookupExpr, argument);
     }
 }
