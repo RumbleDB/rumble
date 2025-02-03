@@ -361,6 +361,6 @@ public class FunctionItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new FunctionAtomizationException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
+        throw new FunctionAtomizationException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
     }
 }

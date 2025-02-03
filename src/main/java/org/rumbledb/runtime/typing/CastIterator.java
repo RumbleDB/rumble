@@ -74,6 +74,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         if (item != null && !item.isAtomic()) {
+            try {
                 List<Item> atomized = item.atomizedValue();
                 if (atomized.size() > 1) {
                     throw new UnexpectedTypeException(
@@ -82,6 +83,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     );
                 }
                 item = atomized.get(0);
+            } catch (FunctionAtomizationException e) {
+                // needed to add metadata for now, e has no metadata
+                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed", getMetadata());
+                castE.initCause(e);
+                throw castE;
+            }
         }
         if (item == null) {
             return null;
