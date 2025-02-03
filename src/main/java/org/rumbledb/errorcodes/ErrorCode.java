@@ -47,8 +47,7 @@ public enum ErrorCode {
     MatchesEmptyStringErrorCode("FORX0003"),
     InvalidReplacementStringErrorCode("FORX0004"),
 
-    NoTypedValueErrorCode("FOTY0012"),
-
+    FunctionAtomizationErrorCode("FOTY0013"),
 
 
     DuplicatePairNameErrorCode("XQDY0137"),

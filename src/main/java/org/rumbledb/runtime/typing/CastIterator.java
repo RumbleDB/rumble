@@ -20,7 +20,7 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
-
+import java.util.List;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -74,10 +74,21 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         if (item != null && !item.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "Only atomics can be cast to atomic types.",
-                    getMetadata()
-            );
+            try {
+                List<Item> atomized = item.atomizedValue();
+                if (atomized.size() > 1) {
+                    throw new UnexpectedTypeException(
+                            "Only atomics can be cast to atomic types.",
+                            getMetadata()
+                    );
+                }
+                item = atomized.get(0);
+            } catch (FunctionAtomizationException e) {
+                // needed to add metadata for now, e has no metadata
+                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed", getMetadata());
+                castE.initCause(e);
+                throw castE;
+            }
         }
         if (item == null) {
             return null;

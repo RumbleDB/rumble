@@ -126,7 +126,7 @@ public class ElementItem implements Item {
 
 
     @Override
-    public String stringValue() {
+    public String getStringValue() {
         return this.stringValue;
     }
 
