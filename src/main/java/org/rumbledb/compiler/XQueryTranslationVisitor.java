@@ -83,8 +83,6 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
@@ -1315,13 +1313,6 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                         expr,
                         createMetadataFromContext(ctx)
                 );
-            } else if (child instanceof XQueryParser.ArrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup((XQueryParser.ArrayLookupContext) child);
-                mainExpression = new ArrayLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
             } else {
                 throw new OurBadException("Unrecognized locator expression found in update expression.");
             }
@@ -1333,9 +1324,6 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
         ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
         if (locatorExprCtx instanceof XQueryParser.ObjectLookupContext) {
             return (Expression) this.visitObjectLookup((XQueryParser.ObjectLookupContext) locatorExprCtx);
-        }
-        if (locatorExprCtx instanceof XQueryParser.ArrayLookupContext) {
-            return (Expression) this.visitArrayLookup((XQueryParser.ArrayLookupContext) locatorExprCtx);
         } else {
             throw new OurBadException("Unrecognized locator found in update expression.");
         }
@@ -1362,16 +1350,6 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                         expr,
                         createMetadataFromContext(ctx)
                 );
-            } else if (child instanceof XQueryParser.ArrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup((XQueryParser.ArrayLookupContext) child);
-                mainExpression = new ArrayLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else if (child instanceof XQueryParser.ArrayUnboxingContext) {
-                this.visitArrayUnboxing((XQueryParser.ArrayUnboxingContext) child);
-                mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
             } else if (child instanceof XQueryParser.ArgumentListContext) {
                 List<Expression> arguments = getArgumentsFromArgumentListContext(
                     (XQueryParser.ArgumentListContext) child
@@ -1419,11 +1397,6 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
         }
 
         throw new OurBadException("Unrecognized object lookup.");
-    }
-
-    @Override
-    public Node visitArrayLookup(XQueryParser.ArrayLookupContext ctx) {
-        return this.visitExpr(ctx.expr());
     }
 
     // endregion

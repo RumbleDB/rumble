@@ -267,11 +267,7 @@ annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
-postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
-
-arrayLookup             : '[' '[' expr ']' ']';
-
-arrayUnboxing           : '[' ']';
+postFixExpr             : main_expr=primaryExpr ( predicate | objectLookup | argumentList)*;
 
 predicate               : '[' expr ']';
 
@@ -333,7 +329,7 @@ transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=expr
 
 appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+updateLocator           : main_expr=primaryExpr ( objectLookup )+; // TODO CHECK THIS,
 
 copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
