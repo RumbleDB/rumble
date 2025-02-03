@@ -267,11 +267,11 @@ annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
-postFixExpr             : main_expr=primaryExpr ( predicate | objectLookup | argumentList)*;
+postFixExpr             : main_expr=primaryExpr ( predicate | lookup | argumentList)*;
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
+lookup            : '?' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : Literal
                         | stringLiteral
@@ -329,7 +329,7 @@ transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=expr
 
 appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( objectLookup )+; // TODO CHECK THIS,
+updateLocator           : main_expr=primaryExpr ( lookup )+; // TODO CHECK THIS,
 
 copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 

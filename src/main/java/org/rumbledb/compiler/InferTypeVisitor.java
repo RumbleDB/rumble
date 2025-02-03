@@ -52,11 +52,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -1676,6 +1672,73 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
         return argument;
     }
+
+    public StaticContext visitXQueryLookupExpression(XQueryLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
+        SequenceType lookupType = expression.getLookupExpression().getStaticSequenceType();
+
+        if (mainType == null || lookupType == null) {
+            throw new OurBadException(
+                    "A child expression of a ObjectLookupExpression has no inferred type",
+                    expression.getMetadata()
+            );
+        }
+
+        // must be castable to string
+        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
+            throwStaticTypeException(
+                "the lookup expression type must be castable to string (i.e. must match atomic), instead "
+                    + lookupType
+                    + " was inferred",
+                expression.getMetadata()
+            );
+        }
+
+        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("object*")) || mainType.isEmptySequence()) {
+            throwStaticTypeException(
+                "Inferred type is empty sequence and this is not a CommaExpression",
+                ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                expression.getMetadata()
+            );
+        }
+
+        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
+            ? SequenceType.Arity.OneOrZero
+            : SequenceType.Arity.ZeroOrMore;
+
+        ItemType inferredType = BuiltinTypesCatalogue.item;
+        // if we have a specific object type and a string literal as key try perform better inference
+        if (
+            mainType.getItemType().isObjectItemType()
+                && (expression.getLookupExpression() instanceof StringLiteralExpression)
+        ) {
+            String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
+            boolean isObjectClosed = mainType.getItemType().getClosedFacet();
+            Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
+            if (objectSchema.containsKey(key)) {
+                FieldDescriptor field = objectSchema.get(key);
+                inferredType = field.getType();
+                if (field.isRequired()) {
+                    // if the field is required then any object will have it, so no need to include '0' arity if not
+                    // present
+                    inferredArity = mainType.getArity();
+                }
+            } else if (isObjectClosed) {
+                // if object is closed and key is not found then for sure we will return the empty sequence
+                throwStaticTypeException(
+                    "Inferred type is empty sequence and this is not a CommaExpression",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    expression.getMetadata()
+                );
+            }
+        }
+
+        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
+        return argument;
+    }
+
 
     @Override
     public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {

@@ -86,6 +86,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.XQueryLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -1306,8 +1307,8 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
     public Expression getMainExpressionFromUpdateLocatorContext(XQueryParser.UpdateLocatorContext ctx) {
         Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
-            if (child instanceof XQueryParser.ObjectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup((XQueryParser.ObjectLookupContext) child);
+            if (child instanceof XQueryParser.LookupContext) {
+                Expression expr = (Expression) this.visitLookup((XQueryParser.LookupContext) child);
                 mainExpression = new ObjectLookupExpression(
                         mainExpression,
                         expr,
@@ -1322,8 +1323,8 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(XQueryParser.UpdateLocatorContext ctx) {
         ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
-        if (locatorExprCtx instanceof XQueryParser.ObjectLookupContext) {
-            return (Expression) this.visitObjectLookup((XQueryParser.ObjectLookupContext) locatorExprCtx);
+        if (locatorExprCtx instanceof XQueryParser.LookupContext) {
+            return (Expression) this.visitLookup((XQueryParser.LookupContext) locatorExprCtx);
         } else {
             throw new OurBadException("Unrecognized locator found in update expression.");
         }
@@ -1343,9 +1344,9 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                         expr,
                         createMetadataFromContext(ctx)
                 );
-            } else if (child instanceof XQueryParser.ObjectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup((XQueryParser.ObjectLookupContext) child);
-                mainExpression = new ObjectLookupExpression(
+            } else if (child instanceof XQueryParser.LookupContext) {
+                Expression expr = (Expression) this.visitLookup((XQueryParser.LookupContext) child);
+                mainExpression = new XQueryLookupExpression(
                         mainExpression,
                         expr,
                         createMetadataFromContext(ctx)
@@ -1372,8 +1373,8 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitObjectLookup(XQueryParser.ObjectLookupContext ctx) {
-        // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
+    public Node visitLookup(XQueryParser.LookupContext ctx) {
+        // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in lookup
         if (ctx.lt != null) {
             return new StringLiteralExpression(
                     ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1),
@@ -1396,7 +1397,7 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
             return this.visitContextItemExpr(ctx.ci);
         }
 
-        throw new OurBadException("Unrecognized object lookup.");
+        throw new OurBadException("Unrecognized lookup.");
     }
 
     // endregion

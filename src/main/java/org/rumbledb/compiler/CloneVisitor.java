@@ -37,11 +37,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -345,6 +341,18 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
     public Node visitObjectLookupExpression(ObjectLookupExpression expression, Node argument) {
         ObjectLookupExpression result = new ObjectLookupExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (Expression) visit(expression.getLookupExpression(), argument),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitXQueryLookupExpression(XQueryLookupExpression expression, Node argument) {
+        XQueryLookupExpression result = new XQueryLookupExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
                 (Expression) visit(expression.getLookupExpression(), argument),
                 expression.getMetadata()
