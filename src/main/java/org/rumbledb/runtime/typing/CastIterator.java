@@ -89,7 +89,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
-        // first we try to atomize if its not atomic
+        // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
             try {
                 List<Item> atomized = item.atomizedValue();
@@ -106,6 +106,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 castE.initCause(e);
                 throw castE;
             }
+        }
+
+        if (!item.getDynamicType().isStaticallyCastableAs(targetType)) {
+            String message = String.format(
+                "\"%s\": a value of type %s is not castable to type %s",
+                item.serialize(),
+                item.getDynamicType(),
+                targetType
+            );
+            throw new UnexpectedTypeException(message, metadata);
         }
 
         try {
