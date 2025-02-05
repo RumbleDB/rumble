@@ -39,7 +39,7 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
 
     // needed for kryo
     public XMLDocumentPosition() {
-    };
+    }
 
     public XMLDocumentPosition(String path, int docPosition) {
         this.path = path;

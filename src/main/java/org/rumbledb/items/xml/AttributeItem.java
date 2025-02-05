@@ -22,7 +22,7 @@ public class AttributeItem implements Item {
 
     // needed for kryo
     public AttributeItem() {
-    };
+    }
 
     public AttributeItem(Node attributeNode) {
         this.nodeName = attributeNode.getNodeName();

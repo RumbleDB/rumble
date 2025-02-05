@@ -20,7 +20,7 @@ public class TextItem implements Item {
 
     // needed for kryo
     public TextItem() {
-    };
+    }
 
     public TextItem(Node textNode) {
         this.content = textNode.getTextContent();

@@ -25,7 +25,7 @@ public class ElementItem implements Item {
 
     // needed for kryo
     public ElementItem() {
-    };
+    }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
         this.nodeName = elementNode.getNodeName();
