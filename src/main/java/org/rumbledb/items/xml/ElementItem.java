@@ -23,6 +23,10 @@ public class ElementItem implements Item {
     // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
+    // needed for kryo
+    public ElementItem() {
+    };
+
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
         this.nodeName = elementNode.getNodeName();
         this.stringValue = elementNode.getTextContent();

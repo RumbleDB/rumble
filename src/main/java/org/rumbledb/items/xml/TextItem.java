@@ -18,6 +18,10 @@ public class TextItem implements Item {
     private Item parent;
     private XMLDocumentPosition documentPos;
 
+    // needed for kryo
+    public TextItem() {
+    };
+
     public TextItem(Node textNode) {
         this.content = textNode.getTextContent();
     }

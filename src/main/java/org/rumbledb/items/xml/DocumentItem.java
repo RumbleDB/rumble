@@ -21,6 +21,10 @@ public class DocumentItem implements Item {
     private XMLDocumentPosition documentPos;
     // TODO: add base-uri, document-uri, typed-value
 
+    // needed for kryo
+    public DocumentItem() {
+    }
+
     public DocumentItem(Node documentNode, List<Item> children) {
         this.nodeName = documentNode.getNodeName();
         this.stringValue = documentNode.getTextContent();

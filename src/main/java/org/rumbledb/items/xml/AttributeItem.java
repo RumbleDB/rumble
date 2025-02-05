@@ -20,6 +20,10 @@ public class AttributeItem implements Item {
     private XMLDocumentPosition documentPos;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
 
+    // needed for kryo
+    public AttributeItem() {
+    };
+
     public AttributeItem(Node attributeNode) {
         this.nodeName = attributeNode.getNodeName();
         this.typedValue = attributeNode.getNodeValue();

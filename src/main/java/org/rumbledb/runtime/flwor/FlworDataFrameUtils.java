@@ -78,6 +78,10 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -135,6 +139,11 @@ public class FlworDataFrameUtils {
         kryo.register(ArrayList.class);
 
         kryo.register(RumbleRuntimeConfiguration.class);
+
+        kryo.register(DocumentItem.class);
+        kryo.register(ElementItem.class);
+        kryo.register(AttributeItem.class);
+        kryo.register(TextItem.class);
     }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
