@@ -73,34 +73,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     getMetadata()
             );
         }
-        if (item != null && !item.isAtomic()) {
-            try {
-                List<Item> atomized = item.atomizedValue();
-                if (atomized.size() > 1) {
-                    throw new UnexpectedTypeException(
-                            "Only atomics can be cast to atomic types.",
-                            getMetadata()
-                    );
-                }
-                item = atomized.get(0);
-            } catch (FunctionAtomizationException e) {
-                // needed to add metadata for now, e has no metadata
-                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed", getMetadata());
-                castE.initCause(e);
-                throw castE;
-            }
-        }
         if (item == null) {
             return null;
-        }
-        if (!item.getDynamicType().isStaticallyCastableAs(this.sequenceType.getItemType())) {
-            String message = String.format(
-                "\"%s\": a value of type %s is not castable to type %s",
-                item.serialize(),
-                item.getDynamicType(),
-                this.sequenceType.getItemType()
-            );
-            throw new UnexpectedTypeException(message, getMetadata());
         }
         Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
@@ -115,6 +89,25 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+        // first we try to atomize if its not atomic
+        if (!item.isAtomic()) {
+            try {
+                List<Item> atomized = item.atomizedValue();
+                if (atomized.size() > 1) {
+                    throw new UnexpectedTypeException(
+                            "Only atomics can be cast to atomic types.",
+                            metadata
+                    );
+                }
+                item = atomized.get(0);
+            } catch (FunctionAtomizationException e) {
+                // needed to add metadata for now, e has no metadata
+                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed", metadata);
+                castE.initCause(e);
+                throw castE;
+            }
+        }
+
         try {
             Item result = null;
             ItemType itemType = item.getDynamicType();
