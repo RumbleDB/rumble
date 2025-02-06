@@ -95,14 +95,14 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 List<Item> atomized = item.atomizedValue();
                 if (atomized.size() > 1) {
                     throw new UnexpectedTypeException(
-                            "Only atomics can be cast to atomic types.",
+                            "Atomization in cast resulted in more than one item.",
                             metadata
                     );
                 }
                 item = atomized.get(0);
             } catch (FunctionAtomizationException e) {
-                // needed to add metadata for now, e has no metadata
-                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed", metadata);
+                // need to add metadata, e has no metadata
+                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed: \""+item.serialize() + "\"", metadata);
                 castE.initCause(e);
                 throw castE;
             }
