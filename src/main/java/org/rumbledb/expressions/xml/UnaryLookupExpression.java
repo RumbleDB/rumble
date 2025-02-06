@@ -22,7 +22,6 @@ package org.rumbledb.expressions.xml;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -33,22 +32,17 @@ import java.util.List;
 // clone of ObjectLookupExpression but for xquery lookup
 public class UnaryLookupExpression extends Expression {
 
-    private Expression mainExpression;
     private Expression lookupExpression;
+    // lookupexpression is null if we have a wildcard!!
 
-    public UnaryLookupExpression(Expression mainExpression, Expression lookupExpression, ExceptionMetadata metadata) {
+    public UnaryLookupExpression(Expression lookupExpression, ExceptionMetadata metadata) {
         super(metadata);
-        if (mainExpression == null) {
-            throw new OurBadException("Main expression cannot be null in a postfix expression.");
-        }
-        this.mainExpression = mainExpression;
         this.lookupExpression = lookupExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this.mainExpression);
         if (this.lookupExpression != null)
             result.add(this.lookupExpression);
         return result;
@@ -57,9 +51,11 @@ public class UnaryLookupExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append("?");
-        this.lookupExpression.serializeToJSONiq(sb, 0);
+        if (this.lookupExpression != null)
+            this.lookupExpression.serializeToJSONiq(sb, 0);
+        else
+            sb.append("*");
         sb.append("\n");
     }
 
@@ -71,9 +67,5 @@ public class UnaryLookupExpression extends Expression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitUnaryLookupExpression(this, argument);
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 }

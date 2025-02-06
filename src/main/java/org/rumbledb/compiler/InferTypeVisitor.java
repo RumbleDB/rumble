@@ -102,6 +102,7 @@ import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -1702,6 +1703,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType inferredType = BuiltinTypesCatalogue.item;
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
+        return argument;
+    }
+
+    public StaticContext visitUnaryLookupExpression(UnaryLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.ITEM_STAR);
         return argument;
     }
 

@@ -137,6 +137,7 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -1361,6 +1362,15 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
 
     @Override
     public Node visitLookup(XQueryParser.LookupContext ctx) {
+        return this.visitKeySpecifier(ctx.keySpecifier());
+    }
+
+    @Override
+    public Node visitUnaryLookup(XQueryParser.UnaryLookupContext ctx) {
+        return this.visitKeySpecifier(ctx.keySpecifier());
+    }
+
+    public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
             return new StringLiteralExpression(
                     ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1),
@@ -1426,6 +1436,12 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
         }
         if (child instanceof XQueryParser.BlockExprContext) {
             return this.visitBlockExpr((XQueryParser.BlockExprContext) child);
+        }
+        if (child instanceof XQueryParser.UnaryLookupContext) {
+            return new UnaryLookupExpression(
+                    (Expression) this.visitUnaryLookup((XQueryParser.UnaryLookupContext) child),
+                    createMetadataFromContext(ctx)
+            );
         }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",

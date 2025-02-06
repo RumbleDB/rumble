@@ -20,96 +20,53 @@
 
 package org.rumbledb.runtime.xml;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
 /**
- * This Iterator is for the postfix lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both Objects
+ * This Iterator is for the unary lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both
+ * Objects
  * (should be maps in the future) and Arrays. The lookupIterator is null in case we have a wildcard
  */
-public class UnaryLookupIterator extends HybridRuntimeIterator {
+public class UnaryLookupIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
     private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
+    private List<Item> contextItem;
     private Queue<Item> nextResult;
     private boolean wildcard;
 
     public UnaryLookupIterator(
-            RuntimeIterator object,
             RuntimeIterator lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
-            Stream.of(object, lookupIterator).filter(Objects::nonNull).collect(Collectors.toList()),
+            (lookupIterator != null) ? Collections.singletonList(lookupIterator) : new ArrayList<>(),
             staticContext
         );
-        this.iterator = object;
         this.nextResult = new LinkedList<>();
         this.lookupIterator = lookupIterator;
         this.wildcard = this.lookupIterator == null;
     }
 
-    private void initLookupKey(DynamicContext context) {
-        if (this.wildcard)
-            return;
-        this.lookupKeys = this.lookupIterator.materialize(context);
-    }
-
     @Override
-    public void openLocal() {
-        initLookupKey(this.currentDynamicContextForLocalExecution);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
+    public void open(DynamicContext context) {
+        super.open(context);
+        this.hasNext = true;
+        this.contextItem = this.currentDynamicContextForLocalExecution.getVariableValues()
+            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+        if (!this.wildcard)
+            this.lookupKeys = this.lookupIterator.materialize(context);
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult.poll(); // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    public void setNextResult() {
-        if (!this.nextResult.isEmpty())
-            return;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
+        for (Item item : this.contextItem) {
             if (item.isObject()) {
                 if (this.wildcard) {
                     this.nextResult.addAll(item.getValues());
@@ -150,20 +107,13 @@ public class UnaryLookupIterator extends HybridRuntimeIterator {
                 );
             }
         }
-
-        if (this.nextResult.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
+        this.hasNext = !this.nextResult.isEmpty();
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        initLookupKey(dynamicContext);
-        List<Item> keys = this.lookupKeys;
-        FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(keys, this.wildcard);
-        return childRDD.flatMap(transformation);
+    public Item next() {
+        Item result = this.nextResult.poll();
+        this.hasNext = !this.nextResult.isEmpty();
+        return result;
     }
 }

@@ -76,6 +76,7 @@ import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -355,6 +356,19 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     public Node visitPostfixLookupExpression(PostfixLookupExpression expression, Node argument) {
         PostfixLookupExpression result = new PostfixLookupExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
+                (expression.getLookupExpression() != null)
+                    ? (Expression) visit(expression.getLookupExpression(), argument)
+                    : null,
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitUnaryLookupExpression(UnaryLookupExpression expression, Node argument) {
+        UnaryLookupExpression result = new UnaryLookupExpression(
                 (expression.getLookupExpression() != null)
                     ? (Expression) visit(expression.getLookupExpression(), argument)
                     : null,

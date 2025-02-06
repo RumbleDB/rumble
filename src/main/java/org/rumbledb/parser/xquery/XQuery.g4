@@ -269,7 +269,13 @@ postFixExpr             : main_expr=primaryExpr ( predicate | lookup | argumentL
 
 predicate               : '[' expr ']';
 
-lookup            : '?' ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | wc='*');
+// postfix lookup, behind map or array
+lookup            : '?' keySpecifier;
+
+keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | wc='*');
+
+// unary lookup inside predicate or after simpleMap
+unaryLookup : '?' keySpecifier;
 
 primaryExpr             : Literal
                         | stringLiteral
@@ -283,6 +289,7 @@ primaryExpr             : Literal
                         | arrayConstructor
                         | functionItemExpr
                         | blockExpr
+                        | unaryLookup
                         ;
 
 blockExpr : '{' statementsAndExpr '}' ;

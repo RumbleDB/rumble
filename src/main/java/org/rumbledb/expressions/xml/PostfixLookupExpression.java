@@ -35,6 +35,7 @@ public class PostfixLookupExpression extends Expression {
 
     private Expression mainExpression;
     private Expression lookupExpression;
+    // lookupexpression is null if we have a wildcard!!
 
     public PostfixLookupExpression(Expression mainExpression, Expression lookupExpression, ExceptionMetadata metadata) {
         super(metadata);
@@ -59,7 +60,10 @@ public class PostfixLookupExpression extends Expression {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append("?");
-        this.lookupExpression.serializeToJSONiq(sb, 0);
+        if (this.lookupExpression != null)
+            this.lookupExpression.serializeToJSONiq(sb, 0);
+        else
+            sb.append("*");
         sb.append("\n");
     }
 
