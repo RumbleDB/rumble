@@ -377,10 +377,7 @@ reverseAxis: ( Kparent
 
 abbrevReverseStep: '..' ;
 
-// Causes issues
 nodeTest: nameTest | kindTest ;
-
-//nodeTest: kindTest;
 
 nameTest: qname | wildcard ;
 

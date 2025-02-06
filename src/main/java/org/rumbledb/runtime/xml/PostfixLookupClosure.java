@@ -29,13 +29,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class XQueryLookupClosure implements FlatMapFunction<Item, Item> {
+public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
 
     private static final long serialVersionUID = 1L;
     private final List<Item> keys;
     private boolean wildcard;
 
-    public XQueryLookupClosure(List<Item> keys, boolean wildcard) {
+    public PostfixLookupClosure(List<Item> keys, boolean wildcard) {
         this.keys = keys;
         this.wildcard = wildcard;
     }

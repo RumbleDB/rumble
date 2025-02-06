@@ -93,8 +93,10 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -184,7 +186,11 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitXQueryLookupExpression(XQueryLookupExpression expression, T argument) {
+    public T visitPostfixLookupExpression(PostfixLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitUnaryLookupExpression(UnaryLookupExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

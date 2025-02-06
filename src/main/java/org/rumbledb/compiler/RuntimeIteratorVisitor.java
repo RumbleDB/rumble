@@ -111,6 +111,7 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
@@ -190,7 +191,7 @@ import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
-import org.rumbledb.runtime.xml.XQueryLookupIterator;
+import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -623,13 +624,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitXQueryLookupExpression(XQueryLookupExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitPostfixLookupExpression(PostfixLookupExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
         Expression lookup = expression.getLookupExpression(); // null if wildcard
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
-        RuntimeIterator runtimeIterator = new XQueryLookupIterator(
+        RuntimeIterator runtimeIterator = new PostfixLookupIterator(
                 mainIterator,
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)

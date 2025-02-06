@@ -34,10 +34,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * This Iterator is for the lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both Objects
+ * This Iterator is for the postfix lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both Objects
  * (should be maps in the future) and Arrays. The lookupIterator is null in case we have a wildcard
  */
-public class XQueryLookupIterator extends HybridRuntimeIterator {
+public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
@@ -46,7 +46,7 @@ public class XQueryLookupIterator extends HybridRuntimeIterator {
     private Queue<Item> nextResult;
     private boolean wildcard;
 
-    public XQueryLookupIterator(
+    public PostfixLookupIterator(
             RuntimeIterator object,
             RuntimeIterator lookupIterator,
             RuntimeStaticContext staticContext
@@ -159,7 +159,7 @@ public class XQueryLookupIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         List<Item> keys = this.lookupKeys;
-        FlatMapFunction<Item, Item> transformation = new XQueryLookupClosure(keys, this.wildcard);
+        FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(keys, this.wildcard);
         return childRDD.flatMap(transformation);
     }
 }

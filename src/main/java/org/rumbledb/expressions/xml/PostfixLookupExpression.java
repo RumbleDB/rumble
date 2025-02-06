@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.expressions.postfix;
+package org.rumbledb.expressions.xml;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -31,12 +31,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 // clone of ObjectLookupExpression but for xquery lookup
-public class XQueryLookupExpression extends Expression {
+public class PostfixLookupExpression extends Expression {
 
     private Expression mainExpression;
     private Expression lookupExpression;
 
-    public XQueryLookupExpression(Expression mainExpression, Expression lookupExpression, ExceptionMetadata metadata) {
+    public PostfixLookupExpression(Expression mainExpression, Expression lookupExpression, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a postfix expression.");
@@ -70,7 +70,7 @@ public class XQueryLookupExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitXQueryLookupExpression(this, argument);
+        return visitor.visitPostfixLookupExpression(this, argument);
     }
 
     public Expression getMainExpression() {
