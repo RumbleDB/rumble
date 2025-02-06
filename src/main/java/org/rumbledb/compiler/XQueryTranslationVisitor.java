@@ -899,27 +899,15 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
 
     @Override
     public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
-        Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitComparisonExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
             return result;
         }
-        for (XQueryParser.NotExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitNotExpr(child);
+        for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitComparisonExpr(child);
             result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
         }
         return result;
-    }
-
-    @Override
-    public Node visitNotExpr(XQueryParser.NotExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitComparisonExpr(ctx.main_expr);
-        if (ctx.op == null || ctx.op.isEmpty()) {
-            return mainExpression;
-        }
-        return new NotExpression(
-                mainExpression,
-                createMetadataFromContext(ctx)
-        );
     }
 
     @Override

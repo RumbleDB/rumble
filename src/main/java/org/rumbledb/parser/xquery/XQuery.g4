@@ -225,9 +225,7 @@ catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*'
 
 orExpr                  : main_expr=andExpr ( Kor rhs+=andExpr )*;
 
-andExpr                 : main_expr=notExpr ( Kand rhs+=notExpr )*;
-
-notExpr                 : op+=Knot ? main_expr=comparisonExpr;
+andExpr                 : main_expr=comparisonExpr ( Kand rhs+=comparisonExpr )*;
 
 comparisonExpr          : main_expr=stringConcatExpr
                           ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
@@ -481,7 +479,6 @@ keyWords                : Kxquery
                         | Kis
                         | Kitem
                         | Kleast
-                        | Knot
                         | Kof
                         | Kor
                         | Kthen
@@ -607,8 +604,6 @@ Ktypeswitch             : 'typeswitch';
 Kor                     : 'or';
 
 Kand                    : 'and';
-
-Knot                    : 'not' ;
 
 Kto                     : 'to' ;
 
