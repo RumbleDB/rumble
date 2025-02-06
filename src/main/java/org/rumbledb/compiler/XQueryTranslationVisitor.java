@@ -1373,7 +1373,6 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
 
     @Override
     public Node visitLookup(XQueryParser.LookupContext ctx) {
-        // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in lookup
         if (ctx.lt != null) {
             return new StringLiteralExpression(
                     ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1),
@@ -1391,6 +1390,10 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
         }
         if (ctx.pe != null) {
             return this.visitParenthesizedExpr(ctx.pe);
+        }
+        if (ctx.wc != null) {
+            // wildcard isn't an expression, return null and let lookupiterator handle it
+            return null;
         }
 
         throw new OurBadException("Unrecognized lookup.");

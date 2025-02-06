@@ -33,15 +33,24 @@ public class XQueryLookupClosure implements FlatMapFunction<Item, Item> {
 
     private static final long serialVersionUID = 1L;
     private final List<Item> keys;
+    private boolean wildcard;
 
-    public XQueryLookupClosure(List<Item> keys) {
+    public XQueryLookupClosure(List<Item> keys, boolean wildcard) {
         this.keys = keys;
+        this.wildcard = wildcard;
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<>();
 
-
+        if (this.wildcard) {
+            if (arg0.isObject()) {
+                results = arg0.getValues();
+            } else if (arg0.isArray()) {
+                results = arg0.getItems();
+            }
+            return results.iterator();
+        }
         if (arg0.isObject()) {
             for (Item key : this.keys) {
                 if (key.isString()) {

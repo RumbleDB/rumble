@@ -1677,9 +1677,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
-        SequenceType lookupType = expression.getLookupExpression().getStaticSequenceType();
+        // no need to check lookupexpression and it might be null if wildcard
 
-        if (mainType == null || lookupType == null) {
+        if (mainType == null) {
             throw new OurBadException(
                     "A child expression of a ObjectLookupExpression has no inferred type",
                     expression.getMetadata()

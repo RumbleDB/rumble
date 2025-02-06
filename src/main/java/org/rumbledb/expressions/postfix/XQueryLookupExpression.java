@@ -49,7 +49,8 @@ public class XQueryLookupExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.mainExpression);
-        result.add(this.lookupExpression);
+        if (this.lookupExpression != null)
+            result.add(this.lookupExpression);
         return result;
     }
 
@@ -63,6 +64,7 @@ public class XQueryLookupExpression extends Expression {
     }
 
     public Expression getLookupExpression() {
+        // can be null if wildcard
         return this.lookupExpression;
     }
 

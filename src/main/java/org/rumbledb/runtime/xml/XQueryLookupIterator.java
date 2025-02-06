@@ -30,31 +30,41 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This Iterator is for the lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both Objects
- * (should be maps in the future) and Arrays
+ * (should be maps in the future) and Arrays. The lookupIterator is null in case we have a wildcard
  */
 public class XQueryLookupIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
+    private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
     private Queue<Item> nextResult;
+    private boolean wildcard;
 
     public XQueryLookupIterator(
             RuntimeIterator object,
             RuntimeIterator lookupIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(object, lookupIterator), staticContext);
+        super(
+            Stream.of(object, lookupIterator).filter(Objects::nonNull).collect(Collectors.toList()),
+            staticContext
+        );
         this.iterator = object;
         this.nextResult = new LinkedList<>();
+        this.lookupIterator = lookupIterator;
+        this.wildcard = this.lookupIterator == null;
     }
 
     private void initLookupKey(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.children.get(1);
-        this.lookupKeys = lookupIterator.materialize(context);
+        if (this.wildcard)
+            return;
+        this.lookupKeys = this.lookupIterator.materialize(context);
     }
 
     @Override
@@ -97,26 +107,36 @@ public class XQueryLookupIterator extends HybridRuntimeIterator {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             if (item.isObject()) {
-                for (Item key : this.lookupKeys) {
-                    if (key.isString()) {
-                        this.nextResult.add(item.getItemByKey(key.getStringValue()));
-                    }
-                    if (key.isNumeric()) {
-                        // TODO numeric maps
+                if (this.wildcard) {
+                    this.nextResult.addAll(item.getValues());
+                } else {
+                    for (Item key : this.lookupKeys) {
+                        if (key.isString()) {
+                            this.nextResult.add(item.getItemByKey(key.getStringValue()));
+                        }
+                        if (key.isNumeric()) {
+                            // TODO numeric maps
+                        }
                     }
                 }
+
             } else if (item.isArray()) {
-                for (Item key : this.lookupKeys) {
-                    if (key.isString()) {
-                        throw new UnexpectedTypeException(
-                                "Type error; Lookup with String on Arrays is not possible",
-                                getMetadata()
-                        );
-                    }
-                    if (key.isNumeric()) {
-                        this.nextResult.add(item.getItemAt(key.castToIntValue() - 1));
+                if (this.wildcard) {
+                    this.nextResult.addAll(item.getItems());
+                } else {
+                    for (Item key : this.lookupKeys) {
+                        if (key.isString()) {
+                            throw new UnexpectedTypeException(
+                                    "Type error; Lookup with String on Arrays is not possible",
+                                    getMetadata()
+                            );
+                        }
+                        if (key.isNumeric()) {
+                            this.nextResult.add(item.getItemAt(key.castToIntValue() - 1));
+                        }
                     }
                 }
+
             } else {
                 throw new UnexpectedTypeException(
                         "Type error; Lookup is only possible on Maps and Arrays, "
@@ -139,7 +159,7 @@ public class XQueryLookupIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         List<Item> keys = this.lookupKeys;
-        FlatMapFunction<Item, Item> transformation = new XQueryLookupClosure(keys);
+        FlatMapFunction<Item, Item> transformation = new XQueryLookupClosure(keys, this.wildcard);
         return childRDD.flatMap(transformation);
     }
 }

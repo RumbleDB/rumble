@@ -354,7 +354,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     public Node visitXQueryLookupExpression(XQueryLookupExpression expression, Node argument) {
         XQueryLookupExpression result = new XQueryLookupExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
-                (Expression) visit(expression.getLookupExpression(), argument),
+                (expression.getLookupExpression() != null)
+                    ? (Expression) visit(expression.getLookupExpression(), argument)
+                    : null,
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

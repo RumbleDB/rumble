@@ -625,7 +625,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitXQueryLookupExpression(XQueryLookupExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
+        Expression lookup = expression.getLookupExpression(); // null if wildcard
+        RuntimeIterator lookupIterator = (lookup == null)
+            ? null
+            : this.visit(expression.getLookupExpression(), argument);
         RuntimeIterator runtimeIterator = new XQueryLookupIterator(
                 mainIterator,
                 lookupIterator,
