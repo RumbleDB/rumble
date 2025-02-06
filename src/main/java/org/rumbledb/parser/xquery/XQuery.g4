@@ -447,7 +447,8 @@ objectConstructor       : 'map' '{' ( pairConstructor (',' pairConstructor)* )? 
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
-                        | functionTest;
+                        | functionTest
+                        | kindTest;
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
 

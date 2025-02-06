@@ -1565,10 +1565,9 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
-        XQueryParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
-        if (fnCtx != null) {
+        if (itemTypeContext.functionTest() != null) {
             // we have a function item type
-            XQueryParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
+            XQueryParser.TypedFunctionTestContext typedFnCtx = itemTypeContext.functionTest().typedFunctionTest();
             if (typedFnCtx != null) {
                 SequenceType rt = processSequenceType(typedFnCtx.rt);
                 List<SequenceType> st = typedFnCtx.st.stream()
@@ -1582,12 +1581,26 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        Name name = parseName(itemTypeContext.qname(), false, true, false);
-        name = ItemTypeReference.renameAtomic(this.configuration, name);
-        if (!BuiltinTypesCatalogue.typeExists(name)) {
-            return new ItemTypeReference(name);
+        if (itemTypeContext.qname() != null) {
+            Name name = parseName(itemTypeContext.qname(), false, true, false);
+            name = ItemTypeReference.renameAtomic(this.configuration, name);
+            if (!BuiltinTypesCatalogue.typeExists(name)) {
+                return new ItemTypeReference(name);
+            }
+            return BuiltinTypesCatalogue.getItemTypeByName(name);
         }
-        return BuiltinTypesCatalogue.getItemTypeByName(name);
+        if (itemTypeContext.kindTest() != null) {
+            // TODO need to implement Node types
+            throw new UnsupportedFeatureException(
+                    "Kindtest not yet supported",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        throw new UnsupportedFeatureException(
+                "Unsupported itemtype encountered",
+                ExceptionMetadata.EMPTY_METADATA
+        );
+
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
