@@ -102,7 +102,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 item = atomized.get(0);
             } catch (FunctionAtomizationException e) {
                 // need to add metadata, e has no metadata
-                RumbleException castE = new FunctionAtomizationException("Atomization in cast failed: \""+item.serialize() + "\"", metadata);
+                RumbleException castE = new FunctionAtomizationException(
+                        "Atomization in cast failed: \"" + item.serialize() + "\"",
+                        metadata
+                );
                 castE.initCause(e);
                 throw castE;
             }
