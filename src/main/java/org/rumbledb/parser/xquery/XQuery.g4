@@ -272,7 +272,8 @@ predicate               : '[' expr ']';
 // postfix lookup, behind map or array
 lookup            : '?' keySpecifier;
 
-keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | wc='*');
+// stringLiteral and varRef will be in XQuery 4.0
+keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | wc='*');
 
 // unary lookup inside predicate or after simpleMap
 unaryLookup : '?' keySpecifier;

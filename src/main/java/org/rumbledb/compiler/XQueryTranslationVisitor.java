@@ -1393,6 +1393,9 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
             // wildcard isn't an expression, return null and let lookupiterator handle it
             return null;
         }
+        if (ctx.vr != null) {
+            return this.visitVarRef(ctx.vr);
+        }
 
         throw new OurBadException("Unrecognized lookup.");
     }
