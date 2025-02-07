@@ -287,7 +287,7 @@
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>5.6.2</version>
+            <version>4.0.2</version> <!-- dont upgrade for now! -->
         </dependency>
         <dependency>
             <groupId>junit</groupId>
