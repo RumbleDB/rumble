@@ -34,8 +34,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * This Iterator is for the postfix lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both Objects
- * (should be maps in the future) and Arrays. The lookupIterator is null in case we have a wildcard
+ * This Iterator is for the postfix lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both
+ * Objects (should be maps in the future) and Arrays. The lookupIterator is null in case we have a wildcard
  */
 public class PostfixLookupIterator extends HybridRuntimeIterator {
 
