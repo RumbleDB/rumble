@@ -140,7 +140,6 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
-import org.rumbledb.expressions.xml.axis.EmptyStepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -215,7 +214,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
-            throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            throw new JsoniqVersionException(createMetadataFromContext(ctx)); // TODO CHECK
         }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
@@ -2340,13 +2339,11 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+        return new FunctionCallExpression(
                 Name.createVariableInDefaultXQueryTypeNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
-        StepExpr stepExpr = new EmptyStepExpr(createMetadataFromContext(ctx));
-        return new SlashExpr(functionCallExpression, stepExpr, createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {

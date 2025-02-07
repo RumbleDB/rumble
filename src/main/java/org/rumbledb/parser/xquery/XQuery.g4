@@ -1,13 +1,13 @@
-grammar Jsoniq;
+grammar XQuery;
 
 @header {
 // Java header
-package org.rumbledb.parser.jsoniq;
+package org.rumbledb.parser.xquery;
 }
 
 moduleAndThisIsIt       : module EOF;
 
-module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
+module                  : (Kxquery Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
 mainModule              : prolog program;
@@ -225,9 +225,7 @@ catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*'
 
 orExpr                  : main_expr=andExpr ( Kor rhs+=andExpr )*;
 
-andExpr                 : main_expr=notExpr ( Kand rhs+=notExpr )*;
-
-notExpr                 : op+=Knot ? main_expr=comparisonExpr;
+andExpr                 : main_expr=comparisonExpr ( Kand rhs+=comparisonExpr )*;
 
 comparisonExpr          : main_expr=stringConcatExpr
                           ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
@@ -267,20 +265,20 @@ annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
-postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
-
-arrayLookup             : '[' '[' expr ']' ']';
-
-arrayUnboxing           : '[' ']';
+postFixExpr             : main_expr=primaryExpr ( predicate | lookup | argumentList)*;
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
+// postfix lookup, behind map or array
+lookup            : '?' keySpecifier;
 
-primaryExpr             : NullLiteral
-                        | Ktrue
-                        | Kfalse
-                        | Literal
+// stringLiteral and varRef will be in XQuery 4.0
+keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | wc='*');
+
+// unary lookup inside predicate or after simpleMap
+unaryLookup : '?' keySpecifier;
+
+primaryExpr             : Literal
                         | stringLiteral
                         | varRef
                         | parenthesizedExpr
@@ -292,6 +290,7 @@ primaryExpr             : NullLiteral
                         | arrayConstructor
                         | functionItemExpr
                         | blockExpr
+                        | unaryLookup
                         ;
 
 blockExpr : '{' statementsAndExpr '}' ;
@@ -301,7 +300,7 @@ varRef                  : '$' var_name=qname;
 
 parenthesizedExpr       : '(' expr? ')';
 
-contextItemExpr         : '$$';
+contextItemExpr         : '.';
 
 orderedExpr             : 'ordered' '{' expr '}';
 
@@ -336,7 +335,7 @@ transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=expr
 
 appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+updateLocator           : main_expr=primaryExpr ( lookup )+; // TODO CHECK THIS,
 
 copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
@@ -447,12 +446,12 @@ typeName: qname;
 sequenceType            : '(' ')'
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
-objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
+objectConstructor       : 'map' '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
-                        | NullLiteral
-                        | functionTest;
+                        | functionTest
+                        | kindTest;
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
 
@@ -464,13 +463,13 @@ singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
 
-arrayConstructor        :  '[' expr? ']';
+arrayConstructor        :  'array' '{' expr? '}';
 
 uriLiteral              : stringLiteral;
 
 stringLiteral           : STRING;
 
-keyWords                : Kjsoniq
+keyWords                : Kxquery
                         | Kand
                         | Kcast
                         | Kcastable
@@ -485,8 +484,6 @@ keyWords                : Kjsoniq
                         | Kis
                         | Kitem
                         | Kleast
-                        | Knot
-                        | NullLiteral
                         | Kof
                         | Kor
                         | Kthen
@@ -520,8 +517,6 @@ keyWords                : Kjsoniq
                         | Kcount
                         | Kreturn
                         | Kunordered
-                        | Ktrue
-                        | Kfalse
                         | Ktype
                         | Kinsert
                         | Kdelete
@@ -615,8 +610,6 @@ Kor                     : 'or';
 
 Kand                    : 'and';
 
-Knot                    : 'not' ;
-
 Kto                     : 'to' ;
 
 Kinstance               : 'instance' ;
@@ -635,13 +628,9 @@ Kcastable               : 'castable';
 
 Kversion                : 'version';
 
-Kjsoniq                 : 'jsoniq';
+Kxquery                 : 'xquery';
 
 Kunordered              : 'unordered';
-
-Ktrue                   : 'true';
-
-Kfalse                  : 'false';
 
 Ktype                   : 'type';
 
@@ -739,8 +728,6 @@ fragment HEX            : [0-9a-fA-F];
 
 ArgumentPlaceholder     : '?';
 
-NullLiteral             : 'null';
-
 Literal                 : NumericLiteral;
 
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
@@ -773,7 +760,7 @@ fragment NameStartChar  : [_a-zA-Z]
 
 fragment NameChar       : NameStartChar
                         | '-'
-                        // no . in JSONIQ names | '.'
+                        | '.'
                         | [0-9]
                         | '\u00B7'
                         | '\u0300'..'\u036F'

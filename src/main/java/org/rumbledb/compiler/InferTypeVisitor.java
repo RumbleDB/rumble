@@ -52,11 +52,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -103,8 +99,10 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -1676,6 +1674,44 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
         return argument;
     }
+
+    public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
+        // no need to check lookupexpression and it might be null if wildcard
+
+        if (mainType == null) {
+            throw new OurBadException(
+                    "A child expression of a ObjectLookupExpression has no inferred type",
+                    expression.getMetadata()
+            );
+        }
+
+        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("object*")) || mainType.isEmptySequence()) {
+            throwStaticTypeException(
+                "Inferred type is empty sequence and this is not a CommaExpression",
+                ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                expression.getMetadata()
+            );
+        }
+
+        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
+            ? SequenceType.Arity.OneOrZero
+            : SequenceType.Arity.ZeroOrMore;
+
+        ItemType inferredType = BuiltinTypesCatalogue.item;
+
+        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
+        return argument;
+    }
+
+    public StaticContext visitUnaryLookupExpression(UnaryLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.ITEM_STAR);
+        return argument;
+    }
+
 
     @Override
     public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {

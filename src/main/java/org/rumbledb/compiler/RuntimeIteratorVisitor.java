@@ -64,11 +64,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -115,8 +111,10 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.*;
@@ -194,6 +192,8 @@ import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
+import org.rumbledb.runtime.xml.PostfixLookupIterator;
+import org.rumbledb.runtime.xml.UnaryLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -618,6 +618,36 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
         RuntimeIterator runtimeIterator = new ObjectLookupIterator(
                 mainIterator,
+                lookupIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitPostfixLookupExpression(PostfixLookupExpression expression, RuntimeIterator argument) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        Expression lookup = expression.getLookupExpression(); // null if wildcard
+        RuntimeIterator lookupIterator = (lookup == null)
+            ? null
+            : this.visit(expression.getLookupExpression(), argument);
+        RuntimeIterator runtimeIterator = new PostfixLookupIterator(
+                mainIterator,
+                lookupIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitUnaryLookupExpression(UnaryLookupExpression expression, RuntimeIterator argument) {
+        Expression lookup = expression.getLookupExpression(); // null if wildcard
+        RuntimeIterator lookupIterator = (lookup == null)
+            ? null
+            : this.visit(expression.getLookupExpression(), argument);
+        RuntimeIterator runtimeIterator = new UnaryLookupIterator(
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
