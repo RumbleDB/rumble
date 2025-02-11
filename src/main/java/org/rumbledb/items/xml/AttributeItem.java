@@ -15,7 +15,7 @@ import java.util.List;
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
     private String nodeName;
-    private String typedValue;
+    private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
     // TODO: add schema-type, typed-value, is-id, is-idrefs
@@ -26,7 +26,7 @@ public class AttributeItem implements Item {
 
     public AttributeItem(Node attributeNode) {
         this.nodeName = attributeNode.getNodeName();
-        this.typedValue = attributeNode.getNodeValue();
+        this.stringValue = attributeNode.getNodeValue();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class AttributeItem implements Item {
         kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
         output.writeString(this.nodeName);
-        output.writeString(this.typedValue);
+        output.writeString(this.stringValue);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class AttributeItem implements Item {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
         this.nodeName = input.readString();
-        this.typedValue = input.readString();
+        this.stringValue = input.readString();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class AttributeItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.typedValue;
+        return this.stringValue;
     }
 
     @Override
@@ -113,6 +113,6 @@ public class AttributeItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.typedValue));
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
 }

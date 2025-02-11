@@ -15,7 +15,6 @@ import java.util.List;
 
 public class DocumentItem implements Item {
     private static final long serialVersionUID = 1L;
-    private String nodeName;
     private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
@@ -26,7 +25,6 @@ public class DocumentItem implements Item {
     }
 
     public DocumentItem(Node documentNode, List<Item> children) {
-        this.nodeName = documentNode.getNodeName();
         this.stringValue = documentNode.getTextContent();
         this.children = children;
     }
@@ -52,7 +50,6 @@ public class DocumentItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.nodeName);
         output.writeString(this.stringValue);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.documentPos);
@@ -61,7 +58,6 @@ public class DocumentItem implements Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.nodeName = input.readString();
         this.stringValue = input.readString();
         this.children = kryo.readObject(input, ArrayList.class);
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
