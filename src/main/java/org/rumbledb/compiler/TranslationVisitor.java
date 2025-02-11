@@ -1231,7 +1231,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.jsoniqVersion().equals("1.0")) {
+                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1240,7 +1240,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         );
                     } else {
                         throw new ParsingException(
-                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --jsoniq-version CLI option.",
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --language jsoniq10 CLI option.",
                                 createMetadataFromContext(ctx)
                         );
                     }
@@ -1518,7 +1518,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.jsoniqVersion().equals("1.0")) {
+                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1527,7 +1527,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         );
                     } else {
                         throw new ParsingException(
-                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --jsoniq-version CLI option.",
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --language jsoniq10 CLI option.",
                                 createMetadataFromContext(ctx)
                         );
                     }

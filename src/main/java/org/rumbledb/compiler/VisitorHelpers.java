@@ -127,14 +127,14 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(4));
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery")) {
+        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
             if (query.startsWith("jsoniq version \"3.1\"")) {
-                configuration.setJsoniqVersion("3.1");
+                configuration.setQueryLanguage("jsoniq31");
             } else if (query.startsWith("jsoniq version \"1.0\"")) {
-                configuration.setJsoniqVersion("1.0");
+                configuration.setQueryLanguage("jsoniq10");
             }
             return parseJSONiqMainModule(query, uri, configuration);
         }
@@ -305,14 +305,14 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(4));
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery")) {
+        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
             if (query.startsWith("jsoniq version \"3.1\"")) {
-                configuration.setJsoniqVersion("3.1");
+                configuration.setQueryLanguage("jsoniq31");
             } else if (query.startsWith("jsoniq version \"1.0\"")) {
-                configuration.setJsoniqVersion("1.0");
+                configuration.setQueryLanguage("jsoniq10");
             }
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }

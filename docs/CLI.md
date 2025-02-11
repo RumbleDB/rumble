@@ -41,4 +41,4 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --function-inlining | N/A | function-inlining  |  yes or no | activates function inlining for non-recursive functions (activated by default) |
 | --parallel-execution | N/A | parallel-execution |  yes or no | activates parallel execution when possible (activated by default) |
 | --native-execution | N/A | native-execution |  yes or no | activates native (Spark SQL) execution when possible (activated by default) |
-| --jsoniq-version | N/A | N/A | 3.1 | specifies the JSONiq version that is used. Use 1.0 for backwards compatibility. Default is 3.1
+| --language | N/A | N/A | jsoniq10, jsoniq31, xquery31 | specifies the query language to be used

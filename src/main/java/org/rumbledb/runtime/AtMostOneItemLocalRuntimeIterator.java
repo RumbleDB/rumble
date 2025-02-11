@@ -176,7 +176,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (item.isAttributeNode() || item.isDocumentNode() || item.isElementNode() || item.isTextNode()) {
             return true;
         }
-        if (getConfiguration().jsoniqVersion().equals("1.0")) {
+        if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
             if (item.isObject() || item.isArray()) {
                 return true;
             }
@@ -185,7 +185,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
                 System.err.println(
                     "Note: effective boolean value of "
                         + (item.isObject() ? "Object " : "Array ")
-                        + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --jsoniq-version 1.0 command line option"
+                        + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --language jsoniq10 command line option"
                 );
             }
         }

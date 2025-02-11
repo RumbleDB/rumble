@@ -62,7 +62,7 @@ public class ItemTypeReference implements ItemType {
      * with anyAtomicType depending on the jsoniq version.
      */
     public static Name renameAtomic(RumbleRuntimeConfiguration config, Name oldName) {
-        if (config.jsoniqVersion().equals("1.0")) {
+        if (config.getQueryLanguage().equals("jsoniq10")) {
             if (oldName.getNamespace() != null && oldName.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (oldAtomicName.getLocalName().equals(oldName.getLocalName())) {
                     return newAtomicName;

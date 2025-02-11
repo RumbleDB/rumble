@@ -74,7 +74,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean functionInlining;
     private boolean thirdFeature;
     private boolean applyUpdates;
-    private String jsoniqVersion;
+    private String queryLanguage;
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -438,10 +438,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.optimizeGeneralComparisonToValueComparison = true;
         }
 
-        if (this.arguments.containsKey("jsoniq-version")) {
-            this.jsoniqVersion = this.arguments.get("jsoniq-version");
+        if (this.arguments.containsKey("language")) {
+            this.queryLanguage = this.arguments.get("language");
         } else {
-            this.jsoniqVersion = "1.0";
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
         }
     }
 
@@ -674,12 +674,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.optimizeGeneralComparisonToValueComparison = b;
     }
 
-    public String jsoniqVersion() {
-        return this.jsoniqVersion;
+    public String getQueryLanguage() {
+        return this.queryLanguage;
     }
 
-    public void setJsoniqVersion(String version) {
-        this.jsoniqVersion = version;
+    public void setQueryLanguage(String version) {
+        this.queryLanguage = version;
     }
 
     public boolean isLocal() {
