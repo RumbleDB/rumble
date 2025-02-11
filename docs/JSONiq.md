@@ -112,41 +112,43 @@ The JSONiq type system is fully supported. Below is a complete list of JSONiq ty
 types specific to XML (e.g., NOTATION, NMTOKENS, NMTOKEN, ID, IDREF, ENTITY, etc) are not part of the JSONiq standard and
 not supported by RumbleDB.
 
-|  Type | Status |
-|-------|--------|
-| atomic | supported |
-| anyURI | supported |
-| base64Binary | supported |
-| boolean | supported |
-| byte | supported |
-| date | supported |
-| dateTime | supported |
-| dateTimeStamp | supported |
-| dayTimeDuration | supported |
-| decimal | supported |
-| double | supported |
-| duration | supported |
-| float | supported |
-| gDay | supported |
-| gMonth | supported |
-| gYear | supported |
-| gYearMonth | supported |
-| hexBinary | supported |
-| int | supported |
-| integer | supported |
-| long | supported |
-| negativeInteger | supported |
-| nonPositiveInteger | supported |
-| nonNegativeInteger | supported |
-| positiveInteger | supported |
-| short | supported |
-| string | supported |
-| time | supported |
-| unsignedByte | supported |
-| unsignedInt | supported |
-| unsignedLong | supported |
-| unsignedShort | supported |
-| yearMonthDuration | supported |
+| Type               | Status          |
+|--------------------|-----------------|
+| atomic             | JSONiq 1.0 only |
+| anyAtomicType      | supported       |
+| anyURI             | supported       |
+| base64Binary       | supported       |
+| boolean            | supported       |
+| byte               | supported       |
+| date               | supported       |
+| dateTime           | supported       |
+| dateTimeStamp      | supported       |
+| dayTimeDuration    | supported       |
+| decimal            | supported       |
+| double             | supported       |
+| duration           | supported       |
+| float              | supported       |
+| gDay               | supported       |
+| gMonth             | supported       |
+| gYear              | supported       |
+| gYearMonth         | supported       |
+| hexBinary          | supported       |
+| int                | supported       |
+| integer            | supported       |
+| long               | supported       |
+| negativeInteger    | supported       |
+| nonPositiveInteger | supported       |
+| nonNegativeInteger | supported       |
+| numeric            | supported       |
+| positiveInteger    | supported       |
+| short              | supported       |
+| string             | supported       |
+| time               | supported       |
+| unsignedByte       | supported       |
+| unsignedInt        | supported       |
+| unsignedLong       | supported       |
+| unsignedShort      | supported       |
+| yearMonthDuration  | supported       |
 
 ## Unsupported/Unimplemented features (beta release)
 

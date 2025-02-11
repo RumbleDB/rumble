@@ -2,7 +2,7 @@
 
 RumbleDB is able to read a variety of formats from a variety of file systems.
 
-We support functions to read JSON, JSON Lines, Parquet, CSV, Text and ROOT files from various storage layers such as S3 and HDFS, Azure blob storage. We run most of our tests on Amazon EMR with S3 or HDFS, as well as locally on the local file system, but we welcome feedback on other setups.
+We support functions to read JSON, JSON Lines, XML, Parquet, CSV, Text and ROOT files from various storage layers such as S3 and HDFS, Azure blob storage. We run most of our tests on Amazon EMR with S3 or HDFS, as well as locally on the local file system, but we welcome feedback on other setups.
 
 ## Supported formats
 
@@ -81,6 +81,25 @@ Example of usage:
 for $my-structured-json in structured-json-lines("hdfs://host:port/directory/structured-file.json")
 where $my-structured-json.property eq "some value"
 return $my-structured-json
+```
+
+### XML
+
+XML files can be read into RumbleDB using the doc() function. The parameter specifies the XML file to read and return as a document node.
+
+Example of usage:
+
+```
+doc("path/to/file.xml")
+```
+
+Additionally, RumbeDB provides the xml-files() function to read many XML files at once.  xml-files() exists in unary and binary. The first parameter specifies the directory of XML files to read.
+The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition. 
+
+Example of usage:
+
+```
+xml-files("path/to/directory/*.xml", 10)
 ```
 
 ### Text

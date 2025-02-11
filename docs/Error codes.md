@@ -2,6 +2,8 @@
 
 - [FOAR0001] - Division by zero.
 
+- [FOAR0002] - Numeric operation overflow/underflow
+
 - [FOCA0002] - A value that is not lexically valid for a particular type has been encountered.
 
 - [FOCH0001] - Raised by fn:codepoints-to-string if the input contains an integer that is not the codepoint of a valid XML character.
@@ -9,6 +11,10 @@
 - [FOCH0003] - Raised by fn:normalize-unicode if the requested normalization form is not supported by the implementation.
 
 - [FODC0002] - Error retrieving resource.
+
+- [FODT0001] - Overflow/underflow in date/time operation.
+
+- [FODT0002] - Overflow/underflow in duration operation.
 
 - [FOFD1340] -This error is raised if the picture string or calendar supplied to fn:format-date, fn:format-time, or fn:format-dateTime has invalid syntax.
 

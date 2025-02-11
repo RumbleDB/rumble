@@ -7,6 +7,20 @@ RumbleDB namespace, which is the default function namespace and does not require
 
 It is recommended that user-defined functions are put in the local namespace, i.e., their name should have the local: prefix (which is predefined). Otherwise, there is the risk that your code becomes incompatible with subsequent releases if new (unprefixed) builtin functions are introduced.
 
+## Errors and diagnostics
+### Diagnostic tracing
+
+### trace
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-trace)
+
+Fully implemented
+
+```
+trace(1 to 3)
+```
+
+returns (1, 2, 3) and logs it in the log-path if specified
+
 ## Functions and operators on numerics
 ### Functions on numeric values
 
@@ -299,7 +313,11 @@ returns ""
 ### compare
 [W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-compare)
 
-Not implemented
+Fully implemented
+```
+compare("aa", "bb")
+```
+returns -1
 
 ### codepoint-equal
 
@@ -1178,7 +1196,7 @@ returns (1, 2, 3, 4, 5).
 Fully implemented
 
 ```
-remove((1,2, 10), 3)
+remove((1, 2, 10), 3)
 ```
 
 returns (1, 2).
@@ -1457,6 +1475,18 @@ sum(json-lines("file.json").foo)
 
 
 ### Functions giving access to external information
+
+### doc
+
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-doc)
+
+Fully implemented
+
+```
+doc("path/to/file.xml")
+```
+
+Returns the corresponding document node
 
 ### collection
 
