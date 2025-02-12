@@ -262,7 +262,8 @@ public class VisitorHelpers {
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
         try {
             // TODO Handle module extras
-            XQueryParser.MainModuleContext main = parser.module().mainModule();
+            XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
+            XQueryParser.MainModuleContext main = module.module().main;
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
