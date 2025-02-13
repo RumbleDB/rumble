@@ -29,7 +29,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
 
 import java.util.*;
 
@@ -61,10 +60,8 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
         JavaRDD<Item> result = childRDD.flatMap(transformation);
 
-        // get unique items based on unique document position
-        JavaRDD<Item> res = result.mapToPair(item -> new Tuple2<>(item.getXmlDocumentPosition(), item))
-            .groupByKey()
-            .map(value -> value._2.iterator().next());
+        // get unique items (uses hashCode() and equals())
+        JavaRDD<Item> res = result.distinct();
 
         // sort because spark doesnt guarantee any ordering
         return res.sortBy(Item::getXmlDocumentPosition, true, 1);
