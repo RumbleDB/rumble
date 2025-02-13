@@ -37,8 +37,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         String javaVersion = System.getProperty("java.version");
-        if (!javaVersion.startsWith("11") && !javaVersion.startsWith("17.")) {
-            System.err.println("[Error] RumbleDB requires Java 11 or Java 17.");
+        if (!javaVersion.startsWith("11.") && !javaVersion.startsWith("17.")) {
+            System.err.println("[Error] RumbleDB requires Java 11 or 17.");
             System.err.println("Your Java version: " + System.getProperty("java.version"));
             System.err.println("You can download Java 11 or 17 from https://adoptium.net/");
             System.err.println(
