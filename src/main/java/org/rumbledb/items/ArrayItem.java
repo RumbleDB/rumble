@@ -24,6 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
@@ -87,6 +89,12 @@ public class ArrayItem implements Item {
 
     @Override
     public Item getItemAt(int i) {
+        if (i >= this.arrayItems.size() || i < 0) {
+            throw new ArrayIndexOutOfBoundsException(
+                    "Tried to access array index: " + (i + 1) + ", of array with length: " + this.arrayItems.size(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return this.arrayItems.get(i);
     }
 
