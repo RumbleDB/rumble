@@ -97,6 +97,8 @@ public enum ErrorCode {
 
 
     UnexpectedTypeErrorCode("XPTY0004"),
+    NodeAndNonNode("XTPY0018"),
+    UnexpectedNode("XPTY0019"),
 
     InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
@@ -153,9 +155,7 @@ public enum ErrorCode {
     InvalidAssignableVariableComposability("SCCP0005"),
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
-    InvalidVariableDeclaration("SCIN0001"),
-
-    UnexpectedNode("XPTY0019");
+    InvalidVariableDeclaration("SCIN0001");
 
     private String code;
 

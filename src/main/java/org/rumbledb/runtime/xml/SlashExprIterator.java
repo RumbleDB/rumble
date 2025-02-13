@@ -27,6 +27,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -59,12 +60,26 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         // apply right iterator, could be step or predicate/sequencelookup
         FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
         JavaRDD<Item> result = childRDD.flatMap(transformation);
+        if (result.count() == 0)
+            return result;
 
-        // get unique items (uses hashCode() and equals())
-        JavaRDD<Item> res = result.distinct();
+        boolean allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
+        boolean allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
+        if (allNodes) {
+            // get unique items (uses hashCode() and equals())
+            JavaRDD<Item> res = result.distinct();
+            // sort because spark doesnt guarantee any ordering
+            return res.sortBy(Item::getXmlDocumentPosition, true, 1);
+        } else if (allNonNodes) {
+            return result;
+        } else {
+            throw new NodeAndNonNodeException(
+                    "A mix of nodes and non-nodes was encountered as a result of a step expression.",
+                    getMetadata()
+            );
+        }
 
-        // sort because spark doesnt guarantee any ordering
-        return res.sortBy(Item::getXmlDocumentPosition, true, 1);
+
     }
 
     @Override
@@ -117,10 +132,27 @@ public class SlashExprIterator extends HybridRuntimeIterator {
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
                 this.results.addAll(this.rightIterator.materialize(currentContext));
             }
-            // take unique
-            this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
-            // Sort values in document order.
-            this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+            boolean allNodes = true;
+            boolean allNonNodes = true;
+            for (Item current : this.results) {
+                if (current.isNode()) {
+                    allNonNodes = false;
+                } else {
+                    allNodes = false;
+                }
+            }
+
+            if (allNodes) {
+                // take unique
+                this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
+                // Sort values in document order.
+                this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+            } else if (!allNonNodes) {
+                throw new NodeAndNonNodeException(
+                        "A mix of nodes and non-nodes was encountered as a result of a step expression.",
+                        getMetadata()
+                );
+            }
         }
         if (this.nextResultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.nextResultCounter++);
