@@ -80,13 +80,15 @@ public class ElementItem implements Item {
         this.stringValue = input.readString();
     }
 
+    @Override
+    public boolean isNode() {
+        return true;
+    }
 
     @Override
     public boolean isElementNode() {
         return true;
     }
-
-
 
     @Override
     public boolean equals(Object other) {

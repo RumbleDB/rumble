@@ -340,6 +340,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an XML node.
+     *
+     * @return true if it is an XML node, false otherwise.
+     */
+    default boolean isNode() {
+        return false;
+    }
+
+    /**
      * Returns the members of the item if it is an array.
      *
      * @return the list of the array members.

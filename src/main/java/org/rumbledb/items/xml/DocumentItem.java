@@ -104,6 +104,11 @@ public class DocumentItem implements Item {
     }
 
     @Override
+    public boolean isNode() {
+        return true;
+    }
+
+    @Override
     public boolean isDocumentNode() {
         return true;
     }

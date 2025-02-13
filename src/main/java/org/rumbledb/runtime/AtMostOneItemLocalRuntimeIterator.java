@@ -173,7 +173,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
             return !item.getStringValue().isEmpty();
         }
-        if (item.isAttributeNode() || item.isDocumentNode() || item.isElementNode() || item.isTextNode()) {
+        if (item.isNode()) {
             return true;
         }
         if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {

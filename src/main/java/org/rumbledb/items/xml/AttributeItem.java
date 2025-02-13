@@ -102,6 +102,11 @@ public class AttributeItem implements Item {
     }
 
     @Override
+    public boolean isNode() {
+        return true;
+    }
+
+    @Override
     public boolean isAttributeNode() {
         return true;
     }

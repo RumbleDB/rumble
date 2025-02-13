@@ -152,7 +152,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = false;
             } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
-            } else if (item.isAttributeNode() || item.isDocumentNode() || item.isElementNode() || item.isTextNode()) {
+            } else if (item.isNode()) {
                 // returns true even if sequence has more items according to spec
                 return true;
             } else {

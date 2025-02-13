@@ -104,6 +104,11 @@ public class TextItem implements Item {
     }
 
     @Override
+    public boolean isNode() {
+        return true;
+    }
+
+    @Override
     public boolean isTextNode() {
         return true;
     }
