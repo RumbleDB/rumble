@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,6 +32,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import scala.Tuple2;
 
 import java.util.*;
 
@@ -66,10 +69,30 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         boolean allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
         boolean allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
         if (allNodes) {
-            // get unique items (uses hashCode() and equals())
-            JavaRDD<Item> res = result.distinct();
-            // sort because spark doesnt guarantee any ordering
-            return res.sortBy(Item::getXmlDocumentPosition, true, 1);
+            if (false) {
+                // group by document
+                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy(
+                    (Function<Item, Object>) item -> item.getXmlDocumentPosition().getPath()
+                );
+                // sort document
+                JavaRDD<Iterator<Item>> r2 = res.map(
+                    (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
+                        ArrayList<Item> l = new ArrayList<>();
+                        tuple._2().iterator().forEachRemaining(l::add);
+                        l = new ArrayList<>(new HashSet<>(l));
+                        l.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+                        return l.iterator();
+                    }
+                );
+                // put all documents together again
+                return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);// .sortBy(Item::getXmlDocumentPosition,
+                                                                                    // true, 1);
+            } else {
+                // get unique items (uses hashCode() and equals())
+                JavaRDD<Item> res = result.distinct();
+                // sort because spark doesnt guarantee any ordering
+                return res.sortBy(Item::getXmlDocumentPosition, true, 1);
+            }
         } else if (allNonNodes) {
             return result;
         } else {
