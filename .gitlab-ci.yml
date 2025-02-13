@@ -211,6 +211,17 @@ XMLTests:
     reports:
       junit: target/surefire-reports/TEST-iq.XMLTests.xml
 
+XQueryTests:
+  stage: tests
+  script:
+    - mvn -Dtest=XQueryTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.XQueryTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.XQueryTests.xml
+
 SpotlessTest:
   stage: tests
   script:

@@ -54,7 +54,9 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
         if (arg0.isObject()) {
             for (Item key : this.keys) {
                 if (key.isString()) {
-                    results.add(arg0.getItemByKey(key.getStringValue()));
+                    Item i = arg0.getItemByKey(key.getStringValue());
+                    if (i != null)
+                        results.add(i);
                 }
                 if (key.isNumeric()) {
                     // TODO numeric maps
