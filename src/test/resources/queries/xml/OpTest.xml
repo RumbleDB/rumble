@@ -1,0 +1,2007 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="iq.OpTest" time="387.711" tests="4366" errors="18" skipped="837" failures="34">
+  <properties>
+    <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
+    <property name="java.specification.version" value="11"/>
+    <property name="sun.cpu.isalist" value=""/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.class.path" value="/builds/gfourny/rumble-test-suite/target/test-classes:/builds/gfourny/rumble-test-suite/target/classes:/builds/gfourny/rumble-test-suite/rumble/target/rumbledb-1.22.0-jar-with-dependencies.jar:/root/.m2/repository/org/apache/spark/spark-core_2.13/3.5.1/spark-core_2.13-3.5.1.jar:/root/.m2/repository/org/scala-lang/modules/scala-parallel-collections_2.13/1.0.4/scala-parallel-collections_2.13-1.0.4.jar:/root/.m2/repository/org/apache/avro/avro/1.11.2/avro-1.11.2.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.14.2/jackson-core-2.14.2.jar:/root/.m2/repository/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar:/root/.m2/repository/org/apache/avro/avro-mapred/1.11.2/avro-mapred-1.11.2.jar:/root/.m2/repository/org/apache/avro/avro-ipc/1.11.2/avro-ipc-1.11.2.jar:/root/.m2/repository/org/tukaani/xz/1.9/xz-1.9.jar:/root/.m2/repository/com/twitter/chill_2.13/0.10.0/chill_2.13-0.10.0.jar:/root/.m2/repository/com/esotericsoftware/kryo-shaded/4.0.2/kryo-shaded-4.0.2.jar:/root/.m2/repository/com/esotericsoftware/minlog/1.3.0/minlog-1.3.0.jar:/root/.m2/repository/org/objenesis/objenesis/2.5.1/objenesis-2.5.1.jar:/root/.m2/repository/com/twitter/chill-java/0.10.0/chill-java-0.10.0.jar:/root/.m2/repository/org/apache/xbean/xbean-asm9-shaded/4.23/xbean-asm9-shaded-4.23.jar:/root/.m2/repository/org/apache/hadoop/hadoop-client-api/3.3.4/hadoop-client-api-3.3.4.jar:/root/.m2/repository/org/apache/hadoop/hadoop-client-runtime/3.3.4/hadoop-client-runtime-3.3.4.jar:/root/.m2/repository/org/apache/spark/spark-launcher_2.13/3.5.1/spark-launcher_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-kvstore_2.13/3.5.1/spark-kvstore_2.13-3.5.1.jar:/root/.m2/repository/org/fusesource/leveldbjni/leveldbjni-all/1.8/leveldbjni-all-1.8.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar:/root/.m2/repository/org/apache/spark/spark-network-common_2.13/3.5.1/spark-network-common_2.13-3.5.1.jar:/root/.m2/repository/com/google/crypto/tink/tink/1.9.0/tink-1.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar:/root/.m2/repository/com/google/protobuf/protobuf-java/3.19.6/protobuf-java-3.19.6.jar:/root/.m2/repository/joda-time/joda-time/2.12.5/joda-time-2.12.5.jar:/root/.m2/repository/org/apache/spark/spark-network-shuffle_2.13/3.5.1/spark-network-shuffle_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-unsafe_2.13/3.5.1/spark-unsafe_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-common-utils_2.13/3.5.1/spark-common-utils_2.13-3.5.1.jar:/root/.m2/repository/org/slf4j/jul-to-slf4j/2.0.7/jul-to-slf4j-2.0.7.jar:/root/.m2/repository/org/slf4j/jcl-over-slf4j/2.0.7/jcl-over-slf4j-2.0.7.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-slf4j2-impl/2.20.0/log4j-slf4j2-impl-2.20.0.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.20.0/log4j-core-2.20.0.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-1.2-api/2.20.0/log4j-1.2-api-2.20.0.jar:/root/.m2/repository/javax/activation/activation/1.1.1/activation-1.1.1.jar:/root/.m2/repository/org/apache/curator/curator-recipes/2.13.0/curator-recipes-2.13.0.jar:/root/.m2/repository/org/apache/curator/curator-framework/2.13.0/curator-framework-2.13.0.jar:/root/.m2/repository/org/apache/curator/curator-client/2.13.0/curator-client-2.13.0.jar:/root/.m2/repository/com/google/guava/guava/16.0.1/guava-16.0.1.jar:/root/.m2/repository/org/apache/zookeeper/zookeeper/3.6.3/zookeeper-3.6.3.jar:/root/.m2/repository/org/apache/zookeeper/zookeeper-jute/3.6.3/zookeeper-jute-3.6.3.jar:/root/.m2/repository/org/apache/yetus/audience-annotations/0.5.0/audience-annotations-0.5.0.jar:/root/.m2/repository/jakarta/servlet/jakarta.servlet-api/4.0.3/jakarta.servlet-api-4.0.3.jar:/root/.m2/repository/commons-codec/commons-codec/1.16.0/commons-codec-1.16.0.jar:/root/.m2/repository/org/apache/commons/commons-compress/1.23.0/commons-compress-1.23.0.jar:/root/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:/root/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/root/.m2/repository/commons-io/commons-io/2.13.0/commons-io-2.13.0.jar:/root/.m2/repository/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar:/root/.m2/repository/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/root/.m2/repository/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0.jar:/root/.m2/repository/com/ning/compress-lzf/1.1.2/compress-lzf-1.1.2.jar:/root/.m2/repository/org/xerial/snappy/snappy-java/1.1.10.3/snappy-java-1.1.10.3.jar:/root/.m2/repository/org/lz4/lz4-java/1.8.0/lz4-java-1.8.0.jar:/root/.m2/repository/com/github/luben/zstd-jni/1.5.5-4/zstd-jni-1.5.5-4.jar:/root/.m2/repository/org/roaringbitmap/RoaringBitmap/0.9.45/RoaringBitmap-0.9.45.jar:/root/.m2/repository/org/roaringbitmap/shims/0.9.45/shims-0.9.45.jar:/root/.m2/repository/org/scala-lang/modules/scala-xml_2.13/2.1.0/scala-xml_2.13-2.1.0.jar:/root/.m2/repository/org/scala-lang/scala-library/2.13.8/scala-library-2.13.8.jar:/root/.m2/repository/org/scala-lang/scala-reflect/2.13.8/scala-reflect-2.13.8.jar:/root/.m2/repository/org/json4s/json4s-jackson_2.13/3.7.0-M11/json4s-jackson_2.13-3.7.0-M11.jar:/root/.m2/repository/org/json4s/json4s-core_2.13/3.7.0-M11/json4s-core_2.13-3.7.0-M11.jar:/root/.m2/repository/org/json4s/json4s-ast_2.13/3.7.0-M11/json4s-ast_2.13-3.7.0-M11.jar:/root/.m2/repository/org/json4s/json4s-scalap_2.13/3.7.0-M11/json4s-scalap_2.13-3.7.0-M11.jar:/root/.m2/repository/org/glassfish/jersey/core/jersey-client/2.40/jersey-client-2.40.jar:/root/.m2/repository/jakarta/ws/rs/jakarta.ws.rs-api/2.1.6/jakarta.ws.rs-api-2.1.6.jar:/root/.m2/repository/org/glassfish/hk2/external/jakarta.inject/2.6.1/jakarta.inject-2.6.1.jar:/root/.m2/repository/org/glassfish/jersey/core/jersey-common/2.40/jersey-common-2.40.jar:/root/.m2/repository/jakarta/annotation/jakarta.annotation-api/1.3.5/jakarta.annotation-api-1.3.5.jar:/root/.m2/repository/org/glassfish/hk2/osgi-resource-locator/1.0.3/osgi-resource-locator-1.0.3.jar:/root/.m2/repository/org/glassfish/jersey/core/jersey-server/2.40/jersey-server-2.40.jar:/root/.m2/repository/jakarta/validation/jakarta.validation-api/2.0.2/jakarta.validation-api-2.0.2.jar:/root/.m2/repository/org/glassfish/jersey/containers/jersey-container-servlet/2.40/jersey-container-servlet-2.40.jar:/root/.m2/repository/org/glassfish/jersey/containers/jersey-container-servlet-core/2.40/jersey-container-servlet-core-2.40.jar:/root/.m2/repository/org/glassfish/jersey/inject/jersey-hk2/2.40/jersey-hk2-2.40.jar:/root/.m2/repository/org/glassfish/hk2/hk2-locator/2.6.1/hk2-locator-2.6.1.jar:/root/.m2/repository/org/glassfish/hk2/external/aopalliance-repackaged/2.6.1/aopalliance-repackaged-2.6.1.jar:/root/.m2/repository/org/glassfish/hk2/hk2-api/2.6.1/hk2-api-2.6.1.jar:/root/.m2/repository/org/glassfish/hk2/hk2-utils/2.6.1/hk2-utils-2.6.1.jar:/root/.m2/repository/org/javassist/javassist/3.29.2-GA/javassist-3.29.2-GA.jar:/root/.m2/repository/io/netty/netty-all/4.1.96.Final/netty-all-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-buffer/4.1.96.Final/netty-buffer-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec/4.1.96.Final/netty-codec-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec-http/4.1.96.Final/netty-codec-http-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec-http2/4.1.96.Final/netty-codec-http2-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec-socks/4.1.96.Final/netty-codec-socks-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-common/4.1.96.Final/netty-common-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-handler/4.1.96.Final/netty-handler-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.96.Final/netty-transport-native-unix-common-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-handler-proxy/4.1.96.Final/netty-handler-proxy-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-resolver/4.1.96.Final/netty-resolver-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport/4.1.96.Final/netty-transport-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-classes-epoll/4.1.96.Final/netty-transport-classes-epoll-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-classes-kqueue/4.1.96.Final/netty-transport-classes-kqueue-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-native-epoll/4.1.96.Final/netty-transport-native-epoll-4.1.96.Final-linux-x86_64.jar:/root/.m2/repository/io/netty/netty-transport-native-epoll/4.1.96.Final/netty-transport-native-epoll-4.1.96.Final-linux-aarch_64.jar:/root/.m2/repository/io/netty/netty-transport-native-kqueue/4.1.96.Final/netty-transport-native-kqueue-4.1.96.Final-osx-aarch_64.jar:/root/.m2/repository/io/netty/netty-transport-native-kqueue/4.1.96.Final/netty-transport-native-kqueue-4.1.96.Final-osx-x86_64.jar:/root/.m2/repository/com/clearspring/analytics/stream/2.9.6/stream-2.9.6.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-core/4.2.19/metrics-core-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-jvm/4.2.19/metrics-jvm-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-json/4.2.19/metrics-json-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-graphite/4.2.19/metrics-graphite-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-jmx/4.2.19/metrics-jmx-4.2.19.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar:/root/.m2/repository/com/fasterxml/jackson/module/jackson-module-scala_2.13/2.15.2/jackson-module-scala_2.13-2.15.2.jar:/root/.m2/repository/com/thoughtworks/paranamer/paranamer/2.8/paranamer-2.8.jar:/root/.m2/repository/org/apache/ivy/ivy/2.5.1/ivy-2.5.1.jar:/root/.m2/repository/oro/oro/2.0.8/oro-2.0.8.jar:/root/.m2/repository/net/razorvine/pickle/1.3/pickle-1.3.jar:/root/.m2/repository/net/sf/py4j/py4j/0.10.9.7/py4j-0.10.9.7.jar:/root/.m2/repository/org/apache/spark/spark-tags_2.13/3.5.1/spark-tags_2.13-3.5.1.jar:/root/.m2/repository/org/apache/commons/commons-crypto/1.1.0/commons-crypto-1.1.0.jar:/root/.m2/repository/org/apache/spark/spark-sql_2.13/3.5.1/spark-sql_2.13-3.5.1.jar:/root/.m2/repository/org/rocksdb/rocksdbjni/8.3.2/rocksdbjni-8.3.2.jar:/root/.m2/repository/com/univocity/univocity-parsers/2.9.1/univocity-parsers-2.9.1.jar:/root/.m2/repository/org/apache/spark/spark-sketch_2.13/3.5.1/spark-sketch_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-catalyst_2.13/3.5.1/spark-catalyst_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-sql-api_2.13/3.5.1/spark-sql-api_2.13-3.5.1.jar:/root/.m2/repository/org/antlr/antlr4-runtime/4.9.3/antlr4-runtime-4.9.3.jar:/root/.m2/repository/org/apache/arrow/arrow-vector/12.0.1/arrow-vector-12.0.1.jar:/root/.m2/repository/org/apache/arrow/arrow-format/12.0.1/arrow-format-12.0.1.jar:/root/.m2/repository/org/apache/arrow/arrow-memory-core/12.0.1/arrow-memory-core-12.0.1.jar:/root/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.15.1/jackson-datatype-jsr310-2.15.1.jar:/root/.m2/repository/com/google/flatbuffers/flatbuffers-java/1.12.0/flatbuffers-java-1.12.0.jar:/root/.m2/repository/org/apache/arrow/arrow-memory-netty/12.0.1/arrow-memory-netty-12.0.1.jar:/root/.m2/repository/org/codehaus/janino/janino/3.1.9/janino-3.1.9.jar:/root/.m2/repository/org/codehaus/janino/commons-compiler/3.1.9/commons-compiler-3.1.9.jar:/root/.m2/repository/org/apache/datasketches/datasketches-java/3.3.0/datasketches-java-3.3.0.jar:/root/.m2/repository/org/apache/datasketches/datasketches-memory/2.1.0/datasketches-memory-2.1.0.jar:/root/.m2/repository/org/apache/orc/orc-core/1.9.2/orc-core-1.9.2-shaded-protobuf.jar:/root/.m2/repository/org/apache/orc/orc-shims/1.9.2/orc-shims-1.9.2.jar:/root/.m2/repository/io/airlift/aircompressor/0.25/aircompressor-0.25.jar:/root/.m2/repository/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar:/root/.m2/repository/org/threeten/threeten-extra/1.7.1/threeten-extra-1.7.1.jar:/root/.m2/repository/org/apache/orc/orc-mapreduce/1.9.2/orc-mapreduce-1.9.2-shaded-protobuf.jar:/root/.m2/repository/org/apache/hive/hive-storage-api/2.8.1/hive-storage-api-2.8.1.jar:/root/.m2/repository/org/apache/parquet/parquet-column/1.13.1/parquet-column-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-common/1.13.1/parquet-common-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-encoding/1.13.1/parquet-encoding-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-hadoop/1.13.1/parquet-hadoop-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-format-structures/1.13.1/parquet-format-structures-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-jackson/1.13.1/parquet-jackson-1.13.1.jar:/root/.m2/repository/org/apache/spark/spark-mllib_2.13/3.5.1/spark-mllib_2.13-3.5.1.jar:/root/.m2/repository/org/scala-lang/modules/scala-parser-combinators_2.13/2.3.0/scala-parser-combinators_2.13-2.3.0.jar:/root/.m2/repository/org/apache/spark/spark-streaming_2.13/3.5.1/spark-streaming_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-graphx_2.13/3.5.1/spark-graphx_2.13-3.5.1.jar:/root/.m2/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/root/.m2/repository/org/apache/spark/spark-mllib-local_2.13/3.5.1/spark-mllib-local_2.13-3.5.1.jar:/root/.m2/repository/org/scalanlp/breeze_2.13/2.1.0/breeze_2.13-2.1.0.jar:/root/.m2/repository/org/scalanlp/breeze-macros_2.13/2.1.0/breeze-macros_2.13-2.1.0.jar:/root/.m2/repository/net/sf/opencsv/opencsv/2.3/opencsv-2.3.jar:/root/.m2/repository/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar:/root/.m2/repository/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar:/root/.m2/repository/org/scala-lang/modules/scala-collection-compat_2.13/2.7.0/scala-collection-compat_2.13-2.7.0.jar:/root/.m2/repository/org/typelevel/spire_2.13/0.18.0/spire_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/spire-macros_2.13/0.18.0/spire-macros_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/spire-platform_2.13/0.18.0/spire-platform_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/spire-util_2.13/0.18.0/spire-util_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/algebra_2.13/2.8.0/algebra_2.13-2.8.0.jar:/root/.m2/repository/org/typelevel/cats-kernel_2.13/2.8.0/cats-kernel_2.13-2.8.0.jar:/root/.m2/repository/org/glassfish/jaxb/jaxb-runtime/2.3.2/jaxb-runtime-2.3.2.jar:/root/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/2.3.2/jakarta.xml.bind-api-2.3.2.jar:/root/.m2/repository/com/sun/istack/istack-commons-runtime/3.0.8/istack-commons-runtime-3.0.8.jar:/root/.m2/repository/dev/ludovic/netlib/blas/3.0.3/blas-3.0.3.jar:/root/.m2/repository/dev/ludovic/netlib/lapack/3.0.3/lapack-3.0.3.jar:/root/.m2/repository/dev/ludovic/netlib/arpack/3.0.3/arpack-3.0.3.jar:/root/.m2/repository/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar:/root/.m2/repository/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar:/root/.m2/repository/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13.jar:/root/.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:/root/.m2/repository/net/sf/saxon/Saxon-HE/10.2/Saxon-HE-10.2.jar:/root/.m2/repository/junit/junit/4.13.2/junit-4.13.2.jar:/root/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:"/>
+    <property name="java.vm.vendor" value="Eclipse Adoptium"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.vendor.url" value="https://adoptium.net/"/>
+    <property name="user.timezone" value=""/>
+    <property name="java.vm.specification.version" value="11"/>
+    <property name="os.name" value="Linux"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.boot.library.path" value="/opt/java/openjdk/lib"/>
+    <property name="sun.java.command" value="/builds/gfourny/rumble-test-suite/target/surefire/surefirebooter-20250212093901552_3.jar /builds/gfourny/rumble-test-suite/target/surefire 2025-02-12T09-39-01_272-jvmRun1 surefire-20250212093901552_1tmp surefire_0-20250212093901552_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="test" value="OpTest"/>
+    <property name="surefire.test.class.path" value="/builds/gfourny/rumble-test-suite/target/test-classes:/builds/gfourny/rumble-test-suite/target/classes:/builds/gfourny/rumble-test-suite/rumble/target/rumbledb-1.22.0-jar-with-dependencies.jar:/root/.m2/repository/org/apache/spark/spark-core_2.13/3.5.1/spark-core_2.13-3.5.1.jar:/root/.m2/repository/org/scala-lang/modules/scala-parallel-collections_2.13/1.0.4/scala-parallel-collections_2.13-1.0.4.jar:/root/.m2/repository/org/apache/avro/avro/1.11.2/avro-1.11.2.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.14.2/jackson-core-2.14.2.jar:/root/.m2/repository/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar:/root/.m2/repository/org/apache/avro/avro-mapred/1.11.2/avro-mapred-1.11.2.jar:/root/.m2/repository/org/apache/avro/avro-ipc/1.11.2/avro-ipc-1.11.2.jar:/root/.m2/repository/org/tukaani/xz/1.9/xz-1.9.jar:/root/.m2/repository/com/twitter/chill_2.13/0.10.0/chill_2.13-0.10.0.jar:/root/.m2/repository/com/esotericsoftware/kryo-shaded/4.0.2/kryo-shaded-4.0.2.jar:/root/.m2/repository/com/esotericsoftware/minlog/1.3.0/minlog-1.3.0.jar:/root/.m2/repository/org/objenesis/objenesis/2.5.1/objenesis-2.5.1.jar:/root/.m2/repository/com/twitter/chill-java/0.10.0/chill-java-0.10.0.jar:/root/.m2/repository/org/apache/xbean/xbean-asm9-shaded/4.23/xbean-asm9-shaded-4.23.jar:/root/.m2/repository/org/apache/hadoop/hadoop-client-api/3.3.4/hadoop-client-api-3.3.4.jar:/root/.m2/repository/org/apache/hadoop/hadoop-client-runtime/3.3.4/hadoop-client-runtime-3.3.4.jar:/root/.m2/repository/org/apache/spark/spark-launcher_2.13/3.5.1/spark-launcher_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-kvstore_2.13/3.5.1/spark-kvstore_2.13-3.5.1.jar:/root/.m2/repository/org/fusesource/leveldbjni/leveldbjni-all/1.8/leveldbjni-all-1.8.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar:/root/.m2/repository/org/apache/spark/spark-network-common_2.13/3.5.1/spark-network-common_2.13-3.5.1.jar:/root/.m2/repository/com/google/crypto/tink/tink/1.9.0/tink-1.9.0.jar:/root/.m2/repository/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar:/root/.m2/repository/com/google/protobuf/protobuf-java/3.19.6/protobuf-java-3.19.6.jar:/root/.m2/repository/joda-time/joda-time/2.12.5/joda-time-2.12.5.jar:/root/.m2/repository/org/apache/spark/spark-network-shuffle_2.13/3.5.1/spark-network-shuffle_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-unsafe_2.13/3.5.1/spark-unsafe_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-common-utils_2.13/3.5.1/spark-common-utils_2.13-3.5.1.jar:/root/.m2/repository/org/slf4j/jul-to-slf4j/2.0.7/jul-to-slf4j-2.0.7.jar:/root/.m2/repository/org/slf4j/jcl-over-slf4j/2.0.7/jcl-over-slf4j-2.0.7.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-slf4j2-impl/2.20.0/log4j-slf4j2-impl-2.20.0.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-core/2.20.0/log4j-core-2.20.0.jar:/root/.m2/repository/org/apache/logging/log4j/log4j-1.2-api/2.20.0/log4j-1.2-api-2.20.0.jar:/root/.m2/repository/javax/activation/activation/1.1.1/activation-1.1.1.jar:/root/.m2/repository/org/apache/curator/curator-recipes/2.13.0/curator-recipes-2.13.0.jar:/root/.m2/repository/org/apache/curator/curator-framework/2.13.0/curator-framework-2.13.0.jar:/root/.m2/repository/org/apache/curator/curator-client/2.13.0/curator-client-2.13.0.jar:/root/.m2/repository/com/google/guava/guava/16.0.1/guava-16.0.1.jar:/root/.m2/repository/org/apache/zookeeper/zookeeper/3.6.3/zookeeper-3.6.3.jar:/root/.m2/repository/org/apache/zookeeper/zookeeper-jute/3.6.3/zookeeper-jute-3.6.3.jar:/root/.m2/repository/org/apache/yetus/audience-annotations/0.5.0/audience-annotations-0.5.0.jar:/root/.m2/repository/jakarta/servlet/jakarta.servlet-api/4.0.3/jakarta.servlet-api-4.0.3.jar:/root/.m2/repository/commons-codec/commons-codec/1.16.0/commons-codec-1.16.0.jar:/root/.m2/repository/org/apache/commons/commons-compress/1.23.0/commons-compress-1.23.0.jar:/root/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:/root/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/root/.m2/repository/commons-io/commons-io/2.13.0/commons-io-2.13.0.jar:/root/.m2/repository/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar:/root/.m2/repository/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/root/.m2/repository/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0.jar:/root/.m2/repository/com/ning/compress-lzf/1.1.2/compress-lzf-1.1.2.jar:/root/.m2/repository/org/xerial/snappy/snappy-java/1.1.10.3/snappy-java-1.1.10.3.jar:/root/.m2/repository/org/lz4/lz4-java/1.8.0/lz4-java-1.8.0.jar:/root/.m2/repository/com/github/luben/zstd-jni/1.5.5-4/zstd-jni-1.5.5-4.jar:/root/.m2/repository/org/roaringbitmap/RoaringBitmap/0.9.45/RoaringBitmap-0.9.45.jar:/root/.m2/repository/org/roaringbitmap/shims/0.9.45/shims-0.9.45.jar:/root/.m2/repository/org/scala-lang/modules/scala-xml_2.13/2.1.0/scala-xml_2.13-2.1.0.jar:/root/.m2/repository/org/scala-lang/scala-library/2.13.8/scala-library-2.13.8.jar:/root/.m2/repository/org/scala-lang/scala-reflect/2.13.8/scala-reflect-2.13.8.jar:/root/.m2/repository/org/json4s/json4s-jackson_2.13/3.7.0-M11/json4s-jackson_2.13-3.7.0-M11.jar:/root/.m2/repository/org/json4s/json4s-core_2.13/3.7.0-M11/json4s-core_2.13-3.7.0-M11.jar:/root/.m2/repository/org/json4s/json4s-ast_2.13/3.7.0-M11/json4s-ast_2.13-3.7.0-M11.jar:/root/.m2/repository/org/json4s/json4s-scalap_2.13/3.7.0-M11/json4s-scalap_2.13-3.7.0-M11.jar:/root/.m2/repository/org/glassfish/jersey/core/jersey-client/2.40/jersey-client-2.40.jar:/root/.m2/repository/jakarta/ws/rs/jakarta.ws.rs-api/2.1.6/jakarta.ws.rs-api-2.1.6.jar:/root/.m2/repository/org/glassfish/hk2/external/jakarta.inject/2.6.1/jakarta.inject-2.6.1.jar:/root/.m2/repository/org/glassfish/jersey/core/jersey-common/2.40/jersey-common-2.40.jar:/root/.m2/repository/jakarta/annotation/jakarta.annotation-api/1.3.5/jakarta.annotation-api-1.3.5.jar:/root/.m2/repository/org/glassfish/hk2/osgi-resource-locator/1.0.3/osgi-resource-locator-1.0.3.jar:/root/.m2/repository/org/glassfish/jersey/core/jersey-server/2.40/jersey-server-2.40.jar:/root/.m2/repository/jakarta/validation/jakarta.validation-api/2.0.2/jakarta.validation-api-2.0.2.jar:/root/.m2/repository/org/glassfish/jersey/containers/jersey-container-servlet/2.40/jersey-container-servlet-2.40.jar:/root/.m2/repository/org/glassfish/jersey/containers/jersey-container-servlet-core/2.40/jersey-container-servlet-core-2.40.jar:/root/.m2/repository/org/glassfish/jersey/inject/jersey-hk2/2.40/jersey-hk2-2.40.jar:/root/.m2/repository/org/glassfish/hk2/hk2-locator/2.6.1/hk2-locator-2.6.1.jar:/root/.m2/repository/org/glassfish/hk2/external/aopalliance-repackaged/2.6.1/aopalliance-repackaged-2.6.1.jar:/root/.m2/repository/org/glassfish/hk2/hk2-api/2.6.1/hk2-api-2.6.1.jar:/root/.m2/repository/org/glassfish/hk2/hk2-utils/2.6.1/hk2-utils-2.6.1.jar:/root/.m2/repository/org/javassist/javassist/3.29.2-GA/javassist-3.29.2-GA.jar:/root/.m2/repository/io/netty/netty-all/4.1.96.Final/netty-all-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-buffer/4.1.96.Final/netty-buffer-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec/4.1.96.Final/netty-codec-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec-http/4.1.96.Final/netty-codec-http-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec-http2/4.1.96.Final/netty-codec-http2-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-codec-socks/4.1.96.Final/netty-codec-socks-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-common/4.1.96.Final/netty-common-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-handler/4.1.96.Final/netty-handler-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.96.Final/netty-transport-native-unix-common-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-handler-proxy/4.1.96.Final/netty-handler-proxy-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-resolver/4.1.96.Final/netty-resolver-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport/4.1.96.Final/netty-transport-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-classes-epoll/4.1.96.Final/netty-transport-classes-epoll-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-classes-kqueue/4.1.96.Final/netty-transport-classes-kqueue-4.1.96.Final.jar:/root/.m2/repository/io/netty/netty-transport-native-epoll/4.1.96.Final/netty-transport-native-epoll-4.1.96.Final-linux-x86_64.jar:/root/.m2/repository/io/netty/netty-transport-native-epoll/4.1.96.Final/netty-transport-native-epoll-4.1.96.Final-linux-aarch_64.jar:/root/.m2/repository/io/netty/netty-transport-native-kqueue/4.1.96.Final/netty-transport-native-kqueue-4.1.96.Final-osx-aarch_64.jar:/root/.m2/repository/io/netty/netty-transport-native-kqueue/4.1.96.Final/netty-transport-native-kqueue-4.1.96.Final-osx-x86_64.jar:/root/.m2/repository/com/clearspring/analytics/stream/2.9.6/stream-2.9.6.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-core/4.2.19/metrics-core-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-jvm/4.2.19/metrics-jvm-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-json/4.2.19/metrics-json-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-graphite/4.2.19/metrics-graphite-4.2.19.jar:/root/.m2/repository/io/dropwizard/metrics/metrics-jmx/4.2.19/metrics-jmx-4.2.19.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar:/root/.m2/repository/com/fasterxml/jackson/module/jackson-module-scala_2.13/2.15.2/jackson-module-scala_2.13-2.15.2.jar:/root/.m2/repository/com/thoughtworks/paranamer/paranamer/2.8/paranamer-2.8.jar:/root/.m2/repository/org/apache/ivy/ivy/2.5.1/ivy-2.5.1.jar:/root/.m2/repository/oro/oro/2.0.8/oro-2.0.8.jar:/root/.m2/repository/net/razorvine/pickle/1.3/pickle-1.3.jar:/root/.m2/repository/net/sf/py4j/py4j/0.10.9.7/py4j-0.10.9.7.jar:/root/.m2/repository/org/apache/spark/spark-tags_2.13/3.5.1/spark-tags_2.13-3.5.1.jar:/root/.m2/repository/org/apache/commons/commons-crypto/1.1.0/commons-crypto-1.1.0.jar:/root/.m2/repository/org/apache/spark/spark-sql_2.13/3.5.1/spark-sql_2.13-3.5.1.jar:/root/.m2/repository/org/rocksdb/rocksdbjni/8.3.2/rocksdbjni-8.3.2.jar:/root/.m2/repository/com/univocity/univocity-parsers/2.9.1/univocity-parsers-2.9.1.jar:/root/.m2/repository/org/apache/spark/spark-sketch_2.13/3.5.1/spark-sketch_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-catalyst_2.13/3.5.1/spark-catalyst_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-sql-api_2.13/3.5.1/spark-sql-api_2.13-3.5.1.jar:/root/.m2/repository/org/antlr/antlr4-runtime/4.9.3/antlr4-runtime-4.9.3.jar:/root/.m2/repository/org/apache/arrow/arrow-vector/12.0.1/arrow-vector-12.0.1.jar:/root/.m2/repository/org/apache/arrow/arrow-format/12.0.1/arrow-format-12.0.1.jar:/root/.m2/repository/org/apache/arrow/arrow-memory-core/12.0.1/arrow-memory-core-12.0.1.jar:/root/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.15.1/jackson-datatype-jsr310-2.15.1.jar:/root/.m2/repository/com/google/flatbuffers/flatbuffers-java/1.12.0/flatbuffers-java-1.12.0.jar:/root/.m2/repository/org/apache/arrow/arrow-memory-netty/12.0.1/arrow-memory-netty-12.0.1.jar:/root/.m2/repository/org/codehaus/janino/janino/3.1.9/janino-3.1.9.jar:/root/.m2/repository/org/codehaus/janino/commons-compiler/3.1.9/commons-compiler-3.1.9.jar:/root/.m2/repository/org/apache/datasketches/datasketches-java/3.3.0/datasketches-java-3.3.0.jar:/root/.m2/repository/org/apache/datasketches/datasketches-memory/2.1.0/datasketches-memory-2.1.0.jar:/root/.m2/repository/org/apache/orc/orc-core/1.9.2/orc-core-1.9.2-shaded-protobuf.jar:/root/.m2/repository/org/apache/orc/orc-shims/1.9.2/orc-shims-1.9.2.jar:/root/.m2/repository/io/airlift/aircompressor/0.25/aircompressor-0.25.jar:/root/.m2/repository/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar:/root/.m2/repository/org/threeten/threeten-extra/1.7.1/threeten-extra-1.7.1.jar:/root/.m2/repository/org/apache/orc/orc-mapreduce/1.9.2/orc-mapreduce-1.9.2-shaded-protobuf.jar:/root/.m2/repository/org/apache/hive/hive-storage-api/2.8.1/hive-storage-api-2.8.1.jar:/root/.m2/repository/org/apache/parquet/parquet-column/1.13.1/parquet-column-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-common/1.13.1/parquet-common-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-encoding/1.13.1/parquet-encoding-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-hadoop/1.13.1/parquet-hadoop-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-format-structures/1.13.1/parquet-format-structures-1.13.1.jar:/root/.m2/repository/org/apache/parquet/parquet-jackson/1.13.1/parquet-jackson-1.13.1.jar:/root/.m2/repository/org/apache/spark/spark-mllib_2.13/3.5.1/spark-mllib_2.13-3.5.1.jar:/root/.m2/repository/org/scala-lang/modules/scala-parser-combinators_2.13/2.3.0/scala-parser-combinators_2.13-2.3.0.jar:/root/.m2/repository/org/apache/spark/spark-streaming_2.13/3.5.1/spark-streaming_2.13-3.5.1.jar:/root/.m2/repository/org/apache/spark/spark-graphx_2.13/3.5.1/spark-graphx_2.13-3.5.1.jar:/root/.m2/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/root/.m2/repository/org/apache/spark/spark-mllib-local_2.13/3.5.1/spark-mllib-local_2.13-3.5.1.jar:/root/.m2/repository/org/scalanlp/breeze_2.13/2.1.0/breeze_2.13-2.1.0.jar:/root/.m2/repository/org/scalanlp/breeze-macros_2.13/2.1.0/breeze-macros_2.13-2.1.0.jar:/root/.m2/repository/net/sf/opencsv/opencsv/2.3/opencsv-2.3.jar:/root/.m2/repository/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar:/root/.m2/repository/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar:/root/.m2/repository/org/scala-lang/modules/scala-collection-compat_2.13/2.7.0/scala-collection-compat_2.13-2.7.0.jar:/root/.m2/repository/org/typelevel/spire_2.13/0.18.0/spire_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/spire-macros_2.13/0.18.0/spire-macros_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/spire-platform_2.13/0.18.0/spire-platform_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/spire-util_2.13/0.18.0/spire-util_2.13-0.18.0.jar:/root/.m2/repository/org/typelevel/algebra_2.13/2.8.0/algebra_2.13-2.8.0.jar:/root/.m2/repository/org/typelevel/cats-kernel_2.13/2.8.0/cats-kernel_2.13-2.8.0.jar:/root/.m2/repository/org/glassfish/jaxb/jaxb-runtime/2.3.2/jaxb-runtime-2.3.2.jar:/root/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/2.3.2/jakarta.xml.bind-api-2.3.2.jar:/root/.m2/repository/com/sun/istack/istack-commons-runtime/3.0.8/istack-commons-runtime-3.0.8.jar:/root/.m2/repository/dev/ludovic/netlib/blas/3.0.3/blas-3.0.3.jar:/root/.m2/repository/dev/ludovic/netlib/lapack/3.0.3/lapack-3.0.3.jar:/root/.m2/repository/dev/ludovic/netlib/arpack/3.0.3/arpack-3.0.3.jar:/root/.m2/repository/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar:/root/.m2/repository/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar:/root/.m2/repository/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13.jar:/root/.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:/root/.m2/repository/net/sf/saxon/Saxon-HE/10.2/Saxon-HE-10.2.jar:/root/.m2/repository/junit/junit/4.13.2/junit-4.13.2.jar:/root/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="/root"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2024-10-15"/>
+    <property name="java.home" value="/opt/java/openjdk"/>
+    <property name="file.separator" value="/"/>
+    <property name="basedir" value="/builds/gfourny/rumble-test-suite"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+    <property name="surefire.real.class.path" value="/builds/gfourny/rumble-test-suite/target/surefire/surefirebooter-20250212093901552_3.jar"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="11.0.25+9"/>
+    <property name="user.name" value="root"/>
+    <property name="path.separator" value=":"/>
+    <property name="os.version" value="5.15.0-107-generic"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="java.vendor.version" value="Temurin-11.0.25+9"/>
+    <property name="localRepository" value="/root/.m2/repository"/>
+    <property name="java.vendor.url.bug" value="https://github.com/adoptium/adoptium-support/issues"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="java.version" value="11.0.25"/>
+    <property name="user.dir" value="/builds/gfourny/rumble-test-suite"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="java.vendor" value="Eclipse Adoptium"/>
+    <property name="java.vm.version" value="11.0.25+9"/>
+    <property name="java.specification.maintenance.version" value="3"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="55.0"/>
+  </properties>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations2args-1]" classname="iq.OpTest" time="1.737">
+    <system-out><![CDATA[Running sh script to obtain the required tests repository!
+Tests repository obtained!
+[[originalTest|xs:dayTimeDuration("P0DT0H0M0S") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">PT0S</assert-string-value>]]
+[[query|xs:dayTimeDuration("P0DT0H0M0S") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+    <system-err><![CDATA[SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations2args-2]" classname="iq.OpTest" time="0.03">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P15DT11H59M59S") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P15DT11H59M59S</assert-string-value>]]
+[[query|xs:dayTimeDuration("P15DT11H59M59S") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations2args-3]" classname="iq.OpTest" time="0.034">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P31DT23H59M59S") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P31DT23H59M59S</assert-string-value>]]
+[[query|xs:dayTimeDuration("P31DT23H59M59S") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations2args-4]" classname="iq.OpTest" time="0.026">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P0DT0H0M0S") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P15DT11H59M59S</assert-string-value>]]
+[[query|xs:dayTimeDuration("P0DT0H0M0S") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations2args-5]" classname="iq.OpTest" time="0.034">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P0DT0H0M0S") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P31DT23H59M59S</assert-string-value>]]
+[[query|xs:dayTimeDuration("P0DT0H0M0S") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-1]" classname="iq.OpTest" time="0.031">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P2DT12H5M") + xs:dayTimeDuration("P5DT12H")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P8DT5M</assert-string-value>]]
+[[query|xs:dayTimeDuration("P2DT12H5M") + xs:dayTimeDuration("P5DT12H")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-2]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string(xs:dayTimeDuration("P10DT10H11M") + xs:dayTimeDuration("P12DT10H07M")) and fn:false()]]
+[[convertedString|fn:string(xs:dayTimeDuration("P10DT10H11M") + xs:dayTimeDuration("P12DT10H07M")) and fn:fn:false()]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string(xs:dayTimeDuration("P10DT10H11M") + xs:dayTimeDuration("P12DT10H07M")) and fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-3]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string(xs:dayTimeDuration("P20DT20H10M") + xs:dayTimeDuration("P19DT13H10M")) or fn:false()]]
+[[convertedString|fn:string(xs:dayTimeDuration("P20DT20H10M") + xs:dayTimeDuration("P19DT13H10M")) or fn:fn:false()]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string(xs:dayTimeDuration("P20DT20H10M") + xs:dayTimeDuration("P19DT13H10M")) or fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-4]" classname="iq.OpTest" time="0.147">
+    <system-out><![CDATA[[[originalTest|fn:not(fn:string(xs:dayTimeDuration("P11DT12H04M") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:not(fn:string(xs:dayTimeDuration("P11DT12H04M") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-5]" classname="iq.OpTest" time="0.046">
+    <system-out><![CDATA[[[originalTest|fn:boolean(fn:string(xs:dayTimeDuration("P05DT09H08M") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:boolean(fn:string(xs:dayTimeDuration("P05DT09H08M") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-6]" classname="iq.OpTest" time="0.029">
+    <system-out><![CDATA[[[originalTest|fn:number(xs:dayTimeDuration("P02DT06H09M") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">NaN</assert-string-value>]]
+[[query|fn:number(xs:dayTimeDuration("P02DT06H09M") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-7]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|fn:string(xs:dayTimeDuration("P03DT04H08M") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P4DT13H10M</assert-string-value>]]
+[[query|fn:string(xs:dayTimeDuration("P03DT04H08M") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-8]" classname="iq.OpTest" time="0.037">
+    <system-out><![CDATA[[[originalTest|(xs:dayTimeDuration("P10DT01H01M") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">-P1DT1H1M</assert-string-value>]]
+[[query|(xs:dayTimeDuration("P10DT01H01M") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-9]" classname="iq.OpTest" time="0.054">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dayTimeDuration("P01DT02H01M") + xs:dayTimeDuration("P02DT09H02M"))) and fn:string((xs:dayTimeDuration("P02DT03H03M") + xs:dayTimeDuration("P04DT04H04M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dayTimeDuration("P01DT02H01M") + xs:dayTimeDuration("P02DT09H02M"))) and fn:string((xs:dayTimeDuration("P02DT03H03M") + xs:dayTimeDuration("P04DT04H04M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-10]" classname="iq.OpTest" time="0.055">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dayTimeDuration("P05DT09H02M") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:dayTimeDuration("P05DT05H03M") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dayTimeDuration("P05DT09H02M") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:dayTimeDuration("P05DT05H03M") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-11]" classname="iq.OpTest" time="0.046">
+    <system-out><![CDATA[[[originalTest|(xs:dayTimeDuration("P42DT10H10M") + xs:dayTimeDuration("P10DT10H10M")) div (xs:dayTimeDuration("P42DT10H10M") + xs:dayTimeDuration("P10DT10H10M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1</assert-string-value>]]
+[[query|(xs:dayTimeDuration("P42DT10H10M") + xs:dayTimeDuration("P10DT10H10M")) div (xs:dayTimeDuration("P42DT10H10M") + xs:dayTimeDuration("P10DT10H10M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-12]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dayTimeDuration("P10DT08H11M") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:true())]]
+[[convertedString|fn:string((xs:dayTimeDuration("P10DT08H11M") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dayTimeDuration("P10DT08H11M") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-13]" classname="iq.OpTest" time="0.032">
+    <system-out><![CDATA[[[originalTest|(xs:dayTimeDuration("P23DT11H11M") + xs:dayTimeDuration("P23DT11H11M")) eq xs:dayTimeDuration("P23DT11H11M")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dayTimeDuration("P23DT11H11M") + xs:dayTimeDuration("P23DT11H11M")) eq xs:dayTimeDuration("P23DT11H11M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-14]" classname="iq.OpTest" time="0.027">
+    <system-out><![CDATA[[[originalTest|(xs:dayTimeDuration("P21DT08H12M") + xs:dayTimeDuration("P08DT08H05M")) ne xs:dayTimeDuration("P08DT08H05M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dayTimeDuration("P21DT08H12M") + xs:dayTimeDuration("P08DT08H05M")) ne xs:dayTimeDuration("P08DT08H05M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-15]" classname="iq.OpTest" time="0.029">
+    <system-out><![CDATA[[[originalTest|(xs:dayTimeDuration("P10DT10H01M") + xs:dayTimeDuration("P17DT10H02M")) le xs:dayTimeDuration("P17DT10H02M")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dayTimeDuration("P10DT10H01M") + xs:dayTimeDuration("P17DT10H02M")) le xs:dayTimeDuration("P17DT10H02M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] op-add-dayTimeDurations-16]" classname="iq.OpTest" time="0.024">
+    <system-out><![CDATA[[[originalTest|(xs:dayTimeDuration("P13DT09H09M") + xs:dayTimeDuration("P18DT02H02M")) ge xs:dayTimeDuration("P18DT02H02M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dayTimeDuration("P13DT09H09M") + xs:dayTimeDuration("P18DT02H02M")) ge xs:dayTimeDuration("P18DT02H02M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] K-DayTimeDurationAdd-1]" classname="iq.OpTest" time="0.029">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P3DT4H3M3.100S") + xs:dayTimeDuration("PT0S") eq xs:dayTimeDuration("P3DT4H3M3.100S")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:dayTimeDuration("P3DT4H3M3.100S") + xs:dayTimeDuration("PT0S") eq xs:dayTimeDuration("P3DT4H3M3.100S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] K-DayTimeDurationAdd-2]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("PT0S") + xs:dayTimeDuration("P3DT4H3M3.100S") eq xs:dayTimeDuration("P3DT4H3M3.100S")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:dayTimeDuration("PT0S") + xs:dayTimeDuration("P3DT4H3M3.100S") eq xs:dayTimeDuration("P3DT4H3M3.100S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] K-DayTimeDurationAdd-3]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P3DT4H3M3.100S") + xs:dayTimeDuration("P3DT12H31M56.303S") eq xs:dayTimeDuration("P6DT16H34M59.403S")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:dayTimeDuration("P3DT4H3M3.100S") + xs:dayTimeDuration("P3DT12H31M56.303S") eq xs:dayTimeDuration("P6DT16H34M59.403S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-add-dayTimeDurations-001]" classname="iq.OpTest" time="0.166">
+    <system-out><![CDATA[[[originalTest|declare function local:dayTimeDuration($days as xs:integer, $hours as xs:integer ) { xs:dayTimeDuration(concat('P', $days, 'DT', $hours, 'H')) }; local:dayTimeDuration(1, 1) + xs:dayTimeDuration("P0D")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1DT1H</assert-string-value>]]
+[[query|declare function local:dayTimeDuration($days as xs:integer, $hours as xs:integer ) { xs:dayTimeDuration(concat('P', $days, 'DT', $hours, 'H')) }; local:dayTimeDuration(1, 1) + xs:dayTimeDuration("P0D")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-add-dayTimeDurations-002]" classname="iq.OpTest" time="0.057">
+    <system-out><![CDATA[[[originalTest|declare function local:dayTimeDuration($days as xs:integer, $hours as xs:integer ) { xs:dayTimeDuration(concat('P', $days, 'DT', $hours, 'H')) }; xs:dayTimeDuration("P0D") + local:dayTimeDuration(1, 1)]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1DT1H</assert-string-value>]]
+[[query|declare function local:dayTimeDuration($days as xs:integer, $hours as xs:integer ) { xs:dayTimeDuration(concat('P', $days, 'DT', $hours, 'H')) }; xs:dayTimeDuration("P0D") + local:dayTimeDuration(1, 1)]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-add-dayTimeDurations-003]" classname="iq.OpTest" time="0.045">
+    <system-out><![CDATA[[[originalTest|declare function local:dayTimeDuration($days as xs:integer, $hours as xs:integer ) { xs:dayTimeDuration(concat('P', $days, 'DT', $hours, 'H')) }; local:dayTimeDuration(1, 1) + local:dayTimeDuration(1, 1)]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P2DT2H</assert-string-value>]]
+[[query|declare function local:dayTimeDuration($days as xs:integer, $hours as xs:integer ) { xs:dayTimeDuration(concat('P', $days, 'DT', $hours, 'H')) }; local:dayTimeDuration(1, 1) + local:dayTimeDuration(1, 1)]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-001]" classname="iq.OpTest" time="0.117">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:date("1997-01-01") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:date("1997-01-01") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-01-02</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:date("1997-01-01") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-002]" classname="iq.OpTest" time="0.034">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:date("1997-01-01") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:date("1997-01-01") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:date("1997-01-01") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-003]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:date("1997-01-01") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:date("1997-01-01") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-02-01</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:date("1997-01-01") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-004]" classname="iq.OpTest" time="0.03">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:date("1997-01-01") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:date("1997-01-01") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:date("1997-01-01") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-005]" classname="iq.OpTest" time="0.026">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-01-02T12:00:00</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-006]" classname="iq.OpTest" time="0.024">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-007]" classname="iq.OpTest" time="0.028">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-02-01T12:00:00</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-008]" classname="iq.OpTest" time="0.028">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        xs:dateTime("1997-01-01T12:00:00") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-009]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        xs:time("12:00:00") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        xs:time("12:00:00") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">13:00:00</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        xs:time("12:00:00") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-010]" classname="iq.OpTest" time="0.032">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1H") };
+        xs:time("12:00:00") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1H") };
+        xs:time("12:00:00") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1H") };
+        xs:time("12:00:00") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-011]" classname="iq.OpTest" time="0.032">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dayTimeDuration("PT1H") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dayTimeDuration("PT1H") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1DT1H</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dayTimeDuration("PT1H") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-012]" classname="iq.OpTest" time="0.03">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dayTimeDuration("PT1H") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dayTimeDuration("PT1H") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        xs:dayTimeDuration("PT1H") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-013]" classname="iq.OpTest" time="0.031">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        xs:yearMonthDuration("P1Y") + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        xs:yearMonthDuration("P1Y") + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1Y1M</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        xs:yearMonthDuration("P1Y") + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-014]" classname="iq.OpTest" time="0.038">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        xs:yearMonthDuration("P1Y") + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        xs:yearMonthDuration("P1Y") + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        xs:yearMonthDuration("P1Y") + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-015]" classname="iq.OpTest" time="0.031">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(false()) + xs:date("1997-01-01")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + xs:date("1997-01-01")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-01-02</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + xs:date("1997-01-01")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-016]" classname="iq.OpTest" time="0.031">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(true()) + xs:date("1997-01-01")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + xs:date("1997-01-01")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + xs:date("1997-01-01")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-017]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(false()) + xs:date("1997-01-01")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + xs:date("1997-01-01")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-02-01</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + xs:date("1997-01-01")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-018]" classname="iq.OpTest" time="0.021">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(true()) + xs:date("1997-01-01")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + xs:date("1997-01-01")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + xs:date("1997-01-01")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-019]" classname="iq.OpTest" time="0.028">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(false()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-01-02T12:00:00</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-020]" classname="iq.OpTest" time="0.029">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(true()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-021]" classname="iq.OpTest" time="0.021">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(false()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-02-01T12:00:00</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-022]" classname="iq.OpTest" time="0.03">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(true()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + xs:dateTime("1997-01-01T12:00:00")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-023]" classname="iq.OpTest" time="0.032">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        local:f(false()) + xs:time("12:00:00")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        local:f(fn:false()) + xs:time("12:00:00")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">13:00:00</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        local:f(fn:false()) + xs:time("12:00:00")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-024]" classname="iq.OpTest" time="0.044">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        local:f(true()) + xs:time("12:00:00")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        local:f(fn:true()) + xs:time("12:00:00")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("PT1H") };
+        local:f(fn:true()) + xs:time("12:00:00")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-025]" classname="iq.OpTest" time="0.026">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(false()) + xs:dayTimeDuration("PT1H")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + xs:dayTimeDuration("PT1H")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1DT1H</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + xs:dayTimeDuration("PT1H")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-026]" classname="iq.OpTest" time="0.027">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(true()) + xs:dayTimeDuration("PT1H")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + xs:dayTimeDuration("PT1H")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + xs:dayTimeDuration("PT1H")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-027]" classname="iq.OpTest" time="0.027">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(false()) + xs:yearMonthDuration("P1Y")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + xs:yearMonthDuration("P1Y")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1Y1M</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + xs:yearMonthDuration("P1Y")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-028]" classname="iq.OpTest" time="0.049">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(true()) + xs:yearMonthDuration("P1Y")]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + xs:yearMonthDuration("P1Y")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + xs:yearMonthDuration("P1Y")]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-029]" classname="iq.OpTest" time="0.031">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(false()) + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P2M</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-030]" classname="iq.OpTest" time="0.063">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(true()) + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-031]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(false()) + local:f(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + local:f(fn:false())]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P2D</assert-string-value>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:false()) + local:f(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-032]" classname="iq.OpTest" time="0.03">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(true()) + local:f(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + local:f(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        local:f(fn:true()) + local:f(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-033]" classname="iq.OpTest" time="0.028">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        declare function local:g($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(false()) + local:g(false())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        declare function local:g($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + local:g(fn:false())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        declare function local:g($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:false()) + local:g(fn:false())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDurations.xml] cbcl-plus-034]" classname="iq.OpTest" time="0.034">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        declare function local:g($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(true()) + local:g(true())]]
+[[convertedString|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        declare function local:g($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + local:g(fn:true())]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|
+        declare function local:f($x) { if ($x) then xs:duration("P1D") else xs:dayTimeDuration("P1D") };
+        declare function local:g($x) { if ($x) then xs:duration("P1M") else xs:yearMonthDuration("P1M") };
+        local:f(fn:true()) + local:g(fn:true())]]
+[[category|MANAGED]]
+]]></system-out>
+    <system-err><![CDATA[[WARNING] Forcing execution mode of variable x to local.
+[WARNING] Forcing execution mode of variable x to local.
+]]></system-err>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date2args-1]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:date("1970-01-01Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-01-01Z</assert-string-value>]]
+[[query|xs:date("1970-01-01Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date2args-2]" classname="iq.OpTest" time="0.033">
+    <system-out><![CDATA[[[originalTest|xs:date("1983-11-17Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1983-11-17Z</assert-string-value>]]
+[[query|xs:date("1983-11-17Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date2args-3]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|xs:date("2030-12-31Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2030-12-31Z</assert-string-value>]]
+[[query|xs:date("2030-12-31Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date2args-4]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|xs:date("1970-01-01Z") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-01-16Z</assert-string-value>]]
+[[query|xs:date("1970-01-01Z") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date2args-5]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|xs:date("1970-01-01Z") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-02-01Z</assert-string-value>]]
+[[query|xs:date("1970-01-01Z") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-1]" classname="iq.OpTest" time="0.024">
+    <system-out><![CDATA[[[originalTest|xs:date("2004-10-30Z") + xs:dayTimeDuration("P2DT2H30M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2004-11-01Z</assert-string-value>]]
+[[query|xs:date("2004-10-30Z") + xs:dayTimeDuration("P2DT2H30M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-datealt-2]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("2000-12-12Z") + xs:dayTimeDuration("P19DT13H10M"))) and fn:false()]]
+[[convertedString|fn:string((xs:date("2000-12-12Z") + xs:dayTimeDuration("P19DT13H10M"))) and fn:fn:false()]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("2000-12-12Z") + xs:dayTimeDuration("P19DT13H10M"))) and fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-3]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1999-10-23Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:false()]]
+[[convertedString|fn:string((xs:date("1999-10-23Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:fn:false()]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1999-10-23Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-4]" classname="iq.OpTest" time="0.019">
+    <system-out><![CDATA[[[originalTest|fn:not(fn:string(xs:date("1998-09-12Z") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:not(fn:string(xs:date("1998-09-12Z") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-5]" classname="iq.OpTest" time="0.021">
+    <system-out><![CDATA[[[originalTest|fn:boolean(fn:string(xs:date("1962-03-12Z") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:boolean(fn:string(xs:date("1962-03-12Z") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-6]" classname="iq.OpTest" time="0.025">
+    <system-out><![CDATA[[[originalTest|fn:number(xs:date("1988-01-28Z") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">NaN</assert-string-value>]]
+[[query|fn:number(xs:date("1988-01-28Z") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-7]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|fn:string(xs:date("1989-07-05Z") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1989-07-06Z</assert-string-value>]]
+[[query|fn:string(xs:date("1989-07-05Z") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-8]" classname="iq.OpTest" time="0.048">
+    <system-out><![CDATA[[[originalTest|(xs:date("0001-01-01Z") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[originalAssertion|<any-of xmlns="http://www.w3.org/2010/09/qt-fots-catalog">
+   <assert-string-value>-0001-12-20Z</assert-string-value>
+   <assert-string-value>0000-12-20Z</assert-string-value>
+</any-of>]]
+[[query|(xs:date("0001-01-01Z") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[query|(xs:date("0001-01-01Z") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[ERRORS|[org.junit.ComparisonFailure: Wrong string value expected:<[-0001]-12-20Z> but was:<[0000]-12-20Z>]]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-9]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1993-12-09Z") + xs:dayTimeDuration("P03DT01H04M"))) and fn:string((xs:date("1993-12-09Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1993-12-09Z") + xs:dayTimeDuration("P03DT01H04M"))) and fn:string((xs:date("1993-12-09Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-10]" classname="iq.OpTest" time="0.026">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1985-07-05Z") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:date("1985-07-05Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1985-07-05Z") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:date("1985-07-05Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-12]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1980-03-02Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:true())]]
+[[convertedString|fn:string((xs:date("1980-03-02Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1980-03-02Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-13]" classname="iq.OpTest" time="0.025">
+    <system-out><![CDATA[[[originalTest|(xs:date("1980-05-05Z") + xs:dayTimeDuration("P23DT11H11M")) eq xs:date("1980-05-05Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1980-05-05Z") + xs:dayTimeDuration("P23DT11H11M")) eq xs:date("1980-05-05Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-14]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|(xs:date("1979-12-12Z") + xs:dayTimeDuration("P08DT08H05M")) ne xs:date("1979-12-12Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1979-12-12Z") + xs:dayTimeDuration("P08DT08H05M")) ne xs:date("1979-12-12Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-15]" classname="iq.OpTest" time="0.021">
+    <system-out><![CDATA[[[originalTest|(xs:date("1978-12-12Z") + xs:dayTimeDuration("P17DT10H02M")) le xs:date("1978-12-12Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1978-12-12Z") + xs:dayTimeDuration("P17DT10H02M")) le xs:date("1978-12-12Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] op-add-dayTimeDuration-to-date-16]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|(xs:date("1977-12-12Z") + xs:dayTimeDuration("P18DT02H02M")) ge xs:date("1977-12-12Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1977-12-12Z") + xs:dayTimeDuration("P18DT02H02M")) ge xs:date("1977-12-12Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] K-DateAddDTD-1]" classname="iq.OpTest" time="0.028">
+    <failure message="Result is false" type="java.lang.AssertionError"><![CDATA[java.lang.AssertionError: Result is false
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at iq.base.TestBase.assertTrueSingleElement(TestBase.java:269)
+	at iq.base.TestBase.checkAssertion(TestBase.java:157)
+	at iq.base.TestBase.testCase(TestBase.java:68)
+	at iq.OpTest.test(OpTest.java:22)
+	at jdk.internal.reflect.GeneratedMethodAccessor1.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:299)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:293)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+]]></failure>
+    <system-out><![CDATA[[[originalTest|xs:date("1999-08-12") + xs:dayTimeDuration("P23DT09H32M59S") eq xs:date("1999-09-04")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:date("1999-08-12") + xs:dayTimeDuration("P23DT09H32M59S") eq xs:date("1999-09-04")]]
+[[category|FAIL]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] K-DateAddDTD-2]" classname="iq.OpTest" time="0.019">
+    <failure message="Result is false" type="java.lang.AssertionError"><![CDATA[java.lang.AssertionError: Result is false
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at iq.base.TestBase.assertTrueSingleElement(TestBase.java:269)
+	at iq.base.TestBase.checkAssertion(TestBase.java:157)
+	at iq.base.TestBase.testCase(TestBase.java:68)
+	at iq.OpTest.test(OpTest.java:22)
+	at jdk.internal.reflect.GeneratedMethodAccessor1.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:299)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:293)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+]]></failure>
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P23DT09H32M59S") + xs:date("1999-08-12") eq xs:date("1999-09-04")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:dayTimeDuration("P23DT09H32M59S") + xs:date("1999-08-12") eq xs:date("1999-09-04")]]
+[[category|FAIL]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] cbcl-add-dayTimeDuration-to-date-001]" classname="iq.OpTest" time="0.106">
+    <system-out><![CDATA[[[originalTest|
+      	declare function local:two-digit($number as xs:integer) { 
+      		let $string := string($number) 
+      		return if (string-length($string) lt 2) then concat('0', $string) else $string 
+      	}; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { 
+      		let $m := local:two-digit($month), $d := local:two-digit($day) 
+      		return xs:date(concat($year, '-', $m, '-', $d)) 
+      	}; 
+      	local:date(2008, 05, 12) + xs:dayTimeDuration("P0D")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2008-05-12</assert-string-value>]]
+[[query|
+      	declare function local:two-digit($number as xs:integer) { 
+      		let $string := string($number) 
+      		return if (string-length($string) lt 2) then concat('0', $string) else $string 
+      	}; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { 
+      		let $m := local:two-digit($month), $d := local:two-digit($day) 
+      		return xs:date(concat($year, '-', $m, '-', $d)) 
+      	}; 
+      	local:date(2008, 05, 12) + xs:dayTimeDuration("P0D")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] cbcl-add-dayTimeDuration-to-date-002]" classname="iq.OpTest" time="0.037">
+    <system-out><![CDATA[[[originalTest|
+      	declare function local:two-digit($number as xs:integer) { 
+      		let $string := string($number) 
+      		return if (string-length($string) lt 2) then concat('0', $string) else $string 
+      	}; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { 
+      		let $m := local:two-digit($month), $d := local:two-digit($day) 
+      		return xs:date(concat($year, '-', $m, '-', $d)) 
+      	}; 
+      	xs:dayTimeDuration("P0D") + local:date(2008, 05, 12)]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2008-05-12</assert-string-value>]]
+[[query|
+      	declare function local:two-digit($number as xs:integer) { 
+      		let $string := string($number) 
+      		return if (string-length($string) lt 2) then concat('0', $string) else $string 
+      	}; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { 
+      		let $m := local:two-digit($month), $d := local:two-digit($day) 
+      		return xs:date(concat($year, '-', $m, '-', $d)) 
+      	}; 
+      	xs:dayTimeDuration("P0D") + local:date(2008, 05, 12)]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] cbcl-add-dayTimeDuration-to-date-003]" classname="iq.OpTest" time="0.031">
+    <system-out><![CDATA[[[originalTest|
+      declare function local:two-digit($number as xs:integer) { 
+      	let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string 
+      }; 
+      declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { 
+      	let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) 
+      }; 
+      local:date(25252734927766555, 05, 12) + xs:dayTimeDuration("P4267296D")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="FODT0001"/>]]
+[[query|
+      declare function local:two-digit($number as xs:integer) { 
+      	let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string 
+      }; 
+      declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { 
+      	let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) 
+      }; 
+      local:date(25252734927766555, 05, 12) + xs:dayTimeDuration("P4267296D")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] Add-UnionType-36]" classname="iq.OpTest" time="0.0">
+    <skipped message="dependency feature schemaImport"/>
+    <system-out><![CDATA[[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-date.xml] Add-UnionType-37]" classname="iq.OpTest" time="0.0">
+    <skipped message="dependency feature schemaImport"/>
+    <system-out><![CDATA[[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime2args-1]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1970-01-01T00:00:00Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-01-01T00:00:00Z</assert-string-value>]]
+[[query|xs:dateTime("1970-01-01T00:00:00Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime2args-2]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1996-04-07T01:40:52Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1996-04-07T01:40:52Z</assert-string-value>]]
+[[query|xs:dateTime("1996-04-07T01:40:52Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime2args-3]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("2030-12-31T23:59:59Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2030-12-31T23:59:59Z</assert-string-value>]]
+[[query|xs:dateTime("2030-12-31T23:59:59Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime2args-4]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1970-01-01T00:00:00Z") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-01-16T11:59:59Z</assert-string-value>]]
+[[query|xs:dateTime("1970-01-01T00:00:00Z") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime2args-5]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1970-01-01T00:00:00Z") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-02-01T23:59:59Z</assert-string-value>]]
+[[query|xs:dateTime("1970-01-01T00:00:00Z") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-1]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("2000-10-30T11:12:00") + xs:dayTimeDuration("P3DT1H15M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2000-11-02T12:27:00</assert-string-value>]]
+[[query|xs:dateTime("2000-10-30T11:12:00") + xs:dayTimeDuration("P3DT1H15M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-2]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dateTime("2000-12-12T11:10:03Z") + xs:dayTimeDuration("P12DT10H07M"))) and fn:false()]]
+[[convertedString|fn:string((xs:dateTime("2000-12-12T11:10:03Z") + xs:dayTimeDuration("P12DT10H07M"))) and fn:fn:false()]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dateTime("2000-12-12T11:10:03Z") + xs:dayTimeDuration("P12DT10H07M"))) and fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-3]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dateTime("1999-10-23T03:12:23Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:false()]]
+[[convertedString|fn:string((xs:dateTime("1999-10-23T03:12:23Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:fn:false()]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dateTime("1999-10-23T03:12:23Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-4]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|fn:not(fn:string(xs:dateTime("1998-09-12T13:23:23Z") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:not(fn:string(xs:dateTime("1998-09-12T13:23:23Z") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-5]" classname="iq.OpTest" time="0.019">
+    <system-out><![CDATA[[[originalTest|fn:boolean(fn:string(xs:dateTime("1962-03-12T12:34:09Z") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:boolean(fn:string(xs:dateTime("1962-03-12T12:34:09Z") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-6]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|fn:number(xs:dateTime("1988-01-28T12:34:12Z") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">NaN</assert-string-value>]]
+[[query|fn:number(xs:dateTime("1988-01-28T12:34:12Z") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-7]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|fn:string(xs:dateTime("1989-07-05T10:10:10Z") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1989-07-06T19:12:10Z</assert-string-value>]]
+[[query|fn:string(xs:dateTime("1989-07-05T10:10:10Z") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-8]" classname="iq.OpTest" time="0.036">
+    <system-out><![CDATA[[[originalTest|(xs:dateTime("0001-01-01T11:11:11Z") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[originalAssertion|<any-of xmlns="http://www.w3.org/2010/09/qt-fots-catalog">
+   <assert-string-value>-0001-12-21T09:09:11Z</assert-string-value>
+   <assert-string-value>0000-12-21T09:09:11Z</assert-string-value>
+</any-of>]]
+[[query|(xs:dateTime("0001-01-01T11:11:11Z") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[query|(xs:dateTime("0001-01-01T11:11:11Z") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[ERRORS|[org.junit.ComparisonFailure: Wrong string value expected:<[-0001]-12-21T09:09:11Z> but was:<[0000]-12-21T09:09:11Z>]]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-9]" classname="iq.OpTest" time="0.024">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dateTime("1993-12-09T13:13:13Z") + xs:dayTimeDuration("P03DT01H04M"))) and fn:string((xs:dateTime("1993-12-09T13:13:13Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dateTime("1993-12-09T13:13:13Z") + xs:dayTimeDuration("P03DT01H04M"))) and fn:string((xs:dateTime("1993-12-09T13:13:13Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-10]" classname="iq.OpTest" time="0.019">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dateTime("1985-07-05T14:14:14Z") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:dateTime("1985-07-05T15:15:15Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dateTime("1985-07-05T14:14:14Z") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:dateTime("1985-07-05T15:15:15Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-12]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:dateTime("1980-03-02T16:12:10Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:true())]]
+[[convertedString|fn:string((xs:dateTime("1980-03-02T16:12:10Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:dateTime("1980-03-02T16:12:10Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-13]" classname="iq.OpTest" time="0.027">
+    <system-out><![CDATA[[[originalTest|(xs:dateTime("1980-05-05T17:17:17Z") + xs:dayTimeDuration("P23DT11H11M")) eq xs:dateTime("1980-05-05T17:17:17Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dateTime("1980-05-05T17:17:17Z") + xs:dayTimeDuration("P23DT11H11M")) eq xs:dateTime("1980-05-05T17:17:17Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-14]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|(xs:dateTime("1979-12-12T18:18:18Z") + xs:dayTimeDuration("P08DT08H05M")) ne xs:dateTime("1979-12-12T16:15:14Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dateTime("1979-12-12T18:18:18Z") + xs:dayTimeDuration("P08DT08H05M")) ne xs:dateTime("1979-12-12T16:15:14Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-15]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|(xs:dateTime("1978-12-12T12:45:12Z") + xs:dayTimeDuration("P17DT10H02M")) le xs:dateTime("1978-12-12T16:34:23Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dateTime("1978-12-12T12:45:12Z") + xs:dayTimeDuration("P17DT10H02M")) le xs:dateTime("1978-12-12T16:34:23Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] op-add-dayTimeDuration-to-dateTime-16]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|(xs:dateTime("1977-12-12T13:12:15Z") + xs:dayTimeDuration("P18DT02H02M")) ge xs:dateTime("1977-12-12T15:56:10Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:dateTime("1977-12-12T13:12:15Z") + xs:dayTimeDuration("P18DT02H02M")) ge xs:dateTime("1977-12-12T15:56:10Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] K-DateTimeAddDTD-1]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|xs:date("1999-10-12") + xs:dateTime("1999-10-12T08:12:12")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:date("1999-10-12") + xs:dateTime("1999-10-12T08:12:12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] K-DateTimeAddDTD-2]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1999-10-12T08:12:12") + xs:date("1999-10-12")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:dateTime("1999-10-12T08:12:12") + xs:date("1999-10-12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] K-DateTimeAddDTD-3]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:time("08:12:12") + xs:dateTime("1999-10-12T08:12:12")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:time("08:12:12") + xs:dateTime("1999-10-12T08:12:12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] K-DateTimeAddDTD-4]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1999-10-12T08:12:12") + xs:time("08:12:12")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:dateTime("1999-10-12T08:12:12") + xs:time("08:12:12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] cbcl-add-dayTimeDuration-to-dateTime-001]" classname="iq.OpTest" time="0.036">
+    <system-out><![CDATA[[[originalTest|declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; declare function local:dateTime($year as xs:integer, $month as xs:integer, $day as xs:integer, $hour as xs:integer, $mins as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day), $h := local:two-digit($hour), $n := local:two-digit($mins) return xs:dateTime(concat($year, '-', $m, '-', $d, 'T', $h, ':', $n, ':00')) }; xs:dayTimeDuration("P0D") + local:dateTime(2008, 05, 12, 12, 59)]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2008-05-12T12:59:00</assert-string-value>]]
+[[query|declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; declare function local:dateTime($year as xs:integer, $month as xs:integer, $day as xs:integer, $hour as xs:integer, $mins as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day), $h := local:two-digit($hour), $n := local:two-digit($mins) return xs:dateTime(concat($year, '-', $m, '-', $d, 'T', $h, ':', $n, ':00')) }; xs:dayTimeDuration("P0D") + local:dateTime(2008, 05, 12, 12, 59)]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] cbcl-add-dayTimeDuration-to-dateTime-002]" classname="iq.OpTest" time="0.033">
+    <system-out><![CDATA[[[originalTest|declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; declare function local:dateTime($year as xs:integer, $month as xs:integer, $day as xs:integer, $hour as xs:integer, $mins as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day), $h := local:two-digit($hour), $n := local:two-digit($mins) return xs:dateTime(concat($year, '-', $m, '-', $d, 'T', $h, ':', $n, ':00')) }; local:dateTime(2008, 05, 12, 12, 59) + xs:dayTimeDuration("P0D")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2008-05-12T12:59:00</assert-string-value>]]
+[[query|declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; declare function local:dateTime($year as xs:integer, $month as xs:integer, $day as xs:integer, $hour as xs:integer, $mins as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day), $h := local:two-digit($hour), $n := local:two-digit($mins) return xs:dateTime(concat($year, '-', $m, '-', $d, 'T', $h, ':', $n, ':00')) }; local:dateTime(2008, 05, 12, 12, 59) + xs:dayTimeDuration("P0D")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-dateTime.xml] cbcl-add-dayTimeDuration-to-dateTime-003]" classname="iq.OpTest" time="0.034">
+    <system-out><![CDATA[[[originalTest|declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; declare function local:dateTime($year as xs:integer, $month as xs:integer, $day as xs:integer, $hour as xs:integer, $mins as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day), $h := local:two-digit($hour), $n := local:two-digit($mins) return xs:dateTime(concat($year, '-', $m, '-', $d, 'T', $h, ':', $n, ':00')) }; local:dateTime(25252734927766555, 05, 12, 12, 59) + xs:dayTimeDuration("P40267296D")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="FODT0001"/>]]
+[[query|declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; declare function local:dateTime($year as xs:integer, $month as xs:integer, $day as xs:integer, $hour as xs:integer, $mins as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day), $h := local:two-digit($hour), $n := local:two-digit($mins) return xs:dateTime(concat($year, '-', $m, '-', $d, 'T', $h, ':', $n, ':00')) }; local:dateTime(25252734927766555, 05, 12, 12, 59) + xs:dayTimeDuration("P40267296D")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time2args-1]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|xs:time("00:00:00Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">00:00:00Z</assert-string-value>]]
+[[query|xs:time("00:00:00Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time2args-2]" classname="iq.OpTest" time="0.019">
+    <system-out><![CDATA[[[originalTest|xs:time("08:03:35Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">08:03:35Z</assert-string-value>]]
+[[query|xs:time("08:03:35Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time2args-3]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|xs:time("23:59:59Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">23:59:59Z</assert-string-value>]]
+[[query|xs:time("23:59:59Z") + xs:dayTimeDuration("P0DT0H0M0S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time2args-4]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:time("00:00:00Z") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">11:59:59Z</assert-string-value>]]
+[[query|xs:time("00:00:00Z") + xs:dayTimeDuration("P15DT11H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time2args-5]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:time("00:00:00Z") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">23:59:59Z</assert-string-value>]]
+[[query|xs:time("00:00:00Z") + xs:dayTimeDuration("P31DT23H59M59S")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-1]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:time("11:12:00") + xs:dayTimeDuration("P3DT1H15M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">12:27:00</assert-string-value>]]
+[[query|xs:time("11:12:00") + xs:dayTimeDuration("P3DT1H15M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-2]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:time("23:12:00+03:00") + xs:dayTimeDuration("P1DT3H15M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">02:27:00+03:00</assert-string-value>]]
+[[query|xs:time("23:12:00+03:00") + xs:dayTimeDuration("P1DT3H15M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-3]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:time("12:12:01Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:false()]]
+[[convertedString|fn:string((xs:time("12:12:01Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:fn:false()]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:time("12:12:01Z") + xs:dayTimeDuration("P19DT13H10M"))) or fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-4]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|fn:not(fn:string(xs:time("13:12:00Z") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:not(fn:string(xs:time("13:12:00Z") + xs:dayTimeDuration("P02DT07H01M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-5]" classname="iq.OpTest" time="0.021">
+    <system-out><![CDATA[[[originalTest|fn:boolean(fn:string(xs:time("02:02:02Z") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:boolean(fn:string(xs:time("02:02:02Z") + xs:dayTimeDuration("P03DT08H06M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-6]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|fn:number(xs:time("01:01:01Z") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">NaN</assert-string-value>]]
+[[query|fn:number(xs:time("01:01:01Z") + xs:dayTimeDuration("P10DT08H01M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-7]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|fn:string(xs:time("10:02:03Z") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">19:04:03Z</assert-string-value>]]
+[[query|fn:string(xs:time("10:02:03Z") + xs:dayTimeDuration("P01DT09H02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-8]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|(xs:time("08:02:06") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">06:00:06</assert-string-value>]]
+[[query|(xs:time("08:02:06") + xs:dayTimeDuration("-P11DT02H02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-9]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:time("10:10:10Z") + xs:dayTimeDuration("P02DT09H02M"))) and fn:string((xs:time("09:02:02Z") + xs:dayTimeDuration("P04DT04H04M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:time("10:10:10Z") + xs:dayTimeDuration("P02DT09H02M"))) and fn:string((xs:time("09:02:02Z") + xs:dayTimeDuration("P04DT04H04M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-10]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:time("02:03:01Z") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:time("02:03:01Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:time("02:03:01Z") + xs:dayTimeDuration("P03DT01H04M"))) or fn:string((xs:time("02:03:01Z") + xs:dayTimeDuration("P01DT01H03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-timealt-12]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:time("02:02:02Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:true())]]
+[[convertedString|fn:string((xs:time("02:02:02Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:time("02:02:02Z") + xs:dayTimeDuration("P05DT08H11M"))) and (fn:fn:true())]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-13]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|(xs:time("01:03:03Z") + xs:dayTimeDuration("P23DT11H11M")) eq xs:time("04:03:05Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:time("01:03:03Z") + xs:dayTimeDuration("P23DT11H11M")) eq xs:time("04:03:05Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-14]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|(xs:time("04:04:05Z") + xs:dayTimeDuration("P08DT08H05M")) ne xs:time("05:08:02Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:time("04:04:05Z") + xs:dayTimeDuration("P08DT08H05M")) ne xs:time("05:08:02Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-15]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|(xs:time("08:09:09Z") + xs:dayTimeDuration("P17DT10H02M")) le xs:time("09:08:10Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:time("08:09:09Z") + xs:dayTimeDuration("P17DT10H02M")) le xs:time("09:08:10Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-16]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|(xs:time("09:06:07Z") + xs:dayTimeDuration("P18DT02H02M")) ge xs:time("01:01:01Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:time("09:06:07Z") + xs:dayTimeDuration("P18DT02H02M")) ge xs:time("01:01:01Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] op-add-dayTimeDuration-to-time-17]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string(xs:time("12:07:08Z") + xs:dayTimeDuration("P12DT10H07M")) and fn:false()]]
+[[convertedString|fn:string(xs:time("12:07:08Z") + xs:dayTimeDuration("P12DT10H07M")) and fn:fn:false()]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string(xs:time("12:07:08Z") + xs:dayTimeDuration("P12DT10H07M")) and fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] K-TimeAddDTD-1]" classname="iq.OpTest" time="0.016">
+    <failure message="Result is false" type="java.lang.AssertionError"><![CDATA[java.lang.AssertionError: Result is false
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at iq.base.TestBase.assertTrueSingleElement(TestBase.java:269)
+	at iq.base.TestBase.checkAssertion(TestBase.java:157)
+	at iq.base.TestBase.testCase(TestBase.java:68)
+	at iq.OpTest.test(OpTest.java:22)
+	at jdk.internal.reflect.GeneratedMethodAccessor1.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:299)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:293)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+]]></failure>
+    <system-out><![CDATA[[[originalTest|xs:time("08:12:32") + xs:dayTimeDuration("P23DT09H32M59S") eq xs:time("17:45:31")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:time("08:12:32") + xs:dayTimeDuration("P23DT09H32M59S") eq xs:time("17:45:31")]]
+[[category|FAIL]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] K-TimeAddDTD-2]" classname="iq.OpTest" time="0.015">
+    <failure message="Result is false" type="java.lang.AssertionError"><![CDATA[java.lang.AssertionError: Result is false
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at iq.base.TestBase.assertTrueSingleElement(TestBase.java:269)
+	at iq.base.TestBase.checkAssertion(TestBase.java:157)
+	at iq.base.TestBase.testCase(TestBase.java:68)
+	at iq.OpTest.test(OpTest.java:22)
+	at jdk.internal.reflect.GeneratedMethodAccessor1.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:299)
+	at org.junit.internal.runners.statements.FailOnTimeout$CallableStatement.call(FailOnTimeout.java:293)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+]]></failure>
+    <system-out><![CDATA[[[originalTest|xs:dayTimeDuration("P23DT09H32M59S") + xs:time("08:12:32") eq xs:time("17:45:31")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:dayTimeDuration("P23DT09H32M59S") + xs:time("08:12:32") eq xs:time("17:45:31")]]
+[[category|FAIL]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] K2-TimeAddDTD-1]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:time("10:10:10") + xs:time("23:10:10")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:time("10:10:10") + xs:time("23:10:10")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] cbcl-add-dayTimeDuration-to-time-001]" classname="iq.OpTest" time="0.028">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string };
+        declare function local:time($hour as xs:integer, $mins as xs:integer) { let $h := local:two-digit($hour), $m := local:two-digit($mins) return xs:time(concat( $h, ':', $m, ':00')) };
+        local:time(12, 59) + xs:dayTimeDuration("P0D")
+      ]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">12:59:00</assert-string-value>]]
+[[query|
+        declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string };
+        declare function local:time($hour as xs:integer, $mins as xs:integer) { let $h := local:two-digit($hour), $m := local:two-digit($mins) return xs:time(concat( $h, ':', $m, ':00')) };
+        local:time(12, 59) + xs:dayTimeDuration("P0D")
+      ]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-dayTimeDuration-to-time.xml] cbcl-add-dayTimeDuration-to-time-002]" classname="iq.OpTest" time="0.032">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string };
+        declare function local:time($hour as xs:integer, $mins as xs:integer) { let $h := local:two-digit($hour), $m := local:two-digit($mins) return xs:time(concat( $h, ':', $m, ':00')) };
+        xs:dayTimeDuration("P0D") + local:time(12, 59)
+      ]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">12:59:00</assert-string-value>]]
+[[query|
+        declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string };
+        declare function local:time($hour as xs:integer, $mins as xs:integer) { let $h := local:two-digit($hour), $m := local:two-digit($mins) return xs:time(concat( $h, ':', $m, ':00')) };
+        xs:dayTimeDuration("P0D") + local:time(12, 59)
+      ]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations2args-1]" classname="iq.OpTest" time="0.013">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P0Y0M") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P0M</assert-string-value>]]
+[[query|xs:yearMonthDuration("P0Y0M") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations2args-2]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P1000Y6M") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1000Y6M</assert-string-value>]]
+[[query|xs:yearMonthDuration("P1000Y6M") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations2args-3]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P2030Y12M") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P2031Y</assert-string-value>]]
+[[query|xs:yearMonthDuration("P2030Y12M") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations2args-4]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P0Y0M") + xs:yearMonthDuration("P1000Y6M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1000Y6M</assert-string-value>]]
+[[query|xs:yearMonthDuration("P0Y0M") + xs:yearMonthDuration("P1000Y6M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations2args-5]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P0Y0M") + xs:yearMonthDuration("P2030Y12M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P2031Y</assert-string-value>]]
+[[query|xs:yearMonthDuration("P0Y0M") + xs:yearMonthDuration("P2030Y12M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-1]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P2Y11M") + xs:yearMonthDuration("P3Y3M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P6Y2M</assert-string-value>]]
+[[query|xs:yearMonthDuration("P2Y11M") + xs:yearMonthDuration("P3Y3M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-2]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string(xs:yearMonthDuration("P10Y11M") + xs:yearMonthDuration("P12Y07M")) and fn:false()]]
+[[convertedString|fn:string(xs:yearMonthDuration("P10Y11M") + xs:yearMonthDuration("P12Y07M")) and fn:fn:false()]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string(xs:yearMonthDuration("P10Y11M") + xs:yearMonthDuration("P12Y07M")) and fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-3]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string(xs:yearMonthDuration("P20Y10M") + xs:yearMonthDuration("P19Y10M")) or fn:false()]]
+[[convertedString|fn:string(xs:yearMonthDuration("P20Y10M") + xs:yearMonthDuration("P19Y10M")) or fn:fn:false()]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string(xs:yearMonthDuration("P20Y10M") + xs:yearMonthDuration("P19Y10M")) or fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-4]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|fn:not(fn:string(xs:yearMonthDuration("P11Y04M") + xs:yearMonthDuration("P02Y11M")))]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:not(fn:string(xs:yearMonthDuration("P11Y04M") + xs:yearMonthDuration("P02Y11M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-5]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|fn:boolean(fn:string(xs:yearMonthDuration("P05Y08M") + xs:yearMonthDuration("P03Y06M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:boolean(fn:string(xs:yearMonthDuration("P05Y08M") + xs:yearMonthDuration("P03Y06M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-6]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|fn:number(xs:yearMonthDuration("P02Y09M") + xs:yearMonthDuration("P10Y01M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">NaN</assert-string-value>]]
+[[query|fn:number(xs:yearMonthDuration("P02Y09M") + xs:yearMonthDuration("P10Y01M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-7]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|fn:string(xs:yearMonthDuration("P03Y08M") + xs:yearMonthDuration("P01Y02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P4Y10M</assert-string-value>]]
+[[query|fn:string(xs:yearMonthDuration("P03Y08M") + xs:yearMonthDuration("P01Y02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-8]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|(xs:yearMonthDuration("P10Y01M") + xs:yearMonthDuration("-P11Y02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">-P1Y1M</assert-string-value>]]
+[[query|(xs:yearMonthDuration("P10Y01M") + xs:yearMonthDuration("-P11Y02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-9]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:yearMonthDuration("P01Y01M") + xs:yearMonthDuration("P02Y02M"))) and fn:string((xs:yearMonthDuration("P02Y03M") + xs:yearMonthDuration("P04Y04M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:yearMonthDuration("P01Y01M") + xs:yearMonthDuration("P02Y02M"))) and fn:string((xs:yearMonthDuration("P02Y03M") + xs:yearMonthDuration("P04Y04M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-10]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:yearMonthDuration("P05Y02M") + xs:yearMonthDuration("P03Y04M"))) or fn:string((xs:yearMonthDuration("P05Y03M") + xs:yearMonthDuration("P01Y03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:yearMonthDuration("P05Y02M") + xs:yearMonthDuration("P03Y04M"))) or fn:string((xs:yearMonthDuration("P05Y03M") + xs:yearMonthDuration("P01Y03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-11]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|(xs:yearMonthDuration("P42Y10M") + xs:yearMonthDuration("P28Y10M")) div (xs:yearMonthDuration("P10Y10M") + xs:yearMonthDuration("P60Y10M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1</assert-string-value>]]
+[[query|(xs:yearMonthDuration("P42Y10M") + xs:yearMonthDuration("P28Y10M")) div (xs:yearMonthDuration("P10Y10M") + xs:yearMonthDuration("P60Y10M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-12]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:yearMonthDuration("P10Y11M") + xs:yearMonthDuration("P05Y07M"))) and (fn:true())]]
+[[convertedString|fn:string((xs:yearMonthDuration("P10Y11M") + xs:yearMonthDuration("P05Y07M"))) and (fn:fn:true())]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:yearMonthDuration("P10Y11M") + xs:yearMonthDuration("P05Y07M"))) and (fn:fn:true())]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-13]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|(xs:yearMonthDuration("P23Y11M") + xs:yearMonthDuration("P23Y11M")) eq xs:yearMonthDuration("P23Y11M")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:yearMonthDuration("P23Y11M") + xs:yearMonthDuration("P23Y11M")) eq xs:yearMonthDuration("P23Y11M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-14]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|(xs:yearMonthDuration("P21Y12M") + xs:yearMonthDuration("P08Y05M")) ne xs:yearMonthDuration("P08Y05M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:yearMonthDuration("P21Y12M") + xs:yearMonthDuration("P08Y05M")) ne xs:yearMonthDuration("P08Y05M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-15]" classname="iq.OpTest" time="0.018">
+    <system-out><![CDATA[[[originalTest|(xs:yearMonthDuration("P10Y01M") + xs:yearMonthDuration("P17Y02M")) le xs:yearMonthDuration("P17Y02M")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:yearMonthDuration("P10Y01M") + xs:yearMonthDuration("P17Y02M")) le xs:yearMonthDuration("P17Y02M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] op-add-yearMonthDurations-16]" classname="iq.OpTest" time="0.02">
+    <system-out><![CDATA[[[originalTest|(xs:yearMonthDuration("P13Y09M") + xs:yearMonthDuration("P18Y02M")) ge xs:yearMonthDuration("P18Y02M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:yearMonthDuration("P13Y09M") + xs:yearMonthDuration("P18Y02M")) ge xs:yearMonthDuration("P18Y02M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] K-YearMonthDurationAdd-1]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P3Y3M") + xs:yearMonthDuration("P0M") eq xs:yearMonthDuration("P3Y3M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:yearMonthDuration("P3Y3M") + xs:yearMonthDuration("P0M") eq xs:yearMonthDuration("P3Y3M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] K-YearMonthDurationAdd-2]" classname="iq.OpTest" time="0.019">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P0M") + xs:yearMonthDuration("P3Y3M") eq xs:yearMonthDuration("P3Y3M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:yearMonthDuration("P0M") + xs:yearMonthDuration("P3Y3M") eq xs:yearMonthDuration("P3Y3M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] K-YearMonthDurationAdd-3]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P32Y43M") + xs:yearMonthDuration("P12Y13M") eq xs:yearMonthDuration("P48Y8M")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:yearMonthDuration("P32Y43M") + xs:yearMonthDuration("P12Y13M") eq xs:yearMonthDuration("P48Y8M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] cbcl-add-yearMonthDurations-001]" classname="iq.OpTest" time="0.025">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:yearMonthDuration($years as xs:integer, $months as xs:integer ) { xs:yearMonthDuration(concat('P', $years, 'Y', $months, 'M')) };
+        local:yearMonthDuration(1, 1) + xs:yearMonthDuration("P0Y")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1Y1M</assert-string-value>]]
+[[query|
+        declare function local:yearMonthDuration($years as xs:integer, $months as xs:integer ) { xs:yearMonthDuration(concat('P', $years, 'Y', $months, 'M')) };
+        local:yearMonthDuration(1, 1) + xs:yearMonthDuration("P0Y")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] cbcl-add-yearMonthDurations-002]" classname="iq.OpTest" time="0.029">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:yearMonthDuration($years as xs:integer, $months as xs:integer ) { xs:yearMonthDuration(concat('P', $years, 'Y', $months, 'M')) };
+        xs:yearMonthDuration("P0Y") + local:yearMonthDuration(1, 1)]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P1Y1M</assert-string-value>]]
+[[query|
+        declare function local:yearMonthDuration($years as xs:integer, $months as xs:integer ) { xs:yearMonthDuration(concat('P', $years, 'Y', $months, 'M')) };
+        xs:yearMonthDuration("P0Y") + local:yearMonthDuration(1, 1)]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDurations.xml] cbcl-add-yearMonthDurations-003]" classname="iq.OpTest" time="0.027">
+    <system-out><![CDATA[[[originalTest|
+        declare function local:yearMonthDuration($years as xs:integer, $months as xs:integer ) { xs:yearMonthDuration(concat('P', $years, 'Y', $months, 'M')) };
+        local:yearMonthDuration(1, 1) + local:yearMonthDuration(1, 1)]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">P2Y2M</assert-string-value>]]
+[[query|
+        declare function local:yearMonthDuration($years as xs:integer, $months as xs:integer ) { xs:yearMonthDuration(concat('P', $years, 'Y', $months, 'M')) };
+        local:yearMonthDuration(1, 1) + local:yearMonthDuration(1, 1)]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date2args-1]" classname="iq.OpTest" time="0.022">
+    <system-out><![CDATA[[[originalTest|xs:date("1970-01-01Z") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-01-01Z</assert-string-value>]]
+[[query|xs:date("1970-01-01Z") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date2args-2]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:date("1983-11-17Z") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1983-11-17Z</assert-string-value>]]
+[[query|xs:date("1983-11-17Z") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date2args-3]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:date("2030-12-31Z") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2030-12-31Z</assert-string-value>]]
+[[query|xs:date("2030-12-31Z") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date2args-4]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:date("1970-01-01Z") + xs:yearMonthDuration("P1000Y6M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2970-07-01Z</assert-string-value>]]
+[[query|xs:date("1970-01-01Z") + xs:yearMonthDuration("P1000Y6M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date2args-5]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:date("1970-01-01Z") + xs:yearMonthDuration("P2030Y12M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">4001-01-01Z</assert-string-value>]]
+[[query|xs:date("1970-01-01Z") + xs:yearMonthDuration("P2030Y12M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-1]" classname="iq.OpTest" time="0.029">
+    <system-out><![CDATA[[[originalTest|xs:date("2000-10-30") + xs:yearMonthDuration("P1Y2M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2001-12-30</assert-string-value>]]
+[[query|xs:date("2000-10-30") + xs:yearMonthDuration("P1Y2M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-2]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string(xs:date("2000-12-12Z") + xs:dayTimeDuration("P12DT10H07M")) and fn:false()]]
+[[convertedString|fn:string(xs:date("2000-12-12Z") + xs:dayTimeDuration("P12DT10H07M")) and fn:fn:false()]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string(xs:date("2000-12-12Z") + xs:dayTimeDuration("P12DT10H07M")) and fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-3]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1999-10-23Z") + xs:yearMonthDuration("P19Y12M"))) or fn:false()]]
+[[convertedString|fn:string((xs:date("1999-10-23Z") + xs:yearMonthDuration("P19Y12M"))) or fn:fn:false()]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1999-10-23Z") + xs:yearMonthDuration("P19Y12M"))) or fn:fn:false()]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-4]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|fn:not(fn:string(xs:date("1998-09-12Z") + xs:yearMonthDuration("P20Y03M")))]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:not(fn:string(xs:date("1998-09-12Z") + xs:yearMonthDuration("P20Y03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-5]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|fn:boolean(fn:string(xs:date("1962-03-12Z") + xs:yearMonthDuration("P10Y01M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:boolean(fn:string(xs:date("1962-03-12Z") + xs:yearMonthDuration("P10Y01M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-6]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|fn:number(xs:date("1988-01-28Z") + xs:yearMonthDuration("P09Y02M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">NaN</assert-string-value>]]
+[[query|fn:number(xs:date("1988-01-28Z") + xs:yearMonthDuration("P09Y02M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-7]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|fn:string(xs:date("1989-07-05Z") + xs:yearMonthDuration("P08Y04M"))]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1997-11-05Z</assert-string-value>]]
+[[query|fn:string(xs:date("1989-07-05Z") + xs:yearMonthDuration("P08Y04M"))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-8]" classname="iq.OpTest" time="0.027">
+    <system-out><![CDATA[[[originalTest|(xs:date("0001-01-01Z") + xs:yearMonthDuration("-P20Y07M"))]]
+[[originalAssertion|<any-of xmlns="http://www.w3.org/2010/09/qt-fots-catalog">
+   <assert-string-value>-0021-06-01Z</assert-string-value>
+   <assert-string-value>-0020-06-01Z</assert-string-value>
+</any-of>]]
+[[query|(xs:date("0001-01-01Z") + xs:yearMonthDuration("-P20Y07M"))]]
+[[query|(xs:date("0001-01-01Z") + xs:yearMonthDuration("-P20Y07M"))]]
+[[ERRORS|[org.junit.ComparisonFailure: Wrong string value expected:<-002[1]-06-01Z> but was:<-002[0]-06-01Z>]]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-9]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1993-12-09Z") + xs:yearMonthDuration("P03Y03M"))) and fn:string((xs:date("1993-12-09Z") + xs:yearMonthDuration("P03Y03M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1993-12-09Z") + xs:yearMonthDuration("P03Y03M"))) and fn:string((xs:date("1993-12-09Z") + xs:yearMonthDuration("P03Y03M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-10]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1985-07-05Z") + xs:yearMonthDuration("P02Y02M"))) or fn:string((xs:date("1985-07-05Z") + xs:yearMonthDuration("P02Y02M")))]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1985-07-05Z") + xs:yearMonthDuration("P02Y02M"))) or fn:string((xs:date("1985-07-05Z") + xs:yearMonthDuration("P02Y02M")))]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-12]" classname="iq.OpTest" time="0.0">
+    <skipped message="Skip errorcode: XPST0003"/>
+    <system-out><![CDATA[[[originalTest|fn:string((xs:date("1980-03-02Z") + xs:yearMonthDuration("P05Y05M"))) and (fn:true())]]
+[[convertedString|fn:string((xs:date("1980-03-02Z") + xs:yearMonthDuration("P05Y05M"))) and (fn:fn:true())]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|fn:string((xs:date("1980-03-02Z") + xs:yearMonthDuration("P05Y05M"))) and (fn:fn:true())]]
+[[category|SKIP]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-13]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|(xs:date("1980-05-05Z") + xs:yearMonthDuration("P23Y11M")) eq xs:date("1980-05-05Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1980-05-05Z") + xs:yearMonthDuration("P23Y11M")) eq xs:date("1980-05-05Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-14]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|(xs:date("1979-12-12Z") + xs:yearMonthDuration("P08Y08M")) ne xs:date("1979-12-12Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1979-12-12Z") + xs:yearMonthDuration("P08Y08M")) ne xs:date("1979-12-12Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-15]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|(xs:date("1978-12-12Z") + xs:yearMonthDuration("P17Y12M")) le xs:date("1978-12-12Z")]]
+[[originalAssertion|<assert-false xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1978-12-12Z") + xs:yearMonthDuration("P17Y12M")) le xs:date("1978-12-12Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] op-add-yearMonthDuration-to-date-16]" classname="iq.OpTest" time="0.013">
+    <system-out><![CDATA[[[originalTest|(xs:date("1977-12-12Z") + xs:yearMonthDuration("P18Y02M")) ge xs:date("1977-12-12Z")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|(xs:date("1977-12-12Z") + xs:yearMonthDuration("P18Y02M")) ge xs:date("1977-12-12Z")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] K-DateAddYMD-1]" classname="iq.OpTest" time="0.016">
+    <system-out><![CDATA[[[originalTest|xs:date("1999-08-12") + xs:yearMonthDuration("P3Y7M") eq xs:date("2003-03-12")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:date("1999-08-12") + xs:yearMonthDuration("P3Y7M") eq xs:date("2003-03-12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] K-DateAddYMD-2]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P3Y7M") + xs:date("1999-08-12") eq xs:date("2003-03-12")]]
+[[originalAssertion|<assert-true xmlns="http://www.w3.org/2010/09/qt-fots-catalog"/>]]
+[[query|xs:yearMonthDuration("P3Y7M") + xs:date("1999-08-12") eq xs:date("2003-03-12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] K-DateAddYMD-3]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P1Y") - xs:date("1999-08-12")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:yearMonthDuration("P1Y") - xs:date("1999-08-12")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] K-DateAddYMD-4]" classname="iq.OpTest" time="0.017">
+    <system-out><![CDATA[[[originalTest|xs:yearMonthDuration("P1Y") - xs:dateTime("1999-08-12T08:01:23")]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="XPTY0004"/>]]
+[[query|xs:yearMonthDuration("P1Y") - xs:dateTime("1999-08-12T08:01:23")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] cbcl-add-yearMonthDuration-to-date-001]" classname="iq.OpTest" time="0.037">
+    <system-out><![CDATA[[[originalTest|
+      	declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) }; 
+      	local:date(2008, 05, 12) + xs:dayTimeDuration("P0D")
+      ]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2008-05-12</assert-string-value>]]
+[[query|
+      	declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) }; 
+      	local:date(2008, 05, 12) + xs:dayTimeDuration("P0D")
+      ]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] cbcl-add-yearMonthDuration-to-date-002]" classname="iq.OpTest" time="0.023">
+    <system-out><![CDATA[[[originalTest|
+      	declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) }; 
+      	xs:dayTimeDuration("P0D") + local:date(2008, 05, 12)
+      ]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2008-05-12</assert-string-value>]]
+[[query|
+      	declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) }; 
+      	xs:dayTimeDuration("P0D") + local:date(2008, 05, 12)
+      ]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-date.xml] cbcl-add-yearMonthDuration-to-date-003]" classname="iq.OpTest" time="0.025">
+    <system-out><![CDATA[[[originalTest|
+      	declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) }; 
+      	local:date(25252734927766555, 05, 12) + xs:yearMonthDuration("P4267296Y")
+      ]]
+[[originalAssertion|<error xmlns="http://www.w3.org/2010/09/qt-fots-catalog" code="FODT0001"/>]]
+[[query|
+      	declare function local:two-digit($number as xs:integer) { let $string := string($number) return if (string-length($string) lt 2) then concat('0', $string) else $string }; 
+      	declare function local:date($year as xs:integer, $month as xs:integer, $day as xs:integer) { let $m := local:two-digit($month), $d := local:two-digit($day) return xs:date(concat($year, '-', $m, '-', $d)) }; 
+      	local:date(25252734927766555, 05, 12) + xs:yearMonthDuration("P4267296Y")
+      ]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-dateTime.xml] op-add-yearMonthDuration-to-dateTime2args-1]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1970-01-01T00:00:00Z") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1970-01-01T00:00:00Z</assert-string-value>]]
+[[query|xs:dateTime("1970-01-01T00:00:00Z") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-dateTime.xml] op-add-yearMonthDuration-to-dateTime2args-2]" classname="iq.OpTest" time="0.019">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1996-04-07T01:40:52Z") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">1996-04-07T01:40:52Z</assert-string-value>]]
+[[query|xs:dateTime("1996-04-07T01:40:52Z") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-dateTime.xml] op-add-yearMonthDuration-to-dateTime2args-3]" classname="iq.OpTest" time="0.015">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("2030-12-31T23:59:59Z") + xs:yearMonthDuration("P0Y0M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2030-12-31T23:59:59Z</assert-string-value>]]
+[[query|xs:dateTime("2030-12-31T23:59:59Z") + xs:yearMonthDuration("P0Y0M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-dateTime.xml] op-add-yearMonthDuration-to-dateTime2args-4]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1970-01-01T00:00:00Z") + xs:yearMonthDuration("P1000Y6M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">2970-07-01T00:00:00Z</assert-string-value>]]
+[[query|xs:dateTime("1970-01-01T00:00:00Z") + xs:yearMonthDuration("P1000Y6M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+  <testcase name="test[[op/add-yearMonthDuration-to-dateTime.xml] op-add-yearMonthDuration-to-dateTime2args-5]" classname="iq.OpTest" time="0.014">
+    <system-out><![CDATA[[[originalTest|xs:dateTime("1970-01-01T00:00:00Z") + xs:yearMonthDuration("P2030Y12M")]]
+[[originalAssertion|<assert-string-value xmlns="http://www.w3.org/2010/09/qt-fots-catalog">4001-01-01T00:00:00Z</assert-string-value>]]
+[[query|xs:dateTime("1970-01-01T00:00:00Z") + xs:yearMonthDuration("P2030Y12M")]]
+[[category|PASS]]
+]]></system-out>
+  </testcase>
+</testsuite>
