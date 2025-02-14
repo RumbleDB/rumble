@@ -70,16 +70,6 @@ public class DocumentItem implements Item {
     }
 
     @Override
-    public boolean nilled() {
-        return false;
-    }
-
-    @Override
-    public String nodeKind() {
-        return "document";
-    }
-
-    @Override
     public Item parent() {
         return null;
     }

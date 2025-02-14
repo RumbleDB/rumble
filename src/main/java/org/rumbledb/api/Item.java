@@ -915,36 +915,8 @@ public interface Item extends Serializable, KryoSerializable {
         return new ArrayList<>();
     }
 
-    default String baseUri() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
     default List<Item> children() {
         return new ArrayList<>();
-    }
-
-    default String documentUri() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default boolean isId() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default boolean isIdRefs() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default List<Item> namespaceNodes() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default boolean nilled() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default String nodeKind() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     default String nodeName() {
@@ -955,23 +927,11 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default String typeName() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
     default List<Item> atomizedValue() {
         if (isAtomic())
             return Collections.singletonList(this);
         else
             throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default String unparsedEntityPublicId() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default String unparsedEntityServerId() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     default void setParent(Item parent) {

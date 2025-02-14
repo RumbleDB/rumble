@@ -109,17 +109,6 @@ public class ElementItem implements Item {
         return this.children;
     }
 
-    // TODO: may require more checks to comply with the specification using typing.
-    @Override
-    public boolean nilled() {
-        return false;
-    }
-
-    @Override
-    public String nodeKind() {
-        return "element";
-    }
-
     @Override
     public String nodeName() {
         return this.nodeName;
@@ -129,7 +118,6 @@ public class ElementItem implements Item {
     public Item parent() {
         return this.parent;
     }
-
 
     @Override
     public String getStringValue() {
