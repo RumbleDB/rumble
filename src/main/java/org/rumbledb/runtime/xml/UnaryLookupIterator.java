@@ -101,7 +101,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
             } else {
                 throw new UnexpectedTypeException(
                         "Type error; Lookup is only possible on Maps and Arrays, "
-                            + item.typeName()
+                            + item.getDynamicType().toString()
                             + " detected instead",
                         getMetadata()
                 );

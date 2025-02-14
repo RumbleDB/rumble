@@ -79,16 +79,6 @@ public class TextItem implements Item {
     }
 
     @Override
-    public boolean nilled() {
-        return false;
-    }
-
-    @Override
-    public String nodeKind() {
-        return "text";
-    }
-
-    @Override
     public String getStringValue() {
         return this.content;
     }

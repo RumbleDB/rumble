@@ -58,16 +58,6 @@ public class AttributeItem implements Item {
     }
 
     @Override
-    public boolean nilled() {
-        return false;
-    }
-
-    @Override
-    public String nodeKind() {
-        return "attribute";
-    }
-
-    @Override
     public String nodeName() {
         return this.nodeName;
     }
