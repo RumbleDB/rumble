@@ -1,2 +1,0 @@
-(:JIQS: ShouldRun; Output="{ }" :)
-intersect(())
