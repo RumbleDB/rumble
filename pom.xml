@@ -195,7 +195,8 @@
                         </includes>
 
                         <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
                         </excludes>
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
