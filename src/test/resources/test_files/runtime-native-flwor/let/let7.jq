@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="(Lao, Latvian, Russian, Swahili, Croatian, Nepali, Russian, Slovenian, Maori, Czech, Korean, Turkish, German, Greek, Kannada, Serbian, Dari, Serbian, Sinhalese, Vietnamese)" :)
+for $i in structured-json-file("../../../queries/conf-ex.json")
+let $g := $i.choices[]
+return $g

@@ -1,0 +1,9 @@
+(:JIQS: ShouldRun; Output="({ "a" : [ 1, { "b" : 2 } ] }, { "b" : 2 }, { "d" : { "c" : 3 } }, { "c" : 3 })" :)
+let $o := ({ "a" : [1, {"b" : 2}], "d" : {"c" : 3} }) return descendant-pairs($o)
+
+
+
+(: Although the code works properly, this test file doesn't execute bc of an issue I haven't solved.
+testRuntimeIterators[53:/home/travis/build/Sparksoniq/sparksoniq/src/main/resources/test_files/runtime/FunctionObjectDescendantPairs.iq](iq.RuntimeTests)  Time elapsed: 0.142 sec  <<< ERROR!
+org.apache.spark.SparkException: Job aborted due to stage failure: Exception while getting task result: com.esotericsoftware.kryo.KryoException: Unable to find class: '*(
+

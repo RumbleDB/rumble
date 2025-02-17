@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun :)
+((1,2,3) ! ($$ + 3)) is statically integer+, ((1) ! ($$ + 3)) is statically integer, ((1) ! ($$ + 2, $$ + 3)) is statically integer+, ((1 treat as integer?) ! ($$ + 1)) is statically integer?, ((1 treat as integer?) ! ( $$ + 1 , $$ + 2 )) is statically integer*, ((1,2,"qw") ! ($$ || "postfix")) is statically string+, ((1, 2.33) ! ($$)) is statically decimal+
