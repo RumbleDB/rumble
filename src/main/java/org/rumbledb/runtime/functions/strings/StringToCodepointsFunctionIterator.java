@@ -82,7 +82,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
         }
         if (this.currentPosition < this.input.length()) {
             this.nextResult = ItemFactory.getInstance().createIntItem(this.input.codePointAt(this.currentPosition));
-            this.currentPosition++;
+            this.currentPosition = this.input.offsetByCodePoints(this.currentPosition, 1);
             this.hasNext = true;
         } else {
             this.hasNext = false;

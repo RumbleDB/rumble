@@ -20,6 +20,9 @@
 
 package org.rumbledb.items.parsing;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -46,13 +49,16 @@ import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import scala.collection.mutable.WrappedArray;
+import scala.collection.immutable.ArraySeq;
+import scala.collection.Iterator;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -137,7 +143,7 @@ public class ItemParser implements Serializable {
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
             RumbleException r = new ParsingException(
-                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-lines(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
             );
             r.initCause(e);
@@ -259,6 +265,13 @@ public class ItemParser implements Serializable {
 
         if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
+        }
+
+        if (fields.length == 2 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
+        }
+        if (fields.length == 2 && fieldnames[1].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 1, null, fields[1].dataType(), metadata, itemType);
         }
 
         if (
@@ -589,9 +602,14 @@ public class ItemParser implements Serializable {
                 }
             } else {
                 @SuppressWarnings("unchecked")
-                Object arrayObject = ((WrappedArray<Object>) o).array();
-                for (int index = 0; index < Array.getLength(arrayObject); index++) {
-                    Object value = Array.get(arrayObject, index);
+                Iterator<Object> iterator = null;
+                if (o instanceof scala.collection.mutable.ArraySeq) {
+                    iterator = ((scala.collection.mutable.ArraySeq<Object>) o).iterator();
+                } else {
+                    iterator = ((ArraySeq<Object>) o).iterator();
+                }
+                while (iterator.hasNext()) {
+                    Object value = iterator.next();
                     members.add(convertValueToItem(value, dataType, metadata, memberType));
                 }
             }
@@ -644,5 +662,80 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
+    }
+
+    /**
+     * Parses an XML document to an item.
+     *
+     * @param currentNode The current node
+     * @param path The path of the original file
+     * @return the parsed item
+     */
+    public static Item getItemFromXML(Node currentNode, String path) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
+            return getTextNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
+            return getDocumentNodeItem(currentNode, path);
+        }
+        return getElementNodeItem(currentNode, path);
+    }
+
+    private static Item getDocumentNodeItem(Node currentNode, String path) {
+        List<Item> children = getChildren(currentNode, path);
+        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
+        addParentToChildrenAndAttributes(documentItem);
+        documentItem.setXmlDocumentPosition(path, 0);
+        return documentItem;
+    }
+
+    private static Item getElementNodeItem(Node currentNode, String path) {
+        List<Item> children = getChildren(currentNode, path);
+        List<Item> attributes = getAttributes(currentNode);
+        Item elementItem = ItemFactory.getInstance()
+            .createXmlElementNode(currentNode, children, attributes);
+        addParentToChildrenAndAttributes(elementItem);
+        elementItem.setXmlDocumentPosition(path, 0);
+        return elementItem;
+    }
+
+    private static boolean hasWhitespaceText(Node currentNode) {
+        String content = currentNode.getTextContent();
+        content = content.replaceAll("[\\r\\n]+\\s", "");
+        return content.trim().isEmpty();
+    }
+
+    private static List<Item> getChildren(Node currentNode, String path) {
+        List<Item> children = new ArrayList<>();
+        NodeList nodeList = currentNode.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Node childNode = nodeList.item(i);
+            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                children.add(getItemFromXML(childNode, path));
+            } else if (childNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(childNode)) {
+                children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
+            }
+        }
+        return children;
+    }
+
+    private static List<Item> getAttributes(Node currentNode) {
+        List<Item> attributes = new ArrayList<>();
+        NamedNodeMap attributesMap = currentNode.getAttributes();
+
+        for (int i = 0; i < attributesMap.getLength(); ++i) {
+            Node attribute = attributesMap.item(i);
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
+        }
+        return attributes;
+    }
+
+    private static void addParentToChildrenAndAttributes(Item nodeItem) {
+        nodeItem.addParentToDescendants();
+    }
+
+    private static Item getTextNodeItem(Node currentNode, String path) {
+        Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
+        textItem.setXmlDocumentPosition(path, 0);
+        return textItem;
     }
 }

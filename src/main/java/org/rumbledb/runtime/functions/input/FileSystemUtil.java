@@ -50,12 +50,6 @@ public class FileSystemUtil {
         if (url.contains(" ")) {
             url = url.replace(" ", "%20");
         }
-        if (url == null || url.isEmpty()) {
-            throw new CannotRetrieveResourceException(
-                    "No path provided!",
-                    metadata
-            );
-        }
         if (!base.isAbsolute()) {
             throw new OurBadException(
                     "The base URI is not absolute!",

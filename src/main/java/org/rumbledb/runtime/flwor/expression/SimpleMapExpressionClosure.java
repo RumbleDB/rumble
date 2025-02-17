@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+// for now unused since we always use SimpleMapExpressionClosureZipped
+// can be used if the zipping with position is not needed as optimization, similar to PredicateIterator
 public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
 
 

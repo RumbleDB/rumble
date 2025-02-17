@@ -20,14 +20,21 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import java.util.ArrayList;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import scala.Tuple2;
+
 import java.util.Arrays;
 import java.util.List;
+
+import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -47,17 +54,67 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        List<Item> materializedItems = new ArrayList<>();
-        this.iterator.materializeNFirstItems(
-            dynamicContext,
-            materializedItems,
-            this.position
-        );
-        if (materializedItems.size() >= this.position) {
-            return materializedItems.get(this.position - 1);
-        } else {
+        if (this.position <= 0) {
             return null;
         }
+        // we can do an optimization using SparkSQL OFFSET if it is a DataFrame
+        if (this.iterator.isDataFrame()) {
+            JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+            df = df.evaluateSQL(
+                String.format(
+                    "SELECT * FROM %s LIMIT 1 OFFSET %s",
+                    input,
+                    Integer.toString(this.position - 1)
+                ),
+                df.getItemType()
+            );
+            JavaRDD<Item> rdd = dataFrameToRDDOfItems(
+                df,
+                this.getMetadata()
+            );
+
+            List<Item> results = rdd.take(1);
+            if (results.isEmpty()) {
+                return null;
+            }
+            return results.get(0);
+
+        }
+
+        if (this.iterator.isRDD()) {
+            JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
+
+            if (childRDD.isEmpty()) {
+                return null;
+            }
+            JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+            JavaPairRDD<Item, Long> filteredRDD;
+            filteredRDD = zippedRDD.filter(
+                (input) -> input._2() == this.position - 1
+            );
+            List<Tuple2<Item, Long>> results = filteredRDD.take(1);
+            if (results.isEmpty()) {
+                return null;
+            }
+            return results.get(0)._1();
+        }
+
+        if (this.position <= 0) {
+            return null;
+        }
+        this.iterator.open(dynamicContext);
+        int currentPosition = 0;
+        Item result = null;
+        while (this.iterator.hasNext() && currentPosition < this.position) {
+            result = this.iterator.next();
+            ++currentPosition;
+        }
+        this.iterator.close();
+        if (currentPosition == this.position) {
+            return result;
+        }
+        return null;
     }
 
 }

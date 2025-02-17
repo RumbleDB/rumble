@@ -166,25 +166,21 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         // NaN never compares successfully.
-        if (left.isDouble() && left.isNaN()) {
+        if ((left.isFloat() || left.isDouble()) && left.isNaN()) {
             return ItemFactory
                 .getInstance()
-                .createBooleanItem(false);
+                .createBooleanItem(
+                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
+                        .equals(ComparisonOperator.VC_NE)
+                );
         }
-        if (right.isDouble() && right.isNaN()) {
+        if ((right.isFloat() || right.isDouble()) && right.isNaN()) {
             return ItemFactory
                 .getInstance()
-                .createBooleanItem(false);
-        }
-        if (left.isFloat() && left.isNaN()) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(false);
-        }
-        if (right.isFloat() && right.isNaN()) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(false);
+                .createBooleanItem(
+                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
+                        .equals(ComparisonOperator.VC_NE)
+                );
         }
         return comparisonResultToBooleanItem(
             (int) comparison,
@@ -362,6 +358,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         if (left.isAnyURI() && right.isString()) {
             String l = left.serialize();
             String r = right.getStringValue();
+            return processString(l, r);
+        }
+        if (left.getContent() && right.getContent()) {
+            String l = left.getTextValue();
+            String r = right.getTextValue();
             return processString(l, r);
         }
         return Long.MIN_VALUE;

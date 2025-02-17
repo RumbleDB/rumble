@@ -2,6 +2,8 @@
 
 - [FOAR0001] - Division by zero.
 
+- [FOAR0002] - Numeric operation overflow/underflow
+
 - [FOCA0002] - A value that is not lexically valid for a particular type has been encountered.
 
 - [FOCH0001] - Raised by fn:codepoints-to-string if the input contains an integer that is not the codepoint of a valid XML character.
@@ -10,14 +12,15 @@
 
 - [FODC0002] - Error retrieving resource.
 
+- [FODT0001] - Overflow/underflow in date/time operation.
+
+- [FODT0002] - Overflow/underflow in duration operation.
+
 - [FOFD1340] -This error is raised if the picture string or calendar supplied to fn:format-date, fn:format-time, or fn:format-dateTime has invalid syntax.
 
 - [FOFD1350] - This error is raised if the picture string supplied to fn:format-date selects a component that is not present in a date, or if the picture string supplied to fn:format-time selects a component that is not present in a time.
 
 - [FOTY0012] - The argument has no typed value (objects, arrays, functions cannot be atomized).
-
-- [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
- constructor or in a simple object union have the same name.
 
 - [JNTY0004] - Unexpected non-atomic element. Raised when objects
 or arrays are supplied where an atomic element is expected.
@@ -102,6 +105,9 @@ Example: using subtraction on strings.
 - [XQDY0054] - It is a dynamic error if a cycle is encountered
 in the definition of a module's dynamic context components,
 for example because of a cycle in variable declarations.
+
+- [XQDY0137] - Duplicate pair name. It is a dynamic error if two pairs in an object
+  constructor or in a simple object union have the same name.
 
 - [XQST0016] - Module declaration error. 
 Current implementation does not support the Module Feature 

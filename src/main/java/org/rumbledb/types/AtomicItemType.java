@@ -15,7 +15,7 @@ public class AtomicItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     static final AtomicItemType atomicItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "atomic"),
+            new Name(Name.XS_NS, "xs", "anyAtomicType"),
             Collections.emptySet()
     );
     static final AtomicItemType stringItem = new AtomicItemType(
@@ -31,10 +31,9 @@ public class AtomicItemType implements ItemType {
             )
     );
 
-    // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
-    // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
+    // numeric is a union type for xs:double, xs:float, xs:decimal
     static final AtomicItemType numericItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "numeric"),
+            new Name(Name.XS_NS, "xs", "numeric"),
             Collections.emptySet()
     );
 

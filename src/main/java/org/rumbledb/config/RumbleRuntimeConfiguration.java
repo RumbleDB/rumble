@@ -74,6 +74,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean functionInlining;
     private boolean thirdFeature;
     private boolean applyUpdates;
+    private String queryLanguage;
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -112,7 +113,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
-                if (i == 0) {
+                if (args[i].equals("--run") || args[i].equals("--serve") || args[i].equals("--repl")) {
                     System.err.println("Did you know?  🧑‍🏫");
                     System.err.println(
                         "The RumbleDB command line interface was extended with convenient shortcuts. For example:"
@@ -436,6 +437,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.optimizeGeneralComparisonToValueComparison = true;
         }
+
+        if (this.arguments.containsKey("default-language")) {
+            this.queryLanguage = this.arguments.get("default-language");
+        } else {
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
+        }
     }
 
     public boolean getOverwrite() {
@@ -665,6 +672,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setOptimizeGeneralComparisonToValueComparison(boolean b) {
         this.optimizeGeneralComparisonToValueComparison = b;
+    }
+
+    public String getQueryLanguage() {
+        return this.queryLanguage;
+    }
+
+    public void setQueryLanguage(String version) {
+        this.queryLanguage = version;
     }
 
     public boolean isLocal() {

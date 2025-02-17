@@ -1,3 +1,3 @@
 (:JIQS: ShouldRun; Output="" :)
-structured-json-file("../../../queries/nested.json").foob
+structured-json-lines("../../../queries/nested.json").foob
 

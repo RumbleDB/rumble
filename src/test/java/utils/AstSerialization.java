@@ -21,7 +21,7 @@
 package utils;
 
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.jsoniq.JsoniqParser;
 
 import java.util.Arrays;
 

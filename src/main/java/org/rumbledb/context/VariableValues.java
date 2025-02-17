@@ -27,10 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -213,6 +210,17 @@ public class VariableValues implements Serializable, KryoSerializable {
         if (this.localVariableCounts.containsKey(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value: only count available.",
+                    metadata
+            );
+        }
+
+        if (
+            varName.equals(Name.CONTEXT_ITEM)
+                || varName.equals(Name.CONTEXT_COUNT)
+                || varName.equals(Name.CONTEXT_POSITION)
+        ) {
+            throw new AbsentPartOfDynamicContextException(
+                    "\"" + varName + "\" accessed, but the context item is absent",
                     metadata
             );
         }
