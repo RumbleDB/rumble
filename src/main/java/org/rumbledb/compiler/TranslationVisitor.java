@@ -1240,7 +1240,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         );
                     } else {
                         throw new ParsingException(
-                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --language jsoniq10 CLI option.",
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
                                 createMetadataFromContext(ctx)
                         );
                     }
@@ -1527,7 +1527,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         );
                     } else {
                         throw new ParsingException(
-                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --language jsoniq10 CLI option.",
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
                                 createMetadataFromContext(ctx)
                         );
                     }

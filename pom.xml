@@ -26,7 +26,7 @@
 
     <groupId>com.github.rumbledb</groupId>
     <artifactId>rumbledb</artifactId>
-    <version>1.22.0</version>
+    <version>1.23.0</version>
     <packaging>jar</packaging>
     <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
@@ -195,7 +195,8 @@
                         </includes>
 
                         <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
                         </excludes>
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>

@@ -25,6 +25,8 @@ public enum ErrorCode {
     DivisionByZero("FOAR0001"),
     NumericOverflowOrUnderflow("FOAR0002"),
 
+    ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
+
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
     CodepointNotValidErrorCode("FOCH0001"),

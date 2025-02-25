@@ -44,7 +44,7 @@ jobs:
     - name: Copying artefacts
       run: mkdir staging && cp target/*.jar staging
     - name: Package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Package
         path: staging
@@ -114,6 +114,10 @@ jobs:
       run: mvn -Dtest=MLTests test
     - name: MLTestsNativeDeactivated
       run: mvn -Dtest=MLTestsNativeDeactivated test
+    - name: XMLTests
+      run: mvn -Dtest=XMLTests test
+    - name: XQueryTests
+      run: mvn -Dtest=XQueryTests test
 
   tests4:
 

@@ -438,8 +438,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.optimizeGeneralComparisonToValueComparison = true;
         }
 
-        if (this.arguments.containsKey("language")) {
-            this.queryLanguage = this.arguments.get("language");
+        if (this.arguments.containsKey("default-language")) {
+            this.queryLanguage = this.arguments.get("default-language");
         } else {
             this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
         }
