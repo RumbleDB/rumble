@@ -730,7 +730,8 @@ public class ItemParser implements Serializable {
     }
 
     private static void addParentToChildrenAndAttributes(Item nodeItem) {
-        nodeItem.addParentToDescendants();
+        if (false)
+            nodeItem.addParentToDescendants();
     }
 
     private static Item getTextNodeItem(Node currentNode, String path) {
