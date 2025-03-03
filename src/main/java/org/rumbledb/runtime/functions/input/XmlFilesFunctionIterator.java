@@ -121,6 +121,8 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                     );
             }
         }
-        return strings.mapPartitions(new XmlSyntaxToItemMapper(getMetadata()));
+        return strings.mapPartitions(
+            new XmlSyntaxToItemMapper(getMetadata(), context.getRumbleRuntimeConfiguration().optimizeParentPointers())
+        );
     }
 }

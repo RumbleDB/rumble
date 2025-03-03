@@ -60,21 +60,32 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext);
 
-        // apply right iterator, could be step or predicate/sequencelookup
+        // apply right iterator, usually a step
         FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
         JavaRDD<Item> result = childRDD.flatMap(transformation);
-        if (result.count() == 0)
-            return result;
 
-        boolean allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
-        boolean allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
+        boolean allNodes;
+        boolean allNonNodes = false;
+        if (this.rightIterator instanceof StepExprIterator) {
+            allNodes = true;
+        } else {
+            if (result.isEmpty())
+                return result;
+            allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
+            allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
+        }
+
         if (allNodes) {
-            if (false) {
+            if (dynamicContext.getRumbleRuntimeConfiguration().optimizeSteps()) {
+                // faster because we avoid shuffle for uniqueness and global sorting
+                // but could theoretically violate document order over multiple calls if spark groupby order is not
+                // stable
+
                 // group by document
                 JavaPairRDD<Object, Iterable<Item>> res = result.groupBy(
                     (Function<Item, Object>) item -> item.getXmlDocumentPosition().getPath()
                 );
-                // sort document
+                // sort and uniqueness per document
                 JavaRDD<Iterator<Item>> r2 = res.map(
                     (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
                         ArrayList<Item> l = new ArrayList<>();
@@ -85,8 +96,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
                     }
                 );
                 // put all documents together again
-                return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);// .sortBy(Item::getXmlDocumentPosition,
-                                                                                    // true, 1);
+                return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);
             } else {
                 // get unique items (uses hashCode() and equals())
                 JavaRDD<Item> res = result.distinct();

@@ -40,9 +40,11 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
 
     private static final long serialVersionUID = 1L;
     private final ExceptionMetadata metadata;
+    private final boolean optimizeParentPointers;
 
-    public XmlSyntaxToItemMapper(ExceptionMetadata metadata) {
+    public XmlSyntaxToItemMapper(ExceptionMetadata metadata, boolean optimizeParentPointers) {
         this.metadata = metadata;
+        this.optimizeParentPointers = optimizeParentPointers;
     }
 
     @Override
@@ -62,7 +64,7 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                     Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
-                    return ItemParser.getItemFromXML(xmlDocument, path);
+                    return ItemParser.getItemFromXML(xmlDocument, path, optimizeParentPointers);
                 } catch (ParserConfigurationException e) {
                     throw new OurBadException("Document builder creation failed with: " + e);
                 } catch (IOException e) {
