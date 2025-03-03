@@ -45,7 +45,7 @@ jobs:
           path: target/*.jar
 
   tests:
-    needs: setup
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
