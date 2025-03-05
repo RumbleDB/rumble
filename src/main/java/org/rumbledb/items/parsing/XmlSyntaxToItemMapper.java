@@ -64,7 +64,7 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                     Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
-                    return ItemParser.getItemFromXML(xmlDocument, path, optimizeParentPointers);
+                    return ItemParser.getItemFromXML(xmlDocument, path, XmlSyntaxToItemMapper.this.optimizeParentPointers);
                 } catch (ParserConfigurationException e) {
                     throw new OurBadException("Document builder creation failed with: " + e);
                 } catch (IOException e) {

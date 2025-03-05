@@ -699,7 +699,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public boolean optimizeSteps() {
-        return optimizeSteps;
+        return this.optimizeSteps;
     }
 
     public void setOptimizeSteps(boolean optimizeSteps) {
@@ -707,7 +707,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public boolean optimizeParentPointers() {
-        return optimizeParentPointers;
+        return this.optimizeParentPointers;
     }
 
     public void setOptimizeParentPointers(boolean optimizeParentPointers) {
