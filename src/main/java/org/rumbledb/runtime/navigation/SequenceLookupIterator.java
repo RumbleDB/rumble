@@ -41,6 +41,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private int position;
+    private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
             RuntimeIterator sequence,
@@ -58,7 +59,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         // we can do an optimization using SparkSQL OFFSET if it is a DataFrame
-        if (this.iterator.isDataFrame()) {
+        if (this.iterator.isDataFrame() && this.position > this.optimizationThreshold) {
             JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             df = df.evaluateSQL(
@@ -82,7 +83,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
         }
 
-        if (this.iterator.isRDD()) {
+        if (this.iterator.isRDD() && this.position > this.optimizationThreshold) {
             JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
 
             if (childRDD.isEmpty()) {
