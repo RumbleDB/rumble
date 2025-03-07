@@ -50,7 +50,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     private int startPosition;
     private int currentLength;
     private int length;
-    private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this threshold
+    private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
+                                                          // threshold
 
     public SubsequenceFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -111,37 +112,38 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
-                    String.format(
-                            "SELECT * FROM %s LIMIT %s",
-                            input,
-                            Integer.toString(this.startPosition + this.length - 1)
-                    ),
-                    df.getItemType()
+                String.format(
+                    "SELECT * FROM %s LIMIT %s",
+                    input,
+                    Integer.toString(this.startPosition + this.length - 1)
+                ),
+                df.getItemType()
             );
         }
 
         Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
-                df.getDataFrame(),
-                1L,
-                SparkSessionManager.temporaryColumnName
+            df.getDataFrame(),
+            1L,
+            SparkSessionManager.temporaryColumnName
         );
 
         String inputds = FlworDataFrameUtils.createTempView(ds);
         ds = ds.sparkSession()
-                .sql(
-                        String.format(
-                                "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
-                                selectSQL,
-                                inputds,
-                                SparkSessionManager.temporaryColumnName,
-                                Integer.toString(this.startPosition)
-                        )
-                );
+            .sql(
+                String.format(
+                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
+                    selectSQL,
+                    inputds,
+                    SparkSessionManager.temporaryColumnName,
+                    Integer.toString(this.startPosition)
+                )
+            );
         return new JSoundDataFrame(ds, df.getItemType());
     }
 
     /**
-     * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower for small values
+     * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower
+     * for small values
      */
     private JSoundDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
@@ -150,22 +152,22 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
             df = df.evaluateSQL(
-                    String.format(
-                            "SELECT * FROM %s LIMIT %s OFFSET %s",
-                            input,
-                            Integer.toString(this.length),
-                            Integer.toString(this.startPosition - 1)
-                    ),
-                    df.getItemType()
+                String.format(
+                    "SELECT * FROM %s LIMIT %s OFFSET %s",
+                    input,
+                    Integer.toString(this.length),
+                    Integer.toString(this.startPosition - 1)
+                ),
+                df.getItemType()
             );
         } else {
             df = df.evaluateSQL(
-                    String.format(
-                            "SELECT * FROM %s OFFSET %s",
-                            input,
-                            Integer.toString(this.startPosition - 1)
-                    ),
-                    df.getItemType()
+                String.format(
+                    "SELECT * FROM %s OFFSET %s",
+                    input,
+                    Integer.toString(this.startPosition - 1)
+                ),
+                df.getItemType()
             );
         }
         return new JSoundDataFrame(df.getDataFrame(), df.getItemType());

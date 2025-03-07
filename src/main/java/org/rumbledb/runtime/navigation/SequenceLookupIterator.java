@@ -31,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,47 +59,17 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.position <= 0) {
             return null;
         }
-        // we can do an optimization using SparkSQL OFFSET if it is a DataFrame
-        if (this.iterator.isDataFrame() && this.position > this.optimizationThreshold) {
-            JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
-            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT 1 OFFSET %s",
-                    input,
-                    Integer.toString(this.position - 1)
-                ),
-                df.getItemType()
-            );
-            JavaRDD<Item> rdd = dataFrameToRDDOfItems(
-                df,
-                this.getMetadata()
-            );
 
-            List<Item> results = rdd.take(1);
-            if (results.isEmpty()) {
-                return null;
-            }
-            return results.get(0);
-
+        if (this.position < this.optimizationThreshold) {
+            return lookupSmallPosition(dynamicContext);
         }
 
-        if (this.iterator.isRDD() && this.position > this.optimizationThreshold) {
-            JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
+        if (this.iterator.isDataFrame()) {
+            return lookupDF(dynamicContext);
+        }
 
-            if (childRDD.isEmpty()) {
-                return null;
-            }
-            JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-            JavaPairRDD<Item, Long> filteredRDD;
-            filteredRDD = zippedRDD.filter(
-                (input) -> input._2() == this.position - 1
-            );
-            List<Tuple2<Item, Long>> results = filteredRDD.take(1);
-            if (results.isEmpty()) {
-                return null;
-            }
-            return results.get(0)._1();
+        if (this.iterator.isRDD()) {
+            return lookupRDD(dynamicContext);
         }
 
         if (this.position <= 0) {
@@ -116,6 +87,61 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             return result;
         }
         return null;
+    }
+
+    public Item lookupSmallPosition(DynamicContext dynamicContext) {
+        List<Item> materializedItems = new ArrayList<>();
+        this.iterator.materializeNFirstItems(
+            dynamicContext,
+            materializedItems,
+            this.position
+        );
+        if (materializedItems.size() >= this.position) {
+            return materializedItems.get(this.position - 1);
+        } else {
+            return null;
+        }
+    }
+
+    public Item lookupDF(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        df = df.evaluateSQL(
+            String.format(
+                "SELECT * FROM %s LIMIT 1 OFFSET %s",
+                input,
+                Integer.toString(this.position - 1)
+            ),
+            df.getItemType()
+        );
+        JavaRDD<Item> rdd = dataFrameToRDDOfItems(
+            df,
+            this.getMetadata()
+        );
+
+        List<Item> results = rdd.take(1);
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.get(0);
+    }
+
+    public Item lookupRDD(DynamicContext dynamicContext) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
+
+        if (childRDD.isEmpty()) {
+            return null;
+        }
+        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+        JavaPairRDD<Item, Long> filteredRDD;
+        filteredRDD = zippedRDD.filter(
+            (input) -> input._2() == this.position - 1
+        );
+        List<Tuple2<Item, Long>> results = filteredRDD.take(1);
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.get(0)._1();
     }
 
 }
