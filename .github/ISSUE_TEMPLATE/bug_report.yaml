@@ -75,4 +75,4 @@ body:
 
         </details>
     validations:
-      required: true
+      required: false
