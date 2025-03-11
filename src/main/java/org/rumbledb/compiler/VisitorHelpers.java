@@ -119,15 +119,7 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        CharStream stream = CharStreams.fromString(query);
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -298,15 +290,7 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        CharStream stream = CharStreams.fromString(query);
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version

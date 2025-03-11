@@ -8,7 +8,7 @@ The following software is required:
 
 - [Java SE](https://adoptium.net/temurin/releases/) 11, the version of Java is important, as RumbleDB only works with Java 11.
 - [Spark](https://spark.apache.org/), version 3.5.4 (for example)
-- [Ant](http://ant.apache.org/), version 1.11.1
+- [Ant](http://ant.apache.org/), version 1.10
 - [Maven](https://maven.apache.org/) 3.9.9
 
 
