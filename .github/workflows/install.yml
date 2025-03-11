@@ -1,0 +1,27 @@
+name: Test RumbleDB Install
+
+on: [push, pull_request]
+
+jobs:
+  test-install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Make Install Script Executable
+        run: chmod +x install-rumbledb.sh
+
+      - name: Run Install Script
+        run: ./install-rumbledb.sh
+
+      - name: Verify Installation
+        run: |
+          source ~/.bashrc
+          which rumble-repl && rumble-repl --help
+
+      - name: Verify RumbleDB Execution
+        run: |
+          echo '1 to 5' > test-query.jsoniq
+          rumble-file test-query.jsoniq
+
