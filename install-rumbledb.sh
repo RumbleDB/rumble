@@ -3,14 +3,14 @@
 # Script provided by https://github.com/fkellner, Thank you!
 
 INSTALL_PATH=$HOME/RumbleDB
-APACHE_SPARK_RELEASE=3.2.0
+APACHE_SPARK_RELEASE=3.2.2
 HADOOP_RELEASE=3.2
-RUMBLEDB_VERSION=1.15.0
+RUMBLEDB_VERSION=1.22.0
 
 if [ "$1" == "--help" ]; then
   echo "Usage:"
   echo "    ./install-rumbledb.sh"
-  echo "Downloads Apache Spark and RumbleDB (and installs Java 8 if not present)"
+  echo "Downloads Apache Spark and RumbleDB (and installs Java 11 if not present)"
   echo "Creates a RumbleDB REPL script and a RumbleDB File execution script"
   echo "Scripts are added to PATH via an edit to ~/.bashrc"
   echo "Everything, including an uninstaller, will be stored in $INSTALL_PATH"
@@ -23,14 +23,14 @@ fi
 
 echo "######### checking if we need to install Java"
 if [ $(which java) ]; then
-  echo "Java version is $(java -version). Version 8 is recommended, but 11 might work, too."
+  echo "Java version is $(java -version). Version 11 is required."
 else
   if [ $(which apt-get) ]; then
-    echo "No Java found, trying to install OpenJDK 8 JRE via apt-get"
+    echo "No Java found, trying to install OpenJDK 11 JRE via apt-get"
     echo "You will need to enter your password for this"
-    sudo apt-get install openjdk-8-jre
+    sudo apt-get install openjdk-11-jre
   else
-    echo "No Java and no apt-get package manager found, please install Java 8"
+    echo "No Java and no apt-get package manager found, please install Java 11."
     echo "and then return."
     exit 1
   fi
@@ -68,7 +68,7 @@ echo "##### unpacking file"
 tar -xzf $SPARK_FILENAME
 
 echo "########### downloading RumbleDB"
-wget "https://github.com/RumbleDB/rumble/releases/download/v$RUMBLEDB_VERSION/rumbledb-$RUMBLEDB_VERSION.jar"
+wget "https://github.com/RumbleDB/rumble/releases/download/v$RUMBLEDB_VERSION/rumbledb-$RUMBLEDB_VERSION-standalone.jar"
 
 echo "########### creating scripts"
 cat >rumble-repl <<EOF
