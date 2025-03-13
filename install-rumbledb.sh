@@ -3,9 +3,12 @@
 # Script provided by https://github.com/fkellner, Thank you!
 
 INSTALL_PATH=$HOME/RumbleDB
-APACHE_SPARK_RELEASE=3.2.2
-HADOOP_RELEASE=3.2
+APACHE_SPARK_RELEASE=3.5.5
+HADOOP_RELEASE=3
+SCALA_RELEASE=2.13
 RUMBLEDB_VERSION=1.22.0
+
+SPARK_BASE_URL=https://dlcdn.apache.org/spark
 
 if [ "$1" == "--help" ]; then
   echo "Usage:"
@@ -21,121 +24,112 @@ if [ "$1" == "--help" ]; then
   exit 0
 fi
 
-echo "######### checking if we need to install Java"
-if [ $(which java) ]; then
-  echo "Java version is $(java -version). Version 11 is required."
+echo "######### Checking if Java 11 is installed"
+if command -v java >/dev/null 2>&1; then
+  JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+  echo "Java version is $JAVA_VERSION. Version 11 is required."
 else
-  if [ $(which apt-get) ]; then
+  if command -v apt-get >/dev/null 2>&1; then
     echo "No Java found, trying to install OpenJDK 11 JRE via apt-get"
     echo "You will need to enter your password for this"
-    sudo apt-get install openjdk-11-jre
+    sudo apt-get update &
+    apt-get install -y openjdk-11-jdk
   else
-    echo "No Java and no apt-get package manager found, please install Java 11."
-    echo "and then return."
+    echo "No Java and no apt-get package manager found. Please install Java 11 manually."
     exit 1
   fi
 fi
 
-echo "########## creating installation folder"
-mkdir $INSTALL_PATH
-cd $INSTALL_PATH
+echo "########## Creating installation folder"
+mkdir -p "$INSTALL_PATH" || {
+  echo "Failed to create $INSTALL_PATH"
+  exit 1
+}
+cd "$INSTALL_PATH" || {
+  echo "Failed to enter $INSTALL_PATH"
+  exit 1
+}
 
-echo "########## downloading Apache Spark"
-SPARK_FILENAME=spark-$APACHE_SPARK_RELEASE-bin-hadoop$HADOOP_RELEASE.tgz
-wget https://dlcdn.apache.org/spark/spark-$APACHE_SPARK_RELEASE/$SPARK_FILENAME
-wget https://downloads.apache.org/spark/KEYS
-wget https://downloads.apache.org/spark/spark-$APACHE_SPARK_RELEASE/$SPARK_FILENAME.asc
+echo "########## Downloading Apache Spark"
+SPARK_FILENAME="spark-$APACHE_SPARK_RELEASE-bin-hadoop$HADOOP_RELEASE-scala$SCALA_RELEASE.tgz"
+SPARK_URL="$SPARK_BASE_URL/spark-$APACHE_SPARK_RELEASE/$SPARK_FILENAME"
 
-echo "##### verifying download if gpg is installed"
-if [ $(which gpg) ]; then
-  echo "### importing apache spark signing keys"
-  gpg --import KEYS
-  echo "### verifying"
-  gpg --verify $SPARK_FILENAME.asc $SPARK_FILENAME
-  echo "### note:"
-  echo "a warning like 'There is no indication that the signature belongs to the owner.'"
-  echo "can relatively safely be ignored, to alleviate it you would need to get in"
-  echo "touch with an Apache Spark developer."
-else
-  echo "gpg not installed, could not verify download"
+attempt=0
+while [ $attempt -lt 3 ]; do
+  wget -O "$SPARK_FILENAME" "$SPARK_URL" && break
+  if [ $? -eq 8 ]; then
+    echo "Error 302: Redirect detected. Retrying in 3 seconds..."
+    sleep 3
+  else
+    echo "Download failed. Retrying in 3 seconds..."
+    sleep 3
+  fi
+  ((attempt++))
+done
+
+if [ $attempt -eq 3 ]; then
+  echo "Failed to download Apache Spark after 3 attempts. Aborting."
+  exit 1
 fi
 
-echo "if there is reason for concern, you have 5s to abort"
+wget -O KEYS "$SPARK_BASE_URL/KEYS"
+wget -O "$SPARK_FILENAME.asc" "$SPARK_URL.asc"
+
+if command -v gpg >/dev/null 2>&1; then
+  echo "### Importing Apache Spark signing keys"
+  gpg --import KEYS
+  echo "### Verifying"
+  if ! gpg --verify "$SPARK_FILENAME.asc" "$SPARK_FILENAME"; then
+    echo "Signature verification failed! Aborting."
+    exit 1
+  fi
+else
+  echo "GPG not installed, could not verify download"
+fi
 
 sleep 5
 
-echo "##### unpacking file"
-tar -xzf $SPARK_FILENAME
+echo "##### Unpacking file"
+tar -xzf "$SPARK_FILENAME"
 
-echo "########### downloading RumbleDB"
-wget "https://github.com/RumbleDB/rumble/releases/download/v$RUMBLEDB_VERSION/rumbledb-$RUMBLEDB_VERSION-standalone.jar"
+echo "########### Downloading RumbleDB"
+RUMBLE_JAR=rumbledb-$RUMBLEDB_VERSION-standalone.jar
+wget -O "$RUMBLE_JAR" "https://github.com/RumbleDB/rumble/releases/download/v$RUMBLEDB_VERSION/$RUMBLE_JAR"
 
-echo "########### creating scripts"
-cat >rumble-repl <<EOF
+echo "########### Creating scripts"
+mkdir -p scripts
+cat >scripts/rumble-repl <<EOF
 #!/bin/bash
-RUMBLE_JAR_PATH=$INSTALL_PATH/rumbledb-$RUMBLEDB_VERSION.jar
-SPARK_HOME=$INSTALL_PATH/spark-$APACHE_SPARK_RELEASE-bin-hadoop$HADOOP_RELEASE
-JAVA_VERSION=\$(java -version)
-if [ "\$1" == "--help" ]; then
-	echo "Usage:";
-	echo "    rumble-repl"
-	echo "Invokes an interactive RumbleDB Shell using downloaded JARs and Binaries"
-	echo "Rumble Jar taken from \$RUMBLE_JAR_PATH"
-	echo "Spark resides at \$SPARK_HOME"
-	echo "Current version of Java: \$JAVA_VERSION"
-	exit 0
-fi
-
+RUMBLE_JAR_PATH=$INSTALL_PATH/$RUMBLE_JAR
+SPARK_HOME=$INSTALL_PATH/${SPARK_FILENAME%.tgz}
+JAVA_VERSION=\$(java -version 2>&1 | awk -F '"' '/version/ {print \$2}')
 \$SPARK_HOME/bin/spark-submit \$RUMBLE_JAR_PATH --shell yes --output-format json
 EOF
 
-cat >rumble-file <<EOF
+cat >scripts/rumble-file <<EOF
 #!/bin/bash
-RUMBLE_JAR_PATH=$INSTALL_PATH/rumbledb-$RUMBLEDB_VERSION.jar
-SPARK_HOME=$INSTALL_PATH/spark-$APACHE_SPARK_RELEASE-bin-hadoop$HADOOP_RELEASE
-JAVA_VERSION=\$(java -version)
-if [ "\$1" == "--help" ]; then
-	echo "Usage:";
-	echo "    rumble-file <file>"
-	echo "Execute JSONiq query taken from <file> using RumbleDB"
-	echo "Rumble Jar taken from \$RUMBLE_JAR_PATH"
-	echo "Spark resides at \$SPARK_HOME"
-	echo "Current version of Java: \$JAVA_VERSION"
-	exit 0
-fi
-
+RUMBLE_JAR_PATH=$INSTALL_PATH/$RUMBLE_JAR
+SPARK_HOME=$INSTALL_PATH/${SPARK_FILENAME%.tgz}
+JAVA_VERSION=\$(java -version 2>&1 | awk -F '"' '/version/ {print \$2}')
 \$SPARK_HOME/bin/spark-submit \$RUMBLE_JAR_PATH --query-path \$1 --output-format json
 EOF
 
-cat >uninstall-rumble <<EOF
+cat >scripts/uninstall-rumble <<EOF
 #!/bin/bash
-if [ "\$1" == "--help" ]; then
-	echo "Usage:";
-	echo "    uninstall-rumble"
-	echo "Uninstalls Rumble by removing $INSTALL_PATH and"
-	echo "removing the PATH modification in ~/.bashrc"
-	echo "If the installer installed Java, it will stay installed."
-	exit 0
-fi
-
-echo "Removing Path modification from ~/.bashrc"
-cp ~/.bashrc bashrc-old
-cat bashrc-old | sed 's/PATH=\$PATH:$(echo $INSTALL_PATH | sed 's/\//\\\//g')\/scripts//g' > ~/.bashrc
-
+echo "Removing PATH modification from ~/.bashrc"
+sed -i "/$INSTALL_PATH\/scripts/d" ~/.bashrc
 echo "Deleting files"
-cd ~
-rm -rf $INSTALL_PATH
+rm -rf "$INSTALL_PATH"
 EOF
 
-mkdir scripts
-mv rumble-repl rumble-file uninstall-rumble scripts
 chmod +x scripts/*
 
-echo "########## editing ~/.bashrc to add scripts to path"
-echo "PATH=\$PATH:$INSTALL_PATH/scripts" >>~/.bashrc
+if ! grep -q "$INSTALL_PATH/scripts" ~/.bashrc; then
+  echo "PATH=\$PATH:$INSTALL_PATH/scripts" >>~/.bashrc
+fi
 
-echo "########## done. reloading ~/.bashrc and showing help output of scripts"
-source ~/.bashrc
+echo "########## Done. Reloading ~/.bashrc and showing help output of scripts"
+exec bash
 rumble-file --help
 rumble-repl --help
 uninstall-rumble --help
