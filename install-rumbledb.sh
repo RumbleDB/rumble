@@ -129,7 +129,7 @@ if ! grep -q "$INSTALL_PATH/scripts" ~/.bashrc; then
 fi
 
 echo "########## Done. Reloading ~/.bashrc and showing help output of scripts"
-exec bash
+source ~/.bashrc
 rumble-file --help
 rumble-repl --help
 uninstall-rumble --help

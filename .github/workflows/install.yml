@@ -16,9 +16,7 @@ jobs:
         run: ./install-rumbledb.sh
 
       - name: Verify Installation
-        run: |
-          source ~/.bashrc
-          which rumble-repl && rumble-repl --help
+        run: which rumble-repl && rumble-repl --help
 
       - name: Verify RumbleDB Execution
         run: |
