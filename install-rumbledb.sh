@@ -130,6 +130,6 @@ fi
 
 echo "########## Done. Reloading ~/.bashrc and showing help output of scripts"
 source ~/.bashrc
-rumble-file --help
-rumble-repl --help
-uninstall-rumble --help
+~/RumbleDB/scripts/rumble-file --help
+~/RumbleDB/scripts/rumble-repl --help
+~/RumbleDB/scripts/uninstall-rumble --help
