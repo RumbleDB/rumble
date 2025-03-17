@@ -89,6 +89,7 @@ whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 ///////////////////////// Scripting addition - end
 
 setter                  : defaultCollationDecl
+                        | baseURIDecl
                         | orderingModeDecl
                         | emptyOrderDecl
                         | decimalFormatDecl;
@@ -101,6 +102,8 @@ annotatedDecl           : functionDecl
                         | contextItemDecl;
 
 defaultCollationDecl    : Kdeclare Kdefault Kcollation uriLiteral;
+
+baseURIDecl            : Kdeclare 'base-uri' uriLiteral;
 
 orderingModeDecl        : Kdeclare 'ordering' ('ordered' | 'unordered');
 

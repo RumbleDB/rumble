@@ -108,6 +108,7 @@ public enum ErrorCode {
     InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
+    MultipleBaseURIExceptionCode("XQST0032"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
     DefaultCollationExceptionCode("XQST0038"),

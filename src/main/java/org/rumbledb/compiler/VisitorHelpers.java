@@ -96,9 +96,9 @@ public class VisitorHelpers {
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.getStaticBaseUri() != null) {
             location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                    configuration.getStaticBaseUri(),
-                    configuration,
-                    ExceptionMetadata.EMPTY_METADATA
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
             );
         }
         return parseMainModule(query, location, configuration);
@@ -115,9 +115,9 @@ public class VisitorHelpers {
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.getStaticBaseUri() != null) {
             location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                    configuration.getStaticBaseUri(),
-                    configuration,
-                    ExceptionMetadata.EMPTY_METADATA
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
             );
         }
         return parseLibraryModule(query, location, importingModuleContext, configuration);
