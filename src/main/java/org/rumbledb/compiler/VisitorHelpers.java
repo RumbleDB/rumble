@@ -94,6 +94,13 @@ public class VisitorHelpers {
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        if (configuration.getStaticBaseUri() != null) {
+            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return parseMainModule(query, location, configuration);
     }
 
@@ -106,12 +113,23 @@ public class VisitorHelpers {
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        if (configuration.getStaticBaseUri() != null) {
+            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
+        String url = ".";
+        if (configuration.getStaticBaseUri() != null) {
+            url = configuration.getStaticBaseUri();
+        }
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            ".",
+            url,
             configuration,
             ExceptionMetadata.EMPTY_METADATA
         );

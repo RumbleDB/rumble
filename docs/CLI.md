@@ -44,3 +44,4 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --default-language | N/A | N/A | jsoniq10, jsoniq31, xquery31 | specifies the query language to be used
 | --optimize-steps | N/A | N/A | yes or no| allows RumbleDB to optimize steps, might violate stability of document order (activated by default)
 | --optimize-parent-pointers | N/A | N/A | yes or no| allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)
+| --static-base-uri | N/A | N/A | "../data/"| sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query
