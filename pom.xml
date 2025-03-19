@@ -231,6 +231,14 @@
                 <version>3.3.1</version>
                 <configuration>
                     <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
+                    <!-- arguments needed for unit tests to work with Java 17
+                    https://stackoverflow.com/questions/72724816/running-unit-tests-with-spark-3-3-0-on-java-17-fails-with-illegalaccesserror-cl -->
+                    <argLine>
+                        --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>
