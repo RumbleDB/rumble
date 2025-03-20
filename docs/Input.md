@@ -23,7 +23,7 @@ json-doc() also works with an HTTP URI.
 
 JSON Lines files are files that have one JSON object (or value) per line. Such files can thus become very large, up to billions or even trillions of JSON objects.
 
-JSON Lines files are read with the json-lines() function. json-lines() exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
+JSON Lines files are read with the json-lines() function (formerly called json-file()). json-lines() exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
 
 json-lines() also works with an HTTP URI, however, it will download the file completely and then parallelize, because HTTP does not support blocks. As a consequence, it can only be used for reasonable sizes.
