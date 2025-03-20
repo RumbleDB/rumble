@@ -77,6 +77,9 @@ public class SlashExprIterator extends HybridRuntimeIterator {
 
         if (allNodes) {
             if (dynamicContext.getRumbleRuntimeConfiguration().optimizeSteps()) {
+                if (dynamicContext.getRumbleRuntimeConfiguration().optimizeParentPointers()) {
+                    return result;
+                }
                 // faster because we avoid shuffle for uniqueness and global sorting
                 // but could theoretically violate document order over multiple calls if spark groupby order is not
                 // stable
