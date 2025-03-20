@@ -47,11 +47,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (exponent == null) {
             return null;
         }
-        double dexponent = exponent.getDoubleValue();
-        if (Double.isNaN(dexponent) || Double.isInfinite(dexponent)) {
-            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-        }
-        return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, dexponent));
+        return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
     }
 
 }

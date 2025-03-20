@@ -20,7 +20,7 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
-
+import java.util.List;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -73,28 +73,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     getMetadata()
             );
         }
-        if (item != null && !item.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "Only atomics can be cast to atomic types.",
-                    getMetadata()
-            );
-        }
         if (item == null) {
             return null;
-        }
-        if (!item.getDynamicType().isStaticallyCastableAs(this.sequenceType.getItemType())) {
-            String message = String.format(
-                "\"%s\": a value of type %s is not castable to type %s",
-                item.serialize(),
-                item.getDynamicType(),
-                this.sequenceType.getItemType()
-            );
-            throw new UnexpectedTypeException(message, getMetadata());
         }
         Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
             String message = String.format(
-                "\"%s\": this literal is not castable to type %s",
+                "\"%s\": this literal is not castable to type %s.",
                 item.serialize(),
                 this.sequenceType.getItemType()
             );
@@ -104,8 +89,40 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
-        Item result = null;
+        // first we try to atomize if item is not atomic
+        if (!item.isAtomic()) {
+            try {
+                List<Item> atomized = item.atomizedValue();
+                if (atomized.size() > 1) {
+                    throw new UnexpectedTypeException(
+                            "Atomization in cast resulted in more than one item.",
+                            metadata
+                    );
+                }
+                item = atomized.get(0);
+            } catch (FunctionAtomizationException e) {
+                // need to add metadata, e has no metadata
+                RumbleException castE = new FunctionAtomizationException(
+                        "Atomization in cast failed: \"" + item.serialize() + "\"",
+                        metadata
+                );
+                castE.initCause(e);
+                throw castE;
+            }
+        }
+
+        if (!item.getDynamicType().isStaticallyCastableAs(targetType)) {
+            String message = String.format(
+                "\"%s\": a value of type %s is not castable to type %s",
+                item.serialize(),
+                item.getDynamicType(),
+                targetType
+            );
+            throw new UnexpectedTypeException(message, metadata);
+        }
+
         try {
+            Item result = null;
             ItemType itemType = item.getDynamicType();
 
             if (itemType.isSubtypeOf(targetType)) {
@@ -128,7 +145,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-                result = ItemFactory.getInstance().createStringItem(item.serialize());
+                result = ItemFactory.getInstance().createStringItem(item.getStringValue());
                 if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
                     return result;
                 }
@@ -533,14 +550,25 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+                }
+                if (item.isBoolean()) {
+                    return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
+                }
+            }
             return null;
-        } catch (InvalidLexicalValueException i) {
-            throw new InvalidLexicalValueException(
-                    "NaN or INF cannot be cast to another type than Float or Double",
-                    metadata
-            );
+        } catch (DatetimeOverflowOrUnderflow | DurationOverflowOrUnderflow | InvalidLexicalValueException e) {
+            throw e;
         } catch (Exception e) {
-            return null;
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s. %s",
+                item.serialize(),
+                targetType,
+                e
+            );
+            throw new CastException(message, metadata);
         }
     }
 

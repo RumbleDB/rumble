@@ -57,7 +57,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     public SequentialClassificationVisitor(Prolog prolog) {
         this.prolog = prolog;
         this.blockLevel = 0;
-        variableBlockLevel = new HashMap<>();
+        this.variableBlockLevel = new HashMap<>();
     }
 
     protected DescendentSequentialProperties defaultAction(Node node, DescendentSequentialProperties argument) {

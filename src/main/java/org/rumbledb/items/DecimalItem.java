@@ -81,7 +81,7 @@ public class DecimalItem implements Item {
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.getDecimalValue().equals(BigDecimal.ZERO);
+        return !(this.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
     }
 
     public double castToDoubleValue() {

@@ -29,6 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,7 +105,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
                 }
                 Item key = keyIterator.next();
-                if (!key.isString()) {
+                if (!key.isString() && !key.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                     throw new UnexpectedTypeException(
                             "Key provided for object creation must be of type String",
                             getMetadata()

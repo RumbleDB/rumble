@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="(Latvian, Russian, Czech, Greek, Serbian)" :)
-for $i in structured-json-file("../../../queries/conf-ex.json")
+for $i in structured-json-lines("../../../queries/conf-ex.json")
 let $g := $i.guess
 let $h := $g
 return $h

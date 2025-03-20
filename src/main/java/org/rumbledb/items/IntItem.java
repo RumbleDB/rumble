@@ -91,11 +91,11 @@ public class IntItem implements Item {
     }
 
     public double castToDoubleValue() {
-        return new Integer(this.value).doubleValue();
+        return Integer.valueOf(this.value).doubleValue();
     }
 
     public float castToFloatValue() {
-        return new Integer(this.value).floatValue();
+        return Integer.valueOf(this.value).floatValue();
     }
 
     public BigDecimal castToDecimalValue() {

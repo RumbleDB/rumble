@@ -1,4 +1,4 @@
-variable $log := json-file("log.json");
+variable $log := json-lines("log.json");
 variable $username := "username";
 variable $entry := {
     "access-attempt": {

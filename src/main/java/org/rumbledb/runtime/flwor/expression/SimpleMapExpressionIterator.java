@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.flwor.expression;
 
 import org.apache.log4j.LogManager;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
@@ -38,8 +39,10 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
+import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
@@ -58,6 +61,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private Item nextResult;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
+    private long position;
 
 
     public SimpleMapExpressionIterator(
@@ -74,14 +78,33 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        FlatMapFunction<Item, Item> transformation = new SimpleMapExpressionClosure(this.rightIterator, dynamicContext);
-        return childRDD.flatMap(transformation);
+        JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
+        long count = childRDD.count();
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SimpleMapExpressionClosureZipped(
+                this.rightIterator,
+                dynamicContext,
+                count
+        );
+        return zippedChildRDD.flatMap(transformation);
+    }
+
+    private void setLast() {
+        long last = 0;
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        while (this.leftIterator.hasNext()) {
+            this.leftIterator.next();
+            ++last;
+        }
+        this.leftIterator.close();
+        this.mapDynamicContext.getVariableValues().setLast(last);
     }
 
     @Override
     protected void openLocal() {
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        setLast();
         this.mapValues = new LinkedList<>();
+        this.position = 0;
         this.leftIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -94,7 +117,9 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        setLast();
         this.mapValues = new LinkedList<>();
+        this.position = 0;
         this.leftIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -144,6 +169,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         Item item = this.leftIterator.next();
         List<Item> currentItems = new ArrayList<>();
         this.mapDynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
+        this.mapDynamicContext.getVariableValues().setPosition(++this.position);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
         this.mapDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
