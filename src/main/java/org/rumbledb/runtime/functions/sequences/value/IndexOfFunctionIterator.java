@@ -130,8 +130,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
-
-                if (c == 0) {
+                // if its double or float we additionally check that its not NanN, NaN cannot be found with indexOf
+                if (c == 0 && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }

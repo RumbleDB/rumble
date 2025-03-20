@@ -88,7 +88,7 @@ declare type local:my-type as {
 };
 
 validate type local:my-type* {
-  json-file("hdfs:///directory-file.json")
+  json-lines("hdfs:///directory-file.json")
 }
 ```
 

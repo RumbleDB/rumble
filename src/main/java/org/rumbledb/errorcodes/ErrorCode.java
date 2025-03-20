@@ -23,6 +23,9 @@ package org.rumbledb.errorcodes;
 public enum ErrorCode {
 
     DivisionByZero("FOAR0001"),
+    NumericOverflowOrUnderflow("FOAR0002"),
+
+    ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
@@ -46,11 +49,10 @@ public enum ErrorCode {
     MatchesEmptyStringErrorCode("FORX0003"),
     InvalidReplacementStringErrorCode("FORX0004"),
 
-    NoTypedValueErrorCode("FOTY0012"),
+    FunctionAtomizationErrorCode("FOTY0013"),
 
 
-
-    DuplicatePairNameErrorCode("JNDY0003"),
+    DuplicatePairNameErrorCode("XQDY0137"),
 
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),
@@ -97,6 +99,8 @@ public enum ErrorCode {
 
 
     UnexpectedTypeErrorCode("XPTY0004"),
+    NodeAndNonNode("XTPY0018"),
+    UnexpectedNode("XPTY0019"),
 
     InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
@@ -120,7 +124,8 @@ public enum ErrorCode {
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
-    ArithmeticOverflowOrUnderflow("FODT0002"),
+    DatetimeOverflowOrUnderflow("FODT0001"),
+    DurationOverflowOrUnderflow("FODT0002"),
     InvalidTimezoneValue("FODT0003"),
 
     InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
@@ -153,7 +158,6 @@ public enum ErrorCode {
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
     InvalidVariableDeclaration("SCIN0001");
-
 
     private String code;
 

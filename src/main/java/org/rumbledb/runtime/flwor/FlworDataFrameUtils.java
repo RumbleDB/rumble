@@ -78,6 +78,10 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -86,6 +90,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import scala.collection.immutable.ArraySeq;
+import scala.collection.Iterator;
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
 import sparksoniq.spark.SparkSessionManager;
@@ -135,6 +141,11 @@ public class FlworDataFrameUtils {
         kryo.register(ArrayList.class);
 
         kryo.register(RumbleRuntimeConfiguration.class);
+
+        kryo.register(DocumentItem.class);
+        kryo.register(ElementItem.class);
+        kryo.register(AttributeItem.class);
+        kryo.register(TextItem.class);
     }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
@@ -809,10 +820,15 @@ public class FlworDataFrameUtils {
 
     public static void deserializeWrappedParameters(
             ArraySeq<byte[]> wrappedParameters,
+            ArraySeq<byte[]> wrappedParameters,
             List<List<Item>> deserializedParams,
             Kryo kryo,
             Input input
     ) {
+        Iterator<byte[]> iterator = wrappedParameters.iterator();
+        while (iterator.hasNext()) {
+            byte[] bytes = iterator.next();
+            if (bytes == null) {
         Iterator<byte[]> iterator = wrappedParameters.iterator();
         while (iterator.hasNext()) {
             byte[] bytes = iterator.next();
@@ -863,11 +879,8 @@ public class FlworDataFrameUtils {
      * @param offset - starting offset for the first index
      * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
      */
-    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset) {
-        return new JSoundDataFrame(
-                zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
-                jdf.getItemType()
-        );
+    public static Dataset<Row> zipWithIndex(JSoundDataFrame jdf, Long offset) {
+        return zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName);
     }
 
     /**

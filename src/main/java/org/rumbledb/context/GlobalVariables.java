@@ -15,7 +15,7 @@ public class GlobalVariables implements Serializable, KryoSerializable {
     private Set<Name> globalVariables;
 
     public GlobalVariables() {
-        globalVariables = new HashSet<>();
+        this.globalVariables = new HashSet<>();
     }
 
     public void addGlobalVariable(Name globalVariable) {

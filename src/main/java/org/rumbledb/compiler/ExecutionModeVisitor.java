@@ -36,6 +36,7 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -59,11 +60,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
@@ -79,6 +76,8 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -653,11 +652,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+
     @Override
     public StaticContext visitProgram(Program program, StaticContext argument) {
         visitDescendants(program, argument);
         ExecutionMode mergedExecutionMode = program.getStatementsAndOptionalExpr().getHighestExecutionMode();
-        for (Statement statement : exitStatementChildren) {
+        for (Statement statement : this.exitStatementChildren) {
             ExecutionMode statementExecMode = statement.getHighestExecutionMode(this.visitorConfig);
             mergedExecutionMode = getHighestExecutionMode(mergedExecutionMode, statementExecMode);
         }
@@ -895,20 +895,60 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
+        return argument;
+    }
+
+    @Override
     public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
             String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
-                if (
-                    ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue() <= this.configuration
-                        .getResultSizeCap()
-                ) {
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            }
+        }
+
+
+        // START eq optimization
+        if (
+            expression.getPredicateExpression() instanceof ComparisonExpression
+                && ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator()
+                    .toString()
+                    .equals("eq")
+        ) {
+            Node left = expression.getPredicateExpression().getChildren().get(0);
+            Node right = expression.getPredicateExpression().getChildren().get(1);
+
+            Node intLiteral = null;
+            if (
+                left instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (right instanceof IntegerLiteralExpression) {
+                    intLiteral = right;
+                }
+            }
+            if (
+                right instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (left instanceof IntegerLiteralExpression) {
+                    intLiteral = left;
+                }
+            }
+            if (intLiteral != null) {
+                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
+                if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                     expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                     return argument;
                 }
             }
         }
+        // END eq optimization
         expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
         if (!expression.getStaticContext().getRumbleConfiguration().getNativeSQLPredicates()) {
             if (expression.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
@@ -1037,6 +1077,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         ExecutionMode mergedExecutionMode = getHighestExecutionMode(statementsExecMode, exprExecutionMode);
 
         statementsAndExpr.setHighestExecutionMode(mergedExecutionMode);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
+        visitDescendants(slashExpr, argument);
+        slashExpr.setHighestExecutionMode(slashExpr.getLeftExpression().getHighestExecutionMode());
         return argument;
     }
 

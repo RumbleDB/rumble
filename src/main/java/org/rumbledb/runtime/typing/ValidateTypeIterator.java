@@ -365,17 +365,23 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
-            Item castType = CastIterator.castItemToType(
-                ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                itemType,
-                metadata
-            );
-            if (castType == null) {
+            try {
+                Item castType = CastIterator.castItemToType(
+                    ItemFactory.getInstance().createStringItem(item.getStringValue()),
+                    itemType,
+                    metadata
+                );
+                if (castType == null) {
+                    throw new InvalidInstanceException(
+                            "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+                    );
+                }
+                return castType;
+            } catch (Exception e) {
                 throw new InvalidInstanceException(
                         "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
                 );
             }
-            return castType;
         }
         if (itemType.isArrayItemType()) {
             if (!item.isArray()) {

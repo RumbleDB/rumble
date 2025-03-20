@@ -22,10 +22,10 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
-import org.rumbledb.parser.XQueryLexer;
-import org.rumbledb.parser.XQueryParser;
+import org.rumbledb.parser.jsoniq.JsoniqLexer;
+import org.rumbledb.parser.jsoniq.JsoniqParser;
+import org.rumbledb.parser.xquery.XQueryLexer;
+import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -127,9 +127,15 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(4));
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery")) {
+        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
+            // overwrite default version if query specifies jsoniq version
+            if (query.startsWith("jsoniq version \"3.1\"")) {
+                configuration.setQueryLanguage("jsoniq31");
+            } else if (query.startsWith("jsoniq version \"1.0\"")) {
+                configuration.setQueryLanguage("jsoniq10");
+            }
             return parseJSONiqMainModule(query, uri, configuration);
         }
 
@@ -256,7 +262,8 @@ public class VisitorHelpers {
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
         try {
             // TODO Handle module extras
-            XQueryParser.MainModuleContext main = parser.module().mainModule();
+            XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
+            XQueryParser.MainModuleContext main = module.module().main;
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -299,9 +306,15 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(4));
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery")) {
+        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
+            // overwrite default version if query specifies jsoniq version
+            if (query.startsWith("jsoniq version \"3.1\"")) {
+                configuration.setQueryLanguage("jsoniq31");
+            } else if (query.startsWith("jsoniq version \"1.0\"")) {
+                configuration.setQueryLanguage("jsoniq10");
+            }
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }
 

@@ -121,7 +121,7 @@ public class RumbleMLUtils {
             });
             return convertArrayListToPrimitiveArray(paramAsListInJava, paramJavaTypeName);
         } else if (expectedJavaTypeMatchesRumbleAtomic(paramJavaTypeName)) {
-            return convertRumbleAtomicToJava(param, paramJavaTypeName);
+            return convertRumbleItemToJava(param, paramJavaTypeName);
         } else if (paramJavaTypeName.equals("PipelineStage")) {
             if (param.isEstimator()) {
                 return param.getEstimator();
@@ -176,7 +176,14 @@ public class RumbleMLUtils {
             || javaTypeName.equals("long"));
     }
 
-    private static Object convertRumbleAtomicToJava(Item atomicItem, String javaTypeName) {
+    private static Object convertRumbleItemToJava(Item atomicItem, String javaTypeName) {
+        if (!atomicItem.isAtomic()) {
+            // if we want to get a String, we try to serialize instead of casting
+            if (javaTypeName.equals("String")) {
+                return atomicItem.serialize();
+            }
+        }
+
         Item castItem;
         switch (javaTypeName) {
             case "boolean":

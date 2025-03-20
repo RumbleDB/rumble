@@ -1,11 +1,6 @@
 package org.rumbledb.api;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-
+import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -15,13 +10,20 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.KryoSerializable;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -294,6 +296,55 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if it is an atomic item of type base64Binary, false otherwise.
      */
     default boolean isBase64Binary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Element node.
+     *
+     * @return true if it is an XML Element node, false otherwise.
+     */
+    default boolean isElementNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Attribute node.
+     *
+     * @return true if it is an XML Attribute node, false otherwise.
+     */
+    default boolean isAttributeNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Text node.
+     *
+     * @return true if it is an XML Text node, false otherwise.
+     */
+    default boolean getContent() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Document node.
+     *
+     * @return true if it is an XML Document node, false otherwise.
+     */
+    default boolean isDocumentNode() {
+        return false;
+    }
+
+    default boolean isTextNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML node.
+     *
+     * @return true if it is an XML node, false otherwise.
+     */
+    default boolean isNode() {
         return false;
     }
 
@@ -843,4 +894,65 @@ public interface Item extends Serializable, KryoSerializable {
     default Transformer getTransformer() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
+
+    /**
+     * Returns the string value of the text item, if it is a text item.
+     *
+     * @return the string value.
+     */
+    default String getTextValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Method sets the parent item for all descendents of the current item.
+     */
+    default void addParentToDescendants() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default List<Item> attributes() {
+        return new ArrayList<>();
+    }
+
+    default List<Item> children() {
+        return new ArrayList<>();
+    }
+
+    default String nodeName() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default Item parent() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default List<Item> atomizedValue() {
+        if (isAtomic())
+            return Collections.singletonList(this);
+        else
+            throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default void setParent(Item parent) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+
+    /**
+     * Method gets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * uniqueness
+     */
+    default XMLDocumentPosition getXmlDocumentPosition() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Method sets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * uniqueness
+     */
+    default int setXmlDocumentPosition(String path, int current) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
 }
