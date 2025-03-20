@@ -1,13 +1,13 @@
 # Installing RumbleDB
 
-We show here how to install RumbleDB from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use RumbleDB is to simply download the already compiled .jar files.
+We show here how to install RumbleDB from the GitHub repository and build it yourself if you wish to do so (for example, to use the latest master). However, the easiest way to use RumbleDB is to simply download the already compiled .jar files.
 
 ## Requirements
 
 The following software is required:
 
-- [Java SE](https://adoptium.net/temurin/releases/) 11, the version of Java is important, as RumbleDB only works with Java 11.
-- [Spark](https://spark.apache.org/), version 3.5.4 (for example)
+- [Java SE](https://adoptium.net/temurin/releases/) 11, the version of Java is important, as RumbleDB only works with Java 11 and 17.
+- [Spark](https://spark.apache.org/), version 3.5.5 (for example)
 - [Ant](http://ant.apache.org/), version 1.10
 - [Maven](https://maven.apache.org/) 3.9.9
 
@@ -46,7 +46,7 @@ You can compile the entire project like so:
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.62.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-1.23.0-jar-with-dependencies.jar`.
     
 ## Running locally
 
