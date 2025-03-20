@@ -45,8 +45,8 @@
                 <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
                     <compilerId>eclipse</compilerId>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                     <compilerArgs>
                         <arg>-properties</arg>
                         <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
