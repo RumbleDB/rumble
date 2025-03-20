@@ -240,7 +240,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        return iterator.getPendingUpdateList(context);
+        return this.iterator.getPendingUpdateList(context);
     }
 
     /**

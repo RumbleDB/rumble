@@ -48,11 +48,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -97,6 +93,10 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -183,6 +183,14 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitObjectLookupExpression(ObjectLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitPostfixLookupExpression(PostfixLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitUnaryLookupExpression(UnaryLookupExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -452,5 +460,13 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, T argument) {
         return defaultAction(statement, argument);
+    }
+
+    public T visitStepExpr(StepExpr stepExpr, T argument) {
+        return defaultAction(stepExpr, argument);
+    }
+
+    public T visitSlashExpr(SlashExpr slashExpr, T argument) {
+        return defaultAction(slashExpr, argument);
     }
 }

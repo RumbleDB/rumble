@@ -26,13 +26,14 @@
 
     <groupId>com.github.rumbledb</groupId>
     <artifactId>rumbledb</artifactId>
-    <version>1.22.0</version>
+    <version>1.23.0</version>
     <packaging>jar</packaging>
     <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
     <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
+        <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
     </properties>
 
     <build>
@@ -44,11 +45,12 @@
                 <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
                     <compilerId>eclipse</compilerId>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <compilerArguments>
-                        <properties>${project.basedir}/org.eclipse.jdt.core.prefs</properties>
-                    </compilerArguments>
+                    <source>11</source>
+                    <target>11</target>
+                    <compilerArgs>
+                        <arg>-properties</arg>
+                        <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                    </compilerArgs>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -62,6 +64,14 @@
                         <version>3.20.0</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -150,6 +160,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.1</version>
                 <configuration>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
@@ -184,13 +195,42 @@
                         </includes>
 
                         <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
                         </excludes>
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
                         <removeUnusedImports/>
                     </java>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>build-jsoniq-antlr-parser</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <target>
+                                <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
+                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-parser"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
                 </configuration>
             </plugin>
         </plugins>
@@ -209,28 +249,28 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.12</artifactId>
-            <version>3.4.3</version>
+            <artifactId>spark-core_2.13</artifactId>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
-            <version>3.4.3</version>
+            <artifactId>spark-sql_2.13</artifactId>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.12</artifactId>
-            <version>3.4.3</version>
+            <artifactId>spark-mllib_2.13</artifactId>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
              <artifactId>hadoop-aws</artifactId>
-            <version>3.3.2</version>
+            <version>3.3.6</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-avro_2.12</artifactId>
-            <version>3.4.3</version>
+            <artifactId>spark-avro_2.13</artifactId>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
@@ -245,7 +285,7 @@
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.2</version> <!-- dont upgrade for now! -->
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -266,44 +306,44 @@
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
-            <version>3.1</version>
+            <version>3.11.1</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.18.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
-        </dependency>
-	<!--<dependency>
-	    <groupId>edu.vanderbilt.accre</groupId>
-	    <artifactId>laurelin</artifactId>
-	    <version>1.0.1</version>
-	</dependency>-->
-        <dependency>
-            <groupId>org.jgrapht</groupId>
-            <artifactId>jgrapht-core</artifactId>
-            <version>1.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.10.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.13.4</version>
-        </dependency>
-        <dependency>
-            <groupId>io.delta</groupId>
-            <artifactId>delta-core_2.12</artifactId>
-            <version>2.4.0</version>
-        </dependency>
-    </dependencies>
+		<dependency>
+		  <groupId>org.apache.httpcomponents</groupId>
+		  <artifactId>httpclient</artifactId>
+		  <version>4.5.13</version>
+		</dependency>
+		<!--<dependency>
+		    <groupId>edu.vanderbilt.accre</groupId>
+		    <artifactId>laurelin</artifactId>
+		    <version>1.0.1</version>
+		</dependency>-->
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-core</artifactId>
+			<version>1.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>2.10.6</version>
+		</dependency>
+		<dependency>
+		  <groupId>com.fasterxml.jackson.dataformat</groupId>
+		  <artifactId>jackson-dataformat-yaml</artifactId>
+		  <version>2.15.2</version>
+		</dependency>
+    <dependency>
+      <groupId>io.delta</groupId>
+      <artifactId>delta-spark_2.13</artifactId>
+      <version>3.2.1</version>
+    </dependency>
+  </dependencies>
 
     <distributionManagement>
         <snapshotRepository>

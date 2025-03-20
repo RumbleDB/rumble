@@ -15,7 +15,7 @@ import java.net.URI;
  *
  * The query must be provided as a string and a sequence of items is returned.
  *
- * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file
+ * It is possible for the queries to use the text-file() and json-lines() functions if Spark and either the local file
  * system or HDFS are properly configured.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis

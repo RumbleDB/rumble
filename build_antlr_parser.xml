@@ -24,17 +24,17 @@
     <!-- Set project properties. -->
     <!-- <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/> prepends full path as comment-->
     <property name="src.dir" value="./src/main/java/org/rumbledb"/>
-    <property name="parser.dir" value="${src.dir}/parser"/>
+    <property name="parser.dir" value="${src.dir}/parser/jsoniq"/>
     <property name="antlr.jar" value="./lib/antlr-4.9.3-complete.jar"/>
 
 
     <target name="clean-parser">
-        <delete file="/org/rumbledb/parser/Jsoniq.tokens"/>
-        <delete file="/org/rumbledb/parser/JsoniqLexer.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqParser.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqBaseVisitor.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqVisitor.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqLexer.tokens"/>
+        <delete file="/org/rumbledb/parser/jsoniq/Jsoniq.tokens"/>
+        <delete file="/org/rumbledb/parser/jsoniq/JsoniqLexer.java"/>
+        <delete file="/org/rumbledb/parser/jsoniq/JsoniqParser.java"/>
+        <delete file="/org/rumbledb/parser/jsoniq/JsoniqBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/jsoniq/JsoniqVisitor.java"/>
+        <delete file="/org/rumbledb/parser/jsoniq/JsoniqLexer.tokens"/>
     </target>
 
     <target name="generate-parser">

@@ -263,8 +263,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createLongItem((long) (l / r));
+                if (Double.isNaN(l) || Double.isInfinite(l)) {
+                    throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
+                }
+                if (Double.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Right side of division is NaN: " + r, metadata);
+                }
+                if (Double.isInfinite(r)) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
+                return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createDoubleItem(l % r);
             default:
@@ -290,8 +298,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createLongItem((long) (l / r));
+                if (Float.isNaN(l) || Float.isInfinite(l)) {
+                    throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
+                }
+                if (Float.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Right side of division is NaN: " + r, metadata);
+                }
+                if (Float.isInfinite(r)) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
+                return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createFloatItem(l % r);
             default:
@@ -316,7 +332,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+                    .createDecimalItem(l.divide(r, 18, BigDecimal.ROUND_HALF_UP));
             case IDIV:
                 if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
@@ -352,7 +368,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                    .divide(new BigDecimal(r), 18, BigDecimal.ROUND_HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
                 } else {
@@ -371,7 +387,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createIntegerItem(l.mod(r));
+                    .createIntegerItem(l.remainder(r));
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
@@ -394,7 +410,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                    .divide(new BigDecimal(r), 18, BigDecimal.ROUND_HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
                 } else {
@@ -429,6 +445,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 int months = l.getYears() * 12 + l.getMonths();
                 int otherMonths = 12 * r.getYears() + r.getMonths();
+                if (otherMonths == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
                 return ItemFactory.getInstance()
                     .createDecimalItem(
                         BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
@@ -452,19 +471,27 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (Double.isNaN(r)) {
             throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
         }
+        if (Double.isInfinite(r)) {
+            throw new DurationOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
+        }
         switch (multiplicativeOperator) {
             case MUL: {
                 int months = l.getYears() * 12 + l.getMonths();
                 int totalMonths = (int) Math.round(months * r);
-                return ItemFactory.getInstance()
-                    .createYearMonthDurationItem(
-                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                    );
+                try {
+                    return ItemFactory.getInstance()
+                        .createYearMonthDurationItem(
+                            new Period().withMonths(totalMonths)
+                                .withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                        );
+                } catch (ArithmeticException e) {
+                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
+                }
             }
             case DIV: {
                 int months = l.getYears() * 12 + l.getMonths();
                 if (r == 0 || r == -0) {
-                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                    throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 int totalMonths = (int) Math.round(months / r);
                 return ItemFactory.getInstance()
@@ -529,11 +556,15 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 long durationInMillis = l.toStandardDuration().getMillis();
                 // Check r is 0 and throw exception
                 if (r == 0) {
-                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                    throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 long durationResult = Math.round(durationInMillis / r);
-                return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                try {
+                    return ItemFactory.getInstance()
+                        .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                } catch (ArithmeticException e) {
+                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
+                }
             }
             default:
                 throw new UnexpectedTypeException(
