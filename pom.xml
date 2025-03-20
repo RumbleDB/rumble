@@ -26,13 +26,14 @@
 
     <groupId>com.github.rumbledb</groupId>
     <artifactId>rumbledb</artifactId>
-    <version>1.22.0</version>
+    <version>1.23.0</version>
     <packaging>jar</packaging>
     <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
     <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
+        <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
     </properties>
 
     <build>
@@ -63,6 +64,14 @@
                         <version>3.36.0</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -151,6 +160,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.1</version>
                 <configuration>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
@@ -185,7 +195,8 @@
                         </includes>
 
                         <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
+                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
                         </excludes>
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
@@ -279,12 +290,12 @@
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
-            <version>3.1</version>
+            <version>3.11.1</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

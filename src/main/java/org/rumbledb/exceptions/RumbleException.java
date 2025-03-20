@@ -41,7 +41,7 @@ public class RumbleException extends RuntimeException {
         this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
-    RumbleException(String message, ErrorCode errorCode) {
+    public RumbleException(String message, ErrorCode errorCode) {
         super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {

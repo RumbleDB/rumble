@@ -35,17 +35,17 @@ Do make sure it is not Java 17, which will not work.
 
 RumbleDB is just a download and no installation is required.
 
-In order to run RumbleDB, you simply need to download rumbledb-1.22.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
+In order to run RumbleDB, you simply need to download rumbledb-1.23.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
 Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
 You can test that it works with:
 
-    java -jar rumbledb-1.22.0-standalone.jar run -q '1+1'
+    java -jar rumbledb-1.23.0-standalone.jar run -q '1+1'
 
 or launch a JSONiq shell with:
 
-    java -jar rumbledb-1.22.0-standalone.jar repl
+    java -jar rumbledb-1.23.0-standalone.jar repl
     
 If you run out of memory, you can set allocate more memory to Java with an additional Java parameter, e.g., -Xmx10g
 
@@ -111,11 +111,11 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download one of the small .jar files from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 3.4+, use rumbledb-1.22.0-for-spark-3.4.jar.
+If you use Spark 3.4+, use rumbledb-1.23.0-for-spark-3.4.jar.
 
-If you use Spark 3.5+, use rumbledb-1.22.0-for-spark-3.5.jar.
+If you use Spark 3.5+, use rumbledb-1.23.0-for-spark-3.5.jar.
 
-If you use Spark 4.0+ (preview), use rumbledb-1.22.0-for-spark-4.0.jar.
+If you use Spark 4.0+ (preview), use rumbledb-1.23.0-for-spark-4.0.jar.
 
 These jars do not embed Spark, since you chose to set it up separately. They will work with your Spark installation with the spark-submit command.
 
@@ -160,7 +160,7 @@ The RumbleDB shell appears:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.22.0 "Pyrenean oak" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.23.0 "Mountain ash" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     
@@ -186,24 +186,24 @@ or
      
 The above queries do not actually use Spark. Spark is used when the I/O workload can be parallelized. The following query should output the file created above.
      
-     json-file("data.json")
+     json-lines("data.json")
      
-json-file() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
+json-lines() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     return $i
 
 The above creates a very simple Spark job and executes it. More complex queries will create several Spark jobs. But you will not see anything of it: this is all done behind the scenes. If you are curious, you can go to [localhost:4040](http://localhost:4040) in your browser while your query is running (it will not be available once the job is complete) and look at what is going on behind the scenes.
 
 Data can be filtered with the where clause. Again, below the hood, a Spark transformation will be used:
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     where $i.quantity gt 99
     return $i
     
 RumbleDB also supports grouping and aggregation, like so:
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     return { "product" : $product, "total-quantity" : sum($quantity) }
@@ -212,7 +212,7 @@ RumbleDB also supports grouping and aggregation, like so:
 RumbleDB also supports ordering. Note that clauses (where, let, group by, order by) can appear in any order.
 The only constraint is that the first clause should be a for or a let clause.
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     let $sum := sum($quantity)

@@ -37,11 +37,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -79,6 +75,8 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -347,6 +345,33 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         ObjectLookupExpression result = new ObjectLookupExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
                 (Expression) visit(expression.getLookupExpression(), argument),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitPostfixLookupExpression(PostfixLookupExpression expression, Node argument) {
+        PostfixLookupExpression result = new PostfixLookupExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (expression.getLookupExpression() != null)
+                    ? (Expression) visit(expression.getLookupExpression(), argument)
+                    : null,
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitUnaryLookupExpression(UnaryLookupExpression expression, Node argument) {
+        UnaryLookupExpression result = new UnaryLookupExpression(
+                (expression.getLookupExpression() != null)
+                    ? (Expression) visit(expression.getLookupExpression(), argument)
+                    : null,
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

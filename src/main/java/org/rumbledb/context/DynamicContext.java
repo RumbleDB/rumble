@@ -242,7 +242,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     public DateTime getCurrentDateTime() {
         if (this.parent != null) {
-            return this.parent.currentDateTime;
+            return this.parent.getCurrentDateTime();
         }
         return this.currentDateTime;
     }
