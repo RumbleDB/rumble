@@ -92,6 +92,8 @@ import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
+import scala.collection.Iterator;
 import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
@@ -818,6 +820,7 @@ public class FlworDataFrameUtils {
 
     public static void deserializeWrappedParameters(
             ArraySeq<byte[]> wrappedParameters,
+            ArraySeq<byte[]> wrappedParameters,
             List<List<Item>> deserializedParams,
             Kryo kryo,
             Input input
@@ -826,11 +829,15 @@ public class FlworDataFrameUtils {
         while (iterator.hasNext()) {
             byte[] bytes = iterator.next();
             if (bytes == null) {
+        Iterator<byte[]> iterator = wrappedParameters.iterator();
+        while (iterator.hasNext()) {
+            byte[] bytes = iterator.next();
+            if (bytes == null) {
                 deserializedParams.add(Collections.emptyList());
                 continue;
             }
             @SuppressWarnings("unchecked")
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) bytes, kryo, input);
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray(bytes, kryo, input);
             deserializedParams.add(deserializedParam);
         }
     }
