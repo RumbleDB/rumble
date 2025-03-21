@@ -25,6 +25,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -76,8 +77,10 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         }
 
         if (allNodes) {
-            if (dynamicContext.getRumbleRuntimeConfiguration().optimizeSteps()) {
-                if (dynamicContext.getRumbleRuntimeConfiguration().optimizeParentPointers()) {
+            if (this.getConfiguration().optimizeSteps()) {
+                if (this.getConfiguration().optimizeStepExperimental() && this.getConfiguration().optimizeParentPointers()) {
+                    // skip sorting and uniqueness if not needed
+                    // use optimizeParent as approximation for now, this is not verified
                     return result;
                 }
                 // faster because we avoid shuffle for uniqueness and global sorting
