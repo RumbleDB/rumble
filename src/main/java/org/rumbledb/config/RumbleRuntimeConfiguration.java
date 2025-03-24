@@ -461,7 +461,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
 
         if (this.arguments.containsKey("optimize-steps-experimental")) {
-            this.optimizeStepsExperimental = this.arguments.get("optimize-steps").equals("yes");
+            this.optimizeStepsExperimental = this.arguments.get("optimize-steps-experimental").equals("yes");
         } else {
             this.optimizeStepsExperimental = false;
         }

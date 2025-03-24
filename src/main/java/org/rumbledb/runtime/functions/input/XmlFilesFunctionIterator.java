@@ -63,7 +63,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
         url = url.replaceAll(" ", "%20");
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
-        int partitions = 10;
+        int partitions = 32;
         if (this.children.size() > 1) {
             partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
