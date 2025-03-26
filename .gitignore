@@ -20,3 +20,4 @@ src/main/resources/log4j.properties
 
 /src/main/java/org/rumbledb/parser/xquery/
 !/src/main/java/org/rumbledb/parser/xquery/XQuery.g4
+.vscode/settings.json

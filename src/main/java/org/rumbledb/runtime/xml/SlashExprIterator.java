@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -30,6 +32,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import scala.Tuple2;
 
 import java.util.*;
 
@@ -57,19 +60,57 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext);
 
-        // apply right iterator, could be step or predicate/sequencelookup
+        // apply right iterator, usually a step
         FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
         JavaRDD<Item> result = childRDD.flatMap(transformation);
-        if (result.count() == 0)
-            return result;
 
-        boolean allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
-        boolean allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
+        boolean allNodes;
+        boolean allNonNodes = false;
+        if (this.rightIterator instanceof StepExprIterator) {
+            allNodes = true;
+        } else {
+            if (result.isEmpty())
+                return result;
+            allNodes = result.map(Item::isNode).reduce(Boolean::logicalAnd);
+            allNonNodes = !result.map(Item::isNode).reduce(Boolean::logicalOr);
+        }
+
         if (allNodes) {
-            // get unique items (uses hashCode() and equals())
-            JavaRDD<Item> res = result.distinct();
-            // sort because spark doesnt guarantee any ordering
-            return res.sortBy(Item::getXmlDocumentPosition, true, 1);
+            if (this.getConfiguration().optimizeSteps()) {
+                if (
+                    this.getConfiguration().optimizeStepExperimental()
+                        && this.getConfiguration().optimizeParentPointers()
+                ) {
+                    // skip sorting and uniqueness if not needed
+                    // use optimizeParent as approximation for now, this is not verified
+                    return result;
+                }
+                // faster because we avoid shuffle for uniqueness and global sorting
+                // but could theoretically violate document order over multiple calls if spark groupby order is not
+                // stable
+
+                // group by document
+                JavaPairRDD<Object, Iterable<Item>> res = result.groupBy(
+                    (Function<Item, Object>) item -> item.getXmlDocumentPosition().getPath()
+                );
+                // sort and uniqueness per document
+                JavaRDD<Iterator<Item>> r2 = res.map(
+                    (Function<Tuple2<Object, Iterable<Item>>, Iterator<Item>>) tuple -> {
+                        ArrayList<Item> l = new ArrayList<>();
+                        tuple._2().iterator().forEachRemaining(l::add);
+                        l = new ArrayList<>(new HashSet<>(l));
+                        l.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+                        return l.iterator();
+                    }
+                );
+                // put all documents together again
+                return r2.flatMap((FlatMapFunction<Iterator<Item>, Item>) it -> it);
+            } else {
+                // get unique items (uses hashCode() and equals())
+                JavaRDD<Item> res = result.distinct();
+                // sort because spark doesnt guarantee any ordering
+                return res.sortBy(Item::getXmlDocumentPosition, true, 1);
+            }
         } else if (allNonNodes) {
             return result;
         } else {
