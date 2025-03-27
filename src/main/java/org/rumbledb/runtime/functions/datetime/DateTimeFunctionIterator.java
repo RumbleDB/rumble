@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,15 +33,17 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         if (this.dateItem == null || this.timeItem == null) {
             return null;
         }
-        DateTime dt = null;
-        DateTime dateDt = this.dateItem.getDateTimeValue();
-        DateTime timeDt = this.timeItem.getDateTimeValue();
+        ZonedDateTime dt = null;
+        ZonedDateTime dateDt = this.dateItem.getDateTimeValue();
+        ZonedDateTime timeDt = this.timeItem.getDateTimeValue();
 
         if (this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
             if (dateDt.getZone() == timeDt.getZone()) {
-                dt = new DateTime().withZone(dateDt.getZone())
-                    .withDate(dateDt.toLocalDate())
-                    .withTime(timeDt.toLocalTime());
+                dt = ZonedDateTime.of(
+                    dateDt.toLocalDate(),
+                    timeDt.toLocalTime(),
+                    dateDt.getZone()
+                );
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
                 throw new InconsistentTimezonesException(
@@ -50,17 +52,25 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                 );
             }
         } else if (this.dateItem.hasTimeZone() && !this.timeItem.hasTimeZone()) {
-            dt = new DateTime().withZone(dateDt.getZone())
-                .withDate(dateDt.toLocalDate())
-                .withTime(timeDt.toLocalTime());
+            dt = ZonedDateTime.of(
+                dateDt.toLocalDate(),
+                timeDt.toLocalTime(),
+                dateDt.getZone()
+            );
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
         } else if (!this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            dt = new DateTime().withZone(timeDt.getZone())
-                .withDate(dateDt.toLocalDate())
-                .withTime(timeDt.toLocalTime());
-            return ItemFactory.getInstance().createDateTimeItem(dt.withTime(timeDt.toLocalTime()), true);
+            dt = ZonedDateTime.of(
+                dateDt.toLocalDate(),
+                timeDt.toLocalTime(),
+                dateDt.getZone()
+            );
+            return ItemFactory.getInstance().createDateTimeItem(dt, true);
         }
-        dt = new DateTime(dateDt).withTime(timeDt.toLocalTime());
+        dt = ZonedDateTime.of(
+            dateDt.toLocalDate(),
+            timeDt.toLocalTime(),
+            dateDt.getZone()
+        );
         return ItemFactory.getInstance().createDateTimeItem(dt, false);
 
     }

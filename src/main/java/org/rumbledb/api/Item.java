@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import java.time.ZonedDateTime;
+import java.time.Period;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -472,7 +472,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return the period value as a Period.
      */
-    default Period getDurationValue() {
+    default Period getPeriodValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -481,7 +481,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return the dateTime value as a DateTime.
      */
-    default DateTime getDateTimeValue() {
+    default ZonedDateTime getDateTimeValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

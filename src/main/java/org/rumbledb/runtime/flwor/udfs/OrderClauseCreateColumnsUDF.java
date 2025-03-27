@@ -23,7 +23,7 @@ package org.rumbledb.runtime.flwor.udfs;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
-import org.joda.time.Instant;
+import java.time.Duration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -142,14 +142,16 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                         || typeName.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
                 ) {
                     this.results.add(
-                        nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
+                        Duration.ofDays(
+                            nextItem.getPeriodValue().toTotalMonths() * 30 + nextItem.getPeriodValue().getDays()
+                        ).toMillis()
                     );
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.timeItem.getName())
                 ) {
-                    this.results.add(nextItem.getDateTimeValue().getMillis());
+                    this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
                 } else {
                     throw new OurBadException(
                             "Unexpected ordering type found while creating columns."

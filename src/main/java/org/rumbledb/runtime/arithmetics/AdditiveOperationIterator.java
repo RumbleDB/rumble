@@ -24,9 +24,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import java.time.ZonedDateTime;
+import java.time.Period;
+import java.time.Duration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -192,93 +192,93 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return processDecimal(l, r, isMinus);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processYearMonthDuration(l, r, isMinus);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processDayTimeDuration(l, r, isMinus);
         }
         if (left.isDate() && right.isYearMonthDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationDate(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDate() && right.isDayTimeDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationDate(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDate()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Period l = left.getPeriodValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDayTimeDuration() && right.isDate()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Period l = left.getPeriodValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isTime() && right.isDayTimeDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Period l = left.getPeriodValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDateTime() && right.isYearMonthDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDateTime() && right.isDayTimeDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDateTime()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Period l = left.getPeriodValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDayTimeDuration() && right.isDateTime()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Period l = left.getPeriodValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDate() && right.isDate()) {
             if (isMinus) {
-                DateTime l = left.getDateTimeValue();
-                DateTime r = right.getDateTimeValue();
+                ZonedDateTime l = left.getDateTimeValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDayTime(l, r);
             }
         }
         if (left.isTime() && right.isTime()) {
             if (isMinus) {
-                DateTime l = left.getDateTimeValue();
-                DateTime r = right.getDateTimeValue();
+                ZonedDateTime l = left.getDateTimeValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDayTime(l, r);
             }
         }
         if (left.isDateTime() && right.isDateTime()) {
             if (isMinus) {
-                DateTime l = left.getDateTimeValue();
-                DateTime r = right.getDateTimeValue();
+                ZonedDateTime l = left.getDateTimeValue();
+                ZonedDateTime r = right.getDateTimeValue();
                 return processDateTimeDayTime(l, r);
             }
         }
@@ -370,15 +370,15 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processDateTimeDayTime(
-            DateTime l,
-            DateTime r
+            ZonedDateTime l,
+            ZonedDateTime r
     ) {
         return ItemFactory.getInstance()
-            .createDayTimeDurationItem(new Period(r, l, PeriodType.dayTime()));
+            .createDayTimeDurationItem(Period.from(Duration.between(r, l)));
     }
 
     private static Item processDateTimeDurationDate(
-            DateTime l,
+            ZonedDateTime l,
             Period r,
             boolean isMinus,
             boolean timeZone
@@ -393,7 +393,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processDateTimeDurationTime(
-            DateTime l,
+            ZonedDateTime l,
             Period r,
             boolean isMinus,
             boolean timeZone
@@ -408,7 +408,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processDateTimeDurationDateTime(
-            DateTime l,
+            ZonedDateTime l,
             Period r,
             boolean isMinus,
             boolean timeZone

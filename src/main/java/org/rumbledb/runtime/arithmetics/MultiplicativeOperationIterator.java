@@ -23,11 +23,13 @@ package org.rumbledb.runtime.arithmetics;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
-import org.joda.time.Instant;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import java.time.Instant;
+import java.time.Period;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -35,7 +37,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -183,17 +184,17 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return processDecimal(l, r, multiplicativeOperator, metadata);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processYearMonthDuration(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processDayTimeDuration(l, r, multiplicativeOperator, metadata);
         }
         if (left.isYearMonthDuration() && right.isNumeric()) {
-            Period l = left.getDurationValue();
+            Period l = left.getPeriodValue();
             double r = 0;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
@@ -203,7 +204,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return processYearMonthDurationDouble(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDayTimeDuration() && right.isNumeric()) {
-            Period l = left.getDurationValue();
+            Period l = left.getPeriodValue();
             double r = 0;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
@@ -215,7 +216,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (
             left.isNumeric() && right.isYearMonthDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
         ) {
-            Period r = right.getDurationValue();
+            Period r = right.getPeriodValue();
             double l = 0;
             if (left.isDouble()) {
                 l = left.getDoubleValue();
@@ -227,7 +228,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (
             left.isNumeric() && right.isDayTimeDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
         ) {
-            Period r = right.getDurationValue();
+            Period r = right.getPeriodValue();
             double l = 0;
             if (left.isDouble()) {
                 l = left.getDoubleValue();
@@ -480,10 +481,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 int totalMonths = (int) Math.round(months * r);
                 try {
                     return ItemFactory.getInstance()
-                        .createYearMonthDurationItem(
-                            new Period().withMonths(totalMonths)
-                                .withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                        );
+                        .createYearMonthDurationItem(Period.ofMonths(totalMonths));
                 } catch (ArithmeticException e) {
                     throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
                 }
@@ -495,9 +493,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 }
                 int totalMonths = (int) Math.round(months / r);
                 return ItemFactory.getInstance()
-                    .createYearMonthDurationItem(
-                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                    );
+                    .createYearMonthDurationItem(Period.ofMonths(totalMonths));
             }
             default:
                 throw new UnexpectedTypeException(
@@ -518,13 +514,11 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         switch (multiplicativeOperator) {
             case DIV:
                 Instant now = Instant.now();
+                long lMillis = Duration.ofDays(l.getDays()).toMillis();
+                long rMillis = Duration.ofDays(r.getDays()).toMillis();
                 return ItemFactory.getInstance()
                     .createDecimalItem(
-                        BigDecimal.valueOf(
-                            l.toDurationFrom(now).getMillis()
-                                /
-                                (double) r.toDurationFrom(now).getMillis()
-                        )
+                        BigDecimal.valueOf(lMillis / (double) rMillis)
                     );
             default:
                 throw new UnexpectedTypeException(
@@ -547,21 +541,20 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         }
         switch (multiplicativeOperator) {
             case MUL: {
-                long durationInMillis = l.toStandardDuration().getMillis();
+                long durationInMillis = l.getDays() * 24L * 60 * 60 * 1000; // Convert days to milliseconds
                 long durationResult = Math.round(durationInMillis * r);
                 return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                    .createDayTimeDurationItem(Period.from(Duration.of(durationResult, ChronoUnit.MILLIS)));
             }
             case DIV: {
-                long durationInMillis = l.toStandardDuration().getMillis();
-                // Check r is 0 and throw exception
+                long durationInMillis = l.getDays() * 24L * 60 * 60 * 1000; // Convert days to milliseconds
                 if (r == 0) {
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 long durationResult = Math.round(durationInMillis / r);
                 try {
                     return ItemFactory.getInstance()
-                        .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                        .createDayTimeDurationItem(Period.from(Duration.of(durationResult, ChronoUnit.MILLIS)));
                 } catch (ArithmeticException e) {
                     throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
                 }

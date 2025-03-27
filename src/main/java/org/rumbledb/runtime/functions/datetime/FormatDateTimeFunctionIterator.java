@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -12,10 +14,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -44,7 +45,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 return this.valueDateTimeItem;
             }
 
-            DateTime dateTimeValue = this.valueDateTimeItem.getDateTimeValue();
+            ZonedDateTime dateTimeValue = this.valueDateTimeItem.getDateTimeValue();
             String pictureString = this.pictureStringItem.getStringValue();
 
             // Start sequence
@@ -61,17 +62,16 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                         String variableMarker = pictureString.substring(startOfSequence, i);
                         String pattern = parseVariableMarker(variableMarker, result);
 
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern.toString());
-                        Calendar formatCalendar = Calendar.getInstance();
-                        formatCalendar.set(
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
+                        LocalDateTime formatDateTime = LocalDateTime.of(
                             dateTimeValue.getYear(),
-                            dateTimeValue.getMonthOfYear() - 1,
+                            dateTimeValue.getMonthValue() - 1,
                             dateTimeValue.getDayOfMonth(),
-                            dateTimeValue.getHourOfDay(),
-                            dateTimeValue.getMinuteOfHour(),
-                            dateTimeValue.getSecondOfMinute()
+                            dateTimeValue.getHour(),
+                            dateTimeValue.getMinute(),
+                            dateTimeValue.getSecond()
                         );
-                        result.append(simpleDateFormat.format(formatCalendar.getTime()));
+                        result.append(formatter.format(formatDateTime));
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;

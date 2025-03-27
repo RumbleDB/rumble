@@ -20,9 +20,8 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.joda.time.DateTime;
-import org.joda.time.Instant;
-import org.joda.time.Period;
+import java.time.Period;
+import java.time.ZonedDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -264,13 +263,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processDecimal(l, r);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processDuration(l, r);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processDuration(l, r);
         }
         if (left.isDuration() && right.isDuration()) {
@@ -279,8 +278,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 case GC_EQ:
                 case VC_NE:
                 case GC_NE:
-                    Period l = left.getDurationValue();
-                    Period r = right.getDurationValue();
+                    Period l = left.getPeriodValue();
+                    Period r = right.getPeriodValue();
                     return processDuration(l, r);
                 default:
             }
@@ -296,43 +295,43 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processBytes(l, r);
         }
         if (left.isDate() && right.isDate()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isTime() && right.isTime()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isDateTime() && right.isDateTime()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGDay() && right.isGDay()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGMonth() && right.isGMonth()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGYear() && right.isGYear()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGMonthDay() && right.isGMonthDay()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGYearMonth() && right.isGYearMonth()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
+            ZonedDateTime l = left.getDateTimeValue();
+            ZonedDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isBoolean() && right.isBoolean()) {
@@ -421,13 +420,12 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             Period l,
             Period r
     ) {
-        Instant now = new Instant();
-        return l.toDurationFrom(now).compareTo(r.toDurationFrom(now));
+        return Long.compare(l.toTotalMonths(), r.toTotalMonths());
     }
 
     private static int processDateTime(
-            DateTime l,
-            DateTime r
+            ZonedDateTime l,
+            ZonedDateTime r
     ) {
         return l.compareTo(r);
     }

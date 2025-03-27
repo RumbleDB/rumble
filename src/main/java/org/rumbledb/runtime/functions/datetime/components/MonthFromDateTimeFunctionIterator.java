@@ -28,7 +28,7 @@ public class MonthFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntime
         if (this.dateTimeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getMonthOfYear());
+        return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getMonth().getValue());
     }
 
 }

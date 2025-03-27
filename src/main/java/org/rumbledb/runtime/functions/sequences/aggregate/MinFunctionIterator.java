@@ -21,9 +21,10 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.joda.time.DateTime;
-import org.joda.time.Instant;
-import org.joda.time.Period;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -59,11 +60,11 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient String currentMinString;
     private transient boolean currentMinBoolean;
     private transient boolean hasTimeZone = false;
-    private transient DateTime currentMinDate; // TODO: Change to Date type but had issues with Java compiler
-    private transient DateTime currentMinDateTime;
+    private transient ZonedDateTime currentMinDate; // TODO: Change to Date type but had issues with Java compiler
+    private transient ZonedDateTime currentMinDateTime;
     private transient Period currentMinDayTimeDuration;
     private transient Period currentMinYearMonthDuration;
-    private transient DateTime currentMinTime;
+    private transient ZonedDateTime currentMinTime;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
@@ -93,6 +94,9 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
+        Duration candidateDuration;
+        Duration currentMinYearMonthDurationVar;
+
         this.currentMinDouble = 0;
         this.currentMinFloat = 0;
         this.currentMinDecimal = null;
@@ -155,10 +159,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             }
                         } else if (candidateType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
                             this.activeType = 10;
-                            this.currentMinDayTimeDuration = candidateItem.getDurationValue();
+                            this.currentMinDayTimeDuration = candidateItem.getPeriodValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                             this.activeType = 11;
-                            this.currentMinYearMonthDuration = candidateItem.getDurationValue();
+                            this.currentMinYearMonthDuration = candidateItem.getPeriodValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.timeItem)) {
                             this.activeType = 12;
                             this.currentMinTime = candidateItem.getDateTimeValue();
@@ -341,7 +345,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().toDate().compareTo(this.currentMinDate.toDate()) < 0) {
+                        if (candidateItem.getDateTimeValue().isBefore(this.currentMinDate)) {
                             this.currentMinDate = candidateItem.getDateTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
@@ -365,13 +369,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        now = new Instant();
-                        if (
-                            candidateItem.getDurationValue()
-                                .toDurationFrom(now)
-                                .compareTo(this.currentMinDayTimeDuration.toDurationFrom(now)) < 0
-                        ) {
-                            this.currentMinDayTimeDuration = candidateItem.getDurationValue();
+                        candidateDuration = Duration.from(candidateItem.getPeriodValue());
+                        currentMinYearMonthDurationVar = Duration.from(this.currentMinYearMonthDuration);
+                        if (candidateDuration.compareTo(currentMinYearMonthDurationVar) < 0) {
+                            this.currentMinYearMonthDuration = Period.from(candidateDuration);
                         }
                         break;
                     case 11:
@@ -381,13 +382,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        now = new Instant();
-                        if (
-                            candidateItem.getDurationValue()
-                                .toDurationFrom(now)
-                                .compareTo(this.currentMinYearMonthDuration.toDurationFrom(now)) < 0
-                        ) {
-                            this.currentMinYearMonthDuration = candidateItem.getDurationValue();
+                        candidateDuration = Duration.from(candidateItem.getPeriodValue());
+                        currentMinYearMonthDurationVar = Duration.from(this.currentMinYearMonthDuration);
+                        if (candidateDuration.compareTo(currentMinYearMonthDurationVar) < 0) {
+                            this.currentMinYearMonthDuration = Period.from(candidateDuration);
                         }
                         break;
                     case 12:

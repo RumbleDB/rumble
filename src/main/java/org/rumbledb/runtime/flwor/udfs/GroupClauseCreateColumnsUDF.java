@@ -24,7 +24,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
-import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -149,12 +149,16 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(durationGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            this.results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+            this.results.add(
+                Duration.ofDays(
+                    nextItem.getPeriodValue().toTotalMonths() * 30 + nextItem.getPeriodValue().getDays()
+                ).toMillis()
+            );
         } else if (nextItem.hasDateTime()) {
             this.results.add(dateTimeGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            this.results.add(nextItem.getDateTimeValue().getMillis());
+            this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
         } else {
             throw new UnexpectedTypeException(
                     "Group by variable can not contain arrays or objects.",

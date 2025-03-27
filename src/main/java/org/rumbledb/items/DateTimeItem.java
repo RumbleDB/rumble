@@ -3,13 +3,10 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.IllegalFieldValueException;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
-import org.joda.time.format.DateTimeParser;
-import org.joda.time.format.ISODateTimeFormat;
+
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -18,9 +15,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
+import java.time.ZonedDateTime;
+import java.time.format.ResolverStyle;
 import java.util.regex.Pattern;
-
-import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
 public class DateTimeItem implements Item {
 
@@ -55,24 +52,28 @@ public class DateTimeItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
-    private DateTime value;
+    private ZonedDateTime value;
     private boolean hasTimeZone = true;
 
     public DateTimeItem() {
         super();
     }
 
-    DateTimeItem(DateTime value, boolean hasTimeZone) {
+    DateTimeItem(ZonedDateTime value, boolean hasTimeZone) {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
     }
 
-    DateTimeItem(String dateTimeString) {
+    public DateTimeItem(String dateTimeString) {
         this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
+
+        if (
+            !dateTimeString.endsWith("Z")
+                && this.value.getOffset().equals(ZoneId.systemDefault().getRules().getOffset(this.value.toInstant()))
+        ) {
             this.hasTimeZone = false;
-            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+            this.value = this.value.withZoneSameInstant(ZoneId.of("UTC"));
         }
     }
 
@@ -91,20 +92,25 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public DateTime getDateTimeValue() {
+    public ZonedDateTime getDateTimeValue() {
         return this.value;
     }
 
     @Override
     public String getStringValue() {
         String value = this.value.toString();
-        String zoneString = this.value.getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
-                ? ""
-                : value.substring(value.length() - 6);
+        String zoneString;
+        if (this.value.getOffset().equals(ZoneOffset.UTC)) {
+            zoneString = "Z";
+        } else if (this.value.getOffset().equals(ZoneId.systemDefault().getRules().getOffset(this.value.toInstant()))) {
+            zoneString = "";
+        } else {
+            zoneString = this.value.getOffset().toString();
+        }
         value = value.substring(0, value.length() - zoneString.length());
-        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        if (this.value.getNano() == 0) {
+            value = value.substring(0, value.length() - 4);
+        }
         return value + (this.hasTimeZone ? zoneString : "");
     }
 
@@ -135,39 +141,48 @@ public class DateTimeItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.value.getMillis(), true);
+        output.writeString(this.value.format(DateTimeFormatter.ISO_INSTANT));
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.value.getZone().getID());
+        output.writeString(this.value.getZone().getId());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        Long millis = input.readLong(true);
+        String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
-        DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this.value = new DateTime(millis, zone);
+        ZoneId zone = ZoneId.of(input.readString());
+        this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
     static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
-        }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
+        if (
+            dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)
+                ||
+                dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)
+        ) {
+            return DateTimeFormatter.ISO_OFFSET_DATE_TIME; // ISO date-time with offset
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
-            DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
-                ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
-            ).toParser();
-            return (new DateTimeFormatterBuilder()).append(dateElementParser())
-                .appendOptional(dtParser)
+            DateTimeFormatter timeZoneOffsetFormatter = new DateTimeFormatterBuilder()
+                .appendPattern("['Z']")
+                .optionalStart()
+                .appendOffset("+HH", "+00")
+                .optionalEnd()
                 .toFormatter()
-                .withOffsetParsed();
+                .withResolverStyle(ResolverStyle.STRICT);
+
+            return new DateTimeFormatterBuilder()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE) // Assuming this returns a DateTimeFormatter
+                .optionalStart()
+                .append(timeZoneOffsetFormatter)
+                .optionalEnd()
+                .toFormatter()
+                .withResolverStyle(ResolverStyle.STRICT);
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-            return ISODateTimeFormat.timeParser().withOffsetParsed();
+            return DateTimeFormatter.ISO_TIME; // ISO time with offset
         }
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("Unsupported ItemType: " + dateTimeType);
     }
 
     static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
@@ -218,15 +233,13 @@ public class DateTimeItem implements Item {
         return dateTime;
     }
 
-    static DateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
+    static ZonedDateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
         if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
             throw new IllegalArgumentException();
         }
         dateTime = fixEndOfDay(dateTime);
         try {
-            return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
-        } catch (IllegalFieldValueException e) {
-            throw e;
+            return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
         } catch (IllegalArgumentException e) {
             throw new DatetimeOverflowOrUnderflow(
                     "Invalid datetime: \"" + dateTime + "\"",

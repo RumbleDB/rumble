@@ -27,6 +27,6 @@ public class HoursFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIter
         if (this.dateItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getHourOfDay());
+        return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getHour());
     }
 }

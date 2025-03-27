@@ -28,7 +28,7 @@ public class DaysFromDurationFunctionIterator extends AtMostOneItemLocalRuntimeI
         if (this.durationItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getDays());
+        return ItemFactory.getInstance().createIntItem(this.durationItem.getPeriodValue().getDays());
     }
 
 }

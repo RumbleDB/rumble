@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -44,7 +44,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 return this.valueDateItem;
             }
 
-            DateTime dateValue = this.valueDateItem.getDateTimeValue();
+            ZonedDateTime dateValue = this.valueDateItem.getDateTimeValue();
             String pictureString = this.pictureStringItem.getStringValue();
 
             int startOfSequence = 0;
@@ -64,7 +64,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                         Calendar formatCalendar = Calendar.getInstance();
                         formatCalendar.set(
                             dateValue.getYear(),
-                            dateValue.getMonthOfYear() - 1,
+                            dateValue.getMonthValue() - 1,
                             dateValue.getDayOfMonth()
                         );
                         result.append(simpleDateFormat.format(formatCalendar.getTime()));

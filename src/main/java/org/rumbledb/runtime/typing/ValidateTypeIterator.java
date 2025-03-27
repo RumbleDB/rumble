@@ -301,10 +301,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
-                return new Date(item.getDateTimeValue().getMillis());
+                return Date.from(item.getDateTimeValue().toInstant());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                return new Timestamp(item.getDateTimeValue().getMillis());
+                return Timestamp.from(item.getDateTimeValue().toInstant());
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 return item.getBinaryValue();

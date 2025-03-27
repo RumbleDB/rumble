@@ -3,8 +3,9 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -46,7 +47,7 @@ public class gYearItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private String value;
-    private DateTime dt;
+    private ZonedDateTime dt;
     private boolean hasTimeZone = true;
 
     public gYearItem() {
@@ -98,17 +99,13 @@ public class gYearItem implements Item {
         return this.value;
     }
 
-    @Override
     public String getStringValue() {
-        String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.getDateTimeValue().getZone().toString();
-        return (this.value.startsWith("-") ? this.value.substring(0, 5) : this.value.substring(0, 4))
-            + (this.hasTimeZone ? zone : "");
+        String zone = this.dt.getZone().equals(ZoneId.of("UTC")) ? "Z" : this.dt.getZone().toString();
+        return this.dt.format(DateTimeFormatter.ISO_LOCAL_DATE) + (this.hasTimeZone ? zone : "");
     }
 
     @Override
-    public DateTime getDateTimeValue() {
+    public ZonedDateTime getDateTimeValue() {
         return this.dt;
     }
 
@@ -119,16 +116,17 @@ public class gYearItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.getDateTimeValue().getMillis(), true);
-        output.writeString(this.getDateTimeValue().getZone().getID());
+        output.writeString(this.dt.format(DateTimeFormatter.ISO_INSTANT));
+        output.writeBoolean(this.hasTimeZone);
+        output.writeString(this.dt.getZone().getId());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        Long millis = input.readLong(true);
+        String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
-        DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this.dt = new DateTime(millis, zone);
+        ZoneId zone = ZoneId.of(input.readString());
+        this.dt = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
     private static boolean checkInvalidGYearFormat(String gYear, ItemType gYearType) {

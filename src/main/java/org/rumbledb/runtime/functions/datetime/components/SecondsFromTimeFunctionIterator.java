@@ -8,6 +8,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -28,13 +29,11 @@ public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
         if (this.timeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance()
-            .createDecimalItem(
-                BigDecimal.valueOf(
-                    this.timeItem.getDateTimeValue().getSecondOfMinute()
-                        + this.timeItem.getDateTimeValue().getMillisOfSecond() * 1.0 / 1000
-                )
-            );
+        LocalDateTime dateTime = LocalDateTime.now();
+        int second = dateTime.getSecond();
+        int nanoOfSecond = dateTime.getNano();
+
+        return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(second + nanoOfSecond / 1_000_000.0));
     }
 
 }

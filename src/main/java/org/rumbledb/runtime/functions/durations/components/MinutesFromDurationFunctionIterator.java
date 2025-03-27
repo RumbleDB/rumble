@@ -7,6 +7,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 
 public class MinutesFromDurationFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -28,7 +31,13 @@ public class MinutesFromDurationFunctionIterator extends AtMostOneItemLocalRunti
         if (this.durationItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getMinutes());
+        Period period = this.durationItem.getPeriodValue();
+
+        LocalDateTime referenceDate = LocalDateTime.now();
+        LocalDateTime futureDate = referenceDate.plus(period);
+
+        Duration duration = Duration.between(referenceDate, futureDate);
+        return ItemFactory.getInstance().createIntItem((int) duration.toMinutes());
     }
 
 }

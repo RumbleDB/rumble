@@ -28,7 +28,7 @@ public class HoursFromDurationFunctionIterator extends AtMostOneItemLocalRuntime
         if (this.durationItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getHours());
+        return ItemFactory.getInstance().createIntItem(this.durationItem.getPeriodValue().getDays() * 24);
 
     }
 

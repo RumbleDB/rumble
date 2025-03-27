@@ -3,8 +3,11 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -16,14 +19,14 @@ import org.rumbledb.types.ItemType;
 public class TimeItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private DateTime value;
+    private ZonedDateTime value;
     private boolean hasTimeZone = true;
 
     public TimeItem() {
         super();
     }
 
-    TimeItem(DateTime value, boolean hasTimeZone) {
+    TimeItem(ZonedDateTime value, boolean hasTimeZone) {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
@@ -31,9 +34,12 @@ public class TimeItem implements Item {
 
     TimeItem(String dateTimeString) {
         this.value = DateTimeItem.parseDateTime(dateTimeString, BuiltinTypesCatalogue.timeItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
+        if (
+            !dateTimeString.endsWith("Z")
+                && this.value.getOffset().equals(ZoneId.systemDefault().getRules().getOffset(this.value.toInstant()))
+        ) {
             this.hasTimeZone = false;
-            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+            this.value = this.value.withZoneSameInstant(ZoneId.of("UTC"));
         }
     }
 
@@ -52,7 +58,7 @@ public class TimeItem implements Item {
     }
 
     @Override
-    public DateTime getDateTimeValue() {
+    public ZonedDateTime getDateTimeValue() {
         return this.value;
     }
 
@@ -84,26 +90,33 @@ public class TimeItem implements Item {
     @Override
     public String getStringValue() {
         String value = this.value.toString();
-        String zoneString = this.value.getZone() == DateTimeZone.UTC ? "Z" : value.substring(value.length() - 6);
+        String zoneString;
+        if (this.value.getOffset().equals(ZoneOffset.UTC)) {
+            zoneString = "Z";
+        } else {
+            zoneString = this.value.getOffset().toString();
+        }
         value = value.substring(0, value.length() - zoneString.length());
-        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        if (this.value.getNano() == 0) {
+            value = value.substring(0, value.length() - 4);
+        }
         int dateTimeSeparatorIndex = value.indexOf("T");
         return value.substring(dateTimeSeparatorIndex + 1) + (this.hasTimeZone ? zoneString : "");
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.value.getMillis(), true);
+        output.writeString(this.value.format(DateTimeFormatter.ISO_INSTANT));
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.value.getZone().getID());
+        output.writeString(this.value.getZone().getId());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        Long millis = input.readLong(true);
+        String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
-        DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this.value = new DateTime(millis, zone);
+        ZoneId zone = ZoneId.of(input.readString());
+        this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
     @Override

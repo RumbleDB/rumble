@@ -28,7 +28,7 @@ public class YearsFromDurationFunctionIterator extends AtMostOneItemLocalRuntime
         if (this.durationItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getYears());
+        return ItemFactory.getInstance().createIntItem(this.durationItem.getPeriodValue().getYears());
     }
 
 }
