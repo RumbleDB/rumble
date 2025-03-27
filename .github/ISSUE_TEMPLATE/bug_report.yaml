@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a bug encountered while operating RumbleDB
-labels: bug
+labels: Bug
 body:
   - type: textarea
     id: expected
