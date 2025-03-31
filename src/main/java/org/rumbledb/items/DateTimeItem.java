@@ -239,7 +239,11 @@ public class DateTimeItem implements Item {
         }
         dateTime = fixEndOfDay(dateTime);
         try {
-            return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+            if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
+                return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
+            } else {
+                return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+            }
         } catch (IllegalArgumentException e) {
             throw new DatetimeOverflowOrUnderflow(
                     "Invalid datetime: \"" + dateTime + "\"",
