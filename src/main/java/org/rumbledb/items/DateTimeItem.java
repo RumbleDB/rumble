@@ -15,7 +15,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.regex.Pattern;
 
@@ -160,7 +160,7 @@ public class DateTimeItem implements Item {
                 ||
                 dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)
         ) {
-            return DateTimeFormatter.ISO_OFFSET_DATE_TIME; // ISO date-time with offset
+            return DateTimeFormatter.ISO_DATE_TIME; // ISO date-time with offset
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
             DateTimeFormatter timeZoneOffsetFormatter = new DateTimeFormatterBuilder()
@@ -242,7 +242,11 @@ public class DateTimeItem implements Item {
             if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
             } else {
-                return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+                try {
+                    return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+                } catch (DateTimeParseException e) {
+                    return LocalDateTime.parse(dateTime).atZone(ZoneId.of("UTC"));
+                }
             }
         } catch (IllegalArgumentException e) {
             throw new DatetimeOverflowOrUnderflow(
