@@ -241,6 +241,8 @@ public class DateTimeItem implements Item {
         try {
             if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
+            } else if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
+                return LocalDateTime.of(LocalDate.now(), LocalTime.parse(dateTime)).atZone(ZoneId.of("UTC"));
             } else {
                 try {
                     return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
