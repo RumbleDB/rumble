@@ -3,6 +3,8 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import java.time.Duration;
 import java.time.Period;
 import java.time.format.DateTimeParseException;
 import org.rumbledb.api.Item;
@@ -204,10 +206,15 @@ public class DurationItem implements Item {
             Period period = Period.parse(duration);
             return isNegative ? period.negated() : period;
         } catch (DateTimeParseException e) {
-            throw new DurationOverflowOrUnderflow(
-                    "Invalid duration: \"" + duration + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            try {
+                Period period = Period.ofDays(Math.toIntExact(Duration.parse(duration).toDays())); // very crude way to map from duration to period
+                return isNegative ? period.negated() : period;
+            } catch (DateTimeParseException e2) {
+                throw new DurationOverflowOrUnderflow(
+                        "Invalid duration: \"" + duration + "\"",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
         }
     }
 
