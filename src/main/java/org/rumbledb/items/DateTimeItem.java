@@ -242,7 +242,11 @@ public class DateTimeItem implements Item {
             if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
             } else if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-                return LocalDateTime.of(LocalDate.now(), LocalTime.parse(dateTime)).atZone(ZoneId.of("UTC"));
+                try {
+                    return LocalDateTime.of(LocalDate.now(), LocalTime.parse(dateTime)).atZone(ZoneId.of("UTC"));
+                } catch (DateTimeParseException e) {
+                    return OffsetTime.parse(dateTime).atDate(LocalDate.now()).atZoneSameInstant(ZoneId.of("UTC"));
+                }
             } else {
                 try {
                     return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
