@@ -74,6 +74,7 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -1448,6 +1449,9 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         }
+        if (child instanceof XQueryParser.NodeConstructorContext) {
+            return this.visitNodeConstructor((XQueryParser.NodeConstructorContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",
                 createMetadataFromContext(ctx)
@@ -1504,6 +1508,49 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
         return new ObjectConstructorExpression(
                 childExpr,
                 createMetadataFromContext(ctx)
+        );
+    }
+
+
+    @Override
+    public Node visitNodeConstructor(XQueryParser.NodeConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((XQueryParser.DirectConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Node constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirElemConstructorContext) {
+            return this.visitDirElemConstructor((XQueryParser.DirElemConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Direct constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDirElemConstructor(XQueryParser.DirElemConstructorContext ctx) {
+        // check that the start and end tags are the same
+        if(ctx.close_tag_name != null && !ctx.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
+            throw new DirectElementConstructorTagMismatchException(
+                "The name used in the end tag must exactly match the name used in the corresponding start tag.",
+                createMetadataFromContext(ctx)
+            );
+        }
+        
+        // TODO: at the moment, only working with empty elements, with no attributes.
+        return new DirElemConstructorExpression(
+            ctx.open_tag_name.getText(),
+            null,
+            createMetadataFromContext(ctx)
         );
     }
 

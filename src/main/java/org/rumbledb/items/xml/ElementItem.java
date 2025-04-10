@@ -27,6 +27,14 @@ public class ElementItem implements Item {
     public ElementItem() {
     }
 
+    public ElementItem(String tagName, List<Item> children, List<Item> attributes) {
+        this.nodeName = tagName;
+        this.children = children;
+        this.attributes = attributes;
+        // TODO: add support for attributes and children
+        this.stringValue= "<" + tagName + "/>";
+    }
+
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
         this.nodeName = elementNode.getNodeName();
         this.stringValue = elementNode.getTextContent();

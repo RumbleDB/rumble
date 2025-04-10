@@ -290,6 +290,7 @@ primaryExpr             : Literal
                         | functionCall
                         | orderedExpr
                         | unorderedExpr
+                        | nodeConstructor
                         | arrayConstructor
                         | functionItemExpr
                         | blockExpr
@@ -342,7 +343,16 @@ updateLocator           : main_expr=primaryExpr ( lookup )+; // TODO CHECK THIS,
 
 copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
-// TODO: Direct element constructors
+///////////////////////// Direct element constructors
+///////////////////////// TODO: this implementation needs to be extended to support all the features of XQuery 3.1 Direct Element Constructors.
+
+nodeConstructor         : directConstructor;                    // TODO: add computerConstructor
+
+directConstructor       : dirElemConstructor;                   // TODO: add dirCommentConstructor and dirPIConstructor
+
+dirElemConstructor      : '<' open_tag_name=qname ('/>'| ('>' DirElemContent* '</' close_tag_name=qname WS? '>'));
+
+DirElemContent          : 'TEST'[0-9]* ;                        // TODO: add proper definition
 
 
 ///////////////////////// XPath

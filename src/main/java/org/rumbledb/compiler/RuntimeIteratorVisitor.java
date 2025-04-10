@@ -69,6 +69,7 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -157,6 +158,7 @@ import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
+import org.rumbledb.runtime.primary.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.DoubleRuntimeIterator;
 import org.rumbledb.runtime.primary.IntegerRuntimeIterator;
 import org.rumbledb.runtime.primary.NullRuntimeIterator;
@@ -733,6 +735,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
         }
+    }
+
+    @Override
+    public RuntimeIterator visitDirElemConstructor(DirElemConstructorExpression expression, RuntimeIterator argument) {
+        RuntimeIterator runtimeIterator = new DirElemConstructorRuntimeIterator(
+                expression.getTagName(),
+                expression.getChildren()
+                    .stream()
+                    .map(arg -> this.visit(arg, argument))
+                    .collect(Collectors.toList()),
+                new ArrayList<RuntimeIterator>(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
     }
 
     @Override

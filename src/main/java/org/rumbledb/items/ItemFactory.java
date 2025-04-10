@@ -264,4 +264,8 @@ public class ItemFactory {
     public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
         return new ElementItem(elementNode, children, attributes);
     }
+
+    public Item createXmlElementNode(String tagName, List<Item> children, List<Item> attributes) {
+        return new ElementItem(tagName, children, attributes);
+    }
 }
