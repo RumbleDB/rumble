@@ -130,11 +130,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     } else if (item.isInteger()) {
                         result = !item.getIntegerValue().equals(BigInteger.ZERO);
                     } else if (item.isDouble()) {
-                        result = item.getDoubleValue() != 0;
+                        result = !item.isNaN() && item.getDoubleValue() != 0;
                     } else if (item.isFloat()) {
-                        result = item.getFloatValue() != 0;
+                        result = !item.isNaN() && item.getFloatValue() != 0;
                     } else if (item.isDecimal()) {
-                        result = !item.getDecimalValue().equals(BigDecimal.ZERO);
+                        result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                     } else {
                         throw new OurBadException(
                                 "Unexpected numeric type found while calculating effective boolean value."
@@ -152,13 +152,24 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = false;
             } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
-            } else if (item.isObject()) {
-                this.close();
-                return true;
-            } else if (item.isArray()) {
-                this.close();
+            } else if (item.isNode()) {
+                // returns true even if sequence has more items according to spec
                 return true;
             } else {
+                if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+                    if (item.isObject() || item.isArray()) {
+                        this.close();
+                        return true;
+                    }
+                } else {
+                    if (item.isObject() || item.isArray()) {
+                        System.err.println(
+                            "Note: effective boolean value of "
+                                + (item.isObject() ? "Object " : "Array ")
+                                + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                        );
+                    }
+                }
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +

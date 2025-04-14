@@ -9,7 +9,7 @@ copy $je := for $i in (1 to 4)
 modify
     for $l in $je
     return
-        if($l.a)
+        if($l.a.foo)
         then
             rename json $l.a.foo as "bar"
         else

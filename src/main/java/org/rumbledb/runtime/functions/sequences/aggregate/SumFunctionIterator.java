@@ -118,21 +118,28 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         iterator.open(context);
 
-        Item result = zeroElement;
+        Item result = null;
         while (iterator.hasNext()) {
             Item nextValue = iterator.next();
-            Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
-            if (sum == null) {
-                throw new InvalidArgumentTypeException(
-                        " \"+\": operation not possible with parameters of type \""
-                            + result.getDynamicType().toString()
-                            + "\" and \""
-                            + result.getDynamicType().toString()
-                            + "\"",
-                        metadata
-                );
+            if (result == null) {
+                result = nextValue;
+            } else {
+                Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
+                if (sum == null) {
+                    throw new InvalidArgumentTypeException(
+                            " \"+\": operation not possible with parameters of type \""
+                                + result.getDynamicType().toString()
+                                + "\" and \""
+                                + nextValue.getDynamicType().toString()
+                                + "\"",
+                            metadata
+                    );
+                }
+                result = sum;
             }
-            result = sum;
+        }
+        if (result == null) {
+            result = zeroElement;
         }
         iterator.close();
         return result;
@@ -145,8 +152,10 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ExceptionMetadata metadata
     ) {
         JavaRDD<Item> rdd = iterator.getRDD(context);
-        Item result = rdd.fold(zeroElement, new SumClosure(metadata));
-        return result;
+        if (rdd.count() == 0) {
+            return zeroElement;
+        }
+        return rdd.reduce(new SumClosure(metadata));
     }
 
     private static Item computeDataFrame(

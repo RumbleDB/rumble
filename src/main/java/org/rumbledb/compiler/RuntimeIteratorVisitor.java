@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
@@ -63,11 +64,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -114,11 +111,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.*;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
@@ -142,6 +141,7 @@ import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
@@ -190,6 +190,12 @@ import org.rumbledb.runtime.update.expression.InsertExpressionIterator;
 import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
+import org.rumbledb.runtime.xml.SlashExprIterator;
+import org.rumbledb.runtime.xml.StepExprIterator;
+import org.rumbledb.runtime.xml.PostfixLookupIterator;
+import org.rumbledb.runtime.xml.UnaryLookupIterator;
+import org.rumbledb.runtime.xml.axis.AxisIterator;
+import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -508,22 +514,68 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFilterExpression(FilterExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
-            String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
+        Expression predicateExpression = expression.getPredicateExpression();
+
+        // if we have a int in the predicate we can optimize to a SequenceLookupIterator
+        if (predicateExpression instanceof IntegerLiteralExpression) {
+            String lexicalValue = ((IntegerLiteralExpression) predicateExpression).getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
-                if (n <= this.config.getResultSizeCap()) {
-                    RuntimeIterator runtimeIterator = new SequenceLookupIterator(
-                            mainIterator,
-                            n,
-                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    );
-                    runtimeIterator.setStaticContext(expression.getStaticContext());
-                    return runtimeIterator;
+                return getSequenceLookupIterator(expression, mainIterator, n);
+            }
+        }
+
+        if (predicateExpression instanceof DecimalLiteralExpression) {
+            if (((DecimalLiteralExpression) predicateExpression).isIntValue()) {
+                int n = ((DecimalLiteralExpression) predicateExpression).getValue().intValue();
+                return getSequenceLookupIterator(expression, mainIterator, n);
+            }
+
+            // if decimal has digits to the right of the decimal point, return empty sequence according to spec
+            if (((DecimalLiteralExpression) predicateExpression).getValue().stripTrailingZeros().scale() > 0) {
+                return new EmptySequenceIterator(
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                );
+            }
+        }
+
+        if (
+            predicateExpression instanceof ComparisonExpression
+                && ((ComparisonExpression) predicateExpression).getComparisonOperator()
+                    .toString()
+                    .equals("eq")
+        ) {
+            Node left = predicateExpression.getChildren().get(0);
+            Node right = predicateExpression.getChildren().get(1);
+
+            Node intLiteral = null;
+            if (
+                left instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (right instanceof IntegerLiteralExpression) {
+                    intLiteral = right;
+                }
+            }
+            if (
+                right instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+            ) {
+                if (left instanceof IntegerLiteralExpression) {
+                    intLiteral = left;
+                }
+            }
+            if (intLiteral != null) {
+                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
+                if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                    int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                    return getSequenceLookupIterator(expression, mainIterator, n);
                 }
             }
         }
-        RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
+
+        // fallback for alll other cases
+        RuntimeIterator filterIterator = this.visit(predicateExpression, argument);
         RuntimeIterator runtimeIterator = new PredicateIterator(
                 mainIterator,
                 filterIterator,
@@ -531,6 +583,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    private RuntimeIterator getSequenceLookupIterator(
+            FilterExpression expression,
+            RuntimeIterator mainIterator,
+            int n
+    ) {
+        RuntimeIterator iterator = new SequenceLookupIterator(
+                mainIterator,
+                n,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        iterator.setStaticContext(expression.getStaticContext());
+        return iterator;
     }
 
     @Override
@@ -552,6 +618,36 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
         RuntimeIterator runtimeIterator = new ObjectLookupIterator(
                 mainIterator,
+                lookupIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitPostfixLookupExpression(PostfixLookupExpression expression, RuntimeIterator argument) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        Expression lookup = expression.getLookupExpression(); // null if wildcard
+        RuntimeIterator lookupIterator = (lookup == null)
+            ? null
+            : this.visit(expression.getLookupExpression(), argument);
+        RuntimeIterator runtimeIterator = new PostfixLookupIterator(
+                mainIterator,
+                lookupIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitUnaryLookupExpression(UnaryLookupExpression expression, RuntimeIterator argument) {
+        Expression lookup = expression.getLookupExpression(); // null if wildcard
+        RuntimeIterator lookupIterator = (lookup == null)
+            ? null
+            : this.visit(expression.getLookupExpression(), argument);
+        RuntimeIterator runtimeIterator = new UnaryLookupIterator(
                 lookupIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -943,6 +1039,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
+        if (left instanceof StepExprIterator) {
+            // We potentially need to atomize
+            left = new AtomizationIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,
@@ -1414,4 +1517,55 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         runtimeIterator.setStaticContext(statement.getStaticContext());
         return runtimeIterator;
     }
+
+    @Override
+    public RuntimeIterator visitSlashExpr(SlashExpr slashExpr, RuntimeIterator argument) {
+        Expression leftExpression = (Expression) slashExpr.getChildren().get(0);
+        Expression rightExpression = (Expression) slashExpr.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
+
+        RuntimeIterator runtimeIterator = new SlashExprIterator(
+                left,
+                right,
+                slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(slashExpr.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitStepExpr(StepExpr stepExpr, RuntimeIterator argument) {
+        AxisIterator axisIterator = this.visitAxisStep(stepExpr, stepExpr.getMetadata());
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        return new StepExprIterator(
+                axisIterator,
+                nodeTest,
+                new RuntimeStaticContext(
+                        this.config,
+                        SequenceType.ITEM,
+                        stepExpr.getHighestExecutionMode(this.visitorConfig),
+                        stepExpr.getMetadata()
+                )
+        );
+    }
+
+    private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
+        return stepExpr.accept(
+            new AxisIteratorVisitor(),
+            new RuntimeStaticContext(
+                    this.config,
+                    SequenceType.STRING,
+                    ExecutionMode.LOCAL,
+                    metadata
+            )
+        );
+    }
+
 }

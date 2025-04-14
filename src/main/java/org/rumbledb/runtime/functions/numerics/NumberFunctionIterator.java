@@ -53,12 +53,14 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (anyItem == null) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
-
-        Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
-        if (result != null) {
-            return result;
+        try {
+            Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
+            if (result != null) {
+                return result;
+            }
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        } catch (Exception e) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
-        return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-
     }
 }

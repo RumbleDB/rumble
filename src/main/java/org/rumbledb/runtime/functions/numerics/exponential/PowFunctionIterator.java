@@ -57,6 +57,19 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         try {
+            double baseDouble = base.castToDoubleValue();
+            double exponentDouble = exponent.castToDoubleValue();
+
+            // special cases where java doesnt implement IEEE754 standard
+            // 1 or -1 to the power of INF or -INF should be 1
+            if (Math.abs(baseDouble) == 1 && Double.isInfinite(exponentDouble)) {
+                return ItemFactory.getInstance().createDoubleItem(1);
+            }
+            // 1 (but not -1!) to the power of NaN should be 1
+            if (baseDouble == 1 && Double.isNaN(exponentDouble)) {
+                return ItemFactory.getInstance().createDoubleItem(1);
+            }
+
             return ItemFactory.getInstance()
                 .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
         } catch (IteratorFlowException e) {

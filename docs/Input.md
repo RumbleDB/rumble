@@ -2,7 +2,7 @@
 
 RumbleDB is able to read a variety of formats from a variety of file systems.
 
-We support functions to read JSON, JSON Lines, Parquet, CSV, Text and ROOT files from various storage layers such as S3 and HDFS, Azure blob storage. We run most of our tests on Amazon EMR with S3 or HDFS, as well as locally on the local file system, but we welcome feedback on other setups.
+We support functions to read JSON, JSON Lines, XML, Parquet, CSV, Text and ROOT files from various storage layers such as S3 and HDFS, Azure blob storage. We run most of our tests on Amazon EMR with S3 or HDFS, as well as locally on the local file system, but we welcome feedback on other setups.
 
 ## Supported formats
 
@@ -23,15 +23,15 @@ json-doc() also works with an HTTP URI.
 
 JSON Lines files are files that have one JSON object (or value) per line. Such files can thus become very large, up to billions or even trillions of JSON objects.
 
-JSON Lines files are read with the json-file() function. json-file() exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
+JSON Lines files are read with the json-lines() function (formerly called json-file()). json-lines() exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
 
-json-file() also works with an HTTP URI, however, it will download the file completely and then parallelize, because HTTP does not support blocks. As a consequence, it can only be used for reasonable sizes.
+json-lines() also works with an HTTP URI, however, it will download the file completely and then parallelize, because HTTP does not support blocks. As a consequence, it can only be used for reasonable sizes.
 
 Example of usage:
 
 ```
-for $my-json in json-file("hdfs://host:port/directory/file.json")
+for $my-json in json-lines("hdfs://host:port/directory/file.json")
 where $my-json.property eq "some value"
 return $my-json
 ```
@@ -39,7 +39,7 @@ return $my-json
 If a host and port are set:
 
 ```
-for $my-json in json-file("/absolute/directory/file.json")
+for $my-json in json-lines("/absolute/directory/file.json")
 where $my-json.property eq "some value"
 return $my-json
 ```
@@ -47,7 +47,7 @@ return $my-json
 For a set of files:
 
 ```
-for $my-json in json-file("/absolute/directory/file-*.json")
+for $my-json in json-lines("/absolute/directory/file-*.json")
 where $my-json.property eq "some value"
 return $my-json
 ```
@@ -55,7 +55,7 @@ return $my-json
 If a working directory is set:
 
 ```
-for $my-json in json-file("file.json")
+for $my-json in json-lines("file.json")
 where $my-json.property eq "some value"
 return $my-json
 ```
@@ -64,23 +64,42 @@ Several files or whole directories can be read with the same pattern syntax as i
 
 
 ```
-for $my-json in json-file("*.json")
+for $my-json in json-lines("*.json")
 where $my-json.property eq "some value"
 return $my-json
 ```
 
-In some cases, JSON Lines files are highly structured, meaning that all objects have the same fields and these fields are associated with values with the same types. In this case, RumbleDB will be faster navigating such files if you open them with the function structured-json-file().
+In some cases, JSON Lines files are highly structured, meaning that all objects have the same fields and these fields are associated with values with the same types. In this case, RumbleDB will be faster navigating such files if you open them with the function structured-json-lines().
 
-structured-json-file() parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use only when such data is available.
+structured-json-lines() parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use only when such data is available.
 
 Warning: when the data has multiple types for the same field, this field and contained values will be treated as strings. This is also similar to Spark's spark.read.json().
 
 Example of usage:
 
 ```
-for $my-structured-json in structured-json-file("hdfs://host:port/directory/structured-file.json")
+for $my-structured-json in structured-json-lines("hdfs://host:port/directory/structured-file.json")
 where $my-structured-json.property eq "some value"
 return $my-structured-json
+```
+
+### XML
+
+XML files can be read into RumbleDB using the doc() function. The parameter specifies the XML file to read and return as a document node.
+
+Example of usage:
+
+```
+doc("path/to/file.xml")
+```
+
+Additionally, RumbeDB provides the xml-files() function to read many XML files at once.  xml-files() exists in unary and binary. The first parameter specifies the directory of XML files to read.
+The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition. 
+
+Example of usage:
+
+```
+xml-files("path/to/directory/*.xml", 10)
 ```
 
 ### Text
@@ -104,7 +123,7 @@ count(
 
 Several files or whole directories can be read with the same pattern syntax as in Spark.
 
-(Also see examples for json-file for host and port, sets of files and working directory).
+(Also see examples for json-lines for host and port, sets of files and working directory).
 
 There is also a function local-text-file() that reads locally, without parallelism. RumbleDB can stream through the file efficiently.
 

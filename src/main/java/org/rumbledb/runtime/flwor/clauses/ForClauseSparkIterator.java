@@ -395,7 +395,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             throw new JobWithinAJobException(
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. A piece of advice: if you use a predicate expression in your for clause, like for $"
                         + this.variableName.toString()
-                        + " in json-file(\"...\")[$$.id eq $other-flwor-variable.id], Rumble may be able to detect a join.",
+                        + " in json-lines(\"...\")[$$.id eq $other-flwor-variable.id], Rumble may be able to detect a join.",
                     getMetadata()
             );
         }

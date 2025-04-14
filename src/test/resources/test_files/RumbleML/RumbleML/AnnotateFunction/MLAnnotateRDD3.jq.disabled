@@ -1,6 +1,6 @@
 (:JIQS: ShouldRun; Output="" :)
 annotate(
-    json-file("./src/main/resources/queries/rumbleML/sample-ml-data-date.json"),
+    json-lines("./src/main/resources/queries/rumbleML/sample-ml-data-date.json"),
     {
         "id": "integer",
         "birthDate": "date",

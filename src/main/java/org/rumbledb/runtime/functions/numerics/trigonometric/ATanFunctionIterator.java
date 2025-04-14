@@ -51,7 +51,7 @@ public class ATanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         double dvalue = value.getDoubleValue();
-        if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
+        if (Double.isNaN(dvalue)) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         return ItemFactory.getInstance().createDoubleItem(Math.atan(dvalue));

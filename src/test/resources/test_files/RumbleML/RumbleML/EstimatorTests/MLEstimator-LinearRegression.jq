@@ -3,7 +3,7 @@ declare function local:round($i as double) as float {
   float($i)
 };
 let $data := annotate(
-    json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
+    json-lines("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
 let $vector-assembler := get-transformer("VectorAssembler")
