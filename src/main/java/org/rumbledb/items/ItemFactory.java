@@ -1,5 +1,7 @@
 package org.rumbledb.items;
 
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.ZonedDateTime;
 import java.time.Period;
 import org.rumbledb.api.Item;
@@ -154,7 +156,7 @@ public class ItemFactory {
         return new DateTimeStampItem(s);
     }
 
-    public Item createDateItem(ZonedDateTime dt, boolean hasTimeZone) {
+    public Item createDateItem(OffsetDateTime dt, boolean hasTimeZone) {
         return new DateItem(dt, hasTimeZone);
     }
 
@@ -162,7 +164,7 @@ public class ItemFactory {
         return new DateItem(s);
     }
 
-    public Item createTimeItem(ZonedDateTime dt, boolean hasTimeZone) {
+    public Item createTimeItem(OffsetTime dt, boolean hasTimeZone) {
         return new TimeItem(dt, hasTimeZone);
     }
 

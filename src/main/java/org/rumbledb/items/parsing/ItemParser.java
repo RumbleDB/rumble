@@ -553,7 +553,7 @@ public class ItemParser implements Serializable {
             }
             long instant = value.getTime();
             ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
-            Item item = ItemFactory.getInstance().createDateItem(dt, false);
+            Item item = ItemFactory.getInstance().createDateItem(dt.toOffsetDateTime(), false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return item;
             } else {

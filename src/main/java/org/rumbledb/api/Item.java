@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
+
 import java.time.ZonedDateTime;
 import java.time.Period;
 import org.rumbledb.context.DynamicContext;
@@ -188,6 +189,42 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default boolean isDayTimeDuration() {
         return false;
+    }
+
+    default int getMonth() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default int getYear() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default int getDay() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default int getOffset() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default int getHour() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
+    }
+
+    default int getMinute() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
+    }
+
+    default int getSecond() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
+    }
+
+    default int getNanosecond() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
     }
 
     /**

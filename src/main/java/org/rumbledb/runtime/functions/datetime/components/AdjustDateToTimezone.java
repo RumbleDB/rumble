@@ -37,19 +37,15 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createDateItem(this.dateItem.getDateTimeValue().withZoneSameInstant(ZoneOffset.UTC), true);
+                .createDateItem(this.dateItem.getDateTimeValue().toOffsetDateTime(), true);
         }
         if (this.timezone == null) {
             if (this.dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createDateItem(
-                        this.dateItem.getDateTimeValue()
-                            .withZoneSameLocal(this.dateItem.getDateTimeValue().getZone()),
-                        false
-                    );
+                    .createDateItem(this.dateItem.getDateTimeValue().toOffsetDateTime(), false);
             }
             return ItemFactory.getInstance()
-                .createDateItem(this.dateItem.getDateTimeValue(), this.dateItem.hasTimeZone());
+                .createDateItem(this.dateItem.getDateTimeValue().toOffsetDateTime(), this.dateItem.hasTimeZone());
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
@@ -61,14 +57,17 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
             if (this.dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateItem(
-                        this.dateItem.getDateTimeValue().withZoneSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        this.dateItem.getDateTimeValue()
+                            .withZoneSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes))
+                            .toOffsetDateTime(),
                         true
                     );
             }
             return ItemFactory.getInstance()
                 .createDateItem(
                     this.dateItem.getDateTimeValue()
-                        .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
+                        .toOffsetDateTime(),
                     true
                 );
         }

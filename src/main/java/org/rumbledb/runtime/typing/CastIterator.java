@@ -358,9 +358,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
                 } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+                    result = ItemFactory.getInstance()
+                        .createDateItem(item.getDateTimeValue().toOffsetDateTime(), item.hasTimeZone());
                 } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+                    result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -376,9 +377,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
                 } else if (item.isTime()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+                    result = ItemFactory.getInstance()
+                        .createTimeItem(item.getDateTimeValue().toOffsetDateTime().toOffsetTime(), item.hasTimeZone());
                 } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+                    result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }

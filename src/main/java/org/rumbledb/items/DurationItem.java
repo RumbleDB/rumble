@@ -207,7 +207,9 @@ public class DurationItem implements Item {
             return isNegative ? period.negated() : period;
         } catch (DateTimeParseException e) {
             try {
-                Period period = Period.ofDays(Math.toIntExact(Duration.parse(duration).toDays())); // very crude way to map from duration to period
+                Period period = Period.ofDays(Math.toIntExact(Duration.parse(duration).toDays())); // very crude way to
+                                                                                                   // map from duration
+                                                                                                   // to period
                 return isNegative ? period.negated() : period;
             } catch (DateTimeParseException e2) {
                 throw new DurationOverflowOrUnderflow(

@@ -8,14 +8,12 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.regex.Pattern;
 
@@ -30,20 +28,12 @@ public class DateTimeItem implements Item {
     private static final String endOfDayFrag = "(24:00:00(\\.(0)+)?)";
     private static final String timezoneFrag = "(Z|([+\\-])(((0\\d|1[0-3]):" + minuteFrag + ")|(14:00)))";
     private static final String dateFrag = "(" + yearFrag + '-' + monthFrag + '-' + dayFrag + ")";
-    private static final String timeFrag = "(("
-        + hourFrag
-        + ":"
-        + minuteFrag
-        + ":"
-        + secondFrag
-        + ")|("
-        + endOfDayFrag
-        + "))";
+    private static final String timeFrag = String.format("((%s:%s:%s)|(%s))", hourFrag, minuteFrag, secondFrag, endOfDayFrag);
 
-    private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag + "(" + timezoneFrag + ")?";
-    private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + timezoneFrag;
-    private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag + ")?)";
-    private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
+    private static final String dateTimeLexicalRep = String.format("%sT%s(%s)?", dateFrag, timeFrag, timezoneFrag);
+    private static final String dateTimeStampLexicalRep = String.format("%sT%s%s", dateFrag, timeFrag, timezoneFrag);
+    private static final String dateLexicalRep = String.format("(%s(%s)?)", dateFrag, timezoneFrag);
+    private static final String timeLexicalRep = String.format("(%s(%s)?)", timeFrag, timezoneFrag);
 
     private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
     private static final Pattern dateTimeStampPattern = Pattern.compile(dateTimeStampLexicalRep);
@@ -55,6 +45,7 @@ public class DateTimeItem implements Item {
     private ZonedDateTime value;
     private boolean hasTimeZone = true;
 
+    @SuppressWarnings("unused")
     public DateTimeItem() {
         super();
     }
@@ -66,14 +57,23 @@ public class DateTimeItem implements Item {
     }
 
     public DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
+        getDateTimeValue(dateTimeString);
+    }
 
-        if (
-            !dateTimeString.endsWith("Z")
-                && this.value.getOffset().equals(ZoneId.systemDefault().getRules().getOffset(this.value.toInstant()))
-        ) {
-            this.hasTimeZone = false;
-            this.value = this.value.withZoneSameInstant(ZoneId.of("UTC"));
+    private void getDateTimeValue(String dateTimeString) {
+        try {
+            if (
+                dateTimeString.contains("Z") || dateTimeString.contains("+") || dateTimeString.matches(".*-\\d\\d:.*")
+            ) {
+                this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
+                this.hasTimeZone = true;
+            } else {
+                this.value = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    .atZone(ZoneOffset.UTC);
+                this.hasTimeZone = false;
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid xs:dateTime format: " + dateTimeString, e);
         }
     }
 
@@ -98,20 +98,11 @@ public class DateTimeItem implements Item {
 
     @Override
     public String getStringValue() {
-        String value = this.value.toString();
-        String zoneString;
-        if (this.value.getOffset().equals(ZoneOffset.UTC)) {
-            zoneString = "Z";
-        } else if (this.value.getOffset().equals(ZoneId.systemDefault().getRules().getOffset(this.value.toInstant()))) {
-            zoneString = "";
+        if (this.hasTimeZone) {
+            return this.value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } else {
-            zoneString = this.value.getOffset().toString();
+            return this.value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
-        value = value.substring(0, value.length() - zoneString.length());
-        if (this.value.getNano() == 0) {
-            value = value.substring(0, value.length() - 4);
-        }
-        return value + (this.hasTimeZone ? zoneString : "");
     }
 
     @Override
@@ -233,34 +224,34 @@ public class DateTimeItem implements Item {
         return dateTime;
     }
 
-    static ZonedDateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
-        if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
-            throw new IllegalArgumentException();
-        }
-        dateTime = fixEndOfDay(dateTime);
-        try {
-            if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
-                return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
-            } else if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-                try {
-                    return LocalDateTime.of(LocalDate.now(), LocalTime.parse(dateTime)).atZone(ZoneId.of("UTC"));
-                } catch (DateTimeParseException e) {
-                    return OffsetTime.parse(dateTime).atDate(LocalDate.now()).atZoneSameInstant(ZoneId.of("UTC"));
-                }
-            } else {
-                try {
-                    return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
-                } catch (DateTimeParseException e) {
-                    return LocalDateTime.parse(dateTime).atZone(ZoneId.of("UTC"));
-                }
-            }
-        } catch (IllegalArgumentException e) {
-            throw new DatetimeOverflowOrUnderflow(
-                    "Invalid datetime: \"" + dateTime + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
-        }
-    }
+    // static ZonedDateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
+    // if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
+    // throw new IllegalArgumentException();
+    // }
+    // dateTime = fixEndOfDay(dateTime);
+    // try {
+    // if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
+    // return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
+    // } else if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
+    // try {
+    // return LocalDateTime.of(LocalDate.now(), LocalTime.parse(dateTime)).atZone(ZoneId.of("UTC"));
+    // } catch (DateTimeParseException e) {
+    // return OffsetTime.parse(dateTime).atDate(LocalDate.now()).atZoneSameInstant(ZoneId.of("UTC"));
+    // }
+    // } else {
+    // try {
+    // return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+    // } catch (DateTimeParseException e) {
+    // return LocalDateTime.parse(dateTime).atZone(ZoneId.of("UTC"));
+    // }
+    // }
+    // } catch (IllegalArgumentException e) {
+    // throw new DatetimeOverflowOrUnderflow(
+    // "Invalid datetime: \"" + dateTime + "\"",
+    // ExceptionMetadata.EMPTY_METADATA
+    // );
+    // }
+    // }
 
     @Override
     public ItemType getDynamicType() {
@@ -270,5 +261,45 @@ public class DateTimeItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonth().getValue();
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYear();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDayOfMonth();
+    }
+
+    @Override
+    public int getHour() {
+        return this.value.getHour();
+    }
+
+    @Override
+    public int getMinute() {
+        return this.value.getMinute();
+    }
+
+    @Override
+    public int getSecond() {
+        return this.value.getSecond();
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.value.getNano();
+    }
+
+    @Override
+    public int getOffset() {
+        return this.value.getOffset().getTotalSeconds() / 60;
     }
 }

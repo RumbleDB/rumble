@@ -434,7 +434,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance().createBooleanItem(this.currentMinBoolean);
                     break;
                 case 8:
-                    itemResult = ItemFactory.getInstance().createDateItem(this.currentMinDate, this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance()
+                        .createDateItem(this.currentMinDate.toOffsetDateTime(), this.hasTimeZone);
                     break;
                 case 9:
                     itemResult = ItemFactory.getInstance()
@@ -448,7 +449,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         .createYearMonthDurationItem(this.currentMinYearMonthDuration);
                     break;
                 case 12:
-                    itemResult = ItemFactory.getInstance().createTimeItem(this.currentMinTime, this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance()
+                        .createTimeItem(this.currentMinTime.toOffsetDateTime().toOffsetTime(), this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");

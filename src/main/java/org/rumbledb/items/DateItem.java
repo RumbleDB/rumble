@@ -3,11 +3,10 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.time.ZoneId;
+
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -19,28 +18,51 @@ import org.rumbledb.types.ItemType;
 public class DateItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private ZonedDateTime value;
-    private boolean hasTimeZone = true;
+    private OffsetDateTime value;
+    private boolean hasTimeZone = false;
 
+    @SuppressWarnings("unused")
     public DateItem() {
         super();
     }
 
-    DateItem(ZonedDateTime value, boolean hasTimeZone) {
+    DateItem(OffsetDateTime value, boolean hasTimeZone) {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
     }
 
     DateItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateItem);
-        if (
-            !dateTimeString.endsWith("Z")
-                && this.value.getOffset()
-                    .equals(ZoneId.systemDefault().getRules().getOffset(Instant.from(OffsetDateTime.now())))
-        ) {
-            this.hasTimeZone = false;
-            this.value = this.value.withZoneSameInstant(ZoneId.of("UTC"));
+        getDateValue(dateTimeString);
+    }
+
+    DateItem(int year, int month, int day) {
+        super();
+        this.value = OffsetDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC);
+        this.hasTimeZone = false;
+    }
+
+    DateItem(int year, int month, int day, int zoneOffset) {
+        super();
+        this.value = OffsetDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.ofTotalSeconds(zoneOffset * 60));
+        this.hasTimeZone = true;
+    }
+
+    private void getDateValue(String dateString) {
+        try {
+            if (dateString.contains("Z") || dateString.contains("+") || dateString.contains(":")) {
+                this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
+                    .atStartOfDay()
+                    .atOffset(ZoneOffset.of(dateString.substring(10)));
+                this.hasTimeZone = true;
+            } else {
+                this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toOffsetDateTime();
+                this.hasTimeZone = false;
+            }
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid xs:date format: " + dateString, e);
         }
     }
 
@@ -58,36 +80,23 @@ public class DateItem implements Item {
         return false;
     }
 
-    public ZonedDateTime getValue() {
-        return this.value;
-    }
-
     @Override
     public ZonedDateTime getDateTimeValue() {
-        return this.value;
+        return this.value.toZonedDateTime();
     }
 
     @Override
     public String getStringValue() {
-        String value = this.getValue().toString();
-        String zone = this.value.getZone().equals(ZoneId.of("UTC")) ? "Z" : this.value.getZone().toString();
-        int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0, dateTimeSeparatorIndex) + (this.hasTimeZone ? zone : "");
+        if (this.hasTimeZone) {
+            return this.value.format(DateTimeFormatter.ISO_OFFSET_DATE);
+        } else {
+            return this.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        }
     }
 
     @Override
     public boolean isDate() {
         return true;
-    }
-
-    @Override
-    public boolean hasDateTime() {
-        return true;
-    }
-
-    @Override
-    public boolean hasTimeZone() {
-        return this.hasTimeZone;
     }
 
     @Override
@@ -97,22 +106,22 @@ public class DateItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.getValue().hashCode();
+        return this.value.hashCode();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.value.format(DateTimeFormatter.ISO_INSTANT));
+        output.writeString(
+            this.value.format(!this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE)
+        );
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.value.getZone().getId());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
+        String dateString = input.readString();
         this.hasTimeZone = input.readBoolean();
-        ZoneId zone = ZoneId.of(input.readString());
-        this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
+        getDateValue(dateString);
     }
 
     @Override
@@ -130,4 +139,32 @@ public class DateItem implements Item {
         // TODO: Make enum?
         return "DATE";
     }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonth().getValue();
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYear();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDayOfMonth();
+    }
+
+    @Override
+    public int getOffset() {
+        ZoneOffset zoneOffset = this.value.getOffset();
+        return zoneOffset.getTotalSeconds() / 60;
+    }
+
+    @Override
+    public boolean hasTimeZone() {
+        return this.hasTimeZone;
+    }
+
+
 }

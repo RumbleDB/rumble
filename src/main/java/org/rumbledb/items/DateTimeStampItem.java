@@ -3,10 +3,7 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -19,27 +16,20 @@ import org.rumbledb.types.ItemType;
 public class DateTimeStampItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private ZonedDateTime value;
+    private DateTimeItem value;
 
+    @SuppressWarnings("unused")
     public DateTimeStampItem() {
         super();
     }
 
     DateTimeStampItem(ZonedDateTime value, boolean checkTimezone) {
         super();
-        if (checkTimezone) {
-            this.value = DateTimeItem.parseDateTime(
-                this.value.toString(),
-                BuiltinTypesCatalogue.dateTimeStampItem
-            );
-        } else {
-            this.value = value;
-        }
-
+        this.value = new DateTimeItem(value, checkTimezone);
     }
 
     DateTimeStampItem(String dateTimeStampString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
+        this.value = new DateTimeItem(dateTimeStampString);
     }
 
     @Override
@@ -58,26 +48,12 @@ public class DateTimeStampItem implements Item {
 
     @Override
     public ZonedDateTime getDateTimeValue() {
-        return this.value;
+        return this.value.getDateTimeValue();
     }
 
     @Override
     public String getStringValue() {
-        String value = this.value.toString();
-        String zoneString;
-
-        if (this.value.getOffset().equals(ZoneOffset.UTC)) {
-            zoneString = "Z";
-        } else if (this.value.getOffset().equals(ZoneId.systemDefault().getRules().getOffset(this.value.toInstant()))) {
-            zoneString = "";
-        } else {
-            zoneString = this.value.getOffset().toString();
-        }
-        value = value.substring(0, value.length() - zoneString.length());
-        if (this.value.getNano() == 0) {
-            value = value.substring(0, value.length() - 4);
-        }
-        return value + zoneString;
+        return this.value.getStringValue();
     }
 
     @Override
@@ -107,17 +83,12 @@ public class DateTimeStampItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.value.format(DateTimeFormatter.ISO_INSTANT));
-        output.writeString(this.value.getZone().getId());
+        this.value.write(kryo, output);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
-        this.value = ZonedDateTime.parse(
-            dateTimeString,
-            DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of(dateTimeString))
-        );
+        this.value.read(kryo, input);
     }
 
     @Override

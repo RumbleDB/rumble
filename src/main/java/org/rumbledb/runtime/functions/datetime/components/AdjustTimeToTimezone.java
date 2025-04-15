@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
 import java.time.Duration;
+import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -37,19 +38,21 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createDateItem(this.timeItem.getDateTimeValue().withZoneSameInstant(ZoneOffset.UTC), true);
+                .createTimeItem(this.timeItem.getDateTimeValue().toOffsetDateTime().toOffsetTime(), true);
         }
         if (this.timezone == null) {
             if (this.timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createTimeItem(
-                        this.timeItem.getDateTimeValue()
-                            .withZoneSameLocal(this.timeItem.getDateTimeValue().getZone()),
+                        this.timeItem.getDateTimeValue().toOffsetDateTime().toOffsetTime(),
                         false
                     );
             }
             return ItemFactory.getInstance()
-                .createTimeItem(this.timeItem.getDateTimeValue(), this.timeItem.hasTimeZone());
+                .createTimeItem(
+                    this.timeItem.getDateTimeValue().toOffsetDateTime().toOffsetTime(),
+                    this.timeItem.hasTimeZone()
+                );
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
@@ -61,15 +64,19 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
             if (this.timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createTimeItem(
-                        this.timeItem.getDateTimeValue()
-                            .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        OffsetTime.from(
+                            this.timeItem.getDateTimeValue()
+                                .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
+                        ),
                         true
                     );
             }
             return ItemFactory.getInstance()
                 .createTimeItem(
-                    this.timeItem.getDateTimeValue()
-                        .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                    OffsetTime.from(
+                        this.timeItem.getDateTimeValue()
+                            .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
+                    ),
                     true
                 );
         }

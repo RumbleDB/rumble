@@ -385,10 +385,10 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     ) {
         if (isMinus) {
             return ItemFactory.getInstance()
-                .createDateItem(l.minus(r), timeZone);
+                .createDateItem(l.minus(r).toOffsetDateTime(), timeZone);
         } else {
             return ItemFactory.getInstance()
-                .createDateItem(l.plus(r), timeZone);
+                .createDateItem(l.plus(r).toOffsetDateTime(), timeZone);
         }
     }
 
@@ -400,10 +400,10 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     ) {
         if (isMinus) {
             return ItemFactory.getInstance()
-                .createTimeItem(l.minus(r), timeZone);
+                .createTimeItem(l.minus(r).toOffsetDateTime().toOffsetTime(), timeZone);
         } else {
             return ItemFactory.getInstance()
-                .createTimeItem(l.plus(r), timeZone);
+                .createTimeItem(l.plus(r).toOffsetDateTime().toOffsetTime(), timeZone);
         }
     }
 
