@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
 import java.time.Duration;
-import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,7 +30,7 @@ public class TimezoneFromDateFunctionIterator extends AtMostOneItemLocalRuntimeI
         }
         return ItemFactory.getInstance()
             .createDayTimeDurationItem(
-                Period.from(Duration.ofMillis(this.dateItem.getDateTimeValue().getOffset().getTotalSeconds() * 1000L))
+                Duration.ofMillis(this.dateItem.getDateTimeValue().getOffset().getTotalSeconds() * 1000L)
             );
     }
 }

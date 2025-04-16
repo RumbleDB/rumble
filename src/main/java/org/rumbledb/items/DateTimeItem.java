@@ -6,7 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -14,7 +14,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-import java.time.format.ResolverStyle;
 import java.util.regex.Pattern;
 
 public class DateTimeItem implements Item {
@@ -28,7 +27,13 @@ public class DateTimeItem implements Item {
     private static final String endOfDayFrag = "(24:00:00(\\.(0)+)?)";
     private static final String timezoneFrag = "(Z|([+\\-])(((0\\d|1[0-3]):" + minuteFrag + ")|(14:00)))";
     private static final String dateFrag = "(" + yearFrag + '-' + monthFrag + '-' + dayFrag + ")";
-    private static final String timeFrag = String.format("((%s:%s:%s)|(%s))", hourFrag, minuteFrag, secondFrag, endOfDayFrag);
+    private static final String timeFrag = String.format(
+        "((%s:%s:%s)|(%s))",
+        hourFrag,
+        minuteFrag,
+        secondFrag,
+        endOfDayFrag
+    );
 
     private static final String dateTimeLexicalRep = String.format("%sT%s(%s)?", dateFrag, timeFrag, timezoneFrag);
     private static final String dateTimeStampLexicalRep = String.format("%sT%s%s", dateFrag, timeFrag, timezoneFrag);
@@ -57,10 +62,10 @@ public class DateTimeItem implements Item {
     }
 
     public DateTimeItem(String dateTimeString) {
-        getDateTimeValue(dateTimeString);
+        getDateTimeFromString(dateTimeString);
     }
 
-    private void getDateTimeValue(String dateTimeString) {
+    private void getDateTimeFromString(String dateTimeString) {
         try {
             if (
                 dateTimeString.contains("Z") || dateTimeString.contains("+") || dateTimeString.matches(".*-\\d\\d:.*")
@@ -145,37 +150,6 @@ public class DateTimeItem implements Item {
         this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
-    static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-        if (
-            dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)
-                ||
-                dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)
-        ) {
-            return DateTimeFormatter.ISO_DATE_TIME; // ISO date-time with offset
-        }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
-            DateTimeFormatter timeZoneOffsetFormatter = new DateTimeFormatterBuilder()
-                .appendPattern("['Z']")
-                .optionalStart()
-                .appendOffset("+HH", "+00")
-                .optionalEnd()
-                .toFormatter()
-                .withResolverStyle(ResolverStyle.STRICT);
-
-            return new DateTimeFormatterBuilder()
-                .append(DateTimeFormatter.ISO_LOCAL_DATE) // Assuming this returns a DateTimeFormatter
-                .optionalStart()
-                .append(timeZoneOffsetFormatter)
-                .optionalEnd()
-                .toFormatter()
-                .withResolverStyle(ResolverStyle.STRICT);
-        }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-            return DateTimeFormatter.ISO_TIME; // ISO time with offset
-        }
-        throw new IllegalArgumentException("Unsupported ItemType: " + dateTimeType);
-    }
-
     static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
             return dateTimeStampPattern.matcher(dateTime).matches();
@@ -191,67 +165,6 @@ public class DateTimeItem implements Item {
         }
         return false;
     }
-
-    private static String fixEndOfDay(String dateTime) {
-        String endOfDay = "24:00:00";
-        String startOfDay = "00:00:00";
-        if (dateTime.contains(endOfDay)) {
-            if (dateTime.indexOf(endOfDay) == 0) {
-                return startOfDay;
-            }
-            int indexOfT = dateTime.indexOf('T');
-            if (
-                indexOfT < 1
-                    || indexOfT != dateTime.indexOf(endOfDay) - 1
-                    || !Character.isDigit(dateTime.charAt(indexOfT - 1))
-            ) {
-                throw new IllegalArgumentException();
-            }
-            int dayValue;
-            try {
-                dayValue = Character.getNumericValue(dateTime.charAt(indexOfT - 1));
-            } catch (Exception e) {
-                throw new IllegalArgumentException();
-            }
-            return dateTime.substring(0, indexOfT - 1)
-                +
-                (dayValue + 1)
-                + "T"
-                + startOfDay
-                +
-                dateTime.substring(indexOfT + endOfDay.length() + 1);
-        }
-        return dateTime;
-    }
-
-    // static ZonedDateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
-    // if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
-    // throw new IllegalArgumentException();
-    // }
-    // dateTime = fixEndOfDay(dateTime);
-    // try {
-    // if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
-    // return LocalDate.parse(dateTime, getDateTimeFormatter(dateTimeType)).atStartOfDay(ZoneId.of("UTC"));
-    // } else if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-    // try {
-    // return LocalDateTime.of(LocalDate.now(), LocalTime.parse(dateTime)).atZone(ZoneId.of("UTC"));
-    // } catch (DateTimeParseException e) {
-    // return OffsetTime.parse(dateTime).atDate(LocalDate.now()).atZoneSameInstant(ZoneId.of("UTC"));
-    // }
-    // } else {
-    // try {
-    // return ZonedDateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
-    // } catch (DateTimeParseException e) {
-    // return LocalDateTime.parse(dateTime).atZone(ZoneId.of("UTC"));
-    // }
-    // }
-    // } catch (IllegalArgumentException e) {
-    // throw new DatetimeOverflowOrUnderflow(
-    // "Invalid datetime: \"" + dateTime + "\"",
-    // ExceptionMetadata.EMPTY_METADATA
-    // );
-    // }
-    // }
 
     @Override
     public ItemType getDynamicType() {

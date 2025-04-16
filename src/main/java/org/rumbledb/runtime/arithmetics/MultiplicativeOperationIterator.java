@@ -544,7 +544,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 long durationInMillis = l.getDays() * 24L * 60 * 60 * 1000; // Convert days to milliseconds
                 long durationResult = Math.round(durationInMillis * r);
                 return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(Period.from(Duration.of(durationResult, ChronoUnit.MILLIS)));
+                    .createDayTimeDurationItem(Duration.of(durationResult, ChronoUnit.MILLIS));
             }
             case DIV: {
                 long durationInMillis = l.getDays() * 24L * 60 * 60 * 1000; // Convert days to milliseconds
@@ -554,7 +554,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 long durationResult = Math.round(durationInMillis / r);
                 try {
                     return ItemFactory.getInstance()
-                        .createDayTimeDurationItem(Period.from(Duration.of(durationResult, ChronoUnit.MILLIS)));
+                        .createDayTimeDurationItem(Duration.of(durationResult, ChronoUnit.MILLIS));
                 } catch (ArithmeticException e) {
                     throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
                 }

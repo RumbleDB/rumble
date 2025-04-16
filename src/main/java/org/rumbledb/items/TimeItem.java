@@ -33,7 +33,7 @@ public class TimeItem implements Item {
     }
 
     TimeItem(String timeString) {
-        getTimeValue(timeString);
+        getTimeFromString(timeString);
     }
 
     TimeItem(int hour, int minute, int second) {
@@ -48,7 +48,7 @@ public class TimeItem implements Item {
         this.hasTimeZone = true;
     }
 
-    private void getTimeValue(String timeString) {
+    private void getTimeFromString(String timeString) {
         try {
             if (timeString.contains("Z") || timeString.contains("+") || timeString.contains("-")) {
                 this.value = OffsetTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_TIME);

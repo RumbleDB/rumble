@@ -8,7 +8,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.AnnotatedItem;
-import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -432,12 +431,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance()
                         .createYearMonthDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.yearMonthDurationItem
-                            )
+                            item.getStringValue().trim()
                         );
-                } else if (item.isDuration()) {
+                } else if (item.isPeriod()) {
                     result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
                 } else if (item.isDayTimeDuration()) {
                     result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
@@ -456,15 +452,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance()
                         .createDayTimeDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.dayTimeDurationItem
-                            )
+                            item.getStringValue().trim()
                         );
                 } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getPeriodValue());
+                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
                 } else if (item.isYearMonthDuration()) {
-                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getPeriodValue());
+                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
                 } else {
                     return null;
                 }
@@ -480,15 +473,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance()
                         .createDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.durationItem
-                            )
+                            item.getStringValue().trim()
                         );
                 } else if (item.isDayTimeDuration()) {
-                    result = ItemFactory.getInstance().createDurationItem(item.getPeriodValue());
+                    result = ItemFactory.getInstance().createDurationItem(item.getDurationValue());
                 } else if (item.isYearMonthDuration()) {
-                    return ItemFactory.getInstance().createDurationItem(item.getPeriodValue());
+                    return ItemFactory.getInstance().createDurationItem(item.getDurationValue());
                 } else {
                     return null;
                 }

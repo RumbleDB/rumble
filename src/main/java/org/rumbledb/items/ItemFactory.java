@@ -1,9 +1,7 @@
 package org.rumbledb.items;
 
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.ZonedDateTime;
-import java.time.Period;
+import java.time.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
@@ -128,7 +126,11 @@ public class ItemFactory {
         return new AnnotatedItem(itemToAnnotate, type);
     }
 
-    public Item createDurationItem(Period p) {
+    public Item createDurationItem(Duration p) {
+        return new DurationItem(p);
+    }
+
+    public Item createDurationItem(String p) {
         return new DurationItem(p);
     }
 
@@ -136,7 +138,15 @@ public class ItemFactory {
         return new YearMonthDurationItem(p);
     }
 
-    public Item createDayTimeDurationItem(Period p) {
+    public Item createYearMonthDurationItem(String p) {
+        return new YearMonthDurationItem(p);
+    }
+
+    public Item createDayTimeDurationItem(Duration p) {
+        return new DayTimeDurationItem(p);
+    }
+
+    public Item createDayTimeDurationItem(String p) {
         return new DayTimeDurationItem(p);
     }
 

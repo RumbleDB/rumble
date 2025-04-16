@@ -22,14 +22,16 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
 import java.time.Duration;
+import java.time.Period;
 import java.time.ZonedDateTime;
 import java.time.Instant;
-import java.time.Period;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
+import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -63,7 +65,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient boolean hasTimeZone = false;
     private transient ZonedDateTime currentMaxDate; // TODO: Change to Date type but had issues with Java compiler
     private transient ZonedDateTime currentMaxDateTime;
-    private transient Period currentMaxDayTimeDuration;
+    private transient Duration currentMaxDayTimeDuration;
     private transient Period currentMaxYearMonthDuration;
     private transient ZonedDateTime currentMaxTime;
     private transient byte activeType = 0;
@@ -97,6 +99,9 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Duration candidateDuration;
         Duration currentMaxYearMonthDurationVar;
+        Period candidatePeriod;
+        Period currentMaxYearMonthPeriodVar;
+
 
         this.currentMinIsNullItem = false;
         this.currentMaxDouble = 0;
@@ -162,7 +167,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             }
                         } else if (candidateType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
                             this.activeType = 10;
-                            this.currentMaxDayTimeDuration = candidateItem.getPeriodValue();
+                            this.currentMaxDayTimeDuration = candidateItem.getDurationValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                             this.activeType = 11;
                             this.currentMaxYearMonthDuration = candidateItem.getPeriodValue();
@@ -372,10 +377,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        candidateDuration = Duration.from(candidateItem.getPeriodValue());
-                        currentMaxYearMonthDurationVar = Duration.from(this.currentMaxYearMonthDuration);
-                        if (candidateDuration.compareTo(currentMaxYearMonthDurationVar) > 0) {
-                            this.currentMaxYearMonthDuration = Period.from(candidateDuration);
+                        candidatePeriod = candidateItem.getPeriodValue();
+                        currentMaxYearMonthPeriodVar = this.currentMaxYearMonthDuration;
+                        if (DurationItem.periodComparator.compare(currentMaxYearMonthPeriodVar, candidatePeriod) > 0) {
+                            this.currentMaxYearMonthDuration = Period.from(candidatePeriod);
                         }
                         break;
                     case 11:
@@ -385,10 +390,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        candidateDuration = Duration.from(candidateItem.getPeriodValue());
-                        currentMaxYearMonthDurationVar = Duration.from(this.currentMaxYearMonthDuration);
-                        if (candidateDuration.compareTo(currentMaxYearMonthDurationVar) > 0) {
-                            this.currentMaxYearMonthDuration = Period.from(candidateDuration);
+                        candidatePeriod = candidateItem.getPeriodValue();
+                        currentMaxYearMonthPeriodVar = this.currentMaxYearMonthDuration;
+                        if (DurationItem.periodComparator.compare(currentMaxYearMonthPeriodVar, candidatePeriod) > 0) {
+                            this.currentMaxYearMonthDuration = Period.from(candidatePeriod);
                         }
                         break;
                     case 12:

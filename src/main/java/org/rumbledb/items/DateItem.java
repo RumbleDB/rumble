@@ -33,7 +33,7 @@ public class DateItem implements Item {
     }
 
     DateItem(String dateTimeString) {
-        getDateValue(dateTimeString);
+        getDateFromString(dateTimeString);
     }
 
     DateItem(int year, int month, int day) {
@@ -48,7 +48,7 @@ public class DateItem implements Item {
         this.hasTimeZone = true;
     }
 
-    private void getDateValue(String dateString) {
+    private void getDateFromString(String dateString) {
         try {
             if (dateString.contains("Z") || dateString.contains("+") || dateString.contains(":")) {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
@@ -121,7 +121,7 @@ public class DateItem implements Item {
     public void read(Kryo kryo, Input input) {
         String dateString = input.readString();
         this.hasTimeZone = input.readBoolean();
-        getDateValue(dateString);
+        getDateFromString(dateString);
     }
 
     @Override
