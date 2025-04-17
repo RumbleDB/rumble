@@ -306,7 +306,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return Date.valueOf(LocalDate.of(item.getYear(), item.getMonth(), item.getDay()));
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                return Timestamp.valueOf(LocalDateTime.of(item.getYear(), item.getMonth(), item.getDay(), item.getHour(), item.getMinute(), item.getSecond()));
+                return Timestamp.valueOf(
+                    LocalDateTime.of(
+                        item.getYear(),
+                        item.getMonth(),
+                        item.getDay(),
+                        item.getHour(),
+                        item.getMinute(),
+                        item.getSecond()
+                    )
+                );
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 return item.getBinaryValue();

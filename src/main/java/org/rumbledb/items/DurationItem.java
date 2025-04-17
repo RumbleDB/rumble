@@ -140,10 +140,11 @@ public class DurationItem implements Item {
         return base.plus(p1).compareTo(base.plus(p2));
     };
 
-    public long getSeconds(){
+    public long getSeconds() {
         return this.durationValue.getSeconds();
     }
-    public int getMonths(){
+
+    public int getMonths() {
         return this.periodValue.getMonths();
     }
 }
