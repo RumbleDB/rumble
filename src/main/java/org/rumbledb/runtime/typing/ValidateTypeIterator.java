@@ -30,6 +30,8 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -301,10 +303,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
-                return Date.from(item.getDateTimeValue().toInstant());
+                return Date.valueOf(LocalDate.of(item.getYear(), item.getMonth(), item.getDay()));
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                return Timestamp.from(item.getDateTimeValue().toInstant());
+                return Timestamp.valueOf(LocalDateTime.of(item.getYear(), item.getMonth(), item.getDay(), item.getHour(), item.getMinute(), item.getSecond()));
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 return item.getBinaryValue();

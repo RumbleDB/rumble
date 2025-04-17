@@ -65,13 +65,13 @@ public class DurationItem implements Item {
     public String getStringValue() {
         String stringDuration = "";
         String stringPeriod = "";
-        if (isDuration) {
+        if (this.isDuration) {
             stringDuration = this.durationValue.toString();
-            if (isPeriod) {
+            if (this.isPeriod) {
                 stringDuration = stringDuration.substring(1);
             }
         }
-        if (isPeriod) {
+        if (this.isPeriod) {
             stringPeriod = this.periodValue.toString();
         }
 
@@ -100,7 +100,7 @@ public class DurationItem implements Item {
 
     @Override
     public int hashCode() {
-        return Objects.hash(durationValue, periodValue);
+        return Objects.hash(this.durationValue, this.periodValue);
     }
 
     @Override
@@ -139,4 +139,11 @@ public class DurationItem implements Item {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };
+
+    public long getSeconds(){
+        return this.durationValue.getSeconds();
+    }
+    public int getMonths(){
+        return this.periodValue.getMonths();
+    }
 }

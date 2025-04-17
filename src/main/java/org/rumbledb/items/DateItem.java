@@ -81,11 +81,6 @@ public class DateItem implements Item {
     }
 
     @Override
-    public ZonedDateTime getDateTimeValue() {
-        return this.value.toZonedDateTime();
-    }
-
-    @Override
     public String getStringValue() {
         if (this.hasTimeZone) {
             return this.value.format(DateTimeFormatter.ISO_OFFSET_DATE);
