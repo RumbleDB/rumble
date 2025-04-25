@@ -50,7 +50,7 @@ public class DateItem implements Item {
 
     private void getDateFromString(String dateString) {
         try {
-            if (dateString.contains("Z") || dateString.contains("+") || dateString.contains(":")) {
+            if (dateString.contains("Z") || dateString.contains(":")) {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
                     .atStartOfDay()
                     .atOffset(ZoneOffset.of(dateString.substring(10)));
