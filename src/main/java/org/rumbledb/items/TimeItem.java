@@ -50,7 +50,7 @@ public class TimeItem implements Item {
 
     private void getTimeFromString(String timeString) {
         try {
-            if (timeString.startsWith("24:00:00")) {
+            if (timeString.contains("24:00:00")) {
                 timeString = timeString.replace("24:00:00", "00:00:00");
             }
             if (timeString.contains("Z") || timeString.contains("+") || timeString.contains("-")) {
