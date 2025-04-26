@@ -49,7 +49,15 @@ public class DateItem implements Item {
     }
 
     private void getDateFromString(String dateString) {
+        int yearIncrement = 0;
         try {
+            String[] yearAndRest = dateString.split("-",2);
+            String yearOnly = yearAndRest[0];
+            String rest = yearAndRest[1];
+            if (yearOnly.length() > 4){
+                dateString = "2000-" + rest;
+                yearIncrement = Integer.parseInt(yearOnly) - 2000;
+            }
             if (dateString.contains("Z") || dateString.contains(":")) {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
                     .atStartOfDay()
@@ -61,6 +69,7 @@ public class DateItem implements Item {
                     .toOffsetDateTime();
                 this.hasTimeZone = false;
             }
+            this.value = this.value.plusYears(yearIncrement);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid xs:date format: " + dateString, e);
         }
@@ -82,11 +91,16 @@ public class DateItem implements Item {
 
     @Override
     public String getStringValue() {
+        String stringValue;
         if (this.hasTimeZone) {
-            return this.value.format(DateTimeFormatter.ISO_OFFSET_DATE);
+            stringValue = this.value.format(DateTimeFormatter.ISO_OFFSET_DATE);
         } else {
-            return this.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            stringValue = this.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
+        if (this.value.toString().startsWith("+")){
+            return stringValue.substring(1);
+        }
+        return stringValue;
     }
 
     @Override
@@ -150,6 +164,10 @@ public class DateItem implements Item {
         return this.value.getDayOfMonth();
     }
 
+    /**
+     * Offset is an integer between −840 and 840 inclusive
+     * @return offset in minutes
+     */
     @Override
     public int getOffset() {
         ZoneOffset zoneOffset = this.value.getOffset();
@@ -159,6 +177,11 @@ public class DateItem implements Item {
     @Override
     public boolean hasTimeZone() {
         return this.hasTimeZone;
+    }
+
+    @Override
+    public ZonedDateTime getDateTimeValue() {
+        return ZonedDateTime.of(this.value.toLocalDateTime(), this.value.getOffset());
     }
 
 

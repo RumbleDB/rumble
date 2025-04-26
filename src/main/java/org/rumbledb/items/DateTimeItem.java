@@ -36,7 +36,20 @@ public class DateTimeItem implements Item {
     }
 
     private void getDateTimeFromString(String dateTimeString) {
+        int yearIncrement = 0;
+        int dayIncrement = 0;
         try {
+            String[] yearAndRest = dateTimeString.split("-",2);
+            String yearOnly = yearAndRest[0];
+            String rest = yearAndRest[1];
+            if (yearOnly.length() > 4){
+                dateTimeString = "2000-" + rest;
+                yearIncrement = Integer.parseInt(yearOnly) - 2000;
+            }
+            if (dateTimeString.contains("24:00:00")) {
+                dateTimeString = dateTimeString.replace("24:00:00", "00:00:00");
+                dayIncrement = 1;
+            }
             if (
                 dateTimeString.contains("Z") || dateTimeString.contains("+") || dateTimeString.matches(".*-\\d\\d:.*")
             ) {
@@ -47,6 +60,7 @@ public class DateTimeItem implements Item {
                     .atZone(ZoneOffset.UTC);
                 this.hasTimeZone = false;
             }
+            this.value = this.value.plusDays(dayIncrement).plusYears(yearIncrement);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid xs:dateTime format: " + dateTimeString, e);
         }
@@ -73,11 +87,16 @@ public class DateTimeItem implements Item {
 
     @Override
     public String getStringValue() {
+        String stringValue;
         if (this.hasTimeZone) {
-            return this.value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            stringValue = this.value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } else {
-            return this.value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            stringValue = this.value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
+        if (this.value.toString().startsWith("+")){
+            return stringValue.substring(1);
+        }
+        return stringValue;
     }
 
     @Override
