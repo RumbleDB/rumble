@@ -22,6 +22,7 @@ package org.rumbledb.runtime.arithmetics;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.OffsetTime;
 import java.util.Arrays;
 
 import java.time.ZonedDateTime;
@@ -226,14 +227,14 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             }
         }
         if (left.isTime() && right.isDayTimeDuration()) {
-            ZonedDateTime l = left.getDateTimeValue();
+            OffsetTime l = left.getTimeValue();
             Duration r = right.getDurationValue();
             return processDateTimeDurationTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
                 Duration l = left.getDurationValue();
-                ZonedDateTime r = right.getDateTimeValue();
+                OffsetTime r = right.getTimeValue();
                 return processDateTimeDurationTime(r, l, isMinus, right.hasTimeZone());
             }
         }
@@ -270,9 +271,9 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (left.isTime() && right.isTime()) {
             if (isMinus) {
-                ZonedDateTime l = left.getDateTimeValue();
-                ZonedDateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r);
+                OffsetTime l = left.getTimeValue();
+                OffsetTime r = right.getTimeValue();
+                return processTimeDayTime(l, r);
             }
         }
         if (left.isDateTime() && right.isDateTime()) {
@@ -377,6 +378,10 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             .createDayTimeDurationItem(Duration.between(r, l));
     }
 
+    private static Item processTimeDayTime(OffsetTime l, OffsetTime r) {
+        return ItemFactory.getInstance().createDayTimeDurationItem(Duration.between(r, l));
+    }
+
     private static Item processDateTimeDurationDate(
             ZonedDateTime l,
             Duration r,
@@ -393,17 +398,17 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processDateTimeDurationTime(
-            ZonedDateTime l,
+            OffsetTime l,
             Duration r,
             boolean isMinus,
             boolean timeZone
     ) {
         if (isMinus) {
             return ItemFactory.getInstance()
-                .createTimeItem(l.minus(r).toOffsetDateTime().toOffsetTime(), timeZone);
+                .createTimeItem(l.minus(r), timeZone);
         } else {
             return ItemFactory.getInstance()
-                .createTimeItem(l.plus(r).toOffsetDateTime().toOffsetTime(), timeZone);
+                .createTimeItem(l.plus(r), timeZone);
         }
     }
 

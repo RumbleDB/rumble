@@ -36,18 +36,6 @@ public class TimeItem implements Item {
         getTimeFromString(timeString);
     }
 
-    TimeItem(int hour, int minute, int second) {
-        super();
-        this.value = OffsetTime.of(hour, minute, second, 0, ZoneOffset.UTC);
-        this.hasTimeZone = false;
-    }
-
-    TimeItem(int hour, int minute, int second, int zoneOffset) {
-        super();
-        this.value = OffsetTime.of(hour, minute, second, 0, ZoneOffset.ofTotalSeconds(zoneOffset * 60));
-        this.hasTimeZone = true;
-    }
-
     private void getTimeFromString(String timeString) {
         try {
             if (timeString.contains("24:00:00")) {
@@ -156,5 +144,14 @@ public class TimeItem implements Item {
     @Override
     public int getOffset() {
         return this.value.getOffset().getTotalSeconds() / 60;
+    }
+
+    @Override
+    public ZoneOffset getZoneOffset() {
+        return this.value.getOffset();
+    }
+
+    public OffsetTime getTimeValue() {
+        return this.value;
     }
 }

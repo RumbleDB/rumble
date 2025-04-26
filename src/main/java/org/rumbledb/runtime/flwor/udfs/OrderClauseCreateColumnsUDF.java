@@ -23,7 +23,6 @@ package org.rumbledb.runtime.flwor.udfs;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
-import java.time.Duration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -138,20 +137,20 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.results.add(nextItem.getBinaryValue());
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.durationItem.getName())
-                        || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
                 ) {
-                    this.results.add(
-                        Duration.ofDays(
-                            nextItem.getPeriodValue().toTotalMonths() * 30 + nextItem.getPeriodValue().getDays()
-                        ).toMillis()
-                    );
+                    this.results.add(nextItem.getDurationValue());
+                } else if (
+                    typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
+                ) {
+                    this.results.add(nextItem.getPeriodValue());
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())
-                        || typeName.equals(BuiltinTypesCatalogue.timeItem.getName())
                 ) {
                     this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
+                } else if (typeName.equals(BuiltinTypesCatalogue.timeItem.getName())) {
+                    this.results.add(nextItem.getTimeValue().toLocalTime().toNanoOfDay() / 1_000_000);
                 } else {
                     throw new OurBadException(
                             "Unexpected ordering type found while creating columns."

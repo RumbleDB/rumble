@@ -20,8 +20,8 @@
 
 package org.rumbledb.runtime.misc;
 
-import java.time.Period;
-import java.time.ZonedDateTime;
+import java.time.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -263,14 +263,14 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processDecimal(l, r);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getPeriodValue();
-            Period r = right.getPeriodValue();
+            Duration l = left.getDurationValue();
+            Duration r = right.getDurationValue();
             return processDuration(l, r);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
             Period l = left.getPeriodValue();
             Period r = right.getPeriodValue();
-            return processDuration(l, r);
+            return processPeriod(l, r);
         }
         if (left.isDuration() && right.isDuration()) {
             switch (comparisonOperator) {
@@ -278,8 +278,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 case GC_EQ:
                 case VC_NE:
                 case GC_NE:
-                    Period l = left.getPeriodValue();
-                    Period r = right.getPeriodValue();
+                    Duration l = left.getDurationValue();
+                    Duration r = right.getDurationValue();
                     return processDuration(l, r);
                 default:
             }
@@ -300,9 +300,9 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processDateTime(l, r);
         }
         if (left.isTime() && right.isTime()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            OffsetTime l = left.getTimeValue();
+            OffsetTime r = right.getTimeValue();
+            return processTime(l, r);
         }
         if (left.isDateTime() && right.isDateTime()) {
             ZonedDateTime l = left.getDateTimeValue();
@@ -417,15 +417,30 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static int processDuration(
+            Duration l,
+            Duration r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processPeriod(
             Period l,
             Period r
     ) {
-        return Long.compare(l.toTotalMonths(), r.toTotalMonths());
+        LocalDate baseDate = LocalDate.of(2000, 1, 1);
+        return baseDate.plus(l).compareTo(baseDate.plus(r));
     }
 
     private static int processDateTime(
             ZonedDateTime l,
             ZonedDateTime r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processTime(
+            OffsetTime l,
+            OffsetTime r
     ) {
         return l.compareTo(r);
     }

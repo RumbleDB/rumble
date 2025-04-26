@@ -31,7 +31,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -149,16 +148,16 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(durationGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            this.results.add(
-                Duration.ofDays(
-                    nextItem.getPeriodValue().toTotalMonths() * 30 + nextItem.getPeriodValue().getDays()
-                ).toMillis()
-            );
+            this.results.add(nextItem.getDurationValue());
         } else if (nextItem.hasDateTime()) {
             this.results.add(dateTimeGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
+            if (nextItem.isDate()) {
+                this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
+            } else if (nextItem.isTime()) {
+                this.results.add(nextItem.getTimeValue().toLocalTime().toNanoOfDay() / 1_000_000);
+            }
         } else {
             throw new UnexpectedTypeException(
                     "Group by variable can not contain arrays or objects.",

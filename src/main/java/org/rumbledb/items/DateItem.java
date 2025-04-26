@@ -36,25 +36,13 @@ public class DateItem implements Item {
         getDateFromString(dateTimeString);
     }
 
-    DateItem(int year, int month, int day) {
-        super();
-        this.value = OffsetDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC);
-        this.hasTimeZone = false;
-    }
-
-    DateItem(int year, int month, int day, int zoneOffset) {
-        super();
-        this.value = OffsetDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.ofTotalSeconds(zoneOffset * 60));
-        this.hasTimeZone = true;
-    }
-
     private void getDateFromString(String dateString) {
         int yearIncrement = 0;
         try {
-            String[] yearAndRest = dateString.split("-",2);
+            String[] yearAndRest = dateString.split("-", 2);
             String yearOnly = yearAndRest[0];
             String rest = yearAndRest[1];
-            if (yearOnly.length() > 4){
+            if (yearOnly.length() > 4) {
                 dateString = "2000-" + rest;
                 yearIncrement = Integer.parseInt(yearOnly) - 2000;
             }
@@ -97,7 +85,7 @@ public class DateItem implements Item {
         } else {
             stringValue = this.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
-        if (this.value.toString().startsWith("+")){
+        if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }
         return stringValue;
@@ -166,6 +154,7 @@ public class DateItem implements Item {
 
     /**
      * Offset is an integer between −840 and 840 inclusive
+     * 
      * @return offset in minutes
      */
     @Override
@@ -184,5 +173,8 @@ public class DateItem implements Item {
         return ZonedDateTime.of(this.value.toLocalDateTime(), this.value.getOffset());
     }
 
-
+    @Override
+    public OffsetDateTime getDateValue() {
+        return this.value;
+    }
 }

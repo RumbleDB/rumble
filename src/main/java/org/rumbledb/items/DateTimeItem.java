@@ -39,10 +39,10 @@ public class DateTimeItem implements Item {
         int yearIncrement = 0;
         int dayIncrement = 0;
         try {
-            String[] yearAndRest = dateTimeString.split("-",2);
+            String[] yearAndRest = dateTimeString.split("-", 2);
             String yearOnly = yearAndRest[0];
             String rest = yearAndRest[1];
-            if (yearOnly.length() > 4){
+            if (yearOnly.length() > 4) {
                 dateTimeString = "2000-" + rest;
                 yearIncrement = Integer.parseInt(yearOnly) - 2000;
             }
@@ -93,7 +93,7 @@ public class DateTimeItem implements Item {
         } else {
             stringValue = this.value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         }
-        if (this.value.toString().startsWith("+")){
+        if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }
         return stringValue;
