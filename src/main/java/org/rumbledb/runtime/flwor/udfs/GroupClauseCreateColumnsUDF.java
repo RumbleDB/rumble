@@ -148,7 +148,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(durationGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            this.results.add(nextItem.getDurationValue());
+            this.results.add(nextItem.getEpochMilis());
         } else if (nextItem.hasDateTime()) {
             this.results.add(dateTimeGroupIndex);
             this.results.add(null);

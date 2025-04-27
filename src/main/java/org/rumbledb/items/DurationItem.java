@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Comparator;
 import java.util.Objects;
@@ -85,7 +86,7 @@ public class DurationItem implements Item {
 
     @Override
     public boolean isDuration() {
-        return this.isDuration;
+        return true;
     }
 
     @Override
@@ -146,5 +147,12 @@ public class DurationItem implements Item {
 
     public int getMonths() {
         return this.periodValue.getMonths();
+    }
+
+    @Override
+    public long getEpochMilis() {
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.periodValue);
+        return Duration.between(anchor, target).plus(this.durationValue).toMillis();
     }
 }

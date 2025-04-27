@@ -431,7 +431,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createYearMonthDurationItem(item.getStringValue().trim());
-                } else if (item.isPeriod()) {
+                } else if (item.isDuration()) {
                     result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
                 } else if (item.isDayTimeDuration()) {
                     result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());

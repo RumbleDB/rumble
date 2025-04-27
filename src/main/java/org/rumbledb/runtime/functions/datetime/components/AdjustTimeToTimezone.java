@@ -1,8 +1,7 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
 import java.time.Duration;
-import java.time.OffsetTime;
-import java.time.ZoneOffset;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -16,7 +15,6 @@ import java.util.List;
 public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item timeItem = null;
     private Item timezone = null;
 
     public AdjustTimeToTimezone(
@@ -28,68 +26,37 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.timeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item timeItem = this.children.get(0).materializeFirstItemOrNull(context);
         if (this.children.size() == 2) {
             this.timezone = this.children.get(1)
                 .materializeFirstItemOrNull(context);
         }
-        if (this.timeItem == null) {
+        if (timeItem == null) {
             return null;
         }
         if (this.timezone == null && this.children.size() == 1) {
-            return ItemFactory.getInstance()
-                .createTimeItem(this.timeItem.getDateTimeValue().toOffsetDateTime().toOffsetTime(), true);
+            return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), true);
         }
         if (this.timezone == null) {
-            if (this.timeItem.hasTimeZone()) {
-                return ItemFactory.getInstance()
-                    .createTimeItem(
-                        this.timeItem.getDateTimeValue().toOffsetDateTime().toOffsetTime(),
-                        false
-                    );
+            if (timeItem.hasTimeZone()) {
+                return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), false);
             }
             return ItemFactory.getInstance()
-                .createTimeItem(
-                    this.timeItem.getDateTimeValue().toOffsetDateTime().toOffsetTime(),
-                    this.timeItem.hasTimeZone()
-                );
+                .createTimeItem(timeItem.getTimeValue(), timeItem.hasTimeZone());
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
-            Duration timezoneDuration = Duration.from(this.timezone.getPeriodValue());
-            int hours = (int) timezoneDuration.toHours();
-            int minutes = (int) (timezoneDuration.toMinutes() % 60);
-
-            if (this.timeItem.hasTimeZone()) {
-                return ItemFactory.getInstance()
-                    .createTimeItem(
-                        OffsetTime.from(
-                            this.timeItem.getDateTimeValue()
-                                .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
-                        ),
-                        true
-                    );
+            if (timeItem.hasTimeZone()) {
+                return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), true);
             }
-            return ItemFactory.getInstance()
-                .createTimeItem(
-                    OffsetTime.from(
-                        this.timeItem.getDateTimeValue()
-                            .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
-                    ),
-                    true
-                );
+            return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), false);
         }
     }
 
     private boolean checkTimeZoneArgument() {
-        Duration timezoneDuration = Duration.from(this.timezone.getPeriodValue());
-        return (Math.abs(timezoneDuration.toMillis()) > 50400000)
-            ||
-            (Double.compare(
-                timezoneDuration.getSeconds()
-                    + (timezoneDuration.toMillis() / 1000.0),
-                0
-            ) != 0);
+        Duration timezoneDuration = this.timezone.getDurationValue();
+        return (Math.abs(timezoneDuration.toMinutes()) > 840)
+            || (Double.compare(timezoneDuration.getNano(), 0) != 0);
     }
 }

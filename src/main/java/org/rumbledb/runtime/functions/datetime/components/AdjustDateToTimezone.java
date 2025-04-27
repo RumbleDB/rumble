@@ -15,7 +15,6 @@ import java.util.List;
 public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateItem = null;
     private Item timezone = null;
 
     public AdjustDateToTimezone(
@@ -27,37 +26,37 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item dateItem = this.children.get(0).materializeFirstItemOrNull(context);
         if (this.children.size() == 2) {
             this.timezone = this.children.get(1)
                 .materializeFirstItemOrNull(context);
         }
-        if (this.dateItem == null) {
+        if (dateItem == null) {
             return null;
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createDateItem(this.dateItem.getDateTimeValue().toOffsetDateTime(), true);
+                .createDateItem(dateItem.getDateTimeValue().toOffsetDateTime(), true);
         }
         if (this.timezone == null) {
-            if (this.dateItem.hasTimeZone()) {
+            if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createDateItem(this.dateItem.getDateTimeValue().toOffsetDateTime(), false);
+                    .createDateItem(dateItem.getDateTimeValue().toOffsetDateTime(), false);
             }
             return ItemFactory.getInstance()
-                .createDateItem(this.dateItem.getDateTimeValue().toOffsetDateTime(), this.dateItem.hasTimeZone());
+                .createDateItem(dateItem.getDateTimeValue().toOffsetDateTime(), dateItem.hasTimeZone());
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
-            Duration timezoneDuration = Duration.from(this.timezone.getPeriodValue());
+            Duration timezoneDuration = this.timezone.getDurationValue();
             int hours = (int) timezoneDuration.toHours();
             int minutes = (int) (timezoneDuration.toMinutes() % 60);
 
-            if (this.dateItem.hasTimeZone()) {
+            if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateItem(
-                        this.dateItem.getDateTimeValue()
+                        dateItem.getDateTimeValue()
                             .withZoneSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes))
                             .toOffsetDateTime(),
                         true
@@ -65,7 +64,7 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
             }
             return ItemFactory.getInstance()
                 .createDateItem(
-                    this.dateItem.getDateTimeValue()
+                    dateItem.getDateTimeValue()
                         .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
                         .toOffsetDateTime(),
                     true
@@ -74,13 +73,8 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private boolean checkTimeZoneArgument() {
-        Duration timezoneDuration = Duration.from(this.timezone.getPeriodValue());
-        return (Math.abs(timezoneDuration.toMillis()) > 50400000)
-            ||
-            (Double.compare(
-                timezoneDuration.getSeconds()
-                    + (timezoneDuration.toMillis() / 1000.0),
-                0
-            ) != 0);
+        Duration timezoneDuration = this.timezone.getDurationValue();
+        return (Math.abs(timezoneDuration.toMinutes()) > 840)
+            || (Double.compare(timezoneDuration.getNano(), 0) != 0);
     }
 }

@@ -263,14 +263,14 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processDecimal(l, r);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Duration l = left.getDurationValue();
-            Duration r = right.getDurationValue();
-            return processDuration(l, r);
-        }
-        if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
             Period l = left.getPeriodValue();
             Period r = right.getPeriodValue();
             return processPeriod(l, r);
+        }
+        if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
+            Duration l = left.getDurationValue();
+            Duration r = right.getDurationValue();
+            return processDuration(l, r);
         }
         if (left.isDuration() && right.isDuration()) {
             switch (comparisonOperator) {

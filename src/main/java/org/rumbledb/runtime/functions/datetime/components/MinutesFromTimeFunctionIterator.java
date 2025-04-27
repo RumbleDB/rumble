@@ -12,7 +12,6 @@ import java.util.List;
 public class MinutesFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateTimeItem = null;
 
     public MinutesFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -23,12 +22,12 @@ public class MinutesFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateTimeItem = this.children.get(0)
+        Item timeItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
-        if (this.dateTimeItem == null) {
+        if (timeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getMinute());
+        return ItemFactory.getInstance().createIntItem(timeItem.getTimeValue().getMinute());
     }
 
 }

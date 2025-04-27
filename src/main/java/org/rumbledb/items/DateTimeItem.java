@@ -38,7 +38,12 @@ public class DateTimeItem implements Item {
     private void getDateTimeFromString(String dateTimeString) {
         int yearIncrement = 0;
         int dayIncrement = 0;
+        int isMinus = 1;
         try {
+            if (dateTimeString.startsWith("-")) {
+                dateTimeString = dateTimeString.substring(1);
+                isMinus = -1;
+            }
             String[] yearAndRest = dateTimeString.split("-", 2);
             String yearOnly = yearAndRest[0];
             String rest = yearAndRest[1];
@@ -61,6 +66,7 @@ public class DateTimeItem implements Item {
                 this.hasTimeZone = false;
             }
             this.value = this.value.plusDays(dayIncrement).plusYears(yearIncrement);
+            this.value = this.value.withYear(this.value.getYear() * isMinus);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid xs:dateTime format: " + dateTimeString, e);
         }

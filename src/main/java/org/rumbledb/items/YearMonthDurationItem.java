@@ -3,6 +3,8 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.Period;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -44,5 +46,23 @@ public class YearMonthDurationItem extends DurationItem {
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.yearMonthDurationItem;
+    }
+
+    @Override
+    public Duration getDurationValue() {
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.value);
+        return Duration.between(anchor, target);
+    }
+
+    public Period getPeriodValue() {
+        return this.value;
+    }
+
+    @Override
+    public long getEpochMilis() {
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.value);
+        return Duration.between(anchor, target).toMillis();
     }
 }

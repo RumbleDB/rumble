@@ -47,4 +47,14 @@ public class DayTimeDurationItem extends DurationItem {
     public String getStringValue() {
         return this.value.toString();
     }
+
+    @Override
+    public long getEpochMilis() {
+        return this.value.toMillis();
+    }
+
+    @Override
+    public Duration getDurationValue() {
+        return this.value;
+    }
 }

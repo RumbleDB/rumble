@@ -521,7 +521,9 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-
+    default long getEpochMilis() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
 
     /**
      * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem or dateItem or timeItem.

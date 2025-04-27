@@ -24,10 +24,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
-import java.time.Instant;
 import java.time.Period;
 
 import org.rumbledb.api.Item;
@@ -189,8 +187,8 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return processYearMonthDuration(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getPeriodValue();
-            Period r = right.getPeriodValue();
+            Duration l = left.getDurationValue();
+            Duration r = right.getDurationValue();
             return processDayTimeDuration(l, r, multiplicativeOperator, metadata);
         }
         if (left.isYearMonthDuration() && right.isNumeric()) {
@@ -204,7 +202,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return processYearMonthDurationDouble(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDayTimeDuration() && right.isNumeric()) {
-            Period l = left.getPeriodValue();
+            Duration l = left.getDurationValue();
             double r = 0;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
@@ -228,7 +226,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (
             left.isNumeric() && right.isDayTimeDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
         ) {
-            Period r = right.getPeriodValue();
+            Duration r = right.getDurationValue();
             double l = 0;
             if (left.isDouble()) {
                 l = left.getDoubleValue();
@@ -333,7 +331,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createDecimalItem(l.divide(r, 18, BigDecimal.ROUND_HALF_UP));
+                    .createDecimalItem(l.divide(r, 18, RoundingMode.HALF_UP));
             case IDIV:
                 if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
@@ -369,7 +367,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 18, BigDecimal.ROUND_HALF_UP);
+                    .divide(new BigDecimal(r), 18, RoundingMode.HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
                 } else {
@@ -411,7 +409,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 18, BigDecimal.ROUND_HALF_UP);
+                    .divide(new BigDecimal(r), 18, RoundingMode.HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
                 } else {
@@ -488,7 +486,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             }
             case DIV: {
                 int months = l.getYears() * 12 + l.getMonths();
-                if (r == 0 || r == -0) {
+                if (r == -0) {
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 int totalMonths = (int) Math.round(months / r);
@@ -506,20 +504,14 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     private static Item processDayTimeDuration(
-            Period l,
-            Period r,
+            Duration l,
+            Duration r,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
     ) {
         switch (multiplicativeOperator) {
             case DIV:
-                Instant now = Instant.now();
-                long lMillis = Duration.ofDays(l.getDays()).toMillis();
-                long rMillis = Duration.ofDays(r.getDays()).toMillis();
-                return ItemFactory.getInstance()
-                    .createDecimalItem(
-                        BigDecimal.valueOf(lMillis / (double) rMillis)
-                    );
+                return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(l.toNanos() / r.toNanos()));
             default:
                 throw new UnexpectedTypeException(
                         " \""
@@ -531,7 +523,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     private static Item processDayTimeDurationDouble(
-            Period l,
+            Duration l,
             double r,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
@@ -541,20 +533,18 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         }
         switch (multiplicativeOperator) {
             case MUL: {
-                long durationInMillis = l.getDays() * 24L * 60 * 60 * 1000; // Convert days to milliseconds
-                long durationResult = Math.round(durationInMillis * r);
+                long duration = l.toNanos();
                 return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(Duration.of(durationResult, ChronoUnit.MILLIS));
+                    .createDayTimeDurationItem(Duration.ofNanos((long) (duration * r)));
             }
             case DIV: {
-                long durationInMillis = l.getDays() * 24L * 60 * 60 * 1000; // Convert days to milliseconds
+                long duration = l.toNanos();
                 if (r == 0) {
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
-                long durationResult = Math.round(durationInMillis / r);
                 try {
                     return ItemFactory.getInstance()
-                        .createDayTimeDurationItem(Duration.of(durationResult, ChronoUnit.MILLIS));
+                        .createDayTimeDurationItem(Duration.ofNanos((long) (duration / r)));
                 } catch (ArithmeticException e) {
                     throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
                 }

@@ -138,17 +138,14 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.durationItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
+                        || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
                 ) {
-                    this.results.add(nextItem.getDurationValue());
-                } else if (
-                    typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
-                ) {
-                    this.results.add(nextItem.getPeriodValue());
+                    this.results.add(nextItem.getEpochMilis());
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())
                 ) {
-                    this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
+                    this.results.add(nextItem.getEpochMilis());
                 } else if (typeName.equals(BuiltinTypesCatalogue.timeItem.getName())) {
                     this.results.add(nextItem.getTimeValue().toLocalTime().toNanoOfDay() / 1_000_000);
                 } else {
