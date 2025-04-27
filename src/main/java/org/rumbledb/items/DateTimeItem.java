@@ -194,4 +194,8 @@ public class DateTimeItem implements Item {
     public int getOffset() {
         return this.value.getOffset().getTotalSeconds() / 60;
     }
+    @Override
+    public long getEpochMilis(){
+        return this.value.toInstant().toEpochMilli();
+    }
 }

@@ -183,4 +183,9 @@ public class DateItem implements Item {
     public OffsetDateTime getDateValue() {
         return this.value;
     }
+
+    @Override
+    public long getEpochMilis(){
+        return this.value.toInstant().toEpochMilli();
+    }
 }
