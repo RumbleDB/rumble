@@ -185,7 +185,7 @@ public class DateItem implements Item {
     }
 
     @Override
-    public long getEpochMilis(){
+    public long getEpochMilis() {
         return this.value.toInstant().toEpochMilli();
     }
 }

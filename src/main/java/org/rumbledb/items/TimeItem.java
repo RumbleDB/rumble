@@ -154,8 +154,9 @@ public class TimeItem implements Item {
     public OffsetTime getTimeValue() {
         return this.value;
     }
+
     @Override
-    public long getEpochMilis(){
+    public long getEpochMilis() {
         return this.value.toLocalTime().getNano() / 1_000_000;
     }
 }
