@@ -113,6 +113,11 @@ public class DateItem implements Item {
     }
 
     @Override
+    public boolean hasDateTime() {
+        return true;
+    }
+
+    @Override
     public void write(Kryo kryo, Output output) {
         output.writeString(
             this.value.format(!this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE)

@@ -153,11 +153,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(dateTimeGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            if (nextItem.isDate()) {
-                this.results.add(nextItem.getDateTimeValue().toInstant().toEpochMilli());
-            } else if (nextItem.isTime()) {
-                this.results.add(nextItem.getTimeValue().toLocalTime().toNanoOfDay() / 1_000_000);
-            }
+            this.results.add(nextItem.getEpochMilis());
         } else {
             throw new UnexpectedTypeException(
                     "Group by variable can not contain arrays or objects.",

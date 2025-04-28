@@ -302,7 +302,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
-                return Date.valueOf(item.getDateValue().toLocalDate());
+                return Date.valueOf(item.getDateTimeValue().toLocalDate());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
                 return Timestamp.valueOf(

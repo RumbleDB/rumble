@@ -159,8 +159,15 @@ public class DurationItem implements Item {
 
     @Override
     public long getEpochMilis() {
+        if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
+            return 0;
+        } else if (Objects.isNull(this.periodValue)) {
+            return this.durationValue.toMillis();
+        }
         LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime target = anchor.plus(this.periodValue);
-        return Duration.between(anchor, target).plus(this.durationValue).toMillis();
+        return Duration.between(anchor, target)
+            .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue)
+            .toMillis();
     }
 }
