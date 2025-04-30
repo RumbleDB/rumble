@@ -448,16 +448,19 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance().createDateItem(this.currentMaxDate, this.hasTimeZone);
                     break;
                 case 9:
-                    itemResult = ItemFactory.getInstance().createDateTimeItem(this.currentMaxDateTime, this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance()
+                        .createDateTimeItem(this.currentMaxDateTime, this.hasTimeZone);
                     break;
                 case 10:
                     itemResult = ItemFactory.getInstance().createDayTimeDurationItem(this.currentMaxDayTimeDuration);
                     break;
                 case 11:
-                    itemResult = ItemFactory.getInstance().createYearMonthDurationItem(this.currentMaxYearMonthDuration);
+                    itemResult = ItemFactory.getInstance()
+                        .createYearMonthDurationItem(this.currentMaxYearMonthDuration);
                     break;
                 case 12:
-                    itemResult = ItemFactory.getInstance().createTimeItem(this.currentMaxTime.toOffsetTime(), this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance()
+                        .createTimeItem(this.currentMaxTime.toOffsetTime(), this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");

@@ -61,7 +61,8 @@ public class DateTimeItem implements Item {
                 this.value = OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
                 this.hasTimeZone = true;
             } else {
-                this.value = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME).atOffset(ZoneOffset.UTC);
+                this.value = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    .atOffset(ZoneOffset.UTC);
                 this.hasTimeZone = false;
             }
             this.value = this.value.plusDays(dayIncrement).plusYears(yearIncrement);

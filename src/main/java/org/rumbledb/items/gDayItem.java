@@ -87,7 +87,8 @@ public class gDayItem implements Item {
     }
 
     public String getStringValue() {
-        return this.dt.format(DateTimeFormatter.ISO_LOCAL_DATE) + (this.hasTimeZone ? this.dt.getOffset().toString() : "");
+        return this.dt.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            + (this.hasTimeZone ? this.dt.getOffset().toString() : "");
     }
 
     @Override
