@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
 import java.time.Duration;
-import java.time.ZoneOffset;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -42,8 +41,7 @@ public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator 
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateTimeItem(
-                        timeItem.getDateTimeValue()
-                            .withZoneSameLocal(timeItem.getDateTimeValue().getZone()),
+                        timeItem.getDateTimeValue(),
                         false
                     );
             }
@@ -60,15 +58,13 @@ public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator 
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateTimeItem(
-                        timeItem.getDateTimeValue()
-                            .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        timeItem.getDateTimeValue().withHour(hours).withMinute(minutes),
                         true
                     );
             }
             return ItemFactory.getInstance()
                 .createDateTimeItem(
-                    timeItem.getDateTimeValue()
-                        .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                    timeItem.getDateTimeValue().withHour(hours).withMinute(minutes),
                     true
                 );
         }

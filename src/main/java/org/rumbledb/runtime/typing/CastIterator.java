@@ -359,7 +359,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                         .createDateItem(item.getDateValue(), item.hasTimeZone());
                 } else if (item.isDateTime()) {
                     result = ItemFactory.getInstance()
-                        .createDateItem(item.getDateTimeValue().toOffsetDateTime(), item.hasTimeZone());
+                        .createDateItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -378,7 +378,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     result = ItemFactory.getInstance().createTimeItem(item.getTimeValue(), item.hasTimeZone());
                 } else if (item.isDateTime()) {
                     result = ItemFactory.getInstance()
-                        .createTimeItem(item.getDateTimeValue().toOffsetDateTime().toOffsetTime(), item.hasTimeZone());
+                        .createTimeItem(item.getDateTimeValue().toOffsetTime(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -395,7 +395,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
                 } else if (item.isDate()) {
                     result = ItemFactory.getInstance()
-                        .createDateTimeItem(item.getDateValue().toZonedDateTime(), item.hasTimeZone());
+                        .createDateTimeItem(item.getDateValue(), item.hasTimeZone());
                 } else if (item.isDateTime()) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
@@ -413,8 +413,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
                 } else if (item.isDate()) {
-                    result = ItemFactory.getInstance()
-                        .createDateTimeStampItem(item.getDateValue().toZonedDateTime(), false);
+                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateValue(), false);
                 } else if (item.isDateTime()) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
                 } else {

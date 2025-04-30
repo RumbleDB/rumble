@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -45,7 +45,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 return this.valueDateTimeItem;
             }
 
-            ZonedDateTime dateTimeValue = this.valueDateTimeItem.getDateTimeValue();
+            OffsetDateTime dateTimeValue = this.valueDateTimeItem.getDateTimeValue();
             String pictureString = this.pictureStringItem.getStringValue();
 
             // Start sequence

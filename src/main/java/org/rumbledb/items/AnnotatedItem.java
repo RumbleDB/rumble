@@ -4,7 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -261,7 +261,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public ZonedDateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.itemToAnnotate.getDateTimeValue();
     }
 

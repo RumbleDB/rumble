@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.functions.durations.components;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -24,7 +24,7 @@ public class ImplicitTimezoneIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        ZonedDateTime dt = ZonedDateTime.now();
+        OffsetDateTime dt = OffsetDateTime.now();
         return ItemFactory.getInstance()
             .createDayTimeDurationItem(Duration.ofMillis(dt.getOffset().getTotalSeconds() * 1000L));
     }

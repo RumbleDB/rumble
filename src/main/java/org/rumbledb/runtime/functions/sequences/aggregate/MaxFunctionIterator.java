@@ -23,7 +23,7 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 import org.apache.spark.api.java.JavaRDD;
 import java.time.Duration;
 import java.time.Period;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.time.Instant;
 
 import org.rumbledb.api.Item;
@@ -63,11 +63,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient String currentMaxString;
     private transient boolean currentMaxBoolean;
     private transient boolean hasTimeZone = false;
-    private transient ZonedDateTime currentMaxDate; // TODO: Change to Date type but had issues with Java compiler
-    private transient ZonedDateTime currentMaxDateTime;
+    private transient OffsetDateTime currentMaxDate;
+    private transient OffsetDateTime currentMaxDateTime;
     private transient Duration currentMaxDayTimeDuration;
     private transient Period currentMaxYearMonthDuration;
-    private transient ZonedDateTime currentMaxTime;
+    private transient OffsetDateTime currentMaxTime;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
@@ -445,23 +445,19 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance().createBooleanItem(this.currentMaxBoolean);
                     break;
                 case 8:
-                    itemResult = ItemFactory.getInstance()
-                        .createDateItem(this.currentMaxDate.toOffsetDateTime(), this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance().createDateItem(this.currentMaxDate, this.hasTimeZone);
                     break;
                 case 9:
-                    itemResult = ItemFactory.getInstance()
-                        .createDateTimeItem(this.currentMaxDateTime, this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance().createDateTimeItem(this.currentMaxDateTime, this.hasTimeZone);
                     break;
                 case 10:
                     itemResult = ItemFactory.getInstance().createDayTimeDurationItem(this.currentMaxDayTimeDuration);
                     break;
                 case 11:
-                    itemResult = ItemFactory.getInstance()
-                        .createYearMonthDurationItem(this.currentMaxYearMonthDuration);
+                    itemResult = ItemFactory.getInstance().createYearMonthDurationItem(this.currentMaxYearMonthDuration);
                     break;
                 case 12:
-                    itemResult = ItemFactory.getInstance()
-                        .createTimeItem(this.currentMaxTime.toOffsetDateTime().toOffsetTime(), this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance().createTimeItem(this.currentMaxTime.toOffsetTime(), this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");

@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,16 +33,16 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         if (this.dateItem == null || this.timeItem == null) {
             return null;
         }
-        ZonedDateTime dt = null;
-        ZonedDateTime dateDt = this.dateItem.getDateTimeValue();
-        ZonedDateTime timeDt = this.timeItem.getDateTimeValue();
+        OffsetDateTime dt = null;
+        OffsetDateTime dateDt = this.dateItem.getDateTimeValue();
+        OffsetDateTime timeDt = this.timeItem.getDateTimeValue();
 
         if (this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            if (dateDt.getZone() == timeDt.getZone()) {
-                dt = ZonedDateTime.of(
+            if (dateDt.getOffset() == timeDt.getOffset()) {
+                dt = OffsetDateTime.of(
                     dateDt.toLocalDate(),
                     timeDt.toLocalTime(),
-                    dateDt.getZone()
+                    dateDt.getOffset()
                 );
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
@@ -52,24 +52,24 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                 );
             }
         } else if (this.dateItem.hasTimeZone() && !this.timeItem.hasTimeZone()) {
-            dt = ZonedDateTime.of(
+            dt = OffsetDateTime.of(
                 dateDt.toLocalDate(),
                 timeDt.toLocalTime(),
-                dateDt.getZone()
+                dateDt.getOffset()
             );
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
         } else if (!this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            dt = ZonedDateTime.of(
+            dt = OffsetDateTime.of(
                 dateDt.toLocalDate(),
                 timeDt.toLocalTime(),
-                dateDt.getZone()
+                dateDt.getOffset()
             );
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
         }
-        dt = ZonedDateTime.of(
+        dt = OffsetDateTime.of(
             dateDt.toLocalDate(),
             timeDt.toLocalTime(),
-            dateDt.getZone()
+            dateDt.getOffset()
         );
         return ItemFactory.getInstance().createDateTimeItem(dt, false);
 

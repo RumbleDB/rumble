@@ -36,7 +36,7 @@ import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -537,7 +537,7 @@ public class ItemParser implements Serializable {
                 value = (Timestamp) o;
             }
             Instant instant = value.toInstant();
-            ZonedDateTime dt = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+            OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 return item;
@@ -552,8 +552,8 @@ public class ItemParser implements Serializable {
                 value = (Date) o;
             }
             long instant = value.getTime();
-            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
-            Item item = ItemFactory.getInstance().createDateItem(dt.toOffsetDateTime(), false);
+            OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
+            Item item = ItemFactory.getInstance().createDateItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return item;
             } else {

@@ -3,7 +3,7 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
@@ -55,7 +55,7 @@ public class gYearMonthItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private String value;
-    private ZonedDateTime dt;
+    private OffsetDateTime dt;
     private boolean hasTimeZone = true;
 
     public gYearMonthItem() {
@@ -109,12 +109,11 @@ public class gYearMonthItem implements Item {
 
     @Override
     public String getStringValue() {
-        String zone = this.dt.getZone().equals(ZoneId.of("UTC")) ? "Z" : this.dt.getZone().toString();
-        return this.dt.format(DateTimeFormatter.ISO_LOCAL_DATE) + (this.hasTimeZone ? zone : "");
+        return this.dt.format(DateTimeFormatter.ISO_LOCAL_DATE) + (this.hasTimeZone ? this.dt.getOffset() : "");
     }
 
     @Override
-    public ZonedDateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.dt;
     }
 
@@ -127,7 +126,7 @@ public class gYearMonthItem implements Item {
     public void write(Kryo kryo, Output output) {
         output.writeString(this.dt.format(DateTimeFormatter.ISO_INSTANT));
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.dt.getZone().getId());
+        output.writeString(this.dt.getOffset().toString());
     }
 
     @Override
@@ -135,7 +134,7 @@ public class gYearMonthItem implements Item {
         String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
         ZoneId zone = ZoneId.of(input.readString());
-        this.dt = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
+        this.dt = OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
     private static boolean checkInvalidGYearMonthFormat(String gYearMonth, ItemType gYearMonthType) {

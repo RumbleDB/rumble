@@ -24,7 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -61,11 +61,11 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient String currentMinString;
     private transient boolean currentMinBoolean;
     private transient boolean hasTimeZone = false;
-    private transient ZonedDateTime currentMinDate; // TODO: Change to Date type but had issues with Java compiler
-    private transient ZonedDateTime currentMinDateTime;
+    private transient OffsetDateTime currentMinDate;
+    private transient OffsetDateTime currentMinDateTime;
     private transient Duration currentMinDayTimeDuration;
     private transient Period currentMinYearMonthDuration;
-    private transient ZonedDateTime currentMinTime;
+    private transient OffsetDateTime currentMinTime;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
@@ -437,23 +437,19 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance().createBooleanItem(this.currentMinBoolean);
                     break;
                 case 8:
-                    itemResult = ItemFactory.getInstance()
-                        .createDateItem(this.currentMinDate.toOffsetDateTime(), this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance().createDateItem(this.currentMinDate, this.hasTimeZone);
                     break;
                 case 9:
-                    itemResult = ItemFactory.getInstance()
-                        .createDateTimeItem(this.currentMinDateTime, this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance().createDateTimeItem(this.currentMinDateTime, this.hasTimeZone);
                     break;
                 case 10:
                     itemResult = ItemFactory.getInstance().createDayTimeDurationItem(this.currentMinDayTimeDuration);
                     break;
                 case 11:
-                    itemResult = ItemFactory.getInstance()
-                        .createYearMonthDurationItem(this.currentMinYearMonthDuration);
+                    itemResult = ItemFactory.getInstance().createYearMonthDurationItem(this.currentMinYearMonthDuration);
                     break;
                 case 12:
-                    itemResult = ItemFactory.getInstance()
-                        .createTimeItem(this.currentMinTime.toOffsetDateTime().toOffsetTime(), this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance().createTimeItem(this.currentMinTime.toOffsetTime(), this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");

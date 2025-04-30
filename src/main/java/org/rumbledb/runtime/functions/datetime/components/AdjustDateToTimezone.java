@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
 import java.time.Duration;
-import java.time.ZoneOffset;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,15 +35,15 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createDateItem(dateItem.getDateTimeValue().toOffsetDateTime(), true);
+                .createDateItem(dateItem.getDateTimeValue(), true);
         }
         if (this.timezone == null) {
             if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createDateItem(dateItem.getDateTimeValue().toOffsetDateTime(), false);
+                    .createDateItem(dateItem.getDateTimeValue(), false);
             }
             return ItemFactory.getInstance()
-                .createDateItem(dateItem.getDateTimeValue().toOffsetDateTime(), dateItem.hasTimeZone());
+                .createDateItem(dateItem.getDateTimeValue(), dateItem.hasTimeZone());
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
@@ -56,17 +55,13 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
             if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateItem(
-                        dateItem.getDateTimeValue()
-                            .withZoneSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes))
-                            .toOffsetDateTime(),
+                        dateItem.getDateTimeValue().withHour(hours).withMinute(minutes),
                         true
                     );
             }
             return ItemFactory.getInstance()
                 .createDateItem(
-                    dateItem.getDateTimeValue()
-                        .withZoneSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes))
-                        .toOffsetDateTime(),
+                    dateItem.getDateTimeValue().withHour(hours).withMinute(minutes),
                     true
                 );
         }

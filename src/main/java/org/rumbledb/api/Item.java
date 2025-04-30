@@ -530,7 +530,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return the dateTime value as a DateTime.
      */
-    default ZonedDateTime getDateTimeValue() {
+    default OffsetDateTime getDateTimeValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

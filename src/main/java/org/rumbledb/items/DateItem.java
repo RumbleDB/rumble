@@ -180,8 +180,8 @@ public class DateItem implements Item {
     }
 
     @Override
-    public ZonedDateTime getDateTimeValue() {
-        return ZonedDateTime.of(this.value.toLocalDateTime(), this.value.getOffset());
+    public OffsetDateTime getDateTimeValue() {
+        return OffsetDateTime.of(this.value.toLocalDateTime(), this.value.getOffset());
     }
 
     @Override

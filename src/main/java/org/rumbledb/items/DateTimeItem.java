@@ -17,7 +17,7 @@ import org.rumbledb.types.ItemType;
 public class DateTimeItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private ZonedDateTime value;
+    private OffsetDateTime value;
     private boolean hasTimeZone = true;
 
     @SuppressWarnings("unused")
@@ -25,7 +25,7 @@ public class DateTimeItem implements Item {
         super();
     }
 
-    DateTimeItem(ZonedDateTime value, boolean hasTimeZone) {
+    DateTimeItem(OffsetDateTime value, boolean hasTimeZone) {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
@@ -58,11 +58,10 @@ public class DateTimeItem implements Item {
             if (
                 dateTimeString.contains("Z") || dateTimeString.contains("+") || dateTimeString.matches(".*-\\d\\d:.*")
             ) {
-                this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
+                this.value = OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
                 this.hasTimeZone = true;
             } else {
-                this.value = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    .atZone(ZoneOffset.UTC);
+                this.value = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME).atOffset(ZoneOffset.UTC);
                 this.hasTimeZone = false;
             }
             this.value = this.value.plusDays(dayIncrement).plusYears(yearIncrement);
@@ -87,7 +86,7 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public ZonedDateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.value;
     }
 
@@ -134,7 +133,7 @@ public class DateTimeItem implements Item {
     public void write(Kryo kryo, Output output) {
         output.writeString(this.value.format(DateTimeFormatter.ISO_INSTANT));
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.value.getZone().getId());
+        output.writeString(this.value.getOffset().toString());
     }
 
     @Override
@@ -142,7 +141,7 @@ public class DateTimeItem implements Item {
         String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
         ZoneId zone = ZoneId.of(input.readString());
-        this.value = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
+        this.value = OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_INSTANT.withZone(zone));
     }
 
     @Override

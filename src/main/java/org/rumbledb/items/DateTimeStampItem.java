@@ -3,7 +3,7 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -23,7 +23,7 @@ public class DateTimeStampItem implements Item {
         super();
     }
 
-    DateTimeStampItem(ZonedDateTime value, boolean checkTimezone) {
+    DateTimeStampItem(OffsetDateTime value, boolean checkTimezone) {
         super();
         this.value = new DateTimeItem(value, checkTimezone);
     }
@@ -47,7 +47,7 @@ public class DateTimeStampItem implements Item {
     }
 
     @Override
-    public ZonedDateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.value.getDateTimeValue();
     }
 

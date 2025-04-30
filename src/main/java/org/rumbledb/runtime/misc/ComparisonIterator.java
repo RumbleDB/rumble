@@ -295,8 +295,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processBytes(l, r);
         }
         if (left.isDate() && right.isDate()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isTime() && right.isTime()) {
@@ -305,33 +305,33 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processTime(l, r);
         }
         if (left.isDateTime() && right.isDateTime()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGDay() && right.isGDay()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGMonth() && right.isGMonth()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGYear() && right.isGYear()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGMonthDay() && right.isGMonthDay()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isGYearMonth() && right.isGYearMonth()) {
-            ZonedDateTime l = left.getDateTimeValue();
-            ZonedDateTime r = right.getDateTimeValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
         if (left.isBoolean() && right.isBoolean()) {
@@ -432,8 +432,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static int processDateTime(
-            ZonedDateTime l,
-            ZonedDateTime r
+            OffsetDateTime l,
+            OffsetDateTime r
     ) {
         return l.compareTo(r);
     }

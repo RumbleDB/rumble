@@ -150,7 +150,7 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
-    public Item createDateTimeItem(ZonedDateTime dt, boolean hasTimeZone) {
+    public Item createDateTimeItem(OffsetDateTime dt, boolean hasTimeZone) {
         return new DateTimeItem(dt, hasTimeZone);
     }
 
@@ -158,7 +158,7 @@ public class ItemFactory {
         return new DateTimeItem(s);
     }
 
-    public Item createDateTimeStampItem(ZonedDateTime dt, boolean checkTimezone) {
+    public Item createDateTimeStampItem(OffsetDateTime dt, boolean checkTimezone) {
         return new DateTimeStampItem(dt, checkTimezone);
     }
 
