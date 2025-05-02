@@ -40,7 +40,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return normalizeDuration(this.value, Duration.ZERO);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 
 import java.time.Duration;
+import java.time.Period;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -45,7 +46,7 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return normalizeDuration(Period.ZERO, this.value);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,8 +22,8 @@ import org.rumbledb.types.ItemType;
 public class DurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private Duration durationValue;
-    private Period periodValue;
+    private Duration durationValue = Duration.ZERO;
+    private Period periodValue = Period.ZERO;
     boolean isDuration = false;
     boolean isPeriod = false;
 
@@ -72,19 +73,7 @@ public class DurationItem implements Item {
 
     @Override
     public String getStringValue() {
-        String stringDuration = "";
-        String stringPeriod = "";
-        if (this.isDuration) {
-            stringDuration = this.durationValue.toString();
-            if (this.isPeriod) {
-                stringDuration = stringDuration.substring(1);
-            }
-        }
-        if (this.isPeriod) {
-            stringPeriod = this.periodValue.toString();
-        }
-
-        return stringPeriod + stringDuration;
+        return normalizeDuration(this.periodValue, this.durationValue);
     }
 
     @Override
@@ -170,4 +159,44 @@ public class DurationItem implements Item {
             .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue)
             .toMillis();
     }
+
+    public static String normalizeDuration(Period period, Duration duration) {
+        if (period.isZero() && duration.isZero()) {
+            return "PT0S";
+        }
+        long seconds = duration.getSeconds();
+        long absSeconds = Math.abs(seconds);
+
+        long daysFromDuration = absSeconds / (24 * 3600);
+        absSeconds %= 24 * 3600;
+        long hours = absSeconds / 3600;
+        absSeconds %= 3600;
+        long minutes = absSeconds / 60;
+        long secs = absSeconds % 60;
+
+        long totalDays = period.getDays() + (seconds >= 0 ? daysFromDuration : -daysFromDuration);
+
+        BigDecimal totalSeconds = BigDecimal.valueOf(secs).add(BigDecimal.valueOf(duration.getNano(), 9));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append((seconds < 0 || period.isNegative()) ? "-P" : "P");
+        if (period.getYears() != 0)
+            sb.append(Math.abs(period.getYears())).append("Y");
+        if (period.getMonths() != 0)
+            sb.append(Math.abs(period.getMonths())).append("M");
+        if (totalDays != 0)
+            sb.append(Math.abs(totalDays)).append("D");
+
+        if (hours != 0 || minutes != 0 || totalSeconds.signum() != 0) {
+            sb.append("T");
+            if (hours != 0)
+                sb.append(Math.abs(hours)).append("H");
+            if (minutes != 0)
+                sb.append(Math.abs(minutes)).append("M");
+            if (totalSeconds.signum() != 0)
+                sb.append(totalSeconds.abs().stripTrailingZeros().toPlainString()).append("S");
+        }
+        return sb.toString();
+    }
+
 }
