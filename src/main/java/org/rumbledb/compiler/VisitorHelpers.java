@@ -64,12 +64,37 @@ public class VisitorHelpers {
     }
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
-        List<CloneVisitor> optimizers = new ArrayList<>();
-        optimizers.add(new FunctionInliningVisitor());
-        optimizers.add(new ProjectionPushdownVisitor());
         MainModule result = module;
-        for (CloneVisitor optimizer : optimizers) {
-            result = (MainModule) optimizer.visit(result, null);
+        // Annotate recursive functions as such
+        if (conf.isPrintIteratorTree()) {
+            System.err.println("***************************************");
+            System.err.println("Function dependencies visitor");
+            System.err.println("***************************************");
+        }
+        new FunctionDependenciesVisitor().visit(result, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+        // Inline non-recursive functions
+        if (conf.functionInlining()) {
+            if (conf.isPrintIteratorTree()) {
+                System.err.println("***************************************");
+                System.err.println("Function inlining");
+                System.err.println("***************************************");
+            }
+            result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+            if (conf.isPrintIteratorTree()) {
+                printTree(result, conf);
+            }
+        }
+        if (conf.isPrintIteratorTree()) {
+            System.err.println("***************************************");
+            System.err.println("Projection pushdown");
+            System.err.println("***************************************");
+        }
+        result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(result, conf);
         }
         return result;
     }
