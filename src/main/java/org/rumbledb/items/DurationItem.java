@@ -87,11 +87,6 @@ public class DurationItem implements Item {
     }
 
     @Override
-    public boolean isPeriod() {
-        return this.isPeriod;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -154,7 +149,7 @@ public class DurationItem implements Item {
 
     public static String normalizeDuration(Period period, Duration duration) {
         if (period.isZero() && duration.isZero()) {
-            return "PT0S";
+            return duration.toString();
         }
         long seconds = duration.getSeconds();
         long absSeconds = Math.abs(seconds);

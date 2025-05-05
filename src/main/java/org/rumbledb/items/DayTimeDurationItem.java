@@ -6,8 +6,13 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
+import java.time.Period;
+import java.util.Objects;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -37,6 +42,26 @@ public class DayTimeDurationItem implements Item {
     }
 
     @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public boolean isDuration() {
+        return true;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.value);
+    }
+
+    @Override
     public void read(Kryo kryo, Input input) {
         this.value = Duration.parse(input.readString());
     }
@@ -44,6 +69,20 @@ public class DayTimeDurationItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeString(this.getStringValue());
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonExpression.ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
 
@@ -67,7 +106,15 @@ public class DayTimeDurationItem implements Item {
         return this.value;
     }
 
+    @Override
+    public Period getPeriodValue() {
+        return Period.from(this.value);
+    }
+
     public static String normalizeDuration(Duration duration) {
+        if (duration.isZero()) {
+            return duration.toString();
+        }
         boolean isNegative = duration.isNegative();
         duration = duration.abs();
 
