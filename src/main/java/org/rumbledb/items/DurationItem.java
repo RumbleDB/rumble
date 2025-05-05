@@ -115,7 +115,7 @@ public class DurationItem implements Item {
         try {
             if (!durationPeriodString.contains("PT")) {
                 String periodString = durationPeriodString.split("T")[0];
-                this.periodValue = Period.parse(periodString);
+                this.periodValue = Period.parse(periodString).normalized();
                 this.isPeriod = true;
             }
             if (durationPeriodString.contains("T")) {
@@ -137,14 +137,6 @@ public class DurationItem implements Item {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };
-
-    public long getSeconds() {
-        return this.durationValue.getSeconds();
-    }
-
-    public int getMonths() {
-        return this.periodValue.getMonths();
-    }
 
     @Override
     public long getEpochMilis() {
