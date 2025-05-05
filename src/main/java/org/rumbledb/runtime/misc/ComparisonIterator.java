@@ -213,7 +213,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         // General cases
         if (left.isDouble() && right.isNumeric()) {
             double l = left.getDoubleValue();
-            double r = 0;
+            double r;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
             } else {
@@ -234,7 +234,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
-            float r = 0;
+            float r;
             if (right.isFloat()) {
                 r = right.getFloatValue();
             } else {
@@ -243,7 +243,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processFloat(l, r);
         }
         if (left.isNumeric() && right.isFloat()) {
-            float l = 0;
+            float l;
             float r = right.getFloatValue();
             if (left.isFloat()) {
                 l = left.getFloatValue();
@@ -435,14 +435,14 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             OffsetDateTime l,
             OffsetDateTime r
     ) {
-        return l.compareTo(r);
+        return l.toInstant().compareTo(r.toInstant());
     }
 
     private static int processTime(
             OffsetTime l,
             OffsetTime r
     ) {
-        return l.compareTo(r);
+        return l.withOffsetSameInstant(ZoneOffset.UTC).compareTo(r.withOffsetSameInstant(ZoneOffset.UTC));
     }
 
     private static int processBoolean(
@@ -554,7 +554,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 return NativeClauseContext.NoNativeQuery;
             }
 
-            String operator = " = ";
+            String operator;
             switch (this.comparisonOperator.name()) {
                 case "VC_EQ":
                     operator = " = ";
