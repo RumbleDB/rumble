@@ -114,7 +114,7 @@ public class YearMonthDurationItem implements Item {
 
     public static String normalizeDuration(Period period) {
         if (period.isZero()) {
-            return period.toString();
+            return "P0M"; // Default value for yearMonthDuration
         }
         StringBuilder sb = new StringBuilder();
         sb.append((period.isNegative()) ? "-P" : "P");

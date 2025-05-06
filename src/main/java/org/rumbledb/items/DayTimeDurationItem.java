@@ -113,7 +113,7 @@ public class DayTimeDurationItem implements Item {
 
     public static String normalizeDuration(Duration duration) {
         if (duration.isZero()) {
-            return duration.toString();
+            return "PT0S"; // Default value for empty dayTimeDuration
         }
         boolean isNegative = duration.isNegative();
         duration = duration.abs();
