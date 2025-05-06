@@ -62,6 +62,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
@@ -232,6 +233,14 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
+
+    // region xml
+
+    public T visitTextNodeExpression(TextNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     // endregion
 
     // region literal

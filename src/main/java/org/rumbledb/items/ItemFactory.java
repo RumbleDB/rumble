@@ -253,6 +253,10 @@ public class ItemFactory {
         return new TextItem(currentNode);
     }
 
+    public Item createXmlTextNode(String content) {
+        return new TextItem(content);
+    }
+
     public Item createXmlAttributeNode(Node attribute) {
         return new AttributeItem(attribute);
     }

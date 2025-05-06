@@ -346,13 +346,16 @@ copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 ///////////////////////// Direct element constructors
 ///////////////////////// TODO: this implementation needs to be extended to support all the features of XQuery 3.1 Direct Element Constructors.
 
-nodeConstructor         : directConstructor;                    // TODO: add computerConstructor
+nodeConstructor         : directConstructor;                    // TODO: add computedConstructor
 
 directConstructor       : dirElemConstructor;                   // TODO: add dirCommentConstructor and dirPIConstructor
 
-dirElemConstructor      : '<' open_tag_name=qname ('/>'| ('>' DirElemContent* '</' close_tag_name=qname WS? '>'));
+dirElemConstructor      : '<' open_tag_name=qname ('/>'| ('>' dirElemContent* '</' close_tag_name=qname WS? '>'));
 
-DirElemContent          : 'TEST'[0-9]* ;                        // TODO: add proper definition
+dirElemContent          : directConstructor
+                        | elementContentChar;                   // TODO: add cDataSection, commonContent
+
+elementContentChar      : 't'; // TODO: use correct definition of content
 
 
 ///////////////////////// XPath
@@ -780,7 +783,8 @@ fragment NameChar       : NameStartChar
                         | '\u203F'..'\u2040'
                         ;
 
-XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
+///* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-ElementContentChar */
+fragment ElementContentChar      : [~[{}<&]; 
 
-ContentChar             :  ~["'{}<&]  ;
+XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 

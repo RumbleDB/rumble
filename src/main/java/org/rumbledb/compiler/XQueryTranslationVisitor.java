@@ -83,6 +83,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
@@ -1545,14 +1546,43 @@ public class XQueryTranslationVisitor extends XQueryBaseVisitor<Node> {
                 createMetadataFromContext(ctx)
             );
         }
-        
-        // TODO: at the moment, only working with empty elements, with no attributes.
+
+        // visit all children
+        List<Expression> children = new ArrayList<>();
+        // temporary buffer to collect text content
+        StringBuffer content = new StringBuffer();
+        for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
+            ParseTree el = child.children.get(0);
+            if (el instanceof XQueryParser.ElementContentCharContext) {
+                // if the child is an element content char, merge it with the previous string literal
+                content.append(el.getText());
+            } else {
+                // first flush any existing text content to a new text node expression
+                if (content.length() > 0) {
+                    children.add(new TextNodeExpression(content.toString(), createMetadataFromContext(ctx)));
+                    // reset the content buffer
+                    content = new StringBuffer();
+                }
+                // then visit the new child
+                if (el instanceof XQueryParser.DirectConstructorContext) {
+                    children.add((Expression) this.visitDirectConstructor((XQueryParser.DirectConstructorContext) el));
+                } 
+            }
+            // finally, flush any remaining text content to a new text node expression
+            if (content.length() > 0) {
+                children.add(new TextNodeExpression(content.toString(), createMetadataFromContext(ctx)));
+            }
+        }
+
+    
+        // TODO: at the moment, only working with elements with no attributes.
         return new DirElemConstructorExpression(
             ctx.open_tag_name.getText(),
-            null,
+            children,
             createMetadataFromContext(ctx)
         );
     }
+
 
     @Override
     public Node visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {

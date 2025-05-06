@@ -26,6 +26,14 @@ public class TextItem implements Item {
         this.content = textNode.getTextContent();
     }
 
+    /**
+     * Create a new Text Node with the given content.
+     * @param content the content of the text node
+     */
+    public TextItem(String content) {
+        this.content = content;
+    }
+
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
