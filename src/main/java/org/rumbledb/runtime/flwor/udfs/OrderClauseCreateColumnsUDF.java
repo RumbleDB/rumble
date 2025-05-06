@@ -147,7 +147,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 ) {
                     this.results.add(nextItem.getEpochMilis());
                 } else if (typeName.equals(BuiltinTypesCatalogue.timeItem.getName())) {
-                    this.results.add(nextItem.getTimeValue().toLocalTime().toNanoOfDay() / 1_000_000);
+                    this.results.add(nextItem.getEpochMilis());
                 } else {
                     throw new OurBadException(
                             "Unexpected ordering type found while creating columns."
