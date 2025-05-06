@@ -73,7 +73,7 @@ public class DurationItem implements Item {
 
     @Override
     public String getStringValue() {
-        return normalizeDuration(this.periodValue, this.durationValue);
+        return normalizeDuration(normalizeMonthsToYears(this.periodValue), this.durationValue);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class DurationItem implements Item {
         try {
             if (!durationPeriodString.contains("PT")) {
                 String periodString = durationPeriodString.split("T")[0];
-                this.periodValue = Period.parse(periodString).normalized();
+                this.periodValue = normalizeMonthsToYears(Period.parse(periodString));
                 this.isPeriod = true;
             }
             if (durationPeriodString.contains("T")) {
@@ -184,6 +184,14 @@ public class DurationItem implements Item {
                 sb.append(totalSeconds.abs().stripTrailingZeros().toPlainString()).append("S");
         }
         return sb.toString();
+    }
+
+    public static Period normalizeMonthsToYears(Period period) {
+        Period normalized = period.normalized();
+        if (normalized.getMonths() >= 12) {
+            return normalized.minusMonths(normalized.getMonths()-(normalized.getMonths()%12)).plusYears(normalized.getMonths()/12);
+        }
+        return normalized;
     }
 
 }

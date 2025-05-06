@@ -30,7 +30,6 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -86,8 +85,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate);
-            return jdf;
+            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -111,15 +109,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
-            new Function<Item, Row>() {
-                private static final long serialVersionUID = 1L;
+                new Function<>() {
+                    private static final long serialVersionUID = 1L;
 
-                @Override
-                public Row call(Item item) {
-                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate);
-                    return convertLocalItemToRow(item, schema, context);
+                    @Override
+                    public Row call(Item item) {
+                        item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate);
+                        return convertLocalItemToRow(item, schema, context);
+                    }
                 }
-            }
         );
         return new JSoundDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
@@ -190,7 +188,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             DynamicContext context,
             boolean isValidate
     ) {
-        if (items.size() == 0) {
+        if (items.isEmpty()) {
             return new JSoundDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     itemType
@@ -305,16 +303,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return Date.valueOf(item.getDateTimeValue().toLocalDate());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                return Timestamp.valueOf(
-                    LocalDateTime.of(
-                        item.getYear(),
-                        item.getMonth(),
-                        item.getDay(),
-                        item.getHour(),
-                        item.getMinute(),
-                        item.getSecond()
-                    )
-                );
+                return Timestamp.valueOf(item.getDateTimeValue().toLocalDateTime());
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 return item.getBinaryValue();
@@ -358,8 +347,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        Item i = validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate);
-        return i;
+        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate);
     }
 
     private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata, boolean isValidate) {

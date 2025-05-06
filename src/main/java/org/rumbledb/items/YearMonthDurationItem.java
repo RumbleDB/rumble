@@ -32,7 +32,7 @@ public class YearMonthDurationItem implements Item {
     }
 
     public YearMonthDurationItem(String value) {
-        this.value = Period.parse(value).normalized();
+        this.value = normalizeMonthsToYears(Period.parse(value));
     }
 
     @Override
@@ -67,7 +67,7 @@ public class YearMonthDurationItem implements Item {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = Period.parse(input.readString()).normalized();
+        this.value = normalizeMonthsToYears(Period.parse(input.readString()));
     }
 
     @Override
@@ -86,7 +86,7 @@ public class YearMonthDurationItem implements Item {
 
     @Override
     public String getStringValue() {
-        return normalizeDuration(this.value);
+        return normalizeDuration(normalizeMonthsToYears(this.value));
     }
 
     @Override
@@ -125,5 +125,13 @@ public class YearMonthDurationItem implements Item {
         if (period.getDays() != 0)
             sb.append(Math.abs(period.getDays())).append("D");
         return sb.toString();
+    }
+
+    public static Period normalizeMonthsToYears(Period period) {
+        Period normalized = period.normalized();
+        if (normalized.getMonths() >= 12) {
+            return normalized.minusMonths(normalized.getMonths()-(normalized.getMonths()%12)).plusYears(normalized.getMonths()/12);
+        }
+        return normalized;
     }
 }

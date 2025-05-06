@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
@@ -63,15 +62,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                         String pattern = parseVariableMarker(variableMarker, result);
 
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
-                        LocalDateTime formatDateTime = LocalDateTime.of(
-                            timeValue.getYear(),
-                            timeValue.getMonthValue() - 1,
-                            timeValue.getDayOfMonth(),
-                            timeValue.getHour(),
-                            timeValue.getMinute(),
-                            timeValue.getSecond()
-                        );
-                        result.append(formatter.format(formatDateTime));
+                        result.append(formatter.format(timeValue.toLocalTime()));
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;
@@ -186,7 +177,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     int parseWidthModifier(String widthModifier) {
         int width = -1;
-        if (widthModifier.length() == 0) {
+        if (widthModifier.isEmpty()) {
             String message = String.format(
                 "\"%s\": incorrect syntax",
                 this.pictureStringItem.serialize()
@@ -202,7 +193,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     private String parseVariableMarker(String variableMarker, StringBuilder result) {
-        if (variableMarker.length() == 0) {
+        if (variableMarker.isEmpty()) {
             String message = String.format(
                 "\"%s\": incorrect syntax",
                 this.pictureStringItem.serialize()
@@ -234,12 +225,12 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         }
 
         String presentationModifier1 = "";
-        Integer minWidth = 1;
-        Integer maxWidth = -1;
+        int minWidth = 1;
+        int maxWidth = -1;
 
         String variableMarkerOptionalModifiers = variableMarker.substring(1);
 
-        if (variableMarkerOptionalModifiers.length() > 0) {
+        if (!variableMarkerOptionalModifiers.isEmpty()) {
             List<String> variableMarkerModifiers =
                 Arrays.asList(variableMarkerOptionalModifiers.split(","));
             int variableMarkerModifiersSize = variableMarkerModifiers.size();
@@ -260,7 +251,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 if (variableMarkerModifiersSize == 2) {
                     // width modifier present
                     String variableMarkerOptionalWidthModifiers = variableMarkerModifiers.get(1);
-                    if (variableMarkerOptionalWidthModifiers.length() > 0) {
+                    if (!variableMarkerOptionalWidthModifiers.isEmpty()) {
                         List<String> widthModifier =
                             Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
                         int widthModifierSize = widthModifier.size();
@@ -294,7 +285,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         }
 
         StringBuilder pattern = new StringBuilder();
-        if (presentationModifier1.length() > 0) {
+        if (!presentationModifier1.isEmpty()) {
             if (presentationModifier1.equals("Nn") && componentSpecifier != 'a') {
                 if (maxWidth < 1)
                     maxWidth = 10;
@@ -319,8 +310,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                         prefixLength = presentationModifier1.length() - toReduce;
                     else
                         prefixLength = maxWidth - toReduce;
-                    for (int j = 0; j < prefixLength; ++j)
-                        pattern.append('0');
+                    pattern.append("0".repeat(Math.max(0, prefixLength)));
                     maxWidth = toReduce;
                 } else {
                     String message = String.format(
@@ -335,8 +325,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             if (maxWidth < 1)
                 maxWidth = 1;
         }
-        for (int j = minWidth; j <= maxWidth; ++j)
-            pattern.append(componentSpecifier);
+        pattern.append(String.valueOf(componentSpecifier).repeat(Math.max(0, maxWidth - minWidth + 1)));
 
         return pattern.toString();
     }
