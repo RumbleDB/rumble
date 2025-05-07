@@ -23,7 +23,7 @@ public class HoursFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntime
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item dateTimeItem = this.children.get(0)
-                .materializeFirstItemOrNull(context);
+            .materializeFirstItemOrNull(context);
         if (dateTimeItem == null) {
             return null;
         }

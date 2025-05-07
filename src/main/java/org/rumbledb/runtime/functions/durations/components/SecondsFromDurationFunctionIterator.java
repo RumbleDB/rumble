@@ -24,7 +24,7 @@ public class SecondsFromDurationFunctionIterator extends AtMostOneItemLocalRunti
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item durationItem = this.children.get(0)
-                .materializeFirstItemOrNull(context);
+            .materializeFirstItemOrNull(context);
         if (durationItem == null) {
             return null;
         }
