@@ -115,6 +115,9 @@ public class DurationItem implements Item {
             }
             if (durationPeriodString.contains("T")) {
                 String durationString = "PT" + durationPeriodString.split("T")[1];
+                if (durationPeriodString.startsWith("-")) {
+                    durationString = "-" + durationString;
+                }
                 this.durationValue = Duration.parse(durationString);
                 this.isDuration = true;
             }
@@ -189,9 +192,44 @@ public class DurationItem implements Item {
     public static Period normalizeMonthsToYears(Period period) {
         Period normalized = period.normalized();
         if (normalized.getMonths() >= 12) {
-            return normalized.minusMonths(normalized.getMonths()-(normalized.getMonths()%12)).plusYears(normalized.getMonths()/12);
+            return normalized.minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
+                .plusYears(normalized.getMonths() / 12);
         }
         return normalized;
     }
 
+    @Override
+    public int getYear() {
+        return this.periodValue.getYears();
+    }
+
+    @Override
+    public int getMonth() {
+        return this.periodValue.getMonths();
+    }
+
+    @Override
+    public int getDay() {
+        return this.periodValue.getDays();
+    }
+
+    @Override
+    public int getHour() {
+        return (int) ((this.durationValue.getSeconds() / 3600) % 60);
+    }
+
+    @Override
+    public int getMinute() {
+        return (int) ((this.durationValue.getSeconds() / 60) % 60);
+    }
+
+    @Override
+    public double getSecond() {
+        return (this.durationValue.getSeconds() % 60 + this.durationValue.getNano() / 1_000_000_000.0);
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.durationValue.getNano();
+    }
 }

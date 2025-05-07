@@ -221,7 +221,7 @@ public interface Item extends Serializable, KryoSerializable {
 
     }
 
-    default int getSecond() {
+    default double getSecond() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
 
     }

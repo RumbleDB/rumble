@@ -152,4 +152,34 @@ public class DayTimeDurationItem implements Item {
 
         return sb.toString();
     }
+
+    @Override
+    public int getMonth() {
+        return (int) (this.value.getSeconds() / 86400 / 30);
+    }
+
+    @Override
+    public int getDay() {
+        return (int) ((this.value.getSeconds() + this.value.getNano() / 1_000_000_000.0) / 3600 / 24);
+    }
+
+    @Override
+    public int getHour() {
+        return (int) ((this.value.getSeconds() / 3600) % 60);
+    }
+
+    @Override
+    public int getMinute() {
+        return (int) ((this.value.getSeconds() / 60) % 60);
+    }
+
+    @Override
+    public double getSecond() {
+        return (this.value.getSeconds() % 60 + this.value.getNano() / 1_000_000_000.0);
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.value.getNano();
+    }
 }

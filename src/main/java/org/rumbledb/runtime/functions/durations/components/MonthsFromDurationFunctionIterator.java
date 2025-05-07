@@ -27,7 +27,7 @@ public class MonthsFromDurationFunctionIterator extends AtMostOneItemLocalRuntim
         if (durationItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem((int) durationItem.getEpochMilis());
+        return ItemFactory.getInstance().createIntItem(durationItem.getMonth());
     }
 
 }

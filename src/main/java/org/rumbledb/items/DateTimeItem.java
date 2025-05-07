@@ -181,8 +181,8 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public int getSecond() {
-        return this.value.getSecond();
+    public double getSecond() {
+        return this.value.getSecond() + this.value.getNano() / 1_000_000_000.0;
     }
 
     @Override

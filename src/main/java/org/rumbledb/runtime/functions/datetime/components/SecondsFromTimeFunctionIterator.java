@@ -28,7 +28,7 @@ public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
             return null;
         }
         return ItemFactory.getInstance()
-            .createDecimalItem(BigDecimal.valueOf(timeItem.getTimeValue().getSecond()));
+            .createDecimalItem(BigDecimal.valueOf(timeItem.getSecond()));
     }
 
 }

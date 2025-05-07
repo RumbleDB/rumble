@@ -130,8 +130,24 @@ public class YearMonthDurationItem implements Item {
     public static Period normalizeMonthsToYears(Period period) {
         Period normalized = period.normalized();
         if (normalized.getMonths() >= 12) {
-            return normalized.minusMonths(normalized.getMonths()-(normalized.getMonths()%12)).plusYears(normalized.getMonths()/12);
+            return normalized.minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
+                .plusYears(normalized.getMonths() / 12);
         }
         return normalized;
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYears();
+    }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonths();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDays();
     }
 }

@@ -27,7 +27,7 @@ public class MinutesFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
         if (timeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(timeItem.getTimeValue().getMinute());
+        return ItemFactory.getInstance().createIntItem(timeItem.getMinute());
     }
 
 }

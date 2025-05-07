@@ -109,15 +109,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
-                new Function<>() {
-                    private static final long serialVersionUID = 1L;
+            new Function<>() {
+                private static final long serialVersionUID = 1L;
 
-                    @Override
-                    public Row call(Item item) {
-                        item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate);
-                        return convertLocalItemToRow(item, schema, context);
-                    }
+                @Override
+                public Row call(Item item) {
+                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate);
+                    return convertLocalItemToRow(item, schema, context);
                 }
+            }
         );
         return new JSoundDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
