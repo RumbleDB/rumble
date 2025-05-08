@@ -48,7 +48,7 @@ applyStatement              : exprSimple ';' ;
 
 assignStatement             : '$' qname ':=' exprSingle ';' ;
 
-blockStatement              : '{' statements '}' ;
+blockStatement              : LBRACE statements RBRACE ;
 
 breakStatement              : Kbreak Kloop ';' ;
 
@@ -136,7 +136,7 @@ contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exp
 
 functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' (fn_body=statementsAndOptionalExpr) '}' | is_external='external');
+                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external='external');
 
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -220,9 +220,9 @@ ifExpr                  : Kif '(' test_condition=expr ')'
                           Kthen branch=exprSingle
                           Kelse else_branch=exprSingle;
 
-tryCatchExpr            : Ktry '{' try_expression=expr '}' catches+=catchClause+;
+tryCatchExpr            : Ktry LBRACE try_expression=expr RBRACE catches+=catchClause+;
 
-catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* '{' catch_expression=expr '}';
+catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
 
 ///////////////////////// expression
 
@@ -262,9 +262,9 @@ valueExpr               : simpleMap_expr=simpleMapExpr
                         | validate_expr=validateExpr
                         | annotate_expr=annotateExpr;
 
-validateExpr            : Kvalidate Ktype sequenceType '{' expr '}';
+validateExpr            : Kvalidate Ktype sequenceType LBRACE expr RBRACE;
 
-annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
+annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 
 simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
@@ -297,7 +297,7 @@ primaryExpr             : Literal
                         | unaryLookup
                         ;
 
-blockExpr : '{' statementsAndExpr '}' ;
+blockExpr : LBRACE statementsAndExpr RBRACE ;
 
 
 varRef                  : '$' var_name=qname;
@@ -306,9 +306,9 @@ parenthesizedExpr       : '(' expr? ')';
 
 contextItemExpr         : '.';
 
-orderedExpr             : 'ordered' '{' expr '}';
+orderedExpr             : 'ordered' LBRACE expr RBRACE;
 
-unorderedExpr           : 'unordered' '{' expr '}';
+unorderedExpr           : 'unordered' LBRACE expr RBRACE;
 
 functionCall            : fn_name=qname argumentList;
 
@@ -322,7 +322,7 @@ namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
-                           ('{' (fn_body=statementsAndOptionalExpr) '}');
+                           (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE);
 
 ///////////////////////// Updating Expressions
 
@@ -344,18 +344,111 @@ updateLocator           : main_expr=primaryExpr ( lookup )+; // TODO CHECK THIS,
 copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
 ///////////////////////// Direct element constructors
-///////////////////////// TODO: this implementation needs to be extended to support all the features of XQuery 3.1 Direct Element Constructors.
 
-nodeConstructor         : directConstructor;                    // TODO: add computedConstructor
+// starting from here, productions are sorted according to section A1.1 of the XQuery 3.1 spec
 
-directConstructor       : dirElemConstructor;                   // TODO: add dirCommentConstructor and dirPIConstructor
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-NodeConstructor */
+nodeConstructor         : directConstructor
+                        | computedConstructor;
 
-dirElemConstructor      : '<' open_tag_name=qname ('/>'| ('>' dirElemContent* '</' close_tag_name=qname WS? '>'));
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DirectConstructor */
+// TODO: add dirCommentConstructor and dirPIConstructor
+directConstructor       : dirElemConstructor;
 
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DirElemConstructor */
+dirElemConstructor      : '<' open_tag_name=qname dirAttributeList ('/>'| ('>' dirElemContent* '</' close_tag_name=qname WS? '>'));
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DirAttributeList */
+dirAttributeList        : (WS (qname WS? '=' WS? dirAttributeValue)?)*;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DirAttributeValue */
+dirAttributeValue       : '"' (EscapeQuot | quotAttrValueContent)* '"'
+                        | '\'' (EscapeApos | aposAttrValueContent)* '\'';
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-QuotAttrValueContent */
+quotAttrValueContent    : quotAttrContentChar | commonContent;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-AposAttrValueContent */
+aposAttrValueContent    : aposAttrContentChar | commonContent;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DirElemContent*/
 dirElemContent          : directConstructor
-                        | elementContentChar;                   // TODO: add cDataSection, commonContent
+                        | cDataSection
+                        | commonContent
+                        | elementContent;     
 
-elementContentChar      : 't'; // TODO: use correct definition of content
+/* source: https://www.w3.org/TR/xquery-31/#prod-xquery31-CommonContent */
+commonContent:          PredefinedEntityRef | CharRef |( LBRACE LBRACE ) | (RBRACE RBRACE) | enclosedExpr;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CDataSection */
+cDataSection : '<![CDATA[' cDataSectionContents ']]>';
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CDataSectionContents */
+// TODO: edit this rule to match the spec
+cDataSectionContents : .*?;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-ComputedConstructor */
+// TODO: add compNamespaceConstructor, compPIConstructor
+computedConstructor     : computedDocConstructor
+                        | computedElemConstructor
+                        | computedAttrConstructor
+                        | compTextConstructor
+                        | compCommentConstructor;                        
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CompDocConstructor */
+computedDocConstructor  : Kdocument enclosedExpr;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CompElemConstructor */
+computedElemConstructor : Kelement (eqName | ( LBRACE expr RBRACE )) enclosedContentExpr;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-EnclosedContentExpr */
+enclosedContentExpr     : enclosedExpr;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CompAttrConstructor */
+computedAttrConstructor : Kattribute (eqName | ( LBRACE expr RBRACE )) enclosedExpr;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CompTextConstructor */
+compTextConstructor     : Ktext enclosedExpr;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-CompCommentConstructor */
+compCommentConstructor  : Kcomment enclosedExpr;
+
+// sorted section ends here
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-EQName */
+eqName                  : qname | uriQualifiedName;
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-URIQualifiedName */
+uriQualifiedName        : bracedUriLiteral NCName;
+
+/* source: https://www.w3.org/TR/xquery-31/#prod-xquery31-BracedURILiteral */
+// TODO: add  ~[&{}]
+bracedUriLiteral        : 'Q' LBRACE (PredefinedEntityRef | CharRef )* RBRACE;
+
+
+///* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-ElementContentChar */
+// TODO: this does not match in elemContentChar. instead, i need to use NCName to match the content!
+elementContent          : NCName | ElementContentLexer;
+
+/* source: https://www.w3.org/TR/REC-xml/#NT-CharRef */
+CharRef                 : '&#' [0-9]+ ';'
+                        | '&#x' [0-9a-fA-F]+ ';' ;
+
+/* source: https://www.w3.org/TR/xquery-31/#prod-xquery31-PredefinedEntityRef */
+PredefinedEntityRef     : '&' ('lt' | 'gt' | 'amp' | 'quot' | 'apos') ';';
+
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-EnclosedExpr */
+enclosedExpr:           LBRACE expr? RBRACE;
+
+EscapeQuot              : '""';
+EscapeApos              : '\'\'';
+
+// TODO: use correct definition
+quotAttrContentChar     : 'quotAttrContentChar';
+
+// TODO: use correct definition
+aposAttrContentChar     : 'aposAttrContentChar';
 
 
 ///////////////////////// XPath
@@ -462,7 +555,7 @@ typeName: qname;
 sequenceType            : '(' ')'
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
-objectConstructor       : 'map' '{' ( pairConstructor (',' pairConstructor)* )? '}'
+objectConstructor       : 'map' LBRACE ( pairConstructor (',' pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
@@ -479,7 +572,7 @@ singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
 
-arrayConstructor        :  'array' '{' expr? '}';
+arrayConstructor        :  'array' LBRACE expr? RBRACE;
 
 uriLiteral              : stringLiteral;
 
@@ -744,23 +837,44 @@ fragment HEX            : [0-9a-fA-F];
 
 ArgumentPlaceholder     : '?';
 
+// symbols
+
+LBRACE: '{';
+RBRACE: '}';
+
+// literals
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-Literal */
 Literal                 : NumericLiteral;
 
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-NumericLiteral */
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
 
+/// terminal symbols
+
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-IntegerLiteral */
 IntegerLiteral          : Digits ;
 
-DecimalLiteral          : '.' Digits | Digits '.' [0-9]* ;
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DecimalLiteral */
+DecimalLiteral          : ('.' Digits ) | ( Digits '.' [0-9]* );
 
-DoubleLiteral           : ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits ;
-
-fragment Digits         : [0-9]+ ;
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-DoubleLiteral */
+DoubleLiteral           : (( '.' Digits ) | ( Digits ('.' [0-9]*)?)) [eE] [+-]? Digits ;
 
 WS                      : (' '|'\r'|'\t'|'\n') -> channel(HIDDEN);
 
-NCName                  : NameStartChar NameChar*;
+/* source: https://www.w3.org/TR/REC-xml-names/#NT-NCName */
+// TODO: this has been moved to a parser rule, as if it is defined as a lexer rule, it overrides other rules
+// we know where this is used, so we can move it to a context-aware parser rule
+NCName                  : NameStartChar (NameChar)*;
 
-fragment NameStartChar  : [_a-zA-Z]
+
+// problem. this matches too much!
+ElementContentLexer     : Char+;
+
+//Name                    : ;
+
+fragment NameStartChar   : [_a-zA-Z]
                         | '\u00C0'..'\u00D6'
                         | '\u00D8'..'\u00F6'
                         | '\u00F8'..'\u02FF'
@@ -783,8 +897,17 @@ fragment NameChar       : NameStartChar
                         | '\u203F'..'\u2040'
                         ;
 
-///* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-ElementContentChar */
-fragment ElementContentChar      : [~[{}<&]; 
+
+/* source: https://www.w3.org/TR/REC-xml/#NT-Char */
+fragment Char           :  '\u0009'
+                        | '\u000A'
+                        | '\u000D'
+                        | '\u0020'..'\uD7FF'
+                        | '\uE000'..'\uFFFD'
+                        | '\uD800'..'\uDBFF' '\uDC00'..'\uDFFF';  // surrogate pairs for supplementary characters
+
 
 XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 
+/* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-Digits */
+fragment Digits         : [0-9]+ ;
