@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -43,8 +43,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             if (this.valueTimeItem.isNull()) {
                 return this.valueTimeItem;
             }
-
-            OffsetDateTime timeValue = this.valueTimeItem.getDateTimeValue();
+            OffsetTime timeValue = this.valueTimeItem.getTimeValue();
             String pictureString = this.pictureStringItem.getStringValue();
 
             // Start sequence
@@ -62,7 +61,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                         String pattern = parseVariableMarker(variableMarker, result);
 
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
-                        result.append(formatter.format(timeValue.toLocalTime()));
+                        result.append(formatter.format(timeValue));
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;

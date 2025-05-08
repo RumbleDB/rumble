@@ -64,7 +64,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                         Calendar formatCalendar = Calendar.getInstance();
                         formatCalendar.set(
                             dateValue.getYear(),
-                            dateValue.getMonthValue() - 1,
+                            dateValue.getMonthValue(),
                             dateValue.getDayOfMonth()
                         );
                         result.append(simpleDateFormat.format(formatCalendar.getTime()));

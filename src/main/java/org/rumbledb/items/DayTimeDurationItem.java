@@ -108,6 +108,9 @@ public class DayTimeDurationItem implements Item {
 
     @Override
     public Period getPeriodValue() {
+        if (this.value.isZero()) {
+            return Period.ZERO;
+        }
         return Period.from(this.value);
     }
 

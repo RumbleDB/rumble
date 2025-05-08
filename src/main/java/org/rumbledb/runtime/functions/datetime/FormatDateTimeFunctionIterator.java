@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import org.rumbledb.api.Item;
@@ -61,17 +60,8 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     if (c == ']') {
                         String variableMarker = pictureString.substring(startOfSequence, i);
                         String pattern = parseVariableMarker(variableMarker, result);
-
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
-                        LocalDateTime formatDateTime = LocalDateTime.of(
-                            dateTimeValue.getYear(),
-                            dateTimeValue.getMonthValue() - 1,
-                            dateTimeValue.getDayOfMonth(),
-                            dateTimeValue.getHour(),
-                            dateTimeValue.getMinute(),
-                            dateTimeValue.getSecond()
-                        );
-                        result.append(formatter.format(formatDateTime));
+                        result.append(formatter.format(dateTimeValue.toLocalDateTime()));
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;
@@ -224,7 +214,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 componentSpecifier = 'd';
                 break;
             case 'F':
-                componentSpecifier = 'u';
+                componentSpecifier = 'e';
                 break;
             case 'H':
                 componentSpecifier = 'H';
@@ -316,7 +306,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 if (
                     componentSpecifier == 'd'
                         || componentSpecifier == 'D'
-                        || componentSpecifier == 'u'
+                        || componentSpecifier == 'e'
                 )
                     componentSpecifier = 'E';
             } else if (presentationModifier1.equals("N") && componentSpecifier == 'a') {
