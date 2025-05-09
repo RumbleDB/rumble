@@ -437,7 +437,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 } else {
                     return null;
                 }
-                if (!checkFacetsPeriod(result, targetType)) {
+                if (!checkFacetsDuration(result, targetType)) {
                     return null;
                 }
                 if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
@@ -759,6 +759,24 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
+        if (1 > item.getMonth() || item.getMonth() > 12) {
+            return false;
+        }
+        if (1 > item.getDay() || item.getDay() > 31) {
+            return false;
+        }
+        if (0 > item.getHour() || item.getHour() > 23) {
+            return false;
+        }
+        if (0 > item.getMinute() || item.getMinute() > 59) {
+            return false;
+        }
+        if (0 > item.getSecond() || item.getSecond() >= 60) {
+            return false;
+        }
+        if (-840 > item.getOffset() || item.getOffset() > 840) {
+            return false;
+        }
 
         if (
             targetType.getExplicitTimezoneFacet() != null
@@ -775,6 +793,24 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
+        if (1 > item.getMonth() || item.getMonth() > 12) {
+            return false;
+        }
+        if (1 > item.getDay() || item.getDay() > 31) {
+            return false;
+        }
+        if (0 > item.getHour() || item.getHour() > 23) {
+            return false;
+        }
+        if (0 > item.getMinute() || item.getMinute() > 59) {
+            return false;
+        }
+        if (0 > item.getSecond() || item.getSecond() >= 60) {
+            return false;
+        }
+        if (-840 > item.getOffset() || item.getOffset() > 840) {
+            return false;
+        }
 
         if (
             targetType.getExplicitTimezoneFacet() != null
@@ -787,12 +823,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         return true;
     }
 
-    private static boolean checkFacetsPeriod(Item result, ItemType targetType) {
-        // TODO implement
-        return true;
-    }
-
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
+        if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
+            if (item.getMonth() < 0 && item.getSecond() > 0) {
+                return false;
+            }
+            if (item.getMonth() > 0 && item.getSecond() < 0) {
+                return false;
+            }
+        }
         return true;
         // * TODO: fix this that causes pipeline to fail all tests involving duration
         // Period itemPeriod = item.getPeriodValue();

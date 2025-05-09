@@ -49,8 +49,8 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
             Duration timezoneDuration = this.timezone.getDurationValue();
-            int hours = (int) timezoneDuration.toHours();
-            int minutes = (int) (timezoneDuration.toMinutes() % 60);
+            int hours = (int) Math.abs(timezoneDuration.toHours());
+            int minutes = (int) Math.abs(timezoneDuration.toMinutes() % 60);
 
             if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()

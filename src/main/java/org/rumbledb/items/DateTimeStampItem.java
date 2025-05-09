@@ -30,6 +30,9 @@ public class DateTimeStampItem implements Item {
 
     DateTimeStampItem(String dateTimeStampString) {
         this.value = new DateTimeItem(dateTimeStampString);
+        if (!this.value.hasTimeZone()) {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override

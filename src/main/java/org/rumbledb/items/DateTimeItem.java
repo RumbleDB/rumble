@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -19,6 +20,9 @@ public class DateTimeItem implements Item {
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = true;
+    Pattern dateTimePattern = Pattern.compile(
+        "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+    );
 
     @SuppressWarnings("unused")
     public DateTimeItem() {
@@ -36,6 +40,9 @@ public class DateTimeItem implements Item {
     }
 
     private void getDateTimeFromString(String dateTimeString) {
+        if (!this.dateTimePattern.matcher(dateTimeString).matches()) {
+            throw new IllegalArgumentException("Invalid date string: " + dateTimeString);
+        }
         int yearIncrement = 0;
         int dayIncrement = 0;
         int isMinus = 1;

@@ -511,7 +511,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     ) {
         switch (multiplicativeOperator) {
             case DIV:
-                return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(l.toNanos() / r.toNanos()));
+                return ItemFactory.getInstance().createDoubleItem((double) l.toNanos() / r.toNanos());
             default:
                 throw new UnexpectedTypeException(
                         " \""
