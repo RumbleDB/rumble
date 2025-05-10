@@ -288,7 +288,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (presentationModifier1.length() > 0) {
             if (presentationModifier1.equals("Nn")) {
                 if (maxWidth < 1)
-                    maxWidth = 1;
+                    maxWidth = 4;
                 if (
                     componentSpecifier == 'd'
                         || componentSpecifier == 'D'
