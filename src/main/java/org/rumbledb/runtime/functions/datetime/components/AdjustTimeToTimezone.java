@@ -10,6 +10,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
@@ -48,7 +49,13 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
             if (timeItem.hasTimeZone()) {
-                return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), true);
+                int hours = (int) this.timezone.getDurationValue().toHours();
+                int minutes = (int) (this.timezone.getDurationValue().toMinutes() % 60);
+                return ItemFactory.getInstance()
+                    .createTimeItem(
+                        timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        true
+                    );
             }
             return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), false);
         }

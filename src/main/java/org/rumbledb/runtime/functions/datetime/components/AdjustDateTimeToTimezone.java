@@ -9,6 +9,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
@@ -58,13 +59,13 @@ public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator 
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateTimeItem(
-                        timeItem.getDateTimeValue().withHour(hours).withMinute(minutes),
+                        timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
                         true
                     );
             }
             return ItemFactory.getInstance()
                 .createDateTimeItem(
-                    timeItem.getDateTimeValue().withHour(hours).withMinute(minutes),
+                    timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
                     true
                 );
         }
