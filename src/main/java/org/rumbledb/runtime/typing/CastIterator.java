@@ -413,7 +413,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
                 } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateValue(), false);
+                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
                 } else if (item.isDateTime()) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
                 } else {
