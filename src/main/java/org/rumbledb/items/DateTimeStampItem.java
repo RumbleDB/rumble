@@ -103,5 +103,50 @@ public class DateTimeStampItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonth();
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYear();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDay();
+    }
+
+    @Override
+    public int getHour() {
+        return this.value.getHour();
+    }
+
+    @Override
+    public int getMinute() {
+        return this.value.getMinute();
+    }
+
+    @Override
+    public double getSecond() {
+        return this.value.getSecond();
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.value.getNanosecond();
+    }
+
+    @Override
+    public int getOffset() {
+        return this.value.getOffset();
+    }
+
+    @Override
+    public long getEpochMilis() {
+        return this.value.getEpochMilis();
+    }
 }
 
