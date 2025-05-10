@@ -22,7 +22,7 @@ public class TimeItem implements Item {
     private OffsetTime value;
     private boolean hasTimeZone = true;
     Pattern timeRegex = Pattern.compile(
-            "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+        "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
     @SuppressWarnings("unused")
