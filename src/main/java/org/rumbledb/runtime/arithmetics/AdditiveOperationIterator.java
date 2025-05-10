@@ -240,8 +240,8 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (left.isDateTime() && right.isYearMonthDuration()) {
             OffsetDateTime l = left.getDateTimeValue();
-            Duration r = right.getDurationValue();
-            return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
+            Period r = right.getPeriodValue();
+            return processDateTimePeriodDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDateTime() && right.isDayTimeDuration()) {
             OffsetDateTime l = left.getDateTimeValue();
@@ -415,6 +415,21 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     private static Item processDateTimeDurationDateTime(
             OffsetDateTime l,
             Duration r,
+            boolean isMinus,
+            boolean timeZone
+    ) {
+        if (isMinus) {
+            return ItemFactory.getInstance()
+                .createDateTimeItem(l.minus(r), timeZone);
+        } else {
+            return ItemFactory.getInstance()
+                .createDateTimeItem(l.plus(r), timeZone);
+        }
+    }
+
+    private static Item processDateTimePeriodDateTime(
+            OffsetDateTime l,
+            Period r,
             boolean isMinus,
             boolean timeZone
     ) {
