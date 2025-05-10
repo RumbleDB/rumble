@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -26,6 +27,9 @@ public class DurationItem implements Item {
     private Period periodValue = Period.ZERO;
     boolean isDuration = false;
     boolean isPeriod = false;
+    Pattern durationRegex = Pattern.compile(
+        "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
+    );
 
     @SuppressWarnings("unused")
     public DurationItem() {
@@ -38,6 +42,9 @@ public class DurationItem implements Item {
     }
 
     public DurationItem(String value) {
+        if (!this.durationRegex.matcher(value).matches()) {
+            throw new IllegalArgumentException("Invalid duration: " + value);
+        }
         getDurationFromString(value);
     }
 

@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -20,6 +21,7 @@ public class YearMonthDurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private Period value;
+    Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
     @SuppressWarnings("unused")
     public YearMonthDurationItem() {
@@ -32,6 +34,9 @@ public class YearMonthDurationItem implements Item {
     }
 
     public YearMonthDurationItem(String value) {
+        if (!this.yearMonthDurationRegex.matcher(value).matches()) {
+            throw new IllegalArgumentException("Invalid year month duration: " + value);
+        }
         this.value = normalizeMonthsToYears(Period.parse(value));
     }
 

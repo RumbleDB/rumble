@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -20,6 +21,9 @@ public class TimeItem implements Item {
     private static final long serialVersionUID = 1L;
     private OffsetTime value;
     private boolean hasTimeZone = true;
+    Pattern timeRegex = Pattern.compile(
+            "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+    );
 
     @SuppressWarnings("unused")
     public TimeItem() {
@@ -33,6 +37,9 @@ public class TimeItem implements Item {
     }
 
     TimeItem(String timeString) {
+        if (!this.timeRegex.matcher(timeString).matches()) {
+            throw new IllegalArgumentException("Invalid time string: " + timeString);
+        }
         getTimeFromString(timeString);
     }
 

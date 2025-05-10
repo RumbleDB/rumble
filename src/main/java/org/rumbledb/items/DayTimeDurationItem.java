@@ -8,6 +8,7 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Period;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -20,6 +21,7 @@ public class DayTimeDurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private Duration value;
+    Pattern dayTimeDurationRegex = Pattern.compile("^-?P(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$");
 
 
     @SuppressWarnings("unused")
@@ -34,6 +36,9 @@ public class DayTimeDurationItem implements Item {
 
     public DayTimeDurationItem(String value) {
         super();
+        if (!this.dayTimeDurationRegex.matcher(value).matches()) {
+            throw new IllegalArgumentException("Invalid day time duration: " + value);
+        }
         this.value = Duration.parse(value);
     }
 
