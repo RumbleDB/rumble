@@ -12,9 +12,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -59,15 +58,8 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     if (c == ']') {
                         String variableMarker = pictureString.substring(startOfSequence, i);
                         String pattern = parseVariableMarker(variableMarker, result);
-
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern.toString());
-                        Calendar formatCalendar = Calendar.getInstance();
-                        formatCalendar.set(
-                            dateValue.getYear(),
-                            dateValue.getMonthValue(),
-                            dateValue.getDayOfMonth()
-                        );
-                        result.append(simpleDateFormat.format(formatCalendar.getTime()));
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+                        result.append(formatter.format(dateValue));
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;
@@ -220,7 +212,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 componentSpecifier = 'd';
                 break;
             case 'F':
-                componentSpecifier = 'u';
+                componentSpecifier = 'E';
                 break;
             default:
                 String message = String.format(
@@ -296,13 +288,13 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (presentationModifier1.length() > 0) {
             if (presentationModifier1.equals("Nn")) {
                 if (maxWidth < 1)
-                    maxWidth = 10;
+                    maxWidth = 1;
                 if (
                     componentSpecifier == 'd'
                         || componentSpecifier == 'D'
                         || componentSpecifier == 'u'
                 )
-                    componentSpecifier = 'E';
+                    componentSpecifier = 'M';
             } else {
                 char presentationModifierStart = presentationModifier1.charAt(0);
                 // check if numeric sequence as format token

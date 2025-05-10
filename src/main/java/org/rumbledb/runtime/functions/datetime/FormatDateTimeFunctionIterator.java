@@ -15,7 +15,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -60,8 +59,8 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     if (c == ']') {
                         String variableMarker = pictureString.substring(startOfSequence, i);
                         String pattern = parseVariableMarker(variableMarker, result);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
-                        result.append(formatter.format(dateTimeValue.toLocalDateTime()));
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+                        result.append(formatter.format(dateTimeValue));
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;
@@ -214,7 +213,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 componentSpecifier = 'd';
                 break;
             case 'F':
-                componentSpecifier = 'e';
+                componentSpecifier = 'E';
                 break;
             case 'H':
                 componentSpecifier = 'H';

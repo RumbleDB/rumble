@@ -15,7 +15,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -59,10 +58,8 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     if (c == ']') {
                         String variableMarker = pictureString.substring(startOfSequence, i);
                         String pattern = parseVariableMarker(variableMarker, result);
-
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
                         result.append(formatter.format(timeValue));
-
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;
                     }
@@ -296,7 +293,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     componentSpecifier = 'E';
             } else if (presentationModifier1.equals("N") && componentSpecifier == 'a') {
                 if (maxWidth < 1)
-                    maxWidth = 10;
+                    maxWidth = 1;
             } else {
                 char presentationModifierStart = presentationModifier1.charAt(0);
                 // check if numeric sequence as format token
