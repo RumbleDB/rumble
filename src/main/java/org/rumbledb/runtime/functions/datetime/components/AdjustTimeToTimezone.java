@@ -42,15 +42,16 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), false);
             }
-            return ItemFactory.getInstance()
-                .createTimeItem(timeItem.getTimeValue(), timeItem.hasTimeZone());
+            return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), timeItem.hasTimeZone());
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
             if (timeItem.hasTimeZone()) {
-                int hours = (int) this.timezone.getDurationValue().toHours();
-                int minutes = (int) (this.timezone.getDurationValue().toMinutes() % 60);
+                System.out.println("[TEST]: " + this.timezone.getDurationValue().toString());
+                Duration timezoneDuration = this.timezone.getDurationValue();
+                int hours = (int) timezoneDuration.toHours();
+                int minutes = (int) timezoneDuration.toMinutes() % 60;
                 return ItemFactory.getInstance()
                     .createTimeItem(
                         timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),

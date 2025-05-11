@@ -28,10 +28,7 @@ public class TimezoneFromDateTimeFunctionIterator extends AtMostOneItemLocalRunt
         if (this.dateTimeItem == null || !this.dateTimeItem.hasTimeZone()) {
             return null;
         }
-        return ItemFactory.getInstance()
-            .createDayTimeDurationItem(
-                Duration.ofMillis(this.dateTimeItem.getDateTimeValue().getOffset().getTotalSeconds() * 1000L)
-            );
+        return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofMinutes(this.dateTimeItem.getOffset()));
     }
 
 }

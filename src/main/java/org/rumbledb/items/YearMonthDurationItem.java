@@ -155,4 +155,20 @@ public class YearMonthDurationItem implements Item {
     public int getDay() {
         return this.value.getDays();
     }
+
+    @Override
+    public int getHour() {
+        return 0;
+    }
+
+    @Override
+    public int getMinute() {
+        return 0;
+    }
+
+    @Override
+    public double getSecond() {
+        return 0;
+    }
+
 }
