@@ -25,7 +25,10 @@ public class DateTimeStampItem implements Item {
 
     DateTimeStampItem(OffsetDateTime value, boolean checkTimezone) {
         super();
-        this.value = new DateTimeItem(value, checkTimezone);
+        if (!checkTimezone) {
+            throw new IllegalArgumentException("There is no timezone in dateTime");
+        }
+        this.value = new DateTimeItem(value, true);
     }
 
     DateTimeStampItem(String dateTimeStampString) {

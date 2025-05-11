@@ -9,6 +9,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.OffsetTime;
 import java.util.List;
 
 public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -35,7 +36,7 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         }
         OffsetDateTime dt = null;
         OffsetDateTime dateDt = this.dateItem.getDateTimeValue();
-        OffsetDateTime timeDt = this.timeItem.getDateTimeValue();
+        OffsetTime timeDt = this.timeItem.getTimeValue();
 
         if (this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
             if (dateDt.getOffset() == timeDt.getOffset()) {

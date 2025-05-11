@@ -191,4 +191,9 @@ public class DayTimeDurationItem implements Item {
     public int getNanosecond() {
         return this.value.getNano();
     }
+
+    @Override
+    public int getYear() {
+        return (int) (this.value.getSeconds() / 86400 / 30 / 365);
+    }
 }
