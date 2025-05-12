@@ -6,6 +6,8 @@ import org.rumbledb.context.Name;
 
 import java.util.*;
 
+import static org.rumbledb.types.BuiltinTypesCatalogue.*;
+
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model and the derived DayTimeDuration
  * and YearMonthDuration item types that are derived, but whose derivation cannot be expressed through JSound facets
@@ -13,211 +15,6 @@ import java.util.*;
 public class AtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
-
-    static final AtomicItemType atomicItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "anyAtomicType"),
-            Collections.emptySet()
-    );
-    static final AtomicItemType stringItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "string"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            )
-    );
-
-    // numeric is a union type for xs:double, xs:float, xs:decimal
-    static final AtomicItemType numericItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "numeric"),
-            Collections.emptySet()
-    );
-
-    static final AtomicItemType decimalItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "decimal"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.TOTALDIGITS,
-                        FacetTypes.FRACTIONDIGITS
-                    )
-            )
-    );
-    static final AtomicItemType doubleItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "double"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
-    );
-    static final AtomicItemType floatItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "float"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
-    );
-
-    static final AtomicItemType booleanItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS))
-    );
-    static final AtomicItemType nullItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "null"),
-            Collections.emptySet()
-    );
-    static final AtomicItemType durationItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "duration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
-    );
-    static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "yearMonthDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
-    );
-    static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "dayTimeDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
-    );
-    static final AtomicItemType dateTimeItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "dateTime"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            )
-    );
-    static final AtomicItemType dateTimeStampItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            )
-    );
-    static final AtomicItemType dateItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "date"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            )
-    );
-    static final AtomicItemType timeItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "time"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            )
-    );
-    static final AtomicItemType hexBinaryItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "hexBinary"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            )
-    );
-    static final AtomicItemType anyURIItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "anyURI"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            )
-    );
-    static final AtomicItemType base64BinaryItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "base64Binary"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            )
-    );
 
     private Name name;
     private Set<FacetTypes> allowedFacets;
@@ -339,24 +136,29 @@ public class AtomicItemType implements ItemType {
         }
         // DateTime can be cast also to Date or Time or DateTimeStamp
         if (this.equals(dateTimeItem)) {
-            if (other.equals(dateItem) || other.equals(timeItem) || other.equals(dateTimeStampItem))
-                return true;
-            else
-                return false;
+            return other.equals(dateItem)
+                    || other.equals(timeItem)
+                    || other.equals(dateTimeStampItem)
+                    || other.equals(gYearItem)
+                    || other.equals(gMonthItem)
+                    || other.equals(gDayItem);
         }
         // DateTimeStamp can be cast also to Date or Time or DateTime
         if (this.equals(dateTimeStampItem)) {
-            if (other.equals(dateItem) || other.equals(timeItem) || other.equals(dateTimeItem))
-                return true;
-            else
-                return false;
+            return other.equals(dateItem)
+                    || other.equals(timeItem)
+                    || other.equals(dateTimeItem)
+                    || other.equals(gYearItem)
+                    || other.equals(gMonthItem)
+                    || other.equals(gDayItem);
         }
         // Date can be cast also to DateTime or DateTimeStamp
         if (this.equals(dateItem)) {
-            if (other.equals(dateTimeItem) || other.equals(dateTimeStampItem))
-                return true;
-            else
-                return false;
+            return other.equals(dateTimeItem)
+                    || other.equals(dateTimeStampItem)
+                    || other.equals(gYearItem)
+                    || other.equals(gMonthItem)
+                    || other.equals(gDayItem);
         }
         // Otherwise this cannot be casted to other
         return false;
