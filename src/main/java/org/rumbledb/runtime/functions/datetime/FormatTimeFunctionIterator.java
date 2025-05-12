@@ -19,7 +19,6 @@ import java.util.List;
 public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item valueTimeItem = null;
     private Item pictureStringItem = null;
 
     public FormatTimeFunctionIterator(
@@ -31,18 +30,18 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.valueTimeItem = this.children.get(0)
+        Item valueTimeItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         this.pictureStringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
-        if (this.valueTimeItem == null || this.pictureStringItem == null) {
+        if (valueTimeItem == null || this.pictureStringItem == null) {
             return null;
         }
         try {
-            if (this.valueTimeItem.isNull()) {
-                return this.valueTimeItem;
+            if (valueTimeItem.isNull()) {
+                return valueTimeItem;
             }
-            OffsetTime timeValue = this.valueTimeItem.getTimeValue();
+            OffsetTime timeValue = valueTimeItem.getTimeValue();
             String pictureString = this.pictureStringItem.getStringValue();
 
             // Start sequence
@@ -110,8 +109,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                 } else {
                     String literalSubstring = pictureString.substring(
-                        startOfSequence,
-                        pictureString.length()
+                        startOfSequence
                     );
                     result.append(literalSubstring);
                 }
@@ -120,7 +118,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             String message = String.format(
                 "\"%s\": not castable to type %s",
-                this.valueTimeItem.serialize(),
+                valueTimeItem.serialize(),
                 "time"
             );
             throw new CastException(message, getMetadata());
@@ -128,9 +126,11 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     private String parsePresentationModifiers(String presentationModifiers) {
-        String presentationModifier1 = "";
+        String presentationModifier1;
 
         int presentationModifiersLength = presentationModifiers.length();
+        if (presentationModifiersLength == 0)
+            return "";
         if (presentationModifiersLength == 1) {
             presentationModifier1 = presentationModifiers;
         } else {
@@ -146,11 +146,6 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     );
                     throw new UnsupportedFeatureException(message, getMetadata());
                 case 't':
-                    presentationModifier1 = presentationModifiers.substring(
-                        0,
-                        presentationModifiersLength - 1
-                    );
-                    break;
                 case 'c':
                     presentationModifier1 = presentationModifiers.substring(
                         0,
@@ -209,6 +204,9 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 break;
             case 'P':
                 componentSpecifier = 'a';
+                break;
+            case 'f':
+                componentSpecifier = 'f';
                 break;
             default:
                 String message = String.format(
@@ -285,12 +283,6 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             if (presentationModifier1.equals("Nn") && componentSpecifier != 'a') {
                 if (maxWidth < 1)
                     maxWidth = 10;
-                if (
-                    componentSpecifier == 'd'
-                        || componentSpecifier == 'D'
-                        || componentSpecifier == 'u'
-                )
-                    componentSpecifier = 'E';
             } else if (presentationModifier1.equals("N") && componentSpecifier == 'a') {
                 if (maxWidth < 1)
                     maxWidth = 1;
@@ -299,8 +291,6 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 // check if numeric sequence as format token
                 if (presentationModifierStart >= '0' && presentationModifierStart <= '9') {
                     int toReduce = 2;
-                    if (componentSpecifier == 'Y')
-                        toReduce = 4;
                     int prefixLength;
                     if (maxWidth < 1)
                         prefixLength = presentationModifier1.length() - toReduce;

@@ -45,13 +45,13 @@ public class gMonthDayItem implements Item {
     }
 
     gMonthDayItem(String gMonthDayString) {
-        getgMonthFromString(gMonthDayString);
+        getgMonthDayFromString(gMonthDayString);
     }
 
-    private void getgMonthFromString(String gMonthDayString) {
+    private void getgMonthDayFromString(String gMonthDayString) {
         Matcher matcher = this.gMonthDayRegex.matcher(gMonthDayString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gDay format: " + gMonthDayString);
+            throw new IllegalArgumentException("Invalid gMonthDay format: " + gMonthDayString);
         }
         this.month = Month.of(Integer.parseInt(matcher.group(1)));
         this.day = Integer.parseInt(matcher.group(2));
@@ -81,9 +81,9 @@ public class gMonthDayItem implements Item {
     @Override
     public String getStringValue() {
         if (this.hasTimeZone) {
-            return "--" + this.month + this.offset;
+            return String.format("--%02d-%02d", this.month.getValue(), this.day) + this.offset;
         } else {
-            return "--" + this.month;
+            return String.format("--%02d-%02d", this.month.getValue(), this.day);
         }
     }
 
@@ -102,7 +102,7 @@ public class gMonthDayItem implements Item {
     public void read(Kryo kryo, Input input) {
         String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
-        getgMonthFromString(dateTimeString);
+        getgMonthDayFromString(dateTimeString);
     }
 
     @Override

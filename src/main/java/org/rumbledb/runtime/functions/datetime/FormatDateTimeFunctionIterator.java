@@ -19,7 +19,6 @@ import java.util.List;
 public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item valueDateTimeItem = null;
     private Item pictureStringItem = null;
 
     public FormatDateTimeFunctionIterator(
@@ -31,19 +30,19 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.valueDateTimeItem = this.children.get(0)
+        Item valueDateTimeItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         this.pictureStringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
-        if (this.valueDateTimeItem == null || this.pictureStringItem == null) {
+        if (valueDateTimeItem == null || this.pictureStringItem == null) {
             return null;
         }
         try {
-            if (this.valueDateTimeItem.isNull()) {
-                return this.valueDateTimeItem;
+            if (valueDateTimeItem.isNull()) {
+                return valueDateTimeItem;
             }
 
-            OffsetDateTime dateTimeValue = this.valueDateTimeItem.getDateTimeValue();
+            OffsetDateTime dateTimeValue = valueDateTimeItem.getDateTimeValue();
             String pictureString = this.pictureStringItem.getStringValue();
 
             // Start sequence
@@ -112,8 +111,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                 } else {
                     String literalSubstring = pictureString.substring(
-                        startOfSequence,
-                        pictureString.length()
+                        startOfSequence
                     );
                     result.append(literalSubstring);
                 }
@@ -122,7 +120,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             String message = String.format(
                 "\"%s\": not castable to type %s",
-                this.valueDateTimeItem.serialize(),
+                valueDateTimeItem.serialize(),
                 "dateTime"
             );
             throw new CastException(message, getMetadata());
@@ -130,9 +128,11 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     private String parsePresentationModifiers(String presentationModifiers) {
-        String presentationModifier1 = "";
+        String presentationModifier1;
 
         int presentationModifiersLength = presentationModifiers.length();
+        if (presentationModifiersLength == 0)
+            return "";
         if (presentationModifiersLength == 1) {
             presentationModifier1 = presentationModifiers;
         } else {
@@ -148,11 +148,6 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     );
                     throw new UnsupportedFeatureException(message, getMetadata());
                 case 't':
-                    presentationModifier1 = presentationModifiers.substring(
-                        0,
-                        presentationModifiersLength - 1
-                    );
-                    break;
                 case 'c':
                     presentationModifier1 = presentationModifiers.substring(
                         0,
@@ -175,7 +170,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     int parseWidthModifier(String widthModifier) {
         int width = -1;
-        if (widthModifier.length() == 0) {
+        if (widthModifier.isEmpty()) {
             String message = String.format(
                 "\"%s\": incorrect syntax",
                 this.pictureStringItem.serialize()
@@ -191,7 +186,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     private String parseVariableMarker(String variableMarker, StringBuilder result) {
-        if (variableMarker.length() == 0) {
+        if (variableMarker.isEmpty()) {
             String message = String.format(
                 "\"%s\": incorrect syntax",
                 this.pictureStringItem.serialize()
@@ -227,6 +222,9 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
             case 'P':
                 componentSpecifier = 'a';
                 break;
+            case 'f':
+                componentSpecifier = 'f';
+                break;
             default:
                 String message = String.format(
                     "\"%s\": a component specifier refers to components"
@@ -238,12 +236,12 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
 
         String presentationModifier1 = "";
-        Integer minWidth = 1;
-        Integer maxWidth = -1;
+        int minWidth = 1;
+        int maxWidth = -1;
 
         String variableMarkerOptionalModifiers = variableMarker.substring(1);
 
-        if (variableMarkerOptionalModifiers.length() > 0) {
+        if (!variableMarkerOptionalModifiers.isEmpty()) {
             List<String> variableMarkerModifiers =
                 Arrays.asList(variableMarkerOptionalModifiers.split(","));
             int variableMarkerModifiersSize = variableMarkerModifiers.size();
@@ -264,7 +262,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 if (variableMarkerModifiersSize == 2) {
                     // width modifier present
                     String variableMarkerOptionalWidthModifiers = variableMarkerModifiers.get(1);
-                    if (variableMarkerOptionalWidthModifiers.length() > 0) {
+                    if (!variableMarkerOptionalWidthModifiers.isEmpty()) {
                         List<String> widthModifier =
                             Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
                         int widthModifierSize = widthModifier.size();
@@ -298,14 +296,12 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
 
         StringBuilder pattern = new StringBuilder();
-        if (presentationModifier1.length() > 0) {
+        if (!presentationModifier1.isEmpty()) {
             if (presentationModifier1.equals("Nn") && componentSpecifier != 'a') {
                 if (maxWidth < 1)
                     maxWidth = 10;
                 if (
-                    componentSpecifier == 'd'
-                        || componentSpecifier == 'D'
-                        || componentSpecifier == 'e'
+                    componentSpecifier == 'd' || componentSpecifier == 'D'
                 )
                     componentSpecifier = 'E';
             } else if (presentationModifier1.equals("N") && componentSpecifier == 'a') {
@@ -323,8 +319,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                         prefixLength = presentationModifier1.length() - toReduce;
                     else
                         prefixLength = maxWidth - toReduce;
-                    for (int j = 0; j < prefixLength; ++j)
-                        pattern.append('0');
+                    pattern.append("0".repeat(Math.max(0, prefixLength)));
                     maxWidth = toReduce;
                 } else {
                     String message = String.format(
@@ -335,12 +330,12 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     throw new UnsupportedFeatureException(message, getMetadata());
                 }
             }
+            pattern.append(String.valueOf(componentSpecifier).repeat(Math.max(0, maxWidth - minWidth + 1)));
         } else {
             if (maxWidth < 1)
                 maxWidth = 1;
+            pattern.append(String.valueOf(componentSpecifier).repeat(Math.max(0, maxWidth - minWidth + 1)));
         }
-        for (int j = minWidth; j <= maxWidth; ++j)
-            pattern.append(componentSpecifier);
 
         return pattern.toString();
     }

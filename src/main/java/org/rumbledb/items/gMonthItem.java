@@ -79,9 +79,9 @@ public class gMonthItem implements Item {
 
     public String getStringValue() {
         if (this.hasTimeZone) {
-            return "--" + this.month.toString() + this.offset;
+            return String.format("--%02d", this.month.getValue()) + this.offset;
         } else {
-            return "--" + this.month.toString();
+            return String.format("--%02d", this.month.getValue());
         }
     }
 

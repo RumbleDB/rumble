@@ -78,9 +78,9 @@ public class gDayItem implements Item {
 
     public String getStringValue() {
         if (this.hasTimeZone) {
-            return "---" + this.day + this.offset;
+            return String.format("---%02d", this.day) + this.offset;
         } else {
-            return "---" + this.day;
+            return String.format("---%02d", this.day);
         }
     }
 
