@@ -153,11 +153,6 @@ public class TimeItem implements Item {
         return this.value.getOffset().getTotalSeconds() / 60;
     }
 
-    @Override
-    public ZoneOffset getZoneOffset() {
-        return this.value.getOffset();
-    }
-
     public OffsetTime getTimeValue() {
         return this.value;
     }

@@ -354,10 +354,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance()
-                        .createDateItem(item.getDateValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
+                } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance()
                         .createDateItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
@@ -376,7 +373,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     result = ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
                 } else if (item.isTime()) {
                     result = ItemFactory.getInstance().createTimeItem(item.getTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
+                } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance()
                         .createTimeItem(item.getDateTimeValue().toOffsetTime(), item.hasTimeZone());
                 } else {
@@ -393,10 +390,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance()
-                        .createDateTimeItem(item.getDateValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
+                } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
@@ -412,10 +406,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance()
-                        .createDateTimeStampItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
+                } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance()
                         .createDateTimeStampItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
@@ -432,9 +423,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createYearMonthDurationItem(item.getStringValue().trim());
-                } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
-                } else if (item.isDayTimeDuration()) {
+                } else if (item.isDuration() || item.isDayTimeDuration()) {
                     result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
                 } else {
                     return null;
@@ -450,9 +439,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDayTimeDurationItem(item.getStringValue().trim());
-                } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
-                } else if (item.isYearMonthDuration()) {
+                } else if (item.isDuration() || item.isYearMonthDuration()) {
                     result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
                 } else {
                     return null;
@@ -487,6 +474,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGDayItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -498,6 +487,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGMonthItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -509,6 +500,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGYearItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -520,6 +513,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGMonthDayItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -531,6 +526,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance()
+                        .createGYearMonthItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }

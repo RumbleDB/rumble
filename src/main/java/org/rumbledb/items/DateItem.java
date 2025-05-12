@@ -181,11 +181,6 @@ public class DateItem implements Item {
 
     @Override
     public OffsetDateTime getDateTimeValue() {
-        return OffsetDateTime.of(this.value.toLocalDateTime(), this.value.getOffset());
-    }
-
-    @Override
-    public OffsetDateTime getDateValue() {
         return this.value;
     }
 

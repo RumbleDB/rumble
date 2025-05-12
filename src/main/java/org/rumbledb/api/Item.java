@@ -207,10 +207,6 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default ZoneOffset getZoneOffset() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
     default int getHour() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
 
@@ -535,10 +531,6 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default OffsetTime getTimeValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    default OffsetDateTime getDateValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

@@ -137,28 +137,28 @@ public class AtomicItemType implements ItemType {
         // DateTime can be cast also to Date or Time or DateTimeStamp
         if (this.equals(dateTimeItem)) {
             return other.equals(dateItem)
-                    || other.equals(timeItem)
-                    || other.equals(dateTimeStampItem)
-                    || other.equals(gYearItem)
-                    || other.equals(gMonthItem)
-                    || other.equals(gDayItem);
+                || other.equals(timeItem)
+                || other.equals(dateTimeStampItem)
+                || other.equals(gYearItem)
+                || other.equals(gMonthItem)
+                || other.equals(gDayItem);
         }
         // DateTimeStamp can be cast also to Date or Time or DateTime
         if (this.equals(dateTimeStampItem)) {
             return other.equals(dateItem)
-                    || other.equals(timeItem)
-                    || other.equals(dateTimeItem)
-                    || other.equals(gYearItem)
-                    || other.equals(gMonthItem)
-                    || other.equals(gDayItem);
+                || other.equals(timeItem)
+                || other.equals(dateTimeItem)
+                || other.equals(gYearItem)
+                || other.equals(gMonthItem)
+                || other.equals(gDayItem);
         }
         // Date can be cast also to DateTime or DateTimeStamp
         if (this.equals(dateItem)) {
             return other.equals(dateTimeItem)
-                    || other.equals(dateTimeStampItem)
-                    || other.equals(gYearItem)
-                    || other.equals(gMonthItem)
-                    || other.equals(gDayItem);
+                || other.equals(dateTimeStampItem)
+                || other.equals(gYearItem)
+                || other.equals(gMonthItem)
+                || other.equals(gDayItem);
         }
         // Otherwise this cannot be casted to other
         return false;

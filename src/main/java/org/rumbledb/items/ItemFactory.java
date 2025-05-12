@@ -182,12 +182,24 @@ public class ItemFactory {
         return new TimeItem(s);
     }
 
+    public Item createGDayItem(OffsetDateTime s, boolean timezone) {
+        return new gDayItem(s, timezone);
+    }
+
     public Item createGDayItem(String s) {
         return new gDayItem(s);
     }
 
+    public Item createGMonthItem(OffsetDateTime s, boolean timezone) {
+        return new gMonthItem(s, timezone);
+    }
+
     public Item createGMonthItem(String s) {
         return new gMonthItem(s);
+    }
+
+    public Item createGYearItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gYearItem(s, hasTimeZone);
     }
 
     public Item createGYearItem(String s) {
@@ -198,8 +210,16 @@ public class ItemFactory {
         return new gMonthDayItem(s);
     }
 
+    public Item createGMonthDayItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gMonthDayItem(s, hasTimeZone);
+    }
+
     public Item createGYearMonthItem(String s) {
         return new gYearMonthItem(s);
+    }
+
+    public Item createGYearMonthItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gYearMonthItem(s, hasTimeZone);
     }
 
     public Item createAnyURIItem(String s) {
