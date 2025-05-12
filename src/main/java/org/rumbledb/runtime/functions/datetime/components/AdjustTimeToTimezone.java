@@ -54,7 +54,7 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
                 int minutes = (int) timezoneDuration.toMinutes() % 60;
                 return ItemFactory.getInstance()
                     .createTimeItem(
-                        timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
                         true
                     );
             }
