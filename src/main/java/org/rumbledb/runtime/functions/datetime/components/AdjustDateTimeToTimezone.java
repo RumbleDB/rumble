@@ -36,13 +36,13 @@ public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator 
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC), true);
+                .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }
         if (this.timezone == null) {
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateTimeItem(
-                        timeItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC),
+                        timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC),
                         false
                     );
             }

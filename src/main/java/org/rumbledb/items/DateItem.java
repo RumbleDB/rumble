@@ -28,7 +28,7 @@ public class DateItem implements Item {
 
     DateItem(OffsetDateTime value, boolean hasTimeZone) {
         super();
-        this.value = value;
+        this.value = value.toLocalDate().atStartOfDay(value.getOffset()).toOffsetDateTime();
         this.hasTimeZone = hasTimeZone;
     }
 
@@ -99,6 +99,11 @@ public class DateItem implements Item {
 
     @Override
     public boolean isDate() {
+        return true;
+    }
+
+    @Override
+    public boolean isDateTime() {
         return true;
     }
 

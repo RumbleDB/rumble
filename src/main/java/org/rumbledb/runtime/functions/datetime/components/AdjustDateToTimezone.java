@@ -36,15 +36,18 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createDateItem(dateItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC), true);
+                .createDateItem(dateItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }
         if (this.timezone == null) {
             if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createDateItem(dateItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
+                    .createDateItem(dateItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
             }
             return ItemFactory.getInstance()
-                .createDateItem(dateItem.getDateTimeValue(), dateItem.hasTimeZone());
+                .createDateItem(
+                    dateItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.UTC),
+                    dateItem.hasTimeZone()
+                );
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
@@ -56,7 +59,7 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
             if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createDateItem(
-                        dateItem.getDateTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                        dateItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
                         true
                     );
             }

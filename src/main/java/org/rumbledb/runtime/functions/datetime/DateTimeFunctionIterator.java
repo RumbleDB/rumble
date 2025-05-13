@@ -34,7 +34,7 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         if (this.dateItem == null || this.timeItem == null) {
             return null;
         }
-        OffsetDateTime dt = null;
+        OffsetDateTime dt;
         OffsetDateTime dateDt = this.dateItem.getDateTimeValue();
         OffsetTime timeDt = this.timeItem.getTimeValue();
 
@@ -63,7 +63,7 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             dt = OffsetDateTime.of(
                 dateDt.toLocalDate(),
                 timeDt.toLocalTime(),
-                dateDt.getOffset()
+                timeDt.getOffset()
             );
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
         }

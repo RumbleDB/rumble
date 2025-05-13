@@ -36,30 +36,35 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         if (this.timezone == null && this.children.size() == 1) {
-            return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), true);
+            return ItemFactory.getInstance()
+                .createTimeItem(timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }
         if (this.timezone == null) {
             if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createTimeItem(timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
+                    .createTimeItem(timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.UTC), false);
             }
-            return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), timeItem.hasTimeZone());
+            return ItemFactory.getInstance()
+                .createTimeItem(timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.UTC), timeItem.hasTimeZone());
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
+            Duration timezoneDuration = this.timezone.getDurationValue();
+            int hours = (int) timezoneDuration.toHours();
+            int minutes = (int) timezoneDuration.toMinutes() % 60;
             if (timeItem.hasTimeZone()) {
-                System.out.println("[TEST]: " + this.timezone.getDurationValue().toString());
-                Duration timezoneDuration = this.timezone.getDurationValue();
-                int hours = (int) timezoneDuration.toHours();
-                int minutes = (int) timezoneDuration.toMinutes() % 60;
                 return ItemFactory.getInstance()
                     .createTimeItem(
                         timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
                         true
                     );
             }
-            return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), false);
+            return ItemFactory.getInstance()
+                .createTimeItem(
+                    timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
+                    true
+                );
         }
     }
 

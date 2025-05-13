@@ -52,9 +52,9 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private Item left;
     private Item right;
-    private ComparisonExpression.ComparisonOperator comparisonOperator;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final ComparisonExpression.ComparisonOperator comparisonOperator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
 
     public ComparisonIterator(
@@ -293,11 +293,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             byte[] l = left.getBinaryValue();
             byte[] r = right.getBinaryValue();
             return processBytes(l, r);
-        }
-        if (left.isDate() && right.isDate()) {
-            OffsetDateTime l = left.getDateTimeValue();
-            OffsetDateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
         }
         if (left.isTime() && right.isTime()) {
             OffsetTime l = left.getTimeValue();
