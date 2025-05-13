@@ -40,7 +40,8 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
         }
         if (this.timezone == null) {
             if (timeItem.hasTimeZone()) {
-                return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), false);
+                return ItemFactory.getInstance()
+                    .createTimeItem(timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
             }
             return ItemFactory.getInstance().createTimeItem(timeItem.getTimeValue(), timeItem.hasTimeZone());
         } else {

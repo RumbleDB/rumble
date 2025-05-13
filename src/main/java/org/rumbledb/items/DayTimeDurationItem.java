@@ -174,7 +174,7 @@ public class DayTimeDurationItem implements Item {
 
     @Override
     public int getHour() {
-        return (int) ((this.value.getSeconds() / 3600) % 60);
+        return (int) ((this.value.getSeconds() / 3600) % 24);
     }
 
     @Override

@@ -222,7 +222,7 @@ public class DurationItem implements Item {
 
     @Override
     public int getHour() {
-        return (int) ((this.durationValue.getSeconds() / 3600) % 60);
+        return (int) ((this.durationValue.getSeconds() / 3600) % 24);
     }
 
     @Override
