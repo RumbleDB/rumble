@@ -119,7 +119,6 @@ public class gYearMonthItem implements Item {
             return OffsetDateTime.of(this.year.getValue(), this.month.getValue(), 1, 0, 0, 0, 0, this.offset);
         } else {
             return OffsetDateTime.of(this.year.getValue(), this.month.getValue(), 1, 0, 0, 0, 0, ZoneOffset.UTC);
-
         }
     }
 }

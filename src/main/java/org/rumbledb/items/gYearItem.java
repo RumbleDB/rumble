@@ -108,4 +108,13 @@ public class gYearItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public OffsetDateTime getDateTimeValue() {
+        if (this.hasTimeZone) {
+            return OffsetDateTime.of(this.year.getValue(), 1, 1, 0, 0, 0, 0, this.offset);
+        } else {
+            return OffsetDateTime.of(this.year.getValue(), 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+        }
+    }
 }

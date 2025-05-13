@@ -210,8 +210,17 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
             case 'F':
                 componentSpecifier = 'E';
                 break;
+            case 'W':
+                componentSpecifier = 'W';
+                break;
+            case 'w':
+                componentSpecifier = 'w';
+                break;
             case 'H':
                 componentSpecifier = 'H';
+                break;
+            case 'h':
+                componentSpecifier = 'h';
                 break;
             case 'm':
                 componentSpecifier = 'm';
@@ -223,7 +232,19 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 componentSpecifier = 'a';
                 break;
             case 'f':
-                componentSpecifier = 'f';
+                componentSpecifier = 'S';
+                break;
+            case 'Z':
+                componentSpecifier = 'Z';
+                break;
+            case 'z':
+                componentSpecifier = 'z';
+                break;
+            case 'C':
+                componentSpecifier = 'C';
+                break;
+            case 'E':
+                componentSpecifier = 'E';
                 break;
             default:
                 String message = String.format(

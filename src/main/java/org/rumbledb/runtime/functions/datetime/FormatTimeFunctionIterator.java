@@ -196,6 +196,9 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             case 'H':
                 componentSpecifier = 'H';
                 break;
+            case 'h':
+                componentSpecifier = 'h';
+                break;
             case 'm':
                 componentSpecifier = 'm';
                 break;
@@ -206,7 +209,19 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 componentSpecifier = 'a';
                 break;
             case 'f':
-                componentSpecifier = 'f';
+                componentSpecifier = 'S';
+                break;
+            case 'Z':
+                componentSpecifier = 'Z';
+                break;
+            case 'z':
+                componentSpecifier = 'z';
+                break;
+            case 'C':
+                componentSpecifier = 'C';
+                break;
+            case 'E':
+                componentSpecifier = 'E';
                 break;
             default:
                 String message = String.format(

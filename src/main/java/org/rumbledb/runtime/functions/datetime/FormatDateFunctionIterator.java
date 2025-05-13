@@ -200,6 +200,12 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             case 'M':
                 componentSpecifier = 'M';
                 break;
+            case 'W':
+                componentSpecifier = 'W';
+                break;
+            case 'w':
+                componentSpecifier = 'w';
+                break;
             case 'd':
                 componentSpecifier = 'D';
                 break;
@@ -208,6 +214,12 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 break;
             case 'F':
                 componentSpecifier = 'E';
+                break;
+            case 'Z':
+                componentSpecifier = 'Z';
+                break;
+            case 'X':
+                componentSpecifier = 'X';
                 break;
             default:
                 String message = String.format(

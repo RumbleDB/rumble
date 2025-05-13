@@ -118,7 +118,6 @@ public class gDayItem implements Item {
             return OffsetDateTime.of(0, 1, this.day, 0, 0, 0, 0, this.offset);
         } else {
             return OffsetDateTime.of(0, 1, this.day, 0, 0, 0, 0, ZoneOffset.UTC);
-
         }
     }
 }
