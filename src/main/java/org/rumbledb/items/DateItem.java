@@ -103,11 +103,6 @@ public class DateItem implements Item {
     }
 
     @Override
-    public boolean isDateTime() {
-        return true;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }

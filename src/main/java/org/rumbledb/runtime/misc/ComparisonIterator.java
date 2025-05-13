@@ -299,6 +299,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             OffsetTime r = right.getTimeValue();
             return processTime(l, r);
         }
+        if (left.isDate() && right.isDate()) {
+            OffsetDateTime l = left.getDateTimeValue();
+            OffsetDateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
         if (left.isDateTime() && right.isDateTime()) {
             OffsetDateTime l = left.getDateTimeValue();
             OffsetDateTime r = right.getDateTimeValue();
