@@ -44,15 +44,15 @@ public class gMonthItem implements Item {
     }
 
     gMonthItem(String gMonthString) {
-        Matcher matcher = this.gMonthRegex.matcher(gMonthString);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gYear format: " + gMonthString);
-        }
+
         getgMonthFromString(gMonthString);
     }
 
     private void getgMonthFromString(String gMonthString) {
         Matcher matcher = this.gMonthRegex.matcher(gMonthString);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid gMonth format: " + gMonthString);
+        }
         this.month = Month.of(Integer.parseInt(matcher.group(1)));
         String tz = matcher.group(2);
         if (tz == null) {

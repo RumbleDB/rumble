@@ -49,7 +49,7 @@ public class gYearMonthItem implements Item {
     private void getgYearMonthFromString(String gMonthDayString) {
         Matcher matcher = this.gYearMonthRegex.matcher(gMonthDayString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gDay format: " + gMonthDayString);
+            throw new IllegalArgumentException("Invalid gYearMonth format: " + gMonthDayString);
         }
         this.year = Year.of(Integer.parseInt(matcher.group(1)));
         this.month = Month.of(Integer.parseInt(matcher.group(2)));
