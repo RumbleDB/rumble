@@ -226,19 +226,6 @@ catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*'
 
 ///////////////////////// expression
 
-orExpr                  : main_expr=andExpr ( Kor rhs+=andExpr )*;
-
-andExpr                 : main_expr=comparisonExpr ( Kand rhs+=comparisonExpr )*;
-
-comparisonExpr          : main_expr=stringConcatExpr
-                          ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
-                          | '=' | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
-
-stringConcatExpr        : main_expr=rangeExpr ( '||' rhs+=rangeExpr )* ;
-
-rangeExpr               : main_expr=additiveExpr ( Kto rhs+=additiveExpr )?;
-
-additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=multiplicativeExpr )*;
 
 multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
@@ -246,31 +233,11 @@ instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenc
 
 isStaticallyExpr        : main_expr=treatExpr ( Kis Kstatically seq=sequenceType)?;
 
-treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )?;
-
-castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )?;
-
-castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
-
-arrowExpr               : main_expr=unaryExpr (('=' '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
-
-arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
-
-unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
-
 valueExpr               : simpleMap_expr=simpleMapExpr
                         | validate_expr=validateExpr
                         | annotate_expr=annotateExpr;
 
-validateExpr            : Kvalidate Ktype sequenceType LBRACE expr RBRACE;
-
 annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
-
-simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
-
-postFixExpr             : main_expr=primaryExpr ( predicate | lookup | argumentList)*;
-
-predicate               : '[' expr ']';
 
 // postfix lookup, behind map or array
 lookup            : '?' keySpecifier;

@@ -241,17 +241,17 @@ existInsertExpr: KW_INSERT exprSingle (KW_INTO | KW_PRECEDING | KW_FOLLOWING) ex
 existDeleteExpr: KW_DELETE exprSingle;
 existRenameExpr: KW_RENAME exprSingle KW_AS exprSingle;
 
-orExpr: andExpr (KW_OR andExpr)* ;
+orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
-andExpr: comparisonExpr (KW_AND comparisonExpr)* ;
+andExpr: main_expr=comparisonExpr (KW_AND rhs+=comparisonExpr)* ;
 
-comparisonExpr: stringConcatExpr ( (valueComp | generalComp | nodeComp) stringConcatExpr )? ;
+comparisonExpr: main_expr=stringConcatExpr (  op+=compOp rhs+=stringConcatExpr )? ;
 
-stringConcatExpr: rangeExpr (CONCATENATION rangeExpr)* ;
+stringConcatExpr: main_expr=rangeExpr (CONCATENATION rhs+=rangeExpr)* ;
 
-rangeExpr: additiveExpr (KW_TO additiveExpr)? ;
+rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
-additiveExpr: multiplicativeExpr ( (PLUS | MINUS) multiplicativeExpr )* ;
+additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
 multiplicativeExpr: unionExpr ( (STAR | KW_DIV | KW_IDIV | KW_MOD) unionExpr )* ;
 
@@ -261,17 +261,23 @@ intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)
 
 instanceOfExpr: treatExpr ( KW_INSTANCE KW_OF sequenceType)? ;
 
-treatExpr: castableExpr ( KW_TREAT KW_AS sequenceType)? ;
+treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
-castableExpr: castExpr ( KW_CASTABLE KW_AS singleType)?;
+castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType)?;
 
-castExpr: arrowExpr (KW_CAST KW_AS singleType)? ;
+castExpr: main_expr=arrowExpr (KW_CAST KW_AS single=singleType)? ;
 
-arrowExpr: unaryExpression (ARROW arrowFunctionSpecifier argumentList)* ;
+arrowExpr: main_expr=unaryExpr (ARROW function+=arrowFunctionSpecifier arguments+=argumentList)* ;
 
-unaryExpression: (MINUS | PLUS)* valueExpr ;
+unaryExpr: (MINUS | PLUS)* main_expr=valueExpr ;
 
-valueExpr: validateExpr | extensionExpr | simpleMapExpr ;
+valueExpr: validate_expr=validateExpr | extensionExpr | simpleMap_expr=simpleMapExpr ;
+
+/* 
+ * this token was added to prevent the antlr error
+ * "label assigned to a block which is not a set" in the comparisonExpr token definition
+ */
+compOp: valueComp | generalComp | nodeComp ;
 
 generalComp: EQUAL | NOT_EQUAL | LANGLE| (LANGLE EQUAL) | RANGLE | (RANGLE EQUAL) ;
 
@@ -285,7 +291,7 @@ validationMode: KW_LAX | KW_STRICT ;
 
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
-simpleMapExpr: pathExpr (BANG pathExpr)* ;
+simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
@@ -329,7 +335,7 @@ wildcard: STAR            # allNames
         ;
 
 
-postfixExpr: primaryExpr (predicate | argumentList | lookup)* ;
+postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
 argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
 
