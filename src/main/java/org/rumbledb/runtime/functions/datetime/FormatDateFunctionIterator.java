@@ -57,8 +57,16 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     if (c == ']') {
                         String variableMarker = pictureString.substring(startOfSequence, i);
                         String pattern = parseVariableMarker(variableMarker, result);
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-                        result.append(formatter.format(dateValue));
+                        if (pattern.equals("IIII")) {
+                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy");
+                            result.append(integerToRoman(Integer.parseInt(formatter.format(dateValue))));
+                        } else if (pattern.equals("iiii")) {
+                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy");
+                            result.append(integerToRoman(Integer.parseInt(formatter.format(dateValue))).toLowerCase());
+                        } else {
+                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+                            result.append(formatter.format(dateValue));
+                        }
 
                         variableMarkerSequence = false;
                         startOfSequence = i + 1;
@@ -221,6 +229,9 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             case 'X':
                 componentSpecifier = 'X';
                 break;
+            case 'z':
+                componentSpecifier = 'O';
+                break;
             default:
                 String message = String.format(
                     "\"%s\": a component specifier refers to components"
@@ -293,7 +304,22 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
         StringBuilder pattern = new StringBuilder();
         if (!presentationModifier1.isEmpty()) {
-            if (presentationModifier1.equals("Nn")) {
+            if (presentationModifier1.equals("Z") && componentSpecifier == 'Z') {
+                if (maxWidth < 1) {
+                    maxWidth = 3;
+                }
+                componentSpecifier = 'X';
+            } else if (presentationModifier1.equals("I") && componentSpecifier == 'Y') {
+                if (maxWidth < 1) {
+                    maxWidth = 4;
+                }
+                componentSpecifier = 'I';
+            } else if (presentationModifier1.equals("i") && componentSpecifier == 'Y') {
+                if (maxWidth < 1) {
+                    maxWidth = 4;
+                }
+                componentSpecifier = 'i';
+            } else if (presentationModifier1.equals("Nn")) {
                 if (maxWidth < 1)
                     maxWidth = 4;
                 if (
@@ -329,8 +355,24 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         }
 
         pattern.append(String.valueOf(componentSpecifier).repeat(Math.max(0, maxWidth - minWidth + 1)));
-
         return pattern.toString();
+    }
+
+
+    public static String integerToRoman(int number) {
+        final int[] values = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+        final String[] romanLiterals = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+
+
+        StringBuilder s = new StringBuilder();
+
+        for (int i = 0; i < values.length; i++) {
+            while (number >= values[i]) {
+                number -= values[i];
+                s.append(romanLiterals[i]);
+            }
+        }
+        return s.toString();
     }
 
 }

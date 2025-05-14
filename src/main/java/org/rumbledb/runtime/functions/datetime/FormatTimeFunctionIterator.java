@@ -215,7 +215,7 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 componentSpecifier = 'Z';
                 break;
             case 'z':
-                componentSpecifier = 'z';
+                componentSpecifier = 'O';
                 break;
             case 'C':
                 componentSpecifier = 'C';
@@ -295,7 +295,14 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
         StringBuilder pattern = new StringBuilder();
         if (!presentationModifier1.isEmpty()) {
-            if (presentationModifier1.equals("Nn") && componentSpecifier != 'a') {
+            if (presentationModifier1.equals("Z") && componentSpecifier == 'Z') {
+                if (maxWidth < 1) {
+                    maxWidth = 3;
+                }
+                componentSpecifier = 'X';
+            } else if (componentSpecifier == 'O') {
+                maxWidth = 1;
+            } else if (presentationModifier1.equals("Nn") && componentSpecifier != 'a') {
                 if (maxWidth < 1)
                     maxWidth = 10;
             } else if (presentationModifier1.equals("N") && componentSpecifier == 'a') {

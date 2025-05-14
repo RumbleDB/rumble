@@ -41,7 +41,7 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
         if (this.timezone == null) {
             if (dateItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
-                    .createDateItem(dateItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
+                    .createDateItem(dateItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), false);
             }
             return ItemFactory.getInstance()
                 .createDateItem(
