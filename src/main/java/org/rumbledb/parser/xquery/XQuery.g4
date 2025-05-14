@@ -193,13 +193,6 @@ groupByVar              : var_ref=varRef
                           ((Kas seq=sequenceType)? decl=':=' ex=exprSingle)?
                           (Kcollation uri=uriLiteral)?;
 
-orderByClause           : ((Korder Kby) | (stb=Kstable Korder Kby)) orderByExpr (',' orderByExpr)*;
-
-orderByExpr             : ex=exprSingle
-                          (Kascending | desc=Kdescending)?
-                          (Kempty (gr=Kgreatest | ls=Kleast))?
-                          (Kcollation uril=uriLiteral)?;
-
 countClause             : Kcount varRef;
 
 quantifiedExpr          : (so=Ksome | ev=Kevery)
@@ -265,27 +258,6 @@ primaryExpr             : Literal
                         ;
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
-
-
-varRef                  : '$' var_name=qname;
-
-parenthesizedExpr       : '(' expr? ')';
-
-contextItemExpr         : '.';
-
-orderedExpr             : 'ordered' LBRACE expr RBRACE;
-
-unorderedExpr           : 'unordered' LBRACE expr RBRACE;
-
-functionCall            : fn_name=qname argumentList;
-
-argumentList            : '('  (args+=argument (',' args+=argument)*)? ')';
-
-argument                : exprSingle | ArgumentPlaceholder;
-
-functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
-
-namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?

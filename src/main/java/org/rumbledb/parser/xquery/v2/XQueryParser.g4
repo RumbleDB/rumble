@@ -188,12 +188,12 @@ groupingSpec: DOLLAR name=varName
                     (type=typeDeclaration? COLON_EQ exprSingle)?
                     (KW_COLLATION uri=uriLiteral)? ;
 
-orderByClause: KW_STABLE? KW_ORDER KW_BY specs+=orderSpec (COMMA specs+=orderSpec)* ;
+orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderSpec (COMMA specs+=orderSpec)* ;
 
-orderSpec: value=exprSingle
-           order=(KW_ASCENDING | KW_DESCENDING)?
-           (KW_EMPTY empty=(KW_GREATEST|KW_LEAST))?
-           (KW_COLLATION collation=uriLiteral)?
+orderSpec: ex=exprSingle
+           (KW_ASCENDING | desc=KW_DESCENDING)?
+           (KW_EMPTY (gr=KW_GREATEST|ls=KW_LEAST))?
+           (KW_COLLATION uril=uriLiteral)?
          ;
 
 returnClause: KW_RETURN exprSingle ;
@@ -337,7 +337,7 @@ wildcard: STAR            # allNames
 
 postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
-argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
+argumentList: LPAREN (args+=argument (COMMA args+=argument)*)? RPAREN ;
 
 predicateList: predicate*;
 
@@ -368,7 +368,7 @@ literal: numericLiteral | stringLiteral ;
 
 numericLiteral: IntegerLiteral | DecimalLiteral | DoubleLiteral ;
 
-varRef: DOLLAR eqName;
+varRef: DOLLAR var_name=eqName;
 
 varName: eqName ;
 
@@ -380,7 +380,7 @@ orderedExpr: KW_ORDERED enclosedExpression ;
 
 unorderedExpr: KW_UNORDERED enclosedExpression ;
 
-functionCall: eqName argumentList  ;
+functionCall: fn_name=eqName argumentList  ;
 
 argument: exprSingle | QUESTION ;
 
@@ -486,7 +486,7 @@ compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
 
 functionItemExpr: namedFunctionRef | inlineFunctionRef ;
 
-namedFunctionRef: eqName HASH IntegerLiteral ;
+namedFunctionRef: fn_name=eqName HASH arity=IntegerLiteral ;
 
 inlineFunctionRef: annotations KW_FUNCTION LPAREN functionParams? RPAREN (KW_AS sequenceType)? functionBody ;
 
