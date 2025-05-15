@@ -176,9 +176,9 @@ windowVars: (DOLLAR currentItem=eqName)? positionalVar?
                           (KW_PREVIOUS DOLLAR previousItem=eqName)?
                           (KW_NEXT DOLLAR nextItem=eqName)?;
 
-countClause: KW_COUNT DOLLAR varName ;
+countClause: KW_COUNT varRef ;
 
-whereClause: KW_WHERE whereExpr=exprSingle ;
+whereClause: KW_WHERE exprSingle ;
 
 groupByClause: KW_GROUP KW_BY groupingSpecList ;
 

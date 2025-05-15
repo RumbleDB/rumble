@@ -149,8 +149,6 @@ paramList               : param (',' param)*;
 param                   : '$' qname (Kas sequenceType)?;
 ///////////////////////// constructs, expression
 
-expr                    : exprSingle (',' exprSingle)*;     // expr -> CommaExpression in visitor
-
 exprSingle              : exprSimple
                         | flowrExpr
                         | switchExpr
@@ -185,15 +183,11 @@ letClause               : Klet vars+=letVar (',' vars+=letVar)*;
 
 letVar                  : var_ref=varRef (Kas seq=sequenceType)? ':=' ex=exprSingle ;
 
-whereClause             : Kwhere exprSingle;
-
 groupByClause           : Kgroup Kby vars+=groupByVar (',' vars+=groupByVar)*;
 
 groupByVar              : var_ref=varRef
                           ((Kas seq=sequenceType)? decl=':=' ex=exprSingle)?
                           (Kcollation uri=uriLiteral)?;
-
-countClause             : Kcount varRef;
 
 quantifiedExpr          : (so=Ksome | ev=Kevery)
                           vars+=quantifiedExprVar (',' vars+=quantifiedExprVar)*
@@ -279,10 +273,6 @@ itemType                : qname
 singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
-
-uriLiteral              : stringLiteral;
-
-stringLiteral           : STRING;
 
 keyWords                : Kxquery
                         | Kand
