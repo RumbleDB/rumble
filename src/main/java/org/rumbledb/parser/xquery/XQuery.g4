@@ -135,12 +135,6 @@ exprSimple              : quantifiedExpr
                         | appendExpr
                         ;
 
-quantifiedExpr          : (so=Ksome | ev=Kevery)
-                          vars+=quantifiedExprVar (',' vars+=quantifiedExprVar)*
-                          Ksatisfies exprSingle;
-
-quantifiedExprVar       : varRef (Kas sequenceType)? Kin exprSingle;
-
 tryCatchExpr            : Ktry LBRACE try_expression=expr RBRACE catches+=catchClause+;
 
 catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;

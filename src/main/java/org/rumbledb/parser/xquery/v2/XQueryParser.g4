@@ -202,10 +202,14 @@ orderSpec: ex=exprSingle
            (KW_COLLATION uril=uriLiteral)?
          ;
 
-quantifiedExpr: quantifier=(KW_SOME | KW_EVERY) quantifiedVar (COMMA quantifiedVar)*
-                KW_SATISFIES value=exprSingle ;
+quantifiedExpr: (so=KW_SOME | ev=KW_EVERY) vars+=quantifiedExprVar (COMMA vars+=quantifiedExprVar)*
+                KW_SATISFIES exprSingle ;
 
-quantifiedVar: DOLLAR varName typeDeclaration? KW_IN exprSingle ;
+// renamed from quantifiedVar to quantifiedExprVar to match the JSONiq grammar
+quantifiedExprVar: var_ref=varRef
+                  // replaced with the typeDeclaration production to match the JSONiq grammar
+                  (KW_AS seq=sequenceType)?
+                  KW_IN exprSingle ;
 
 switchExpr: KW_SWITCH LPAREN cond=expr RPAREN
                 cases+=switchCaseClause+
