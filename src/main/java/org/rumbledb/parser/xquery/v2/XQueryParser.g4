@@ -520,7 +520,7 @@ singleType: simpleTypeName QUESTION? ;
 
 typeDeclaration: KW_AS sequenceType ;
 
-sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (itemType occurrence=(QUESTION|STAR|PLUS)? );
+sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
 
 itemType: kindTest
         | (KW_ITEM LPAREN RPAREN)

@@ -228,9 +228,6 @@ copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 
 ///////////////////////// Types
 
-sequenceType            : '(' ')'
-                        | item=itemType (question+='?' | star+='*' | plus+='+')?;
-
 objectConstructor       : 'map' LBRACE ( pairConstructor (',' pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
 
