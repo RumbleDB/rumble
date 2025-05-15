@@ -295,8 +295,6 @@ NameChar: NameStartChar
 XQDOC_COMMENT_START: '(:~' ;
 XQDOC_COMMENT_END: ':'+ ')' ;
 
-XQDocComment: 	'(' ':' '~' ( CHAR | ( ':' ~( ')' ) ) )* ':' ')' ;
-
 XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN);
 
 CHAR: ( '\t' | '\n' | '\r' | '\u0020'..'\u0039' | '\u003B'..'\uD7FF' | '\uE000'..'\uFFFD' ) ;
@@ -615,8 +613,6 @@ INT_QUOT_NCName: NameStartChar NameChar* -> type(NCName);
 INT_QUOT_XQDOC_COMMENT_START: '(:~' -> type(XQDOC_COMMENT_START);
 INT_QUOT_XQDOC_COMMENT_END: ':'+ ')' -> type(XQDOC_COMMENT_END);
 
-INT_QUOT_XQDocComment: 	'(' ':' '~' ( CHAR | ( ':' ~( ')' ) ) )* ':' ')' -> type(XQDocComment);
-
 INT_QUOT_XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
 
 INT_QUOT_CHAR: ( '\t' | '\n' | '\r' | '\u0020'..'\u0039' | '\u003B'..'\uD7FF' | '\uE000'..'\uFFFD' ) -> type(CHAR);
@@ -874,8 +870,6 @@ INT_APOS_NCName: NameStartChar NameChar* -> type(NCName);
 
 INT_APOS_XQDOC_COMMENT_START: '(:~' -> type(XQDOC_COMMENT_START);
 INT_APOS_XQDOC_COMMENT_END: ':'+ ')' -> type(XQDOC_COMMENT_END);
-
-INT_APOS_XQDocComment: 	'(' ':' '~' ( CHAR | ( ':' ~( ')' ) ) )* ':' ')' -> type(XQDocComment);
 
 INT_APOS_XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
 

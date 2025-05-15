@@ -17,9 +17,7 @@ options {
 
 // MODULE HEADER ///////////////////////////////////////////////////////////////
 
-module : xqDocComment? versionDecl? xqDocComment? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
-
-xqDocComment: XQDocComment ;
+module : versionDecl? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
 
 versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
              (KW_ENCODING encoding=stringLiteral)?
@@ -36,7 +34,7 @@ moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON ;
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
 prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport) SEMICOLON)*
-        ( xqDocComment? (varDecl | functionDecl | contextItemDecl | optionDecl) SEMICOLON)* ;
+        ( (varDecl | functionDecl | contextItemDecl | optionDecl) SEMICOLON)* ;
 
 defaultNamespaceDecl: KW_DECLARE KW_DEFAULT
                       type=(KW_ELEMENT | KW_FUNCTION)
