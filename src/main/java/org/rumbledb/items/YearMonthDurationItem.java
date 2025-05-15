@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -35,7 +36,10 @@ public class YearMonthDurationItem implements Item {
 
     public YearMonthDurationItem(String value) {
         if (!this.yearMonthDurationRegex.matcher(value).matches()) {
-            throw new IllegalArgumentException("Invalid year month duration: " + value);
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:yearMonthDuration: \"" + value + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
         this.value = normalizeMonthsToYears(Period.parse(value));
     }

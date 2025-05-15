@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -51,7 +52,10 @@ public class gMonthDayItem implements Item {
     private void getgMonthDayFromString(String gMonthDayString) {
         Matcher matcher = this.gMonthDayRegex.matcher(gMonthDayString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gMonthDay format: " + gMonthDayString);
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:gMonthDay: \"" + gMonthDayString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
         this.month = Month.of(Integer.parseInt(matcher.group(1)));
         this.day = Integer.parseInt(matcher.group(2));
@@ -108,6 +112,11 @@ public class gMonthDayItem implements Item {
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.gMonthDayItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.time.*;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -46,10 +47,13 @@ public class gYearMonthItem implements Item {
         getgYearMonthFromString(gYearMonthString);
     }
 
-    private void getgYearMonthFromString(String gMonthDayString) {
-        Matcher matcher = this.gYearMonthRegex.matcher(gMonthDayString);
+    private void getgYearMonthFromString(String gYearMonthString) {
+        Matcher matcher = this.gYearMonthRegex.matcher(gYearMonthString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gYearMonth format: " + gMonthDayString);
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:gYearMonth: \"" + gYearMonthString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
         this.year = Year.of(Integer.parseInt(matcher.group(1)));
         this.month = Month.of(Integer.parseInt(matcher.group(2)));
@@ -83,6 +87,11 @@ public class gYearMonthItem implements Item {
         } else {
             return String.format("%d-%02d", this.year.getValue(), this.month.getValue());
         }
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override

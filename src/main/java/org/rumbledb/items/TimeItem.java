@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -56,7 +57,10 @@ public class TimeItem implements Item {
                 this.hasTimeZone = false;
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid xs:time format: " + timeString, e);
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:time: \"" + timeString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 

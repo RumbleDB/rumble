@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -49,7 +50,10 @@ public class gDayItem implements Item {
     private void getgDayFromString(String gDayString) {
         Matcher matcher = this.gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gDay format: " + gDayString);
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:gDay: \"" + gDayString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
         this.day = Integer.parseInt(matcher.group(1));
         String tz = matcher.group(2);
@@ -75,6 +79,10 @@ public class gDayItem implements Item {
         return false;
     }
 
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
+    }
 
     public String getStringValue() {
         if (this.hasTimeZone) {

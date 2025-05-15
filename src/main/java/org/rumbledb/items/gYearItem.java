@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.time.Year;
 import java.time.ZoneOffset;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -47,7 +48,10 @@ public class gYearItem implements Item {
     private void getgYearFromString(String gYearString) {
         Matcher matcher = this.gYearRegex.matcher(gYearString);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid gYear format: " + gYearString);
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:gYear: \"" + gYearString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
         this.year = Year.of(Integer.parseInt(matcher.group(1)));
         String tz = matcher.group(2);
@@ -97,6 +101,11 @@ public class gYearItem implements Item {
         String dateTimeString = input.readString();
         this.hasTimeZone = input.readBoolean();
         getgYearFromString(dateTimeString);
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override
