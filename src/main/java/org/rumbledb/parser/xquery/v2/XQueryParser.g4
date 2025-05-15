@@ -158,9 +158,13 @@ allowingEmpty: KW_ALLOWING KW_EMPTY;
 
 positionalVar: KW_AT DOLLAR pvar=varName ;
 
-letClause: KW_LET vars+=letBinding (COMMA vars+=letBinding)* ;
+letClause: KW_LET vars+=letVar (COMMA vars+=letVar)* ;
 
-letBinding: DOLLAR varName typeDeclaration? COLON_EQ exprSingle ;
+// renamed from letBinding to letVar to match the JSONiq grammar
+letVar: var_ref=varRef
+        // replaced with the typeDeclaration production to match the JSONiq grammar
+        (KW_AS seq=sequenceType)?
+        COLON_EQ ex=exprSingle ;
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
