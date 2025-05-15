@@ -5,14 +5,10 @@ grammar XQuery;
 package org.rumbledb.parser.xquery;
 }
 
-moduleAndThisIsIt       : module EOF;
-
 module                  : (Kxquery Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
 mainModule              : prolog program;
-
-libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 
 prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
                           (annotatedDecl ';')*;

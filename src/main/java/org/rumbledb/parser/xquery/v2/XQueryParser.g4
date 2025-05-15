@@ -17,6 +17,8 @@ options {
 
 // MODULE HEADER ///////////////////////////////////////////////////////////////
 
+moduleAndThisIsIt       : module EOF;
+
 module : versionDecl? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
 
 versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
@@ -27,9 +29,7 @@ mainModule: prolog queryBody;
 
 queryBody: expr ;
 
-libraryModule: moduleDecl prolog;
-
-moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON ;
+libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON prolog;
 
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
