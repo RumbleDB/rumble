@@ -84,8 +84,6 @@ whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 
 ///////////////////////// Scripting addition - end
 
-namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
-
 annotatedDecl           : functionDecl
                         | varDecl
                         | typeDecl
@@ -532,8 +530,6 @@ fragment Char           :  '\u0009'
                         | '\uE000'..'\uFFFD'
                         | '\uD800'..'\uDBFF' '\uDC00'..'\uDFFF';  // surrogate pairs for supplementary characters
 
-
-XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 
 /* source: https://www.w3.org/TR/xquery-31/#doc-xquery31-Digits */
 fragment Digits         : [0-9]+ ;
