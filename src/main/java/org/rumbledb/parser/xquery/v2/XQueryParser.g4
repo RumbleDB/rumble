@@ -392,11 +392,11 @@ directConstructor: dirElemConstructorOpenClose
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE openName=qName dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: LANGLE open_tag_name=qName dirAttributeList endOpen=RANGLE
                              dirElemContent*
-                             startClose=LANGLE slashClose=SLASH closeName=qName RANGLE ;
+                             startClose=LANGLE slashClose=SLASH close_tag_name=qName RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE openName=qName dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: LANGLE open_tag_name=qName dirAttributeList slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
 dirAttributeList: (qName EQUAL dirAttributeValue)* ;
@@ -429,7 +429,7 @@ dirElemContent: directConstructor
               | noQuotesNoBracesNoAmpNoLAng
               ;
 
-commonContent: (PredefinedEntityRef | CharRef) | LBRACE LBRACE | RBRACE RBRACE | LBRACE expr RBRACE ;
+commonContent: (PredefinedEntityRef | CharRef) | LBRACE LBRACE | RBRACE RBRACE | (LBRACE expr? RBRACE) ;
 
 computedConstructor: compDocConstructor
                    | compElemConstructor
