@@ -592,7 +592,7 @@ functionTest: annotation* (anyFunctionTest | typedFunctionTest) ;
 
 anyFunctionTest: KW_FUNCTION LPAREN STAR RPAREN ;
 
-typedFunctionTest: KW_FUNCTION LPAREN (sequenceType (COMMA sequenceType)*)? RPAREN KW_AS sequenceType ;
+typedFunctionTest: KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN KW_AS rt=sequenceType ;
 
 mapTest: anyMapTest | typedMapTest ;
 

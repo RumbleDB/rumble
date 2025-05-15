@@ -235,9 +235,6 @@ annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 // stringLiteral and varRef will be in XQuery 4.0
 keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | wc='*');
 
-// unary lookup inside predicate or after simpleMap
-unaryLookup : '?' keySpecifier;
-
 primaryExpr             : Literal
                         | stringLiteral
                         | varRef
@@ -447,17 +444,9 @@ itemType                : qname
                         | functionTest
                         | kindTest;
 
-functionTest	        : (anyFunctionTest | typedFunctionTest);
-
-anyFunctionTest         : 'function' '(' '*' ')';
-
-typedFunctionTest	    : 'function' '(' (st+=sequenceType (',' st+=sequenceType)*)? ')' 'as' rt=sequenceType;
-
 singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
-
-arrayConstructor        :  'array' LBRACE expr? RBRACE;
 
 uriLiteral              : stringLiteral;
 
