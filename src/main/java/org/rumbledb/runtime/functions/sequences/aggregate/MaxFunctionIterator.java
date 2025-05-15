@@ -22,9 +22,9 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
 import java.time.Duration;
+import java.time.OffsetTime;
 import java.time.Period;
 import java.time.OffsetDateTime;
-import java.time.Instant;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -53,7 +53,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private transient boolean currentMinIsNullItem = false; // Only happens if all elements are null
     private transient double currentMaxDouble;
     private transient float currentMaxFloat;
@@ -67,11 +67,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient OffsetDateTime currentMaxDateTime;
     private transient Duration currentMaxDayTimeDuration;
     private transient Period currentMaxYearMonthDuration;
-    private transient OffsetDateTime currentMaxTime;
+    private transient OffsetTime currentMaxTime;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
-    private ItemComparator comparator;
+    private final ItemComparator comparator;
 
 
     public MaxFunctionIterator(
@@ -98,9 +98,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         Duration candidateDuration;
-        Duration currentMaxYearMonthDurationVar;
+        Duration currentMaxDayTimeDurationVar;
         Period candidatePeriod;
-        Period currentMaxYearMonthPeriodVar;
 
 
         this.currentMinIsNullItem = false;
@@ -120,9 +119,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
-            Item candidateItem = null;
-            ItemType candidateType = null;
-            Instant now = null;
+            Item candidateItem;
+            ItemType candidateType;
             while (this.iterator.hasNext()) {
                 candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
@@ -173,7 +171,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.currentMaxYearMonthDuration = candidateItem.getPeriodValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.timeItem)) {
                             this.activeType = 12;
-                            this.currentMaxTime = candidateItem.getDateTimeValue();
+                            this.currentMaxTime = candidateItem.getTimeValue();
                             if (candidateItem.hasTimeZone()) {
                                 this.hasTimeZone = true;
                             }
@@ -353,7 +351,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxDate) > 0) {
+                        if (candidateItem.getDateTimeValue().isAfter(this.currentMaxDate)) {
                             this.currentMaxDate = candidateItem.getDateTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
@@ -365,7 +363,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxDateTime) > 0) {
+                        if (candidateItem.getDateTimeValue().isAfter(this.currentMaxDateTime)) {
                             this.currentMaxDateTime = candidateItem.getDateTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
@@ -377,10 +375,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        candidatePeriod = candidateItem.getPeriodValue();
-                        currentMaxYearMonthPeriodVar = this.currentMaxYearMonthDuration;
-                        if (DurationItem.periodComparator.compare(currentMaxYearMonthPeriodVar, candidatePeriod) > 0) {
-                            this.currentMaxYearMonthDuration = Period.from(candidatePeriod);
+                        candidateDuration = candidateItem.getDurationValue();
+                        currentMaxDayTimeDurationVar = this.currentMaxDayTimeDuration;
+                        if (currentMaxDayTimeDurationVar.compareTo(candidateDuration) > 0) {
+                            this.currentMaxDayTimeDuration = candidateDuration;
                         }
                         break;
                     case 11:
@@ -391,9 +389,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             );
                         }
                         candidatePeriod = candidateItem.getPeriodValue();
-                        currentMaxYearMonthPeriodVar = this.currentMaxYearMonthDuration;
-                        if (DurationItem.periodComparator.compare(currentMaxYearMonthPeriodVar, candidatePeriod) > 0) {
-                            this.currentMaxYearMonthDuration = Period.from(candidatePeriod);
+                        if (
+                            DurationItem.periodComparator.compare(this.currentMaxYearMonthDuration, candidatePeriod) < 0
+                        ) {
+                            this.currentMaxYearMonthDuration = candidatePeriod;
                         }
                         break;
                     case 12:
@@ -403,8 +402,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxTime) > 0) {
-                            this.currentMaxTime = candidateItem.getDateTimeValue();
+                        if (candidateItem.getTimeValue().isAfter(this.currentMaxTime)) {
+                            this.currentMaxTime = candidateItem.getTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
@@ -460,7 +459,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     break;
                 case 12:
                     itemResult = ItemFactory.getInstance()
-                        .createTimeItem(this.currentMaxTime.toOffsetTime(), this.hasTimeZone);
+                        .createTimeItem(this.currentMaxTime, this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
@@ -512,7 +511,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);
             return result;
         } else {

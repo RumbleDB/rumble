@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.Period;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -117,7 +118,8 @@ public class DayTimeDurationItem implements Item {
         if (this.value.isZero()) {
             return Period.ZERO;
         }
-        return Period.from(this.value);
+        LocalDate startDate = LocalDate.now();
+        return Period.between(startDate, startDate.plusDays(this.value.toDays()));
     }
 
     public static String normalizeDuration(Duration duration) {

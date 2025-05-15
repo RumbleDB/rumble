@@ -22,7 +22,7 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.OffsetTime;
 import java.time.Period;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
@@ -52,7 +52,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private transient double currentMinDouble;
     private transient float currentMinFloat;
     private transient BigDecimal currentMinDecimal;
@@ -65,11 +65,11 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient OffsetDateTime currentMinDateTime;
     private transient Duration currentMinDayTimeDuration;
     private transient Period currentMinYearMonthDuration;
-    private transient OffsetDateTime currentMinTime;
+    private transient OffsetTime currentMinTime;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
-    private ItemComparator comparator;
+    private final ItemComparator comparator;
 
 
     public MinFunctionIterator(
@@ -96,7 +96,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         Duration candidateDuration;
-        Duration currentMinYearMonthDurationVar;
+        Duration currentMinDayTimeDurationVar;
         Period candidatePeriod;
         Period currentMinYearMonthPeriodVar;
 
@@ -116,9 +116,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
-            Item candidateItem = null;
-            ItemType candidateType = null;
-            Instant now = null;
+            Item candidateItem;
+            ItemType candidateType;
             while (this.iterator.hasNext()) {
                 candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
@@ -168,7 +167,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.currentMinYearMonthDuration = candidateItem.getPeriodValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.timeItem)) {
                             this.activeType = 12;
-                            this.currentMinTime = candidateItem.getDateTimeValue();
+                            this.currentMinTime = candidateItem.getTimeValue();
                             if (candidateItem.hasTimeZone()) {
                                 this.hasTimeZone = true;
                             }
@@ -360,7 +359,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMinDateTime) < 0) {
+                        if (candidateItem.getDateTimeValue().isBefore(this.currentMinDateTime)) {
                             this.currentMinDateTime = candidateItem.getDateTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
@@ -372,10 +371,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        candidatePeriod = candidateItem.getPeriodValue();
-                        currentMinYearMonthPeriodVar = this.currentMinYearMonthDuration;
-                        if (DurationItem.periodComparator.compare(currentMinYearMonthPeriodVar, candidatePeriod) < 0) {
-                            this.currentMinYearMonthDuration = Period.from(candidatePeriod);
+                        candidateDuration = candidateItem.getDurationValue();
+                        currentMinDayTimeDurationVar = this.currentMinDayTimeDuration;
+                        if (currentMinDayTimeDurationVar.compareTo(candidateDuration) > 0) {
+                            this.currentMinDayTimeDuration = candidateDuration;
                         }
                         break;
                     case 11:
@@ -398,8 +397,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMinTime) < 0) {
-                            this.currentMinTime = candidateItem.getDateTimeValue();
+                        if (candidateItem.getTimeValue().isBefore(this.currentMinTime)) {
+                            this.currentMinTime = candidateItem.getTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
@@ -452,7 +451,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     break;
                 case 12:
                     itemResult = ItemFactory.getInstance()
-                        .createTimeItem(this.currentMinTime.toOffsetTime(), this.hasTimeZone);
+                        .createTimeItem(this.currentMinTime, this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
@@ -491,7 +490,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MIN);
             return result;
         } else {
