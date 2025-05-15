@@ -349,7 +349,8 @@ predicate: LBRACKET expr RBRACKET ;
 
 lookup: QUESTION keySpecifier ;
 
-keySpecifier: ncName | IntegerLiteral | parenthesizedExpr | STAR ;
+// stringLiteral and varRef will be in XQuery 4.0
+keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | lt=stringLiteral | vr=varRef) ;
 
 arrowFunctionSpecifier: eqName | varRef | parenthesizedExpr ;
 

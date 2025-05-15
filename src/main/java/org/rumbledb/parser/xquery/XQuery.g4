@@ -154,9 +154,6 @@ valueExpr               : simpleMap_expr=simpleMapExpr
 
 annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 
-// stringLiteral and varRef will be in XQuery 4.0
-keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | wc='*');
-
 primaryExpr             : Literal
                         | stringLiteral
                         | varRef
