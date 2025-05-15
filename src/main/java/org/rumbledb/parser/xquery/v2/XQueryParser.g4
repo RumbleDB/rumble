@@ -185,13 +185,14 @@ countClause: KW_COUNT varRef ;
 
 whereClause: KW_WHERE exprSingle ;
 
-groupByClause: KW_GROUP KW_BY groupingSpecList ;
+// replaced with the groupingSpecList production to match the JSONiq grammar
+groupByClause: KW_GROUP KW_BY vars+=groupByVar (COMMA vars+=groupByVar)* ;
 
-groupingSpecList: groupingSpec (COMMA groupingSpec)* ;
-
-groupingSpec: DOLLAR name=varName
-                    (type=typeDeclaration? COLON_EQ exprSingle)?
-                    (KW_COLLATION uri=uriLiteral)? ;
+// renamed from groupingSpec to groupByVar to match the JSONiq grammar
+groupByVar: var_ref=varRef
+            // replaced with the typeDeclaration production to match the JSONiq grammar
+            ((KW_AS seq=sequenceType)? decl=COLON_EQ ex=exprSingle)?
+            (KW_COLLATION uri=uriLiteral)? ;
 
 orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderSpec (COMMA specs+=orderSpec)* ;
 

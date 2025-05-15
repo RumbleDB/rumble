@@ -135,12 +135,6 @@ exprSimple              : quantifiedExpr
                         | appendExpr
                         ;
 
-groupByClause           : Kgroup Kby vars+=groupByVar (',' vars+=groupByVar)*;
-
-groupByVar              : var_ref=varRef
-                          ((Kas seq=sequenceType)? decl=':=' ex=exprSingle)?
-                          (Kcollation uri=uriLiteral)?;
-
 quantifiedExpr          : (so=Ksome | ev=Kevery)
                           vars+=quantifiedExprVar (',' vars+=quantifiedExprVar)*
                           Ksatisfies exprSingle;
