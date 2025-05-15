@@ -88,12 +88,6 @@ whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 
 ///////////////////////// Scripting addition - end
 
-setter                  : defaultCollationDecl
-                        | baseURIDecl
-                        | orderingModeDecl
-                        | emptyOrderDecl
-                        | decimalFormatDecl;
-
 namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
 
 annotatedDecl           : functionDecl
@@ -101,31 +95,9 @@ annotatedDecl           : functionDecl
                         | typeDecl
                         | contextItemDecl;
 
-defaultCollationDecl    : Kdeclare Kdefault Kcollation uriLiteral;
-
-baseURIDecl            : Kdeclare 'base-uri' uriLiteral;
-
-orderingModeDecl        : Kdeclare 'ordering' ('ordered' | 'unordered');
-
-emptyOrderDecl          : Kdeclare Kdefault 'order' Kempty (emptySequenceOrder=(Kgreatest | Kleast));
-
-decimalFormatDecl       : Kdeclare
-                          (('decimal-format' qname) | (Kdefault 'decimal-format'))
-                          (dfPropertyName '=' stringLiteral)*;
 
 qname                   : ((ns=NCName | nskw=keyWords)':')?
                           (local_name=NCName | local_namekw = keyWords);
-
-dfPropertyName          : 'decimal-separator'
-                        | 'grouping-separator'
-                        | 'infinity'
-                        | 'minus-sign'
-                        | 'NaN'
-                        | 'percent'
-                        | 'per-mille'
-                        | 'zero-digit'
-                        | 'digit'
-                        | 'pattern-separator';
 
 moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
