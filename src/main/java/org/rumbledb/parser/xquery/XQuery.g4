@@ -139,14 +139,6 @@ flowrExpr               : (start_for=forClause| start_let=letClause)
                           (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
                           Kreturn return_expr=exprSingle;
 
-forClause               : Kfor vars+=forVar (',' vars+=forVar)*;
-
-forVar                  : var_ref=varRef
-                          (Kas seq=sequenceType)?
-                          (flag=Kallowing Kempty)?
-                          (Kat at=varRef)?
-                          Kin ex=exprSingle;
-
 letClause               : Klet vars+=letVar (',' vars+=letVar)*;
 
 letVar                  : var_ref=varRef (Kas seq=sequenceType)? ':=' ex=exprSingle ;

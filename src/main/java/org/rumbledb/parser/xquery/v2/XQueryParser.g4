@@ -143,10 +143,16 @@ intermediateClause: initialClause
                   | countClause
                   ;
 
-forClause: KW_FOR vars+=forBinding (COMMA vars+=forBinding)* ;
+forClause: KW_FOR vars+=forVar (COMMA vars+=forVar)* ;
 
-forBinding: DOLLAR name=varName type=typeDeclaration? allowingEmpty? positionalVar?
-        KW_IN in=exprSingle ;
+// renamed from forBinding to forVar to match the JSONiq grammar
+forVar: var_ref=varRef
+        // replaced with the typeDeclaration production to match the JSONiq grammar
+        (KW_AS seq=sequenceType)?
+        (flag=allowingEmpty)?
+        // replaced with the positionalVar production to match the JSONiq grammar
+        (KW_AT at=varRef)?
+        KW_IN ex=exprSingle ;
 
 allowingEmpty: KW_ALLOWING KW_EMPTY;
 
