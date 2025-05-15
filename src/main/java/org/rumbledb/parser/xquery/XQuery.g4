@@ -231,10 +231,6 @@ copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 objectConstructor       : 'map' LBRACE ( pairConstructor (',' pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
 
-itemType                : qname
-                        | functionTest
-                        | kindTest;
-
 singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;

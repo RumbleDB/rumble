@@ -527,10 +527,10 @@ itemType: kindTest
         | functionTest
         | mapTest
         | arrayTest
-        | atomicOrUnionType
+        // simplification compared to XQuery 3.1 grammar
+        // removes the need for a separate atomicOrUnionType rule
+        | eqName
         | parenthesizedItemTest ;
-
-atomicOrUnionType: eqName ;
 
 kindTest: documentTest
         | elementTest
