@@ -572,7 +572,7 @@ attributeNameOrWildcard: attributeName | STAR ;
 
 schemaAttributeTest: KW_SCHEMA_ATTR LPAREN attributeDeclaration RPAREN ;
 
-elementTest: KW_ELEMENT LPAREN (elementNameOrWildcard (COMMA typeName optional=QUESTION?)?)? RPAREN ;
+elementTest: KW_ELEMENT LPAREN (elementNameOrWildcard (COMMA type=typeName optional=QUESTION?)?)? RPAREN ;
 
 elementNameOrWildcard: elementName | STAR ;
 

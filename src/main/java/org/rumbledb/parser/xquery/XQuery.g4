@@ -232,9 +232,6 @@ valueExpr               : simpleMap_expr=simpleMapExpr
 
 annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 
-// postfix lookup, behind map or array
-lookup            : '?' keySpecifier;
-
 // stringLiteral and varRef will be in XQuery 4.0
 keySpecifier : ( in=Literal| lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | wc='*');
 
@@ -437,57 +434,6 @@ nCNameWithPrefixWildcard: '*' ':' NCName ;
 
 
 predicateList: predicate*;
-
-kindTest: documentTest
-        | elementTest
-        | attributeTest
-        | schemaElementTest
-        | schemaAttributeTest
-        | piTest
-        | commentTest
-        | textTest
-        | namespaceNodeTest
-        | binaryNodeTest
-        | anyKindTest
-        ;
-
-anyKindTest: Knode '(' ')' ;
-
-binaryNodeTest: Kbinary '(' ')' ;
-
-documentTest: Kdocument_node '(' (elementTest | schemaElementTest)? ')' ;
-
-textTest: Ktext '(' ')' ;
-
-commentTest: Kcomment '(' ')' ;
-
-namespaceNodeTest: Knamespace_node '(' ')' ;
-
-piTest: Kpi '(' (NCName | stringLiteral)? ')' ;
-
-attributeTest: Kattribute '(' (attributeNameOrWildcard (',' type=typeName)?)? ')' ;
-
-attributeNameOrWildcard: attributeName | '*' ;
-
-schemaAttributeTest: Kschema_attribute '(' attributeDeclaration ')' ;
-
-attributeDeclaration: attributeName ;
-
-elementTest: Kelement '(' (elementNameOrWildcard (',' type=typeName optional='?'?)?)? ')' ;
-
-elementNameOrWildcard: elementName | '*' ;
-
-schemaElementTest: Kschema_element '(' elementDeclaration ')' ;
-
-elementDeclaration: elementName ;
-
-attributeName: qname ;
-
-elementName: qname ;
-
-simpleTypeName: typeName ;
-
-typeName: qname;
 
 ///////////////////////// Types
 
