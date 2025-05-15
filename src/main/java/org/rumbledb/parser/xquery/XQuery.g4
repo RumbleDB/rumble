@@ -135,10 +135,6 @@ exprSimple              : quantifiedExpr
                         | appendExpr
                         ;
 
-flowrExpr               : (start_for=forClause| start_let=letClause)
-                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
-                          Kreturn return_expr=exprSingle;
-
 groupByClause           : Kgroup Kby vars+=groupByVar (',' vars+=groupByVar)*;
 
 groupByVar              : var_ref=varRef

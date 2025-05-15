@@ -133,15 +133,12 @@ exprSingle: flworExpr
           | orExpr
           ;
 
-flworExpr: initialClause intermediateClause* returnClause ;
-
-initialClause: forClause | letClause | windowClause ;
-intermediateClause: initialClause
-                  | whereClause
-                  | groupByClause
-                  | orderByClause
-                  | countClause
-                  ;
+flworExpr: // replaced with the initialClause production to match the JSONiq grammar
+           (start_for=forClause| start_let=letClause | start_window=windowClause)
+           // replaced with the intermediateClause production to match the JSONiq grammar
+           (forClause | letClause | windowClause| whereClause | groupByClause | orderByClause | countClause)*
+           // replaced with the returnClause production to match the JSONiq grammar
+           KW_RETURN return_expr=exprSingle ;
 
 forClause: KW_FOR vars+=forVar (COMMA vars+=forVar)* ;
 
@@ -203,8 +200,6 @@ orderSpec: ex=exprSingle
            (KW_EMPTY (gr=KW_GREATEST|ls=KW_LEAST))?
            (KW_COLLATION uril=uriLiteral)?
          ;
-
-returnClause: KW_RETURN exprSingle ;
 
 quantifiedExpr: quantifier=(KW_SOME | KW_EVERY) quantifiedVar (COMMA quantifiedVar)*
                 KW_SATISFIES value=exprSingle ;
