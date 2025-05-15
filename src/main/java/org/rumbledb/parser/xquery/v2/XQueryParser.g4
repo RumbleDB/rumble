@@ -203,26 +203,22 @@ quantifiedExpr: quantifier=(KW_SOME | KW_EVERY) quantifiedVar (COMMA quantifiedV
 
 quantifiedVar: DOLLAR varName typeDeclaration? KW_IN exprSingle ;
 
-switchExpr: KW_SWITCH LPAREN expr RPAREN
-                switchCaseClause+
-                KW_DEFAULT KW_RETURN returnExpr=exprSingle ;
+switchExpr: KW_SWITCH LPAREN cond=expr RPAREN
+                cases+=switchCaseClause+
+                KW_DEFAULT KW_RETURN def=exprSingle ;
 
-switchCaseClause: (KW_CASE switchCaseOperand)+ KW_RETURN exprSingle ;
+switchCaseClause: (KW_CASE cond+=exprSingle)+ KW_RETURN ret=exprSingle ;
 
-switchCaseOperand: exprSingle ;
+typeswitchExpr: KW_TYPESWITCH LPAREN cond=expr RPAREN
+                cses+=caseClause+
+                KW_DEFAULT (var_ref=varRef)? KW_RETURN def=exprSingle ;
 
-typeswitchExpr: KW_TYPESWITCH LPAREN expr RPAREN
-                clauses=caseClause+
-                KW_DEFAULT (DOLLAR var=varName)? KW_RETURN returnExpr=exprSingle ;
+caseClause: KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* KW_RETURN
+            ret=exprSingle ;
 
-caseClause: KW_CASE (DOLLAR var=varName KW_AS)? type=sequenceUnionType KW_RETURN
-            returnExpr=exprSingle ;
-
-sequenceUnionType: sequenceType ( VBAR sequenceType )* ;
-
-ifExpr: KW_IF LPAREN conditionExpr=expr RPAREN
-        KW_THEN thenExpr=exprSingle
-        KW_ELSE elseExpr=exprSingle ;
+ifExpr: KW_IF LPAREN test_condition=expr RPAREN
+        KW_THEN branch=exprSingle
+        KW_ELSE else_branch=exprSingle ;
 
 tryCatchExpr: tryClause catchClause+ ;
 tryClause: KW_TRY enclosedTryTargetExpression ;
@@ -295,7 +291,7 @@ simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
-pathExpr: (SLASH relativePathExpr?) | (DSLASH relativePathExpr) | relativePathExpr ;
+pathExpr: (SLASH singleslash=relativePathExpr?) | (DSLASH doubleslash=relativePathExpr) | relative=relativePathExpr ;
 
 relativePathExpr: stepExpr (sep=(SLASH|DSLASH) stepExpr)* ;
 
@@ -303,7 +299,7 @@ stepExpr: postfixExpr | axisStep ;
 
 axisStep: (reverseStep | forwardStep) predicateList ;
 
-forwardStep: forwardAxis nodeTest | abbrevForwardStep ;
+forwardStep: (forwardAxis nodeTest) | abbrevForwardStep ;
 
 forwardAxis: ( KW_CHILD
              | KW_DESCENDANT
@@ -315,7 +311,7 @@ forwardAxis: ( KW_CHILD
 
 abbrevForwardStep: AT? nodeTest ;
 
-reverseStep: reverseAxis nodeTest | abbrevReverseStep ;
+reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
 reverseAxis: ( KW_PARENT
              | KW_ANCESTOR

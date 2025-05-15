@@ -201,18 +201,6 @@ quantifiedExpr          : (so=Ksome | ev=Kevery)
 
 quantifiedExprVar       : varRef (Kas sequenceType)? Kin exprSingle;
 
-switchExpr              : Kswitch '(' cond=expr ')' cases+=switchCaseClause+ Kdefault Kreturn def=exprSingle;
-
-switchCaseClause        : (Kcase cond+=exprSingle)+ Kreturn ret=exprSingle;
-
-typeSwitchExpr          : Ktypeswitch '(' cond=expr ')' cses+=caseClause+ Kdefault (var_ref=varRef)? Kreturn def=exprSingle;
-
-caseClause              : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=exprSingle;
-
-ifExpr                  : Kif '(' test_condition=expr ')'
-                          Kthen branch=exprSingle
-                          Kelse else_branch=exprSingle;
-
 tryCatchExpr            : Ktry LBRACE try_expression=expr RBRACE catches+=catchClause+;
 
 catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
@@ -382,55 +370,6 @@ quotAttrContentChar     : 'quotAttrContentChar';
 
 // TODO: use correct definition
 aposAttrContentChar     : 'aposAttrContentChar';
-
-
-///////////////////////// XPath
-
-// PATHS ///////////////////////////////////////////////////////////////////////
-
-pathExpr: (Kslash singleslash=relativePathExpr?) | (Kdslash doubleslash=relativePathExpr) | relative=relativePathExpr ;
-
-relativePathExpr: stepExpr (sep+=(Kslash|Kdslash) stepExpr)* ;
-
-stepExpr: postFixExpr | axisStep ;
-
-axisStep: (reverseStep | forwardStep) predicateList ;
-
-forwardStep: (forwardAxis nodeTest) | abbrevForwardStep ;
-
-forwardAxis: ( Kchild
-             | Kdescendant
-             | Kattribute
-             | Kself
-             | Kdescendant_or_self
-             | Kfollowing_sibling
-             | Kfollowing ) ':' ':' ;
-
-abbrevForwardStep: Kat_symbol? nodeTest ;
-
-reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
-
-reverseAxis: ( Kparent
-             | Kancestor
-             | Kpreceding_sibling
-             | Kpreceding
-             | Kancestor_or_self ) ':' ':';
-
-abbrevReverseStep: '..' ;
-
-nodeTest: nameTest | kindTest ;
-
-nameTest: qname | wildcard ;
-
-wildcard: '*'            # allNames
-        | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
-        | nCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
-        ;
-nCNameWithLocalWildcard :  NCName ':' '*' ;
-nCNameWithPrefixWildcard: '*' ':' NCName ;
-
-
-predicateList: predicate*;
 
 ///////////////////////// Types
 
