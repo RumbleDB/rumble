@@ -93,8 +93,6 @@ annotatedDecl           : functionDecl
 qname                   : ((ns=NCName | nskw=keyWords)':')?
                           (local_name=NCName | local_namekw = keyWords);
 
-moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
-
 // TODO: Assignable variable decl
 varDecl                 : Kdeclare annotations Kvariable varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
