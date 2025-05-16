@@ -138,8 +138,6 @@ catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*'
 ///////////////////////// expression
 
 
-multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
-
 instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
 
 isStaticallyExpr        : main_expr=treatExpr ( Kis Kstatically seq=sequenceType)?;

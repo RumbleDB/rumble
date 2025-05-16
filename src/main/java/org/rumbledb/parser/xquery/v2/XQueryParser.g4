@@ -257,7 +257,7 @@ rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
 additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
-multiplicativeExpr: unionExpr ( (STAR | KW_DIV | KW_IDIV | KW_MOD) unionExpr )* ;
+multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
 unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
