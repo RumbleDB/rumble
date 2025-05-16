@@ -81,8 +81,8 @@ public class gYearItem implements Item {
         return String.format(
             "%s%04d%s",
             this.year.getValue() < 0 ? "-" : "",
-            this.year.getValue(),
-            this.hasTimeZone() ? this.offset.toString() : ""
+            Math.abs(this.year.getValue()),
+            this.hasTimeZone ? this.offset.toString() : ""
         );
     }
 

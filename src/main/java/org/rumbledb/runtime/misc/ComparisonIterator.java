@@ -152,7 +152,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         long comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
-        if (comparison == -Long.MIN_VALUE) {
+        if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
                         + this.comparisonOperator
@@ -430,7 +430,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         OffsetTime l = left.getTimeValue();
         OffsetTime r = right.getTimeValue();
-        return l.withOffsetSameInstant(ZoneOffset.UTC).compareTo(r.withOffsetSameInstant(ZoneOffset.UTC));
+        return l.compareTo(r);
     }
 
     private static int processBoolean(
