@@ -263,7 +263,7 @@ unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
 intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-instanceOfExpr: treatExpr ( KW_INSTANCE KW_OF sequenceType)? ;
+instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
 treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
