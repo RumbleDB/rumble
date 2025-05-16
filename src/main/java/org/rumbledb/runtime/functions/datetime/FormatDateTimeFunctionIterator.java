@@ -2,6 +2,7 @@ package org.rumbledb.runtime.functions.datetime;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -21,19 +22,14 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
     private static final long serialVersionUID = 1L;
     private Item pictureStringItem = null;
 
-    public FormatDateTimeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FormatDateTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueDateTimeItem = this.children.get(0)
-            .materializeFirstItemOrNull(context);
-        this.pictureStringItem = this.children.get(1)
-            .materializeFirstItemOrNull(context);
+        Item valueDateTimeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        this.pictureStringItem = this.children.get(1).materializeFirstItemOrNull(context);
         if (valueDateTimeItem == null || this.pictureStringItem == null) {
             return null;
         }
@@ -114,15 +110,10 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
             if (startOfSequence != pictureString.length()) {
                 if (variableMarkerSequence) {
-                    String message = String.format(
-                        "\"%s\": incorrect syntax",
-                        this.pictureStringItem.serialize()
-                    );
+                    String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
                     throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                 } else {
-                    String literalSubstring = pictureString.substring(
-                        startOfSequence
-                    );
+                    String literalSubstring = pictureString.substring(startOfSequence);
                     result.append(literalSubstring);
                 }
             }
@@ -146,9 +137,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
         if (presentationModifiersLength == 1) {
             presentationModifier1 = presentationModifiers;
         } else {
-            char lastChar = presentationModifiers.charAt(
-                presentationModifiersLength - 1
-            );
+            char lastChar = presentationModifiers.charAt(presentationModifiersLength - 1);
             String message;
             switch (lastChar) {
                 case 'a':
@@ -159,10 +148,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     throw new UnsupportedFeatureException(message, getMetadata());
                 case 't':
                 case 'c':
-                    presentationModifier1 = presentationModifiers.substring(
-                        0,
-                        presentationModifiersLength - 1
-                    );
+                    presentationModifier1 = presentationModifiers.substring(0, presentationModifiersLength - 1);
                     break;
                 case 'o':
                     message = String.format(
@@ -181,14 +167,8 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
     int parseWidthModifier(String widthModifier) {
         int width = -1;
         if (widthModifier.isEmpty()) {
-            String message = String.format(
-                "\"%s\": incorrect syntax",
-                this.pictureStringItem.serialize()
-            );
-            throw new IncorrectSyntaxFormatDateTimeException(
-                    message,
-                    getMetadata()
-            );
+            String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
+            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
         }
         if (!widthModifier.equals("*"))
             width = Integer.parseInt(widthModifier);
@@ -197,10 +177,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     private String parseVariableMarker(String variableMarker, StringBuilder result) {
         if (variableMarker.isEmpty()) {
-            String message = String.format(
-                "\"%s\": incorrect syntax",
-                this.pictureStringItem.serialize()
-            );
+            String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
             throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
         }
         char componentSpecifier;
@@ -258,8 +235,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 break;
             default:
                 String message = String.format(
-                    "\"%s\": a component specifier refers to components"
-                        + " that are not available in the %s type",
+                    "\"%s\": a component specifier refers to components" + " that are not available in the %s type",
                     this.pictureStringItem.serialize(),
                     "dateTime"
                 );
@@ -273,16 +249,12 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
         String variableMarkerOptionalModifiers = variableMarker.substring(1);
 
         if (!variableMarkerOptionalModifiers.isEmpty()) {
-            List<String> variableMarkerModifiers =
-                Arrays.asList(variableMarkerOptionalModifiers.split(","));
+            List<String> variableMarkerModifiers = Arrays.asList(variableMarkerOptionalModifiers.split(","));
             int variableMarkerModifiersSize = variableMarkerModifiers.size();
 
             if (variableMarkerModifiersSize > 2) {
                 // only one comma accepted for picture argument
-                String message = String.format(
-                    "\"%s\": groups not supported",
-                    this.pictureStringItem.serialize()
-                );
+                String message = String.format("\"%s\": groups not supported", this.pictureStringItem.serialize());
                 throw new UnsupportedFeatureException(message, getMetadata());
             } else {
                 if (variableMarkerModifiersSize >= 1) {
@@ -294,8 +266,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     // width modifier present
                     String variableMarkerOptionalWidthModifiers = variableMarkerModifiers.get(1);
                     if (!variableMarkerOptionalWidthModifiers.isEmpty()) {
-                        List<String> widthModifier =
-                            Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
+                        List<String> widthModifier = Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
                         int widthModifierSize = widthModifier.size();
                         if (widthModifierSize >= 1) {
                             minWidth = parseWidthModifier(widthModifier.get(0));
@@ -310,16 +281,10 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
                                 "\"%s\": incorrect syntax",
                                 this.pictureStringItem.serialize()
                             );
-                            throw new IncorrectSyntaxFormatDateTimeException(
-                                    message,
-                                    getMetadata()
-                            );
+                            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                         }
                     } else {
-                        String message = String.format(
-                            "\"%s\": incorrect syntax",
-                            this.pictureStringItem.serialize()
-                        );
+                        String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
                         throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                     }
                 }
@@ -346,9 +311,7 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
             } else if (presentationModifier1.equals("Nn") && componentSpecifier != 'a') {
                 if (maxWidth < 1)
                     maxWidth = 10;
-                if (
-                    componentSpecifier == 'd' || componentSpecifier == 'D'
-                )
+                if (componentSpecifier == 'd' || componentSpecifier == 'D')
                     componentSpecifier = 'E';
             } else if (presentationModifier1.equals("N") && componentSpecifier == 'a') {
                 if (maxWidth < 1)
@@ -401,5 +364,4 @@ public class FormatDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
         return s.toString();
     }
-
 }

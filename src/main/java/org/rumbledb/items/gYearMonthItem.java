@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.time.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -16,6 +17,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class gYearMonthItem implements Item {
+
+    private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private Year year;
     private Month month;
@@ -126,10 +129,15 @@ public class gYearMonthItem implements Item {
 
     @Override
     public OffsetDateTime getDateTimeValue() {
-        if (this.hasTimeZone) {
-            return OffsetDateTime.of(this.year.getValue(), this.month.getValue(), 1, 0, 0, 0, 0, this.offset);
-        } else {
-            return OffsetDateTime.of(this.year.getValue(), this.month.getValue(), 1, 0, 0, 0, 0, ZoneOffset.UTC);
-        }
+        return OffsetDateTime.of(
+            this.year.getValue(),
+            this.month.getValue(),
+            1,
+            0,
+            0,
+            0,
+            0,
+            this.hasTimeZone ? this.offset : ZoneOffset.UTC
+        );
     }
 }

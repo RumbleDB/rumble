@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
 import java.time.OffsetDateTime;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -15,36 +16,25 @@ import java.util.List;
 public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateItem = null;
-    private Item timeItem = null;
 
-    public DateTimeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DateTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateItem = this.children.get(0)
-            .materializeFirstItemOrNull(context);
-        this.timeItem = this.children.get(1)
-            .materializeFirstItemOrNull(context);
-        if (this.dateItem == null || this.timeItem == null) {
+        Item dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item timeItem = this.children.get(1).materializeFirstItemOrNull(context);
+        if (dateItem == null || timeItem == null) {
             return null;
         }
         OffsetDateTime dt;
-        OffsetDateTime dateDt = this.dateItem.getDateTimeValue();
-        OffsetTime timeDt = this.timeItem.getTimeValue();
+        OffsetDateTime dateDt = dateItem.getDateTimeValue();
+        OffsetTime timeDt = timeItem.getTimeValue();
 
-        if (this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
+        if (dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
             if (dateDt.getOffset() == timeDt.getOffset()) {
-                dt = OffsetDateTime.of(
-                    dateDt.toLocalDate(),
-                    timeDt.toLocalTime(),
-                    dateDt.getOffset()
-                );
+                dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
                 throw new InconsistentTimezonesException(
@@ -52,29 +42,14 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         getMetadata()
                 );
             }
-        } else if (this.dateItem.hasTimeZone() && !this.timeItem.hasTimeZone()) {
-            dt = OffsetDateTime.of(
-                dateDt.toLocalDate(),
-                timeDt.toLocalTime(),
-                dateDt.getOffset()
-            );
+        } else if (dateItem.hasTimeZone() && !timeItem.hasTimeZone()) {
+            dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
-        } else if (!this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            dt = OffsetDateTime.of(
-                dateDt.toLocalDate(),
-                timeDt.toLocalTime(),
-                timeDt.getOffset()
-            );
+        } else if (!dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
+            dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), timeDt.getOffset());
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
         }
-        dt = OffsetDateTime.of(
-            dateDt.toLocalDate(),
-            timeDt.toLocalTime(),
-            dateDt.getOffset()
-        );
+        dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
         return ItemFactory.getInstance().createDateTimeItem(dt, false);
-
     }
-
-
 }

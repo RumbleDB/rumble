@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
 import java.time.OffsetDateTime;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -21,19 +22,14 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     private static final long serialVersionUID = 1L;
     private Item pictureStringItem = null;
 
-    public FormatDateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public FormatDateFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueDateItem = this.children.get(0)
-            .materializeFirstItemOrNull(context);
-        this.pictureStringItem = this.children.get(1)
-            .materializeFirstItemOrNull(context);
+        Item valueDateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        this.pictureStringItem = this.children.get(1).materializeFirstItemOrNull(context);
         if (valueDateItem == null || this.pictureStringItem == null) {
             return null;
         }
@@ -111,25 +107,16 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
             if (startOfSequence != pictureString.length()) {
                 if (variableMarkerSequence) {
-                    String message = String.format(
-                        "\"%s\": incorrect syntax",
-                        this.pictureStringItem.serialize()
-                    );
+                    String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
                     throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                 } else {
-                    String literalSubstring = pictureString.substring(
-                        startOfSequence
-                    );
+                    String literalSubstring = pictureString.substring(startOfSequence);
                     result.append(literalSubstring);
                 }
             }
             return ItemFactory.getInstance().createStringItem(result.toString());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
-            String message = String.format(
-                "\"%s\": not castable to type %s",
-                valueDateItem.serialize(),
-                "date"
-            );
+            String message = String.format("\"%s\": not castable to type %s", valueDateItem.serialize(), "date");
             throw new CastException(message, getMetadata());
         }
     }
@@ -143,9 +130,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (presentationModifiersLength == 1) {
             presentationModifier1 = presentationModifiers;
         } else {
-            char lastChar = presentationModifiers.charAt(
-                presentationModifiersLength - 1
-            );
+            char lastChar = presentationModifiers.charAt(presentationModifiersLength - 1);
             String message;
             switch (lastChar) {
                 case 'a':
@@ -156,10 +141,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     throw new UnsupportedFeatureException(message, getMetadata());
                 case 't':
                 case 'c':
-                    presentationModifier1 = presentationModifiers.substring(
-                        0,
-                        presentationModifiersLength - 1
-                    );
+                    presentationModifier1 = presentationModifiers.substring(0, presentationModifiersLength - 1);
                     break;
                 case 'o':
                     message = String.format(
@@ -178,14 +160,8 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     int parseWidthModifier(String widthModifier) {
         int width = -1;
         if (widthModifier.isEmpty()) {
-            String message = String.format(
-                "\"%s\": incorrect syntax",
-                this.pictureStringItem.serialize()
-            );
-            throw new IncorrectSyntaxFormatDateTimeException(
-                    message,
-                    getMetadata()
-            );
+            String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
+            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
         }
         if (!widthModifier.equals("*"))
             width = Integer.parseInt(widthModifier);
@@ -194,10 +170,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     private String parseVariableMarker(String variableMarker, StringBuilder result) {
         if (variableMarker.isEmpty()) {
-            String message = String.format(
-                "\"%s\": incorrect syntax",
-                this.pictureStringItem.serialize()
-            );
+            String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
             throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
         }
         char componentSpecifier;
@@ -234,8 +207,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                 break;
             default:
                 String message = String.format(
-                    "\"%s\": a component specifier refers to components"
-                        + " that are not available in the %s type",
+                    "\"%s\": a component specifier refers to components" + " that are not available in the %s type",
                     this.pictureStringItem.serialize(),
                     "date"
                 );
@@ -249,16 +221,12 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         String variableMarkerOptionalModifiers = variableMarker.substring(1);
 
         if (!variableMarkerOptionalModifiers.isEmpty()) {
-            List<String> variableMarkerModifiers =
-                Arrays.asList(variableMarkerOptionalModifiers.split(","));
+            List<String> variableMarkerModifiers = Arrays.asList(variableMarkerOptionalModifiers.split(","));
             int variableMarkerModifiersSize = variableMarkerModifiers.size();
 
             if (variableMarkerModifiersSize > 2) {
                 // only one comma accepted for picture argument
-                String message = String.format(
-                    "\"%s\": groups not supported",
-                    this.pictureStringItem.serialize()
-                );
+                String message = String.format("\"%s\": groups not supported", this.pictureStringItem.serialize());
                 throw new UnsupportedFeatureException(message, getMetadata());
             } else {
                 if (variableMarkerModifiersSize >= 1) {
@@ -270,8 +238,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     // width modifier present
                     String variableMarkerOptionalWidthModifiers = variableMarkerModifiers.get(1);
                     if (!variableMarkerOptionalWidthModifiers.isEmpty()) {
-                        List<String> widthModifier =
-                            Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
+                        List<String> widthModifier = Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
                         int widthModifierSize = widthModifier.size();
                         if (widthModifierSize >= 1) {
                             minWidth = parseWidthModifier(widthModifier.get(0));
@@ -286,16 +253,10 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                                 "\"%s\": incorrect syntax",
                                 this.pictureStringItem.serialize()
                             );
-                            throw new IncorrectSyntaxFormatDateTimeException(
-                                    message,
-                                    getMetadata()
-                            );
+                            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                         }
                     } else {
-                        String message = String.format(
-                            "\"%s\": incorrect syntax",
-                            this.pictureStringItem.serialize()
-                        );
+                        String message = String.format("\"%s\": incorrect syntax", this.pictureStringItem.serialize());
                         throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                     }
                 }
@@ -322,9 +283,7 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             } else if (presentationModifier1.equals("Nn")) {
                 if (maxWidth < 1)
                     maxWidth = 4;
-                if (
-                    componentSpecifier == 'd' || componentSpecifier == 'D'
-                )
+                if (componentSpecifier == 'd' || componentSpecifier == 'D')
                     componentSpecifier = 'M';
             } else {
                 char presentationModifierStart = presentationModifier1.charAt(0);
@@ -374,5 +333,4 @@ public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         }
         return s.toString();
     }
-
 }

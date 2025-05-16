@@ -28,5 +28,4 @@ public class MonthFromDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
         }
         return ItemFactory.getInstance().createIntItem(dateItem.getMonth());
     }
-
 }

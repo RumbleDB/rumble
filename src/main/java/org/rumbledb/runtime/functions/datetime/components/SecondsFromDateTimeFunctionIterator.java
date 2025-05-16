@@ -30,5 +30,4 @@ public class SecondsFromDateTimeFunctionIterator extends AtMostOneItemLocalRunti
         }
         return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(dateTimeItem.getSecond()));
     }
-
 }

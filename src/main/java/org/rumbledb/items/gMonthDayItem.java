@@ -20,6 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class gMonthDayItem implements Item {
+
+    private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private final Pattern gMonthDayRegex = Pattern.compile(
         "--(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
@@ -128,10 +130,15 @@ public class gMonthDayItem implements Item {
 
     @Override
     public OffsetDateTime getDateTimeValue() {
-        if (this.hasTimeZone) {
-            return OffsetDateTime.of(0, this.month.getValue(), this.day, 0, 0, 0, 0, this.offset);
-        } else {
-            return OffsetDateTime.of(0, this.month.getValue(), this.day, 0, 0, 0, 0, ZoneOffset.UTC);
-        }
+        return OffsetDateTime.of(
+            0,
+            this.month.getValue(),
+            this.day,
+            0,
+            0,
+            0,
+            0,
+            this.hasTimeZone ? this.offset : ZoneOffset.UTC
+        );
     }
 }

@@ -29,5 +29,4 @@ public class DayFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
         }
         return ItemFactory.getInstance().createIntItem(dateTimeItem.getDay());
     }
-
 }

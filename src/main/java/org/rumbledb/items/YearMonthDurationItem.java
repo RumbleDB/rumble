@@ -120,7 +120,7 @@ public class YearMonthDurationItem implements Item {
     }
 
     @Override
-    public long getEpochMilis() {
+    public long getEpochMillis() {
         LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime target = anchor.plus(this.value);
         return Duration.between(anchor, target).toMillis();

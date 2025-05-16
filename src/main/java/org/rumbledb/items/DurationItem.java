@@ -151,7 +151,7 @@ public class DurationItem implements Item {
     };
 
     @Override
-    public long getEpochMilis() {
+    public long getEpochMillis() {
         if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
             return 0;
         } else if (Objects.isNull(this.periodValue)) {

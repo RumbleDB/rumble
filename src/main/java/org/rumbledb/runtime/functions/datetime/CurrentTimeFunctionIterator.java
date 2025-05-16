@@ -25,5 +25,4 @@ public class CurrentTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterat
         return ItemFactory.getInstance()
             .createTimeItem(context.getCurrentDateTime().toOffsetTime(), true);
     }
-
 }

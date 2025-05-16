@@ -70,8 +70,7 @@ public class DateItem implements Item {
                     .toOffsetDateTime();
                 this.hasTimeZone = false;
             }
-            this.value = this.value.plusYears(yearIncrement);
-            this.value = this.value.withYear(this.value.getYear() * isMinus);
+            this.value = this.value.plusYears(yearIncrement).withYear(this.value.getYear() * isMinus);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         } catch (NumberFormatException e) {
@@ -98,12 +97,9 @@ public class DateItem implements Item {
 
     @Override
     public String getStringValue() {
-        String stringValue;
-        if (this.hasTimeZone) {
-            stringValue = this.value.format(DateTimeFormatter.ISO_OFFSET_DATE);
-        } else {
-            stringValue = this.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        }
+        String stringValue = this.value.format(
+            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE
+        );
         if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }
@@ -180,11 +176,6 @@ public class DateItem implements Item {
         return this.value.getDayOfMonth();
     }
 
-    /**
-     * Offset is an integer between −840 and 840 inclusive
-     * 
-     * @return offset in minutes
-     */
     @Override
     public int getOffset() {
         ZoneOffset zoneOffset = this.value.getOffset();
@@ -202,7 +193,7 @@ public class DateItem implements Item {
     }
 
     @Override
-    public long getEpochMilis() {
+    public long getEpochMillis() {
         return this.value.toInstant().toEpochMilli();
     }
 }

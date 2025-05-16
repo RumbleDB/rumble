@@ -7,6 +7,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -83,11 +84,7 @@ public class gMonthItem implements Item {
     }
 
     public String getStringValue() {
-        if (this.hasTimeZone) {
-            return String.format("--%02d", this.month.getValue()) + this.offset;
-        } else {
-            return String.format("--%02d", this.month.getValue());
-        }
+        return String.format("--%02d%s", this.month.getValue(), this.hasTimeZone ? this.offset : "");
     }
 
     @Override
@@ -120,10 +117,15 @@ public class gMonthItem implements Item {
 
     @Override
     public OffsetDateTime getDateTimeValue() {
-        if (this.hasTimeZone) {
-            return OffsetDateTime.of(0, this.month.getValue(), 1, 0, 0, 0, 0, this.offset);
-        } else {
-            return OffsetDateTime.of(0, this.month.getValue(), 1, 0, 0, 0, 0, ZoneOffset.UTC);
-        }
+        return OffsetDateTime.of(
+            0,
+            this.month.getValue(),
+            1,
+            0,
+            0,
+            0,
+            0,
+            this.hasTimeZone ? this.offset : ZoneOffset.UTC
+        );
     }
 }

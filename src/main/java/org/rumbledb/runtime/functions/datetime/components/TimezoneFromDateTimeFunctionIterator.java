@@ -13,7 +13,6 @@ import java.util.List;
 public class TimezoneFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateTimeItem = null;
 
     public TimezoneFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -24,11 +23,10 @@ public class TimezoneFromDateTimeFunctionIterator extends AtMostOneItemLocalRunt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateTimeItem = this.children.get(0).materializeFirstItemOrNull(context);
-        if (this.dateTimeItem == null || !this.dateTimeItem.hasTimeZone()) {
+        Item dateTimeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (dateTimeItem == null || !dateTimeItem.hasTimeZone()) {
             return null;
         }
-        return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofMinutes(this.dateTimeItem.getOffset()));
+        return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofMinutes(dateTimeItem.getOffset()));
     }
-
 }

@@ -148,8 +148,8 @@ public class DateTimeStampItem implements Item {
     }
 
     @Override
-    public long getEpochMilis() {
-        return this.value.getEpochMilis();
+    public long getEpochMillis() {
+        return this.value.getEpochMillis();
     }
 }
 

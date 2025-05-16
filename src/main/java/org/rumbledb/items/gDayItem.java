@@ -3,8 +3,10 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -118,10 +120,6 @@ public class gDayItem implements Item {
 
     @Override
     public OffsetDateTime getDateTimeValue() {
-        if (this.hasTimeZone) {
-            return OffsetDateTime.of(0, 1, this.day, 0, 0, 0, 0, this.offset);
-        } else {
-            return OffsetDateTime.of(0, 1, this.day, 0, 0, 0, 0, ZoneOffset.UTC);
-        }
+        return OffsetDateTime.of(0, 1, this.day, 0, 0, 0, 0, this.hasTimeZone ? this.offset : ZoneOffset.UTC);
     }
 }

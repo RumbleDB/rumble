@@ -41,20 +41,20 @@ import java.util.Map;
 public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
     private static final long serialVersionUID = 1L;
-    private DataFrameContext dataFrameContext;
-    private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
+    private final DataFrameContext dataFrameContext;
+    private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
-    private Map<Integer, Name> sortingKeyTypes;
+    private final Map<Integer, Name> sortingKeyTypes;
 
-    private List<Object> results;
+    private final List<Object> results;
 
     // nulls and empty sequences have special ordering captured in the first sorting column
     // if non-null, non-empty-sequence value is given, the second column is used to sort the input
     // indices are assigned to each value type for the first column
-    private static int emptySequenceOrderIndexFirst = 1; // by default, empty sequence is taken as first(=least)
-    private static int emptySequenceOrderIndexLast = 4; // by default, empty sequence is taken as first(=least)
-    private static int nullOrderIndex = 2; // null is the smallest value except empty sequence(default)
-    private static int valueOrderIndex = 3; // values are larger than null and empty sequence(default)
+    private static final int emptySequenceOrderIndexFirst = 1; // by default, empty sequence is taken as first(=least)
+    private static final int emptySequenceOrderIndexLast = 4; // by default, empty sequence is taken as first(=least)
+    private static final int nullOrderIndex = 2; // null is the smallest value except empty sequence(default)
+    private static final int valueOrderIndex = 3; // values are larger than null and empty sequence(default)
 
 
     public OrderClauseCreateColumnsUDF(
@@ -140,14 +140,14 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                         || typeName.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
                 ) {
-                    this.results.add(nextItem.getEpochMilis());
+                    this.results.add(nextItem.getEpochMillis());
                 } else if (
                     typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
                         || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())
                 ) {
-                    this.results.add(nextItem.getEpochMilis());
+                    this.results.add(nextItem.getEpochMillis());
                 } else if (typeName.equals(BuiltinTypesCatalogue.timeItem.getName())) {
-                    this.results.add(nextItem.getEpochMilis());
+                    this.results.add(nextItem.getEpochMillis());
                 } else {
                     throw new OurBadException(
                             "Unexpected ordering type found while creating columns."

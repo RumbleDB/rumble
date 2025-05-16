@@ -162,7 +162,7 @@ public class TimeItem implements Item {
     }
 
     @Override
-    public long getEpochMilis() {
+    public long getEpochMillis() {
         return this.value.toEpochSecond(LocalDate.EPOCH) * 1000 + this.value.getNano() / 1_000_000;
     }
 }

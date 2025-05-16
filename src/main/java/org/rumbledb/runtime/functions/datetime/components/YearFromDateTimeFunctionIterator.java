@@ -29,5 +29,4 @@ public class YearFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeI
         }
         return ItemFactory.getInstance().createIntItem(dateTimeItem.getYear());
     }
-
 }

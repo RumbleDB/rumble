@@ -29,5 +29,4 @@ public class MinutesFromDateTimeFunctionIterator extends AtMostOneItemLocalRunti
         }
         return ItemFactory.getInstance().createIntItem(dateTimeItem.getMinute());
     }
-
 }

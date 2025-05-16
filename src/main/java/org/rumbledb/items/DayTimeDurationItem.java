@@ -115,7 +115,7 @@ public class DayTimeDurationItem implements Item {
     }
 
     @Override
-    public long getEpochMilis() {
+    public long getEpochMillis() {
         return this.value.toMillis();
     }
 

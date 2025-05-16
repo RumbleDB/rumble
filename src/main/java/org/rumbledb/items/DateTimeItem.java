@@ -74,8 +74,9 @@ public class DateTimeItem implements Item {
                     .atOffset(ZoneOffset.UTC);
                 this.hasTimeZone = false;
             }
-            this.value = this.value.plusDays(dayIncrement).plusYears(yearIncrement);
-            this.value = this.value.withYear(this.value.getYear() * isMinus);
+            this.value = this.value.plusDays(dayIncrement)
+                .plusYears(yearIncrement)
+                .withYear(this.value.getYear() * isMinus);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid xs:dateTime: \"" + dateTimeString + "\"");
         } catch (NumberFormatException e) {
@@ -101,23 +102,21 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public OffsetDateTime getDateTimeValue() {
-        return this.value;
-    }
-
-    @Override
     public String getStringValue() {
-        String stringValue;
-        if (this.hasTimeZone) {
-            stringValue = this.value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        } else {
-            stringValue = this.value.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        }
+        String stringValue = this.value.format(
+            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE_TIME : DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        );
         if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }
         return stringValue;
     }
+
+    @Override
+    public OffsetDateTime getDateTimeValue() {
+        return this.value;
+    }
+
 
     @Override
     public boolean hasTimeZone() {
@@ -210,7 +209,7 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public long getEpochMilis() {
+    public long getEpochMillis() {
         return this.value.toInstant().toEpochMilli();
     }
 }
