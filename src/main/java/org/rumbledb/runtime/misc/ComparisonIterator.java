@@ -430,7 +430,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         OffsetTime l = left.getTimeValue();
         OffsetTime r = right.getTimeValue();
-        return l.compareTo(r);
+        return l.atDate(LocalDate.of(1970, 1, 1))
+            .toInstant()
+            .compareTo(
+                r.atDate(LocalDate.of(1970, 1, 1)).toInstant()
+            );
     }
 
     private static int processBoolean(
