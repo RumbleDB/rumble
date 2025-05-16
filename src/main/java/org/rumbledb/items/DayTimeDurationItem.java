@@ -24,7 +24,10 @@ public class DayTimeDurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private Duration value;
-    Pattern dayTimeDurationRegex = Pattern.compile("^-?P(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$");
+    Pattern durationRegex = Pattern.compile(
+            "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
+    );
+    Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
 
 
     @SuppressWarnings("unused")
@@ -39,7 +42,7 @@ public class DayTimeDurationItem implements Item {
 
     public DayTimeDurationItem(String value) {
         super();
-        if (!this.dayTimeDurationRegex.matcher(value).matches()) {
+        if (!this.durationRegex.matcher(value).matches() || !this.dayTimeDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }
         try {
