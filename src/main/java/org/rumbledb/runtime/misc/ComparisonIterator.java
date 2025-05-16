@@ -421,9 +421,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         OffsetDateTime l = left.getDateTimeValue();
         OffsetDateTime r = right.getDateTimeValue();
-        if (!left.hasTimeZone() || !right.hasTimeZone()) {
-            return l.toLocalDate().compareTo(r.toLocalDate());
-        }
         return l.toInstant().compareTo(r.toInstant());
     }
 
