@@ -508,7 +508,7 @@ unaryLookup: QUESTION keySpecifier ;
 
 // TYPES AND TYPE TESTS ////////////////////////////////////////////////////////
 
-singleType: simpleTypeName QUESTION? ;
+singleType: item=simpleTypeName (question+=QUESTION)? ;
 
 typeDeclaration: KW_AS sequenceType ;
 

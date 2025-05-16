@@ -190,8 +190,6 @@ copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
 objectConstructor       : 'map' LBRACE ( pairConstructor (',' pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
 
-singleType              : item=itemType (question +='?')?;
-
 pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
 
 keyWords                : Kxquery
