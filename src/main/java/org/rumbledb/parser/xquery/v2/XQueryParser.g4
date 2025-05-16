@@ -447,25 +447,7 @@ computedConstructor: compDocConstructor
                    | compTextConstructor
                    | compCommentConstructor
                    | compPIConstructor
-                   | compMLJSONConstructor
                    ;
-
-compMLJSONConstructor: compMLJSONArrayConstructor
-                     | compMLJSONObjectConstructor
-                     | compMLJSONNumberConstructor
-                     | compMLJSONBooleanConstructor
-                     | compMLJSONNullConstructor
-                     | compBinaryConstructor
-                     ;
-
-compMLJSONArrayConstructor: KW_ARRAY_NODE enclosedContentExpr ;
-compMLJSONObjectConstructor: KW_OBJECT_NODE LBRACE (exprSingle COLON exprSingle (COMMA exprSingle COLON exprSingle)*)? RBRACE ;
-compMLJSONNumberConstructor: KW_NUMBER_NODE enclosedContentExpr ;
-compMLJSONBooleanConstructor: KW_BOOLEAN_NODE LBRACE exprSingle RBRACE ;
-compMLJSONNullConstructor: KW_NULL_NODE LBRACE RBRACE ;
-
-compBinaryConstructor: KW_BINARY enclosedContentExpr ;
-
 
 compDocConstructor: KW_DOCUMENT enclosedExpression ;
 
