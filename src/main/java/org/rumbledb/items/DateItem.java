@@ -132,9 +132,13 @@ public class DateItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(
-            this.value.format(!this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE)
+        String formatted = this.value.format(
+            !this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE
         );
+        if (formatted.startsWith("+")) {
+            formatted = formatted.substring(1);
+        }
+        output.writeString(formatted);
         output.writeBoolean(this.hasTimeZone);
     }
 
