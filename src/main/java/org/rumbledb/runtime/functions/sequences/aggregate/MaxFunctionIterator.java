@@ -377,7 +377,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         }
                         candidateDuration = candidateItem.getDurationValue();
                         currentMaxDayTimeDurationVar = this.currentMaxDayTimeDuration;
-                        if (currentMaxDayTimeDurationVar.compareTo(candidateDuration) > 0) {
+                        if (currentMaxDayTimeDurationVar.compareTo(candidateDuration) < 0) {
                             this.currentMaxDayTimeDuration = candidateDuration;
                         }
                         break;

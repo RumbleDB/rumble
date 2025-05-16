@@ -179,8 +179,12 @@ public class DurationItem implements Item {
         long secs = absSeconds % 60;
 
         long totalDays = period.getDays() + (seconds >= 0 ? daysFromDuration : -daysFromDuration);
-
-        BigDecimal totalSeconds = BigDecimal.valueOf(secs).add(BigDecimal.valueOf(duration.getNano(), 9));
+        BigDecimal totalSeconds;
+        if (seconds >= 0) {
+            totalSeconds = BigDecimal.valueOf(secs).add(BigDecimal.valueOf(duration.getNano(), 9));
+        } else {
+            totalSeconds = BigDecimal.valueOf(secs).subtract(BigDecimal.valueOf(duration.getNano(), 9));
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append((seconds < 0 || period.isNegative()) ? "-P" : "P");

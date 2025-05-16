@@ -32,7 +32,7 @@ public class YearMonthDurationItem implements Item {
 
     public YearMonthDurationItem(Period value) {
         super();
-        this.value = value;
+        this.value = Period.of(value.getYears(), value.getMonths(), 0);
     }
 
     public YearMonthDurationItem(String value) {

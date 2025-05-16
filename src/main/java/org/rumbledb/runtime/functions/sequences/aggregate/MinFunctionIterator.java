@@ -386,7 +386,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         }
                         candidatePeriod = candidateItem.getPeriodValue();
                         currentMinYearMonthPeriodVar = this.currentMinYearMonthDuration;
-                        if (DurationItem.periodComparator.compare(currentMinYearMonthPeriodVar, candidatePeriod) < 0) {
+                        if (DurationItem.periodComparator.compare(currentMinYearMonthPeriodVar, candidatePeriod) > 0) {
                             this.currentMinYearMonthDuration = Period.from(candidatePeriod);
                         }
                         break;
