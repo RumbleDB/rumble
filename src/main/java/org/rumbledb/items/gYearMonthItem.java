@@ -6,7 +6,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.time.*;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -50,10 +49,7 @@ public class gYearMonthItem implements Item {
     private void getgYearMonthFromString(String gYearMonthString) {
         Matcher matcher = this.gYearMonthRegex.matcher(gYearMonthString);
         if (!matcher.matches()) {
-            throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:gYearMonth: \"" + gYearMonthString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            throw new IllegalArgumentException("Invalid xs:gYearMonth: \"" + gYearMonthString + "\"");
         }
         this.year = Year.of(Integer.parseInt(matcher.group(1)));
         this.month = Month.of(Integer.parseInt(matcher.group(2)));

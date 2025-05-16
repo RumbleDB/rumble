@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -39,10 +38,7 @@ public class DayTimeDurationItem implements Item {
     public DayTimeDurationItem(String value) {
         super();
         if (!this.dayTimeDurationRegex.matcher(value).matches()) {
-            throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:dayTimeDuration: \"" + value + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }
         this.value = Duration.parse(value);
     }

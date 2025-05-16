@@ -8,7 +8,6 @@ import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -52,10 +51,7 @@ public class gMonthItem implements Item {
     private void getgMonthFromString(String gMonthString) {
         Matcher matcher = this.gMonthRegex.matcher(gMonthString);
         if (!matcher.matches()) {
-            throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:gMonth: \"" + gMonthString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            throw new IllegalArgumentException("Invalid xs:gMonth: \"" + gMonthString + "\"");
         }
         this.month = Month.of(Integer.parseInt(matcher.group(1)));
         String tz = matcher.group(2);
