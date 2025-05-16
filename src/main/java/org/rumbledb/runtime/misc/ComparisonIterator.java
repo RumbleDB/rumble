@@ -430,9 +430,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         OffsetTime l = left.getTimeValue();
         OffsetTime r = right.getTimeValue();
-        if (!left.hasTimeZone() || !right.hasTimeZone()) {
-            return l.withOffsetSameLocal(ZoneOffset.UTC).compareTo(r.withOffsetSameLocal(ZoneOffset.UTC));
-        }
         return l.withOffsetSameInstant(ZoneOffset.UTC).compareTo(r.withOffsetSameInstant(ZoneOffset.UTC));
     }
 
