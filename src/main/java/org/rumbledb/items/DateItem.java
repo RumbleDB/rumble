@@ -70,7 +70,10 @@ public class DateItem implements Item {
                     .toOffsetDateTime();
                 this.hasTimeZone = false;
             }
-            this.value = this.value.plusYears(yearIncrement).withYear(this.value.getYear() * isMinus);
+            // Those operations need to be in separate lines,
+            // because we change the sign only after we calculate correct year
+            this.value = this.value.plusYears(yearIncrement);
+            this.value = this.value.withYear(this.value.getYear() * isMinus);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         } catch (NumberFormatException e) {

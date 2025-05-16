@@ -74,9 +74,10 @@ public class DateTimeItem implements Item {
                     .atOffset(ZoneOffset.UTC);
                 this.hasTimeZone = false;
             }
-            this.value = this.value.plusDays(dayIncrement)
-                .plusYears(yearIncrement)
-                .withYear(this.value.getYear() * isMinus);
+            // Those operations need to be in separate lines,
+            // because we change the sign only after we calculate correct year
+            this.value = this.value.plusDays(dayIncrement).plusYears(yearIncrement);
+            this.value = this.value.withYear(this.value.getYear() * isMinus);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid xs:dateTime: \"" + dateTimeString + "\"");
         } catch (NumberFormatException e) {
