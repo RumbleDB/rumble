@@ -7,10 +7,12 @@ import com.esotericsoftware.kryo.io.Output;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -37,7 +39,14 @@ public class YearMonthDurationItem implements Item {
         if (!this.yearMonthDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:yearMonthDuration: \"" + value + "\"");
         }
-        this.value = normalizeMonthsToYears(Period.parse(value));
+        try {
+            this.value = normalizeMonthsToYears(Period.parse(value));
+        } catch (DateTimeParseException e) {
+            throw new DurationOverflowOrUnderflow(
+                    "Invalid xs:yearMonthDuration: \"" + value + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -55,6 +56,11 @@ public class gMonthDayItem implements Item {
         }
         this.month = Month.of(Integer.parseInt(matcher.group(1)));
         this.day = Integer.parseInt(matcher.group(2));
+        try {
+            LocalDate ignore = LocalDate.of(2000, this.month.getValue(), this.day);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid xs:gMonthDay: \"" + gMonthDayString + "\"");
+        }
         String tz = matcher.group(3);
         if (tz == null) {
             this.hasTimeZone = false;

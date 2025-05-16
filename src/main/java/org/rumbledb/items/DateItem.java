@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -66,6 +67,11 @@ public class DateItem implements Item {
             this.value = this.value.withYear(this.value.getYear() * isMinus);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
+        } catch (NumberFormatException e) {
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:date: \"" + dateString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 

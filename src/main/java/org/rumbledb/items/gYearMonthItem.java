@@ -51,7 +51,11 @@ public class gYearMonthItem implements Item {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gYearMonth: \"" + gYearMonthString + "\"");
         }
-        this.year = Year.of(Integer.parseInt(matcher.group(1)));
+        if (gYearMonthString.startsWith("-")) {
+            this.year = Year.of(-Integer.parseInt(matcher.group(1)));
+        } else {
+            this.year = Year.of(Integer.parseInt(matcher.group(1)));
+        }
         this.month = Month.of(Integer.parseInt(matcher.group(2)));
         String tz = matcher.group(3);
         if (tz == null) {
@@ -78,11 +82,13 @@ public class gYearMonthItem implements Item {
 
     @Override
     public String getStringValue() {
-        if (this.hasTimeZone) {
-            return String.format("%d-%02d", this.year.getValue(), this.month.getValue()) + this.offset;
-        } else {
-            return String.format("%d-%02d", this.year.getValue(), this.month.getValue());
-        }
+        return String.format(
+            "%s%04d-%02d%s",
+            this.year.getValue() < 0 ? "-" : "",
+            Math.abs(this.year.getValue()),
+            this.month.getValue(),
+            this.hasTimeZone ? this.offset.toString() : ""
+        );
     }
 
     @Override

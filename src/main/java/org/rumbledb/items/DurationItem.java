@@ -9,11 +9,13 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -128,6 +130,11 @@ public class DurationItem implements Item {
                 this.durationValue = Duration.parse(durationString);
                 this.isDuration = true;
             }
+        } catch (DateTimeParseException e) {
+            throw new DurationOverflowOrUnderflow(
+                    "Invalid xs:duration: \"" + durationPeriodString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid xs:duration format: " + durationPeriodString, e);
         }

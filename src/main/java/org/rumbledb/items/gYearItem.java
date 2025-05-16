@@ -49,7 +49,11 @@ public class gYearItem implements Item {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gYear: \"" + gYearString + "\"");
         }
-        this.year = Year.of(Integer.parseInt(matcher.group(1)));
+        if (gYearString.startsWith("-")) {
+            this.year = Year.of(-Integer.parseInt(matcher.group(1)));
+        } else {
+            this.year = Year.of(Integer.parseInt(matcher.group(1)));
+        }
         String tz = matcher.group(2);
         if (tz == null) {
             this.hasTimeZone = false;
@@ -74,11 +78,12 @@ public class gYearItem implements Item {
     }
 
     public String getStringValue() {
-        if (this.hasTimeZone) {
-            return this.year.toString() + this.offset.toString();
-        } else {
-            return this.year.toString();
-        }
+        return String.format(
+            "%s%04d%s",
+            this.year.getValue() < 0 ? "-" : "",
+            this.year.getValue(),
+            this.hasTimeZone() ? this.offset.toString() : ""
+        );
     }
 
     @Override
