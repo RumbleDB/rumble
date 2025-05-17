@@ -17,6 +17,7 @@ options {
 
 // MODULE HEADER ///////////////////////////////////////////////////////////////
 
+// this rule was added to match the JSONiq grammar
 moduleAndThisIsIt       : module EOF;
 
 module : versionDecl? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
@@ -98,13 +99,18 @@ contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
                  ((COLON_EQ value=exprSingle)
                  | (KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
-functionDecl: KW_DECLARE (annotations|ncName) KW_FUNCTION name=eqName LPAREN functionParams? RPAREN
-              functionReturn?
-              ( functionBody | KW_EXTERNAL) ;
+functionDecl: KW_DECLARE (annotations|ncName) KW_FUNCTION fn_name=eqName LPAREN paramList? RPAREN
+              // replaced with the functionReturn production to match the JSONiq grammar
+              (KW_AS return_type=sequenceType)?
+              // replaced functionBody to match the JSONiq grammar and the XQuery Scripting Extension spec
+              ( LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=KW_EXTERNAL) ;
 
-functionParams: functionParam (COMMA functionParam)* ;
+// renamed from functionParams to paramList to match the JSONiq grammar
+paramList: param (COMMA param)* ;
 
-functionParam: DOLLAR name=qName type=typeDeclaration? ;
+// renamed from functionParam to param to match the JSONiq grammar
+// replaced with the typeDeclaration production to match the JSONiq grammar
+param: DOLLAR name=qName (KW_AS sequenceType)? ;
 
 annotations: annotation* ;
 
@@ -113,8 +119,6 @@ annotation: MOD qName (LPAREN annotList RPAREN)? ;
 annotList: annotationParam ( COMMA annotationParam )* ;
 
 annotationParam: literal ;
-
-functionReturn: KW_AS sequenceType ;
 
 optionDecl: KW_DECLARE KW_OPTION name=qName value=stringLiteral ;
 
@@ -474,7 +478,7 @@ functionItemExpr: namedFunctionRef | inlineFunctionRef ;
 
 namedFunctionRef: fn_name=eqName HASH arity=IntegerLiteral ;
 
-inlineFunctionRef: annotations KW_FUNCTION LPAREN functionParams? RPAREN (KW_AS sequenceType)? functionBody ;
+inlineFunctionRef: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS sequenceType)? functionBody ;
 
 functionBody: enclosedExpression ;
 
@@ -849,3 +853,68 @@ noQuotesNoBracesNoAmpNoLAng:
                      )
                    )+
  ;
+
+// XQuery Scripting Extension /////////////////////////////////////////////////////////////
+// the following section contains rules for the XQuery Scripting Extension Proposal
+
+statement               : applyStatement
+                        | assignStatement
+                        | blockStatement
+                        | breakStatement
+                        | continueStatement
+                        | exitStatement
+                        | flowrStatement
+                        | ifStatement
+                        | switchStatement
+                        | tryCatchStatement
+                        | typeSwitchStatement
+                        | varDeclStatement
+                        | whileStatement
+                        ;
+
+applyStatement          : exprSimple SEMICOLON ;
+
+assignStatement         : DOLLAR varName COLON_EQ exprSingle SEMICOLON ;
+
+blockStatement          : LBRACE statements RBRACE ;
+
+breakStatement          : KW_BREAK KW_LOOP SEMICOLON ;
+
+continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
+
+exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
+
+// replaced with the initialClause production to match the JSONiq grammar
+flowrStatement          : (start_for=forClause| start_let=letClause)
+                        // replaced with the intermediateClause production to match the JSONiq grammar
+                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                        // replaced with the returnStatement production to match the JSONiq grammar
+                          KW_RETURN returnStmt=statement ;
+
+ifStatement             :  KW_IF LPAREN test_expr=expr RPAREN
+                           KW_THEN branch=statement
+                           KW_ELSE else_branch=statement ;
+
+switchStatement         : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
+
+// replaced with the switchCaseOperand production to match the JSONiq grammar
+switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
+
+tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
+
+// added to match the JSONiq grammar
+// replaced the CatchErrorList production rule to match the JSONiq grammar
+catchCaseStatement      : KW_CATCH (jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* catch_block=blockStatement;
+
+// replaced "$" varName with varRef to match the JSONiq grammar
+typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN | KW_SELECT) def=statement ;
+
+// replaced "$" varName with varRef to match the JSONiq grammar
+caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN | KW_SELECT) ret=statement ;
+
+varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
+
+// added to match the JSONiq grammar
+varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
+
+whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;

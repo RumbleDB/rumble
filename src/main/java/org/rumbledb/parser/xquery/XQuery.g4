@@ -25,62 +25,8 @@ statementsAndExpr           : statements expr ;
 
 statementsAndOptionalExpr   : statements expr? ;
 
-statement                   : applyStatement
-                            | assignStatement
-                            | blockStatement
-                            | breakStatement
-                            | continueStatement
-                            | exitStatement
-                            | flowrStatement
-                            | ifStatement
-                            | switchStatement
-                            | tryCatchStatement
-                            | typeSwitchStatement
-                            | varDeclStatement
-                            | whileStatement
-                            ;
-
-applyStatement              : exprSimple ';' ;
-
-assignStatement             : '$' qname ':=' exprSingle ';' ;
-
-blockStatement              : LBRACE statements RBRACE ;
-
-breakStatement              : Kbreak Kloop ';' ;
-
-continueStatement           : Kcontinue Kloop ';' ;
-
-exitStatement               : Kexit Kreturning exprSingle ';' ;
-
-flowrStatement              : (start_for=forClause| start_let=letClause)
-                              (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
-                              Kreturn returnStmt=statement ;
-
-ifStatement:                Kif '(' test_expr=expr ')'
-                            Kthen branch=statement
-                            Kelse else_branch=statement ;
-
-switchStatement             : Kswitch '(' condExpr=expr ')' cases+=switchCaseStatement+ Kdefault Kreturn def=statement ;
-
-switchCaseStatement         : (Kcase cond+=exprSingle)+ Kreturn ret=statement ;
-
-tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseStatement+ ;
-
-catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
-
-typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement+ Kdefault (var_ref=varRef)? Kreturn def=statement ;
-
-caseStatement               : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=statement ;
 
 annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
-
-annotations                 : annotation* ;
-
-varDeclStatement            : annotations Kvariable varDeclForStatement (',' varDeclForStatement)* ';' ;
-
-varDeclForStatement         : var_ref=varRef (Kas sequenceType)? (':=' expr_vals+=exprSingle)? ;
-
-whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 
 ///////////////////////// Scripting addition - end
 
@@ -98,19 +44,12 @@ varDecl                 : Kdeclare annotations Kvariable varRef (Kas sequenceTyp
 
 contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
-functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
-                          (Kas return_type=sequenceType)?
-                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external='external');
-
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 schemaLanguage          : 'jsound' 'compact'
                         | 'jsound' 'verbose'
                         | 'json' 'schema';
 
-paramList               : param (',' param)*;
-
-param                   : '$' qname (Kas sequenceType)?;
 ///////////////////////// constructs, expression
 
 exprSingle              : exprSimple
@@ -140,8 +79,10 @@ catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*'
 
 valueExpr               : simpleMap_expr=simpleMapExpr
                         | validate_expr=validateExpr
+                        // this seems to not be a XQuery feature
                         | annotate_expr=annotateExpr;
 
+// is this a XQuery feature? does not look like in any spec
 annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 
 primaryExpr             : Literal

@@ -244,6 +244,15 @@ KW_INTO:               'into';
 KW_DELETE:             'delete';
 KW_RENAME:             'rename';
 
+// XQuery Scripting Extension keywords
+
+KW_BREAK:              'break';
+KW_LOOP:               'loop';
+KW_CONTINUE:           'continue';
+KW_EXIT:               'exit';
+KW_RETURNING:          'returning';
+KW_SELECT:             'select';
+KW_WHILE:              'while';
 
 // NAMES
 
