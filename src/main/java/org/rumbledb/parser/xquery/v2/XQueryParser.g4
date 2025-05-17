@@ -474,13 +474,13 @@ compCommentConstructor: KW_COMMENT enclosedExpression ;
 
 compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
 
-functionItemExpr: namedFunctionRef | inlineFunctionRef ;
+functionItemExpr: namedFunctionRef | inlineFunctionExpr ;
 
 namedFunctionRef: fn_name=eqName HASH arity=IntegerLiteral ;
 
-inlineFunctionRef: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS sequenceType)? functionBody ;
-
-functionBody: enclosedExpression ;
+// renamed from inlineFunctionRef to inlineFunctionExpr to match the JSONiq grammar
+// replaced with the functionBody production to match the JSONiq grammar
+inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
 mapConstructor: KW_MAP LBRACE (mapConstructorEntry (COMMA mapConstructorEntry)*)? RBRACE ;
 

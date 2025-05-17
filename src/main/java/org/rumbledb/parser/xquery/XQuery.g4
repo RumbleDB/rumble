@@ -90,10 +90,6 @@ primaryExpr             : Literal
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
 
-inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
-                           (Kas return_type=sequenceType)?
-                           (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE);
-
 ///////////////////////// Updating Expressions
 
 insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?
