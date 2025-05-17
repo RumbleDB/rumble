@@ -88,8 +88,6 @@ primaryExpr             : Literal
                         | unaryLookup
                         ;
 
-blockExpr : LBRACE statementsAndExpr RBRACE ;
-
 ///////////////////////// Updating Expressions
 
 insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (Kat Kposition pos_expr=exprSingle)?

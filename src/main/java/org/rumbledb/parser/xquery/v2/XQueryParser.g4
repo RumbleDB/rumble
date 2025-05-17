@@ -371,6 +371,7 @@ primaryExpr: literal
            | arrayConstructor
            | stringConstructor
            | unaryLookup
+           | blockExpr
            ;
 
 literal: numericLiteral | stringLiteral ;
@@ -857,6 +858,8 @@ noQuotesNoBracesNoAmpNoLAng:
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
 
+// Statements
+
 statement               : applyStatement
                         | assignStatement
                         | blockStatement
@@ -918,3 +921,7 @@ varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA var
 varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
 
 whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
+
+// Expressions
+
+blockExpr : LBRACE statementsAndExpr RBRACE ;
