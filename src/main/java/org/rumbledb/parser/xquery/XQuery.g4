@@ -46,10 +46,6 @@ contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exp
 
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
-schemaLanguage          : 'jsound' 'compact'
-                        | 'jsound' 'verbose'
-                        | 'json' 'schema';
-
 ///////////////////////// constructs, expression
 
 exprSingle              : exprSimple
@@ -75,15 +71,6 @@ tryCatchExpr            : Ktry LBRACE try_expression=expr RBRACE catches+=catchC
 catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
 
 ///////////////////////// expression
-
-
-valueExpr               : simpleMap_expr=simpleMapExpr
-                        | validate_expr=validateExpr
-                        // this seems to not be a XQuery feature
-                        | annotate_expr=annotateExpr;
-
-// is this a XQuery feature? does not look like in any spec
-annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 
 primaryExpr             : Literal
                         | stringLiteral
