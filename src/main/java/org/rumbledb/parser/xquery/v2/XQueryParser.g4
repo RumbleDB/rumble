@@ -1,4 +1,10 @@
 parser grammar XQueryParser;
+
+@header {
+// Java header
+package org.rumbledb.parser.xquery;
+}
+
 options {
   tokenVocab=XQueryLexer;
 }

@@ -1,10 +1,5 @@
 grammar XQuery;
 
-@header {
-// Java header
-package org.rumbledb.parser.xquery;
-}
-
 module                  : (Kxquery Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
