@@ -133,16 +133,6 @@ optionDecl: KW_DECLARE KW_OPTION name=qName value=stringLiteral ;
 
 expr: exprSingle (COMMA exprSingle)* ;
 
-exprSingle: flworExpr
-          | quantifiedExpr
-          | switchExpr
-          | typeswitchExpr
-          | existUpdateExpr
-          | ifExpr
-          | tryCatchExpr
-          | orExpr
-          ;
-
 flworExpr: // replaced with the initialClause production to match the JSONiq grammar
            (start_for=forClause| start_let=letClause | start_window=windowClause)
            // replaced with the intermediateClause production to match the JSONiq grammar
@@ -864,6 +854,14 @@ noQuotesNoBracesNoAmpNoLAng:
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
 
+// Mixing Expressions and Statements
+
+statements                  : statement* ;
+
+statementsAndExpr           : statements expr ;
+
+statementsAndOptionalExpr   : statements expr? ;
+
 // Statements
 
 statement               : applyStatement
@@ -929,5 +927,25 @@ varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_va
 whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
 
 // Expressions
+
+// redefined according to the XQuery Scripting Extension spec
+exprSingle              : exprSimple
+                        | flworExpr
+                        | ifExpr
+                        | switchExpr
+                        | tryCatchExpr
+                        | typeswitchExpr
+                        // TODO: include existUpdateExpr, either in the exprSingle or in the exprSimple rule
+                        ;
+
+exprSimple              : quantifiedExpr
+                        | orExpr
+                        // TODO: import updating expressions
+                        // | insertExpr
+                        // | deleteExpr
+                        // | renameExpr
+                        // | replaceExpr
+                        // | transformExpr
+                        ;
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;

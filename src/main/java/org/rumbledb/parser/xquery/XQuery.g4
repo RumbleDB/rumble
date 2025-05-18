@@ -14,12 +14,6 @@ program                 : statementsAndOptionalExpr ;
 
 ///////////////////////// Statements
 
-statements                  : statement* ;
-
-statementsAndExpr           : statements expr ;
-
-statementsAndOptionalExpr   : statements expr? ;
-
 
 annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
 
@@ -42,24 +36,6 @@ contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exp
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 ///////////////////////// constructs, expression
-
-exprSingle              : exprSimple
-                        | flowrExpr
-                        | switchExpr
-                        | typeSwitchExpr
-                        | ifExpr
-                        | tryCatchExpr
-                        ;
-
-exprSimple              : quantifiedExpr
-                        | orExpr
-                        | insertExpr
-                        | deleteExpr
-                        | renameExpr
-                        | replaceExpr
-                        | transformExpr
-                        | appendExpr
-                        ;
 
 tryCatchExpr            : Ktry LBRACE try_expression=expr RBRACE catches+=catchClause+;
 
