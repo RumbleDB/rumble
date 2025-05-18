@@ -132,7 +132,7 @@ param: DOLLAR name=qName (KW_AS sequenceType)? ;
 
 annotations: annotation* ;
 
-annotation: MOD qName (LPAREN annotList RPAREN)? ;
+annotation: MOD name=qName (LPAREN annotList RPAREN)? ;
 
 annotList: annotationParam ( COMMA annotationParam )* ;
 

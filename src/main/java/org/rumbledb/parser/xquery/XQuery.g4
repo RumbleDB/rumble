@@ -3,8 +3,9 @@ grammar XQuery;
 ///////////////////////// Scripting addition - begin
 
 ///////////////////////// Statements
-
-annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
+// TODO: updating token is not referenced anywhere in the XQuery spec
+// or in the XQuery Scripting Extension spec
+// annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
 
 ///////////////////////// Scripting addition - end
 
