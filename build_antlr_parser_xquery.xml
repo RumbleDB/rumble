@@ -29,12 +29,11 @@
 
 
     <target name="clean-parser">
+        <delete file="/org/rumbledb/parser/xquery/XQuery.interp"/>
+        <delete file="/org/rumbledb/parser/xquery/XQuery.java"/>
         <delete file="/org/rumbledb/parser/xquery/XQuery.tokens"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryLexer.java"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryParser.java"/>
         <delete file="/org/rumbledb/parser/xquery/XQueryBaseVisitor.java"/>
         <delete file="/org/rumbledb/parser/xquery/XQueryVisitor.java"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryLexer.tokens"/>
     </target>
 
     <target name="generate-parser">
