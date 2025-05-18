@@ -23,22 +23,6 @@ catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*'
 
 ///////////////////////// expression
 
-primaryExpr             : Literal
-                        | stringLiteral
-                        | varRef
-                        | parenthesizedExpr
-                        | contextItemExpr
-                        | objectConstructor
-                        | functionCall
-                        | orderedExpr
-                        | unorderedExpr
-                        | nodeConstructor
-                        | arrayConstructor
-                        | functionItemExpr
-                        | blockExpr
-                        | unaryLookup
-                        ;
-
 ///////////////////////// Updating Expressions
 // TODO: updating expressions are not referenced anywhere in the XQuery spec
 // or in the XQuery Scripting Extension spec
