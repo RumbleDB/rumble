@@ -42,7 +42,14 @@ libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON p
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
 prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport) SEMICOLON)*
-        ( (varDecl | functionDecl | contextItemDecl | optionDecl) SEMICOLON)* ;
+        (annotatedDecl SEMICOLON)* ;
+
+// added to match the JSONiq grammar
+annotatedDecl: functionDecl
+              | varDecl
+              | contextItemDecl
+              | optionDecl
+              ;
 
 defaultNamespaceDecl: KW_DECLARE KW_DEFAULT
                       type=(KW_ELEMENT | KW_FUNCTION)
