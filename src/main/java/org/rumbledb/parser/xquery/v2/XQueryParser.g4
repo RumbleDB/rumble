@@ -26,15 +26,16 @@ options {
 // this rule was added to match the JSONiq grammar
 moduleAndThisIsIt       : module EOF;
 
-module : versionDecl? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
+module : // replaced with the versionDecl production to match the JSONiq grammar
+         (KW_XQUERY KW_VERSION vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
+         // TODO: subsequent optional main modules are currently ignored
+         (libraryModule | (main=mainModule (SEMICOLON versionDecl? mainModule)* )) ;
 
 versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
              (KW_ENCODING encoding=stringLiteral)?
              SEMICOLON ;
 
-mainModule: prolog queryBody;
-
-queryBody: expr ;
+// mainModule and queryBody are replaced with the mainModule and program rules according to the XQuery Scripting Extension spec
 
 libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON prolog;
 
@@ -853,6 +854,12 @@ noQuotesNoBracesNoAmpNoLAng:
 
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
+
+// New query body for main modules
+
+mainModule              : prolog program;
+
+program                 : statementsAndOptionalExpr ;
 
 // Mixing Expressions and Statements
 

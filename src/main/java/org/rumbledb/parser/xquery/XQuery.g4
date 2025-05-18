@@ -1,19 +1,11 @@
 grammar XQuery;
 
-module                  : (Kxquery Kversion vers=stringLiteral ';')?
-                          (libraryModule | main=mainModule);
-
-mainModule              : prolog program;
-
 prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
                           (annotatedDecl ';')*;
 
 ///////////////////////// Scripting addition - begin
 
-program                 : statementsAndOptionalExpr ;
-
 ///////////////////////// Statements
-
 
 annotation                  : ('%' name=qname ('(' Literal (',' Literal)* ')')? | updating=Kupdating);
 
