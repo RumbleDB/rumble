@@ -108,7 +108,7 @@ varDefaultValue: expr ;
 contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
                  (KW_AS itemType)?
                  ((COLON_EQ value=exprSingle)
-                 | (KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
+                 | (external=KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
 functionDecl: KW_DECLARE (annotations|ncName) KW_FUNCTION fn_name=eqName LPAREN paramList? RPAREN
               // replaced with the functionReturn production to match the JSONiq grammar

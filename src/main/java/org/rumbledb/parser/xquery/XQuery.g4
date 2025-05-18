@@ -20,8 +20,6 @@ annotatedDecl           : functionDecl
 qname                   : ((ns=NCName | nskw=keyWords)':')?
                           (local_name=NCName | local_namekw = keyWords);
 
-contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
-
 typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 ///////////////////////// constructs, expression
