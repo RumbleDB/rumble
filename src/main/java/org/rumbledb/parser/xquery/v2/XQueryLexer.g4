@@ -260,7 +260,6 @@ KW_WHILE:              'while';
 URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName ;
 
 // We create these basic variants in order to honor ws:explicit in some basic cases
-FullQName: NCName ':' NCName ;
 NCNameWithLocalWildcard:  NCName ':' '*' ;
 NCNameWithPrefixWildcard: '*' ':' NCName ; 
 
@@ -613,7 +612,6 @@ INT_QUOT_KW_RENAME:             'rename' -> type(KW_RENAME);
 // NAMES
 
 INT_QUOT_URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName -> type(URIQualifiedName);
-INT_QUOT_FullQName: NCName ':' NCName -> type(FullQName);
 INT_QUOT_NCNameWithLocalWildcard:  NCName ':' '*' -> type(NCNameWithLocalWildcard);
 INT_QUOT_NCNameWithPrefixWildcard: '*' ':' NCName -> type(NCNameWithPrefixWildcard); 
 
@@ -871,7 +869,6 @@ INT_APOS_KW_RENAME:             'rename' -> type(KW_RENAME);
 // NAMES
 
 INT_APOS_URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName -> type(URIQualifiedName);
-INT_APOS_FullQName: NCName ':' NCName -> type(FullQName);
 INT_APOS_NCNameWithLocalWildcard:  NCName ':' '*' -> type(NCNameWithLocalWildcard);
 INT_APOS_NCNameWithPrefixWildcard: '*' ':' NCName -> type(NCNameWithPrefixWildcard); 
 

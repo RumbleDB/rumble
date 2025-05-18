@@ -9,9 +9,6 @@ grammar XQuery;
 
 ///////////////////////// Scripting addition - end
 
-qname                   : ((ns=NCName | nskw=keyWords)':')?
-                          (local_name=NCName | local_namekw = keyWords);
-
 // TODO: typeDecl not referenced anywhere in the XQuery spec
 // typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 

@@ -182,7 +182,6 @@ KW_INTO=181
 KW_DELETE=182
 KW_RENAME=183
 URIQualifiedName=184
-FullQName=185
 NCNameWithLocalWildcard=186
 NCNameWithPrefixWildcard=187
 NCName=188
