@@ -15,12 +15,6 @@ qname                   : ((ns=NCName | nskw=keyWords)':')?
 // TODO: typeDecl not referenced anywhere in the XQuery spec
 // typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
-///////////////////////// constructs, expression
-
-tryCatchExpr            : Ktry LBRACE try_expression=expr RBRACE catches+=catchClause+;
-
-catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
-
 ///////////////////////// expression
 
 ///////////////////////// Updating Expressions

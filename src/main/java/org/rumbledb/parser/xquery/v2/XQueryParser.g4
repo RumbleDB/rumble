@@ -240,14 +240,16 @@ ifExpr: KW_IF LPAREN test_condition=expr RPAREN
         KW_THEN branch=exprSingle
         KW_ELSE else_branch=exprSingle ;
 
-tryCatchExpr: tryClause catchClause+ ;
-tryClause: KW_TRY enclosedTryTargetExpression ;
-enclosedTryTargetExpression: enclosedExpression ;
-catchClause: KW_CATCH (catchErrorList | (LPAREN DOLLAR varName RPAREN)) enclosedExpression ;
+// replaced with the tryClause and the enclosedTryTargetExpression productions to match the JSONiq grammar
+tryCatchExpr: KW_TRY LBRACE try_expression=expr? RBRACE catches+=catchClause+ ;
+
+catchClause: KW_CATCH
+             // replaced with the catchErrorList production to match the JSONiq grammar
+             ((jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* | (LPAREN DOLLAR varName RPAREN))
+             // replaced with the enclosedExpression production to match the JSONiq grammar
+             LBRACE catch_expression=expr? RBRACE ;
+
 enclosedExpression: LBRACE expr? RBRACE ;
-
-catchErrorList: nameTest (VBAR nameTest)* ;
-
 
 existUpdateExpr: KW_UPDATE ( existReplaceExpr | existValueExpr | existInsertExpr | existDeleteExpr | existRenameExpr ) ;
 
