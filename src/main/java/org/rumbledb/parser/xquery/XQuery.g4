@@ -61,11 +61,6 @@ primaryExpr             : Literal
 
 ///////////////////////// Types
 
-objectConstructor       : 'map' LBRACE ( pairConstructor (',' pairConstructor)* )? RBRACE
-                        | merge_operator+='{|' expr '|}';
-
-pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
-
 keyWords                : Kxquery
                         | Kand
                         | Kcast

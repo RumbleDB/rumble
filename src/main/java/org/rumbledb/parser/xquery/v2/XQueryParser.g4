@@ -375,7 +375,7 @@ primaryExpr: literal
            | unorderedExpr
            | nodeConstructor
            | functionItemExpr
-           | mapConstructor
+           | objectConstructor
            | arrayConstructor
            | stringConstructor
            | unaryLookup
@@ -491,9 +491,11 @@ namedFunctionRef: fn_name=eqName HASH arity=IntegerLiteral ;
 // replaced with the functionBody production to match the JSONiq grammar
 inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
-mapConstructor: KW_MAP LBRACE (mapConstructorEntry (COMMA mapConstructorEntry)*)? RBRACE ;
+// renamed from mapConstructor to objectConstructor to match the JSONiq grammar
+objectConstructor: KW_MAP LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE ;
 
-mapConstructorEntry: mapKey=exprSingle (COLON | COLON_EQ) mapValue=exprSingle ;
+// renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
+pairConstructor: lhs=exprSingle (COLON | COLON_EQ) rhs=exprSingle ;
 
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
