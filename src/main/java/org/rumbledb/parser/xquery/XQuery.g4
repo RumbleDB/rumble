@@ -1,4 +1,7 @@
-grammar XQuery;
+// this file includes the old grammar of XQuery 3.1.
+// it is kept here for reference as we complete the migration process to the new grammar file.
+// here, only the rules that were not imported into the new grammar are present.
+// grammar XQuery;
 
 ///////////////////////// Scripting addition - begin
 
