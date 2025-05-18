@@ -128,17 +128,17 @@ paramList: param (COMMA param)* ;
 
 // renamed from functionParam to param to match the JSONiq grammar
 // replaced with the typeDeclaration production to match the JSONiq grammar
-param: DOLLAR name=qName (KW_AS sequenceType)? ;
+param: DOLLAR name=qname (KW_AS sequenceType)? ;
 
 annotations: annotation* ;
 
-annotation: MOD name=qName (LPAREN annotList RPAREN)? ;
+annotation: MOD name=qname (LPAREN annotList RPAREN)? ;
 
 annotList: annotationParam ( COMMA annotationParam )* ;
 
 annotationParam: literal ;
 
-optionDecl: KW_DECLARE KW_OPTION name=qName value=stringLiteral ;
+optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
@@ -177,11 +177,11 @@ letVar: var_ref=varRef
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
-tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qName
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition? ;
 
-slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qName
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition ;
 
@@ -416,14 +416,14 @@ directConstructor: dirElemConstructorOpenClose
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE open_tag_name=qName dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: LANGLE open_tag_name=qname dirAttributeList endOpen=RANGLE
                              dirElemContent*
-                             startClose=LANGLE slashClose=SLASH close_tag_name=qName RANGLE ;
+                             startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE open_tag_name=qName dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: LANGLE open_tag_name=qname dirAttributeList slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
-dirAttributeList: (qName EQUAL dirAttributeValue)* ;
+dirAttributeList: (qname EQUAL dirAttributeValue)* ;
 
 dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
 dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
@@ -636,9 +636,10 @@ mlNullNodeTest: KW_NULL_NODE LPAREN stringLiteral? RPAREN ;
 // NAMES ///////////////////////////////////////////////////////////////////////
 
 // walkers need to split into prefix+localpart by the ':'
-eqName: qName | URIQualifiedName ;
+eqName: qname | URIQualifiedName ;
 
-qName: FullQName | ncName ;
+// renamed from qName to qname to match the JSONiq grammar
+qname: FullQName | ncName ;
 
 
 ncName: NCName | keyword ;
