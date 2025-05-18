@@ -16,8 +16,8 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
 }
 
 IntegerLiteral: Digits ;
-DecimalLiteral: '.' Digits | Digits '.' [0-9]* ;
-DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits ;
+DecimalLiteral: ('.' Digits) | (Digits '.' [0-9]*) ;
+DoubleLiteral: (('.' Digits) | (Digits ('.' [0-9]*)?)) [eE] [+-]? Digits ;
 
 DFPropertyName: 'decimal-separator'
               | 'grouping-separator'
