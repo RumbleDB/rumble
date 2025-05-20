@@ -37,7 +37,7 @@ versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
 
 // mainModule and queryBody are replaced with the mainModule and program rules according to the XQuery Scripting Extension spec
 
-libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON prolog;
+libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=uriLiteral SEMICOLON prolog;
 
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
