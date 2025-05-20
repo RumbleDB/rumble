@@ -1,4 +1,4 @@
-parser grammar XQuery;
+parser grammar XQueryParser;
 
 @header {
 // Java header

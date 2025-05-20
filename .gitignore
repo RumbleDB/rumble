@@ -19,10 +19,10 @@ src/main/resources/log4j.properties
 !/src/main/java/org/rumbledb/parser/jsoniq/Jsoniq.g4
 
 # ANTLR generated files for XQuery grammar
-/src/main/java/org/rumbledb/parser/xquery/XQuery.interp
-/src/main/java/org/rumbledb/parser/xquery/XQuery.java
-/src/main/java/org/rumbledb/parser/xquery/XQuery.tokens
-/src/main/java/org/rumbledb/parser/xquery/XQueryBaseVisitor.java
-/src/main/java/org/rumbledb/parser/xquery/XQueryVisitor.java
+/src/main/java/org/rumbledb/parser/xquery/XQueryParser.interp
+/src/main/java/org/rumbledb/parser/xquery/XQueryParser.java
+/src/main/java/org/rumbledb/parser/xquery/XQueryParser.tokens
+/src/main/java/org/rumbledb/parser/xquery/XQueryParserBaseVisitor.java
+/src/main/java/org/rumbledb/parser/xquery/XQueryParserVisitor.java
 
 .vscode/settings.json

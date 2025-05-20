@@ -29,18 +29,18 @@
 
 
     <target name="clean-parser">
-        <delete file="/org/rumbledb/parser/xquery/XQuery.interp"/>
-        <delete file="/org/rumbledb/parser/xquery/XQuery.java"/>
-        <delete file="/org/rumbledb/parser/xquery/XQuery.tokens"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryBaseVisitor.java"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryVisitor.java"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParser.interp"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParser.java"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParser.tokens"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParserBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParserVisitor.java"/>
     </target>
 
     <target name="generate-parser">
-        <echo message="ANTLR4 ${parser.dir}/XQuery.g4" level="info"/>
+        <echo message="ANTLR4 ${parser.dir}/XQueryParser.g4" level="info"/>
         <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
-            <arg value="${parser.dir}/XQuery.g4"/>
+            <arg value="${parser.dir}/XQueryParser.g4"/>
             <arg value="-o"/>
             <!-- <arg value="${parser.dir}" /> -->
             <arg value="."/>   <!-- put results in *.g4's directory -->
