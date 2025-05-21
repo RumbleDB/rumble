@@ -1,5 +1,11 @@
 lexer grammar XQueryLexer;
 
+@header {
+// Java header
+package org.rumbledb.parser.xquery;
+}
+
+
 // Note: string syntax depends on syntactic context, so they are
 // handled by the parser and not the lexer.
 
