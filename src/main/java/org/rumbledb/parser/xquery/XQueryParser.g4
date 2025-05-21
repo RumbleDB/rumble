@@ -70,7 +70,7 @@ defaultCollationDecl: KW_DECLARE KW_DEFAULT KW_COLLATION uriLiteral ;
 baseURIDecl: KW_DECLARE KW_BASE_URI uriLiteral ;
 constructionDecl: KW_DECLARE KW_CONSTRUCTION type=(KW_STRIP | KW_PRESERVE) ;
 orderingModeDecl: KW_DECLARE KW_ORDERING type=(KW_ORDERED | KW_UNORDERED) ;
-emptyOrderDecl: KW_DECLARE KW_DEFAULT KW_ORDER KW_EMPTY type=(KW_GREATEST | KW_LEAST) ;
+emptyOrderDecl: KW_DECLARE KW_DEFAULT KW_ORDER KW_EMPTY emptySequenceOrder=(KW_GREATEST | KW_LEAST) ;
 copyNamespacesDecl: KW_DECLARE KW_COPY_NS preserveMode COMMA inheritMode ;
 preserveMode: KW_PRESERVE | KW_NO_PRESERVE ;
 inheritMode: KW_INHERIT | KW_NO_INHERIT ;
@@ -102,8 +102,10 @@ varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE
          // replaced with the typeDeclaration production to match the JSONiq grammar
          (KW_AS sequenceType)?
          (
-            (COLON_EQ varValue)
-          | (external=KW_EXTERNAL (COLON_EQ varDefaultValue)?)
+          // replaced with the varValue production to match the JSONiq grammar
+            (COLON_EQ expr)
+          // replaced with the varDefaultValue production to match the JSONiq grammar
+          | (external=KW_EXTERNAL (COLON_EQ expr)?)
           | (LBRACE varValue RBRACE)
           | (external=KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
          ) ;
@@ -113,13 +115,15 @@ varValue: expr ;
 varDefaultValue: expr ;
 
 contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
-                 (KW_AS itemType)?
+                 //(KW_AS itemType)?
+                 // TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+                 (KW_AS sequenceType)?
                  ((COLON_EQ value=exprSingle)
                  | (external=KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
 // constrains to valid function names only
 // see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
-functionDecl: KW_DECLARE (annotations|functionName) KW_FUNCTION fn_name=eqName LPAREN paramList? RPAREN
+functionDecl: KW_DECLARE (annotations) KW_FUNCTION fn_name=functionName LPAREN paramList? RPAREN
               // replaced with the functionReturn production to match the JSONiq grammar
               (KW_AS return_type=sequenceType)?
               // replaced functionBody to match the JSONiq grammar and the XQuery Scripting Extension spec
@@ -208,9 +212,10 @@ groupByVar: var_ref=varRef
             ((KW_AS seq=sequenceType)? decl=COLON_EQ ex=exprSingle)?
             (KW_COLLATION uri=uriLiteral)? ;
 
-orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderSpec (COMMA specs+=orderSpec)* ;
+orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderByExpr (COMMA specs+=orderByExpr)* ;
 
-orderSpec: ex=exprSingle
+// renamed from orderSpec to orderByExpr to match the JSONiq grammar
+orderByExpr: ex=exprSingle
            (KW_ASCENDING | desc=KW_DESCENDING)?
            (KW_EMPTY (gr=KW_GREATEST|ls=KW_LEAST))?
            (KW_COLLATION uril=uriLiteral)?
@@ -289,7 +294,7 @@ castExpr: main_expr=arrowExpr (KW_CAST KW_AS single=singleType)? ;
 
 arrowExpr: main_expr=unaryExpr (ARROW function+=arrowFunctionSpecifier arguments+=argumentList)* ;
 
-unaryExpr: (MINUS | PLUS)* main_expr=valueExpr ;
+unaryExpr: op+=(MINUS | PLUS)* main_expr=valueExpr ;
 
 valueExpr: validate_expr=validateExpr | extensionExpr | simpleMap_expr=simpleMapExpr ;
 
@@ -305,7 +310,10 @@ valueComp: KW_EQ | KW_NE | KW_LT | KW_LE | KW_GT | KW_GE ;
 
 nodeComp: KW_IS | (LANGLE LANGLE) | (RANGLE RANGLE) ;
 
-validateExpr: KW_VALIDATE ( validationMode | ( ( KW_TYPE | KW_AS ) typeName) )? enclosedExpression ;
+// replaced with the enclosedExpression production to match the JSONiq grammar
+// TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// validateExpr: KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr? RBRACE ;
+validateExpr: KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE ;
 
 validationMode: KW_LAX | KW_STRICT ;
 
@@ -317,7 +325,7 @@ simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
 pathExpr: (SLASH singleslash=relativePathExpr?) | (DSLASH doubleslash=relativePathExpr) | relative=relativePathExpr ;
 
-relativePathExpr: stepExpr (sep=(SLASH|DSLASH) stepExpr)* ;
+relativePathExpr: stepExpr (sep+=(SLASH|DSLASH) stepExpr)* ;
 
 stepExpr: postfixExpr | axisStep ;
 
@@ -402,7 +410,7 @@ orderedExpr: KW_ORDERED enclosedExpression ;
 
 unorderedExpr: KW_UNORDERED enclosedExpression ;
 
-functionCall: fn_name=eqName argumentList  ;
+functionCall: fn_name=functionName argumentList  ;
 
 argument: exprSingle | QUESTION ;
 
@@ -489,7 +497,9 @@ compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
 
 functionItemExpr: namedFunctionRef | inlineFunctionExpr ;
 
-namedFunctionRef: fn_name=eqName HASH arity=IntegerLiteral ;
+// constrains to valid function names only
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 
 // renamed from inlineFunctionRef to inlineFunctionExpr to match the JSONiq grammar
 // replaced with the functionBody production to match the JSONiq grammar
@@ -527,7 +537,9 @@ unaryLookup: QUESTION keySpecifier ;
 
 // TYPES AND TYPE TESTS ////////////////////////////////////////////////////////
 
-singleType: item=simpleTypeName (question+=QUESTION)? ;
+// TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// singleType: item=simpleTypeName (question+=QUESTION)? ;
+singleType: item=itemType (question+=QUESTION)? ;
 
 typeDeclaration: KW_AS sequenceType ;
 
