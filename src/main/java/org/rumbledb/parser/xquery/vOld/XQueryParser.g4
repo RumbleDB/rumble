@@ -122,11 +122,11 @@ functionDecl: KW_DECLARE (annotations|ncName) KW_FUNCTION name=eqName LPAREN fun
 
 functionParams: functionParam (COMMA functionParam)* ;
 
-functionParam: DOLLAR name=qName type=typeDeclaration? ;
+functionParam: DOLLAR name=qname type=typeDeclaration? ;
 
 annotations: annotation* ;
 
-annotation: MOD qName (LPAREN annotList RPAREN)? ;
+annotation: MOD qname (LPAREN annotList RPAREN)? ;
 
 annotList: annotationParam ( COMMA annotationParam )* ;
 
@@ -134,7 +134,7 @@ annotationParam: literal ;
 
 functionReturn: KW_AS sequenceType ;
 
-optionDecl: KW_DECLARE KW_OPTION name=qName value=stringLiteral ;
+optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
@@ -176,11 +176,11 @@ letBinding: DOLLAR varName typeDeclaration? COLON_EQ exprSingle ;
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
-tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qName
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition? ;
 
-slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qName
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition ;
 
@@ -412,14 +412,14 @@ directConstructor: dirElemConstructorOpenClose
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE openName=qName dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: LANGLE open_tag_name=qname dirAttributeList endOpen=RANGLE
                              dirElemContent*
-                             startClose=LANGLE slashClose=SLASH closeName=qName RANGLE ;
+                             startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE openName=qName dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: LANGLE open_tag_name=qname dirAttributeList slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
-dirAttributeList: (qName EQUAL dirAttributeValue)* ;
+dirAttributeList: (qname EQUAL dirAttributeValue)* ;
 
 dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
 dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
@@ -648,9 +648,9 @@ mlNullNodeTest: KW_NULL_NODE LPAREN stringLiteral? RPAREN ;
 // NAMES ///////////////////////////////////////////////////////////////////////
 
 // walkers need to split into prefix+localpart by the ':'
-eqName: qName | URIQualifiedName ;
+eqName: qname | URIQualifiedName ;
 
-qName: FullQName | ncName ;
+qname: FullQName | ncName ;
 
 
 ncName: NCName | keyword ;
