@@ -130,9 +130,16 @@ functionParams: functionParam (COMMA functionParam)* ;
 
 functionParam: DOLLAR name=qname type=typeDeclaration? ;
 
+// renamed from functionParams to paramList to match the JSONiq grammar
+paramList: param (COMMA param)* ;
+
+// renamed from functionParam to param to match the JSONiq grammar
+// replaced with the typeDeclaration production to match the JSONiq grammar
+param: DOLLAR name=qname (KW_AS sequenceType)? ;
+
 annotations: annotation* ;
 
-annotation: MOD qname (LPAREN annotList RPAREN)? ;
+annotation: MOD name=qname (LPAREN annotList RPAREN)? ;
 
 annotList: annotationParam ( COMMA annotationParam )* ;
 
@@ -402,7 +409,7 @@ primaryExpr: literal
            | unorderedExpr
            | nodeConstructor
            | functionItemExpr
-           | mapConstructor
+           | objectConstructor
            | arrayConstructor
            | stringConstructor
            | unaryLookup
@@ -509,17 +516,23 @@ compCommentConstructor: KW_COMMENT enclosedExpression ;
 
 compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
 
-functionItemExpr: namedFunctionRef | inlineFunctionRef ;
+functionItemExpr: namedFunctionRef | inlineFunctionExpr ;
 
-namedFunctionRef: eqName HASH IntegerLiteral ;
+// constrains to valid function names only
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 
-inlineFunctionRef: annotations KW_FUNCTION LPAREN functionParams? RPAREN (KW_AS sequenceType)? functionBody ;
+// renamed from inlineFunctionRef to inlineFunctionExpr to match the JSONiq grammar
+// replaced with the functionBody production to match the JSONiq grammar
+inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=exprSingle) RBRACE) ;
+
+// renamed from mapConstructor to objectConstructor to match the JSONiq grammar
+objectConstructor: KW_MAP LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE ;
+
+// renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
+pairConstructor: lhs=exprSingle (COLON | COLON_EQ) rhs=exprSingle ;
 
 functionBody: enclosedExpression ;
-
-mapConstructor: KW_MAP LBRACE (mapConstructorEntry (COMMA mapConstructorEntry)*)? RBRACE ;
-
-mapConstructorEntry: mapKey=exprSingle (COLON | COLON_EQ) mapValue=exprSingle ;
 
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
