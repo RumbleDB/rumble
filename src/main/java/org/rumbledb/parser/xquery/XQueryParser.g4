@@ -117,7 +117,7 @@ varDefaultValue: expr ;
 contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
                  //(KW_AS itemType)?
                  // TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
-                 (KW_AS sequenceType)?
+                 (KW_AS sequenceType)? // TODO: change to itemType, update expressions to use itemType, update back JSONiq grammar
                  ((COLON_EQ value=exprSingle)
                  | (external=KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
@@ -312,6 +312,7 @@ nodeComp: KW_IS | (LANGLE LANGLE) | (RANGLE RANGLE) ;
 
 // replaced with the enclosedExpression production to match the JSONiq grammar
 // TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// TODO: replace with the proper rule, throw excep.
 // validateExpr: KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr? RBRACE ;
 validateExpr: KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE ;
 
@@ -539,6 +540,8 @@ unaryLookup: QUESTION keySpecifier ;
 
 // TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
 // singleType: item=simpleTypeName (question+=QUESTION)? ;
+// TODO: change to simpletypeName, update expressions.
+// but this is not required to pass all the xquery qt3-tests.
 singleType: item=itemType (question+=QUESTION)? ;
 
 typeDeclaration: KW_AS sequenceType ;

@@ -251,13 +251,14 @@ KW_DELETE:             'delete';
 KW_RENAME:             'rename';
 
 // XQuery Scripting Extension keywords
-
+// TODO: add them as ok for function names.
+// if tests break bc of this, move to not ok.
 KW_BREAK:              'break';
 KW_LOOP:               'loop';
 KW_CONTINUE:           'continue';
 KW_EXIT:               'exit';
 KW_RETURNING:          'returning';
-KW_SELECT:             'select';
+// KW_SELECT:             'select';
 KW_WHILE:              'while';
 
 // NAMES
