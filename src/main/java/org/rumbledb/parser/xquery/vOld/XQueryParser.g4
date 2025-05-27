@@ -324,19 +324,19 @@ validationMode: KW_LAX | KW_STRICT ;
 
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
-simpleMapExpr: pathExpr (BANG pathExpr)* ;
+simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
-pathExpr: (SLASH relativePathExpr?) | (DSLASH relativePathExpr) | relativePathExpr ;
+pathExpr: (SLASH singleslash=relativePathExpr?) | (DSLASH doubleslash=relativePathExpr) | relative=relativePathExpr ;
 
-relativePathExpr: stepExpr (sep=(SLASH|DSLASH) stepExpr)* ;
+relativePathExpr: stepExpr (sep+=(SLASH|DSLASH) stepExpr)* ;
 
 stepExpr: postfixExpr | axisStep ;
 
 axisStep: (reverseStep | forwardStep) predicateList ;
 
-forwardStep: forwardAxis nodeTest | abbrevForwardStep ;
+forwardStep: (forwardAxis nodeTest) | abbrevForwardStep ;
 
 forwardAxis: ( KW_CHILD
              | KW_DESCENDANT
@@ -348,7 +348,7 @@ forwardAxis: ( KW_CHILD
 
 abbrevForwardStep: AT? nodeTest ;
 
-reverseStep: reverseAxis nodeTest | abbrevReverseStep ;
+reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
 reverseAxis: ( KW_PARENT
              | KW_ANCESTOR
@@ -368,9 +368,9 @@ wildcard: STAR            # allNames
         ;
 
 
-postfixExpr: primaryExpr (predicate | argumentList | lookup)* ;
+postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
-argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
+argumentList: LPAREN (args+=argument (COMMA args+=argument)*)? RPAREN ;
 
 predicateList: predicate*;
 
@@ -378,7 +378,9 @@ predicate: LBRACKET expr RBRACKET ;
 
 lookup: QUESTION keySpecifier ;
 
-keySpecifier: ncName | IntegerLiteral | parenthesizedExpr | STAR ;
+// stringLiteral and varRef will be in XQuery 4.0
+keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | lt=stringLiteral | vr=varRef) ;
+
 
 arrowFunctionSpecifier: eqName | varRef | parenthesizedExpr ;
 
