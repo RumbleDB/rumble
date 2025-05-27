@@ -93,12 +93,18 @@ moduleImport: KW_IMPORT KW_MODULE
 
 namespaceDecl: KW_DECLARE KW_NAMESPACE ncName EQUAL uriLiteral ;
 
-varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE DOLLAR varName typeDeclaration?
+varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE
+         // replaced "$" varName with varRef to match the JSONiq grammar
+         varRef
+         // replaced with the typeDeclaration production to match the JSONiq grammar
+         (KW_AS sequenceType)?
          (
-            (COLON_EQ varValue)
-          | (KW_EXTERNAL (COLON_EQ varDefaultValue)?)
+          // replaced with the varValue production to match the JSONiq grammar
+            (COLON_EQ expr)
+          // replaced with the varDefaultValue production to match the JSONiq grammar
+          | (external=KW_EXTERNAL (COLON_EQ expr)?)
           | (LBRACE varValue RBRACE)
-          | (KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
+          | (external=KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
          ) ;
 
 varValue: expr ;
