@@ -151,7 +151,12 @@ exprSingle: flworExpr
           | orExpr
           ;
 
-flworExpr: initialClause intermediateClause* returnClause ;
+flworExpr: // replaced with the initialClause production to match the JSONiq grammar
+           (start_for=forClause| start_let=letClause | start_window=windowClause)
+           // replaced with the intermediateClause production to match the JSONiq grammar
+           (forClause | letClause | windowClause| whereClause | groupByClause | orderByClause | countClause)*
+           // replaced with the returnClause production to match the JSONiq grammar
+           KW_RETURN return_expr=exprSingle ;
 
 initialClause: forClause | letClause | windowClause ;
 intermediateClause: initialClause
@@ -202,62 +207,64 @@ windowVars: (DOLLAR currentItem=eqName)? positionalVar?
                           (KW_PREVIOUS DOLLAR previousItem=eqName)?
                           (KW_NEXT DOLLAR nextItem=eqName)?;
 
-countClause: KW_COUNT DOLLAR varName ;
+countClause: KW_COUNT varRef ;
 
-whereClause: KW_WHERE whereExpr=exprSingle ;
+whereClause: KW_WHERE exprSingle ;
 
-groupByClause: KW_GROUP KW_BY groupingSpecList ;
+// replaced with the groupingSpecList production to match the JSONiq grammar
+groupByClause: KW_GROUP KW_BY vars+=groupByVar (COMMA vars+=groupByVar)* ;
 
-groupingSpecList: groupingSpec (COMMA groupingSpec)* ;
+// renamed from groupingSpec to groupByVar to match the JSONiq grammar
+groupByVar: var_ref=varRef
+            // replaced with the typeDeclaration production to match the JSONiq grammar
+            ((KW_AS seq=sequenceType)? decl=COLON_EQ ex=exprSingle)?
+            (KW_COLLATION uri=uriLiteral)? ;
 
-groupingSpec: DOLLAR name=varName
-                    (type=typeDeclaration? COLON_EQ exprSingle)?
-                    (KW_COLLATION uri=uriLiteral)? ;
+orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderByExpr (COMMA specs+=orderByExpr)* ;
 
-orderByClause: KW_STABLE? KW_ORDER KW_BY specs+=orderSpec (COMMA specs+=orderSpec)* ;
-
-orderSpec: value=exprSingle
-           order=(KW_ASCENDING | KW_DESCENDING)?
-           (KW_EMPTY empty=(KW_GREATEST|KW_LEAST))?
-           (KW_COLLATION collation=uriLiteral)?
+// renamed from orderSpec to orderByExpr to match the JSONiq grammar
+orderByExpr: ex=exprSingle
+           (KW_ASCENDING | desc=KW_DESCENDING)?
+           (KW_EMPTY (gr=KW_GREATEST|ls=KW_LEAST))?
+           (KW_COLLATION uril=uriLiteral)?
          ;
 
-returnClause: KW_RETURN exprSingle ;
+quantifiedExpr: (so=KW_SOME | ev=KW_EVERY) vars+=quantifiedExprVar (COMMA vars+=quantifiedExprVar)*
+                KW_SATISFIES exprSingle ;
 
-quantifiedExpr: quantifier=(KW_SOME | KW_EVERY) quantifiedVar (COMMA quantifiedVar)*
-                KW_SATISFIES value=exprSingle ;
+// renamed from quantifiedVar to quantifiedExprVar to match the JSONiq grammar
+quantifiedExprVar: var_ref=varRef
+                  // replaced with the typeDeclaration production to match the JSONiq grammar
+                  (KW_AS seq=sequenceType)?
+                  KW_IN exprSingle ;
 
-quantifiedVar: DOLLAR varName typeDeclaration? KW_IN exprSingle ;
+switchExpr: KW_SWITCH LPAREN cond=expr RPAREN
+                cases+=switchCaseClause+
+                KW_DEFAULT KW_RETURN def=exprSingle ;
 
-switchExpr: KW_SWITCH LPAREN expr RPAREN
-                switchCaseClause+
-                KW_DEFAULT KW_RETURN returnExpr=exprSingle ;
+switchCaseClause: (KW_CASE cond+=exprSingle)+ KW_RETURN ret=exprSingle ;
 
-switchCaseClause: (KW_CASE switchCaseOperand)+ KW_RETURN exprSingle ;
+typeswitchExpr: KW_TYPESWITCH LPAREN cond=expr RPAREN
+                cses+=caseClause+
+                KW_DEFAULT (var_ref=varRef)? KW_RETURN def=exprSingle ;
 
-switchCaseOperand: exprSingle ;
+caseClause: KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* KW_RETURN
+            ret=exprSingle ;
 
-typeswitchExpr: KW_TYPESWITCH LPAREN expr RPAREN
-                clauses=caseClause+
-                KW_DEFAULT (DOLLAR var=varName)? KW_RETURN returnExpr=exprSingle ;
+ifExpr: KW_IF LPAREN test_condition=expr RPAREN
+        KW_THEN branch=exprSingle
+        KW_ELSE else_branch=exprSingle ;
 
-caseClause: KW_CASE (DOLLAR var=varName KW_AS)? type=sequenceUnionType KW_RETURN
-            returnExpr=exprSingle ;
+// replaced with the tryClause and the enclosedTryTargetExpression productions to match the JSONiq grammar
+tryCatchExpr: KW_TRY LBRACE try_expression=expr? RBRACE catches+=catchClause+ ;
 
-sequenceUnionType: sequenceType ( VBAR sequenceType )* ;
+catchClause: KW_CATCH
+             // replaced with the catchErrorList production to match the JSONiq grammar
+             ((jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* | (LPAREN DOLLAR varName RPAREN))
+             // replaced with the enclosedExpression production to match the JSONiq grammar
+             LBRACE catch_expression=expr? RBRACE ;
 
-ifExpr: KW_IF LPAREN conditionExpr=expr RPAREN
-        KW_THEN thenExpr=exprSingle
-        KW_ELSE elseExpr=exprSingle ;
-
-tryCatchExpr: tryClause catchClause+ ;
-tryClause: KW_TRY enclosedTryTargetExpression ;
-enclosedTryTargetExpression: enclosedExpression ;
-catchClause: KW_CATCH (catchErrorList | (LPAREN DOLLAR varName RPAREN)) enclosedExpression ;
 enclosedExpression: LBRACE expr? RBRACE ;
-
-catchErrorList: nameTest (VBAR nameTest)* ;
-
 
 existUpdateExpr: KW_UPDATE ( existReplaceExpr | existValueExpr | existInsertExpr | existDeleteExpr | existRenameExpr ) ;
 
