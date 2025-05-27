@@ -34,13 +34,9 @@ versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
              (KW_ENCODING encoding=stringLiteral)?
              SEMICOLON ;
 
-mainModule: prolog queryBody;
+// mainModule and queryBody are replaced with the mainModule and program rules according to the XQuery Scripting Extension spec
 
-queryBody: expr ;
-
-libraryModule: moduleDecl prolog;
-
-moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON ;
+libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=uriLiteral SEMICOLON prolog;
 
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
@@ -153,16 +149,6 @@ optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
 expr: exprSingle (COMMA exprSingle)* ;
-
-exprSingle: flworExpr
-          | quantifiedExpr
-          | switchExpr
-          | typeswitchExpr
-          | existUpdateExpr
-          | ifExpr
-          | tryCatchExpr
-          | orExpr
-          ;
 
 flworExpr: // replaced with the initialClause production to match the JSONiq grammar
            (start_for=forClause| start_let=letClause | start_window=windowClause)
@@ -910,3 +896,108 @@ noQuotesNoBracesNoAmpNoLAng:
                      )
                    )+
  ;
+
+// XQuery Scripting Extension /////////////////////////////////////////////////////////////
+// the following section contains rules for the XQuery Scripting Extension Proposal
+
+// New query body for main modules
+
+mainModule              : prolog program;
+
+program                 : statementsAndOptionalExpr ;
+
+// Mixing Expressions and Statements
+
+statements                  : statement* ;
+
+statementsAndExpr           : statements expr ;
+
+statementsAndOptionalExpr   : statements expr? ;
+
+// Statements
+
+statement               : applyStatement
+                        | assignStatement
+                        | blockStatement
+                        | breakStatement
+                        | continueStatement
+                        | exitStatement
+                        | flowrStatement
+                        | ifStatement
+                        | switchStatement
+                        | tryCatchStatement
+                        | typeSwitchStatement
+                        | varDeclStatement
+                        | whileStatement
+                        ;
+
+applyStatement          : exprSimple SEMICOLON ;
+
+assignStatement         : DOLLAR varName COLON_EQ exprSingle SEMICOLON ;
+
+blockStatement          : LBRACE statements RBRACE ;
+
+breakStatement          : KW_BREAK KW_LOOP SEMICOLON ;
+
+continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
+
+exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
+
+// replaced with the initialClause production to match the JSONiq grammar
+flowrStatement          : (start_for=forClause| start_let=letClause)
+                        // replaced with the intermediateClause production to match the JSONiq grammar
+                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                        // replaced with the returnStatement production to match the JSONiq grammar
+                          KW_RETURN returnStmt=statement ;
+
+ifStatement             :  KW_IF LPAREN test_expr=expr RPAREN
+                           KW_THEN branch=statement
+                           KW_ELSE else_branch=statement ;
+
+switchStatement         : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
+
+// replaced with the switchCaseOperand production to match the JSONiq grammar
+switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
+
+tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
+
+// added to match the JSONiq grammar
+// replaced the CatchErrorList production rule to match the JSONiq grammar
+catchCaseStatement      : KW_CATCH (jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* catch_block=blockStatement;
+
+// replaced "$" varName with varRef to match the JSONiq grammar
+typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN) def=statement ;
+
+// replaced "$" varName with varRef to match the JSONiq grammar
+caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN) ret=statement ;
+
+varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
+
+// added to match the JSONiq grammar
+varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
+
+whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
+
+// Expressions
+
+// redefined according to the XQuery Scripting Extension spec
+exprSingle              : exprSimple
+                        | flworExpr
+                        | ifExpr
+                        | switchExpr
+                        | tryCatchExpr
+                        | typeswitchExpr
+                        // TODO: include existUpdateExpr, either in the exprSingle or in the exprSimple rule
+                        ;
+
+exprSimple              : quantifiedExpr
+                        | orExpr
+                        // TODO: import updating expressions
+                        // | insertExpr
+                        // | deleteExpr
+                        // | renameExpr
+                        // | replaceExpr
+                        // | transformExpr
+                        ;
+
+blockExpr : LBRACE statementsAndExpr RBRACE ;
