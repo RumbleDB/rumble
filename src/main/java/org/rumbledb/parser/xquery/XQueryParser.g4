@@ -957,10 +957,10 @@ tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStat
 catchCaseStatement      : KW_CATCH (jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* catch_block=blockStatement;
 
 // replaced "$" varName with varRef to match the JSONiq grammar
-typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN | KW_SELECT) def=statement ;
+typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN) def=statement ;
 
 // replaced "$" varName with varRef to match the JSONiq grammar
-caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN | KW_SELECT) ret=statement ;
+caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN) ret=statement ;
 
 varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
 
