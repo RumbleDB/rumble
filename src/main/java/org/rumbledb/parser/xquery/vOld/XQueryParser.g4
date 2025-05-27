@@ -244,7 +244,7 @@ orExpr: andExpr (KW_OR andExpr)* ;
 
 andExpr: comparisonExpr (KW_AND comparisonExpr)* ;
 
-comparisonExpr: stringConcatExpr ( (valueComp | generalComp | nodeComp) stringConcatExpr )? ;
+comparisonExpr: main_expr=stringConcatExpr (  op+=compOp rhs+=stringConcatExpr )? ;
 
 stringConcatExpr: rangeExpr (CONCATENATION rangeExpr)* ;
 
@@ -271,6 +271,12 @@ arrowExpr: unaryExpression (ARROW arrowFunctionSpecifier argumentList)* ;
 unaryExpression: (MINUS | PLUS)* valueExpr ;
 
 valueExpr: validateExpr | extensionExpr | simpleMapExpr ;
+
+/* 
+ * this token was added to prevent the antlr error
+ * "label assigned to a block which is not a set" in the comparisonExpr token definition
+ */
+compOp: valueComp | generalComp | nodeComp ;
 
 generalComp: EQUAL | NOT_EQUAL | LANGLE| (LANGLE EQUAL) | RANGLE | (RANGLE EQUAL) ;
 
