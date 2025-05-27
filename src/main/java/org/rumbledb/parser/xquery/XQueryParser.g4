@@ -138,11 +138,7 @@ param: DOLLAR name=qname (KW_AS sequenceType)? ;
 
 annotations: annotation* ;
 
-annotation: MOD name=qname (LPAREN annotList RPAREN)? ;
-
-annotList: annotationParam ( COMMA annotationParam )* ;
-
-annotationParam: literal ;
+annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? ;
 
 optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
