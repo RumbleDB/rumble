@@ -556,21 +556,23 @@ unaryLookup: QUESTION keySpecifier ;
 
 // TYPES AND TYPE TESTS ////////////////////////////////////////////////////////
 
-singleType: simpleTypeName QUESTION? ;
+// TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// singleType: item=simpleTypeName (question+=QUESTION)? ;
+singleType: item=itemType (question+=QUESTION)? ;
 
 typeDeclaration: KW_AS sequenceType ;
 
-sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (itemType occurrence=(QUESTION|STAR|PLUS)? );
+sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
 
 itemType: kindTest
         | (KW_ITEM LPAREN RPAREN)
         | functionTest
         | mapTest
         | arrayTest
-        | atomicOrUnionType
+        // simplification compared to XQuery 3.1 grammar
+        // removes the need for a separate atomicOrUnionType rule
+        | eqName
         | parenthesizedItemTest ;
-
-atomicOrUnionType: eqName ;
 
 kindTest: documentTest
         | elementTest
