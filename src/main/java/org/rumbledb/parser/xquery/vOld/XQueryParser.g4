@@ -412,7 +412,7 @@ literal: numericLiteral | stringLiteral ;
 
 numericLiteral: IntegerLiteral | DecimalLiteral | DoubleLiteral ;
 
-varRef: DOLLAR eqName;
+varRef: DOLLAR var_name=eqName;
 
 varName: eqName ;
 
@@ -424,7 +424,7 @@ orderedExpr: KW_ORDERED enclosedExpression ;
 
 unorderedExpr: KW_UNORDERED enclosedExpression ;
 
-functionCall: eqName argumentList  ;
+functionCall: fn_name=functionName argumentList  ;
 
 argument: exprSingle | QUESTION ;
 
