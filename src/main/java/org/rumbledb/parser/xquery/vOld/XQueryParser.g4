@@ -143,8 +143,6 @@ annotList: annotationParam ( COMMA annotationParam )* ;
 
 annotationParam: literal ;
 
-functionReturn: KW_AS sequenceType ;
-
 optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
 
@@ -385,7 +383,6 @@ lookup: QUESTION keySpecifier ;
 // stringLiteral and varRef will be in XQuery 4.0
 keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | lt=stringLiteral | vr=varRef) ;
 
-
 arrowFunctionSpecifier: eqName | varRef | parenthesizedExpr ;
 
 primaryExpr: literal
@@ -512,15 +509,13 @@ namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 
 // renamed from inlineFunctionRef to inlineFunctionExpr to match the JSONiq grammar
 // replaced with the functionBody production to match the JSONiq grammar
-inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=exprSingle) RBRACE) ;
+inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
 // renamed from mapConstructor to objectConstructor to match the JSONiq grammar
 objectConstructor: KW_MAP LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE ;
 
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
 pairConstructor: lhs=exprSingle (COLON | COLON_EQ) rhs=exprSingle ;
-
-functionBody: enclosedExpression ;
 
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
