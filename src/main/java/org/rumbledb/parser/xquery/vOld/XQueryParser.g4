@@ -114,17 +114,19 @@ varValue: expr ;
 varDefaultValue: expr ;
 
 contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
-                 (KW_AS itemType)?
+                 //(KW_AS itemType)?
+                 // TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+                 (KW_AS sequenceType)?
                  ((COLON_EQ value=exprSingle)
-                 | (KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
+                 | (external=KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
-functionDecl: KW_DECLARE (annotations|ncName) KW_FUNCTION name=eqName LPAREN functionParams? RPAREN
-              functionReturn?
-              ( functionBody | KW_EXTERNAL) ;
-
-functionParams: functionParam (COMMA functionParam)* ;
-
-functionParam: DOLLAR name=qname type=typeDeclaration? ;
+// constrains to valid function names only
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+functionDecl: KW_DECLARE (annotations) KW_FUNCTION fn_name=functionName LPAREN paramList? RPAREN
+              // replaced with the functionReturn production to match the JSONiq grammar
+              (KW_AS return_type=sequenceType)?
+              // replaced functionBody to match the JSONiq grammar and the XQuery Scripting Extension spec
+              ( LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=KW_EXTERNAL) ;
 
 // renamed from functionParams to paramList to match the JSONiq grammar
 paramList: param (COMMA param)* ;
