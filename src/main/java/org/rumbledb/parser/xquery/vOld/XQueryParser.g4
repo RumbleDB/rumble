@@ -86,9 +86,9 @@ schemaImport: KW_IMPORT KW_SCHEMA
 schemaPrefix: (KW_NAMESPACE ncName EQUAL | KW_DEFAULT KW_ELEMENT KW_NAMESPACE) ;
 
 moduleImport: KW_IMPORT KW_MODULE
-              (KW_NAMESPACE ncName EQUAL)?
-              nsURI=uriLiteral
-              (KW_AT locations+=uriLiteral (COMMA locations+=uriLiteral)*)? ;
+              (KW_NAMESPACE prefix=ncName EQUAL)?
+              targetNamespace=uriLiteral
+              (KW_AT uriLiteral (COMMA uriLiteral)*)? ;
 
 
 namespaceDecl: KW_DECLARE KW_NAMESPACE ncName EQUAL uriLiteral ;
@@ -480,9 +480,8 @@ enclosedContentExpr: enclosedExpression ;
 
 compAttrConstructor: KW_ATTRIBUTE (eqName | (LBRACE expr RBRACE)) enclosedExpression ;
 
-compNamespaceConstructor: KW_NAMESPACE (prefix | enclosedPrefixExpr) enclosedURIExpr ;
-
-prefix: ncName ;
+// replaced with the prefix production to allow the usage of the prefix label in the moduleImport rule
+compNamespaceConstructor: KW_NAMESPACE (ncName | enclosedPrefixExpr) enclosedURIExpr ;
 
 enclosedPrefixExpr: enclosedExpression ;
 
