@@ -157,14 +157,6 @@ flworExpr: // replaced with the initialClause production to match the JSONiq gra
            // replaced with the returnClause production to match the JSONiq grammar
            KW_RETURN return_expr=exprSingle ;
 
-initialClause: forClause | letClause | windowClause ;
-intermediateClause: initialClause
-                  | whereClause
-                  | groupByClause
-                  | orderByClause
-                  | countClause
-                  ;
-
 forClause: KW_FOR vars+=forVar (COMMA vars+=forVar)* ;
 
 // renamed from forBinding to forVar to match the JSONiq grammar
@@ -398,6 +390,7 @@ primaryExpr: literal
            | arrayConstructor
            | stringConstructor
            | unaryLookup
+           | blockExpr
            ;
 
 literal: numericLiteral | stringLiteral ;
