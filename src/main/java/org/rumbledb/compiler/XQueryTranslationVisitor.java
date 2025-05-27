@@ -1162,6 +1162,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
         SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
         return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
+        // TODO: this is not implemented in XQuery. Throw an unsupported feature exception.
     }
     // endregion
 
@@ -2647,9 +2648,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
         for (XQueryParser.AnnotationContext annotationContext : annotations.annotation()) {
-            XQueryParser.QnameContext qnameContext = annotationContext.qname();
-            Name name = parseName(qnameContext, false, false, true);
-            if (!annotationContext.annotList().isEmpty()) {
+            XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
+            Name name = parseEqName(eqNameContext, false, false, true);
+            if (!annotationContext.literal().isEmpty()) {
                 throw new UnsupportedFeatureException("Literals are currently not supported in annotations!", createMetadataFromContext(annotationContext));
             }
             parsedAnnotations.add(new Annotation(name, null));
