@@ -1,4 +1,10 @@
 parser grammar XQueryParser;
+
+@header {
+// Java header
+package org.rumbledb.parser.xquery;
+}
+
 options {
   tokenVocab=XQueryLexer;
 }
@@ -674,12 +680,20 @@ mlNullNodeTest: KW_NULL_NODE LPAREN stringLiteral? RPAREN ;
 // walkers need to split into prefix+localpart by the ':'
 eqName: qname | URIQualifiedName ;
 
-qname: FullQName | ncName ;
+// renamed from qName to qname to match the JSONiq grammar
+// replaced and merged with the FullQName production to match the JSONiq grammar
+// added support for keywords as namespace names
+qname: (ns=ncName COLON)? local_name=ncName ;
 
-
+// matches the definition of NCName in the XQuery 3.1 spec
+// this includes all the valid characters, including all the keywords
 ncName: NCName | keyword ;
 
-functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
+// function names should be valid NCNames, but limited by the constraint of reserved-function-names
+// as defined in the XQuery 3.1 spec
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+// replaced with the FullQName production. the FullQName production was removed to prevent ambiguities
+functionName: (NCName COLON NCName) | NCName | URIQualifiedName | keywordOKForFunction ;
 
 keyword: keywordOKForFunction | keywordNotOKForFunction ;
 
@@ -893,7 +907,6 @@ noQuotesNoBracesNoAmpNoLAng:
                      | AT
                      | DOLLAR
                      | BANG
-                     | FullQName
                      | URIQualifiedName
                      | NCNameWithLocalWildcard
                      | NCNameWithPrefixWildcard
