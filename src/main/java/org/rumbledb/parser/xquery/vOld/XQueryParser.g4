@@ -477,7 +477,7 @@ dirElemContent: directConstructor
               | noQuotesNoBracesNoAmpNoLAng
               ;
 
-commonContent: (PredefinedEntityRef | CharRef) | LBRACE LBRACE | RBRACE RBRACE | LBRACE expr RBRACE ;
+commonContent: (PredefinedEntityRef | CharRef) | LBRACE LBRACE | RBRACE RBRACE | (LBRACE expr? RBRACE) ;
 
 computedConstructor: compDocConstructor
                    | compElemConstructor
