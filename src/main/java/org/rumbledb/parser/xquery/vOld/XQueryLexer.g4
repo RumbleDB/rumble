@@ -1,5 +1,11 @@
 lexer grammar XQueryLexer;
 
+@header {
+// Java header
+package org.rumbledb.parser.xquery;
+}
+
+
 // Note: string syntax depends on syntactic context, so they are
 // handled by the parser and not the lexer.
 
@@ -16,8 +22,8 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
 }
 
 IntegerLiteral: Digits ;
-DecimalLiteral: '.' Digits | Digits '.' [0-9]* ;
-DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits ;
+DecimalLiteral: ('.' Digits) | (Digits '.' [0-9]*) ;
+DoubleLiteral: (('.' Digits) | (Digits ('.' [0-9]*)?)) [eE] [+-]? Digits ;
 
 DFPropertyName: 'decimal-separator'
               | 'grouping-separator'
@@ -244,6 +250,16 @@ KW_INTO:               'into';
 KW_DELETE:             'delete';
 KW_RENAME:             'rename';
 
+// XQuery Scripting Extension keywords
+// TODO: add them as ok for function names.
+// if tests break bc of this, move to not ok.
+KW_BREAK:              'break';
+KW_LOOP:               'loop';
+KW_CONTINUE:           'continue';
+KW_EXIT:               'exit';
+KW_RETURNING:          'returning';
+// KW_SELECT:             'select';
+KW_WHILE:              'while';
 
 // NAMES
 
@@ -251,7 +267,6 @@ KW_RENAME:             'rename';
 URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName ;
 
 // We create these basic variants in order to honor ws:explicit in some basic cases
-FullQName: NCName ':' NCName ;
 NCNameWithLocalWildcard:  NCName ':' '*' ;
 NCNameWithPrefixWildcard: '*' ':' NCName ; 
 
@@ -294,8 +309,6 @@ NameChar: NameStartChar
 
 XQDOC_COMMENT_START: '(:~' ;
 XQDOC_COMMENT_END: ':'+ ')' ;
-
-XQDocComment: 	'(' ':' '~' ( CHAR | ( ':' ~( ')' ) ) )* ':' ')' ;
 
 XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN);
 
@@ -606,7 +619,6 @@ INT_QUOT_KW_RENAME:             'rename' -> type(KW_RENAME);
 // NAMES
 
 INT_QUOT_URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName -> type(URIQualifiedName);
-INT_QUOT_FullQName: NCName ':' NCName -> type(FullQName);
 INT_QUOT_NCNameWithLocalWildcard:  NCName ':' '*' -> type(NCNameWithLocalWildcard);
 INT_QUOT_NCNameWithPrefixWildcard: '*' ':' NCName -> type(NCNameWithPrefixWildcard); 
 
@@ -614,8 +626,6 @@ INT_QUOT_NCName: NameStartChar NameChar* -> type(NCName);
 
 INT_QUOT_XQDOC_COMMENT_START: '(:~' -> type(XQDOC_COMMENT_START);
 INT_QUOT_XQDOC_COMMENT_END: ':'+ ')' -> type(XQDOC_COMMENT_END);
-
-INT_QUOT_XQDocComment: 	'(' ':' '~' ( CHAR | ( ':' ~( ')' ) ) )* ':' ')' -> type(XQDocComment);
 
 INT_QUOT_XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
 
@@ -866,7 +876,6 @@ INT_APOS_KW_RENAME:             'rename' -> type(KW_RENAME);
 // NAMES
 
 INT_APOS_URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName -> type(URIQualifiedName);
-INT_APOS_FullQName: NCName ':' NCName -> type(FullQName);
 INT_APOS_NCNameWithLocalWildcard:  NCName ':' '*' -> type(NCNameWithLocalWildcard);
 INT_APOS_NCNameWithPrefixWildcard: '*' ':' NCName -> type(NCNameWithPrefixWildcard); 
 
@@ -874,8 +883,6 @@ INT_APOS_NCName: NameStartChar NameChar* -> type(NCName);
 
 INT_APOS_XQDOC_COMMENT_START: '(:~' -> type(XQDOC_COMMENT_START);
 INT_APOS_XQDOC_COMMENT_END: ':'+ ')' -> type(XQDOC_COMMENT_END);
-
-INT_APOS_XQDocComment: 	'(' ':' '~' ( CHAR | ( ':' ~( ')' ) ) )* ':' ')' -> type(XQDocComment);
 
 INT_APOS_XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
 
