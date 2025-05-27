@@ -318,7 +318,10 @@ valueComp: KW_EQ | KW_NE | KW_LT | KW_LE | KW_GT | KW_GE ;
 
 nodeComp: KW_IS | (LANGLE LANGLE) | (RANGLE RANGLE) ;
 
-validateExpr: KW_VALIDATE ( validationMode | ( ( KW_TYPE | KW_AS ) typeName) )? enclosedExpression ;
+// replaced with the enclosedExpression production to match the JSONiq grammar
+// TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// validateExpr: KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr? RBRACE ;
+validateExpr: KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE ;
 
 validationMode: KW_LAX | KW_STRICT ;
 
