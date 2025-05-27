@@ -16,9 +16,13 @@ options {
 
 // MODULE HEADER ///////////////////////////////////////////////////////////////
 
-module : xqDocComment? versionDecl? xqDocComment? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
+// this rule was added to match the JSONiq grammar
+moduleAndThisIsIt       : module EOF;
 
-xqDocComment: XQDocComment ;
+module : // replaced with the versionDecl production to match the JSONiq grammar
+         (KW_XQUERY KW_VERSION vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
+         // TODO: subsequent optional main modules are currently ignored
+         (libraryModule | (main=mainModule (SEMICOLON versionDecl? mainModule)* )) ;
 
 versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
              (KW_ENCODING encoding=stringLiteral)?
@@ -35,7 +39,14 @@ moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON ;
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
 prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport) SEMICOLON)*
-        ( xqDocComment? (varDecl | functionDecl | contextItemDecl | optionDecl) SEMICOLON)* ;
+        (annotatedDecl SEMICOLON)* ;
+
+// added to match the JSONiq grammar
+annotatedDecl: functionDecl
+              | varDecl
+              | contextItemDecl
+              | optionDecl
+              ;
 
 defaultNamespaceDecl: KW_DECLARE KW_DEFAULT
                       type=(KW_ELEMENT | KW_FUNCTION)
