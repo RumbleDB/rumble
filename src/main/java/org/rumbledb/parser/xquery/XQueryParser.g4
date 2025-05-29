@@ -695,7 +695,6 @@ keywordNotOKForFunction:
        | KW_SLIDING
        | KW_DECIMAL_FORMAT
        | KW_WINDOW
-       | KW_COUNT
        | KW_MAP
        | KW_END
        | KW_ALLOWING
@@ -735,6 +734,7 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_COLLATION
        | KW_CONSTRUCTION
        | KW_COPY_NS
+       | KW_COUNT
        | KW_DECLARE
        | KW_DEFAULT
        | KW_DESCENDANT
