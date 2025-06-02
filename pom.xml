@@ -236,6 +236,13 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>staging-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/iodelta-1227</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
