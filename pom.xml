@@ -45,8 +45,8 @@
                 <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
                     <compilerId>eclipse</compilerId>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                     <compilerArgs>
                         <arg>-properties</arg>
                         <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
@@ -234,13 +234,20 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.1</version>
+            <version>3.3.0</version>
                 <configuration>
-                    <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
+                    <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-exports=java.base/sun.util.calendar=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>staging-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/iodelta-1227</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
