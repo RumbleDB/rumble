@@ -553,6 +553,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             NativeClauseContext orderContext
     ) {
+        return NativeClauseContext.NoNativeQuery;
+        // below is code from dominik
+        // disabled for now since it accesses resultingType which is not set
+        // return createOrderExpressionDominik(expressionsWithIterator, orderContext);
+    }
+
+    private static NativeClauseContext createOrderExpressionDominik(
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
+            NativeClauseContext orderContext
+    ) {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
