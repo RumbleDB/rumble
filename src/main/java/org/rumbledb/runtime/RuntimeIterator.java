@@ -435,8 +435,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
-    public void printToStandardError()
-    {
+    public void printToStandardError() {
         StringBuffer sb = new StringBuffer();
         this.print(sb, 0);
         System.err.println(sb);
