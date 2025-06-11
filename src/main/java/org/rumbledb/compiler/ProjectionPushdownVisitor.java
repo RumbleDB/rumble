@@ -58,24 +58,24 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
 
     @Override
     public Node visitLetClause(LetClause clause, Node argument) {
-        return new LetClause(
-                clause.getVariableName(),
-                clause.getActualSequenceType(),
-                (Expression) visit(clause.getExpression(), argument),
-                clause.getMetadata()
-        );
-
-        // code below from dominik
-        // problem is that it removes the last let clause (returns null for that)
-        // if (clause.getReferenced()) {
         // return new LetClause(
         // clause.getVariableName(),
         // clause.getActualSequenceType(),
         // (Expression) visit(clause.getExpression(), argument),
         // clause.getMetadata()
         // );
-        // }
-        // return null;
+
+        // code below from dominik
+        // problem is that it removes the last let clause (returns null for that)
+        if (clause.getReferenced()) {
+            return new LetClause(
+                    clause.getVariableName(),
+                    clause.getActualSequenceType(),
+                    (Expression) visit(clause.getExpression(), argument),
+                    clause.getMetadata()
+            );
+        }
+        return null;
     }
 
     @Override

@@ -20,6 +20,30 @@ public class ProjectionPushdownDetectionVisitor
         extends
             AbstractNodeVisitor<ProjectionPushdownDetectionVisitor.ReferenceMap> {
 
+    /*******************************
+     * High-level explanations
+     *
+     * When visiting an expression, the ReferenceMap argument provides the projection
+     * expected from the outside world, with the ReferenceMap keys being object keys.
+     *
+     * If the ReferenceMap has no keys, then the entire object is needed.
+     *
+     * The returned ReferenceMap contains all the variables that this expression needs
+     * to access, together with the projections that they need in case these variables
+     * are associated with objects (if the associated projection has no keys, then the
+     * entire object is expected for this variable).
+     *
+     * When visiting a clause, the ReferenceMap argument provides the variables that
+     * subsequenc clauses need to access, together with the projections that they need
+     * in case these variables are associated with objects (if the associated projection
+     * has no keys, then the entire object is expected for this variable).
+     *
+     * The returned ReferenceMap contains all the variables that this clause needs
+     * to access, together with the projections that they need in case these variables
+     * are associated with objects (if the associated projection has no keys, then the
+     * entire object is expected for this variable).
+     */
+
     @Override
     public ReferenceMap visitForClause(ForClause clause, ReferenceMap argument) {
         ReferenceMap result = new ReferenceMap(argument);
@@ -44,8 +68,8 @@ public class ProjectionPushdownDetectionVisitor
         // We make a copy of the references made by the outside world
         ReferenceMap result = new ReferenceMap(argument);
         for (Node child : node.getChildren()) {
-            // We pass the references made by the outside world to every child expression
-            ReferenceMap map = visit(child, argument); // TODO should pass empty map?
+            // We pass an empty reference map in the general case.
+            ReferenceMap map = visit(child, new ReferenceMap());
             // and add any new references
             result.add(map);
         }
@@ -187,18 +211,18 @@ public class ProjectionPushdownDetectionVisitor
         }
         // In the general case, we return all references made by the current expression.
         ReferenceMap result = new ReferenceMap();
-        result.add(visit(expression.getMainExpression(), new ReferenceMap())); // TODO should pass empty map?
-        result.add(visit(expression.getLookupExpression(), new ReferenceMap())); // TODO should pass empty map?
+        result.add(visit(expression.getMainExpression(), new ReferenceMap()));
+        result.add(visit(expression.getLookupExpression(), new ReferenceMap()));
         return result;
     }
 
     @Override
     public ReferenceMap visitObjectConstructor(ObjectConstructorExpression expression, ReferenceMap argument) {
         if (expression.isMergedConstructor()) {
-            return this.defaultAction(expression, argument); // TODO should pass empty map?
+            return this.defaultAction(expression, argument);
         }
         if (!expression.getKeys().stream().allMatch(exp -> exp instanceof StringLiteralExpression)) {
-            return this.defaultAction(expression, argument); // TODO should pass empty map?
+            return this.defaultAction(expression, argument);
         }
         ReferenceMap result = new ReferenceMap();
         for (int i = 0; i < expression.getKeys().size(); i++) {
