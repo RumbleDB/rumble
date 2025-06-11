@@ -158,6 +158,12 @@ public class ProjectionPushdownDetectionVisitor
     }
 
     @Override
+    public ReferenceMap visitReturnClause(ReturnClause expression, ReferenceMap argument) {
+        // We forward the needed projection to the retun expression and returns its referenced variables.
+        return visit(expression.getReturnExpr(), argument);
+    }
+
+    @Override
     public ReferenceMap visitFlowrExpression(FlworExpression expression, ReferenceMap argument) {
         Clause clause = expression.getReturnClause();
         // we go through the clauses from the last one to the first one, passing and updating the references
