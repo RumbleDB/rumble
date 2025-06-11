@@ -28,12 +28,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
+import com.esotericsoftware.kryo.KryoSerializable;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface ItemType extends Serializable {
+public interface ItemType extends Serializable, KryoSerializable {
 
     long serialVersionUID = 1L;
 
