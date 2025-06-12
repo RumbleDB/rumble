@@ -422,22 +422,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.URIQualifiedName() != null) {
             // TODO: implement URIQualifiedName support
             throw new UnsupportedFeatureException("URIQualifiedNames are not supported yet.", createMetadataFromContext(ctx));
-        } else if (ctx.keywordOKForFunction() != null) {
-            // if the rule matches a keyword, the prefix is not defined
-            return Name.createVariableInDefaultFunctionNamespace(ctx.keywordOKForFunction().getText());
-        } else {
-            String localName = null;
-            String prefix = null;
-            if(ctx.NCName().size() == 1) {
-                // no prefix
-                localName = ctx.NCName().get(0).getText();
-            } else {
-                // prefix is defined
-                localName = ctx.NCName().get(1).getText();
-                prefix = ctx.NCName().get(0).getText();
+        } else if (ctx.FullQName() != null) {
+            // Handle FullQName by parsing its text content
+            String fullQNameText = ctx.FullQName().getText();
+            int colonIndex = fullQNameText.indexOf(':');
+            if (colonIndex == -1) {
+                throw new ParsingException("Invalid FullQName format: " + fullQNameText, createMetadataFromContext(ctx));
             }
+            String prefix = fullQNameText.substring(0, colonIndex);
+            String localName = fullQNameText.substring(colonIndex + 1);
             Name name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
-
             if (name != null) {
                 return name;
             } else {
@@ -446,6 +440,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     generateMetadata(ctx.getStop())
                 );
             }
+        } else if (ctx.keywordOKForFunction() != null) {
+            // if the rule matches a keyword, the prefix is not defined
+            return Name.createVariableInDefaultFunctionNamespace(ctx.keywordOKForFunction().getText());
+        } else {
+            // Handle NCName case
+            String localName = ctx.NCName().getText();
+            return Name.createVariableInDefaultFunctionNamespace(localName);
         }
     }
 
@@ -462,10 +463,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         String localName = null;
         String prefix = null;
         Name name = null;
-        localName = ctx.local_name.getText();
-        if (ctx.ns != null) {
-            prefix = ctx.ns.getText();
+        
+        if (ctx.FullQName() != null) {
+            // Handle FullQName by parsing its text content
+            String fullQNameText = ctx.FullQName().getText();
+            int colonIndex = fullQNameText.indexOf(':');
+            if (colonIndex == -1) {
+                throw new ParsingException("Invalid FullQName format: " + fullQNameText, createMetadataFromContext(ctx));
+            }
+            prefix = fullQNameText.substring(0, colonIndex);
+            localName = fullQNameText.substring(colonIndex + 1);
+        } else {
+            // Handle the labeled ncName case
+            localName = ctx.local_name.getText();
+            if (ctx.ns != null) {
+                prefix = ctx.ns.getText();
+            }
         }
+        
         if (prefix == null) {
             if (isFunction) {
                 name = Name.createVariableInDefaultFunctionNamespace(localName);

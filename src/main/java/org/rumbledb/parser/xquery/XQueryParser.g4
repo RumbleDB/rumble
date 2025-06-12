@@ -652,9 +652,10 @@ mlNullNodeTest: KW_NULL_NODE LPAREN stringLiteral? RPAREN ;
 eqName: qname | URIQualifiedName ;
 
 // renamed from qName to qname to match the JSONiq grammar
-// replaced and merged with the FullQName production to match the JSONiq grammar
 // added support for keywords as namespace names
-qname: (ns=ncName COLON)? local_name=ncName ;
+// the FullQName production catches the case where the namespace name is NOT a keyword
+// whereas the (ns=ncName COLON)? local_name=ncName production catches the case where the (optional) namespace name is a keyword
+qname: FullQName | (ns=ncName COLON)? local_name=ncName ;
 
 // matches the definition of NCName in the XQuery 3.1 spec
 // this includes all the valid characters, including all the keywords
@@ -664,7 +665,7 @@ ncName: NCName | keyword ;
 // as defined in the XQuery 3.1 spec
 // see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
 // replaced with the FullQName production. the FullQName production was removed to prevent ambiguities
-functionName: (NCName COLON NCName) | NCName | URIQualifiedName | keywordOKForFunction ;
+functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
 
 keyword: keywordOKForFunction | keywordNotOKForFunction ;
 
@@ -878,6 +879,7 @@ noQuotesNoBracesNoAmpNoLAng:
                      | AT
                      | DOLLAR
                      | BANG
+                     | FullQName
                      | URIQualifiedName
                      | NCNameWithLocalWildcard
                      | NCNameWithPrefixWildcard
