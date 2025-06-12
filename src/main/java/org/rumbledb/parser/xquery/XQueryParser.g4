@@ -27,13 +27,12 @@ options {
 moduleAndThisIsIt       : module EOF;
 
 module : // replaced with the versionDecl production to match the JSONiq grammar
-         (KW_XQUERY ((KW_ENCODING encoding=stringLiteral) | (KW_VERSION version=stringLiteral
-             (KW_ENCODING encoding=stringLiteral)?)) SEMICOLON)?
+         (KW_XQUERY KW_VERSION vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
          // TODO: subsequent optional main modules are currently ignored
          (libraryModule | (main=mainModule (SEMICOLON versionDecl? mainModule)* )) ;
 
-versionDecl: KW_XQUERY ((KW_ENCODING encoding=stringLiteral) | (KW_VERSION version=stringLiteral
-             (KW_ENCODING encoding=stringLiteral)?))
+versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
+             (KW_ENCODING encoding=stringLiteral)?
              SEMICOLON ;
 
 // mainModule and queryBody are replaced with the mainModule and program rules according to the XQuery Scripting Extension spec
