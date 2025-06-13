@@ -446,7 +446,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     "Effective boolean value not defined for items of type "
                         +
                         nativeQuery.getResultingType().getItemType().toString(),
-                    metadata
+                    iterator.getMetadata()
             );
         }
         LogManager.getLogger("WhereClauseSparkIterator")
