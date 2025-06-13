@@ -94,6 +94,13 @@ public class VisitorHelpers {
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        if (configuration.getStaticBaseUri() != null) {
+            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return parseMainModule(query, location, configuration);
     }
 
@@ -106,12 +113,23 @@ public class VisitorHelpers {
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        if (configuration.getStaticBaseUri() != null) {
+            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
+        String url = ".";
+        if (configuration.getStaticBaseUri() != null) {
+            url = configuration.getStaticBaseUri();
+        }
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            ".",
+            url,
             configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
@@ -119,15 +137,7 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        CharStream stream = CharStreams.fromString(query);
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -298,15 +308,7 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        CharStream stream = CharStreams.fromString(query);
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version

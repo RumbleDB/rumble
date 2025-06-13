@@ -56,8 +56,11 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 );
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                 Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                Item res = ItemParser.getItemFromXML(xmlDocument, uri.toString());
-                return res;
+                return ItemParser.getItemFromXML(
+                    xmlDocument,
+                    uri.toString(),
+                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration().optimizeParentPointers()
+                );
             } catch (ParserConfigurationException e) {
                 throw new OurBadException("Document builder creation failed with: " + e);
             } catch (IOException e) {

@@ -21,15 +21,15 @@ Once you want to take it to the next level and query your own data on your lapto
 
 ### Java version (important)
 
-You need to make sure that you have Java 8 or 11 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8 or 11. Spark only supports Java 8 or 11.
+You need to make sure that you have Java 11 or 17 and that, if you have several versions installed, JAVA_HOME correctly points to Java 11 or 17.
 
-RumbleDB works with both Java 8 and Java 11. You can check the Java version that is configured on your machine with:
+RumbleDB works with both Java 11 and Java 17. You can check the Java version that is configured on your machine with:
 
     java -version
 
-If you do not have Java, you can download version 8 or 11 from [AdoptOpenJDK](https://adoptopenjdk.net/).
+If you do not have Java, you can download version 11 or 17 from [AdoptOpenJDK](https://adoptopenjdk.net/).
 
-Do make sure it is not Java 17, which will not work.
+Do make sure it is not Java 8, which will not work.
 
 ### Download RumbleDB
 
@@ -76,13 +76,13 @@ If you use Linux, Florian Kellner also kindly contributed an [installation scrip
 
 ### Install Spark
 
-RumbleDB requires an Apache Spark installation on Linux, Mac or Windows.
+RumbleDB requires an Apache Spark installation on Linux, Mac or Windows. Important note: it needs to be the scala 2.13 version of spark as RumbleDB supports only that version.
 
-It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.4.3. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
+It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.5.5. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
 
 What you need to do then is to add the subdirectory "bin" within the unpacked directory to the PATH variable. On macOS this is done by adding
 
-    export SPARK_HOME=/path/to/spark-3.4.3-bin-hadoop3.2
+    export SPARK_HOME=/path/to/spark-3.5.5-bin-hadoop3-scala2.13
     export PATH=$SPARK_HOME/bin:$PATH
 
 (with SPARK_HOME appropriately set to match your unzipped Spark directory) to the file .zshrc in your home directory, then making sure to force the change with
@@ -99,9 +99,9 @@ You can test that Spark was correctly installed with:
    
 ### Java version (important)
 
-You need to make sure that you have Java 8 or 11 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8 or 11. Spark only supports Java 8 or 11.
+You need to make sure that you have Java 11 or 17 and that, if you have several versions installed, JAVA_HOME correctly points to Java 11 or 17. Spark only supports Java 11 or 17.
 
-Spark 3+ is documented to work with both Java 8 and Java 11. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
+Spark 3+ is documented to work with both Java 11 and Java 17. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
 
     java -version
 
@@ -110,8 +110,6 @@ Spark 3+ is documented to work with both Java 8 and Java 11. If there is an issu
 Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download one of the small .jar files from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
-
-If you use Spark 3.4+, use rumbledb-1.23.0-for-spark-3.4.jar.
 
 If you use Spark 3.5+, use rumbledb-1.23.0-for-spark-3.5.jar.
 

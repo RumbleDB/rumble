@@ -485,6 +485,17 @@ public class BuiltinFunctionCatalogue {
         XmlFilesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
+    /**
+     * function that parses multiple xml files into an RDD
+     */
+    static final BuiltinFunction xml_files2 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "xml-files"),
+        "string",
+        "integer?",
+        "item*",
+        XmlFilesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "root"),
@@ -3019,6 +3030,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
         builtinFunctions.put(structured_json_lines.getIdentifier(), structured_json_lines);
         builtinFunctions.put(xml_files.getIdentifier(), xml_files);
+        builtinFunctions.put(xml_files2.getIdentifier(), xml_files2);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
         builtinFunctions.put(yaml_doc.getIdentifier(), yaml_doc);

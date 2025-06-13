@@ -136,6 +136,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         throw new OurBadException("Static context not set.");
     }
 
+    public void setStaticBaseUri(URI staticBaseURI) {
+        this.staticBaseURI = staticBaseURI;
+    }
+
     public boolean isInScope(Name varName) {
         boolean found = false;
         if (this.inScopeVariables.containsKey(varName)) {

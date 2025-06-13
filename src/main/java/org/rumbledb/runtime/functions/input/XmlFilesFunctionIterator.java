@@ -63,7 +63,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
         url = url.replaceAll(" ", "%20");
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
-        int partitions = -1;
+        int partitions = 32;
         if (this.children.size() > 1) {
             partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
@@ -86,18 +86,12 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                 throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
             }
             String fileContent = String.join("", lines);
-            if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelizePairs(Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)));
-            } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelizePairs(
-                        Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)),
-                        partitions
-                    );
-            }
+            strings = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .parallelizePairs(
+                    Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)),
+                    partitions
+                );
         } else {
             if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
@@ -107,20 +101,15 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
             if (uri.getScheme().contentEquals("file")) {
                 path = path.replaceAll("%20", " ");
             }
-
-            if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .wholeTextFiles(path);
-            } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .wholeTextFiles(
-                        path,
-                        partitions
-                    );
-            }
+            strings = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .wholeTextFiles(
+                    path,
+                    partitions
+                );
         }
-        return strings.mapPartitions(new XmlSyntaxToItemMapper(getMetadata()));
+        return strings.mapPartitions(
+            new XmlSyntaxToItemMapper(getMetadata(), context.getRumbleRuntimeConfiguration().optimizeParentPointers())
+        );
     }
 }

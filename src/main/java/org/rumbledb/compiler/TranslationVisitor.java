@@ -30,24 +30,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.DefaultCollationException;
-import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
-import org.rumbledb.exceptions.DuplicateParamNameException;
-import org.rumbledb.exceptions.EmptyModuleURIException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidSchemaException;
-import org.rumbledb.exceptions.JsoniqVersionException;
-import org.rumbledb.exceptions.ModuleNotFoundException;
-import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
-import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
-import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
-import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -213,8 +196,12 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
-            throw new JsoniqVersionException(createMetadataFromContext(ctx)); // TODO CHECK
+        if (
+            !(ctx.vers == null)
+                && !ctx.vers.isEmpty()
+                && (!ctx.vers.getText().trim().equals("1.0") || !ctx.vers.getText().trim().equals("3.1"))
+        ) {
+            throw new JsoniqVersionException(createMetadataFromContext(ctx));
         }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
@@ -307,6 +294,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         List<SetterContext> setters = ctx.setter();
         boolean emptyOrderSet = false;
         boolean defaultCollationSet = false;
+        boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
             if (setterContext.emptyOrderDecl() != null) {
                 if (emptyOrderSet) {
@@ -328,6 +316,23 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 }
                 processDefaultCollation(setterContext.defaultCollationDecl());
                 defaultCollationSet = true;
+                continue;
+            }
+            if (setterContext.baseURIDecl() != null) {
+                if (baseURISet) {
+                    throw new MultipleBaseURIException(
+                            "The base-uri was already set.",
+                            createMetadataFromContext(setterContext.baseURIDecl())
+                    );
+                }
+                String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
+                URI uri = FileSystemUtil.resolveURI(
+                    this.moduleContext.getStaticBaseURI(),
+                    uriString,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                this.moduleContext.setStaticBaseUri(uri);
+                baseURISet = true;
                 continue;
             }
             throw new UnsupportedFeatureException(
