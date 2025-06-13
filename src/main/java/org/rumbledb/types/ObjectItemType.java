@@ -492,51 +492,6 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public boolean isSubtypeOf(ItemType otherType) {
-        if (this.hasName()) {
-            return ItemType.super.isSubtypeOf(otherType);
-        }
-        System.err.println(
-            "Testing subtype of " + this.getIdentifierString() + " against " + otherType.getIdentifierString()
-        );
-        if (otherType.equals(BuiltinTypesCatalogue.JSONItem)) {
-            return true;
-        }
-        if (otherType.equals(BuiltinTypesCatalogue.item)) {
-            return true;
-        }
-        if (!otherType.isObjectItemType()) {
-            return false;
-        }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!otherType.getObjectContentFacet().containsKey(entry.getKey())) {
-                if (otherType.getClosedFacet()) {
-                    System.err.println("False because of content");
-                    return false;
-                } else {
-                    continue;
-                }
-            }
-            FieldDescriptor superTypeDescriptor = otherType.getObjectContentFacet().get(entry.getKey());
-            if (!entry.getValue().getType().isSubtypeOf(superTypeDescriptor.getType())) {
-                System.err.println("False because of content");
-                return false;
-            }
-            if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
-                System.err.println("False because of content");
-                return false;
-            }
-        }
-        if (otherType.getClosedFacet() && !this.isClosed) {
-            System.err.println("False because of closed");
-            return false;
-        }
-        System.err.println("True ");
-        return true;
-    }
-
-
-    @Override
     public String getSparkSQLType() {
         StringBuilder sb = new StringBuilder();
         Map<String, FieldDescriptor> content = this.getObjectContentFacet();
