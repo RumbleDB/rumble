@@ -357,7 +357,7 @@ nameTest: eqName | wildcard ;
 wildcard: STAR            # allNames
         | NCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
         | NCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
-        | BracedURILiteral # BracedURILiteral
+        | ( BracedURILiteral STAR )# BracedURILiteral
         ;
 
 
