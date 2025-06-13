@@ -293,8 +293,8 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
         kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeObject(output, this.baseType);
-        kryo.writeObjectOrNull(output, this.content, ItemType.class);
+        kryo.writeClassAndObject(output, this.baseType);
+        kryo.writeClassAndObject(output, this.content);
         kryo.writeObjectOrNull(output, this.enumeration, ArrayList.class);
         output.writeInt(this.minLength != null ? this.minLength : -1);
         output.writeInt(this.maxLength != null ? this.maxLength : -1);
@@ -303,8 +303,8 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = kryo.readObject(input, ItemType.class);
-        this.content = kryo.readObjectOrNull(input, ItemType.class);
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.content = (ItemType) kryo.readClassAndObject(input);
         this.enumeration = kryo.readObjectOrNull(input, ArrayList.class);
         int min = input.readInt();
         int max = input.readInt();

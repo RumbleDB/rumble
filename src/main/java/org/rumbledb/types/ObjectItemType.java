@@ -25,13 +25,16 @@ public class ObjectItemType implements ItemType {
             )
     );
 
-    final private Name name;
+    private Name name;
     private Map<String, FieldDescriptor> content;
     private boolean isClosed;
     private List<String> constraints;
     private List<Item> enumeration;
-    final private ItemType baseType;
+    private ItemType baseType;
     private int typeTreeDepth;
+
+    ObjectItemType() {
+    }
 
     ObjectItemType(
             Name name,
@@ -57,14 +60,107 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Implement serialization logic here if needed
-        throw new UnsupportedOperationException("Serialization not implemented yet.");
+        // Write the name
+        output.writeBoolean(this.name != null);
+        if (this.name != null) {
+            kryo.writeObject(output, this.name);
+        }
+
+        // Write baseType
+        kryo.writeClassAndObject(output, this.baseType);
+
+        // Write isClosed
+        output.writeBoolean(this.isClosed);
+
+        // Write content map
+        if (this.content != null) {
+            output.writeInt(this.content.size());
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+                output.writeString(entry.getKey());
+                kryo.writeObject(output, entry.getValue());
+            }
+        } else {
+            output.writeInt(-1);
+        }
+
+        // Write constraints list
+        if (this.constraints != null) {
+            output.writeInt(this.constraints.size());
+            for (String constraint : this.constraints) {
+                output.writeString(constraint);
+            }
+        } else {
+            output.writeInt(-1);
+        }
+
+        // Write enumeration list
+        if (this.enumeration != null) {
+            output.writeInt(this.enumeration.size());
+            for (Item item : this.enumeration) {
+                kryo.writeObject(output, item);
+            }
+        } else {
+            output.writeInt(-1);
+        }
+
+        // Write typeTreeDepth
+        output.writeInt(this.typeTreeDepth);
     }
 
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Implement deserialization logic here if needed
-        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+        // Read the name
+        boolean hasName = input.readBoolean();
+        if (hasName) {
+            this.name = kryo.readObject(input, Name.class);
+        } else {
+            this.name = null;
+        }
+
+        // Read baseType
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+
+        // Read isClosed
+        this.isClosed = input.readBoolean();
+
+        // Read content map
+        int contentSize = input.readInt();
+        if (contentSize >= 0) {
+            this.content = new HashMap<>();
+            for (int i = 0; i < contentSize; i++) {
+                String key = input.readString();
+                FieldDescriptor value = kryo.readObject(input, FieldDescriptor.class);
+                this.content.put(key, value);
+            }
+        } else {
+            this.content = Collections.emptyMap();
+        }
+
+        // Read constraints list
+        int constraintsSize = input.readInt();
+        if (constraintsSize >= 0) {
+            this.constraints = new ArrayList<>();
+            for (int i = 0; i < constraintsSize; i++) {
+                this.constraints.add(input.readString());
+            }
+        } else {
+            this.constraints = Collections.emptyList();
+        }
+
+        // Read enumeration list
+        int enumSize = input.readInt();
+        if (enumSize >= 0) {
+            this.enumeration = new ArrayList<>();
+            for (int i = 0; i < enumSize; i++) {
+                Item item = kryo.readObject(input, Item.class);
+                this.enumeration.add(item);
+            }
+        } else {
+            this.enumeration = null;
+        }
+
+        // Read typeTreeDepth
+        this.typeTreeDepth = input.readInt();
     }
 
     @Override

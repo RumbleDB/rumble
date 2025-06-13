@@ -18,6 +18,9 @@ public class ItemTypeReference implements ItemType {
     private ItemType resolvedItemType;
     private Name name;
 
+    public ItemTypeReference() {
+    }
+
     public ItemTypeReference(Name name) {
         if (name == null) {
             throw new OurBadException("A type name cannot be null!");
@@ -27,14 +30,14 @@ public class ItemTypeReference implements ItemType {
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Implement serialization logic here if needed
-        throw new UnsupportedOperationException("Serialization not implemented yet.");
+        kryo.writeObjectOrNull(output, this.name, Name.class);
+        kryo.writeClassAndObject(output, this.resolvedItemType);
     }
 
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Implement deserialization logic here if needed
-        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+        this.name = kryo.readObjectOrNull(input, Name.class);
+        this.resolvedItemType = (ItemType) kryo.readClassAndObject(input);
     }
 
     public boolean isResolved() {
