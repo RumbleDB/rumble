@@ -167,6 +167,18 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             } else if (nativeChildQuery.getResultingQuery().contains(".count")) {
                 return nativeChildQuery;
+            } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.One)) {
+                return new NativeClauseContext(
+                        nativeChildQuery,
+                        "1",
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                );
+            } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.OneOrZero)) {
+                return new NativeClauseContext(
+                        nativeChildQuery,
+                        "CASE WHEN (" + nativeChildQuery.getResultingQuery() + ") IS NULL THEN 0 ELSE 1 END",
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                );
             } else {
                 return new NativeClauseContext(
                         nativeChildQuery,
