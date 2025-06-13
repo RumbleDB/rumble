@@ -354,6 +354,14 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 .get(key)
                 .getType();
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
+            StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
+            newContext.setResultingType(
+                new SequenceType(
+                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
+                        SequenceType.Arity.OneOrZero
+                )
+            );
+            newContext.setSchema(field.dataType());
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")

@@ -118,11 +118,13 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             }
             variableType = variableType.getArrayContentFacet();
         }
-        return new NativeClauseContext(
+        NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
                 "`" + escapedName + "`",
                 new SequenceType(variableType, arity)
         );
+        newContext.setSchema(fieldType);
+        return newContext;
     }
 
     @Override
