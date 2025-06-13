@@ -263,8 +263,10 @@ KW_WHILE:              'while';
 
 // NAMES
 
+// added the BracedURILiteral rule
+BracedURILiteral: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' ;
 // Moved URIQualifiedName here to gather all names
-URIQualifiedName: 'Q' '{' (PredefinedEntityRef | CharRef | ~[&{}])* '}' NCName ;
+URIQualifiedName: BracedURILiteral NCName ;
 
 // We create these basic variants in order to honor ws:explicit in some basic cases
 FullQName: NCName ':' NCName ;
