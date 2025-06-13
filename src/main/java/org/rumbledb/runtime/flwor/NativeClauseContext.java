@@ -259,14 +259,31 @@ public class NativeClauseContext {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Native clause context.\n");
+        sb.append("======================\n");
         sb.append("Query: " + this.resultingQuery + "\n");
         sb.append("Clause type: " + this.clauseType + "\n");
-        sb.append("Schema: " + this.schema.toString() + "\n");
-        sb.append("Context: " + this.context.toString() + "\n");
-        sb.append("Resulting type: " + this.resultingType + "\n");
-        sb.append("Lateral views:\n");
-        for (String s : this.lateralViewPart) {
-            sb.append(s + "\n");
+        if (this.schema != null) {
+            sb.append("Schema: " + this.schema.toString() + "\n");
+        } else {
+            sb.append("No schema.\n");
+        }
+        if (this.context != null) {
+            sb.append("Context: " + this.context.toString() + "\n");
+        } else {
+            sb.append("No context.\n");
+        }
+        if (this.resultingType != null) {
+            sb.append("Resulting type: " + this.resultingType + "\n");
+        } else {
+            sb.append("No resulting type.\n");
+        }
+        if (this.lateralViewPart != null) {
+            sb.append("Lateral views:\n");
+            for (String s : this.lateralViewPart) {
+                sb.append(s + "\n");
+            }
+        } else {
+            sb.append("No lateral views.\n");
         }
         return sb.toString();
     }

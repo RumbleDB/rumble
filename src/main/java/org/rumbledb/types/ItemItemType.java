@@ -16,7 +16,7 @@ public class ItemItemType implements ItemType {
     private Name name;
 
     public ItemItemType() {
-        name = Name.createVariableInDefaultTypeNamespace("item");
+        this.name = Name.createVariableInDefaultTypeNamespace("item");
     }
 
     public ItemItemType(Name name) {
