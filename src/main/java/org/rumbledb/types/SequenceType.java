@@ -487,9 +487,14 @@ public class SequenceType implements Serializable {
         if (isEmptySequence()) {
             return "()";
         }
+        ItemType itemType = this.getItemType();
         StringBuilder result = new StringBuilder();
-        Name name = this.getItemType().getName();
-        result.append(name != null ? name : "<anonymous>");
+        Name name = itemType.getName();
+        if (name != null) {
+            result.append(name);
+        } else {
+            result.append("<anonymous>(" + itemType + ")");
+        }
         result.append(this.arity.getSymbol());
         return result.toString();
     }

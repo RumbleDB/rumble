@@ -301,11 +301,21 @@ public class ObjectItemType implements ItemType {
             return this.name.toString();
         } else {
             StringBuilder sb = new StringBuilder();
-            sb.append(this.name == null ? "#anonymous" : this.name.toString());
+            sb.append("{");
+            if (this.name != null)
+                sb.append(this.name == null ? "#anonymous" : this.name.toString());
             sb.append(" (object item)\n");
 
-            sb.append("base type : ");
+            sb.append("base type: ");
             sb.append(this.baseType.toString());
+            sb.append("\n");
+
+            sb.append("tree depth: ");
+            sb.append(this.typeTreeDepth);
+            sb.append("\n");
+
+            sb.append("closed: ");
+            sb.append(this.isClosed ? "yes" : "no");
             sb.append("\n");
 
             if (isResolved()) {
@@ -479,6 +489,50 @@ public class ObjectItemType implements ItemType {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType otherType) {
+        if (this.hasName()) {
+            return ItemType.super.isSubtypeOf(otherType);
+        }
+        System.err.println(
+            "Testing subtype of " + this.getIdentifierString() + " against " + otherType.getIdentifierString()
+        );
+        if (otherType.equals(BuiltinTypesCatalogue.JSONItem)) {
+            return true;
+        }
+        if (otherType.equals(BuiltinTypesCatalogue.item)) {
+            return true;
+        }
+        if (!otherType.isObjectItemType()) {
+            return false;
+        }
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!otherType.getObjectContentFacet().containsKey(entry.getKey())) {
+                if (otherType.getClosedFacet()) {
+                    System.err.println("False because of content");
+                    return false;
+                } else {
+                    continue;
+                }
+            }
+            FieldDescriptor superTypeDescriptor = otherType.getObjectContentFacet().get(entry.getKey());
+            if (!entry.getValue().getType().isSubtypeOf(superTypeDescriptor.getType())) {
+                System.err.println("False because of content");
+                return false;
+            }
+            if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
+                System.err.println("False because of content");
+                return false;
+            }
+        }
+        if (otherType.getClosedFacet() && !this.isClosed) {
+            System.err.println("False because of closed");
+            return false;
+        }
+        System.err.println("True ");
+        return true;
     }
 
 

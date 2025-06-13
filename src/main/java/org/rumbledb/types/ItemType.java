@@ -152,7 +152,9 @@ public interface ItemType extends Serializable, KryoSerializable {
     /**
      *
      * @param superType another item type
-     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself
+     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself.
+     *         If [this] has a name, then this is determined strictly based on the hierarchy.
+     *         If [this] does not have a name, then this is determined based on facets.
      */
     default boolean isSubtypeOf(ItemType superType) {
         // the default methods works fine for all non-function types

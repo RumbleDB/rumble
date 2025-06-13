@@ -2428,7 +2428,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     statement.getMetadata()
             );
         }
-        statement.setStaticSequenceType(statement.getAssignExpression().getStaticSequenceType());
+        // We take the declared type
+        statement.setStaticSequenceType(variableDeclaredType);
         return argument;
     }
 
