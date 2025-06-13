@@ -310,10 +310,7 @@ NameChar: NameStartChar
 // this as a single token with a recursive rule, rather than using a
 // mode.
 
-XQDOC_COMMENT_START: '(:~' ;
-XQDOC_COMMENT_END: ':'+ ')' ;
-
-XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN);
+XQComment: '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN);
 
 CHAR: ( '\t' | '\n' | '\r' | '\u0020'..'\u0039' | '\u003B'..'\uD7FF' | '\uE000'..'\uFFFD' ) ;
 
@@ -628,10 +625,7 @@ INT_QUOT_NCNameWithPrefixWildcard: '*' ':' NCName -> type(NCNameWithPrefixWildca
 
 INT_QUOT_NCName: NameStartChar NameChar* -> type(NCName);
 
-INT_QUOT_XQDOC_COMMENT_START: '(:~' -> type(XQDOC_COMMENT_START);
-INT_QUOT_XQDOC_COMMENT_END: ':'+ ')' -> type(XQDOC_COMMENT_END);
-
-INT_QUOT_XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
+INT_QUOT_XQComment: '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
 
 INT_QUOT_CHAR: ( '\t' | '\n' | '\r' | '\u0020'..'\u0039' | '\u003B'..'\uD7FF' | '\uE000'..'\uFFFD' ) -> type(CHAR);
 
@@ -886,10 +880,7 @@ INT_APOS_NCNameWithPrefixWildcard: '*' ':' NCName -> type(NCNameWithPrefixWildca
 
 INT_APOS_NCName: NameStartChar NameChar* -> type(NCName);
 
-INT_APOS_XQDOC_COMMENT_START: '(:~' -> type(XQDOC_COMMENT_START);
-INT_APOS_XQDOC_COMMENT_END: ':'+ ')' -> type(XQDOC_COMMENT_END);
-
-INT_APOS_XQComment: '(' ':' ~'~' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
+INT_APOS_XQComment: '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'* ':'+ ')' -> channel(HIDDEN), type(XQComment);
 
 INT_APOS_CHAR: ( '\t' | '\n' | '\r' | '\u0020'..'\u0039' | '\u003B'..'\uD7FF' | '\uE000'..'\uFFFD' ) -> type(CHAR);
 
