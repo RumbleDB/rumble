@@ -238,6 +238,12 @@ public class VisitorHelpers {
             }
             populateExpressionClassifications(mainModule, configuration);
             if (configuration.isPrintIteratorTree()) {
+                System.err.println("********************************");
+                System.err.println("Verify composability constraints");
+                System.err.println("********************************");
+            }
+            verifyComposabilityConstraints(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
                 System.err.println("**************");
                 System.err.println("Infering types");
                 System.err.println("**************");
@@ -261,12 +267,6 @@ public class VisitorHelpers {
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
-                System.err.println("********************************");
-                System.err.println("Verify composability constraints");
-                System.err.println("********************************");
-            }
-            verifyComposabilityConstraints(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
