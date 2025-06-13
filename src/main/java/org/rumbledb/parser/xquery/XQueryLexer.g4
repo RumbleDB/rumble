@@ -1,3 +1,10 @@
+/*
+ * This file is based on the XQuery lexer grammar from the xqdoc project:
+ * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryLexer.g4
+ * 
+ * See LICENSE-xqdoc.txt for the original license terms.
+ */
+
 lexer grammar XQueryLexer;
 
 @header {
