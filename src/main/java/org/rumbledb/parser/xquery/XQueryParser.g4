@@ -1,8 +1,11 @@
 /*
+ * A parser grammar for XQuery 3.1 that includes the XQuery Scripting Extensions, and additional update features.
  * This file is based on the XQuery parser grammar from the xqdoc project:
  * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
  * 
  * See LICENSE-xqdoc.txt for the original license terms.
+ * 
+ * @author Matteo Agnoletto (EPMatt)
  */
 
 parser grammar XQueryParser;
@@ -872,7 +875,6 @@ noQuotesNoBracesNoAmpNoLAng:
                      | DOT
                      | GRAVE
                      | DDOT
-                     | XQDOC_COMMENT_START
                      | COLON
                      | CARAT
                      | COLON_EQ
