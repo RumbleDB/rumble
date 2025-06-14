@@ -122,6 +122,7 @@ public enum ErrorCode {
     EmptyModuleURIErrorCode("XQST0088"),
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
+    DirectElementConstructorTagMismatchErrorCode("XQST0118"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
