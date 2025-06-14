@@ -166,3 +166,8 @@ variable, do not have distinct names (expanded QNames).
 The name of each grouping variable must be equal 
 (by the eq operator on expanded QNames) to the name of a 
 variable in the input tuple stream.
+
+- [XQST0118] - In a direct element constructor, the name
+used in the end tag must exactly match the name used in the
+corresponding start tag, including its prefix or absence of
+a prefix. 
