@@ -265,14 +265,6 @@ catchClause: KW_CATCH
 
 enclosedExpression: LBRACE expr? RBRACE ;
 
-existUpdateExpr: KW_UPDATE ( existReplaceExpr | existValueExpr | existInsertExpr | existDeleteExpr | existRenameExpr ) ;
-
-existReplaceExpr: KW_REPLACE expr KW_WITH exprSingle ;
-existValueExpr: KW_VALUE expr KW_WITH exprSingle ;
-existInsertExpr: KW_INSERT exprSingle (KW_INTO | KW_PRECEDING | KW_FOLLOWING) exprSingle;
-existDeleteExpr: KW_DELETE exprSingle;
-existRenameExpr: KW_RENAME exprSingle KW_AS exprSingle;
-
 orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
 andExpr: main_expr=comparisonExpr (KW_AND rhs+=comparisonExpr)* ;
@@ -1005,7 +997,6 @@ exprSingle              : exprSimple
                         | switchExpr
                         | tryCatchExpr
                         | typeswitchExpr
-                        // TODO: include existUpdateExpr, either in the exprSingle or in the exprSimple rule
                         ;
 
 exprSimple              : quantifiedExpr
