@@ -148,7 +148,8 @@ param: DOLLAR name=qname (KW_AS sequenceType)? ;
 
 annotations: annotation* ;
 
-annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? ;
+// added the updating keyword to support the out-of-spec updating expressions extension
+annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating=KW_UPDATING ;
 
 optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
@@ -816,6 +817,20 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_VERSION
        | KW_WHERE
        | KW_XQUERY
+       // XQuery Scripting Extension keywords
+       | KW_BREAK
+       | KW_LOOP
+       | KW_CONTINUE
+       | KW_EXIT
+       | KW_RETURNING
+       | KW_WHILE
+       //  Updating expressions keywords
+       | KW_COPY
+       | KW_MODIFY
+       | KW_APPEND
+       | KW_JSON
+       | KW_POSITION
+       | KW_UPDATING
        ;
 
 // STRING LITERALS /////////////////////////////////////////////////////////////
@@ -980,6 +995,7 @@ varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_va
 
 whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
 
+
 // Expressions
 
 // redefined according to the XQuery Scripting Extension spec
@@ -994,12 +1010,33 @@ exprSingle              : exprSimple
 
 exprSimple              : quantifiedExpr
                         | orExpr
-                        // TODO: import updating expressions
-                        // | insertExpr
-                        // | deleteExpr
-                        // | renameExpr
-                        // | replaceExpr
-                        // | transformExpr
+                        | insertExpr
+                        | deleteExpr
+                        | renameExpr
+                        | replaceExpr
+                        | transformExpr
+                        | appendExpr
                         ;
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
+
+// Updating expressions (out-of-spec)
+// these are not referenced anywhere in the XQuery spec or in the XQuery Scripting Extension spec
+// they are ported from the original grammar, and likely to be derived from JSONiq
+
+insertExpr              : KW_INSERT KW_JSON to_insert_expr=exprSingle KW_INTO main_expr=exprSingle (KW_AT KW_POSITION pos_expr=exprSingle)?
+                        | KW_INSERT KW_JSON pairConstructor ( COMMA pairConstructor )* KW_INTO main_expr=exprSingle;
+
+deleteExpr              : KW_DELETE KW_JSON updateLocator;
+
+renameExpr              : KW_RENAME KW_JSON updateLocator KW_AS name_expr=exprSingle;
+
+replaceExpr             : KW_REPLACE KW_VALUE KW_OF KW_JSON updateLocator KW_WITH replacer_expr=exprSingle;
+
+transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_expr=exprSingle KW_RETURN ret_expr=exprSingle;
+
+appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle KW_INTO array_expr=exprSingle;
+
+updateLocator           : main_expr=primaryExpr ( lookup )+; 
+
+copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
