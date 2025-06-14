@@ -450,7 +450,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(child -> (Expression) visit(child, argument))
             .collect(Collectors.toList());
-            
+
         DirElemConstructorExpression result = new DirElemConstructorExpression(
                 expression.getTagName(),
                 children,

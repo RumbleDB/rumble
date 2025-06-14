@@ -53,21 +53,22 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         List<Item> attributes = new ArrayList<>();
         // Process all child content
         if (this.children != null) {
-                for (RuntimeIterator iterator : this.children) {
-                    iterator.open(dynamicContext);
+            for (RuntimeIterator iterator : this.children) {
+                iterator.open(dynamicContext);
                 while (iterator.hasNext()) {
                     content.add(iterator.next());
                 }
                 iterator.close();
             }
         }
-        
+
         // Create and return the element item
         this.hasNext = false;
-        return ItemFactory.getInstance().createXmlElementNode(
+        return ItemFactory.getInstance()
+            .createXmlElementNode(
                 this.tagName,
-                content,    
+                content,
                 attributes
-        );
+            );
     }
-} 
+}

@@ -16,33 +16,34 @@
  *
  */
 
- package org.rumbledb.runtime.xml;
+package org.rumbledb.runtime.xml;
 
- import org.rumbledb.api.Item;
- import org.rumbledb.context.DynamicContext;
- import org.rumbledb.context.RuntimeStaticContext;
- import org.rumbledb.items.ItemFactory;
- import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
- 
- public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
- 
-     private static final long serialVersionUID = 1L;
-     private String content;
- 
-     public TextNodeRuntimeIterator(
-             String content,
-             RuntimeStaticContext staticContext
-     ) {
-       super(null, staticContext);
-       this.content = content;
-     }
- 
-     @Override
-     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-         // Create and return the element item
-         this.hasNext = false;
-         return ItemFactory.getInstance().createXmlTextNode(
-                 this.content
-         );
-     }
- } 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+
+public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+
+    private static final long serialVersionUID = 1L;
+    private String content;
+
+    public TextNodeRuntimeIterator(
+            String content,
+            RuntimeStaticContext staticContext
+    ) {
+        super(null, staticContext);
+        this.content = content;
+    }
+
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        // Create and return the element item
+        this.hasNext = false;
+        return ItemFactory.getInstance()
+            .createXmlTextNode(
+                this.content
+            );
+    }
+}

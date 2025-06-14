@@ -32,7 +32,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         // TODO: add support for attributes and children
-        this.stringValue= "<" + tagName + "/>";
+        this.stringValue = "<" + tagName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {

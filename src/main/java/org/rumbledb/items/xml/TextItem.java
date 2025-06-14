@@ -28,6 +28,7 @@ public class TextItem implements Item {
 
     /**
      * Create a new Text Node with the given content.
+     * 
      * @param content the content of the text node
      */
     public TextItem(String content) {
