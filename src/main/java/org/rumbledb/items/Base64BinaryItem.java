@@ -41,6 +41,7 @@ public class Base64BinaryItem implements Item {
     }
 
     public Base64BinaryItem(String stringValue) {
+        stringValue = stringValue.replaceAll("\\s", "");
         this.value = parseBase64BinaryString(stringValue);
         this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
