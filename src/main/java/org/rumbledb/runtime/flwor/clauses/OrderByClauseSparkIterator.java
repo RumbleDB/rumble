@@ -56,13 +56,7 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -535,13 +529,49 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context
     ) {
         NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
+        NativeClauseContext queryContext = createOrderExpression(expressionsWithIterator, orderContext);
+        if (queryContext == NativeClauseContext.NoNativeQuery)
+            return null;
+
+        LogManager.getLogger("OrderByClauseSparkIterator")
+            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
+        dataFrame.createOrReplaceTempView("input");
+        return new FlworDataFrame(
+                dataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from input order by %s",
+                            selectSQL,
+                            queryContext.getResultingQuery()
+                        )
+                    )
+        );
+    }
+
+    private static NativeClauseContext createOrderExpression(
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
+            NativeClauseContext orderContext
+    ) {
+        return NativeClauseContext.NoNativeQuery;
+        // below is code from dominik
+        // disabled for now since it accesses resultingType which is not set
+        // return createOrderExpressionDominik(expressionsWithIterator, orderContext);
+    }
+
+    private static NativeClauseContext createOrderExpressionDominik(
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
+            NativeClauseContext orderContext
+    ) {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
-        NativeClauseContext nativeQuery;
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
-            nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
-            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-                return null;
+            NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
+            if (
+                orderContext == NativeClauseContext.NoNativeQuery
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
+            ) {
+                return NativeClauseContext.NoNativeQuery;
             }
             // For now we are conservative and do not support arities other than one.
             if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
@@ -552,17 +582,17 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // special check to avoid ordering by an integer constant in an ordering clause
             // second check to assure it is a literal
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
-            // and jsoniq (order by a costant, so no actual ordering is performed)
+            // and jsoniq (order by a constant, so no actual ordering is performed)
             if (
                 (nativeQuery.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
                     || nativeQuery.getResultingType().isSubtypeOf(SequenceType.INT_QM))
                     && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');
-                orderSql.append(nativeQuery.getResultingQuery());
+                orderSql.append(orderContext.getResultingQuery());
                 orderSql.append('"');
             } else {
-                orderSql.append(nativeQuery.getResultingQuery());
+                orderSql.append(orderContext.getResultingQuery());
             }
             if (!orderIterator.isAscending()) {
                 orderSql.append(" desc");
@@ -575,21 +605,44 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
+        return new NativeClauseContext(orderContext, orderSql.toString(), orderContext.getResultingType());
+    }
 
-        LogManager.getLogger("OrderByClauseSparkIterator")
-            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
-        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
-        dataFrame.createOrReplaceTempView("input");
-        return new FlworDataFrame(
-                dataFrame.sparkSession()
-                    .sql(
-                        String.format(
-                            "select %s from input order by %s",
-                            selectSQL,
-                            orderSql
-                        )
-                    )
-        );
+    private NativeClauseContext createOrderExpressions(
+            NativeClauseContext orderContext,
+            Map<String, Boolean> sortingColumns
+    ) {
+        for (OrderByClauseAnnotatedChildIterator orderIterator : this.expressionsWithIterator) {
+            orderContext = orderIterator.getIterator().generateNativeQuery(orderContext);
+            if (
+                orderContext == NativeClauseContext.NoNativeQuery
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            // special check to avoid ordering by an integer constant in an ordering clause
+            // second check to assure it is a literal
+            // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
+            // and jsoniq (order by a constant, so no actual ordering is performed)
+            String key;
+            boolean value;
+            if (
+                (orderContext.getResultingType().getItemType() == BuiltinTypesCatalogue.integerItem
+                    || orderContext.getResultingType().getItemType() == BuiltinTypesCatalogue.intItem)
+                    && orderContext.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
+            ) {
+                key = "\"" + orderContext.getResultingQuery() + "\"";
+            } else {
+                key = orderContext.getResultingQuery();
+            }
+            if (!orderIterator.isAscending()) {
+                value = true;
+            } else {
+                value = false;
+            }
+            sortingColumns.put(key, value);
+        }
+        return new NativeClauseContext(orderContext, null, orderContext.getResultingType());
     }
 
     public boolean containsClause(FLWOR_CLAUSES kind) {
@@ -629,5 +682,40 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) childContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        Map<String, Boolean> sortingColumns = new HashMap<>();
+        NativeClauseContext orderContext = createOrderExpressions(childContext, sortingColumns);
+        if (orderContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        StringBuilder orderColumnString = new StringBuilder();
+        sortingColumns.forEach((key, value) -> {
+            String columnName = childContext.addVariable().toString();
+            orderColumnString.append(String.format("%s as `%s`,", key, columnName));
+            childContext.addSortingColumn(columnName, value);
+            childContext.setSchema(((StructType) childContext.getSchema()).add(columnName, DataTypes.BinaryType));
+        });
+        String view = orderContext.getView();
+        String resultString = String.format(
+            "select %s %s from (%s)",
+            orderColumnString,
+            FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
+            view
+        );
+        childContext.setView(resultString);
+        return new NativeClauseContext(childContext, null, null);
     }
 }

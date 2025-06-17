@@ -331,6 +331,12 @@
 		  <artifactId>httpclient</artifactId>
 		  <version>4.5.13</version>
 		</dependency>
+        <dependency>
+            <groupId>org.skyscreamer</groupId>
+            <artifactId>jsonassert</artifactId>
+            <version>1.5.1</version>
+            <scope>test</scope>
+        </dependency>
 		<!--<dependency>
 		    <groupId>edu.vanderbilt.accre</groupId>
 		    <artifactId>laurelin</artifactId>
