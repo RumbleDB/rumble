@@ -263,6 +263,12 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(" as " + entry.getValue().getSequenceType());
             stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
             stringBuilder.append(" | " + entry.getValue().getStorageMode());
+            if(entry.getValue().isAssignable())
+            {
+                stringBuilder.append(" | assignable");
+            } else {
+                stringBuilder.append(" | not assignable");
+            }
             stringBuilder.append("\n");
         }
         stringBuilder.append("Static context with user-defined functions:\n");
