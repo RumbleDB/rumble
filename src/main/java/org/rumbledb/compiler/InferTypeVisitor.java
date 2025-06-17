@@ -2283,8 +2283,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = SequenceType.ITEM_STAR;
         if (declaredType == null) {
             if (expression.getExpression() != null) {
-                if(argument.getIsAssignable(expression.getVariableName()))
-                {
+                if (argument.getIsAssignable(expression.getVariableName())) {
                     inferredType = SequenceType.ITEM_STAR;
                 } else {
                     inferredType = expression.getExpression().getStaticSequenceType();
