@@ -72,6 +72,7 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -80,6 +81,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
@@ -1503,6 +1505,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirElemConstructorOpenCloseContext) {
+            return this.visitDirElemConstructorOpenClose((XQueryParser.DirElemConstructorOpenCloseContext) child);
+        } else if (child instanceof XQueryParser.DirElemConstructorSingleTagContext) {
+            return this.visitDirElemConstructorSingleTag((XQueryParser.DirElemConstructorSingleTagContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Direct constructor not yet implemented",
                 createMetadataFromContext(ctx)
@@ -1511,10 +1519,112 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitDirElemConstructorOpenClose(XQueryParser.DirElemConstructorOpenCloseContext ctx) {
-        throw new UnsupportedFeatureException(
-                "DirElemConstructorOpenClose not yet implemented",
+        // check that the start and end tags are the same
+        if (ctx.close_tag_name != null && !ctx.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
+            throw new DirectElementConstructorTagMismatchException(
+                    "The name used in the end tag must exactly match the name used in the corresponding start tag.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as adjacent siblings.
+        // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+        // here, we merge adjacent text nodes into a single text node.
+        List<Expression> content = new ArrayList<>();
+        StringBuilder textAccumulator = null;
+        ExceptionMetadata firstTextMetadata = null;
+        
+        for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
+            Expression childExpression = (Expression) this.visitDirElemContent(child);
+            
+            if (childExpression instanceof TextNodeExpression) {
+                TextNodeExpression textNode = (TextNodeExpression) childExpression;
+
+                // If the parent of a text node is not empty, the Text Node must not contain the zero-length string as its content. 
+                // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+                // skip empty text nodes
+                if (textNode.getContent().isEmpty()) {
+                    continue;
+                }
+                
+                if (textAccumulator == null) {
+                    // start accumulating text nodes
+                    textAccumulator = new StringBuilder();
+                    // keep metadata of the first node
+                    firstTextMetadata = textNode.getMetadata();
+                }
+                
+                // accumulate the text content
+                textAccumulator.append(textNode.getContent());
+            } else {
+                // non-text node encountered
+                if (textAccumulator != null) {
+                    // finalize any accumulated text nodes
+                    content.add(new TextNodeExpression(
+                        textAccumulator.toString(),
+                        firstTextMetadata
+                    ));
+                    textAccumulator = null;
+                    firstTextMetadata = null;
+                }
+                
+                // add the non-text node
+                content.add(childExpression);
+            }
+        }
+        
+        // handle any remaining accumulated text at the end
+        if (textAccumulator != null) {
+            content.add(new TextNodeExpression(
+                textAccumulator.toString(),
+                firstTextMetadata
+            ));
+        }
+
+        // TODO: at the moment, only working with elements with no attributes.
+        return new DirElemConstructorExpression(
+                ctx.open_tag_name.getText(),
+                content,
                 createMetadataFromContext(ctx)
         );
+
+    }
+
+    @Override
+    public Node visitDirElemConstructorSingleTag(XQueryParser.DirElemConstructorSingleTagContext ctx) {
+        // TODO: at the moment, only working with empty elements, with no attributes.
+        return new DirElemConstructorExpression(
+                ctx.open_tag_name.getText(),
+                null,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDirElemContent(XQueryParser.DirElemContentContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((XQueryParser.DirectConstructorContext) child);
+        } else if (child instanceof XQueryParser.CommonContentContext) {
+            return this.visitCommonContent((XQueryParser.CommonContentContext) child);
+        } else {
+            // create a new text node
+            String text = child.getText();
+            if(ctx.CDATA() != null) {
+                // filter out the <![CDATA[ and ]]>, and return the text
+                return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
+            } 
+            return new TextNodeExpression(text , createMetadataFromContext(ctx));
+        }
+    }
+
+    @Override
+    public Node visitCommonContent(XQueryParser.CommonContentContext ctx) {
+        if(ctx.expr() != null) {
+            return (Expression) this.visitExpr(ctx.expr());
+        } 
+        // if there is no expression, return a text node with the content
+        return new TextNodeExpression(ctx.getText(), createMetadataFromContext(ctx));
     }
 
 
