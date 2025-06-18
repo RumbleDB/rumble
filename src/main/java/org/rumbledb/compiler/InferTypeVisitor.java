@@ -1695,7 +1695,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
             ? SequenceType.Arity.OneOrZero
             : SequenceType.Arity.ZeroOrMore;
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.item, inferredArity));
+        ItemType resultItemType = BuiltinTypesCatalogue.item;
+        ItemType itemType = mainType.getItemType();
+        if(itemType.isArrayItemType())
+        {
+            resultItemType = itemType.getArrayContentFacet();
+        }
+        expression.setStaticSequenceType(new SequenceType(resultItemType, inferredArity));
         return argument;
     }
 

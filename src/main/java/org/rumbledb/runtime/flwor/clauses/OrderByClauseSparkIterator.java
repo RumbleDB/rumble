@@ -565,7 +565,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
             // For now we are conservative and do not support arities other than one.
             if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
-                return null;
+                return NativeClauseContext.NoNativeQuery;
             }
             orderSql.append(orderSeparator);
             orderSeparator = ", ";
@@ -579,10 +579,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');
-                orderSql.append(orderContext.getResultingQuery());
+                orderSql.append(nativeQuery.getResultingQuery());
                 orderSql.append('"');
             } else {
-                orderSql.append(orderContext.getResultingQuery());
+                orderSql.append(nativeQuery.getResultingQuery());
             }
             if (!orderIterator.isAscending()) {
                 orderSql.append(" desc");
