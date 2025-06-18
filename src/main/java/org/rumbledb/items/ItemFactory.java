@@ -285,6 +285,10 @@ public class ItemFactory {
         return new TextItem(currentNode);
     }
 
+    public Item createXmlTextNode(String content) {
+        return new TextItem(content);
+    }
+
     public Item createXmlAttributeNode(Node attribute) {
         return new AttributeItem(attribute);
     }
@@ -295,5 +299,9 @@ public class ItemFactory {
 
     public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
         return new ElementItem(elementNode, children, attributes);
+    }
+
+    public Item createXmlElementNode(String tagName, List<Item> children, List<Item> attributes) {
+        return new ElementItem(tagName, children, attributes);
     }
 }

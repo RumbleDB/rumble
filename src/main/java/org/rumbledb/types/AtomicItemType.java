@@ -12,7 +12,7 @@ import static org.rumbledb.types.BuiltinTypesCatalogue.*;
  * This class describes all the primitive built-in atomic types in the JSONiq data model and the derived DayTimeDuration
  * and YearMonthDuration item types that are derived, but whose derivation cannot be expressed through JSound facets
  */
-public class AtomicItemType implements ItemType {
+public class AtomicItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -25,6 +25,18 @@ public class AtomicItemType implements ItemType {
     AtomicItemType(Name name, Set<FacetTypes> allowedFacets) {
         this.name = name;
         this.allowedFacets = allowedFacets;
+    }
+
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        kryo.writeObjectOrNull(output, this.name, Name.class);
+        kryo.writeObjectOrNull(output, this.allowedFacets, HashSet.class);
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        this.name = kryo.readObjectOrNull(input, Name.class);
+        this.allowedFacets = kryo.readObjectOrNull(input, HashSet.class);
     }
 
     @Override

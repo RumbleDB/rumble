@@ -14,6 +14,4 @@ The documentation also contains an introduction specific to RumbleDB and how you
 
 [The documentation of the latest official release is available here.](http://rumble.readthedocs.io/en/latest/)
 
-[The documentation of the current master (for the adventurous and curious) is available here.](http://sparksoniq.readthedocs.io/en/latest/)
-
 RumbleDB is an effort involving many researchers and ETH Zurich students: code and support by Stefan Irimescu, Ghislain Fourny, Gustavo Alonso, Renato Marroquin, Rodrigo Bruno, Falko Noé, Ioana Stefan, Andrea Rinaldi, Stevan Mihajlovic, Mario Arduini, Can Berker Çıkış, Elwin Stephan, David Dao, Zirun Wang, Ingo Müller, Dan-Ovidiu Graur, Thomas Zhou, Olivier Goerens, Alexandru Meterez, Remo Röthlisberger, Dominik Bruggisser, David Loughlin, David Buzatu, Marco Schöb.
