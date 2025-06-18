@@ -28,11 +28,18 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -124,5 +131,224 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             return ItemFactory.getInstance()
                 .createObjectItem(keys, values, getMetadata(), true);
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.isMergedObject) {
+            return generateMergedObject(nativeClauseContext);
+        }
+        return generateKeyValueObject(nativeClauseContext);
+    }
+
+    private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
+        List<RuntimeIterator> objectsToMerge = this.children;
+        if (this.children.get(0) instanceof CommaExpressionIterator) {
+            objectsToMerge = ((CommaExpressionIterator) this.children.get(0)).getChildren();
+        }
+        if (
+            !objectsToMerge.stream()
+                .allMatch(
+                    objectToMerge -> objectToMerge instanceof VariableReferenceIterator
+                        || objectToMerge instanceof ObjectConstructorRuntimeIterator
+                )
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<String> queries = new ArrayList<>();
+        List<String> keyNames = new ArrayList<>();
+        List<ItemType> valueTypes = new ArrayList<>();
+        for (RuntimeIterator objectToMerge : objectsToMerge) {
+            if (objectToMerge instanceof VariableReferenceIterator) {
+                NativeClauseContext objectPartContext = objectToMerge.generateNativeQuery(nativeClauseContext);
+                if (objectPartContext == NativeClauseContext.NoNativeQuery) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                nativeClauseContext = new NativeClauseContext(objectPartContext, null, null);
+                objectPartContext.getResultingType().getItemType().getObjectContentFacet().forEach((k, v) -> {
+                    keyNames.add(k);
+                    valueTypes.add(v.getType());
+                });
+                // special case: if there is only one item, spark treats it as a reference, in that case don't use .*
+                queries.add(
+                    String.format(
+                        "%s%s",
+                        objectPartContext.getResultingQuery(),
+                        objectsToMerge.size() > 1 ? ".*" : ""
+                    )
+                );
+            } else {
+                ObjectConstructorRuntimeIterator child = (ObjectConstructorRuntimeIterator) objectToMerge;
+                if (child.isMergedObject) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                if (child.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
+                List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
+                for (RuntimeIterator key : child.keys) {
+                    NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+                    if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
+                        return NativeClauseContext.NoNativeQuery;
+                    }
+                    keyNativeContexts.add(keyNativeContext);
+                    nativeClauseContext = keyNativeContext;
+                }
+                for (RuntimeIterator value : child.values) {
+                    NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+                    if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
+                        return NativeClauseContext.NoNativeQuery;
+                    }
+                    valueNativeContexts.add(valueNativeContext);
+                    nativeClauseContext = valueNativeContext;
+                }
+
+                int subQueryCount = keyNativeContexts.size();
+                if (subQueryCount == 0) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                if (
+                    subQueryCount == 1
+                        && keyNativeContexts.get(0)
+                            .getResultingQuery()
+                            .substring(1, keyNativeContexts.get(0).getResultingQuery().length() - 1)
+                            .equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                ) {
+                    continue;
+                }
+
+                List<String> constructorKeyNames = createKeyNames(
+                    keyNativeContexts,
+                    valueNativeContexts,
+                    subQueryCount
+                );
+                for (int i = 0; i < subQueryCount; i++) {
+                    queries.add(
+                        String.format(
+                            "(%s) as `%s`",
+                            valueNativeContexts.get(i).getResultingQuery(),
+                            constructorKeyNames.get(i)
+                                .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1)
+                        )
+                    );
+                }
+                constructorKeyNames
+                    .stream()
+                    .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
+                    .forEach(keyNames::add);
+                valueNativeContexts
+                    .stream()
+                    .map(value -> value.getResultingType().getItemType())
+                    .forEach(valueTypes::add);
+            }
+        }
+        String resultString = "(" + String.join(",", queries) + ")";
+        ItemType resultType = ItemTypeFactory.createAnonymousObjectType(keyNames, valueTypes);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultString,
+                new SequenceType(
+                        resultType,
+                        SequenceType.Arity.One
+                )
+        );
+    }
+
+    private NativeClauseContext generateKeyValueObject(NativeClauseContext nativeClauseContext) {
+        if (this.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
+        List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
+        for (RuntimeIterator key : this.keys) {
+            NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+            if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            keyNativeContexts.add(keyNativeContext);
+            nativeClauseContext = keyNativeContext;
+        }
+        for (RuntimeIterator value : this.values) {
+            NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+            if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            valueNativeContexts.add(valueNativeContext);
+            nativeClauseContext = valueNativeContext;
+        }
+        int subQueryCount = keyNativeContexts.size();
+        if (subQueryCount == 0) {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "named_struct(\"" + SparkSessionManager.emptyObjectJSONiqItemColumnName + "\", null)",
+                    new SequenceType(
+                            BuiltinTypesCatalogue.objectItem,
+                            SequenceType.Arity.One
+                    )
+            );
+        }
+
+        List<String> keyNames = createKeyNames(keyNativeContexts, valueNativeContexts, subQueryCount);
+
+        List<String> objectItems = new ArrayList<>();
+        for (int i = 0; i < subQueryCount; i++) {
+            objectItems.add(
+                String.format(
+                    "%s, (%s)",
+                    keyNames.get(i),
+                    valueNativeContexts.get(i).getResultingQuery()
+                )
+            );
+        }
+        String resultString =
+            String.format(
+                "named_struct(%s)",
+                String.join(",", objectItems)
+            );
+
+        ItemType resultType =
+            ItemTypeFactory.createAnonymousObjectType(
+                keyNames
+                    .stream()
+                    .map(key -> key.substring(1, key.length() - 1)) // because string wrapped in ""
+                    .collect(Collectors.toList()),
+                valueNativeContexts
+                    .stream()
+                    .map(value -> value.getResultingType().getItemType())
+                    .collect(Collectors.toList())
+            );
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultString,
+                new SequenceType(
+                        resultType,
+                        SequenceType.Arity.One
+                )
+        );
+    }
+
+    private List<String> createKeyNames(
+            List<NativeClauseContext> keyNativeContexts,
+            List<NativeClauseContext> valueNativeContexts,
+            int subQueryCount
+    ) {
+        List<String> constructorKeyNames = new ArrayList<>();
+        for (int i = 0; i < subQueryCount; i++) {
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(valueNativeContexts.get(i).getResultingType().getArity())) {
+                constructorKeyNames.add(
+                    String.format(
+                        "\"%s%s\"",
+                        keyNativeContexts.get(i)
+                            .getResultingQuery()
+                            .substring(1, keyNativeContexts.get(i).getResultingQuery().length() - 1),
+                        SparkSessionManager.sequenceColumnName
+                    )
+                );
+            } else {
+                constructorKeyNames.add(keyNativeContexts.get(i).getResultingQuery());
+            }
+        }
+        return constructorKeyNames;
     }
 }
