@@ -142,6 +142,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
                     expression.getMetadata()
             );
         }
+        visit(expression.getStatement(), expression);
         return argument;
     }
 

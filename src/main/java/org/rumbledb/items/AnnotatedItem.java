@@ -19,7 +19,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -65,14 +64,13 @@ public class AnnotatedItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.itemToAnnotate);
-        kryo.writeClassAndObject(output, this.type.getName());
+        kryo.writeClassAndObject(output, this.type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
-        Name name = (Name) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
-        this.type = new ItemTypeReference(name);
+        this.type = (ItemType) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
     }
 
     @Override
