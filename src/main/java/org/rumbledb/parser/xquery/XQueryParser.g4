@@ -427,14 +427,14 @@ directConstructor: dirElemConstructorOpenClose
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE open_tag_name=qname dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: LANGLE open_tag_name=qname attributes=dirAttributeList endOpen=RANGLE
                              dirElemContent*
                              startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE open_tag_name=qname dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeList slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
-dirAttributeList: (qname EQUAL dirAttributeValue)* ;
+dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
 
 dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
 dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
@@ -443,17 +443,20 @@ dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
                      ;
 
-dirAttributeContentQuot : ContentChar+                     
+dirAttributeContentQuot : contentChar                     
                         | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueApos
                         | LBRACE expr? RBRACE
                         ;
 
-dirAttributeContentApos : ContentChar+                     
+dirAttributeContentApos : contentChar                    
                         | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueQuot
                         | LBRACE expr? RBRACE
-                        ;                     
+                        ;
+
+// helper rule to match any content character
+contentChar:              ContentChar+ ;
 
 dirElemContent: directConstructor
               | commonContent

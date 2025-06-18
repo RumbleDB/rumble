@@ -10,24 +10,31 @@ import java.util.List;
 
 public class DirElemConstructorExpression extends Expression {
     private final String tagName;
-    private final List<Expression> childExpressions;
+    private final List<Expression> content;
+    private final List<Expression> attributes;
 
     public DirElemConstructorExpression(
             String tagName,
-            List<Expression> contentExpressions,
+            List<Expression> content,
+            List<Expression> attributes,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         this.tagName = tagName;
-        this.childExpressions = contentExpressions;
+        this.content = content;
+        this.attributes = attributes;
     }
 
     public String getTagName() {
         return this.tagName;
     }
 
-    public List<Expression> getChildExpressions() {
-        return this.childExpressions;
+    public List<Expression> getContent() {
+        return this.content;
+    }
+
+    public List<Expression> getAttributes() {
+        return this.attributes;
     }
 
     @Override
@@ -38,8 +45,12 @@ public class DirElemConstructorExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.childExpressions != null) {
-            result.addAll(this.childExpressions);
+        if (this.content != null) {
+            result.addAll(this.content);
+        }
+        // in the XML data model, attributes are considered children
+        if (this.attributes != null) {
+            result.addAll(this.attributes);
         }
         return result;
     }
@@ -47,10 +58,17 @@ public class DirElemConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("<" + this.tagName + ">");
-        if (this.childExpressions != null && !this.childExpressions.isEmpty()) {
+        sb.append("<" + this.tagName);
+        if (this.attributes != null && !this.attributes.isEmpty()) {
+            for (Expression attr : this.attributes) {
+                attr.serializeToJSONiq(sb, indent);
+                sb.append(" ");
+            }
+        }
+        sb.append(">");
+        if (this.content != null && !this.content.isEmpty()) {
             sb.append("\n");
-            for (Expression expr : this.childExpressions) {
+            for (Expression expr : this.content) {
                 expr.serializeToJSONiq(sb, indent + 1);
             }
             indentIt(sb, indent);

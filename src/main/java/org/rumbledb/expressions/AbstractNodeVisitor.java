@@ -50,6 +50,8 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
+import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
@@ -237,7 +239,15 @@ public abstract class AbstractNodeVisitor<T> {
 
     // region xml
 
-    public T visitTextNodeExpression(TextNodeExpression expression, T argument) {
+    public T visitTextNode(TextNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAttributeNode(AttributeNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAttributeNodeContent(AttributeNodeContentExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

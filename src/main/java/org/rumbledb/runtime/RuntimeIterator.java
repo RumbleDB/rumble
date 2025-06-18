@@ -350,6 +350,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
+    /**
+     * Materialize the items of the iterator into the result list.
+     * 
+     * @param context the dynamic context
+     * @param result the list to materialize the items into. The list is cleared before the materialization.
+     */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
         this.open(context);

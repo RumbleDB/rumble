@@ -54,6 +54,8 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.AttributeNodeExpression;
+import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
@@ -395,8 +397,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitTextNodeExpression(TextNodeExpression expression, StaticContext argument) {
+    public StaticContext visitTextNode(TextNodeExpression expression, StaticContext argument) {
         // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAttributeNode(AttributeNodeExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAttributeNodeContent(AttributeNodeContentExpression expression, StaticContext argument) {
+        // Attribute content should be typed as string
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
         return argument;
     }

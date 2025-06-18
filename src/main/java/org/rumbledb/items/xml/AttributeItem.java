@@ -29,6 +29,11 @@ public class AttributeItem implements Item {
         this.stringValue = attributeNode.getNodeValue();
     }
 
+    public AttributeItem(String qname, String value) {
+        this.nodeName = qname;
+        this.stringValue = value;
+    }
+
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);

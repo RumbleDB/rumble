@@ -66,6 +66,8 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
+import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
@@ -196,6 +198,8 @@ import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeRuntimeIterator;
+import org.rumbledb.runtime.xml.AttributeNodeContentRuntimeIterator;
+import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
@@ -743,11 +747,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitDirElemConstructor(DirElemConstructorExpression expression, RuntimeIterator argument) {
         RuntimeIterator runtimeIterator = new DirElemConstructorRuntimeIterator(
                 expression.getTagName(),
-                expression.getChildren()
+                expression.getContent()
                     .stream()
                     .map(arg -> this.visit(arg, argument))
                     .collect(Collectors.toList()),
-                new ArrayList<RuntimeIterator>(),
+                expression.getAttributes()
+                    .stream()
+                    .map(arg -> this.visit(arg, argument))
+                    .collect(Collectors.toList()),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -755,8 +762,35 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitTextNodeExpression(TextNodeExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitTextNode(TextNodeExpression expression, RuntimeIterator argument) {
         RuntimeIterator runtimeIterator = new TextNodeRuntimeIterator(
+                expression.getContent(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitAttributeNode(AttributeNodeExpression expression, RuntimeIterator argument) {
+        RuntimeIterator runtimeIterator = new AttributeNodeRuntimeIterator(
+                expression.getQName(),
+                expression.getValue()
+                    .stream()
+                    .map(arg -> this.visit(arg, argument))
+                    .collect(Collectors.toList()),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitAttributeNodeContent(
+            AttributeNodeContentExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator runtimeIterator = new AttributeNodeContentRuntimeIterator(
                 expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

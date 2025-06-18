@@ -39,6 +39,8 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
+import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
@@ -51,6 +53,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
@@ -446,14 +449,55 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitDirElemConstructor(DirElemConstructorExpression expression, Node argument) {
-        List<Expression> children = expression.getChildren()
+        List<Expression> content = expression.getContent()
+            .stream()
+            .map(child -> (Expression) visit(child, argument))
+            .collect(Collectors.toList());
+
+        List<Expression> attributes = expression.getAttributes()
             .stream()
             .map(child -> (Expression) visit(child, argument))
             .collect(Collectors.toList());
 
         DirElemConstructorExpression result = new DirElemConstructorExpression(
                 expression.getTagName(),
-                children,
+                content,
+                attributes,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitTextNode(TextNodeExpression expression, Node argument) {
+        Expression result = new TextNodeExpression(expression.getContent(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitAttributeNode(AttributeNodeExpression expression, Node argument) {
+        List<Expression> value = expression.getValue()
+            .stream()
+            .map(child -> (Expression) visit(child, argument))
+            .collect(Collectors.toList());
+        AttributeNodeExpression result = new AttributeNodeExpression(
+                expression.getQName(),
+                value,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitAttributeNodeContent(AttributeNodeContentExpression expression, Node argument) {
+        Expression result = new AttributeNodeContentExpression(
+                expression.getContent(),
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
