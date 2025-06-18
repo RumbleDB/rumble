@@ -456,14 +456,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitDirElemConstructor(DirElemConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
-        return argument;
-    }
-
-    @Override
     public StaticContext visitTextNodeExpression(TextNodeExpression expression, StaticContext argument) {
         // TODO: define xml node types
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
