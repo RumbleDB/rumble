@@ -69,6 +69,7 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -77,6 +78,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
@@ -157,6 +159,7 @@ import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
+import org.rumbledb.runtime.primary.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.DoubleRuntimeIterator;
 import org.rumbledb.runtime.primary.IntegerRuntimeIterator;
 import org.rumbledb.runtime.primary.NullRuntimeIterator;
@@ -192,6 +195,7 @@ import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
+import org.rumbledb.runtime.xml.TextNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
@@ -313,7 +317,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new LetClauseSparkIterator(
                     previousIterator,
                     letClause.getVariableName(),
-                    letClause.getActualSequenceType(),
+                    letClause.getStaticType(),
                     assignmentIterator,
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -733,6 +737,31 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
         }
+    }
+
+    @Override
+    public RuntimeIterator visitDirElemConstructor(DirElemConstructorExpression expression, RuntimeIterator argument) {
+        RuntimeIterator runtimeIterator = new DirElemConstructorRuntimeIterator(
+                expression.getTagName(),
+                expression.getChildren()
+                    .stream()
+                    .map(arg -> this.visit(arg, argument))
+                    .collect(Collectors.toList()),
+                new ArrayList<RuntimeIterator>(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitTextNodeExpression(TextNodeExpression expression, RuntimeIterator argument) {
+        RuntimeIterator runtimeIterator = new TextNodeRuntimeIterator(
+                expression.getContent(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
     }
 
     @Override

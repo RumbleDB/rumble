@@ -40,8 +40,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -512,14 +510,10 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             if (leftResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+                new NativeClauseContext(leftResult, null, null)
+            );
             if (rightResult == NativeClauseContext.NoNativeQuery) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            if (!rightResult.getResultingType().getArity().equals(Arity.One)) {
                 return NativeClauseContext.NoNativeQuery;
             }
             if (
@@ -529,7 +523,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }
-
             // TODO: once done type system do proper comparison
             if (
                 !(leftResult.getResultingType() != null
@@ -564,17 +557,17 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 default:
                     return NativeClauseContext.NoNativeQuery;
             }
-            SequenceType.Arity resultingArity = leftResult.getResultingType()
-                .getArity()
-                .multiplyWith(rightResult.getResultingType().getArity());
+            SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+                && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                    ? SequenceType.Arity.One
+                    : SequenceType.Arity.OneOrZero;
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
             return new NativeClauseContext(
-                    nativeClauseContext,
+                    rightResult,
                     query,
                     new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
             );
-        } else {
-            return NativeClauseContext.NoNativeQuery;
         }
+        return NativeClauseContext.NoNativeQuery;
     }
 }

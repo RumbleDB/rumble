@@ -12,6 +12,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -197,6 +198,31 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     + ".",
                 getMetadata()
         );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
+            return childContext;
+        }
+        if (childContext.getResultingType().getItemType().isSubtypeOf(this.itemType)) {
+            return childContext;
+        }
+        if (
+            childContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+        ) {
+            return new NativeClauseContext(
+                    childContext,
+                    "CAST (" + childContext.getResultingQuery() + " AS DOUBLE)",
+                    new SequenceType(BuiltinTypesCatalogue.doubleItem, childContext.getResultingType().getArity())
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 
     private void checkTypePromotion() {

@@ -53,6 +53,7 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -61,6 +62,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
@@ -212,6 +214,10 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitDirElemConstructor(DirElemConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     public T visitContextExpr(ContextItemExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -227,6 +233,14 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
+
+    // region xml
+
+    public T visitTextNodeExpression(TextNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     // endregion
 
     // region literal
