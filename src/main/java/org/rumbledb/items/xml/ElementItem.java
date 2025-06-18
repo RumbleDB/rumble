@@ -24,6 +24,7 @@ public class ElementItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
+    @SuppressWarnings("unused")
     public ElementItem() {
     }
 
@@ -150,5 +151,10 @@ public class ElementItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
     }
 }
