@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, false, true, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, false, false)" :)
 time("13:20:00") eq time("13:20:00.000Z"),
 time("13:20:30.5555") ne time("13:20:30.555"),
 time("13:20:00-05:00") ge time("13:20:00+02:00"),
