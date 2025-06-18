@@ -29,6 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -59,21 +60,31 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+            new NativeClauseContext(leftResult, null, null)
+        );
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!leftResult.getResultingType().equals(SequenceType.BOOLEAN)) {
+        if (
+            SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
+                ||
+                SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
+        ) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!rightResult.getResultingType().equals(SequenceType.BOOLEAN)) {
-            return NativeClauseContext.NoNativeQuery;
-        }
-
+        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
         String resultingQuery = "( " + leftResult.getResultingQuery() + " OR " + rightResult.getResultingQuery() + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, SequenceType.BOOLEAN);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
+        );
     }
 }

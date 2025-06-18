@@ -12,6 +12,7 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -826,6 +827,36 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
         return true;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childQuery = this.child.generateNativeQuery(nativeClauseContext);
+        if (childQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            return new NativeClauseContext(
+                    childQuery,
+                    "CAST (" + childQuery.getResultingQuery() + " AS FLOAT)",
+                    new SequenceType(BuiltinTypesCatalogue.floatItem, childQuery.getResultingType().getArity())
+            );
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+            return new NativeClauseContext(
+                    childQuery,
+                    "CAST (" + childQuery.getResultingQuery() + " AS STRING)",
+                    new SequenceType(BuiltinTypesCatalogue.stringItem, childQuery.getResultingType().getArity())
+            );
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            return new NativeClauseContext(
+                    childQuery,
+                    "CAST (" + childQuery.getResultingQuery() + " AS DOUBLE)",
+                    new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }
 

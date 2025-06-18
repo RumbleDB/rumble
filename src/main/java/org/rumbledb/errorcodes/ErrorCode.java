@@ -108,6 +108,7 @@ public enum ErrorCode {
     InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
+    MultipleBaseURIExceptionCode("XQST0032"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
     DefaultCollationExceptionCode("XQST0038"),
@@ -121,6 +122,7 @@ public enum ErrorCode {
     EmptyModuleURIErrorCode("XQST0088"),
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
+    DirectElementConstructorTagMismatchErrorCode("XQST0118"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),

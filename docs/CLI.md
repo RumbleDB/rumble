@@ -42,3 +42,7 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --parallel-execution | N/A | parallel-execution |  yes or no | activates parallel execution when possible (activated by default) |
 | --native-execution | N/A | native-execution |  yes or no | activates native (Spark SQL) execution when possible (activated by default) |
 | --default-language | N/A | N/A | jsoniq10, jsoniq31, xquery31 | specifies the query language to be used
+| --optimize-steps | N/A | N/A | yes or no| allows RumbleDB to optimize steps, might violate stability of document order (activated by default)
+| --optimize-steps-experimental | N/A | N/A | yes or no| experimentally optimizes steps more by skipping uniqueness and sorting in some cases. correctness is not yet verified (disabled by default)
+| --optimize-parent-pointers | N/A | N/A | yes or no| allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)
+| --static-base-uri | N/A | N/A | "../data/"| sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query
