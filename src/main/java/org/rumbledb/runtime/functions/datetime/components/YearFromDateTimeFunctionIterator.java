@@ -12,7 +12,6 @@ import java.util.List;
 public class YearFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateTimeItem = null;
 
     public YearFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -23,12 +22,11 @@ public class YearFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateTimeItem = this.children.get(0)
+        Item dateTimeItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
-        if (this.dateTimeItem == null) {
+        if (dateTimeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getYear());
+        return ItemFactory.getInstance().createIntItem(dateTimeItem.getYear());
     }
-
 }

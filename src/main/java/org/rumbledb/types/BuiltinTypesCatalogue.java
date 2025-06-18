@@ -144,7 +144,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
             dateTimeItem,
-            AtomicItemType.dateTimeItem,
+            dateTimeItem,
             Facets.createTimezoneFacets(TimezoneFacet.REQUIRED),
             false
     );
@@ -285,8 +285,8 @@ public class BuiltinTypesCatalogue {
 
     public static final ItemType integerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "integer"),
-            AtomicItemType.decimalItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
+            decimalItem,
             Facets.getIntegerFacets(),
             false
     );
@@ -294,7 +294,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType longItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "long"),
             integerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(
                 new IntegerItem(new BigInteger("-9223372036854775808")),
                 new IntegerItem(new BigInteger("9223372036854775807")),
@@ -306,7 +306,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType intItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "int"),
             longItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
             false
     );
@@ -314,7 +314,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType shortItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "short"),
             intItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
             false
     );
@@ -322,7 +322,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "byte"),
             shortItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
             false
     );
@@ -330,7 +330,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
             integerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinFacets(
                 new IntegerItem(new BigInteger("0")),
                 true
@@ -341,7 +341,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
             integerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMaxFacets(
                 new IntegerItem(new BigInteger("0")),
                 true
@@ -352,7 +352,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "negativeInteger"),
             nonPositiveIntegerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMaxFacets(
                 new IntegerItem(new BigInteger("-1")),
                 true
@@ -363,7 +363,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "positiveInteger"),
             nonNegativeIntegerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinFacets(
                 new IntegerItem(new BigInteger("1")),
                 true
@@ -374,7 +374,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedLong"),
             nonNegativeIntegerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(
                 new IntegerItem(new BigInteger("0")),
                 new IntegerItem(new BigInteger("18446744073709551615")),
@@ -386,7 +386,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedInt"),
             unsignedLongItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(
                 new IntegerItem(new BigInteger("0")),
                 new IntegerItem(new BigInteger("4294967295")),
@@ -398,7 +398,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedShort"),
             unsignedIntItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
             false
     );
@@ -406,7 +406,7 @@ public class BuiltinTypesCatalogue {
     public static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedByte"),
             unsignedShortItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
             false
     );
