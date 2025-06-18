@@ -558,8 +558,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
             NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
             if (
-                orderContext == NativeClauseContext.NoNativeQuery
-                    || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
+                nativeQuery == NativeClauseContext.NoNativeQuery
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }
