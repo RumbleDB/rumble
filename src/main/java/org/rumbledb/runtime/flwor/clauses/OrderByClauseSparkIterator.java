@@ -553,29 +553,19 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             NativeClauseContext orderContext
     ) {
-        return NativeClauseContext.NoNativeQuery;
-        // below is code from dominik
-        // disabled for now since it accesses resultingType which is not set
-        // return createOrderExpressionDominik(expressionsWithIterator, orderContext);
-    }
-
-    private static NativeClauseContext createOrderExpressionDominik(
-            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
-            NativeClauseContext orderContext
-    ) {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
             NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
             if (
-                orderContext == NativeClauseContext.NoNativeQuery
-                    || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
+                nativeQuery == NativeClauseContext.NoNativeQuery
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }
             // For now we are conservative and do not support arities other than one.
             if (!nativeQuery.getResultingType().getArity().equals(Arity.One)) {
-                return null;
+                return NativeClauseContext.NoNativeQuery;
             }
             orderSql.append(orderSeparator);
             orderSeparator = ", ";
@@ -589,10 +579,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
             ) {
                 orderSql.append('"');
-                orderSql.append(orderContext.getResultingQuery());
+                orderSql.append(nativeQuery.getResultingQuery());
                 orderSql.append('"');
             } else {
-                orderSql.append(orderContext.getResultingQuery());
+                orderSql.append(nativeQuery.getResultingQuery());
             }
             if (!orderIterator.isAscending()) {
                 orderSql.append(" desc");
