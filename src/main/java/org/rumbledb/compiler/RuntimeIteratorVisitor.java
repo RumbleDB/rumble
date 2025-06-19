@@ -70,6 +70,7 @@ import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
@@ -159,6 +160,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.navigation.SequenceLookupIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
+import org.rumbledb.runtime.primary.ComputedElementConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
 import org.rumbledb.runtime.primary.DirElemConstructorRuntimeIterator;
@@ -757,6 +759,33 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     .collect(Collectors.toList()),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitComputedElementConstructor(ComputedElementConstructorExpression expression, RuntimeIterator argument) {
+        Expression contentExpression = expression.getContentExpression();
+        RuntimeIterator contentIterator = contentExpression != null ?
+            this.visit(contentExpression, argument) : null;
+
+        RuntimeIterator runtimeIterator;
+        if (expression.hasStaticName()) {
+            // Static element name: element elementName { content }
+            runtimeIterator = new ComputedElementConstructorRuntimeIterator(
+                    expression.getElementName().toString(),
+                    contentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            // Dynamic element name: element { nameExpression } { content }
+            RuntimeIterator nameIterator = this.visit(expression.getNameExpression(), argument);
+            runtimeIterator = new ComputedElementConstructorRuntimeIterator(
+                    nameIterator,
+                    contentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
