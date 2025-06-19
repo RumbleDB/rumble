@@ -110,7 +110,6 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
                     throw new UnexpectedStaticTypeException("Computed element constructor name must evaluate to a single atomic value");
                 }
                 Item atomizedNameItem = atomizedNameItems.get(0);
-                System.out.println("atomizedNameItem: " + atomizedNameItem.toString());
                 if(!(atomizedNameItem.isAtomic())) {
                     throw new UnexpectedStaticTypeException("Computed element constructor name must evaluate to a single atomic value");
                 }
