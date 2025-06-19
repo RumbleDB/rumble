@@ -140,6 +140,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
+import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -1499,6 +1500,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (child instanceof XQueryParser.DirectConstructorContext) {
             return this.visitDirectConstructor((XQueryParser.DirectConstructorContext) child);
         }
+        if (child instanceof XQueryParser.ComputedConstructorContext) {
+            return this.visitComputedConstructor((XQueryParser.ComputedConstructorContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Node constructor not yet implemented",
                 createMetadataFromContext(ctx)
@@ -1644,6 +1648,52 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         // if there is no expression, return a text node with the content
         return new TextNodeExpression(ctx.getText(), createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitComputedConstructor(XQueryParser.ComputedConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.CompElemConstructorContext) {
+            return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Computed constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
+        
+        // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.eqName() != null) {
+            // Static element name: element elementName { content }
+            Name elementName = this.parseEqName(ctx.eqName(), false, false, false);
+            return new ComputedElementConstructorExpression(
+                    elementName,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.expr() != null) {
+            // Dynamic element name: element { nameExpression } { content }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedElementConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed element constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitEnclosedContentExpr(XQueryParser.EnclosedContentExprContext ctx) {
+        return this.visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override

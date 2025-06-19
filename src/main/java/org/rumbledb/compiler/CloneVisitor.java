@@ -43,6 +43,7 @@ import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
@@ -465,6 +466,35 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 attributes,
                 expression.getMetadata()
         );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedElementConstructor(ComputedElementConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression = contentExpression != null ?
+        (Expression) visit(contentExpression, argument) : null;
+       
+        ComputedElementConstructorExpression result;
+        if (expression.hasStaticName()) {
+            result = new ComputedElementConstructorExpression(
+                    expression.getElementName(),
+                    clonedContentExpression,
+                    expression.getMetadata()
+            );
+        } else {
+            Expression nameExpression = expression.getNameExpression();
+            Expression clonedNameExpression = nameExpression != null ?
+            (Expression) visit(nameExpression, argument) : null;
+
+            result = new ComputedElementConstructorExpression(
+                    clonedNameExpression,
+                    clonedContentExpression,
+                    expression.getMetadata()
+            );
+        }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
