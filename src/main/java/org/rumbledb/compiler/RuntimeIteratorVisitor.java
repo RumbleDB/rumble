@@ -69,8 +69,8 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
-import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
@@ -81,6 +81,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeConstructorExpression;
 import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -169,6 +170,7 @@ import org.rumbledb.runtime.primary.IntegerRuntimeIterator;
 import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
+import org.rumbledb.runtime.primary.TextNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.ProgramIterator;
 import org.rumbledb.runtime.scripting.block.StatementsOnlyIterator;
@@ -788,6 +790,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitTextNodeConstructor(TextNodeConstructorExpression expression, RuntimeIterator argument) {
+        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+        
+        TextNodeConstructorRuntimeIterator result = new TextNodeConstructorRuntimeIterator(
+            new AtomizationIterator(Collections.singletonList(contentIterator), expression.getStaticContextForRuntime(this.config, this.visitorConfig)),
+            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
 
     @Override

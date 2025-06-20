@@ -82,6 +82,7 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.TextNodeConstructorExpression;
 import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -1655,12 +1656,22 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
         if (child instanceof XQueryParser.CompElemConstructorContext) {
             return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompTextConstructorContext) {
+            return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
         }
-        throw new UnsupportedFeatureException(
-                "Computed constructor not yet implemented",
-                createMetadataFromContext(ctx)
+        throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCompTextConstructor(XQueryParser.CompTextConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+        
+        return new TextNodeConstructorExpression(
+            contentExpression,
+            createMetadataFromContext(ctx)
         );
     }
+
 
     @Override
     public Node visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
