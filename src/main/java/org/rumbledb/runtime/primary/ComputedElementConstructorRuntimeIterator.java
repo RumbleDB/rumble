@@ -21,11 +21,11 @@ package org.rumbledb.runtime.primary;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
     private static final long serialVersionUID = 1L;
     private String staticElementName;
-    private RuntimeIterator nameIterator;
+    private AtomizationIterator nameIterator;
     private RuntimeIterator contentIterator;
 
     /**
@@ -56,12 +56,12 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
     /**
      * Constructor for dynamic element name: element { nameExpression } { content }
-     * @param nameIterator The dynamic element name iterator
+     * @param nameIterator The dynamic element name iterator (wrapped in AtomizationIterator)
      * @param contentIterator The content iterator
      * @param staticContext The runtime static context
      */
     public ComputedElementConstructorRuntimeIterator(
-            RuntimeIterator nameIterator,
+            AtomizationIterator nameIterator,
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
@@ -90,29 +90,20 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             elementName = this.staticElementName;
         } else {
             // Dynamic element name - evaluate the name expression
-            List<Item> materialized = this.nameIterator.materialize(dynamicContext);
-
-            // according to the semantics of atomization, if we materialize more than one item,
-            // atomization of the materialized sequence will not yield a single atomic value
-            if (materialized.size() != 1) {
-                throw new UnexpectedStaticTypeException("Unexpected number of items in name expression iterator in computed element constructor");
-            }
-            Item nameItem = materialized.get(0);
-
             // processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedElements
 
             // 1. atomization is applied to the value of the name expression
-            List<Item> atomizedNameItems = nameItem.atomizedValue();
+            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
             // 1. (cont.) If the result of atomization is not a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised [err:XPTY0004].
             // TODO: better type checking of the name expression. As soon as we have a stable xml type system, we should use it here.
-                if (atomizedNameItems.size() != 1) {
-                    throw new UnexpectedStaticTypeException("Computed element constructor name must evaluate to a single atomic value");
-                }
-                Item atomizedNameItem = atomizedNameItems.get(0);
-                if(!(atomizedNameItem.isAtomic())) {
-                    throw new UnexpectedStaticTypeException("Computed element constructor name must evaluate to a single atomic value");
-                }
+            if (atomizedNameItems.size() != 1) {
+                throw new UnexpectedStaticTypeException("Computed element constructor name must evaluate to a single atomic value");
+            }
+            Item atomizedNameItem = atomizedNameItems.get(0);
+            if(!(atomizedNameItem.isAtomic())) {
+                throw new UnexpectedStaticTypeException("Computed element constructor name must evaluate to a single atomic value");
+            }
 
             elementName = atomizedNameItem.getStringValue();
             

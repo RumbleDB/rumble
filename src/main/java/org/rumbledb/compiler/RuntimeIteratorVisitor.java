@@ -781,7 +781,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else {
             // Dynamic element name: element { nameExpression } { content }
-            RuntimeIterator nameIterator = this.visit(expression.getNameExpression(), argument);
+            RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            AtomizationIterator nameIterator = new AtomizationIterator(
+                    Collections.singletonList(nameExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
             runtimeIterator = new ComputedElementConstructorRuntimeIterator(
                     nameIterator,
                     contentIterator,
