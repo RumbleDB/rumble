@@ -816,12 +816,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitAttributeNode(AttributeNodeExpression expression, RuntimeIterator argument) {
+        List<AtomizationIterator> atomizedValues = expression.getValue()
+                .stream()
+                .map(arg -> new AtomizationIterator(
+                        Collections.singletonList(this.visit(arg, argument)),
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                ))
+                .collect(Collectors.toList());
+        
         RuntimeIterator runtimeIterator = new AttributeNodeRuntimeIterator(
                 expression.getQName(),
-                expression.getValue()
-                    .stream()
-                    .map(arg -> this.visit(arg, argument))
-                    .collect(Collectors.toList()),
+                atomizedValues,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

@@ -18,73 +18,69 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
 public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private String qname;
-    private List<RuntimeIterator> value;
+    private List<AtomizationIterator> atomizedValues;
 
     public AttributeNodeRuntimeIterator(
             String qname,
-            List<RuntimeIterator> value,
+            List<AtomizationIterator> atomizedValues,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(createChildList(atomizedValues), staticContext);
         this.qname = qname;
-        this.value = value;
+        this.atomizedValues = atomizedValues;
+    }
+
+    private static List<RuntimeIterator> createChildList(List<AtomizationIterator> atomizedValues) {
+        return Arrays.asList(atomizedValues.toArray(new RuntimeIterator[0]));
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         StringBuilder sb = new StringBuilder();
         // follow the spec as defined in https://www.w3.org/TR/xquery-31/#id-attributes
-
-        // materialize the value of all the attribute components
-        for (RuntimeIterator child : this.value) {
-            List<Item> materialized = child.materialize(dynamicContext);
-            if (materialized.size() == 1 && materialized.get(0) instanceof StringItem) {
-                // component materialized to a string only. no need to atomize
-                sb.append(((StringItem) materialized.get(0)).getStringValue());
+        // 2. Each enclosed expression is converted to a string as follows:
+        for (AtomizationIterator atomizedValueIterator : this.atomizedValues) {
+            
+            // 2.a Atomization is applied to each enclosed expression, converting it to a sequence of atomic values.
+            List<Item> atomizedItems = atomizedValueIterator.materialize(dynamicContext);
+            
+            
+            // 2.b If the result of atomization is an empty sequence, the result is the zero-length string.
+            if (atomizedItems.isEmpty()) {
+                // Empty atomization result contributes nothing to the final string
+                sb.append("");
             } else {
-                // component materialized to a sequence. need to atomize and merge
-                // 2. Each enclosed expression is converted to a string as follows:
-                for (Item item : materialized) {
-                        // 2.a apply atomization
-                        List<Item> atomizedItem = item.atomizedValue();
-                        // 2.b If the result of atomization is an empty sequence, the result is the zero-length string.
-                        if (atomizedItem.isEmpty()) {
-                            sb.append("");
-                            // append the whitespace (2.c)
-                            sb.append(" ");
-                        } else {
-                            // 2.b (cont.) Otherwise, each atomic value in the atomized sequence is cast into a string.
-                            // 2.c The individual strings resulting from the previous step are merged into
-                            // a single string by concatenating them with a single space character between each pair.
-                            for (Item i : atomizedItem) {
-                                sb.append(i.getStringValue());
-                                sb.append(" ");
-                            }
-                            
-                        }
+                // 2.b (cont.) Otherwise, each atomic value in the atomized sequence is cast into a string.
+                // 2.c The individual strings resulting from the previous step are merged into
+                // a single string by concatenating them with a single space character between each pair.
+                for (int i = 0; i < atomizedItems.size(); i++) {
+                    Item atomicItem = atomizedItems.get(i);
+                    sb.append(atomicItem.getStringValue());
+                    if (i < atomizedItems.size() - 1) {
+                        sb.append(" ");
+                    }
                 }
-                // remove the last space
-                sb.setLength(sb.length() - 1);
             }
         }
 
         // 3. Adjacent strings resulting from the above steps are concatenated with no intervening blanks.
         // The resulting string becomes the string-value property of the attribute node.
-        // this is performed by using a StringBuilder
+        // this is performed by using the same StringBuilder for all the attribute components
 
         // Create and return the attribute
         this.hasNext = false;
