@@ -74,11 +74,6 @@ public class Rumble {
             this.configuration
         );
 
-        if (iterator.isUpdating()) {
-            PendingUpdateList pul = iterator.getPendingUpdateList(dynamicContext);
-            pul.applyUpdates(iterator.getMetadata());
-        }
-
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 
