@@ -5,7 +5,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.update.PendingUpdateList;
 
 import sparksoniq.spark.SparkSessionManager;
 
