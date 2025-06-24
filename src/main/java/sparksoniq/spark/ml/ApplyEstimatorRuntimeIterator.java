@@ -82,6 +82,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         } catch (IllegalArgumentException | NoSuchElementException e) {
             String message = e.getMessage();
             if (message == null) {
+                e.printStackTrace();
                 RumbleException ex = new InvalidRumbleMLParamException(
                         "Parameters provided to "
                             + this.estimatorShortName
