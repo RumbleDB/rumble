@@ -112,6 +112,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
+import org.apache.spark.sql.SparkSession;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -494,6 +495,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 .schema();
             ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             // TODO : check if arity is correct
+            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+            return true;
+        }
+
+        // handle 'delta-table' function
+        if (
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("delta-table"))
+                && args.size() > 0
+                && args.get(0) instanceof StringLiteralExpression
+        ) {
+            String name = ((StringLiteralExpression) args.get(0)).getValue();
+            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (session.catalog().tableExists(name) == false) {
+                throw new CannotRetrieveResourceException("Table " + name + " not found in hive catalogue.", expression.getMetadata());
+            }
+
+            StructType s = session
+                .read()
+                .table(name)
+                .schema();
+            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
             return true;
         }

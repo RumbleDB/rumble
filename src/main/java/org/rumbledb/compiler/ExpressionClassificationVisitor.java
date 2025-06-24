@@ -346,6 +346,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         if (function != null) {
             signature = function.getSignature();
         } else {
+            System.out.println("##Here: ExpressionClassificationVisitor:349");
             signature = staticContext.getFunctionSignature(identifier);
         }
         return signature;

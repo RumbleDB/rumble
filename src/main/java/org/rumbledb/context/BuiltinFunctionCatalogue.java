@@ -127,6 +127,7 @@ public class BuiltinFunctionCatalogue {
             return builtinFunctions.get(identifier);
         }
         Name name = identifier.getName();
+        System.out.println("##FunctionCatalogue: "+identifier);
         if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
             FunctionIdentifier fn = new FunctionIdentifier(
                     new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
@@ -605,6 +606,18 @@ public class BuiltinFunctionCatalogue {
         DeltaFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
+
+    /**
+     * function that parses a hive registered delta table
+     */
+    static final BuiltinFunction delta_table = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "delta-table"),
+        "string",
+        "item*",
+        DeltaTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
     /**
      * function that parses a csv file
      */
@@ -3044,6 +3057,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(parquet_file1.getIdentifier(), parquet_file1);
         builtinFunctions.put(parquet_file2.getIdentifier(), parquet_file2);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
+        builtinFunctions.put(delta_table.getIdentifier(), delta_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);
