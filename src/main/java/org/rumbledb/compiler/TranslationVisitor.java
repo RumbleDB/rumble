@@ -122,6 +122,7 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -660,6 +661,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
         if (content instanceof JsoniqParser.CreateCollectionExprContext) {
             return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteIndexExprContext) {
+            return this.visitDeleteIndexExpr((JsoniqParser.DeleteIndexExprContext) content);
         }
         if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
             return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
@@ -1339,6 +1343,22 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         boolean isTable = (ctx.table != null);
         return new CreateCollectionExpression(
             collection, contentExpression, isTable, createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
+        boolean isFirst = (ctx.first != null);
+
+        int numDelete = 1;
+        if (ctx.num != null) {
+            numDelete = Integer.parseInt(ctx.num.getText());
+        }
+
+        return new DeleteIndexFromCollectionExpression(
+            collection, numDelete, isFirst, isTable, createMetadataFromContext(ctx)
         );
     }
 

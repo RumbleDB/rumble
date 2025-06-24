@@ -9,14 +9,16 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
-public class CreateCollectionExpression extends Expression {
+public class DeleteIndexFromCollectionExpression extends Expression {
     private Expression collection;
-    private Expression contentExpression;
+    private int numDelete;
+    private boolean isFirst;
     private boolean isTable;
 
-    public CreateCollectionExpression(
+    public DeleteIndexFromCollectionExpression(
         Expression collection,
-        Expression contentExpression,
+        int numDelete,
+        boolean isFirst,
         boolean isTable,
         ExceptionMetadata metadata
     ) {
@@ -24,13 +26,11 @@ public class CreateCollectionExpression extends Expression {
         // Extension to other modes can be done by increasing flags for using enum instead
         super(metadata);
         if (collection == null) {
-            throw new OurBadException("Collection must be identified for creation.");
-        }
-        if (contentExpression == null) {
-            throw new OurBadException("Content must be specified for creating collection.");
+            throw new OurBadException("Collection must be identified for indexed Deletion.");
         }
         this.collection = collection;
-        this.contentExpression = contentExpression;
+        this.numDelete = numDelete;
+        this.isFirst = isFirst;
         this.isTable = isTable;
     }
 
@@ -38,34 +38,36 @@ public class CreateCollectionExpression extends Expression {
         return this.collection;
     }
 
-    public Expression getContentExpression() {
-        return this.contentExpression;
-    }
-
     public boolean isTable() {
         return this.isTable;
     }
 
+    public boolean isFirst() {
+        return this.isFirst;
+    }
+
+    public int getNumDelete() {
+        return this.numDelete;
+    }
+
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.contentExpression, this.collection);
+        return Arrays.asList(this.collection);
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitCreateCollectionExpression(this, argument);
+        return visitor.visitDeleteIndexFromCollectionExpression(this, argument);
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("create collection ");
-        sb.append(this.isTable ? "table" : "delta-file");
-        sb.append("(");
+        sb.append("delete ");
+        sb.append(this.isFirst ? "first " : "last ");
+        sb.append(this.numDelete);
+        sb.append(" from collection ");
         this.collection.serializeToJSONiq(sb, 0);
-        sb.append(")");
-        sb.append(" with ");
-        this.contentExpression.serializeToJSONiq(sb, 1);
         sb.append("\n");
     }
 

@@ -112,6 +112,7 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -193,6 +194,7 @@ import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
 import org.rumbledb.runtime.update.expression.CreateCollectionIterator;
+import org.rumbledb.runtime.update.expression.DeleteIndexFromCollectionIterator;
 import org.rumbledb.runtime.update.expression.TruncateCollectionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
@@ -520,6 +522,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new CreateCollectionIterator(
             targetIterator,
             contentIterator,
+            isTable,
+            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitDeleteIndexFromCollectionExpression(
+        DeleteIndexFromCollectionExpression expression, 
+        RuntimeIterator argument
+    ) {
+        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+        boolean isTable = expression.isTable();
+        boolean isFirst = expression.isFirst();
+        int numDelete = expression.getNumDelete();
+
+        RuntimeIterator runtimeIterator = new DeleteIndexFromCollectionIterator(
+            targetIterator,
+            numDelete,
+            isFirst,
             isTable,
             expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

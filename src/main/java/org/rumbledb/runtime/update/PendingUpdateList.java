@@ -22,6 +22,7 @@ public class PendingUpdateList {
 
     private Map<String, UpdatePrimitive> createCollectionMap;
     private Map<String, UpdatePrimitive> truncateCollectionMap;
+    private Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
 
 
     public PendingUpdateList() {
@@ -60,6 +61,7 @@ public class PendingUpdateList {
         this.renameObjMap = new TreeMap<>(this.targetComparator);
         this.createCollectionMap = new TreeMap<>();
         this.truncateCollectionMap = new TreeMap<>();
+        this.deleteTupleMap = new TreeMap<>();
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -115,6 +117,10 @@ public class PendingUpdateList {
         } else if (updatePrimitive.isTruncateCollection()) {
             String collectionName = updatePrimitive.getCollectionName();
             this.truncateCollectionMap.put(collectionName, updatePrimitive);
+        } else if (updatePrimitive.isDeleteTuple()) {
+            String collection = updatePrimitive.getCollectionPath();
+            Double rowOrder = updatePrimitive.getRowOrder();
+            this.deleteTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -228,12 +234,19 @@ public class PendingUpdateList {
             }
         }
 
+        // TODO: Ascertain order of apply of top level primitives with specs
+
         ////// APPLY CREATE COLLECTION
         this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
 
         ////// APPLY TRUNCATE COLLECTION
         this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
         
+        ////// APPLY DELETE TUPLE
+        for (Map<Double, UpdatePrimitive> tables: this.deleteTupleMap.values()) {
+            tables.values().forEach(UpdatePrimitive::apply);
+        }
+
 
     }
 

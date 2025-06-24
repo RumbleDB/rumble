@@ -87,6 +87,14 @@ public class UpdatePrimitiveFactory {
         return new CreateCollectionPrimitive(collectionName, contents, isTable, metadata);
     }
 
+    public UpdatePrimitive createDeleteTupleFromCollectionPrimitive(
+        String collectionName,
+        double rowOrder,
+        ExceptionMetadata metadata
+    ) {
+        return new DeleteTupleFromCollectionPrimitive(collectionName, rowOrder, metadata);
+    }
+
     public UpdatePrimitive createTruncateCollectionPrimitive(
         String collectionName,
         ExceptionMetadata metadata

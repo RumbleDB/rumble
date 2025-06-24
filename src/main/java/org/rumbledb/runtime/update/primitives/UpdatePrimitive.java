@@ -83,6 +83,10 @@ public interface UpdatePrimitive {
         return false;
     }
 
+    default boolean isDeleteTuple() {
+        return false;
+    }
+
     default boolean isTruncateCollection() {
         return false;
     }
@@ -96,6 +100,10 @@ public interface UpdatePrimitive {
     }
 
     default String getCollectionName() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default double getRowOrder() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
