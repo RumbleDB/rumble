@@ -94,7 +94,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             for (int i = 0; i < items1.size(); i++) {
                 Item item1 = items1.get(i);
                 Item item2 = items2.get(i);
-                
+
                 if (!checkItemsDeepEqual(item1, item2)) {
                     return false;
                 }
@@ -147,33 +147,33 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return false;
         }
 
-        // 2: If the two nodes are both document nodes then they are deep-equal 
+        // 2: If the two nodes are both document nodes then they are deep-equal
         // if and only if the sequence $i1/(*|text()) is deep-equal to the sequence $i2/(*|text()).
         if (node1.isDocumentNode() && node2.isDocumentNode()) {
             return checkDeepEqual(getElementsAndTextNodes(node1), getElementsAndTextNodes(node2));
         }
 
-        // 3: If the two nodes are both element nodes then they are deep-equal 
+        // 3: If the two nodes are both element nodes then they are deep-equal
         // if and only if all of the following conditions are satisfied:
         if (node1.isElementNode() && node2.isElementNode()) {
             return checkElementNodesDeepEqual(node1, node2);
         }
 
-        // 4: If the two nodes are both attribute nodes then they are deep-equal 
+        // 4: If the two nodes are both attribute nodes then they are deep-equal
         // if and only if both the following conditions are satisfied:
         if (node1.isAttributeNode() && node2.isAttributeNode()) {
             return checkAttributeNodesDeepEqual(node1, node2);
         }
 
-        // 5: If the two nodes are both processing instruction nodes, then they are deep-equal 
+        // 5: If the two nodes are both processing instruction nodes, then they are deep-equal
         // if and only if both the following conditions are satisfied:
         // Note: Processing instruction nodes are not yet implemented in Rumble
-        
-        // 6: If the two nodes are both namespace nodes, then they are deep-equal 
+
+        // 6: If the two nodes are both namespace nodes, then they are deep-equal
         // if and only if both the following conditions are satisfied:
         // Note: Namespace nodes are not yet implemented in Rumble
 
-        // 7: If the two nodes are both text nodes or comment nodes, then they are deep-equal 
+        // 7: If the two nodes are both text nodes or comment nodes, then they are deep-equal
         // if and only if their string-values are equal.
         if (node1.isTextNode() && node2.isTextNode()) {
             return node1.getTextValue().equals(node2.getTextValue());
@@ -193,10 +193,13 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      * @return true if nodes are of the same kind, false otherwise
      */
     private boolean sameNodeKind(Item node1, Item node2) {
-        return (node1.isDocumentNode() && node2.isDocumentNode()) ||
-               (node1.isElementNode() && node2.isElementNode()) ||
-               (node1.isAttributeNode() && node2.isAttributeNode()) ||
-               (node1.isTextNode() && node2.isTextNode());
+        return (node1.isDocumentNode() && node2.isDocumentNode())
+            ||
+            (node1.isElementNode() && node2.isElementNode())
+            ||
+            (node1.isAttributeNode() && node2.isAttributeNode())
+            ||
+            (node1.isTextNode() && node2.isTextNode());
         // TODO: Add support for processing instruction, comment, and namespace nodes when implemented
     }
 
@@ -208,7 +211,8 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      * @return List of child elements and text nodes
      */
     private List<Item> getElementsAndTextNodes(Item node) {
-        return node.children().stream()
+        return node.children()
+            .stream()
             .filter(child -> child.isElementNode() || child.isTextNode())
             .collect(java.util.stream.Collectors.toList());
     }
@@ -226,22 +230,25 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return false;
         }
 
-        // 3b: Either both nodes are annotated as having simple content or both nodes 
-        // are annotated as having complex content. For this purpose "simple content" means 
-        // either a simple type or a complex type with simple content; "complex content" means 
+        // 3b: Either both nodes are annotated as having simple content or both nodes
+        // are annotated as having complex content. For this purpose "simple content" means
+        // either a simple type or a complex type with simple content; "complex content" means
         // a complex type whose variety is mixed, element-only, or empty.
         // Note: Schema type information is not yet implemented in Rumble, so we skip this check
 
-        // 3c: The two nodes have the same number of attributes, and for every attribute 
+        // 3c: The two nodes have the same number of attributes, and for every attribute
         // $a1 in $i1/@* there exists an attribute $a2 in $i2/@* such that $a1 and $a2 are deep-equal.
         if (!checkAttributesDeepEqual(element1.attributes(), element2.attributes())) {
             return false;
         }
 
         // 3d: One of the following conditions holds:
-        // i. Both element nodes are annotated as having simple content (as defined in 3(b) above), and the typed value of $i1 is deep-equal to the typed value of $i2.
-        // ii. Both element nodes have a type annotation that is a complex type with variety element-only, and the sequence $i1/* is deep-equal to the sequence $i2/*.
-        // iii. Both element nodes have a type annotation that is a complex type with variety mixed, and the sequence $i1/(*|text()) is deep-equal to the sequence $i2/(*|text()).
+        // i. Both element nodes are annotated as having simple content (as defined in 3(b) above), and the typed value
+        // of $i1 is deep-equal to the typed value of $i2.
+        // ii. Both element nodes have a type annotation that is a complex type with variety element-only, and the
+        // sequence $i1/* is deep-equal to the sequence $i2/*.
+        // iii. Both element nodes have a type annotation that is a complex type with variety mixed, and the sequence
+        // $i1/(*|text()) is deep-equal to the sequence $i2/(*|text()).
         // iv. Both element nodes have a type annotation that is a complex type with variety empty.
         // For now, we assume mixed content and compare all child nodes (elements and text) (corresponds to iii.)
         // Note: element type annotations are not yet implemented in Rumble
