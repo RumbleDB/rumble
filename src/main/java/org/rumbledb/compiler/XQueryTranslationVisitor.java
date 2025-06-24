@@ -1665,10 +1665,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitCompTextConstructor(XQueryParser.CompTextConstructorContext ctx) {
         Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
-        
+
         return new TextNodeConstructorExpression(
-            contentExpression,
-            createMetadataFromContext(ctx)
+                contentExpression,
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -1676,7 +1676,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
         Expression contentExpression = (Expression) this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
-        
+
         // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.eqName() != null) {
             // Static element name: element elementName { content }

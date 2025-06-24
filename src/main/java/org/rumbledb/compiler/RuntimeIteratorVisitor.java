@@ -766,10 +766,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitComputedElementConstructor(ComputedElementConstructorExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitComputedElementConstructor(
+            ComputedElementConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
         Expression contentExpression = expression.getContentExpression();
-        RuntimeIterator contentIterator = contentExpression != null ?
-            this.visit(contentExpression, argument) : null;
+        RuntimeIterator contentIterator = contentExpression != null ? this.visit(contentExpression, argument) : null;
 
         RuntimeIterator runtimeIterator;
         if (expression.hasStaticName()) {
@@ -797,12 +799,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitTextNodeConstructor(TextNodeConstructorExpression expression, RuntimeIterator argument) {
+
+    @Override
+    public RuntimeIterator visitTextNodeConstructor(
+            TextNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
         RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
-        
+
         TextNodeConstructorRuntimeIterator result = new TextNodeConstructorRuntimeIterator(
-            new AtomizationIterator(Collections.singletonList(contentIterator), expression.getStaticContextForRuntime(this.config, this.visitorConfig)),
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                new AtomizationIterator(
+                        Collections.singletonList(contentIterator),
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                ),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         result.setStaticContext(expression.getStaticContext());
         return result;

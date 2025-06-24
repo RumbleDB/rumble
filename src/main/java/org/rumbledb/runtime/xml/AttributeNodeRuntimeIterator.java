@@ -55,11 +55,11 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         // follow the spec as defined in https://www.w3.org/TR/xquery-31/#id-attributes
         // 2. Each enclosed expression is converted to a string as follows:
         for (AtomizationIterator atomizedValueIterator : this.atomizedValues) {
-            
+
             // 2.a Atomization is applied to each enclosed expression, converting it to a sequence of atomic values.
             List<Item> atomizedItems = atomizedValueIterator.materialize(dynamicContext);
-            
-            
+
+
             // 2.b If the result of atomization is an empty sequence, the result is the zero-length string.
             if (atomizedItems.isEmpty()) {
                 // Empty atomization result contributes nothing to the final string

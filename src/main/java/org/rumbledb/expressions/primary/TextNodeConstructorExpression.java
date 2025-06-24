@@ -34,6 +34,7 @@ public class TextNodeConstructorExpression extends Expression {
 
     /**
      * Constructor for text node constructor: text { content }
+     * 
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
@@ -47,6 +48,7 @@ public class TextNodeConstructorExpression extends Expression {
 
     /**
      * Get the content expression
+     * 
      * @return The content expression
      */
     public Expression getContentExpression() {
@@ -76,4 +78,4 @@ public class TextNodeConstructorExpression extends Expression {
         }
         sb.append(" }\n");
     }
-} 
+}

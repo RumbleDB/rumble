@@ -496,20 +496,18 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                     expression.getMetadata()
             );
         }
-        result.setStaticContext(expression.getStaticContext());
-        result.setStaticSequenceType(expression.getStaticSequenceType());
-        return result;
     }
 
     @Override
     public Node visitTextNodeConstructor(TextNodeConstructorExpression expression, Node argument) {
         Expression contentExpression = expression.getContentExpression();
-        Expression clonedContentExpression = contentExpression != null ?
-        (Expression) visit(contentExpression, argument) : null;
-            
+        Expression clonedContentExpression = contentExpression != null
+            ? (Expression) visit(contentExpression, argument)
+            : null;
+
         TextNodeConstructorExpression result = new TextNodeConstructorExpression(
-            clonedContentExpression,
-            expression.getMetadata()
+                clonedContentExpression,
+                expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());

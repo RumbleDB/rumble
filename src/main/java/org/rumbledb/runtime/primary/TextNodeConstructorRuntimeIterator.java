@@ -37,6 +37,7 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
 
     /**
      * Constructor for text node constructor runtime iterator
+     * 
      * @param contentIterator Iterator for the content expression
      * @param staticContext The static context
      */
@@ -60,23 +61,23 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
         // see https://www.w3.org/TR/xquery-31/#id-textConstructors
 
         // 1. Atomization is applied to the value of the content expression,
-        // converting it to a sequence of atomic values. 
+        // converting it to a sequence of atomic values.
         List<Item> materialized = this.contentIterator.materialize(dynamicContext);
         // 2. If the result of atomization is an empty sequence, no text node is constructed.
         if (materialized.isEmpty()) {
             return null;
         }
-        // 2. (cont.) Otherwise, each atomic value in the atomized sequence is cast into a string. 
+        // 2. (cont.) Otherwise, each atomic value in the atomized sequence is cast into a string.
         for (Item item : materialized) {
             // 3.The individual strings resulting from the previous step are merged into a single string
             // by concatenating them with a single space character between each pair.
-            // The resulting string becomes the content property of the constructed text node. 
+            // The resulting string becomes the content property of the constructed text node.
             textContent.append(item.getStringValue());
             textContent.append(" ");
         }
         // remove the last space
         textContent.deleteCharAt(textContent.length() - 1);
-        
+
         // Create and return the text node item
         this.hasNext = false;
         return ItemFactory.getInstance()
@@ -84,4 +85,4 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
                 textContent.toString()
             );
     }
-} 
+}
