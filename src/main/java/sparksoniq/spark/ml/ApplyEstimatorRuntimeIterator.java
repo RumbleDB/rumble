@@ -82,11 +82,15 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         } catch (IllegalArgumentException | NoSuchElementException e) {
             String message = e.getMessage();
             if (message == null) {
+                System.err.println("Exception stack trace:");
                 e.printStackTrace();
                 RumbleException ex = new InvalidRumbleMLParamException(
                         "Parameters provided to "
                             + this.estimatorShortName
-                            + " caused an following error with no message."
+                            + " caused an error with no message."
+                            + "Exception class: "
+                            + e.getClass().getName()
+                            + "\n"
                             + "\n\nWe are happy to give you a few hints:"
                             + "\nBy default, we look for the features used to train the model in the field 'features'."
                             + "\nIf this field does not exist, you can build it with the VectorAssembler transformer by combining the fields you want to include."
