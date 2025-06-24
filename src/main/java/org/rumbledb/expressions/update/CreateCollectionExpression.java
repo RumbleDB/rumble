@@ -20,6 +20,8 @@ public class CreateCollectionExpression extends Expression {
         boolean isTable,
         ExceptionMetadata metadata
     ) {
+        // TODO: The current implementations only accounts for two callening modes- table, and delta-file
+        // Extension to other modes can be done by increasing flags for using enum instead
         super(metadata);
         if (collection == null) {
             throw new OurBadException("Collection must be identified for creation.");
@@ -30,7 +32,6 @@ public class CreateCollectionExpression extends Expression {
         this.collection = collection;
         this.contentExpression = contentExpression;
         this.isTable = isTable;
-        System.out.println("##Create collection expression created with " + this.isTable);
     }
 
     public Expression getCollection() {

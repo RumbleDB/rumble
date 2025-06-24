@@ -25,49 +25,39 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        System.out.println("##Delta File");
     }
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        // RuntimeIterator urlIterator = this.children.get(0);
-        // urlIterator.open(context);
-        // String url = urlIterator.next().getStringValue();
-        // urlIterator.close();
-        // URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        // if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
-        //     throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
-        // }
-        // // DeltaTable deltaTable = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(),
-        // // uri.toString());
-        // SparkSessionManager.getInstance()
-        //     .getOrCreateSession()
-        //     .read()
-        //     .format("delta")
-        //     .load(uri.toString())
-        //     .withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id())
-        //     .write()
-        //     .format("delta")
-        //     .mode("overwrite")
-        //     .option("overwriteSchema", true)
-        //     .save(uri.toString());
-        // Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-        //     .getOrCreateSession()
-        //     .read()
-        //     .format("delta")
-        //     .load(uri.toString());
-        // dataFrame = dataFrame.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0));
-        // dataFrame = dataFrame.withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id());
-        // dataFrame = dataFrame.withColumn(SparkSessionManager.pathInColumnName, lit(""));
-        // dataFrame = dataFrame.withColumn(SparkSessionManager.tableLocationColumnName, lit(uri.toString()));
-        // // TODO: Make unique DeltaTable code
-        // return new JSoundDataFrame(dataFrame);
-
-        RuntimeIterator collectionNameIterator = this.children.get(0);
-        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+        RuntimeIterator urlIterator = this.children.get(0);
+        urlIterator.open(context);
+        String url = urlIterator.next().getStringValue();
+        urlIterator.close();
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         
-        String selectQuery = "SELECT * FROM " + collectionName;
-        Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().sql(selectQuery);
+        SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .read()
+            .format("delta")
+            .load(uri.toString())
+            .withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id())
+            .write()
+            .format("delta")
+            .mode("overwrite")
+            .option("overwriteSchema", true)
+            .save(uri.toString());
+        Dataset<Row> dataFrame = SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .read()
+            .format("delta")
+            .load(uri.toString());
+        dataFrame = dataFrame.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0));
+        dataFrame = dataFrame.withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id());
+        dataFrame = dataFrame.withColumn(SparkSessionManager.pathInColumnName, lit(""));
+        dataFrame = dataFrame.withColumn(SparkSessionManager.tableLocationColumnName, lit(uri.toString()));
         
         return new JSoundDataFrame(dataFrame);
     }

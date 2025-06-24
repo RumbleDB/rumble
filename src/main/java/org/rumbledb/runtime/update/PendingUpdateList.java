@@ -58,8 +58,6 @@ public class PendingUpdateList {
         this.delReplaceArrayMap = new TreeMap<>(this.targetComparator);
         this.renameObjMap = new TreeMap<>(this.targetComparator);
         this.createCollectionMap = new TreeMap<>();
-
-        System.out.println("##Creating PUL");
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -226,11 +224,7 @@ public class PendingUpdateList {
         }
 
         ////// APPLY CREATE COLLECTION
-        for (UpdatePrimitive up: this.createCollectionMap.values()) {
-            System.out.println("##Creating: " + up.getCollectionPath());
-            up.apply();
-        }
-        // createCollectionMap.values().forEach(UpdatePrimitive::apply);
+        this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
 
     }
 

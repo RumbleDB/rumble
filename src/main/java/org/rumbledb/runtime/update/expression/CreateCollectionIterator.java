@@ -51,7 +51,6 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
         this.isUpdating = true;
 
-        System.out.println("##Create Collection Iterator created with: " + this.isTable);
     }
 
     public boolean hasPositionIterator() {
@@ -92,7 +91,6 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        System.out.println("##Creating Create Collection UP: "+this.isTable);
         PendingUpdateList pul = new PendingUpdateList();
 
         Item targetItem = null;

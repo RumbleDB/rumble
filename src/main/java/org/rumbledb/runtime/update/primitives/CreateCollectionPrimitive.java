@@ -19,11 +19,9 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
 
     public CreateCollectionPrimitive(String collectionName, Dataset<Row> contents, boolean isTable, ExceptionMetadata metadata) {
         // The target should be the name of the collection, an object of the class String
-        System.out.println("## Collection Primitive made");
         this.collectionName = collectionName;
         this.contents = contents;
-        this.isTable = true;
-        System.out.println("##Create Collection primitive created with: "+this.isTable);
+        this.isTable = isTable;
     }
 
     @Override

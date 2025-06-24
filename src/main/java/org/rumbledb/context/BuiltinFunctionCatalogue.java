@@ -127,7 +127,6 @@ public class BuiltinFunctionCatalogue {
             return builtinFunctions.get(identifier);
         }
         Name name = identifier.getName();
-        System.out.println("##FunctionCatalogue: "+identifier);
         if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
             FunctionIdentifier fn = new FunctionIdentifier(
                     new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),

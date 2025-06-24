@@ -1332,7 +1332,6 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
         Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
-        System.out.println(ctx.table);
         boolean isTable = (ctx.table != null);
         return new CreateCollectionExpression(
             collection, contentExpression, isTable, createMetadataFromContext(ctx)
