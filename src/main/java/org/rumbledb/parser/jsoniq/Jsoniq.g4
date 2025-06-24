@@ -167,6 +167,7 @@ exprSimple              : quantifiedExpr
                         | replaceExpr
                         | transformExpr
                         | appendExpr
+                        | createCollectionExpr
                         ;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
@@ -341,9 +342,14 @@ appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_ex
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 
-copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
+copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
 // TODO: Direct element constructors
+
+
+///////////////////////// Top Level Updating Expressions
+
+createCollectionExpr    : Kcreate Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
 
 
 ///////////////////////// XPath
@@ -548,6 +554,10 @@ keyWords                : Kjsoniq
                         | Kjson
                         | Ktext
                         | Kupdating
+                        | Kcreate
+                        | Kcollection
+                        | Ktable
+                        | Kdeltafile
                         ;
 
 ///////////////////////// literals
@@ -685,6 +695,14 @@ Kposition               : 'position';
 Kjson                   : 'json';
 
 Kupdating               :  'updating';
+
+Kcreate                 : 'create';
+
+Kcollection             : 'collection';
+
+Ktable                  : 'table';
+
+Kdeltafile              : 'delta-file';
 
 
 ///////////////////////// XPath

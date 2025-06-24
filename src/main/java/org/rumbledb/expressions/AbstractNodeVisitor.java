@@ -93,6 +93,7 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -340,6 +341,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTransformExpression(TransformExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCreateCollectionExpression(CreateCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

@@ -5,6 +5,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TooManyRenamesOnSameTargetSelectorException;
 import org.rumbledb.exceptions.TooManyReplacesOnSameTargetSelectorException;
+import org.rumbledb.exceptions.TooManyCollectionCreationsOnSameTargetException;
 import org.rumbledb.runtime.update.primitives.*;
 
 import java.util.*;
@@ -18,6 +19,9 @@ public class PendingUpdateList {
     private Map<Item, Map<Item, Item>> renameObjMap;
     private Comparator<Item> targetComparator;
     private Comparator<Item> arraySelectorComparator;
+
+    private Map<String, UpdatePrimitive> createCollectionMap;
+
 
     public PendingUpdateList() {
         // TODO: diff comparator for delta
@@ -53,6 +57,9 @@ public class PendingUpdateList {
         this.delReplaceObjMap = new TreeMap<>(this.targetComparator);
         this.delReplaceArrayMap = new TreeMap<>(this.targetComparator);
         this.renameObjMap = new TreeMap<>(this.targetComparator);
+        this.createCollectionMap = new TreeMap<>();
+
+        System.out.println("##Creating PUL");
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -61,8 +68,8 @@ public class PendingUpdateList {
     }
 
     public void addUpdatePrimitive(UpdatePrimitive updatePrimitive) {
-        Item target = updatePrimitive.getTarget();
         if (updatePrimitive.isDeleteObject()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
             for (Item locator : updatePrimitive.getContentList()) {
                 locSrcMap.put(locator, null);
@@ -70,32 +77,41 @@ public class PendingUpdateList {
             this.delReplaceObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isReplaceObject()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
             this.delReplaceObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isInsertObject()) {
+            Item target = updatePrimitive.getTarget();
             this.insertObjMap.put(target, updatePrimitive.getContent());
 
         } else if (updatePrimitive.isRenameObject()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.renameObjMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
             this.renameObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isDeleteArray()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), null);
             this.delReplaceArrayMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isReplaceArray()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
             this.delReplaceArrayMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isInsertArray()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, List<Item>> locSrcMap = this.insertArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContentList());
             this.insertArrayMap.put(target, locSrcMap);
+        } else if (updatePrimitive.isCreateCollection()) {
+            String collectionPath = updatePrimitive.getCollectionPath();
+            this.createCollectionMap.put(collectionPath, updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -208,6 +224,13 @@ public class PendingUpdateList {
                 }
             }
         }
+
+        ////// APPLY CREATE COLLECTION
+        for (UpdatePrimitive up: this.createCollectionMap.values()) {
+            System.out.println("##Creating: " + up.getCollectionPath());
+            up.apply();
+        }
+        // createCollectionMap.values().forEach(UpdatePrimitive::apply);
 
     }
 
@@ -325,6 +348,15 @@ public class PendingUpdateList {
                 );
             }
             this.insertArrayMap.put(target, tempSelSrcResListMap);
+        }
+
+        // CREATE COLLECTION
+        for (Map.Entry<String, UpdatePrimitive> entry: otherPul.createCollectionMap.entrySet()) {
+            if (this.createCollectionMap.containsKey(entry.getKey())) {
+                throw new TooManyCollectionCreationsOnSameTargetException(entry.getKey(), metadata);
+            } else {
+                this.createCollectionMap.put(entry.getKey(), entry.getValue());
+            }
         }
     }
 

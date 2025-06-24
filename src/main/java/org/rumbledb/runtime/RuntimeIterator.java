@@ -445,7 +445,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
         buffer.append(getStaticType());
         buffer.append(" | ");
-        buffer.append(this.isUpdating ? "updating" : "simple");
+        buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
         buffer.append(this.isSequential ? "sequential" : "non-sequential");
         buffer.append(" | ");

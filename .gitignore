@@ -11,6 +11,11 @@ rumble*.jar
 *.*~
 /.rumble_shell_history
 
+delta/
+spark-warehouse/
+metastore_db/
+derby.log
+
 # for now ignore jsound package
 src/main/java/jsound/
 src/main/resources/log4j.properties

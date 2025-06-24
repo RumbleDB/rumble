@@ -41,6 +41,7 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
 
 import java.util.ArrayList;
@@ -614,6 +615,32 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         expression.setExpressionClassification(ExpressionClassification.SIMPLE);
         return ExpressionClassification.SIMPLE;
     }
+
+    @Override
+    public ExpressionClassification visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
+        if (!collectionResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Main expression in Insert expression must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "toInsert expression in Insert expression must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
 
     // Endregion
 

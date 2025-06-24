@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
@@ -76,5 +78,13 @@ public class UpdatePrimitiveFactory {
         return new RenameInObjectPrimitive(targetObject, selectorStr, content, metadata);
     }
 
+    public UpdatePrimitive createCreateCollectionPrimitive(
+        String collectionName,
+        Dataset<Row> contents,
+        boolean isTable,
+        ExceptionMetadata metadata
+    ) {
+        return new CreateCollectionPrimitive(collectionName, contents, isTable, metadata);
+    }
 
 }

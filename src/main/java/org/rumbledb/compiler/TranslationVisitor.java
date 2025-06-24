@@ -121,6 +121,7 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
@@ -655,7 +656,11 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (content instanceof JsoniqParser.PathExprContext) {
             return this.visitPathExpr((JsoniqParser.PathExprContext) content);
         }
-        throw new OurBadException("Unrecognized ExprSimple.");
+
+        if (content instanceof JsoniqParser.CreateCollectionExprContext) {
+            return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        }
+        throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
 
     // endregion
@@ -1321,6 +1326,17 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression arrayExpression = (Expression) this.visitExprSingle(ctx.array_expr);
         Expression toAppendExpression = (Expression) this.visitExprSingle(ctx.to_append_expr);
         return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        System.out.println(ctx.table);
+        boolean isTable = (ctx.table != null);
+        return new CreateCollectionExpression(
+            collection, contentExpression, isTable, createMetadataFromContext(ctx)
+        );
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {

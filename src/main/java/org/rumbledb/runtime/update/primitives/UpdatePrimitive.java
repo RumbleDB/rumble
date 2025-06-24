@@ -23,7 +23,9 @@ public interface UpdatePrimitive {
 
     boolean hasSelector();
 
-    Item getTarget();
+    default Item getTarget() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
 
     default Item getSelector() {
         throw new UnsupportedOperationException("Operation not defined");
@@ -41,6 +43,10 @@ public interface UpdatePrimitive {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
+    default Dataset<Row> getContentDataFrame() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+    
     default boolean isDeleteObject() {
         return false;
     }
@@ -73,7 +79,15 @@ public interface UpdatePrimitive {
         return false;
     }
 
+    default boolean isCreateCollection() {
+        return false;
+    }
+
     default void arrayIndexingUpdateSchemaDelta() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default String getCollectionPath() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
