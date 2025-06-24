@@ -87,4 +87,11 @@ public class UpdatePrimitiveFactory {
         return new CreateCollectionPrimitive(collectionName, contents, isTable, metadata);
     }
 
+    public UpdatePrimitive createTruncateCollectionPrimitive(
+        String collectionName,
+        ExceptionMetadata metadata
+    ) {
+        return new TruncateCollectionPrimitive(collectionName, metadata);
+    }
+
 }

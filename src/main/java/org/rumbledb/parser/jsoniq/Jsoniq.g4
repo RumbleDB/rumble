@@ -168,6 +168,7 @@ exprSimple              : quantifiedExpr
                         | transformExpr
                         | appendExpr
                         | createCollectionExpr
+                        | truncateCollectionExpr
                         ;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
@@ -350,6 +351,8 @@ copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 ///////////////////////// Top Level Updating Expressions
 
 createCollectionExpr    : Kcreate Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
+
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
 
 
 ///////////////////////// XPath
@@ -558,6 +561,7 @@ keyWords                : Kjsoniq
                         | Kcollection
                         | Ktable
                         | Kdeltafile
+                        | Ktruncate
                         ;
 
 ///////////////////////// literals
@@ -703,6 +707,8 @@ Kcollection             : 'collection';
 Ktable                  : 'table';
 
 Kdeltafile              : 'delta-file';
+
+Ktruncate               : 'truncate';
 
 
 ///////////////////////// XPath

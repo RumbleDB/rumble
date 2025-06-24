@@ -122,6 +122,7 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
@@ -659,6 +660,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
         if (content instanceof JsoniqParser.CreateCollectionExprContext) {
             return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
+            return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
         }
         throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
@@ -1335,6 +1339,14 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         boolean isTable = (ctx.table != null);
         return new CreateCollectionExpression(
             collection, contentExpression, isTable, createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
+        Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+        return new TruncateCollectionExpression(
+            collectionName, createMetadataFromContext(ctx)
         );
     }
 

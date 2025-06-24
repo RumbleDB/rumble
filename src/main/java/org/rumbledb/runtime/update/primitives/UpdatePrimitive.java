@@ -83,11 +83,19 @@ public interface UpdatePrimitive {
         return false;
     }
 
+    default boolean isTruncateCollection() {
+        return false;
+    }
+
     default void arrayIndexingUpdateSchemaDelta() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
     default String getCollectionPath() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default String getCollectionName() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 

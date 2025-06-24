@@ -42,6 +42,7 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
 
 import java.util.ArrayList;
@@ -624,7 +625,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
         if (!collectionResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Main expression in Insert expression must be Simple",
+                    "Expression for the Name of the collection to be created must be Simple",
                     expression.getMetadata()
             );
         }
@@ -632,7 +633,24 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "toInsert expression in Insert expression must be Simple",
+                    "Content of new collection must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification collectionNameResult = this.visit(expression.getCollectionName(), argument);
+        if (!collectionNameResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for the Name of the collection to be truncated must be Simple",
                     expression.getMetadata()
             );
         }

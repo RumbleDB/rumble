@@ -21,6 +21,7 @@ public class PendingUpdateList {
     private Comparator<Item> arraySelectorComparator;
 
     private Map<String, UpdatePrimitive> createCollectionMap;
+    private Map<String, UpdatePrimitive> truncateCollectionMap;
 
 
     public PendingUpdateList() {
@@ -58,6 +59,7 @@ public class PendingUpdateList {
         this.delReplaceArrayMap = new TreeMap<>(this.targetComparator);
         this.renameObjMap = new TreeMap<>(this.targetComparator);
         this.createCollectionMap = new TreeMap<>();
+        this.truncateCollectionMap = new TreeMap<>();
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -110,6 +112,9 @@ public class PendingUpdateList {
         } else if (updatePrimitive.isCreateCollection()) {
             String collectionPath = updatePrimitive.getCollectionPath();
             this.createCollectionMap.put(collectionPath, updatePrimitive);
+        } else if (updatePrimitive.isTruncateCollection()) {
+            String collectionName = updatePrimitive.getCollectionName();
+            this.truncateCollectionMap.put(collectionName, updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -225,6 +230,10 @@ public class PendingUpdateList {
 
         ////// APPLY CREATE COLLECTION
         this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
+
+        ////// APPLY TRUNCATE COLLECTION
+        this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
+        
 
     }
 
@@ -352,6 +361,12 @@ public class PendingUpdateList {
                 this.createCollectionMap.put(entry.getKey(), entry.getValue());
             }
         }
+
+        // TRUNCATE COLLECTION
+        for (Map.Entry<String, UpdatePrimitive> entry: otherPul.truncateCollectionMap.entrySet()) {
+            this.truncateCollectionMap.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        
     }
 
 }
