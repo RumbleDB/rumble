@@ -1618,7 +1618,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         return new DirElemConstructorExpression(
                 ctx.open_tag_name.getText(),
-                null,
+                new ArrayList<>(),
                 attributes,
                 createMetadataFromContext(ctx)
         );
