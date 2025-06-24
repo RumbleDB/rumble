@@ -44,6 +44,7 @@ import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.primary.TextNodeConstructorExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
@@ -474,25 +475,20 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitComputedElementConstructor(ComputedElementConstructorExpression expression, Node argument) {
-        Expression contentExpression = expression.getContentExpression();
-        Expression clonedContentExpression = contentExpression != null ?
-        (Expression) visit(contentExpression, argument) : null;
-       
-        ComputedElementConstructorExpression result;
         if (expression.hasStaticName()) {
-            result = new ComputedElementConstructorExpression(
+            return new ComputedElementConstructorExpression(
                     expression.getElementName(),
-                    clonedContentExpression,
+                    expression.getContentExpression() != null
+                        ? (Expression) visit(expression.getContentExpression(), argument)
+                        : null,
                     expression.getMetadata()
             );
         } else {
-            Expression nameExpression = expression.getNameExpression();
-            Expression clonedNameExpression = nameExpression != null ?
-            (Expression) visit(nameExpression, argument) : null;
-
-            result = new ComputedElementConstructorExpression(
-                    clonedNameExpression,
-                    clonedContentExpression,
+            return new ComputedElementConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    expression.getContentExpression() != null
+                        ? (Expression) visit(expression.getContentExpression(), argument)
+                        : null,
                     expression.getMetadata()
             );
         }
