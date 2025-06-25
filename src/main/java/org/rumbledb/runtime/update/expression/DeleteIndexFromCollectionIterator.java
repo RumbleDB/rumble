@@ -120,8 +120,10 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
         String selectQuery = String.format(
-            "SELECT rowOrder FROM %s ORDER BY rowOrder %s LIMIT %d",
+            "SELECT %s FROM %s ORDER BY %s %s LIMIT %d",
+            SparkSessionManager.rowOrderColumnName,
             collection,
+            SparkSessionManager.rowOrderColumnName,
             this.isFirst ? "ASC" : "DESC",
             this.numDelete
         );
@@ -130,7 +132,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         for (Row row: rows) {
-            double rowOrder = row.getAs("rowOrder");
+            double rowOrder = row.getAs(SparkSessionManager.rowOrderColumnName);
             UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
                 collection, 
                 rowOrder,

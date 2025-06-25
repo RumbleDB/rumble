@@ -66,9 +66,11 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
         );
 
         this.contents = this.contents.withColumn(
-            "rowOrder",
+            SparkSessionManager.rowOrderColumnName,
             monotonically_increasing_id().cast("double")
         );
+
+
 
         if (this.isTable) {
             this.contents.write()

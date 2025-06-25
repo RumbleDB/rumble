@@ -58,8 +58,9 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
         
         String deleteQuery = String.format(
-            "DELETE FROM %s WHERE rowOrder = %s",
+            "DELETE FROM %s WHERE %s = %s",
             this.collectionPath,
+            SparkSessionManager.rowOrderColumnName,
             String.valueOf(this.rowOrder)
         );
         session.sql(deleteQuery);

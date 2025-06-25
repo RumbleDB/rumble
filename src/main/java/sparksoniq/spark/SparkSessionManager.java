@@ -93,6 +93,7 @@ public class SparkSessionManager {
     public static String rowIdColumnName = "rowID";
     public static String pathInColumnName = "pathIn";
     public static String tableLocationColumnName = "tableLocation";
+    public static String rowOrderColumnName = "rowOrder";
 
     private SparkSessionManager() {
     }

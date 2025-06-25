@@ -78,7 +78,7 @@ public class InsertTuplePrimitive implements UpdatePrimitive {
         );
 
         this.contents = this.contents.withColumn(
-            "rowOrder",
+            SparkSessionManager.rowOrderColumnName,
             monotonically_increasing_id().cast("double")
         );
 
