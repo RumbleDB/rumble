@@ -29,9 +29,9 @@ public class AttributeItem implements Item {
         this.stringValue = attributeNode.getNodeValue();
     }
 
-    public AttributeItem(String qname, String value) {
-        this.nodeName = qname;
-        this.stringValue = value;
+    public AttributeItem(String nodeName, String stringValue) {
+        this.nodeName = nodeName;
+        this.stringValue = stringValue;
     }
 
     @Override

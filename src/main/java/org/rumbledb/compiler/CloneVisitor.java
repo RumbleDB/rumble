@@ -495,6 +495,23 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, Node argument) {
+        if (expression.hasStaticName()) {
+            return new ComputedAttributeConstructorExpression(
+                    expression.getAttributeName(),
+                    (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata()
+            );
+        } else {
+            return new ComputedAttributeConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata()
+            );
+        }
+    }
+
+    @Override
     public Node visitTextNodeConstructor(TextNodeConstructorExpression expression, Node argument) {
         Expression contentExpression = expression.getContentExpression();
         Expression clonedContentExpression = contentExpression != null

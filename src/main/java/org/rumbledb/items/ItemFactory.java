@@ -261,8 +261,8 @@ public class ItemFactory {
         return new AttributeItem(attribute);
     }
 
-    public Item createXmlAttributeNode(String qname, String value) {
-        return new AttributeItem(qname, value);
+    public Item createXmlAttributeNode(String nodeName, String stringValue) {
+        return new AttributeItem(nodeName, stringValue);
     }
 
     public Item createXmlDocumentNode(Node documentNode, List<Item> children) {

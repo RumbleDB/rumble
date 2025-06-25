@@ -69,6 +69,7 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.AttributeNodeExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
@@ -161,6 +162,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.navigation.SequenceLookupIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
+import org.rumbledb.runtime.primary.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.ComputedElementConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
@@ -798,6 +800,42 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return runtimeIterator;
     }
 
+    @Override
+    public RuntimeIterator visitComputedAttributeConstructor(
+            ComputedAttributeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator runtimeIterator;
+        // create atomized iterator for the content expression
+        RuntimeIterator contentExpressionIterator = this.visit(expression.getValueExpression(), argument);
+        AtomizationIterator atomizedContentIterator = new AtomizationIterator(
+                Collections.singletonList(contentExpressionIterator),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        if (expression.hasStaticName()) {
+            // Static attribute name: attribute attributeName { content }
+            runtimeIterator = new ComputedAttributeConstructorRuntimeIterator(
+                    expression.getAttributeName().toString(),
+                    atomizedContentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            // Dynamic attribute name: attribute { nameExpression } { content }
+            // create atomized iterator for the name expression
+            RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            AtomizationIterator atomizedNameIterator = new AtomizationIterator(
+                    Collections.singletonList(nameExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            runtimeIterator = new ComputedAttributeConstructorRuntimeIterator(
+                    atomizedNameIterator,
+                    atomizedContentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
 
     @Override
     public RuntimeIterator visitTextNodeConstructor(

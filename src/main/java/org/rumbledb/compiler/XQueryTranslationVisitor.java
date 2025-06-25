@@ -142,6 +142,7 @@ import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -1658,6 +1659,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
         } else if (child instanceof XQueryParser.CompTextConstructorContext) {
             return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompAttrConstructorContext) {
+            return this.visitCompAttrConstructor((XQueryParser.CompAttrConstructorContext) child);
         }
         throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
     }
@@ -1672,6 +1675,34 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         );
     }
 
+    @Override
+    public Node visitCompAttrConstructor(XQueryParser.CompAttrConstructorContext ctx) {
+        Expression valueExpression = (Expression) visit(ctx.enclosedExpression());
+
+        // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.name != null) {
+            // Static attribute name: attribute attributeName { value }
+            Name attributeName = this.parseEqName(ctx.name, false, false, false);
+            return new ComputedAttributeConstructorExpression(
+                    attributeName,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.name_expr != null) {
+            // Dynamic attribute name: attribute { nameExpression } { value }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.name_expr);
+            return new ComputedAttributeConstructorExpression(
+                    nameExpression,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed attribute constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
 
     @Override
     public Node visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
