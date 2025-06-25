@@ -170,6 +170,7 @@ exprSimple              : quantifiedExpr
                         | createCollectionExpr
                         | truncateCollectionExpr
                         | deleteIndexExpr
+                        | deleteSearchExpr
                         | insertIndexExpr
                         ;
 
@@ -356,7 +357,11 @@ createCollectionExpr    : Kcreate Kcollection (table=Ktable | deltaFile=Kdeltafi
 
 deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=IntegerLiteral? ) Kfrom Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
 
+deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
+
 insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=IntegerLiteral) | first=Kfirst | last=Klast ) Kinto Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+
+// insertSearchExpr        : Kinsert items=exprSingle (after=Kafter | before=Kbefore) target=exptSingle Kinto Kcollection;
 
 truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
 

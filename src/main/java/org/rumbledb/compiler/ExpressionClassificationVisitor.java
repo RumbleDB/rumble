@@ -43,6 +43,7 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
@@ -653,6 +654,23 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         if (!collectionResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Expression for the name of the collection must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content of insertion must be Simple",
                     expression.getMetadata()
             );
         }
