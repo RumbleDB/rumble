@@ -39,6 +39,7 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Constructor for static element name: element elementName { content }
+     * 
      * @param elementName The static element name
      * @param contentExpression The content expression
      * @param metadata The exception metadata
@@ -56,6 +57,7 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Constructor for dynamic element name: element { nameExpression } { content }
+     * 
      * @param nameExpression The dynamic element name expression
      * @param contentExpression The content expression
      * @param metadata The exception metadata
@@ -73,6 +75,7 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Get the static element name
+     * 
      * @return The static element name
      */
     public Name getElementName() {
@@ -81,6 +84,7 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Get the dynamic element name expression
+     * 
      * @return The dynamic element name expression
      */
     public Expression getNameExpression() {
@@ -89,6 +93,7 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Get the content expression
+     * 
      * @return The content expression
      */
     public Expression getContentExpression() {
@@ -97,6 +102,7 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Check if the element has a static name
+     * 
      * @return True if the element has a static name, false otherwise
      */
     public boolean hasStaticName() {
@@ -137,4 +143,4 @@ public class ComputedElementConstructorExpression extends Expression {
         }
         sb.append(" }\n");
     }
-} 
+}
