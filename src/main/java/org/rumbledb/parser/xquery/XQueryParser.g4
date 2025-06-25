@@ -484,7 +484,7 @@ compElemConstructor: KW_ELEMENT ( eqName |(LBRACE expr RBRACE)) enclosedContentE
 
 enclosedContentExpr: enclosedExpression ;
 
-compAttrConstructor: KW_ATTRIBUTE (eqName | (LBRACE expr RBRACE)) enclosedExpression ;
+compAttrConstructor: KW_ATTRIBUTE (name=eqName | (LBRACE name_expr=expr RBRACE)) enclosedExpression ;
 
 // replaced with the prefix production to allow the usage of the prefix label in the moduleImport rule
 compNamespaceConstructor: KW_NAMESPACE (ncName | enclosedPrefixExpr) enclosedURIExpr ;
