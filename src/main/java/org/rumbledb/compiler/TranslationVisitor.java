@@ -123,6 +123,7 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -1359,6 +1360,25 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
         return new DeleteIndexFromCollectionExpression(
             collection, numDelete, isFirst, isTable, createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isTable = (ctx.table != null);
+        boolean isLast = (ctx.last != null);
+        Integer pos = null;
+        if (ctx.pos != null) {
+            pos = Integer.parseInt(ctx.pos.getText());
+        }
+        if (ctx.first != null) {
+            pos = 1;
+        }
+
+        return new InsertIndexIntoCollectionExpression(
+            collection, contentExpression, isTable, pos, isLast, createMetadataFromContext(ctx)
         );
     }
 

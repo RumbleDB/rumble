@@ -95,6 +95,16 @@ public class UpdatePrimitiveFactory {
         return new DeleteTupleFromCollectionPrimitive(collectionName, rowOrder, metadata);
     }
 
+    public UpdatePrimitive createInsertTuplePrimitive(
+        String collection,
+        Dataset<Row> contents,
+        double rowOrderBase,
+        double rowOrderMax,
+        ExceptionMetadata metadata
+    ) {
+        return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
+    }
+
     public UpdatePrimitive createTruncateCollectionPrimitive(
         String collectionName,
         ExceptionMetadata metadata

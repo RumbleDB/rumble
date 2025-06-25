@@ -95,6 +95,7 @@ import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -347,6 +348,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitCreateCollectionExpression(CreateCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitInsertIndexIntoCollectionExpression(InsertIndexIntoCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

@@ -87,6 +87,10 @@ public interface UpdatePrimitive {
         return false;
     }
 
+    default boolean isInsertTuple() {
+        return false;
+    }
+
     default boolean isTruncateCollection() {
         return false;
     }
@@ -104,6 +108,14 @@ public interface UpdatePrimitive {
     }
 
     default double getRowOrder() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default double getRowOrderRangeBase() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default double getRowOrderRangeMax() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
