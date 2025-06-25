@@ -96,12 +96,10 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             // processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedAttributes
 
-            // 1. atomization is applied to the value of the name expression
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
-            // 1. (cont.) If the result of atomization is not a single atomic value of type xs:QName, xs:string, or
+            // 1. Atomization is applied to the result of the name expression. If the result of
+            // atomization is not a single atomic value of type xs:QName, xs:string, or
             // xs:untypedAtomic, a type error is raised [err:XPTY0004].
-            // TODO: better type checking of the name expression. As soon as we have a stable xml type system, we should
-            // use it here.
+            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed attribute constructor name must evaluate to a single atomic value"
@@ -114,6 +112,22 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 );
             }
 
+            // 2. If the atomized value of the name expression is of type xs:QName:
+            // a. If the expanded QName returned by the atomized name expression has a namespace URI
+            // but has no prefix, it is given an implementation-dependent prefix.
+            // b. The resulting expanded QName (including its prefix) is used as the node-name
+            // property of the constructed attribute node.
+            //
+            // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
+            // that value is converted to an expanded QName. If the string value contains a namespace
+            // prefix, that prefix is resolved to a namespace URI using the statically known namespaces.
+            // If the string value contains no namespace prefix, it is treated as a local name in no
+            // namespace. The resulting expanded QName (including its prefix) is used as the node-name
+            // property of the constructed attribute. If conversion of the atomized name expression to
+            // an expanded QName is not successful, a dynamic error is raised [err:XQDY0074].
+
+            // For now, we implement simplified processing by converting to string value
+            // TODO: Implement full QName processing with namespace resolution when we have a stable xml type system
             attributeName = atomizedNameItem.getStringValue();
         }
 
