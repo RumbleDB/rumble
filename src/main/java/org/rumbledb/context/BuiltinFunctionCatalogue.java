@@ -108,6 +108,7 @@ import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
 import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
+import org.rumbledb.runtime.functions.xml.NodeNameFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -509,6 +510,21 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.FN_NS, "fn", "root"),
         "item",
         GetRootFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction name_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "name"),
+        "item?",
+        "string",
+        NodeNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction name_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "name"),
+        "string",
+        NodeNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3250,6 +3266,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(doc.getIdentifier(), doc);
         builtinFunctions.put(root_with_arg.getIdentifier(), root_with_arg);
         builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
+        builtinFunctions.put(name_with_arg.getIdentifier(), name_with_arg);
+        builtinFunctions.put(name_without_arg.getIdentifier(), name_without_arg);
         builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);
     }
 

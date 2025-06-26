@@ -144,7 +144,10 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         return elementItem;
     }
 
-    private static List<RuntimeIterator> createChildList(List<RuntimeIterator> content, List<AttributeNodeRuntimeIterator> attributes) {
+    private static List<RuntimeIterator> createChildList(
+            List<RuntimeIterator> content,
+            List<AttributeNodeRuntimeIterator> attributes
+    ) {
         List<RuntimeIterator> children = new ArrayList<>();
         children.addAll(content);
         children.addAll(attributes);
