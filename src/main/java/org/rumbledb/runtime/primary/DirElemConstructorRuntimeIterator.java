@@ -22,8 +22,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,16 +35,15 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
     private static final long serialVersionUID = 1L;
     private String tagName;
     private List<RuntimeIterator> content;
-    private List<RuntimeIterator> attributes;
+    private List<AttributeNodeRuntimeIterator> attributes;
 
     public DirElemConstructorRuntimeIterator(
             String tagName,
             List<RuntimeIterator> content,
-            List<RuntimeIterator> attributes,
+            List<AttributeNodeRuntimeIterator> attributes,
             RuntimeStaticContext staticContext
     ) {
-        // TODO: pass content and attributes to the super constructor?
-        super(content, staticContext);
+        super(createChildList(content, attributes), staticContext);
         this.content = content;
         this.attributes = attributes;
         this.tagName = tagName;
@@ -132,11 +133,22 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
         // create and return the element item
         this.hasNext = false;
-        return ItemFactory.getInstance()
+        ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
                 this.tagName,
                 content,
                 attributes
             );
+        // set the parent of the child nodes to the element node
+        elementItem.addParentToDescendants();
+        return elementItem;
     }
+
+    private static List<RuntimeIterator> createChildList(List<RuntimeIterator> content, List<AttributeNodeRuntimeIterator> attributes) {
+        List<RuntimeIterator> children = new ArrayList<>();
+        children.addAll(content);
+        children.addAll(attributes);
+        return children;
+    }
+
 }

@@ -759,7 +759,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     .collect(Collectors.toList()),
                 expression.getAttributes()
                     .stream()
-                    .map(arg -> this.visit(arg, argument))
+                    .map(arg -> (AttributeNodeRuntimeIterator) this.visit(arg, argument))
                     .collect(Collectors.toList()),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
