@@ -141,6 +141,9 @@ public enum ErrorCode {
 
     UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
 
+    InvalidElementNameErrorCode("XQDY0074"),
+    InvalidNodeNameErrorCode("XQDY0096"),
+
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
     CannotCastUpdateSelectorErrorCode("JNUP0007"),

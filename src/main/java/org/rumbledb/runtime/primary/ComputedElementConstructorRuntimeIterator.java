@@ -93,29 +93,48 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             elementName = this.staticElementName;
         } else {
             // Dynamic element name - evaluate the name expression
-            // processing of the name expression according to
+            // Processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedElements
 
-            // 1. atomization is applied to the value of the name expression
+            // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
+            // single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised
+            // [err:XPTY0004].
             List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
-            // 1. (cont.) If the result of atomization is not a single atomic value of type xs:QName, xs:string, or
-            // xs:untypedAtomic, a type error is raised [err:XPTY0004].
-            // TODO: better type checking of the name expression. As soon as we have a stable xml type system, we should
-            // use it here.
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed element constructor name must evaluate to a single atomic value"
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic"
                 );
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
             if (!(atomizedNameItem.isAtomic())) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed element constructor name must evaluate to a single atomic value"
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic"
                 );
             }
+            // TODO: implement proper type checking when we have a stable xml type system
 
-            elementName = atomizedNameItem.getStringValue();
+            // 2. If the atomized value of the name expression is of type xs:QName, that expanded QName is used as the
+            // node-name property of the constructed element, retaining the prefix part of the QName.
+            // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic, that value is
+            // converted to an expanded QName. If the string value contains a namespace prefix, that prefix is resolved
+            // to a namespace URI using the statically known namespaces. If the string value contains no namespace
+            // prefix, it is treated as a local name in the default element/type namespace. The resulting expanded QName
+            // is used as the node-name property of the constructed element, retaining the prefix part of the QName. If
+            // conversion of the atomized name expression to an expanded QName is not successful, a dynamic error is
+            // raised [err:XQDY0074].
 
+            String nameString = atomizedNameItem.getStringValue();
+            // TODO: implement proper QName processing with namespace resolution when we have a stable xml type system
+
+            // A dynamic error is raised [err:XQDY0096] if the node-name of the constructed element node has any of the
+            // following properties:
+            // - Its namespace prefix is xmlns.
+            // - Its namespace URI is http://www.w3.org/2000/xmlns/.
+            // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
+            // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+            // TODO: implement proper validation of the element name
+
+            elementName = nameString;
         }
 
         // Process content
