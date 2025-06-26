@@ -59,6 +59,7 @@ import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.primary.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
@@ -413,6 +414,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitComputedAttributeConstructor(
             ComputedAttributeConstructorExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression,
             StaticContext argument
     ) {
         visitDescendants(expression, argument);

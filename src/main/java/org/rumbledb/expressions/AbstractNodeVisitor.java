@@ -56,6 +56,7 @@ import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.primary.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.primary.TextNodeConstructorExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
@@ -247,6 +248,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

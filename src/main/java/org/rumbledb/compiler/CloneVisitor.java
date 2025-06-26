@@ -45,6 +45,7 @@ import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.primary.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.primary.TextNodeConstructorExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DirElemConstructorExpression;
@@ -509,6 +510,22 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                     expression.getMetadata()
             );
         }
+    }
+
+    @Override
+    public Node visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression = contentExpression != null
+            ? (Expression) visit(contentExpression, argument)
+            : null;
+
+        DocumentNodeConstructorExpression result = new DocumentNodeConstructorExpression(
+                clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     @Override

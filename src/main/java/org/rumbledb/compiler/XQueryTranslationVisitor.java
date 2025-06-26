@@ -143,6 +143,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.expressions.primary.AttributeNodeContentExpression;
 import org.rumbledb.expressions.primary.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.primary.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.primary.DocumentNodeConstructorExpression;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -1655,7 +1656,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitComputedConstructor(XQueryParser.ComputedConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.CompElemConstructorContext) {
+        if (child instanceof XQueryParser.CompDocConstructorContext) {
+            return this.visitCompDocConstructor((XQueryParser.CompDocConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompElemConstructorContext) {
             return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
         } else if (child instanceof XQueryParser.CompTextConstructorContext) {
             return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
@@ -1663,6 +1666,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitCompAttrConstructor((XQueryParser.CompAttrConstructorContext) child);
         }
         throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCompDocConstructor(XQueryParser.CompDocConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new DocumentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override

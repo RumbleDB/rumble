@@ -269,6 +269,10 @@ public class ItemFactory {
         return new DocumentItem(documentNode, children);
     }
 
+    public Item createXmlDocumentNode(List<Item> children) {
+        return new DocumentItem(children);
+    }
+
     public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
         return new ElementItem(elementNode, children, attributes);
     }
