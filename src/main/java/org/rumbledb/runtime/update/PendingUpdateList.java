@@ -6,6 +6,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TooManyRenamesOnSameTargetSelectorException;
 import org.rumbledb.exceptions.TooManyReplacesOnSameTargetSelectorException;
 import org.rumbledb.exceptions.TooManyCollectionCreationsOnSameTargetException;
+import org.rumbledb.exceptions.TooManyEditsOnSameTargetException;
 import org.rumbledb.runtime.update.primitives.*;
 
 import java.util.*;
@@ -23,6 +24,7 @@ public class PendingUpdateList {
     private Map<String, UpdatePrimitive> createCollectionMap;
     private Map<String, UpdatePrimitive> truncateCollectionMap;
     private Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
+    private Map<String, Map<Double, UpdatePrimitive>> editTupleMap;
 
 
     public PendingUpdateList() {
@@ -62,6 +64,7 @@ public class PendingUpdateList {
         this.createCollectionMap = new TreeMap<>();
         this.truncateCollectionMap = new TreeMap<>();
         this.deleteTupleMap = new TreeMap<>();
+        this.editTupleMap = new TreeMap<>();
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -121,6 +124,10 @@ public class PendingUpdateList {
             String collection = updatePrimitive.getCollectionPath();
             Double rowOrder = updatePrimitive.getRowOrder();
             this.deleteTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
+        } else if (updatePrimitive.isEditTuple()) {
+            String collection = updatePrimitive.getCollectionPath();
+            Double rowOrder = updatePrimitive.getRowOrder();
+            this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -247,6 +254,10 @@ public class PendingUpdateList {
             tables.values().forEach(UpdatePrimitive::apply);
         }
 
+        ////// APPLY EDIT TUPLE
+        for (Map<Double, UpdatePrimitive> tables: this.editTupleMap.values()) {
+            tables.values().forEach(UpdatePrimitive::apply);
+        }
 
     }
 
@@ -379,7 +390,32 @@ public class PendingUpdateList {
         for (Map.Entry<String, UpdatePrimitive> entry: otherPul.truncateCollectionMap.entrySet()) {
             this.truncateCollectionMap.putIfAbsent(entry.getKey(), entry.getValue());
         }
+
+        // DELETE TUPLE
+        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry: otherPul.deleteTupleMap.entrySet()) {
+            String collection = tableEntry.getKey();
+            Map<Double, UpdatePrimitive> tableMap = this.deleteTupleMap.computeIfAbsent(collection, k -> new TreeMap<>());
+            
+            for (Map.Entry<Double, UpdatePrimitive> entry: tableEntry.getValue().entrySet()) {
+                tableMap.putIfAbsent(entry.getKey(), entry.getValue());
+            }
+        }
         
+        // EDIT TUPLE
+        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry: otherPul.editTupleMap.entrySet()) {
+            String collection = tableEntry.getKey();
+            Map<Double, UpdatePrimitive> tableMap = this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>());
+            
+            for (Map.Entry<Double, UpdatePrimitive> entry: tableEntry.getValue().entrySet()) {
+                if (tableMap.containsKey(entry.getKey())) {
+                    throw new TooManyEditsOnSameTargetException(collection, entry.getKey(), metadata);
+                } 
+                else {
+                    tableMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
     }
 
 }

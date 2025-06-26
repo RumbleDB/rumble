@@ -147,6 +147,7 @@ public enum ErrorCode {
     TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
     TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
     TooManyCollectionCreationsOnSameTargetException("JNUP0011"),
+    TooManyEditsOnSameTargetException("JNUP0012"),
     CannotResolveUpdateSelectorErrorCode("JNUP0016"),
     ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
 

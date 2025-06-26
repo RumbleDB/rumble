@@ -171,6 +171,7 @@ exprSimple              : quantifiedExpr
                         | truncateCollectionExpr
                         | deleteIndexExpr
                         | deleteSearchExpr
+                        | editCollectionExpr
                         | insertIndexExpr
                         ;
 
@@ -362,6 +363,8 @@ deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
 insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=IntegerLiteral) | first=Kfirst | last=Klast ) Kinto Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
 
 truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
+
+editCollectionExpr      : Kedit target=exprSingle Kby content=exprSingle Kfrom Kcollection;
 
 
 ///////////////////////// XPath
@@ -574,6 +577,7 @@ keyWords                : Kjsoniq
                         | Kfirst
                         | Klast
                         | Kfrom
+                        | Kedit
                         ;
 
 ///////////////////////// literals
@@ -727,6 +731,8 @@ Kfirst                  : 'first';
 Klast                   : 'last';
 
 Kfrom                   : 'from';
+
+Kedit                   : 'edit';
 
 
 ///////////////////////// XPath

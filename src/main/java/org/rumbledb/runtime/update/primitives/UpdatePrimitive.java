@@ -27,6 +27,10 @@ public interface UpdatePrimitive {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
+    default Dataset<Row> getTargetDataFrame() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
     default Item getSelector() {
         throw new UnsupportedOperationException("Operation not defined");
     }
@@ -84,6 +88,10 @@ public interface UpdatePrimitive {
     }
 
     default boolean isDeleteTuple() {
+        return false;
+    }
+
+    default boolean isEditTuple() {
         return false;
     }
 

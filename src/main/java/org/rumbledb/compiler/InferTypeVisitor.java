@@ -102,6 +102,7 @@ import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
@@ -847,6 +848,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         DeleteSearchFromCollectionExpression expression, 
         StaticContext argument
     ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitEditCollectionExpression(EditCollectionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;

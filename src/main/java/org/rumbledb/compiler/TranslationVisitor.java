@@ -124,6 +124,7 @@ import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -669,6 +670,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
         if (content instanceof JsoniqParser.DeleteSearchExprContext) {
             return this.visitDeleteSearchExpr((JsoniqParser.DeleteSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.EditCollectionExprContext) {
+            return this.visitEditCollectionExpr((JsoniqParser.EditCollectionExprContext) content);
         }
         if (content instanceof JsoniqParser.InsertIndexExprContext) {
             return this.visitInsertIndexExpr((JsoniqParser.InsertIndexExprContext) content);
@@ -1375,6 +1379,15 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
         return new DeleteSearchFromCollectionExpression(
             contentExpression, createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new EditCollectionExpression(
+            targetExpression, contentExpression, createMetadataFromContext(ctx)
         );
     }
 
