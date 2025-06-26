@@ -143,6 +143,8 @@ public enum ErrorCode {
 
     InvalidElementNameErrorCode("XQDY0074"),
     InvalidNodeNameErrorCode("XQDY0096"),
+    DuplicateAttributeErrorCode("XQDY0025"),
+    AttributeAfterNonAttributeErrorCode("XQTY0024"),
 
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
