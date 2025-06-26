@@ -98,13 +98,15 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
         }
         catch (MoreThanOneItemException e) {
-            throw new InvalidUpdateTargetException("The collection name must be a string, but more than one item was provided.",
-                     this.getMetadata()
+            throw new InvalidUpdateTargetException(
+                "The collection name must be a string, but more than one item was provided.",
+                this.getMetadata()
             );
         }
         catch (NoItemException e) {
-            throw new InvalidUpdateTargetException("The collection name must be a string, but no item was provided.",
-                     this.getMetadata()
+            throw new InvalidUpdateTargetException(
+                "The collection name must be a string, but no item was provided.",
+                this.getMetadata()
             );
         }
 

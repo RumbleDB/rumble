@@ -35,6 +35,8 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
         String selectQuery = "SELECT * FROM " + collectionName;
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().sql(selectQuery);
         
+        dataFrame.show();
+        
         return new JSoundDataFrame(dataFrame);
     }
 }

@@ -17,6 +17,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
 import java.util.Arrays;
@@ -85,7 +86,25 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        return null;
+        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        List<Row> rows = contentDF.collectAsList();
+        
+        if (rows.isEmpty()) {
+            // Not throwing an error for empty deletion
+            return null;
+        }
+
+        PendingUpdateList pul = new PendingUpdateList();
+        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+        String collection = rows.get(0).getAs(SparkSessionManager.tableLocationColumnName);
+        for (Row row: rows) {
+            UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
+                collection, row.getAs(SparkSessionManager.rowOrderColumnName), this.getMetadata()
+            );
+            pul.addUpdatePrimitive(up);
+        }
+
+        return pul;
     }
 
 }

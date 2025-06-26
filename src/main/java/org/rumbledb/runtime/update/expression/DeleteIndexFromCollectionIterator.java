@@ -134,9 +134,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         for (Row row: rows) {
             double rowOrder = row.getAs(SparkSessionManager.rowOrderColumnName);
             UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
-                collection, 
-                rowOrder,
-                this.getMetadata()
+                collection, rowOrder, this.getMetadata()
             );
             pul.addUpdatePrimitive(up);
         }
