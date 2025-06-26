@@ -638,6 +638,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region EnclosedExpression
     @Override
     public Node visitEnclosedExpression(XQueryParser.EnclosedExpressionContext ctx) {
+        // empty expression
+        if (ctx.expr() == null) {
+            return null;
+        }
         return this.visitExpr(ctx.expr());
     }
     // endregion
@@ -1670,8 +1674,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitCompDocConstructor(XQueryParser.CompDocConstructorContext ctx) {
-        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
-
+        Expression contentExpression = (Expression) this.visitEnclosedExpression(ctx.enclosedExpression());
         return new DocumentNodeConstructorExpression(
                 contentExpression,
                 createMetadataFromContext(ctx)
