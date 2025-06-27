@@ -39,16 +39,18 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         
+        // TODO: For 1 item, this is a TreatIterator not conforming to DF; but for more than 1, it is DataFrame
         if (!contentIterator.isDataFrame()) {
+            System.out.println("##"+contentIterator);
             throw new CannotResolveUpdateSelectorException(
-                "The given content doesn not conform to a dataframe",
+                "The given content does not conform to a dataframe",
                 this.getMetadata()
             );
         }
 
         if (!targetIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                "The given target doesn not conform to a dataframe",
+                "The given target does not conform to a dataframe",
                 this.getMetadata()
             );
         }

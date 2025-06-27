@@ -4,6 +4,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -67,7 +68,7 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         String collectionPath = this.getCollectionPath();
-        long targetMutabilityLevel = this.targetRow.getAs(SparkSessionManager.mutabilityLevelColumnName);
+        int targetMutabilityLevel = this.targetRow.getAs(SparkSessionManager.mutabilityLevelColumnName);
         long targetRowID = this.targetRow.getAs(SparkSessionManager.rowIdColumnName);
         double targetRowOrder = this.targetRow.getAs(SparkSessionManager.rowOrderColumnName);
         String pathInColumn = this.targetRow.getAs(SparkSessionManager.pathInColumnName);
@@ -75,11 +76,25 @@ public class EditTuplePrimitive implements UpdatePrimitive {
         this.contents = this.contents
                             .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
                             .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder))
-                            .withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0))
-                            .withColumn(SparkSessionManager.pathInColumnName, lit(""))
+                            .withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(targetMutabilityLevel))
+                            .withColumn(SparkSessionManager.pathInColumnName, lit(pathInColumn))
                             .withColumn(SparkSessionManager.tableLocationColumnName, lit(collectionPath));
+
+        System.out.println("##Contents\n"+this.contents.schema().treeString());
+        System.out.println("##Target\n"+this.target.schema().treeString());
     
-        System.out.println("##"+this.contents.schema().equals(this.target.schema()));
+        // System.out.println("##"+this.contents.schema().equals(this.target.schema()));
+        SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+        String tempViewName = String.format("__edit_tview_%s_%d", collectionPath, targetRowID);
+        this.contents.createOrReplaceTempView(tempViewName);
+
+        String deleteQuery = String.format("DELETE FROM %s WHERE %s = %d", collectionPath, SparkSessionManager.rowIdColumnName, targetRowID);
+        session.sql(deleteQuery);
+
+        String insertQuery = String.format("INSERT INTO %s SELECT * FROM %s", collectionPath, tempViewName);
+        session.sql(insertQuery);
+
+        session.catalog().dropTempView(tempViewName);
 
     }
 
