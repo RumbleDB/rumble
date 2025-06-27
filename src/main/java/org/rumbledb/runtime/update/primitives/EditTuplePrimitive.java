@@ -85,7 +85,8 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     
         // System.out.println("##"+this.contents.schema().equals(this.target.schema()));
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        String tempViewName = String.format("__edit_tview_%s_%d", collectionPath, targetRowID);
+        String safeName = collectionPath.replaceAll("[^a-zA-Z0-9_]", "_");
+        String tempViewName = String.format("__edit_tview_%s_%d", safeName, targetRowID);
         this.contents.createOrReplaceTempView(tempViewName);
 
         String deleteQuery = String.format("DELETE FROM %s WHERE %s = %d", collectionPath, SparkSessionManager.rowIdColumnName, targetRowID);

@@ -25,6 +25,7 @@ public class PendingUpdateList {
     private Map<String, UpdatePrimitive> truncateCollectionMap;
     private Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
     private Map<String, Map<Double, UpdatePrimitive>> editTupleMap;
+    private List<UpdatePrimitive> insertTupleList;
 
 
     public PendingUpdateList() {
@@ -65,6 +66,7 @@ public class PendingUpdateList {
         this.truncateCollectionMap = new TreeMap<>();
         this.deleteTupleMap = new TreeMap<>();
         this.editTupleMap = new TreeMap<>();
+        this.insertTupleList = new ArrayList<>();
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -128,6 +130,8 @@ public class PendingUpdateList {
             String collection = updatePrimitive.getCollectionPath();
             Double rowOrder = updatePrimitive.getRowOrder();
             this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
+        } else if (updatePrimitive.isInsertTuple()) {
+            this.insertTupleList.add(updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -258,6 +262,9 @@ public class PendingUpdateList {
         for (Map<Double, UpdatePrimitive> tables: this.editTupleMap.values()) {
             tables.values().forEach(UpdatePrimitive::apply);
         }
+
+        ////// APPLY INSERT TUPLE
+        this.insertTupleList.forEach(UpdatePrimitive::apply);
 
     }
 
@@ -414,6 +421,9 @@ public class PendingUpdateList {
                 }
             }
         }
+
+        // TODO: MERGE CONFLICT IN INSERT TUPLE & DELETE, EDIT
+        this.insertTupleList.addAll(otherPul.insertTupleList);
 
     }
 
