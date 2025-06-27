@@ -37,6 +37,7 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
         super(Arrays.asList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
         
+        // TODO: In case of sequence dereference, SequenceLookupIterator is the type of contentIterator
         if (!contentIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
                 "The given content doesn not conform to a dataframe",

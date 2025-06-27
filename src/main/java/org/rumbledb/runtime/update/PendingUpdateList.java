@@ -261,10 +261,7 @@ public class PendingUpdateList {
 
     }
 
-    public void mergeUpdates(
-            PendingUpdateList otherPul,
-            ExceptionMetadata metadata
-    ) {
+    public void mergeUpdates(PendingUpdateList otherPul, ExceptionMetadata metadata) {
         Map<Item, Item> tempSelSrcMap;
         Map<Item, List<Item>> tempSelSrcListMap;
         Map<Item, Item> tempSelSrcResMap;
@@ -391,6 +388,7 @@ public class PendingUpdateList {
             this.truncateCollectionMap.putIfAbsent(entry.getKey(), entry.getValue());
         }
 
+        // TODO: MERGE CONFLICTS BETWEEN EDIT AND DELETE
         // DELETE TUPLE
         for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry: otherPul.deleteTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
@@ -401,6 +399,7 @@ public class PendingUpdateList {
             }
         }
         
+        // TODO: MERGE CONFLICTS BETWEEN EDIT AND DELETE
         // EDIT TUPLE
         for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry: otherPul.editTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
