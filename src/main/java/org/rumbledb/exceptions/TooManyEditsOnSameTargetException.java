@@ -8,7 +8,7 @@ public class TooManyEditsOnSameTargetException extends RumbleException {
 
     public TooManyEditsOnSameTargetException(String collection, double rowID, ExceptionMetadata metadata) {
         super(
-            "Dynamic Updating error; Too many edit requested for collection: " + collection + " ; rowID:" + rowID +".",
+            "Dynamic Updating error; Too many edit requested for collection: " + collection + " ; rowID:" + rowID + ".",
             ErrorCode.TooManyEditsOnSameTargetException,
             metadata
         );

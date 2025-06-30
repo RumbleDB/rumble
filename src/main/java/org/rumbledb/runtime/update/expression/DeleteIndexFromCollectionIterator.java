@@ -1,16 +1,11 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
@@ -21,11 +16,8 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.util.Collections;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
@@ -36,11 +28,11 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
     private final boolean isTable;
 
     public DeleteIndexFromCollectionIterator(
-        RuntimeIterator targetIterator,
-        int numDelete,
-        boolean isFirst,
-        boolean isTable,
-        RuntimeStaticContext staticContext
+            RuntimeIterator targetIterator,
+            int numDelete,
+            boolean isFirst,
+            boolean isTable,
+            RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
@@ -91,26 +83,27 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         Item targetItem = null;
         try {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
-        }
-        catch (MoreThanOneItemException e) {
-            throw new InvalidUpdateTargetException("The collection name must be a string, but more than one item was provided.",
-                     this.getMetadata()
+        } catch (MoreThanOneItemException e) {
+            throw new InvalidUpdateTargetException(
+                    "The collection name must be a string, but more than one item was provided.",
+                    this.getMetadata()
             );
-        }
-        catch (NoItemException e) {
-            throw new InvalidUpdateTargetException("The collection name must be a string, but no item was provided.",
-                     this.getMetadata()
-            );
-        }
-
-        if(! targetItem.isString()) {
-            throw new InvalidUpdateTargetException("Expecting collection name as a String, but it was: " 
-                                                        + targetItem.getDynamicType().getIdentifierString(),
-                                                    this.getMetadata()
+        } catch (NoItemException e) {
+            throw new InvalidUpdateTargetException(
+                    "The collection name must be a string, but no item was provided.",
+                    this.getMetadata()
             );
         }
 
-        String collection = null; 
+        if (!targetItem.isString()) {
+            throw new InvalidUpdateTargetException(
+                    "Expecting collection name as a String, but it was: "
+                        + targetItem.getDynamicType().getIdentifierString(),
+                    this.getMetadata()
+            );
+        }
+
+        String collection = null;
         if (this.isTable) {
             collection = targetItem.getStringValue();
         } else {
@@ -127,18 +120,20 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             this.isFirst ? "ASC" : "DESC",
             this.numDelete
         );
-        System.out.println("##"+selectQuery);
+        System.out.println("##" + selectQuery);
         List<Row> rows = session.sql(selectQuery).collectAsList();
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        for (Row row: rows) {
+        for (Row row : rows) {
             double rowOrder = row.getAs(SparkSessionManager.rowOrderColumnName);
             UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
-                collection, rowOrder, this.getMetadata()
+                collection,
+                rowOrder,
+                this.getMetadata()
             );
             pul.addUpdatePrimitive(up);
         }
-        
+
         return pul;
     }
 

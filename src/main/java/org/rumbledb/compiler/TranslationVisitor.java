@@ -1354,7 +1354,10 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
         boolean isTable = (ctx.table != null);
         return new CreateCollectionExpression(
-            collection, contentExpression, isTable, createMetadataFromContext(ctx)
+                collection,
+                contentExpression,
+                isTable,
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -1370,7 +1373,11 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
 
         return new DeleteIndexFromCollectionExpression(
-            collection, numDelete, isFirst, isTable, createMetadataFromContext(ctx)
+                collection,
+                numDelete,
+                isFirst,
+                isTable,
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -1378,7 +1385,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
         return new DeleteSearchFromCollectionExpression(
-            contentExpression, createMetadataFromContext(ctx)
+                contentExpression,
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -1387,7 +1395,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
         return new EditCollectionExpression(
-            targetExpression, contentExpression, createMetadataFromContext(ctx)
+                targetExpression,
+                contentExpression,
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -1406,7 +1416,12 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
 
         return new InsertIndexIntoCollectionExpression(
-            collection, contentExpression, isTable, pos, isLast, createMetadataFromContext(ctx)
+                collection,
+                contentExpression,
+                isTable,
+                pos,
+                isLast,
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -1414,7 +1429,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
         Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
         return new TruncateCollectionExpression(
-            collectionName, createMetadataFromContext(ctx)
+                collectionName,
+                createMetadataFromContext(ctx)
         );
     }
 

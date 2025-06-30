@@ -16,11 +16,11 @@ public class DeleteIndexFromCollectionExpression extends Expression {
     private boolean isTable;
 
     public DeleteIndexFromCollectionExpression(
-        Expression collection,
-        int numDelete,
-        boolean isFirst,
-        boolean isTable,
-        ExceptionMetadata metadata
+            Expression collection,
+            int numDelete,
+            boolean isFirst,
+            boolean isTable,
+            ExceptionMetadata metadata
     ) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
         // Extension to other modes can be done by increasing flags for using enum instead

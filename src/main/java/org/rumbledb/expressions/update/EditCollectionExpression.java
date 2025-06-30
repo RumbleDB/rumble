@@ -14,9 +14,9 @@ public class EditCollectionExpression extends Expression {
     private Expression contentExpression;
 
     public EditCollectionExpression(
-        Expression targetExpression,
-        Expression contentExpression,
-        ExceptionMetadata metadata
+            Expression targetExpression,
+            Expression contentExpression,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (targetExpression == null) {
@@ -28,7 +28,7 @@ public class EditCollectionExpression extends Expression {
         this.targetExpression = targetExpression;
         this.contentExpression = contentExpression;
     }
-    
+
     public Expression getTargetExpression() {
         return this.targetExpression;
     }

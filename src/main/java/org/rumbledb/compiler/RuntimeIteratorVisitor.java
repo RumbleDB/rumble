@@ -520,16 +520,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitCreateCollectionExpression(CreateCollectionExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
         boolean isTable = expression.isTable();
 
         RuntimeIterator runtimeIterator = new CreateCollectionIterator(
-            targetIterator,
-            contentIterator,
-            isTable,
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                targetIterator,
+                contentIterator,
+                isTable,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
         return runtimeIterator;
@@ -537,8 +540,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitDeleteIndexFromCollectionExpression(
-        DeleteIndexFromCollectionExpression expression, 
-        RuntimeIterator argument
+            DeleteIndexFromCollectionExpression expression,
+            RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
         boolean isTable = expression.isTable();
@@ -546,11 +549,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         int numDelete = expression.getNumDelete();
 
         RuntimeIterator runtimeIterator = new DeleteIndexFromCollectionIterator(
-            targetIterator,
-            numDelete,
-            isFirst,
-            isTable,
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                targetIterator,
+                numDelete,
+                isFirst,
+                isTable,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
         return runtimeIterator;
@@ -558,25 +561,29 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitDeleteSearchFromCollectionExpression(
-        DeleteSearchFromCollectionExpression expression, RuntimeIterator argument
+            DeleteSearchFromCollectionExpression expression,
+            RuntimeIterator argument
     ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator runtimeIterator = new DeleteSearchFromCollectionIterator(
-            contentIterator,
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitEditCollectionExpression(EditCollectionExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitEditCollectionExpression(
+            EditCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
         RuntimeIterator targetIterator = this.visit(expression.getTargetExpression(), argument);
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
 
         RuntimeIterator runtimeIterator = new EditCollectionIterator(
-            targetIterator,
-            contentIterator,
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                targetIterator,
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
         return runtimeIterator;
@@ -584,8 +591,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitInsertIndexIntoCollectionExpression(
-        InsertIndexIntoCollectionExpression expression, 
-        RuntimeIterator argument
+            InsertIndexIntoCollectionExpression expression,
+            RuntimeIterator argument
     ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
@@ -594,23 +601,26 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         Integer pos = expression.getPosition();
 
         RuntimeIterator runtimeIterator = new InsertIndexIntoCollectionIterator(
-            targetIterator,
-            contentIterator,
-            isTable,
-            pos,
-            isLast,
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                targetIterator,
+                contentIterator,
+                isTable,
+                pos,
+                isLast,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
         return runtimeIterator;
     }
 
     @Override
-    public RuntimeIterator visitTruncateCollectionExpression(TruncateCollectionExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
         RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
-            targetIterator,
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                targetIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
         return runtimeIterator;

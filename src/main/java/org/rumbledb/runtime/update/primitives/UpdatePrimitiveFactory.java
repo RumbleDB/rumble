@@ -79,43 +79,43 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createCreateCollectionPrimitive(
-        String collectionName,
-        Dataset<Row> contents,
-        boolean isTable,
-        ExceptionMetadata metadata
+            String collectionName,
+            Dataset<Row> contents,
+            boolean isTable,
+            ExceptionMetadata metadata
     ) {
         return new CreateCollectionPrimitive(collectionName, contents, isTable, metadata);
     }
 
     public UpdatePrimitive createDeleteTupleFromCollectionPrimitive(
-        String collectionName,
-        double rowOrder,
-        ExceptionMetadata metadata
+            String collectionName,
+            double rowOrder,
+            ExceptionMetadata metadata
     ) {
         return new DeleteTupleFromCollectionPrimitive(collectionName, rowOrder, metadata);
     }
 
     public UpdatePrimitive createEditTuplePrimitive(
-        Dataset<Row> target,
-        Dataset<Row> contents,
-        ExceptionMetadata metadata
+            Dataset<Row> target,
+            Dataset<Row> contents,
+            ExceptionMetadata metadata
     ) {
         return new EditTuplePrimitive(target, contents, metadata);
     }
 
     public UpdatePrimitive createInsertTuplePrimitive(
-        String collection,
-        Dataset<Row> contents,
-        double rowOrderBase,
-        double rowOrderMax,
-        ExceptionMetadata metadata
+            String collection,
+            Dataset<Row> contents,
+            double rowOrderBase,
+            double rowOrderMax,
+            ExceptionMetadata metadata
     ) {
         return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
     }
 
     public UpdatePrimitive createTruncateCollectionPrimitive(
-        String collectionName,
-        ExceptionMetadata metadata
+            String collectionName,
+            ExceptionMetadata metadata
     ) {
         return new TruncateCollectionPrimitive(collectionName, metadata);
     }

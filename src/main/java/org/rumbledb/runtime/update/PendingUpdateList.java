@@ -252,14 +252,14 @@ public class PendingUpdateList {
 
         ////// APPLY TRUNCATE COLLECTION
         this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
-        
+
         ////// APPLY DELETE TUPLE
-        for (Map<Double, UpdatePrimitive> tables: this.deleteTupleMap.values()) {
+        for (Map<Double, UpdatePrimitive> tables : this.deleteTupleMap.values()) {
             tables.values().forEach(UpdatePrimitive::apply);
         }
 
         ////// APPLY EDIT TUPLE
-        for (Map<Double, UpdatePrimitive> tables: this.editTupleMap.values()) {
+        for (Map<Double, UpdatePrimitive> tables : this.editTupleMap.values()) {
             tables.values().forEach(UpdatePrimitive::apply);
         }
 
@@ -382,7 +382,7 @@ public class PendingUpdateList {
         }
 
         // CREATE COLLECTION
-        for (Map.Entry<String, UpdatePrimitive> entry: otherPul.createCollectionMap.entrySet()) {
+        for (Map.Entry<String, UpdatePrimitive> entry : otherPul.createCollectionMap.entrySet()) {
             if (this.createCollectionMap.containsKey(entry.getKey())) {
                 throw new TooManyCollectionCreationsOnSameTargetException(entry.getKey(), metadata);
             } else {
@@ -391,32 +391,34 @@ public class PendingUpdateList {
         }
 
         // TRUNCATE COLLECTION
-        for (Map.Entry<String, UpdatePrimitive> entry: otherPul.truncateCollectionMap.entrySet()) {
+        for (Map.Entry<String, UpdatePrimitive> entry : otherPul.truncateCollectionMap.entrySet()) {
             this.truncateCollectionMap.putIfAbsent(entry.getKey(), entry.getValue());
         }
 
         // TODO: MERGE CONFLICTS BETWEEN EDIT AND DELETE
         // DELETE TUPLE
-        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry: otherPul.deleteTupleMap.entrySet()) {
+        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.deleteTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
-            Map<Double, UpdatePrimitive> tableMap = this.deleteTupleMap.computeIfAbsent(collection, k -> new TreeMap<>());
-            
-            for (Map.Entry<Double, UpdatePrimitive> entry: tableEntry.getValue().entrySet()) {
+            Map<Double, UpdatePrimitive> tableMap = this.deleteTupleMap.computeIfAbsent(
+                collection,
+                k -> new TreeMap<>()
+            );
+
+            for (Map.Entry<Double, UpdatePrimitive> entry : tableEntry.getValue().entrySet()) {
                 tableMap.putIfAbsent(entry.getKey(), entry.getValue());
             }
         }
-        
+
         // TODO: MERGE CONFLICTS BETWEEN EDIT AND DELETE
         // EDIT TUPLE
-        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry: otherPul.editTupleMap.entrySet()) {
+        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.editTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
             Map<Double, UpdatePrimitive> tableMap = this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>());
-            
-            for (Map.Entry<Double, UpdatePrimitive> entry: tableEntry.getValue().entrySet()) {
+
+            for (Map.Entry<Double, UpdatePrimitive> entry : tableEntry.getValue().entrySet()) {
                 if (tableMap.containsKey(entry.getKey())) {
                     throw new TooManyEditsOnSameTargetException(collection, entry.getKey(), metadata);
-                } 
-                else {
+                } else {
                     tableMap.put(entry.getKey(), entry.getValue());
                 }
             }

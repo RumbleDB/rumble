@@ -1,13 +1,8 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 
 
@@ -19,11 +14,11 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         this.collectionName = collectionName;
     }
 
-    @Override 
+    @Override
     public boolean isTruncateCollection() {
         return true;
     }
-    
+
     @Override
     public String getCollectionName() {
         return this.collectionName;
@@ -51,7 +46,10 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
         if (session.catalog().tableExists(this.collectionName) == false) {
-            throw new CannotRetrieveResourceException("Table " + this.collectionName + " not found in hive catalogue.", this.metadata);
+            throw new CannotRetrieveResourceException(
+                    "Table " + this.collectionName + " not found in hive catalogue.",
+                    this.metadata
+            );
         }
 
         String truncateQuery = String.format(

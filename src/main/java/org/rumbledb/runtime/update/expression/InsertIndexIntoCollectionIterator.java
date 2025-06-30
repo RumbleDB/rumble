@@ -1,16 +1,13 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -23,11 +20,8 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.util.Collections;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
@@ -39,12 +33,12 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     private final boolean isLast;
 
     public InsertIndexIntoCollectionIterator(
-        RuntimeIterator targetIterator,
-        RuntimeIterator contentIterator,
-        boolean isTable,
-        Integer pos,
-        boolean isLast,
-        RuntimeStaticContext staticContext
+            RuntimeIterator targetIterator,
+            RuntimeIterator contentIterator,
+            boolean isTable,
+            Integer pos,
+            boolean isLast,
+            RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator, contentIterator), staticContext);
         this.targetIterator = targetIterator;
@@ -52,11 +46,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isTable = isTable;
         this.pos = pos;
         this.isLast = isLast;
-        
+
         if (!contentIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                "The given content doesn not conform to a dataframe",
-                this.getMetadata()
+                    "The given content doesn not conform to a dataframe",
+                    this.getMetadata()
             );
         }
 
@@ -107,25 +101,25 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
-                "The collection name must be a unique string, but more than one item was provided.",
-                this.getMetadata()
+                    "The collection name must be a unique string, but more than one item was provided.",
+                    this.getMetadata()
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
-                "The collection name must be a unique string, but no item was provided.",
-                this.getMetadata()
+                    "The collection name must be a unique string, but no item was provided.",
+                    this.getMetadata()
             );
         }
 
-        if(! targetItem.isString()) {
+        if (!targetItem.isString()) {
             throw new InvalidUpdateTargetException(
-                "Expecting collection name as a String, but it was: " 
-                + targetItem.getDynamicType().getIdentifierString(),
-                this.getMetadata()
+                    "Expecting collection name as a String, but it was: "
+                        + targetItem.getDynamicType().getIdentifierString(),
+                    this.getMetadata()
             );
         }
 
-        String collection = null; 
+        String collection = null;
         if (this.isTable) {
             collection = targetItem.getStringValue();
         } else {
@@ -146,8 +140,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
                 rowOrderBase = rows.get(0).getAs("rowOrder");
             }
 
-        }
-        else if (this.pos == 1) {
+        } else if (this.pos == 1) {
             // Case: first
             String selectQuery = String.format(
                 "SELECT rowOrder FROM %s ORDER BY rowOrder ASC LIMIT 1",
@@ -158,27 +151,26 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             if (!rows.isEmpty()) {
                 rowOrderMax = rows.get(0).getAs("rowOrder");
             }
-        }
-        else {
+        } else {
             String selectQuery = String.format(
                 "SELECT rowOrder FROM %s ORDER BY rowOrder ASC OFFSET %d LIMIT 2",
-                collection, this.pos-2
+                collection,
+                this.pos - 2
             );
             List<Row> rows = session.sql(selectQuery).collectAsList();
-            
+
             if (rows.isEmpty()) {
                 throw new InvalidUpdateTargetException(
-                    String.format(
-                        "Unable to insert at index %d as target collection has less than %d rows",
-                        this.pos, this.pos-1
-                    ),
-                    this.getMetadata()
+                        String.format(
+                            "Unable to insert at index %d as target collection has less than %d rows",
+                            this.pos,
+                            this.pos - 1
+                        ),
+                        this.getMetadata()
                 );
-            }
-            else if (rows.size() == 1) {
+            } else if (rows.size() == 1) {
                 rowOrderBase = rows.get(0).getAs("rowOrder");
-            }
-            else {
+            } else {
                 rowOrderBase = rows.get(0).getAs("rowOrder");
                 rowOrderMax = rows.get(1).getAs("rowOrder");
             }
@@ -189,7 +181,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createInsertTuplePrimitive(
-            collection, contentDF, rowOrderBase, rowOrderMax, this.getMetadata()
+            collection,
+            contentDF,
+            rowOrderBase,
+            rowOrderMax,
+            this.getMetadata()
         );
 
         pul.addUpdatePrimitive(up);

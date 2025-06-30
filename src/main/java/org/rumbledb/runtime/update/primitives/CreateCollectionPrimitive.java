@@ -1,12 +1,9 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 
 import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
@@ -17,7 +14,12 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
     private String collectionName;
     private boolean isTable;
 
-    public CreateCollectionPrimitive(String collectionName, Dataset<Row> contents, boolean isTable, ExceptionMetadata metadata) {
+    public CreateCollectionPrimitive(
+            String collectionName,
+            Dataset<Row> contents,
+            boolean isTable,
+            ExceptionMetadata metadata
+    ) {
         // The target should be the name of the collection, an object of the class String
         this.collectionName = collectionName;
         this.contents = contents;
@@ -28,12 +30,12 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
     public boolean isCreateCollection() {
         return true;
     }
-    
+
     @Override
     public String getCollectionPath() {
-        return this.isTable 
-                ? this.collectionName 
-                : "delta." + this.collectionName;
+        return this.isTable
+            ? this.collectionName
+            : "delta." + this.collectionName;
     }
 
     @Override
@@ -74,16 +76,22 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
         this.contents = this.contents.withColumn(SparkSessionManager.pathInColumnName, lit(""));
 
         if (this.isTable) {
-            this.contents = this.contents.withColumn(SparkSessionManager.tableLocationColumnName, lit(this.collectionName));
+            this.contents = this.contents.withColumn(
+                SparkSessionManager.tableLocationColumnName,
+                lit(this.collectionName)
+            );
             this.contents.write()
-                         .format("delta")
-                         .saveAsTable(this.collectionName);
+                .format("delta")
+                .saveAsTable(this.collectionName);
         } else {
-            this.contents = this.contents.withColumn(SparkSessionManager.tableLocationColumnName, lit("delta.`"+this.collectionName+"`"));
+            this.contents = this.contents.withColumn(
+                SparkSessionManager.tableLocationColumnName,
+                lit("delta.`" + this.collectionName + "`")
+            );
             this.contents.write()
-                         .format("delta")
-                         .option("path", "delta/"+this.collectionName)
-                         .save();
+                .format("delta")
+                .option("path", "delta/" + this.collectionName)
+                .save();
         }
 
     }

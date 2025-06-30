@@ -15,10 +15,10 @@ public class CreateCollectionExpression extends Expression {
     private boolean isTable;
 
     public CreateCollectionExpression(
-        Expression collection,
-        Expression contentExpression,
-        boolean isTable,
-        ExceptionMetadata metadata
+            Expression collection,
+            Expression contentExpression,
+            boolean isTable,
+            ExceptionMetadata metadata
     ) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
         // Extension to other modes can be done by increasing flags for using enum instead

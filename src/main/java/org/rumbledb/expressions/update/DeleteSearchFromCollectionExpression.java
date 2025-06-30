@@ -13,8 +13,8 @@ public class DeleteSearchFromCollectionExpression extends Expression {
     private Expression contentExpression;
 
     public DeleteSearchFromCollectionExpression(
-        Expression contentExpression,
-        ExceptionMetadata metadata
+            Expression contentExpression,
+            ExceptionMetadata metadata
     ) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
         // Extension to other modes can be done by increasing flags for using enum instead

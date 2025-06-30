@@ -50,7 +50,7 @@ public interface UpdatePrimitive {
     default Dataset<Row> getContentDataFrame() {
         throw new UnsupportedOperationException("Operation not defined");
     }
-    
+
     default boolean isDeleteObject() {
         return false;
     }

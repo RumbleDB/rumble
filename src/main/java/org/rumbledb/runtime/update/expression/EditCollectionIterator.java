@@ -3,26 +3,18 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.commons.lang3.SerializationUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-import java.util.Collections;
 import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class EditCollectionIterator extends HybridRuntimeIterator {
 
@@ -31,27 +23,27 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator contentIterator;
 
     public EditCollectionIterator(
-        RuntimeIterator targetIterator,
-        RuntimeIterator contentIterator,
-        RuntimeStaticContext staticContext
+            RuntimeIterator targetIterator,
+            RuntimeIterator contentIterator,
+            RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator, contentIterator), staticContext);
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
-        
+
         // TODO: For 1 item, this is a TreatIterator not conforming to DF; but for more than 1, it is DataFrame
         if (!contentIterator.isDataFrame()) {
-            System.out.println("##"+contentIterator);
+            System.out.println("##" + contentIterator);
             throw new CannotResolveUpdateSelectorException(
-                "The given content does not conform to a dataframe",
-                this.getMetadata()
+                    "The given content does not conform to a dataframe",
+                    this.getMetadata()
             );
         }
 
         if (!targetIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                "The given target does not conform to a dataframe",
-                this.getMetadata()
+                    "The given target does not conform to a dataframe",
+                    this.getMetadata()
             );
         }
 
@@ -105,16 +97,16 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
 
         if (contentCount != 1) {
             throw new InvalidUpdateTargetException(
-                "Exactly one content must be specified for edit, but " + contentCount + " found",
-                this.getMetadata()
+                    "Exactly one content must be specified for edit, but " + contentCount + " found",
+                    this.getMetadata()
             );
         }
         if (targetCount != 1) {
             throw new InvalidUpdateTargetException(
-                "Exactly one target must be specified for edit, but " + targetCount + " found",
-                this.getMetadata()
+                    "Exactly one target must be specified for edit, but " + targetCount + " found",
+                    this.getMetadata()
             );
-        }     
+        }
 
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();

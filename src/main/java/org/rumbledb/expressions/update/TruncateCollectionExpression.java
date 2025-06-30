@@ -13,8 +13,8 @@ public class TruncateCollectionExpression extends Expression {
     private Expression collectionName;
 
     public TruncateCollectionExpression(
-        Expression collectionName,
-        ExceptionMetadata metadata
+            Expression collectionName,
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         if (collectionName == null) {
@@ -45,5 +45,5 @@ public class TruncateCollectionExpression extends Expression {
         this.collectionName.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
-    
+
 }

@@ -513,7 +513,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String name = ((StringLiteralExpression) args.get(0)).getValue();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
             if (session.catalog().tableExists(name) == false) {
-                throw new CannotRetrieveResourceException("Table " + name + " not found in hive catalogue.", expression.getMetadata());
+                throw new CannotRetrieveResourceException(
+                        "Table " + name + " not found in hive catalogue.",
+                        expression.getMetadata()
+                );
             }
 
             StructType s = session
@@ -827,7 +830,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitCreateCollectionExpression(CreateCollectionExpression expression, StaticContext argument) {
+    public StaticContext visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            StaticContext argument
+    ) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;
@@ -835,8 +841,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitDeleteIndexFromCollectionExpression(
-        DeleteIndexFromCollectionExpression expression, 
-        StaticContext argument
+            DeleteIndexFromCollectionExpression expression,
+            StaticContext argument
     ) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
@@ -845,8 +851,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitDeleteSearchFromCollectionExpression(
-        DeleteSearchFromCollectionExpression expression, 
-        StaticContext argument
+            DeleteSearchFromCollectionExpression expression,
+            StaticContext argument
     ) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
@@ -862,8 +868,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitInsertIndexIntoCollectionExpression(
-        InsertIndexIntoCollectionExpression expression, 
-        StaticContext argument
+            InsertIndexIntoCollectionExpression expression,
+            StaticContext argument
     ) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
@@ -871,7 +877,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitTruncateCollectionExpression(TruncateCollectionExpression expression, StaticContext argument) {
+    public StaticContext visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            StaticContext argument
+    ) {
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;

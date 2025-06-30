@@ -3,10 +3,8 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.commons.lang3.SerializationUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -18,11 +16,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-import java.util.Collections;
 import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class CreateCollectionIterator extends HybridRuntimeIterator {
 
@@ -32,20 +26,20 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
     private boolean isTable;
 
     public CreateCollectionIterator(
-        RuntimeIterator targetIterator,
-        RuntimeIterator contentIterator,
-        boolean isTable,
-        RuntimeStaticContext staticContext
+            RuntimeIterator targetIterator,
+            RuntimeIterator contentIterator,
+            boolean isTable,
+            RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator, contentIterator), staticContext);
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.isTable = isTable;
-        
+
         if (!contentIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                "The given content doesn not conform to a dataframe",
-                this.getMetadata()
+                    "The given content doesn not conform to a dataframe",
+                    this.getMetadata()
             );
         }
 
@@ -96,24 +90,23 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         Item targetItem = null;
         try {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
-        }
-        catch (MoreThanOneItemException e) {
+        } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
-                "The collection name must be a string, but more than one item was provided.",
-                this.getMetadata()
+                    "The collection name must be a string, but more than one item was provided.",
+                    this.getMetadata()
             );
-        }
-        catch (NoItemException e) {
+        } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
-                "The collection name must be a string, but no item was provided.",
-                this.getMetadata()
+                    "The collection name must be a string, but no item was provided.",
+                    this.getMetadata()
             );
         }
 
-        if(! targetItem.isString()) {
-            throw new InvalidUpdateTargetException("Expecting collection name as a String, but it was: " 
-                                                        + targetItem.getDynamicType().getIdentifierString(),
-                                                    this.getMetadata()
+        if (!targetItem.isString()) {
+            throw new InvalidUpdateTargetException(
+                    "Expecting collection name as a String, but it was: "
+                        + targetItem.getDynamicType().getIdentifierString(),
+                    this.getMetadata()
             );
         }
 
@@ -123,8 +116,13 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
 
-        UpdatePrimitive up = factory.createCreateCollectionPrimitive(collectionName, contentDF, this.isTable, this.getMetadata());
-        
+        UpdatePrimitive up = factory.createCreateCollectionPrimitive(
+            collectionName,
+            contentDF,
+            this.isTable,
+            this.getMetadata()
+        );
+
         pul.addUpdatePrimitive(up);
         return pul;
     }

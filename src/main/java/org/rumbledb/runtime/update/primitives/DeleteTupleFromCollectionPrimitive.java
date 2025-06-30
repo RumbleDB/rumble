@@ -1,13 +1,7 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 
 
@@ -21,11 +15,11 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
         this.rowOrder = rowOrder;
     }
 
-    @Override 
+    @Override
     public boolean isDeleteTuple() {
         return true;
     }
-    
+
     @Override
     public String getCollectionPath() {
         return this.collectionPath;
@@ -56,7 +50,7 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        
+
         String deleteQuery = String.format(
             "DELETE FROM %s WHERE %s = %s",
             this.collectionPath,

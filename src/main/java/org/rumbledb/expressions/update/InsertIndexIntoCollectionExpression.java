@@ -17,12 +17,12 @@ public class InsertIndexIntoCollectionExpression extends Expression {
     private final boolean isLast;
 
     public InsertIndexIntoCollectionExpression(
-        Expression collection,
-        Expression contentExpression,
-        boolean isTable,
-        Integer pos,
-        boolean isLast,
-        ExceptionMetadata metadata
+            Expression collection,
+            Expression contentExpression,
+            boolean isTable,
+            Integer pos,
+            boolean isLast,
+            ExceptionMetadata metadata
     ) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
         // Extension to other modes can be done by increasing flags for using enum instead
