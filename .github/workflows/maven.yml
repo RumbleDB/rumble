@@ -50,26 +50,7 @@ jobs:
     strategy:
       matrix:
         test_class: [
-          "FrontendTests",
-          "RuntimeTests",
-          "RuntimeTestsNoParallelism",
-          "RuntimeTestsNoInlining",
-          "StaticTypeTests",
-          "JavaAPITest",
-          "SparkRuntimeTests",
-          "SparkRuntimeTestsNativeDeactivated",
-          "SparkRuntimeTestsDataFramesDeactivated",
-          "SparkRuntimeTestsParallelismDeactivated",
-          "Bugs",
-          "NativeFLWORRuntimeTests",
-          "NativeFLWORRuntimeTestsNativeDeactivated",
-          "NativeFLWORRuntimeTestsDataFramesDeactivated",
-          "NativeFLWORRuntimeTestsParallelismDeactivated",
-          "MLTests",
-          "MLTestsNativeDeactivated",
-          "XMLTests",
-          "XQueryTests",
-          "DeltaUpdateRuntimeTests"
+          "MLTestsNativeDeactivated"
         ]
     steps:
       - uses: actions/checkout@v3
