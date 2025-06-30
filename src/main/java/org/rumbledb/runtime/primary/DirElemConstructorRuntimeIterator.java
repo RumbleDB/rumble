@@ -152,6 +152,15 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
             );
         // set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
+
+        // Set XML document position if this is the top-level runtime iterator
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            // This is the top-level runtime iterator - set XML document positions recursively
+            // Use the hash code of the runtime iterator object as the path to track the identity of constructed objects
+            String documentPath = String.valueOf(this.hashCode());
+            elementItem.setXmlDocumentPosition(documentPath, 0);
+        }
+
         return elementItem;
     }
 

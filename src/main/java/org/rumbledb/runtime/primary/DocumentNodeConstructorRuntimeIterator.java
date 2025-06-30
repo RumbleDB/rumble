@@ -106,10 +106,23 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
         // Create and return the document node item
         this.hasNext = false;
-        return ItemFactory.getInstance()
+        Item documentItem = ItemFactory.getInstance()
             .createXmlDocumentNode(
                 processedContent
             );
+
+        // Set the parent of the child nodes to the document node
+        documentItem.addParentToDescendants();
+
+        // Set XML document position if this is the top-level runtime iterator
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            // This is the top-level runtime iterator - set XML document positions recursively
+            // Use the hash code of the runtime iterator object as the path to track the identity of constructed objects
+            String documentPath = String.valueOf(this.hashCode());
+            documentItem.setXmlDocumentPosition(documentPath, 0);
+        }
+
+        return documentItem;
     }
 
     /**
