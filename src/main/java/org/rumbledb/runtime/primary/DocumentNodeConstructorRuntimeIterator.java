@@ -86,12 +86,23 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        // Check if this is the top-level runtime iterator for XML tree building
+        DynamicContext contextToUse;
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            // This is the top-level runtime iterator - create a new context and set this iterator as top-level
+            contextToUse = new DynamicContext(dynamicContext);
+            contextToUse.setTopLevelRuntimeIterator(this);
+        } else {
+            // A top-level iterator is already set - use the provided context
+            contextToUse = dynamicContext;
+        }
+
         // Process content expression according to XQuery 3.1 specification
         // The content expression of a document node constructor is processed in exactly the same way
         // as an enclosed expression in the content of a direct element constructor, as described in
         // Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
         // of nodes called the content sequence.
-        List<Item> processedContent = processContentExpression(dynamicContext);
+        List<Item> processedContent = processContentExpression(contextToUse);
 
         // Create and return the document node item
         this.hasNext = false;

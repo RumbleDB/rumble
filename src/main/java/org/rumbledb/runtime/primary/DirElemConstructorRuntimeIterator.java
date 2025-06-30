@@ -51,6 +51,17 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        // Check if this is the top-level runtime iterator for XML tree building
+        DynamicContext contextToUse;
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            // This is the top-level runtime iterator - create a new context and set this iterator as top-level
+            contextToUse = new DynamicContext(dynamicContext);
+            contextToUse.setTopLevelRuntimeIterator(this);
+        } else {
+            // A top-level iterator is already set - use the provided context
+            contextToUse = dynamicContext;
+        }
+
         List<Item> content = new ArrayList<>();
         List<Item> attributes = new ArrayList<>();
         // process all child content
@@ -58,7 +69,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
             StringBuilder textAccumulator = null;
 
             for (RuntimeIterator iterator : this.content) {
-                iterator.open(dynamicContext);
+                iterator.open(contextToUse);
                 while (iterator.hasNext()) {
                     Item item = iterator.next();
 
@@ -119,7 +130,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         // process attributes
         if (this.attributes != null) {
             for (RuntimeIterator iterator : this.attributes) {
-                iterator.open(dynamicContext);
+                iterator.open(contextToUse);
                 while (iterator.hasNext()) {
                     Item item = iterator.next();
 

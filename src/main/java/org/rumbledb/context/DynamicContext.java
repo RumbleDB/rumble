@@ -32,6 +32,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -49,6 +50,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private DateTime currentDateTime;
     private int currentMutabilityLevel;
     private final GlobalVariables globalVariables;
+    private RuntimeIterator topLevelRuntimeIterator;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -62,6 +64,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.currentDateTime = new DateTime();
         this.currentMutabilityLevel = 0;
         this.globalVariables = new GlobalVariables();
+        this.topLevelRuntimeIterator = null;
     }
 
     /**
@@ -78,6 +81,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.currentDateTime = new DateTime();
         this.currentMutabilityLevel = 0;
         this.globalVariables = new GlobalVariables();
+        this.topLevelRuntimeIterator = null;
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -91,6 +95,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
         this.globalVariables = parent.globalVariables;
+        this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
     public DynamicContext(
@@ -113,6 +118,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = null;
         this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
         this.globalVariables = parent.globalVariables;
+        this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -257,6 +263,24 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     public void addGlobalVariable(Name globalVariable) {
         this.globalVariables.addGlobalVariable(globalVariable);
+    }
+
+    /**
+     * Gets the top-level runtime iterator for XML tree building.
+     * 
+     * @return the top-level runtime iterator, or null if not set
+     */
+    public RuntimeIterator getTopLevelRuntimeIterator() {
+        return this.topLevelRuntimeIterator;
+    }
+
+    /**
+     * Sets the top-level runtime iterator for XML tree building.
+     * 
+     * @param topLevelRuntimeIterator the top-level runtime iterator to set
+     */
+    public void setTopLevelRuntimeIterator(RuntimeIterator topLevelRuntimeIterator) {
+        this.topLevelRuntimeIterator = topLevelRuntimeIterator;
     }
 }
 

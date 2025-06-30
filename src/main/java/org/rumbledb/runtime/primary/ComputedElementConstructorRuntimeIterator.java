@@ -90,6 +90,17 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        // Check if this is the top-level runtime iterator for XML tree building
+        DynamicContext contextToUse;
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            // This is the top-level runtime iterator - create a new context and set this iterator as top-level
+            contextToUse = new DynamicContext(dynamicContext);
+            contextToUse.setTopLevelRuntimeIterator(this);
+        } else {
+            // A top-level iterator is already set - use the provided context
+            contextToUse = dynamicContext;
+        }
+
         // Determine the element name
         String elementName;
         if (this.staticElementName != null) {
@@ -103,7 +114,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
             // single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised
             // [err:XPTY0004].
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
+            List<Item> atomizedNameItems = this.nameIterator.materialize(contextToUse);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic"
@@ -143,7 +154,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         // Process content expression according to XQuery 3.1 specification
         // https://www.w3.org/TR/xquery-31/#id-computedElements
-        ProcessedContent processedContent = processContentExpression(dynamicContext);
+        ProcessedContent processedContent = processContentExpression(contextToUse);
 
         // Create and return the element item
         this.hasNext = false;
