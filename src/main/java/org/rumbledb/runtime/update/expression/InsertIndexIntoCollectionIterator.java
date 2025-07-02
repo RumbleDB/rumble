@@ -126,7 +126,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             collection = "delta.`" + targetItem.getStringValue() + "` ";
         }
 
-        double rowOrderBase = 0, rowOrderMax = Double.MAX_VALUE;
+        double rowOrderBase = 0, rowOrderMax = 10000.0;
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
         if (this.isLast) {
