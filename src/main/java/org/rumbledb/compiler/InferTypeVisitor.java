@@ -506,7 +506,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         // handle 'delta-table' function
         if (
-            functionName.equals(Name.createVariableInDefaultFunctionNamespace("delta-table"))
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("table"))
                 && args.size() > 0
                 && args.get(0) instanceof StringLiteralExpression
         ) {
