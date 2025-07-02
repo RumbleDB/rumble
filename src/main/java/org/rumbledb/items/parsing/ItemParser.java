@@ -305,6 +305,10 @@ public class ItemParser implements Serializable {
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                     res.setTableLocation(row.getString(i));
                 }
+                if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                    // add setRowOrder(double) to the items API
+                    continue;
+                }
             }
             return res;
         }
@@ -345,6 +349,10 @@ public class ItemParser implements Serializable {
             }
             if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                 tableLocation = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                // TODO: edit Items API to include rowOrder
                 continue;
             }
 
