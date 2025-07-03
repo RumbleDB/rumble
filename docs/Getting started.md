@@ -35,17 +35,17 @@ Do make sure it is not Java 8, which will not work.
 
 RumbleDB is just a download and no installation is required.
 
-In order to run RumbleDB, you simply need to download rumbledb-1.23.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
+In order to run RumbleDB, you simply need to download rumbledb-1.24.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
 Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
 You can test that it works with:
 
-    java -jar rumbledb-1.23.0-standalone.jar run -q '1+1'
+    java -jar rumbledb-1.24.0-standalone.jar run -q '1+1'
 
 or launch a JSONiq shell with:
 
-    java -jar rumbledb-1.23.0-standalone.jar repl
+    java -jar rumbledb-1.24.0-standalone.jar repl
     
 If you run out of memory, you can set allocate more memory to Java with an additional Java parameter, e.g., -Xmx10g
 
@@ -111,9 +111,9 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download one of the small .jar files from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 3.5+, use rumbledb-1.23.0-for-spark-3.5.jar.
+If you use Spark 3.5+, use rumbledb-1.24.0-for-spark-3.5.jar.
 
-If you use Spark 4.0+ (preview), use rumbledb-1.23.0-for-spark-4.0.jar.
+If you use Spark 4.0+ (preview), use rumbledb-1.24.0-for-spark-4.0.jar.
 
 These jars do not embed Spark, since you chose to set it up separately. They will work with your Spark installation with the spark-submit command.
 
@@ -158,7 +158,7 @@ The RumbleDB shell appears:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.23.0 "Mountain ash" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.24.0 "Mountain ash" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     
