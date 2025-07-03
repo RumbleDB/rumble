@@ -8,6 +8,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -795,6 +796,19 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
                 expression.getComparisonOperator(),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitNodeComparisonExpr(NodeComparisonExpression expression, Node argument) {
+        NodeComparisonExpression result = new NodeComparisonExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

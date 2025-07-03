@@ -36,6 +36,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -916,8 +917,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         XQueryParser.StringConcatExprContext child = ctx.rhs.get(0);
         Expression childExpression = (Expression) this.visitStringConcatExpr(child);
 
+        String operatorSymbol = ctx.op.get(0).getText();
+
+        // Check if node comparison operator
+        if (ctx.op.get(0).nodeComp() != null) {
+            NodeComparisonExpression.NodeComparisonOperator nodeOp = NodeComparisonExpression.NodeComparisonOperator
+                .fromSymbol(operatorSymbol);
+            return new NodeComparisonExpression(
+                    mainExpression,
+                    childExpression,
+                    nodeOp,
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        // else, it's a generic or value comparison
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
-            ctx.op.get(0).getText()
+            operatorSymbol
         );
         if (kind.isValueComparison() || this.configuration.optimizeGeneralComparisonToValueComparison()) {
             return new ComparisonExpression(

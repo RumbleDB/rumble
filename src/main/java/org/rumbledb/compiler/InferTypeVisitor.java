@@ -24,6 +24,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -1369,6 +1370,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, returnArity));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitNodeComparisonExpr(NodeComparisonExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        // According to XQuery 3.1 specification section 3.7.3:
+        // Each operand must be either a single node or an empty sequence; otherwise a type error is raised
+        // [err:XPTY0004].
+        // TODO: implement static type checking, to exclude evaluation of operands that we can
+        // infer statically that are not empty sequences or nodes (e.g. strings, etc.)
+
+        // Node comparisons always return a boolean
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
         return argument;
     }
 

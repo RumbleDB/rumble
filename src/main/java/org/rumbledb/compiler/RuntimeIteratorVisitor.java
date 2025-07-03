@@ -39,6 +39,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -153,6 +154,7 @@ import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.NodeComparisonRuntimeIterator;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.runtime.misc.StringConcatIterator;
 import org.rumbledb.runtime.navigation.ArrayLookupIterator;
@@ -1214,6 +1216,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 left,
                 right,
                 expression.getComparisonOperator(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitNodeComparisonExpr(NodeComparisonExpression expression, RuntimeIterator argument) {
+        RuntimeIterator left = this.visit(expression.getLeftExpression(), argument);
+        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator runtimeIterator = new NodeComparisonRuntimeIterator(
+                left,
+                right,
+                expression.getOperator(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

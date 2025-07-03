@@ -24,6 +24,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -337,6 +338,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitComparisonExpr(ComparisonExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitNodeComparisonExpr(NodeComparisonExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
