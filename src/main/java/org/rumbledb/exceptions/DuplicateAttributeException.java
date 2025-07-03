@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Authors: Matteo Agnoletto (EPMatt)
+ * 
  */
 
 package org.rumbledb.exceptions;
