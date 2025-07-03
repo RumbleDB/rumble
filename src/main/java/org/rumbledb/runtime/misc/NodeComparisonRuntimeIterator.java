@@ -128,6 +128,11 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
         boolean result;
         switch (this.operator) {
+            case NC_IS: // is
+                // 4. A comparison with the is operator is true if the two operand nodes are the same node;
+                // otherwise it is false.
+                result = leftItem.equals(rightItem);
+                break;
             case NC_PRECEDES: // <<
                 // 5. A comparison with the << operator returns true if the left operand node precedes
                 // the right operand node in document order; otherwise it returns false.

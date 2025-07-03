@@ -40,7 +40,8 @@ public class NodeComparisonExpression extends Expression {
 
     public static enum NodeComparisonOperator {
         NC_PRECEDES("<<"),
-        NC_FOLLOWS(">>");
+        NC_FOLLOWS(">>"),
+        NC_IS("is");
 
         private String symbol;
 
@@ -59,6 +60,8 @@ public class NodeComparisonExpression extends Expression {
                     return NC_PRECEDES;
                 case ">>":
                     return NC_FOLLOWS;
+                case "is":
+                    return NC_IS;
                 default:
                     throw new OurBadException("Unrecognized node comparison symbol: " + symbol);
             }
