@@ -1,4 +1,4 @@
-package org.rumbledb.expressions.primary;
+package org.rumbledb.expressions.xml;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;

@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.runtime.primary;
+package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -25,7 +25,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 
 import java.util.ArrayList;
 import java.util.List;

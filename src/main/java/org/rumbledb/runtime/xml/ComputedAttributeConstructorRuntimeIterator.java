@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.runtime.primary;
+package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;

@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.expressions.primary;
+package org.rumbledb.expressions.xml;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,89 +29,89 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ComputedElementConstructorExpression extends Expression {
-    /** The static element name (if specified) */
-    private final Name elementName;
-    /** The dynamic element name expression (if specified) */
+public class ComputedAttributeConstructorExpression extends Expression {
+    /** The static attribute name (if specified) */
+    private final Name attributeName;
+    /** The dynamic attribute name expression (if specified) */
     private final Expression nameExpression;
-    /** The content expression */
-    private final Expression contentExpression;
+    /** The value expression */
+    private final Expression valueExpression;
 
     /**
-     * Constructor for static element name: element elementName { content }
+     * Constructor for static attribute name: attribute attributeName { value }
      * 
-     * @param elementName The static element name
-     * @param contentExpression The content expression
+     * @param attributeName The static attribute name
+     * @param valueExpression The value expression
      * @param metadata The exception metadata
      */
-    public ComputedElementConstructorExpression(
-            Name elementName,
-            Expression contentExpression,
+    public ComputedAttributeConstructorExpression(
+            Name attributeName,
+            Expression valueExpression,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.elementName = elementName;
+        this.attributeName = attributeName;
         this.nameExpression = null;
-        this.contentExpression = contentExpression;
+        this.valueExpression = valueExpression;
     }
 
     /**
-     * Constructor for dynamic element name: element { nameExpression } { content }
+     * Constructor for dynamic attribute name: attribute { nameExpression } { value }
      * 
-     * @param nameExpression The dynamic element name expression
-     * @param contentExpression The content expression
+     * @param nameExpression The dynamic attribute name expression
+     * @param valueExpression The value expression
      * @param metadata The exception metadata
      */
-    public ComputedElementConstructorExpression(
+    public ComputedAttributeConstructorExpression(
             Expression nameExpression,
-            Expression contentExpression,
+            Expression valueExpression,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.elementName = null;
+        this.attributeName = null;
         this.nameExpression = nameExpression;
-        this.contentExpression = contentExpression;
+        this.valueExpression = valueExpression;
     }
 
     /**
-     * Get the static element name
+     * Get the static attribute name
      * 
-     * @return The static element name
+     * @return The static attribute name
      */
-    public Name getElementName() {
-        return this.elementName;
+    public Name getAttributeName() {
+        return this.attributeName;
     }
 
     /**
-     * Get the dynamic element name expression
+     * Get the dynamic attribute name expression
      * 
-     * @return The dynamic element name expression
+     * @return The dynamic attribute name expression
      */
     public Expression getNameExpression() {
         return this.nameExpression;
     }
 
     /**
-     * Get the content expression
+     * Get the value expression
      * 
-     * @return The content expression
+     * @return The value expression
      */
-    public Expression getContentExpression() {
-        return this.contentExpression;
+    public Expression getValueExpression() {
+        return this.valueExpression;
     }
 
     /**
-     * Check if the element has a static name
+     * Check if the attribute has a static name
      * 
-     * @return True if the element has a static name, false otherwise
+     * @return True if the attribute has a static name, false otherwise
      */
     public boolean hasStaticName() {
-        return this.elementName != null;
+        return this.attributeName != null;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitComputedElementConstructor(this, argument);
+        return visitor.visitComputedAttributeConstructor(this, argument);
     }
 
     @Override
@@ -120,8 +120,8 @@ public class ComputedElementConstructorExpression extends Expression {
         if (this.nameExpression != null) {
             result.add(this.nameExpression);
         }
-        if (this.contentExpression != null) {
-            result.add(this.contentExpression);
+        if (this.valueExpression != null) {
+            result.add(this.valueExpression);
         }
         return result;
     }
@@ -129,17 +129,17 @@ public class ComputedElementConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("element ");
+        sb.append("attribute ");
         if (this.hasStaticName()) {
-            sb.append(this.elementName.toString());
+            sb.append(this.attributeName.toString());
         } else {
             sb.append("{ ");
             this.nameExpression.serializeToJSONiq(sb, 0);
             sb.append(" }");
         }
         sb.append(" { ");
-        if (this.contentExpression != null) {
-            this.contentExpression.serializeToJSONiq(sb, 0);
+        if (this.valueExpression != null) {
+            this.valueExpression.serializeToJSONiq(sb, 0);
         }
         sb.append(" }\n");
     }

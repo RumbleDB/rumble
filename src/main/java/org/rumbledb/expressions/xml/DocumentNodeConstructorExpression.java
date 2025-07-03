@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.expressions.primary;
+package org.rumbledb.expressions.xml;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -28,17 +28,32 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextNodeConstructorExpression extends Expression {
+/**
+ * Document node constructors create document nodes according to the XQuery 3.1 specification.
+ * All document node constructors are computed constructors. The result of a document node
+ * constructor is a new document node, with its own node identity.
+ * 
+ * A document node constructor is useful when the result of a query is to be a document
+ * in its own right.
+ * 
+ * Syntax: document { content }
+ * 
+ * The content expression of a document node constructor is processed in exactly the same way
+ * as an enclosed expression in the content of a direct element constructor, as described in
+ * Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
+ * of nodes called the content sequence.
+ */
+public class DocumentNodeConstructorExpression extends Expression {
     /** The content expression */
     private final Expression contentExpression;
 
     /**
-     * Constructor for text node constructor: text { content }
+     * Constructor for document node constructor: document { content }
      * 
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
-    public TextNodeConstructorExpression(
+    public DocumentNodeConstructorExpression(
             Expression contentExpression,
             ExceptionMetadata metadata
     ) {
@@ -57,7 +72,7 @@ public class TextNodeConstructorExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitTextNodeConstructor(this, argument);
+        return visitor.visitDocumentNodeConstructor(this, argument);
     }
 
     @Override
@@ -72,7 +87,7 @@ public class TextNodeConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("text { ");
+        sb.append("document { ");
         if (this.contentExpression != null) {
             this.contentExpression.serializeToJSONiq(sb, 0);
         }

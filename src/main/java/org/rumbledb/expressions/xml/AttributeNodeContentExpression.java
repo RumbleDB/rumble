@@ -1,4 +1,4 @@
-package org.rumbledb.expressions.primary;
+package org.rumbledb.expressions.xml;
 
 import java.util.ArrayList;
 import java.util.List;
