@@ -27,26 +27,44 @@
     <property name="parser.dir" value="${src.dir}/parser/xquery"/>
     <property name="antlr.jar" value="./lib/antlr-4.13.1-complete.jar"/>
 
-
+    <!-- Clean the ANTLR generated files for the parser-->
     <target name="clean-parser">
-        <delete file="/org/rumbledb/parser/xquery/XQuery.tokens"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryLexer.java"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParser.interp"/>
         <delete file="/org/rumbledb/parser/xquery/XQueryParser.java"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryBaseVisitor.java"/>
-        <delete file="/org/rumbledb/parser/xquery/XQueryVisitor.java"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParser.tokens"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParserBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryParserVisitor.java"/>
+    </target>
+
+    <!-- Clean the ANTLR generated files for the lexer-->
+    <target name="clean-lexer">
+        <delete file="/org/rumbledb/parser/xquery/XQueryLexer.interp"/>
+        <delete file="/org/rumbledb/parser/xquery/XQueryLexer.java"/>
         <delete file="/org/rumbledb/parser/xquery/XQueryLexer.tokens"/>
     </target>
 
+    <!-- Generate the parser class, from the parser grammar file -->
     <target name="generate-parser">
-        <echo message="ANTLR4 ${parser.dir}/XQuery.g4" level="info"/>
+        <echo message="ANTLR4 ${parser.dir}/XQueryParser.g4" level="info"/>
         <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
-            <arg value="${parser.dir}/XQuery.g4"/>
+            <arg value="${parser.dir}/XQueryParser.g4"/>
             <arg value="-o"/>
-            <!-- <arg value="${parser.dir}" /> -->
             <arg value="."/>   <!-- put results in *.g4's directory -->
             <arg value="-no-listener"/>
             <arg value="-visitor"/>
+        </java>
+    </target>
+
+    <!-- Generate the lexer class, from the lexer grammar file -->
+    <target name="generate-lexer">
+        <echo message="ANTLR4 ${parser.dir}/XQueryLexer.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/XQueryLexer.g4"/>
+            <arg value="-o"/>
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
         </java>
     </target>
 

@@ -66,10 +66,35 @@ public class VisitorHelpers {
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
         // Annotate recursive functions as such
+        if (conf.isPrintIteratorTree()) {
+            System.err.println("***************************************");
+            System.err.println("Function dependencies visitor");
+            System.err.println("***************************************");
+        }
         new FunctionDependenciesVisitor().visit(result, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
         // Inline non-recursive functions
         if (conf.functionInlining()) {
+            if (conf.isPrintIteratorTree()) {
+                System.err.println("***************************************");
+                System.err.println("Function inlining");
+                System.err.println("***************************************");
+            }
             result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+            if (conf.isPrintIteratorTree()) {
+                printTree(result, conf);
+            }
+        }
+        if (conf.isPrintIteratorTree()) {
+            System.err.println("***************************************");
+            System.err.println("Projection pushdown");
+            System.err.println("***************************************");
+        }
+        result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(result, conf);
         }
         return result;
     }
@@ -94,6 +119,13 @@ public class VisitorHelpers {
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        if (configuration.getStaticBaseUri() != null) {
+            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return parseMainModule(query, location, configuration);
     }
 
@@ -106,12 +138,23 @@ public class VisitorHelpers {
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        if (configuration.getStaticBaseUri() != null) {
+            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.getStaticBaseUri(),
+                configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
+        String url = ".";
+        if (configuration.getStaticBaseUri() != null) {
+            url = configuration.getStaticBaseUri();
+        }
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            ".",
+            url,
             configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
@@ -119,15 +162,7 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        CharStream stream = CharStreams.fromString(query);
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -203,6 +238,12 @@ public class VisitorHelpers {
             }
             populateExpressionClassifications(mainModule, configuration);
             if (configuration.isPrintIteratorTree()) {
+                System.err.println("********************************");
+                System.err.println("Verify composability constraints");
+                System.err.println("********************************");
+            }
+            verifyComposabilityConstraints(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
                 System.err.println("**************");
                 System.err.println("Infering types");
                 System.err.println("**************");
@@ -226,12 +267,6 @@ public class VisitorHelpers {
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
-                System.err.println("********************************");
-                System.err.println("Verify composability constraints");
-                System.err.println("********************************");
-            }
-            verifyComposabilityConstraints(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -298,15 +333,7 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        CharStream stream = CharStreams.fromString(query);
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        if (sb.toString().equals("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version

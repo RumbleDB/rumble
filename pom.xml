@@ -216,6 +216,7 @@
                         <configuration>
                             <target>
                                 <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
+                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-lexer"/>
                                 <ant antfile="build_antlr_parser_xquery.xml" target="generate-parser"/>
                             </target>
                         </configuration>
@@ -230,7 +231,16 @@
                 <artifactId>maven-surefire-plugin</artifactId>
             <version>3.3.0</version>
                 <configuration>
-                    <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-exports=java.base/sun.util.calendar=ALL-UNNAMED</argLine>
+                    <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
+                    <!-- arguments needed for unit tests to work with Java 17
+                    https://stackoverflow.com/questions/72724816/running-unit-tests-with-spark-3-3-0-on-java-17-fails-with-illegalaccesserror-cl -->
+                    <argLine>
+                        --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>
@@ -267,7 +277,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-             <artifactId>hadoop-aws</artifactId>
+            <artifactId>hadoop-aws</artifactId>
             <version>3.3.6</version>
             <scope>provided</scope>
         </dependency>
@@ -322,11 +332,11 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
         </dependency>
-	<!--<dependency>
-	    <groupId>edu.vanderbilt.accre</groupId>
-	    <artifactId>laurelin</artifactId>
-	    <version>1.0.1</version>
-	</dependency>-->
+	      <!--<dependency>
+	          <groupId>edu.vanderbilt.accre</groupId>
+	          <artifactId>laurelin</artifactId>
+      	    <version>1.0.1</version>
+      	</dependency>-->
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
@@ -346,6 +356,12 @@
             <groupId>io.delta</groupId>
             <artifactId>delta-spark_2.13</artifactId>
             <version>4.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.skyscreamer</groupId>
+            <artifactId>jsonassert</artifactId>
+            <version>1.5.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

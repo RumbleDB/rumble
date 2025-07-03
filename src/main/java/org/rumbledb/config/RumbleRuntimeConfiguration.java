@@ -75,6 +75,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean thirdFeature;
     private boolean applyUpdates;
     private String queryLanguage;
+    private String staticBaseUri;
+    private boolean optimizeSteps; // do optimized version in SlashExpr that may violate stability condition of document
+                                   // order
+    private boolean optimizeStepsExperimental; // experimentally optimize steps even more, correctness not yet verified
+    private boolean optimizeParentPointers; // true if no steps in query require the parent pointer, allows removal of
+                                            // parent pointer from node items
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -443,6 +449,28 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
         }
+
+        if (this.arguments.containsKey("static-base-uri")) {
+            this.staticBaseUri = this.arguments.get("static-base-uri");
+        }
+
+        if (this.arguments.containsKey("optimize-steps")) {
+            this.optimizeSteps = this.arguments.get("optimize-steps").equals("yes");
+        } else {
+            this.optimizeSteps = true;
+        }
+
+        if (this.arguments.containsKey("optimize-steps-experimental")) {
+            this.optimizeStepsExperimental = this.arguments.get("optimize-steps-experimental").equals("yes");
+        } else {
+            this.optimizeStepsExperimental = false;
+        }
+
+        if (this.arguments.containsKey("optimize-parent-pointers")) {
+            this.optimizeParentPointers = this.arguments.get("optimize-parent-pointers").equals("yes");
+        } else {
+            this.optimizeParentPointers = true;
+        }
     }
 
     public boolean getOverwrite() {
@@ -680,6 +708,34 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setQueryLanguage(String version) {
         this.queryLanguage = version;
+    }
+
+    public String getStaticBaseUri() {
+        return this.staticBaseUri;
+    }
+
+    public boolean optimizeSteps() {
+        return this.optimizeSteps;
+    }
+
+    public void setOptimizeSteps(boolean optimizeSteps) {
+        this.optimizeSteps = optimizeSteps;
+    }
+
+    public boolean optimizeStepExperimental() {
+        return this.optimizeStepsExperimental;
+    }
+
+    public void setOptimizeStepsExperimental(boolean optimizeStepsExperimental) {
+        this.optimizeStepsExperimental = optimizeStepsExperimental;
+    }
+
+    public boolean optimizeParentPointers() {
+        return this.optimizeParentPointers;
+    }
+
+    public void setOptimizeParentPointers(boolean optimizeParentPointers) {
+        this.optimizeParentPointers = optimizeParentPointers;
     }
 
     public boolean isLocal() {

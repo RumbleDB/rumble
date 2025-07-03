@@ -24,7 +24,16 @@ public class ElementItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
+    @SuppressWarnings("unused")
     public ElementItem() {
+    }
+
+    public ElementItem(String tagName, List<Item> children, List<Item> attributes) {
+        this.nodeName = tagName;
+        this.children = children;
+        this.attributes = attributes;
+        // TODO: add support for attributes and children
+        this.stringValue = "<" + tagName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
@@ -142,5 +151,10 @@ public class ElementItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
     }
 }
