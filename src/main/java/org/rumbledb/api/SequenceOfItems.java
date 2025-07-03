@@ -1,6 +1,9 @@
 package org.rumbledb.api;
 
+import static org.apache.spark.sql.functions.trim;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -34,12 +37,13 @@ import sparksoniq.spark.SparkSessionManager;
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
-public class SequenceOfItems {
+public class SequenceOfItems implements Iterator<Item> {
 
     private RuntimeIterator iterator;
     private DynamicContext dynamicContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
+    private boolean isConsumed;
 
     public SequenceOfItems(
             RuntimeIterator iterator,
@@ -48,37 +52,9 @@ public class SequenceOfItems {
     ) {
         this.iterator = iterator;
         this.isOpen = false;
+        this.isConsumed = false;
         this.dynamicContext = dynamicContext;
         this.configuration = configuration;
-    }
-
-    /**
-     * Opens the iterator.
-     */
-    public void open() {
-        if (this.isMaterialisable()) {
-            this.iterator.open(this.dynamicContext);
-        }
-        this.isOpen = true;
-    }
-
-    /**
-     * Checks whether the iterator is open.
-     *
-     * @return true if it is open, false if it is closed.
-     */
-    public boolean isOpen() {
-        return this.isOpen;
-    }
-
-    /**
-     * Closes the iterator.
-     */
-    public void close() {
-        if (this.isOpen) {
-            this.iterator.close();
-        }
-        this.isOpen = false;
     }
 
     /**
@@ -90,7 +66,22 @@ public class SequenceOfItems {
         if (!this.isMaterialisable()) {
             return false;
         }
-        return this.iterator.hasNext();
+        if(this.isConsumed)
+        {
+            return false;
+        }
+        if(!this.isOpen)
+        {
+            this.iterator.open(this.dynamicContext);
+            this.isOpen = true;
+        }
+        boolean result = this.iterator.hasNext();
+        if(!result)
+        {
+            this.iterator.close();
+            this.isConsumed = true;
+        }
+        return result;
     }
 
     /**

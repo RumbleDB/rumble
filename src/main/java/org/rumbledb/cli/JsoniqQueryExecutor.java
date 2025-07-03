@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.slf4j.Logger;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
@@ -43,11 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.spark.internal.Logging;
 
-public class JsoniqQueryExecutor {
+public class JsoniqQueryExecutor implements Logging {
     private RumbleRuntimeConfiguration configuration;
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
+        initializeLogIfNecessary(true, true);
         this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
@@ -236,6 +239,18 @@ public class JsoniqQueryExecutor {
         resultList.clear();
         JavaRDD<Item> rdd = sequence.getAsRDD();
         return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+    }
+
+    @Override
+    public Logger org$apache$spark$internal$Logging$$log_() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void org$apache$spark$internal$Logging$$log__$eq(Logger x$1) {
+        // TODO Auto-generated method stub
+
     }
 
 }
