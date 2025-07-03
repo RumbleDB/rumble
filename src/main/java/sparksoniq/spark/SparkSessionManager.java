@@ -20,9 +20,9 @@
 
 package sparksoniq.spark;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -150,8 +150,8 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Logger.getLogger("org").setLevel(LOG_LEVEL);
-            Logger.getLogger("akka").setLevel(LOG_LEVEL);
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
 
             this.session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {
