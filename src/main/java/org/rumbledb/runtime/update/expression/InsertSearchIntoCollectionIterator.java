@@ -130,8 +130,7 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
                 rowOrderBase = res.get(0).getAs(SparkSessionManager.rowOrderColumnName);
                 rowOrderMax = 100000.0;
             }
-        }
-        else {
+        } else {
             rowOrderBase = res.get(0).getAs(SparkSessionManager.rowOrderColumnName);
             rowOrderMax = res.get(1).getAs(SparkSessionManager.rowOrderColumnName);
         }
