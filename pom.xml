@@ -261,25 +261,21 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.13</artifactId>
             <version>3.5.6</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.13</artifactId>
             <version>3.5.6</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.13</artifactId>
             <version>3.5.6</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
             <version>3.3.6</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -357,6 +353,12 @@
       <groupId>io.delta</groupId>
       <artifactId>delta-spark_2.13</artifactId>
       <version>3.2.1</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/net.sf.py4j/py4j -->
+    <dependency>
+        <groupId>net.sf.py4j</groupId>
+        <artifactId>py4j</artifactId>
+        <version>0.10.9.9</version>
     </dependency>
   </dependencies>
 

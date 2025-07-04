@@ -1,5 +1,6 @@
 package org.rumbledb.api;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -7,8 +8,10 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
@@ -179,6 +182,49 @@ public class SequenceOfItems {
         pul.applyUpdates(this.iterator.getMetadata());
     }
 
+    /**
+     * Outputs the results as a list.
+     * @param
+     * @return a list of items.
+     */
+    public List<Item> getList() {
+        List<Item> result = new ArrayList<Item>();
+        long num = populateList(result);
+        if(num != -1)
+        {
+            throw new CannotMaterializeException(
+                    "Cannot materialize a sequence of "
+                        + num
+                        + " items because the limit is set to "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + ". This value can be configured with the --materialization-cap parameter at startup",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        return result;
+    }
+
+    /**
+     * Outputs the results as a list.
+     * @param
+     * @return a list of items.
+     */
+    public List<Item> getListWithWarningOnlyIfCapReached() {
+        List<Item> result = new ArrayList<Item>();
+        long num = populateList(result);
+        if(num != -1)
+        {
+            System.err.println(
+                "Warning! The output sequence contains "
+                    + num
+                    + " items and its materialization was capped at "
+                    + SparkSessionManager.COLLECT_ITEM_LIMIT
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
+            );
+        }
+        return result;
+    }
+
     /*
      * Populates a list of items with the output.
      *
@@ -232,5 +278,4 @@ public class SequenceOfItems {
             return populateList(resultList);
         }
     }
-
 }
