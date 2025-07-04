@@ -192,14 +192,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return RumbleRuntimeConfiguration.defaultConfiguration;
     }
 
-    public String getConfigurationArgument(String key) {
-        if (this.arguments.containsKey(key)) {
-            return this.arguments.get(key);
-        } else {
-            return null;
-        }
-    }
-
     public int getPort() {
         if (this.arguments.containsKey("port")) {
             return Integer.parseInt(this.arguments.get("port"));
@@ -606,16 +598,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return null;
     }
 
-    public Set<Name> getExternalVariablesReadFromDataFrame() {
-        return this.externalVariableValuesReadFromDataFrames.keySet();
-    }
-
-    public void setExternalVariableValueReadFromDataFrame(Name name, Dataset<Row> dataFrame) {
+    public void setExternalVariableValue(Name name, Dataset<Row> dataFrame) {
         this.externalVariableValuesReadFromDataFrames.put(name, dataFrame);
     }
 
-    public void setExternalVariableValueReadFromDataFrame(String variableName, Dataset<Row> dataFrame) {
-        setExternalVariableValueReadFromDataFrame(new Name(null, null, variableName), dataFrame);
+    public void setExternalVariableValue(String variableName, Dataset<Row> dataFrame) {
+        setExternalVariableValue(new Name(null, null, variableName), dataFrame);
     }
 
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {

@@ -26,7 +26,7 @@ public class Rumble {
     private RumbleRuntimeConfiguration configuration;
 
     /**
-     * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
+     * Creates a new Rumble instance. This initializes a brand new Spark session.
      *
      * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */

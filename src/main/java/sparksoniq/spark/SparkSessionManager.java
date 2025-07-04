@@ -99,6 +99,14 @@ public class SparkSessionManager {
     private SparkSessionManager() {
     }
 
+    private SparkSessionManager(SparkConf conf) {
+        if (this.configuration == null) {
+            this.configuration = conf;
+        } else {
+            throw new OurBadException("Configuration already exists: new configuration initialization prevented.");
+        }
+    }
+
     private SparkSessionManager(SparkSession session) {
         if (this.session == null) {
             this.session = session;
@@ -118,16 +126,23 @@ public class SparkSessionManager {
         return COLLECT_ITEM_LIMIT > 0;
     }
 
-    public static SparkSessionManager getInstance(SparkSession session) {
+    public static SparkSessionManager getInstance() {
         if (instance == null) {
-            instance = new SparkSessionManager(session);
+            instance = new SparkSessionManager();
         }
         return instance;
     }
 
-    public static SparkSessionManager getInstance() {
+    public static SparkSessionManager getInstance(SparkConf conf) {
         if (instance == null) {
-            instance = new SparkSessionManager();
+            instance = new SparkSessionManager(conf);
+        }
+        return instance;
+    }
+
+    public static SparkSessionManager getInstance(SparkSession session) {
+        if (instance == null) {
+            instance = new SparkSessionManager(session);
         }
         return instance;
     }
