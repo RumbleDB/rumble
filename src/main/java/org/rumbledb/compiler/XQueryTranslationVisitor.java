@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -36,6 +36,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -67,6 +68,12 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
@@ -111,6 +118,8 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
@@ -630,6 +639,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region EnclosedExpression
     @Override
     public Node visitEnclosedExpression(XQueryParser.EnclosedExpressionContext ctx) {
+        // empty expression
+        if (ctx.expr() == null) {
+            return null;
+        }
         return this.visitExpr(ctx.expr());
     }
     // endregion
@@ -904,8 +917,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         XQueryParser.StringConcatExprContext child = ctx.rhs.get(0);
         Expression childExpression = (Expression) this.visitStringConcatExpr(child);
 
+        String operatorSymbol = ctx.op.get(0).getText();
+
+        // Check if node comparison operator
+        if (ctx.op.get(0).nodeComp() != null) {
+            NodeComparisonExpression.NodeComparisonOperator nodeOp = NodeComparisonExpression.NodeComparisonOperator
+                .fromSymbol(operatorSymbol);
+            return new NodeComparisonExpression(
+                    mainExpression,
+                    childExpression,
+                    nodeOp,
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        // else, it's a generic or value comparison
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
-            ctx.op.get(0).getText()
+            operatorSymbol
         );
         if (kind.isValueComparison() || this.configuration.optimizeGeneralComparisonToValueComparison()) {
             return new ComparisonExpression(
@@ -1495,6 +1523,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (child instanceof XQueryParser.DirectConstructorContext) {
             return this.visitDirectConstructor((XQueryParser.DirectConstructorContext) child);
         }
+        if (child instanceof XQueryParser.ComputedConstructorContext) {
+            return this.visitComputedConstructor((XQueryParser.ComputedConstructorContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Node constructor not yet implemented",
                 createMetadataFromContext(ctx)
@@ -1503,6 +1534,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirElemConstructorOpenCloseContext) {
+            return this.visitDirElemConstructorOpenClose((XQueryParser.DirElemConstructorOpenCloseContext) child);
+        } else if (child instanceof XQueryParser.DirElemConstructorSingleTagContext) {
+            return this.visitDirElemConstructorSingleTag((XQueryParser.DirElemConstructorSingleTagContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Direct constructor not yet implemented",
                 createMetadataFromContext(ctx)
@@ -1511,12 +1548,227 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitDirElemConstructorOpenClose(XQueryParser.DirElemConstructorOpenCloseContext ctx) {
-        throw new UnsupportedFeatureException(
-                "DirElemConstructorOpenClose not yet implemented",
+        // check that the start and end tags are the same
+        if (ctx.close_tag_name != null && !ctx.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
+            throw new DirectElementConstructorTagMismatchException(
+                    "The name used in the end tag must exactly match the name used in the corresponding start tag.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as adjacent
+        // siblings.
+        // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+        // here, we merge adjacent text nodes into a single text node.
+        List<Expression> content = new ArrayList<>();
+        StringBuilder textAccumulator = null;
+        ExceptionMetadata firstTextMetadata = null;
+
+        for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
+            Expression childExpression = (Expression) this.visitDirElemContent(child);
+
+            if (childExpression instanceof TextNodeExpression) {
+                TextNodeExpression textNode = (TextNodeExpression) childExpression;
+
+                // If the parent of a text node is not empty, the Text Node must not contain the zero-length string as
+                // its content.
+                // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+                // skip empty text nodes
+                if (textNode.getContent().isEmpty()) {
+                    continue;
+                }
+
+                if (textAccumulator == null) {
+                    // start accumulating text nodes
+                    textAccumulator = new StringBuilder();
+                    // keep metadata of the first node
+                    firstTextMetadata = textNode.getMetadata();
+                }
+
+                // accumulate the text content
+                textAccumulator.append(textNode.getContent());
+            } else {
+                // non-text node encountered
+                if (textAccumulator != null) {
+                    // finalize any accumulated text nodes
+                    content.add(
+                        new TextNodeExpression(
+                                textAccumulator.toString(),
+                                firstTextMetadata
+                        )
+                    );
+                    textAccumulator = null;
+                    firstTextMetadata = null;
+                }
+
+                // add the non-text node
+                content.add(childExpression);
+            }
+        }
+
+        // handle any remaining accumulated text at the end
+        if (textAccumulator != null) {
+            content.add(
+                new TextNodeExpression(
+                        textAccumulator.toString(),
+                        firstTextMetadata
+                )
+            );
+        }
+
+        List<Expression> attributes = new ArrayList<>();
+        if (ctx.attributes != null) {
+            attributes = this.getAttributesExpressionsList(ctx.attributes);
+        }
+
+        return new DirElemConstructorExpression(
+                ctx.open_tag_name.getText(),
+                content,
+                attributes,
+                createMetadataFromContext(ctx)
+        );
+
+    }
+
+    @Override
+    public Node visitDirElemConstructorSingleTag(XQueryParser.DirElemConstructorSingleTagContext ctx) {
+        // Handle attributes in self-closing tags
+        List<Expression> attributes = new ArrayList<>();
+        if (ctx.attributes != null) {
+            attributes = this.getAttributesExpressionsList(ctx.attributes);
+        }
+
+        return new DirElemConstructorExpression(
+                ctx.open_tag_name.getText(),
+                new ArrayList<>(),
+                attributes,
                 createMetadataFromContext(ctx)
         );
     }
 
+    @Override
+    public Node visitDirElemContent(XQueryParser.DirElemContentContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((XQueryParser.DirectConstructorContext) child);
+        } else if (child instanceof XQueryParser.CommonContentContext) {
+            return this.visitCommonContent((XQueryParser.CommonContentContext) child);
+        } else {
+            // create a new text node
+            String text = child.getText();
+            if (ctx.CDATA() != null) {
+                // filter out the <![CDATA[ and ]]>, and return the text
+                return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
+            }
+            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+        }
+    }
+
+    @Override
+    public Node visitCommonContent(XQueryParser.CommonContentContext ctx) {
+        if (ctx.expr() != null) {
+            return (Expression) this.visitExpr(ctx.expr());
+        }
+        // if there is no expression, return a text node with the content
+        return new TextNodeExpression(ctx.getText(), createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitComputedConstructor(XQueryParser.ComputedConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.CompDocConstructorContext) {
+            return this.visitCompDocConstructor((XQueryParser.CompDocConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompElemConstructorContext) {
+            return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompTextConstructorContext) {
+            return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompAttrConstructorContext) {
+            return this.visitCompAttrConstructor((XQueryParser.CompAttrConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCompDocConstructor(XQueryParser.CompDocConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedExpression(ctx.enclosedExpression());
+        return new DocumentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompTextConstructor(XQueryParser.CompTextConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new TextNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompAttrConstructor(XQueryParser.CompAttrConstructorContext ctx) {
+        Expression valueExpression = (Expression) visit(ctx.enclosedExpression());
+
+        // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.name != null) {
+            // Static attribute name: attribute attributeName { value }
+            Name attributeName = this.parseEqName(ctx.name, false, false, false);
+            return new ComputedAttributeConstructorExpression(
+                    attributeName,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.name_expr != null) {
+            // Dynamic attribute name: attribute { nameExpression } { value }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.name_expr);
+            return new ComputedAttributeConstructorExpression(
+                    nameExpression,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed attribute constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
+
+        // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.eqName() != null) {
+            // Static element name: element elementName { content }
+            Name elementName = this.parseEqName(ctx.eqName(), false, false, false);
+            return new ComputedElementConstructorExpression(
+                    elementName,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.expr() != null) {
+            // Dynamic element name: element { nameExpression } { content }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedElementConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed element constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitEnclosedContentExpr(XQueryParser.EnclosedContentExprContext ctx) {
+        return this.visitEnclosedExpression(ctx.enclosedExpression());
+    }
 
     @Override
     public Node visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {
@@ -2676,5 +2928,226 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         return parsedAnnotations;
     }
+
+
+    private List<Expression> getAttributesExpressionsList(XQueryParser.DirAttributeListContext ctx) {
+        List<Expression> attributes = new ArrayList<>();
+
+        // Process each attribute name-value pair
+        List<XQueryParser.QnameContext> attributeNames = ctx.attribute_qname;
+        List<XQueryParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
+
+        for (int i = 0; i < attributeNames.size(); i++) {
+            // Get the attribute name
+            Name attributeName = parseName(attributeNames.get(i), false, false, false);
+            String qname = attributeName.toString();
+
+            // Get the attribute value
+            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i));
+            // Create AttributeNodeExpression
+            AttributeNodeExpression attributeNode = new AttributeNodeExpression(
+                    qname,
+                    value,
+                    createMetadataFromContext(ctx)
+            );
+            attributes.add(attributeNode);
+        }
+
+        return attributes;
+    }
+
+    private List<Expression> getAttributeValuesExpressionsList(XQueryParser.DirAttributeValueContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.DirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions((XQueryParser.DirAttributeValueAposContext) child);
+        } else if (child instanceof XQueryParser.DirAttributeValueQuotContext) {
+            return this.getDirAttributeValueQuotExpressions((XQueryParser.DirAttributeValueQuotContext) child);
+        }
+        throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+    }
+
+
+    private String processEntityOrCharacterReference(ParseTree child) {
+        String text = child.getText();
+
+        // Handle predefined entity references
+        if ("&lt;".equals(text)) {
+            return "<";
+        } else if ("&gt;".equals(text)) {
+            return ">";
+        } else if ("&amp;".equals(text)) {
+            return "&";
+        } else if ("&quot;".equals(text)) {
+            return "\"";
+        } else if ("&apos;".equals(text)) {
+            return "'";
+        }
+
+        // Handle character references
+        if (text.startsWith("&#x") && text.endsWith(";")) {
+            // Hexadecimal character reference
+            try {
+                String hexValue = text.substring(3, text.length() - 1);
+                int codePoint = Integer.parseInt(hexValue, 16);
+                return new String(Character.toChars(codePoint));
+            } catch (IllegalArgumentException e) {
+                // Invalid character reference, return as-is
+                return null;
+            }
+        } else if (text.startsWith("&#") && text.endsWith(";")) {
+            // Decimal character reference
+            try {
+                String decimalValue = text.substring(2, text.length() - 1);
+                int codePoint = Integer.parseInt(decimalValue, 10);
+                return new String(Character.toChars(codePoint));
+            } catch (IllegalArgumentException e) {
+                // Invalid character reference, return as-is
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Helper method to process quoted attribute values (both single and double quoted).
+     * This method handles the common logic for merging adjacent text content and building expressions.
+     * Returns a list of expressions where adjacent string literals are merged.
+     */
+    private List<Expression> processQuotedAttributeValue(
+            ParserRuleContext ctx,
+            String escapeSequence,
+            String escapedChar
+    ) {
+
+        // Similar to element content, we need to merge adjacent text content
+        StringBuilder textAccumulator = null;
+        List<Expression> contentExpressions = new ArrayList<>();
+
+        // Process each child between the quotes (skip the first and last quote tokens)
+        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
+            ParseTree child = ctx.getChild(i);
+            List<Expression> childExpressions = new ArrayList<>();
+
+            // Try to process as entity or character reference first
+            String entityValue = processEntityOrCharacterReference(child);
+            if (entityValue != null) {
+                childExpressions.add(new AttributeNodeContentExpression(entityValue, createMetadataFromContext(ctx)));
+            } else if (child.getText().equals(escapeSequence)) {
+                // Escaped quote
+                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
+            } else {
+                // Try the content visitor for nested content or text
+                List<Expression> contentResult = processAttributeContent((ParserRuleContext) child);
+                if (contentResult != null && !contentResult.isEmpty()) {
+                    childExpressions.addAll(contentResult);
+                } else {
+                    throw new UnsupportedOperationException("Unsupported attribute content: " + child.getText());
+                }
+            }
+
+            // Process each expression returned from the child
+            for (Expression childExpression : childExpressions) {
+                if (childExpression instanceof AttributeNodeContentExpression) {
+                    // Text content - accumulate it
+                    String content = ((AttributeNodeContentExpression) childExpression).getContent();
+
+                    if (textAccumulator == null) {
+                        // Start accumulating text content
+                        textAccumulator = new StringBuilder();
+                    }
+
+                    // Accumulate the text content
+                    textAccumulator.append(content);
+                } else {
+                    // Non-text expression encountered (e.g., enclosed expression)
+                    if (textAccumulator != null) {
+                        // Finalize any accumulated text
+                        contentExpressions.add(
+                            new AttributeNodeContentExpression(
+                                    textAccumulator.toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                        textAccumulator = null;
+                    }
+
+                    // Add the non-text expression
+                    contentExpressions.add(childExpression);
+                }
+            }
+        }
+
+        // Handle any remaining accumulated text at the end
+        if (textAccumulator != null) {
+            contentExpressions.add(
+                new AttributeNodeContentExpression(
+                        textAccumulator.toString(),
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+
+        return contentExpressions;
+    }
+
+    /**
+     * Helper method to process attribute content (handles nested quotes, expressions, and escaped braces).
+     */
+    private List<Expression> processAttributeContent(ParserRuleContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        List<Expression> expressions = new ArrayList<>();
+
+        if (ctx instanceof XQueryParser.DirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions((XQueryParser.DirAttributeValueAposContext) ctx);
+        } else if (ctx instanceof XQueryParser.DirAttributeValueQuotContext) {
+            return this.getDirAttributeValueQuotExpressions((XQueryParser.DirAttributeValueQuotContext) ctx);
+        } else if (
+            ctx instanceof XQueryParser.DirAttributeContentQuotContext
+                &&
+                ((XQueryParser.DirAttributeContentQuotContext) ctx).expr() != null
+        ) {
+            // Expression in braces
+            expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentQuotContext) ctx).expr()));
+        } else if (
+            ctx instanceof XQueryParser.DirAttributeContentAposContext
+                &&
+                ((XQueryParser.DirAttributeContentAposContext) ctx).expr() != null
+        ) {
+            // Expression in braces
+            expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentAposContext) ctx).expr()));
+        } else if (child.getText().equals("{{")) {
+            // DOUBLE_LBRACE - escaped left brace
+            expressions.add(new AttributeNodeContentExpression("{", createMetadataFromContext(ctx)));
+        } else if (child.getText().equals("}}")) {
+            // DOUBLE_RBRACE - escaped right brace
+            expressions.add(new AttributeNodeContentExpression("}", createMetadataFromContext(ctx)));
+        } else if (child instanceof XQueryParser.ContentCharContext) {
+            // ContentChar+ - regular text content
+            expressions.add(new AttributeNodeContentExpression(child.getText(), createMetadataFromContext(ctx)));
+        }
+        return expressions;
+    }
+
+
+
+    /**
+     * Process dirAttributeValueApos and return a list of expressions.
+     * This method deviates from the strict visitor pattern to return multiple expressions.
+     */
+    private List<Expression> getDirAttributeValueAposExpressions(XQueryParser.DirAttributeValueAposContext ctx) {
+        return processQuotedAttributeValue(ctx, "\"\"", "\"");
+    }
+
+    /**
+     * Process dirAttributeValueQuot and return a list of expressions.
+     * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
+     * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
+     * This method deviates from the strict visitor pattern to return multiple expressions.
+     */
+    private List<Expression> getDirAttributeValueQuotExpressions(XQueryParser.DirAttributeValueQuotContext ctx) {
+        return processQuotedAttributeValue(ctx, "''", "'");
+    }
+
 
 }

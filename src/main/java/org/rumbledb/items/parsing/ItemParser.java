@@ -724,7 +724,10 @@ public class ItemParser implements Serializable {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers));
-            } else if (childNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(childNode)) {
+            } else if (
+                (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
+                    && !hasWhitespaceText(childNode)
+            ) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
         }
