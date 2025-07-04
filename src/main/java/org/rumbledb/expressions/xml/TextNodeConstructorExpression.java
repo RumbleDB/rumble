@@ -31,7 +31,8 @@ import java.util.List;
 /**
  * An expression representing a text node constructor.
  * 
- * All text node constructors are computed constructors. The result of a text node constructor is a new text node, with its own node identity.
+ * All text node constructors are computed constructors. The result of a text node constructor is a new text node, with
+ * its own node identity.
  * 
  * Syntax: text { content }
  * 

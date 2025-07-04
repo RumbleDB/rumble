@@ -33,7 +33,7 @@ import java.util.List;
  * 
  * All document node constructors are computed constructors.
  * 
- * The result of a document node constructor is a new document node, with its own node identity. 
+ * The result of a document node constructor is a new document node, with its own node identity.
  * 
  * @see https://www.w3.org/TR/xquery-31/#id-documentConstructors
  */
