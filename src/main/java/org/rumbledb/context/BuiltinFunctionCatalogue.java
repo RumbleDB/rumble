@@ -610,7 +610,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a hive registered delta table
      */
     static final BuiltinFunction delta_table = createBuiltinFunction(
-        new Name(Name.JN_NS, "jn", "delta-table"),
+        new Name(Name.JN_NS, "jn", "table"),
         "string",
         "item*",
         DeltaTableFunctionIterator.class,

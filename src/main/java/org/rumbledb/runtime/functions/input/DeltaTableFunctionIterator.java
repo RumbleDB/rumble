@@ -28,7 +28,7 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
         RuntimeIterator collectionNameIterator = this.children.get(0);
         String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
-        String selectQuery = "SELECT * FROM " + collectionName;
+        String selectQuery = "SELECT * FROM " + collectionName + " ORDER BY " + SparkSessionManager.rowOrderColumnName;
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().sql(selectQuery);
 
         dataFrame.show();
