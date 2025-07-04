@@ -37,6 +37,7 @@ public class Rumble {
 
     /**
      * Sets a session from outside.
+     * 
      * @return
      */
     public void setSession(SparkSession session) {
@@ -45,6 +46,7 @@ public class Rumble {
 
     /**
      * Gets the configuration
+     * 
      * @param query
      * @return the configuration
      */

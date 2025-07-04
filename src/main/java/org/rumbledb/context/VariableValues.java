@@ -210,7 +210,10 @@ public class VariableValues implements Serializable, KryoSerializable {
                 throw new JobWithinAJobException(metadata);
             }
             JSoundDataFrame df = this.getDataFrameVariableValue(varName, metadata);
-            return SparkSessionManager.collectRDDwithLimit(HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata), metadata);
+            return SparkSessionManager.collectRDDwithLimit(
+                HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata),
+                metadata
+            );
         }
 
         if (this.parent != null) {

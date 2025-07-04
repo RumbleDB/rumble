@@ -184,14 +184,14 @@ public class SequenceOfItems {
 
     /**
      * Outputs the results as a list.
+     * 
      * @param
      * @return a list of items.
      */
     public List<Item> getList() {
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result);
-        if(num != -1)
-        {
+        if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
@@ -206,14 +206,14 @@ public class SequenceOfItems {
 
     /**
      * Outputs the results as a list.
+     * 
      * @param
      * @return a list of items.
      */
     public List<Item> getListWithWarningOnlyIfCapReached() {
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result);
-        if(num != -1)
-        {
+        if (num != -1) {
             System.err.println(
                 "Warning! The output sequence contains "
                     + num

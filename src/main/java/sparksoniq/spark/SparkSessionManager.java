@@ -34,7 +34,6 @@ import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -116,7 +115,7 @@ public class SparkSessionManager {
             this.session = session;
             this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
             if (this.configuration == null) {
-            setDefaultConfiguration();
+                setDefaultConfiguration();
             }
             initializeKryoSerialization();
             Configurator.setLevel("org", LOG_LEVEL);
