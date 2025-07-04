@@ -31,7 +31,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 /**
  * An expression representing a text node, as part of a direct element constructor content.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-element-constructor
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-element-constructor">XQuery 3.1, 3.9.1: Direct Element
+ *      Constructors</a>
  */
 public class TextNodeExpression extends Expression {
 
