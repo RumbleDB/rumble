@@ -33,6 +33,7 @@ public class Rumble {
     public Rumble(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+        SparkSessionManager.getInstance().getOrCreateSession();
     }
 
     /**
