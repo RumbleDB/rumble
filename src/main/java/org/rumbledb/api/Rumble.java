@@ -49,7 +49,6 @@ public class Rumble {
     /**
      * Gets the configuration
      * 
-     * @param query
      * @return the configuration
      */
     public RumbleRuntimeConfiguration getConfiguration() {
