@@ -31,6 +31,8 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -201,6 +203,14 @@ public class VariableValues implements Serializable, KryoSerializable {
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
             return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
+        }
+
+        if (this.dataFrameVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
+            JSoundDataFrame df = this.getDataFrameVariableValue(varName, metadata);
+            return SparkSessionManager.collectRDDwithLimit(HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata), metadata);
         }
 
         if (this.parent != null) {

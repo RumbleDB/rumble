@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -108,6 +109,21 @@ public class SparkSessionManager {
             instance = new SparkSessionManager();
         }
         return instance;
+    }
+
+    public void setSession(SparkSession session) {
+        if (this.session == null) {
+            this.session = session;
+            this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+            if (this.configuration == null) {
+            setDefaultConfiguration();
+            }
+            initializeKryoSerialization();
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
+        } else {
+            throw new OurBadException("Session already exists: new session initialization prevented.");
+        }
     }
 
     public SparkSession getOrCreateSession() {

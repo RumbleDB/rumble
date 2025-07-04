@@ -1,5 +1,6 @@
 package org.rumbledb.api;
 
+import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -32,6 +33,23 @@ public class Rumble {
     public Rumble(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+    }
+
+    /**
+     * Sets a session from outside.
+     * @return
+     */
+    public void setSession(SparkSession session) {
+        SparkSessionManager.getInstance().setSession(session);
+    }
+
+    /**
+     * Gets the configuration
+     * @param query
+     * @return the configuration
+     */
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     /**

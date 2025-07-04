@@ -20,6 +20,8 @@
 
 package org.rumbledb.config;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
@@ -56,6 +58,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
     private Map<Name, String> externalVariableValuesReadFromFiles;
+    private Map<Name, Dataset<Row>> externalVariableValuesReadFromDataFrames;
     private Set<Name> externalVariablesReadFromStandardInput;
     private Map<Name, String> externalVariablesInputFormats;
     private boolean checkReturnTypeOfBuiltinFunctions;
@@ -306,6 +309,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
         this.externalVariableValuesReadFromFiles = new HashMap<>();
+        this.externalVariableValuesReadFromDataFrames = new HashMap<>();
         this.externalVariablesInputFormats = new HashMap<>();
         this.externalVariablesReadFromStandardInput = new HashSet<>();
         for (String s : this.arguments.keySet()) {
@@ -593,6 +597,25 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             return this.externalVariableValuesReadFromFiles.get(name);
         }
         return null;
+    }
+
+    public Dataset<Row> getExternalVariableValueReadFromDataFrame(Name name) {
+        if (this.externalVariableValuesReadFromDataFrames.containsKey(name)) {
+            return this.externalVariableValuesReadFromDataFrames.get(name);
+        }
+        return null;
+    }
+
+    public Set<Name> getExternalVariablesReadFromDataFrame() {
+        return this.externalVariableValuesReadFromDataFrames.keySet();
+    }
+
+    public void setExternalVariableValueReadFromDataFrame(Name name, Dataset<Row> dataFrame) {
+        this.externalVariableValuesReadFromDataFrames.put(name, dataFrame);
+    }
+
+    public void setExternalVariableValueReadFromDataFrame(String variableName, Dataset<Row> dataFrame) {
+        setExternalVariableValueReadFromDataFrame(new Name(null, null, variableName), dataFrame);
     }
 
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
