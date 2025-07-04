@@ -28,6 +28,11 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
+/**
+ * Expression representing an attribute node in a direct element constructor.
+ * 
+ * @see https://www.w3.org/TR/xquery-31/#id-attributes
+ */
 public class AttributeNodeExpression extends Expression {
     /**
      * The qname of the attribute node.

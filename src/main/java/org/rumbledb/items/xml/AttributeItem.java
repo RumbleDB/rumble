@@ -29,6 +29,12 @@ public class AttributeItem implements Item {
         this.stringValue = attributeNode.getNodeValue();
     }
 
+    /**
+     * Constructor for an attribute item.
+     * 
+     * @param nodeName The name of the attribute
+     * @param stringValue The string value of the attribute
+     */
     public AttributeItem(String nodeName, String stringValue) {
         this.nodeName = nodeName;
         this.stringValue = stringValue;

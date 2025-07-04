@@ -50,6 +50,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private DateTime currentDateTime;
     private int currentMutabilityLevel;
     private final GlobalVariables globalVariables;
+    /**
+     * The top-level runtime iterator for constructing the XML Node Tree.
+     * This is used in the context of direct constructors.
+     */
     private RuntimeIterator topLevelRuntimeIterator;
 
     /**

@@ -45,12 +45,14 @@ import java.util.List;
  * - fn:name() as xs:string
  * - fn:name($arg as node()?) as xs:string
  * 
- * Rules from XQuery 3.1 specification:
+ * Rules:
  * - If the argument is omitted, it defaults to the context item (.)
  * - If the argument is supplied and is the empty sequence, the function returns the zero-length string
  * - If the node identified by $arg has no name (that is, if it is a document node, a comment,
  * a text node, or a namespace node having no name), the function returns the zero-length string
  * - Otherwise, the function returns the value of the expression fn:string(fn:node-name($arg))
+ * 
+ * @see https://www.w3.org/TR/xpath-functions-31/#func-name
  */
 public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
 

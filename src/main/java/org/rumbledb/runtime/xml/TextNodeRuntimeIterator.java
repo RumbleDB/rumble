@@ -26,11 +26,23 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
+/**
+ * Runtime iterator for text nodes in a direct element constructor.
+ * 
+ * @see TextNodeExpression
+ */
 public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    /** The string content of the text node */
     private String content;
 
+    /**
+     * Constructor for text node runtime iterator.
+     * 
+     * @param content The string content of the text node
+     * @param staticContext The static context
+     */
     public TextNodeRuntimeIterator(
             String content,
             RuntimeStaticContext staticContext

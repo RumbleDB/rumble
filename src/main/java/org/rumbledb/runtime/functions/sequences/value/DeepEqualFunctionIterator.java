@@ -87,6 +87,13 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return ItemFactory.getInstance().createBooleanItem(res);
     }
 
+    /**
+     * Checks if two lists of items are deep-equal according to specification.
+     * 
+     * @param items1 The first list of items
+     * @param items2 The second list of items
+     * @return true if the lists are deep-equal, false otherwise
+     */
     public boolean checkDeepEqual(List<Item> items1, List<Item> items2) {
         if (items1.size() != items2.size()) {
             return false;
@@ -104,7 +111,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     /**
-     * Checks if two items are deep-equal according to XQuery 3.1 specification.
+     * Checks if two items are deep-equal according to specification.
      * This method handles the comparison logic for individual items, including
      * special cases for nodes and atomic values.
      *
@@ -134,8 +141,9 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     /**
-     * Checks if two nodes are deep-equal according to XQuery 3.1 specification.
-     * Reference: https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
+     * Checks if two nodes are deep-equal according to specification.
+     * 
+     * @see https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
      * 
      * @param node1 The first node to compare
      * @param node2 The second node to compare
@@ -218,14 +226,16 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     /**
-     * 3: Checks if two element nodes are deep-equal according to XQuery 3.1 specification.
+     * 3: Checks if two element nodes are deep-equal according to specification.
+     * 
+     * @see https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
      * 
      * @param element1 The first element node
      * @param element2 The second element node
      * @return true if the element nodes are deep-equal, false otherwise
      */
     private boolean checkElementNodesDeepEqual(Item element1, Item element2) {
-        // Point 3a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
+        // 3a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
         if (!element1.nodeName().equals(element2.nodeName())) {
             return false;
         }
@@ -256,7 +266,9 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     /**
-     * 4: Checks if two attribute nodes are deep-equal according to XQuery 3.1 specification.
+     * 4: Checks if two attribute nodes are deep-equal according to specification.
+     * 
+     * @see https://www.w3.org/TR/xpath-functions-31/#func-deep-equal
      * 
      * @param attr1 The first attribute node
      * @param attr2 The second attribute node

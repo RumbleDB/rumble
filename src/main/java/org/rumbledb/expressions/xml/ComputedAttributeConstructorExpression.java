@@ -29,6 +29,11 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Expression representing a computed attribute constructor.
+ * 
+ * @see https://www.w3.org/TR/xquery-31/#id-computedAttributes
+ */
 public class ComputedAttributeConstructorExpression extends Expression {
     /** The static attribute name (if specified) */
     private final Name attributeName;

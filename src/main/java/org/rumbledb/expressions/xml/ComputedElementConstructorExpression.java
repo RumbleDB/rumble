@@ -29,6 +29,11 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Expression representing a computed element constructor.
+ * 
+ * @see https://www.w3.org/TR/xquery-31/#id-computedElements
+ */
 public class ComputedElementConstructorExpression extends Expression {
     /** The static element name (if specified) */
     private final Name elementName;

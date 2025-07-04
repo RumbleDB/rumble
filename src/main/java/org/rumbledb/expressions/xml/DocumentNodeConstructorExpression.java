@@ -29,26 +29,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Document node constructors create document nodes according to the XQuery 3.1 specification.
- * All document node constructors are computed constructors. The result of a document node
- * constructor is a new document node, with its own node identity.
+ * An expression representing a document node constructor.
  * 
- * A document node constructor is useful when the result of a query is to be a document
- * in its own right.
+ * All document node constructors are computed constructors.
  * 
- * Syntax: document { content }
+ * The result of a document node constructor is a new document node, with its own node identity. 
  * 
- * The content expression of a document node constructor is processed in exactly the same way
- * as an enclosed expression in the content of a direct element constructor, as described in
- * Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
- * of nodes called the content sequence.
+ * @see https://www.w3.org/TR/xquery-31/#id-documentConstructors
  */
 public class DocumentNodeConstructorExpression extends Expression {
     /** The content expression */
     private final Expression contentExpression;
 
     /**
-     * Constructor for document node constructor: document { content }
+     * Constructor for document node constructor.
      * 
      * @param contentExpression The content expression
      * @param metadata The exception metadata

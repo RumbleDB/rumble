@@ -25,14 +25,19 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * Runtime iterator for text node constructors.
+ * 
+ * @see TextNodeConstructorExpression
+ */
 public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    /** The content iterator */
     private final AtomizationIterator contentIterator;
 
     /**
@@ -45,12 +50,8 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
             AtomizationIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(createChildList(contentIterator), staticContext);
+        super(Collections.singletonList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
-    }
-
-    private static List<RuntimeIterator> createChildList(RuntimeIterator contentIterator) {
-        return Arrays.asList(contentIterator);
     }
 
     @Override

@@ -25,6 +25,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 /**
  * Exception for XQTY0024: It is a type error if the content sequence in an element constructor
  * contains an attribute node following a node that is not an attribute node.
+ * @see https://www.w3.org/TR/xquery-31/#ERRXQTY0024
  */
 public class AttributeAfterNonAttributeException extends RumbleException {
 

@@ -30,8 +30,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Expression representing text content within XML attribute values.
- * This is distinct from StringLiteralExpression as it exists specifically
- * in the context of XML attribute values and has different semantics.
+ * This is distinct from other type of expressions as it exists specifically
+ * in the context of computed XML attribute nodes and has different semantics.
+ * 
+ * @see https://www.w3.org/TR/xquery-31/#id-computedAttributes
  */
 public class AttributeNodeContentExpression extends Expression {
 
@@ -60,7 +62,7 @@ public class AttributeNodeContentExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         // just append the content as is
-        // this is not a string literal, but it's only used in the context of attribute values
+        // this is not a string literal, but it's only used in the context of computed attribute nodes
         sb.append(this.content);
     }
 }

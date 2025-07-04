@@ -26,6 +26,11 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
+/**
+ * Runtime iterator for attribute node content.
+ * 
+ * @see AttributeNodeContentExpression
+ */
 public class AttributeNodeContentRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;

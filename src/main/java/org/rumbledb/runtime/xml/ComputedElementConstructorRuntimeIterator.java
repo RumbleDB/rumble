@@ -37,6 +37,11 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Runtime iterator for computed element constructors.
+ * 
+ * @see ComputedElementConstructorExpression
+ */
 public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;

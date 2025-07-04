@@ -27,12 +27,19 @@ public class ElementItem implements Item {
     public ElementItem() {
     }
 
-    public ElementItem(String tagName, List<Item> children, List<Item> attributes) {
-        this.nodeName = tagName;
+    /**
+     * Constructor for an element item.
+     * 
+     * @param nodeName The name of the element
+     * @param children The children items of the element
+     * @param attributes The attributes items of the element
+     */
+    public ElementItem(String nodeName, List<Item> children, List<Item> attributes) {
+        this.nodeName = nodeName;
         this.children = children;
         this.attributes = attributes;
         // TODO: add support for attributes and children
-        this.stringValue = "<" + tagName + "/>";
+        this.stringValue = "<" + nodeName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {

@@ -33,34 +33,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Runtime iterator for document node constructors.
+ * 
  * Document node constructors create document nodes according to the XQuery 3.1 specification.
  * All document node constructors are computed constructors. The result of a document node
  * constructor is a new document node, with its own node identity.
  * 
- * A document node constructor is useful when the result of a query is to be a document
- * in its own right.
- * 
- * Processing of the document node constructor proceeds as follows:
- * 1. If the content sequence contains a document node, the document node is replaced in the content
- * sequence by its children.
- * 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
- * their contents, with no intervening blanks. After concatenation, any text node whose content
- * is a zero-length string is deleted from the content sequence.
- * 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
- * 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
- * 5. The properties of the newly constructed document node are determined as follows:
- * a. base-uri is set to the Static Base URI.
- * b. children consist of all the element, text, comment, and processing instruction nodes in the
- * content sequence. Note that the parent property of each of these nodes has been set to the
- * newly constructed document node.
- * c. The unparsed-entities and document-uri properties are empty.
- * d. The string-value property is equal to the concatenated contents of the text-node descendants
- * in document order.
- * e. The typed-value property is equal to the string-value property, as an instance of xs:untypedAtomic.
- * 
- * No validation is performed on the constructed document node. The [XML 1.0] rules that govern the
- * structure of an XML document (for example, the document node must have exactly one child that is
- * an element node) are not enforced by the XQuery document node constructor.
+ * @see DocumentNodeConstructorExpression
  */
 public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -97,7 +76,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
             contextToUse = dynamicContext;
         }
 
-        // Process content expression according to XQuery 3.1 specification
+        // Process content expression according to specification,
         // The content expression of a document node constructor is processed in exactly the same way
         // as an enclosed expression in the content of a direct element constructor, as described in
         // Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
@@ -126,7 +105,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
     }
 
     /**
-     * Processes the content expression according to the XQuery 3.1 specification.
+     * Processes the content expression of the document node constructor.
      * 
      * Processing of the document node constructor proceeds as follows:
      * 1. If the content sequence contains a document node, the document node is replaced in the content

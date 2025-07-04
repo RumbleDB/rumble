@@ -27,11 +27,27 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Expression representing a direct element constructor.
+ * 
+ * @see https://www.w3.org/TR/xquery-31/#id-element-constructor
+ */
 public class DirElemConstructorExpression extends Expression {
-    private final String tagName;
+    /** The node name of the element */
+    private final String nodeName;
+    /** The content of the element */
     private final List<Expression> content;
+    /** The attributes of the element */
     private final List<Expression> attributes;
 
+    /**
+     * Constructor for a direct element constructor.
+     * 
+     * @param tagName The node name of the element
+     * @param content The content of the element
+     * @param attributes The attributes of the element
+     * @param metadata The exception metadata
+     */
     public DirElemConstructorExpression(
             String tagName,
             List<Expression> content,
@@ -39,19 +55,34 @@ public class DirElemConstructorExpression extends Expression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.tagName = tagName;
+        this.nodeName = tagName;
         this.content = content;
         this.attributes = attributes;
     }
 
-    public String getTagName() {
-        return this.tagName;
+    /**
+     * Get the node name of the element
+     * 
+     * @return The node name of the element
+     */
+    public String getNodeName() {
+        return this.nodeName;
     }
 
+    /**
+     * Get the content of the element
+     * 
+     * @return The content of the element
+     */
     public List<Expression> getContent() {
         return this.content;
     }
 
+    /**
+     * Get the attributes of the element
+     * 
+     * @return The attributes of the element
+     */
     public List<Expression> getAttributes() {
         return this.attributes;
     }
@@ -77,7 +108,7 @@ public class DirElemConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("<" + this.tagName);
+        sb.append("<" + this.nodeName);
         if (this.attributes != null && !this.attributes.isEmpty()) {
             for (Expression attr : this.attributes) {
                 attr.serializeToJSONiq(sb, indent);
@@ -92,7 +123,7 @@ public class DirElemConstructorExpression extends Expression {
             }
             indentIt(sb, indent);
         }
-        sb.append("</" + this.tagName + ">\n");
+        sb.append("</" + this.nodeName + ">\n");
     }
 
 }

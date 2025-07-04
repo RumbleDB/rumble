@@ -31,6 +31,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
+/**
+ * Runtime iterator for attribute nodes in a direct element constructor.
+ * 
+ * @see AttributeNodeExpression
+ */
 public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;

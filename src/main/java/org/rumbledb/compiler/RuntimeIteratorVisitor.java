@@ -754,7 +754,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitDirElemConstructor(DirElemConstructorExpression expression, RuntimeIterator argument) {
         RuntimeIterator runtimeIterator = new DirElemConstructorRuntimeIterator(
-                expression.getTagName(),
+                expression.getNodeName(),
                 expression.getContent()
                     .stream()
                     .map(arg -> this.visit(arg, argument))

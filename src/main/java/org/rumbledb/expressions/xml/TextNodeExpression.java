@@ -28,15 +28,32 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
+/**
+ * An expression representing a text node, as part of a direct element constructor content.
+ * 
+ * @see https://www.w3.org/TR/xquery-31/#id-element-constructor
+ */
 public class TextNodeExpression extends Expression {
 
+    /** The content of the text node */
     private String content;
 
+    /**
+     * Constructor for a text node.
+     * 
+     * @param content The content of the text node
+     * @param metadata The exception metadata
+     */
     public TextNodeExpression(String content, ExceptionMetadata metadata) {
         super(metadata);
         this.content = content;
     }
 
+    /**
+     * Get the content of the text node
+     * 
+     * @return The content of the text node
+     */
     public String getContent() {
         return this.content;
     }

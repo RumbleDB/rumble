@@ -30,7 +30,7 @@ public class DocumentItem implements Item {
     }
 
     /**
-     * Constructor for creating a document node with children and a computed string value.
+     * Constructor for creating a document node with children items.
      * Used by document node constructors when no actual DOM node is available.
      * 
      * @param children the child nodes of the document

@@ -25,6 +25,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 /**
  * Exception for XQDY0025: It is a dynamic error if any attribute of a constructed element
  * does not have a name that is distinct from the names of all other attributes of the constructed element.
+ * @see https://www.w3.org/TR/xquery-31/#ERRXQDY0025
  */
 public class DuplicateAttributeException extends RumbleException {
 

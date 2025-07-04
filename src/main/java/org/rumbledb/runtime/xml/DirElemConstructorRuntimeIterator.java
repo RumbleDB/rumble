@@ -31,6 +31,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Runtime iterator for direct element constructors.
+ * 
+ * @see DirElemConstructorExpression
+ */
 public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;

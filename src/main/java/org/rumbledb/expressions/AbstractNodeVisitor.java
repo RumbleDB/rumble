@@ -221,10 +221,6 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitDirElemConstructor(DirElemConstructorExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
     public T visitContextExpr(ContextItemExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -243,6 +239,10 @@ public abstract class AbstractNodeVisitor<T> {
     // endregion
 
     // region xml
+
+    public T visitDirElemConstructor(DirElemConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
     public T visitComputedElementConstructor(ComputedElementConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);

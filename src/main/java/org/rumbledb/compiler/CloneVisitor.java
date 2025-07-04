@@ -465,7 +465,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .collect(Collectors.toList());
 
         DirElemConstructorExpression result = new DirElemConstructorExpression(
-                expression.getTagName(),
+                expression.getNodeName(),
                 content,
                 attributes,
                 expression.getMetadata()
