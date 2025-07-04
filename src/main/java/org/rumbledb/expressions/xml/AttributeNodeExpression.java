@@ -31,7 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 /**
  * Expression representing an attribute node in a direct element constructor.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-attributes
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-attributes">XQuery 3.1, 3.9.1.1: Attributes</a>
  */
 public class AttributeNodeExpression extends Expression {
     /**

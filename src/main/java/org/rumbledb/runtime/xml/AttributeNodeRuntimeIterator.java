@@ -34,7 +34,7 @@ import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 /**
  * Runtime iterator for attribute nodes in a direct element constructor.
  * 
- * @see AttributeNodeExpression
+ * @see org.rumbledb.expressions.xml.AttributeNodeExpression
  */
 public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

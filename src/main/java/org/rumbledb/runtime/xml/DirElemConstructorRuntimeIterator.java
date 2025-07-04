@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Runtime iterator for direct element constructors.
  * 
- * @see DirElemConstructorExpression
+ * @see org.rumbledb.expressions.xml.DirElemConstructorExpression
  */
 public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

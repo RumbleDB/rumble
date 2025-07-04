@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Runtime iterator for text node constructors.
  * 
- * @see TextNodeConstructorExpression
+ * @see org.rumbledb.expressions.xml.TextNodeConstructorExpression
  */
 public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

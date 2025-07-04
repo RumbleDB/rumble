@@ -30,7 +30,8 @@ import java.util.List;
 /**
  * Expression representing a direct element constructor.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-element-constructor
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-element-constructor">XQuery 3.1, 3.9.1: Direct Element
+ *      Constructors</a>
  */
 public class DirElemConstructorExpression extends Expression {
     /** The node name of the element */

@@ -52,7 +52,7 @@ import java.util.List;
  * a text node, or a namespace node having no name), the function returns the zero-length string
  * - Otherwise, the function returns the value of the expression fn:string(fn:node-name($arg))
  * 
- * @see https://www.w3.org/TR/xpath-functions-31/#func-name
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-name">XPath Functions 3.1: fn:name</a>
  */
 public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
 

@@ -39,8 +39,7 @@ import java.util.Arrays;
  * 
  * Node comparisons are used to compare two nodes, by their identity or by their document order.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-node-comparisons
- * 
+ * @see org.rumbledb.expressions.comparison.NodeComparisonExpression
  */
 public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

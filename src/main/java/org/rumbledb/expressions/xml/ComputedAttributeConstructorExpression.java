@@ -32,7 +32,8 @@ import java.util.List;
 /**
  * Expression representing a computed attribute constructor.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-computedAttributes
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
+ *      Constructors</a>
  */
 public class ComputedAttributeConstructorExpression extends Expression {
     /** The static attribute name (if specified) */

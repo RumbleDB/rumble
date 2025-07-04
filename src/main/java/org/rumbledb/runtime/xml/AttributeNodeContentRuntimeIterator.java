@@ -29,7 +29,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 /**
  * Runtime iterator for attribute node content.
  * 
- * @see AttributeNodeContentExpression
+ * @see org.rumbledb.expressions.xml.AttributeNodeContentExpression
  */
 public class AttributeNodeContentRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * Runtime iterator for computed element constructors.
  * 
- * @see ComputedElementConstructorExpression
+ * @see org.rumbledb.expressions.xml.ComputedElementConstructorExpression
  */
 public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

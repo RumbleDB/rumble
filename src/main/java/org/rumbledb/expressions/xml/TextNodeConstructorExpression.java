@@ -36,7 +36,7 @@ import java.util.List;
  * 
  * Syntax: text { content }
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-textConstructors
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-textConstructors">XQuery 3.1, 3.9.3.4: Text Node Constructors</a>
  */
 public class TextNodeConstructorExpression extends Expression {
     /** The content expression */

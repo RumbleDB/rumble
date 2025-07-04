@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * Runtime iterator for computed attribute constructors.
  * 
- * @see ComputedAttributeConstructorExpression
+ * @see org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression
  */
 public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

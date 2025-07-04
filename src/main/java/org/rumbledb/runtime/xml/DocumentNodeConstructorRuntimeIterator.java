@@ -39,7 +39,7 @@ import java.util.List;
  * All document node constructors are computed constructors. The result of a document node
  * constructor is a new document node, with its own node identity.
  * 
- * @see DocumentNodeConstructorExpression
+ * @see org.rumbledb.expressions.xml.DocumentNodeConstructorExpression
  */
 public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 

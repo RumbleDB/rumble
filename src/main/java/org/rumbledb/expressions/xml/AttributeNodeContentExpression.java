@@ -33,7 +33,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * This is distinct from other type of expressions as it exists specifically
  * in the context of computed XML attribute nodes and has different semantics.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-computedAttributes
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
+ *      Constructors</a>
  */
 public class AttributeNodeContentExpression extends Expression {
 

@@ -32,7 +32,8 @@ import java.util.List;
 /**
  * Expression representing a computed element constructor.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-computedElements
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedElements">XQuery 3.1, 3.9.3.1: Computed Element
+ *      Constructors</a>
  */
 public class ComputedElementConstructorExpression extends Expression {
     /** The static element name (if specified) */

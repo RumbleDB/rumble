@@ -34,7 +34,7 @@ import java.util.List;
  * 
  * Node comparisons are used to compare two nodes, by their identity or by their document order.
  * 
- * @see https://www.w3.org/TR/xquery-31/#id-node-comparisons
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-node-comparisons">XQuery 3.1, 3.7.3: Node Comparisons</a>
  */
 public class NodeComparisonExpression extends Expression {
 

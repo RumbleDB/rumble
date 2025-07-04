@@ -940,16 +940,22 @@ public interface Item extends Serializable, KryoSerializable {
 
 
     /**
-     * Method gets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
+     * 
+     * @return the XML document position
      */
     default XMLDocumentPosition getXmlDocumentPosition() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Method sets the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * Set the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
+     * 
+     * @param path the path of the XML document
+     * @param current the current position
+     * @return the new position
      */
     default int setXmlDocumentPosition(String path, int current) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());

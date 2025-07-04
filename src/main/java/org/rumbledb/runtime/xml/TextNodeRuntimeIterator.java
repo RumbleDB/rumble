@@ -29,7 +29,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 /**
  * Runtime iterator for text nodes in a direct element constructor.
  * 
- * @see TextNodeExpression
+ * @see org.rumbledb.expressions.xml.TextNodeExpression
  */
 public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
