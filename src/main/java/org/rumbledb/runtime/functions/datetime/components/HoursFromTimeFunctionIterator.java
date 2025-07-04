@@ -12,7 +12,6 @@ import java.util.List;
 public class HoursFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateItem = null;
 
     public HoursFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -23,10 +22,10 @@ public class HoursFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateItem = this.children.get(0).materializeFirstItemOrNull(context);
-        if (this.dateItem == null) {
+        Item timeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (timeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getHourOfDay());
+        return ItemFactory.getInstance().createIntItem(timeItem.getHour());
     }
 }
