@@ -20,9 +20,9 @@
 
 package sparksoniq.spark;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -110,6 +111,21 @@ public class SparkSessionManager {
         return instance;
     }
 
+    public void setSession(SparkSession session) {
+        if (this.session == null) {
+            this.session = session;
+            this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+            if (this.configuration == null) {
+            setDefaultConfiguration();
+            }
+            initializeKryoSerialization();
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
+        } else {
+            throw new OurBadException("Session already exists: new session initialization prevented.");
+        }
+    }
+
     public SparkSession getOrCreateSession() {
         if (this.configuration == null) {
             setDefaultConfiguration();
@@ -150,8 +166,8 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Logger.getLogger("org").setLevel(LOG_LEVEL);
-            Logger.getLogger("akka").setLevel(LOG_LEVEL);
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
 
             this.session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {

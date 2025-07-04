@@ -20,6 +20,8 @@
 
 package org.rumbledb.compiler;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -40,6 +42,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.typing.CastIterator;
@@ -270,6 +273,16 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 );
             return argument;
         }
+
+        // Variable is external. Do we have supplied DataFrame items?
+        Dataset<Row> df = this.configuration.getExternalVariableValueReadFromDataFrame(name);
+        if (df != null) {
+            JSoundDataFrame jdf = new JSoundDataFrame(df);
+            argument.getVariableValues()
+            .addVariableValue(name, jdf);
+            return argument;
+        }
+
         if (name.equals(Name.CONTEXT_ITEM) && this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)) {
             StringBuilder stringBuilder = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
