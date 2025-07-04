@@ -36,12 +36,13 @@ public class Rumble {
     }
 
     /**
-     * Sets a session from outside.
-     * 
-     * @return
+     * Creates a new Rumble instance. It uses the supplied spark session.
+     *
      */
-    public void setSession(SparkSession session) {
-        SparkSessionManager.getInstance().setSession(session);
+    public Rumble(SparkSession session) {
+        this.configuration = new RumbleRuntimeConfiguration();
+        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+        SparkSessionManager.getInstance(session);
     }
 
     /**

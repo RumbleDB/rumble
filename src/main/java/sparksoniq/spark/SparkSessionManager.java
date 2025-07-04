@@ -99,18 +99,7 @@ public class SparkSessionManager {
     private SparkSessionManager() {
     }
 
-    public static boolean LIMIT_COLLECT() {
-        return COLLECT_ITEM_LIMIT > 0;
-    }
-
-    public static SparkSessionManager getInstance() {
-        if (instance == null) {
-            instance = new SparkSessionManager();
-        }
-        return instance;
-    }
-
-    public void setSession(SparkSession session) {
+    private SparkSessionManager(SparkSession session) {
         if (this.session == null) {
             this.session = session;
             this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
@@ -123,6 +112,24 @@ public class SparkSessionManager {
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
+    }
+
+    public static boolean LIMIT_COLLECT() {
+        return COLLECT_ITEM_LIMIT > 0;
+    }
+
+    public static SparkSessionManager getInstance(SparkSession session) {
+        if (instance == null) {
+            instance = new SparkSessionManager(session);
+        }
+        return instance;
+    }
+
+    public static SparkSessionManager getInstance() {
+        if (instance == null) {
+            instance = new SparkSessionManager();
+        }
+        return instance;
     }
 
     public SparkSession getOrCreateSession() {
