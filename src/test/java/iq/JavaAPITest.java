@@ -61,7 +61,10 @@ public class JavaAPITest {
     public void testLocal() throws Throwable {
         Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
+        Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(!iterator.availableAsRDD());
+        iterator.open();
+        Assert.assertTrue(iterator.isOpen());
         Assert.assertTrue(iterator.hasNext());
         for (int i = 1; i <= 5; ++i) {
             Assert.assertTrue(iterator.hasNext());
@@ -75,14 +78,18 @@ public class JavaAPITest {
             Assert.assertTrue(value.isInteger());
             Assert.assertTrue(value.getIntValue() == i);
         }
-        Assert.assertFalse(iterator.hasNext());
+        iterator.close();
+        Assert.assertTrue(!iterator.isOpen());
     }
 
     @Test(timeout = 1000000)
     public void testCollect() throws Throwable {
         Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
+        Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
+        iterator.open();
+        Assert.assertTrue(iterator.isOpen());
         Assert.assertTrue(iterator.hasNext());
         for (int i = 1; i <= 5; ++i) {
             Assert.assertTrue(iterator.hasNext());
@@ -96,7 +103,8 @@ public class JavaAPITest {
             Assert.assertTrue(value.isInteger());
             Assert.assertTrue(value.getIntValue() == i);
         }
-        Assert.assertFalse(iterator.hasNext());
+        iterator.close();
+        Assert.assertTrue(!iterator.isOpen());
     }
 
     @Test(timeout = 1000000)
