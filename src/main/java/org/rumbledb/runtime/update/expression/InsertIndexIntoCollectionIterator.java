@@ -49,7 +49,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
         if (!contentIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content doesn not conform to a dataframe",
+                    "The given content does not conform to a dataframe",
                     this.getMetadata()
             );
         }

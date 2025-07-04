@@ -116,6 +116,7 @@ import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
 import org.rumbledb.expressions.update.EditCollectionExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -201,6 +202,7 @@ import org.rumbledb.runtime.update.expression.DeleteIndexFromCollectionIterator;
 import org.rumbledb.runtime.update.expression.DeleteSearchFromCollectionIterator;
 import org.rumbledb.runtime.update.expression.EditCollectionIterator;
 import org.rumbledb.runtime.update.expression.InsertIndexIntoCollectionIterator;
+import org.rumbledb.runtime.update.expression.InsertSearchIntoCollectionIterator;
 import org.rumbledb.runtime.update.expression.TruncateCollectionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
@@ -606,6 +608,25 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 isTable,
                 pos,
                 isLast,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator targetIterator = this.visit(expression.getTargetExpression(), argument);
+        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+        boolean isBefore = expression.isBefore();
+
+        RuntimeIterator runtimeIterator = new InsertSearchIntoCollectionIterator(
+                targetIterator,
+                contentIterator,
+                isBefore,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 

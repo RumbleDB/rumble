@@ -126,6 +126,7 @@ import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
 import org.rumbledb.expressions.update.EditCollectionExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -676,6 +677,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
         if (content instanceof JsoniqParser.InsertIndexExprContext) {
             return this.visitInsertIndexExpr((JsoniqParser.InsertIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertSearchExprContext) {
+            return this.visitInsertSearchExpr((JsoniqParser.InsertSearchExprContext) content);
         }
         if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
             return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
@@ -1421,6 +1425,19 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 isTable,
                 pos,
                 isLast,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isBefore = (ctx.before != null);
+        return new InsertSearchIntoCollectionExpression(
+                targetExpression,
+                contentExpression,
+                isBefore,
                 createMetadataFromContext(ctx)
         );
     }

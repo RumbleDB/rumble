@@ -46,6 +46,7 @@ import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
 import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
 import org.rumbledb.expressions.update.EditCollectionExpression;
 import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
 
@@ -671,7 +672,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content of insertion must be Simple",
+                    "Content of deletion must be Simple",
                     expression.getMetadata()
             );
         }
@@ -688,7 +689,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification targetResult = this.visit(expression.getTargetExpression(), argument);
         if (!targetResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Expression for the Name of the collection to be created must be Simple",
+                    "Expression for the edit target must be Simple",
                     expression.getMetadata()
             );
         }
@@ -696,7 +697,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content of new collection must be Simple",
+                    "Content to be inserted must be Simple",
                     expression.getMetadata()
             );
         }
@@ -721,7 +722,32 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
         if (!contentResult.isSimple()) {
             throw new InvalidUpdatingExpressionPositionException(
-                    "Content of new collection must be Simple",
+                    "Content to be inserted must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification targetResult = this.visit(expression.getTargetExpression(), argument);
+        if (!targetResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for insertion target must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content of insertion must be Simple",
                     expression.getMetadata()
             );
         }
