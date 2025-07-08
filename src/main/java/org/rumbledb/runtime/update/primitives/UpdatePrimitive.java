@@ -98,6 +98,14 @@ public interface UpdatePrimitive {
     default boolean isInsertTuple() {
         return false;
     }
+    
+    default boolean isInsertFirstIntoCollection() {
+        return false;
+    }
+    
+    default boolean isInsertLastIntoCollection() {
+        return false;
+    }
 
     default boolean isTruncateCollection() {
         return false;
