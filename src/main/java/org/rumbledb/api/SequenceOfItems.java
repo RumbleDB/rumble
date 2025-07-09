@@ -231,7 +231,7 @@ public class SequenceOfItems {
         if (this.availableAsPUL()) {
             return -1;
         }
-        if (this.availableAsRDD()) {
+        if (this.iterator.isRDDOrDataFrame()) {
             JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
             return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
         }
