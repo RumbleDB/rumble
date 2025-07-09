@@ -114,17 +114,17 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createInsertAfterIntoCollectionPrimitive(
-        Item target,
-        Dataset<Row> contents,
-        ExceptionMetadata metadata
+            Item target,
+            Dataset<Row> contents,
+            ExceptionMetadata metadata
     ) {
         return new InsertAfterIntoCollectionPrimitive(target, contents, metadata);
     }
 
     public UpdatePrimitive createInsertBeforeIntoCollectionPrimitive(
-        Item target,
-        Dataset<Row> contents,
-        ExceptionMetadata metadata
+            Item target,
+            Dataset<Row> contents,
+            ExceptionMetadata metadata
     ) {
         return new InsertBeforeIntoCollectionPrimitive(target, contents, metadata);
     }

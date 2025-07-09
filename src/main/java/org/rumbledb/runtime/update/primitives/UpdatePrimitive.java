@@ -106,11 +106,11 @@ public interface UpdatePrimitive {
     default boolean isInsertBeforeIntoCollection() {
         return false;
     }
-    
+
     default boolean isInsertFirstIntoCollection() {
         return false;
     }
-    
+
     default boolean isInsertLastIntoCollection() {
         return false;
     }

@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.primitives;
 
-import java.util.Arrays;
 import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.expressions.Window;
@@ -17,7 +16,8 @@ import static org.apache.spark.sql.functions.row_number;
 
 
 public class InsertBeforeIntoCollectionPrimitive implements UpdatePrimitive {
-    private static final double DEFAULT_ROW_ORDER_BASE = -100000.0;     // TODO: Replace this literal with a better defined constant
+    private static final double DEFAULT_ROW_ORDER_BASE = -100000.0; // TODO: Replace this literal with a better defined
+                                                                    // constant
 
     private final Item target;
     private Dataset<Row> contents;

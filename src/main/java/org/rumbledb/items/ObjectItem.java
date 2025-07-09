@@ -262,8 +262,9 @@ public class ObjectItem implements Item {
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
         this.topLevelOrder = topLevelOrder;
-        // The loop below is redundant now, but might be useful to port inner updates to rowOrder (since rowOrder is also candidate key)
-        for (Item item: this.values) {
+        // The loop below is redundant now, but might be useful to port inner updates to rowOrder (since rowOrder is
+        // also candidate key)
+        for (Item item : this.values) {
             item.setTopLevelOrder(topLevelOrder);
         }
     }

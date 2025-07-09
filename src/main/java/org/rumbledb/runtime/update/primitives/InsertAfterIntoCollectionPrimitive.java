@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.primitives;
 
-import java.util.Arrays;
 import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.expressions.Window;

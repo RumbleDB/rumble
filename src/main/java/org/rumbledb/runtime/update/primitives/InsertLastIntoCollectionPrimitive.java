@@ -63,7 +63,7 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
         );
         Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
         rowIDStart = rowIDStart == null ? 0L : rowIDStart;
-    
+
 
         long rowCount = this.contents.count();
 
@@ -76,11 +76,11 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
         Double rowOrderBase = session.sql(selectRowOrderQuery).first().getAs("maxRowOrder");
         if (rowOrderBase == null) {
             rowOrderBase = 0.0;
-            rowOrderMax = (double)rowCount;
+            rowOrderMax = (double) rowCount;
         } else {
             rowOrderMax = 2.0 * rowOrderBase;
         }
-        
+
         double interval = (rowOrderMax - rowOrderBase) / (rowCount + 3);
 
         // Adding metadata columns

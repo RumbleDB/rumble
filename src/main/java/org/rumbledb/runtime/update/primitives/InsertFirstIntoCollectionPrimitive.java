@@ -14,7 +14,8 @@ import static org.apache.spark.sql.functions.row_number;
 
 
 public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
-    private static final double DEFAULT_ROW_ORDER_BASE = -100000.0;     // TODO: Replace this literal with a better defined constant
+    private static final double DEFAULT_ROW_ORDER_BASE = -100000.0; // TODO: Replace this literal with a better defined
+                                                                    // constant
 
     private final String collection;
     private Dataset<Row> contents;
@@ -64,7 +65,7 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         );
         Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
         rowIDStart = rowIDStart == null ? 0L : rowIDStart;
-    
+
 
         long rowCount = this.contents.count();
 
@@ -77,9 +78,9 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         Double rowOrderMax = session.sql(selectRowOrderQuery).first().getAs("minRowOrder");
         if (rowOrderMax == null) {
             rowOrderBase = 0;
-            rowOrderMax = (double)rowCount+1;
+            rowOrderMax = (double) rowCount + 1;
         }
-        
+
         double interval = (rowOrderMax - rowOrderBase) / (rowCount + 1);
 
         // Adding metadata columns

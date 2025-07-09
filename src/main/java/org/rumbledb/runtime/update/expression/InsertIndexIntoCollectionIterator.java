@@ -3,7 +3,6 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -18,10 +17,8 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
