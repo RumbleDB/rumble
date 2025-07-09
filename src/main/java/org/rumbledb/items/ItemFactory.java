@@ -285,6 +285,12 @@ public class ItemFactory {
         return new TextItem(currentNode);
     }
 
+    /**
+     * Create a text item.
+     * 
+     * @param content The string content of the text item
+     * @return The text item
+     */
     public Item createXmlTextNode(String content) {
         return new TextItem(content);
     }
@@ -293,15 +299,44 @@ public class ItemFactory {
         return new AttributeItem(attribute);
     }
 
+    /**
+     * Create an attribute item.
+     * 
+     * @param nodeName The name of the attribute
+     * @param stringValue The string value of the attribute
+     * @return The attribute item
+     */
+    public Item createXmlAttributeNode(String nodeName, String stringValue) {
+        return new AttributeItem(nodeName, stringValue);
+    }
+
     public Item createXmlDocumentNode(Node documentNode, List<Item> children) {
         return new DocumentItem(documentNode, children);
+    }
+
+    /**
+     * Create a document item.
+     * 
+     * @param children The children items of the document
+     * @return The document item
+     */
+    public Item createXmlDocumentNode(List<Item> children) {
+        return new DocumentItem(children);
     }
 
     public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
         return new ElementItem(elementNode, children, attributes);
     }
 
-    public Item createXmlElementNode(String tagName, List<Item> children, List<Item> attributes) {
-        return new ElementItem(tagName, children, attributes);
+    /**
+     * Create an element item.
+     * 
+     * @param nodeName The name of the element
+     * @param children The children items of the element
+     * @param attributes The attributes items of the element
+     * @return The element item
+     */
+    public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
+        return new ElementItem(nodeName, children, attributes);
     }
 }
