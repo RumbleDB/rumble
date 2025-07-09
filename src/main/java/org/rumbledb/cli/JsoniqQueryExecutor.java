@@ -166,7 +166,7 @@ public class JsoniqQueryExecutor {
             outputRDD.saveAsTextFile(outputPath);
         } else {
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
+            long materializationCount = sequence.populateList(outputList);
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
                 .map(x -> configuration.getSerializer().serialize(x))
@@ -225,17 +225,13 @@ public class JsoniqQueryExecutor {
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
+        resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(query);
-        if (!sequence.availableAsRDD()) {
-            return sequence.populateList(resultList);
-        }
         if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
-        resultList.clear();
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+        return sequence.populateList(resultList);
     }
 
 }

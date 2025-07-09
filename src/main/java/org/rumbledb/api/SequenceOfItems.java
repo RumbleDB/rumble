@@ -65,9 +65,10 @@ public class SequenceOfItems {
      * Opens the iterator.
      */
     public void open() {
-        if (this.isMaterialisable()) {
-            this.iterator.open(this.dynamicContext);
+        if (this.availableAsPUL()) {
+            return;
         }
+        this.iterator.open(this.dynamicContext);
         this.isOpen = true;
     }
 
@@ -84,6 +85,9 @@ public class SequenceOfItems {
      * Closes the iterator.
      */
     public void close() {
+        if (this.availableAsPUL()) {
+            return;
+        }
         if (this.isOpen) {
             this.iterator.close();
         }
@@ -96,7 +100,7 @@ public class SequenceOfItems {
      * @return true if there are more items, false otherwise.
      */
     public boolean hasNext() {
-        if (!this.isMaterialisable()) {
+        if (this.availableAsPUL()) {
             return false;
         }
         return this.iterator.hasNext();
@@ -109,7 +113,7 @@ public class SequenceOfItems {
      * @return the next item.
      */
     public Item next() {
-        if (!this.isMaterialisable()) {
+        if (this.availableAsPUL()) {
             return ItemFactory.getInstance().createNullItem();
         }
         return this.iterator.next();
@@ -143,22 +147,13 @@ public class SequenceOfItems {
     }
 
     /**
-     * Return whether the iterator of the sequence should be evaluated to materialise the sequence of items.
-     *
-     * @return true if materialisable; otherwise false
-     */
-    private boolean isMaterialisable() {
-        return !(this.availableAsPUL() && !this.iterator.isSequential());
-    }
-
-    /**
      * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
      * It is not possible to do so if the iterator is open.
      *
      * @return an RDD of Items.
      */
     public JavaRDD<Item> getAsRDD() {
-        if (!this.isMaterialisable()) {
+        if (this.availableAsPUL()) {
             return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
         }
         if (this.isOpen) {
@@ -174,7 +169,7 @@ public class SequenceOfItems {
      * @return a data frame.
      */
     public Dataset<Row> getAsDataFrame() {
-        if (!this.isMaterialisable()) {
+        if (this.availableAsPUL()) {
             return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
         }
         if (this.isOpen) {
@@ -197,10 +192,10 @@ public class SequenceOfItems {
      * 
      * @return The list of all items in the sequence.
      */
-    public List<Item> getList() {
+    public List<Item> getList(boolean cap) {
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result);
-        if (num != -1) {
+        if (!cap && num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
@@ -215,34 +210,30 @@ public class SequenceOfItems {
 
     /**
      * Outputs the results as a list. If there are more items than the allowed materialization limit,
-     * then the list is incomplete and a message is output on standard error.
+     * then the list is incomplete and no error is thrown.
      * 
      * @return The list of items in the sequence, possibly capped.
      */
-    public List<Item> getListCapped() {
+    public List<Item> getCappedList() {
         List<Item> result = new ArrayList<Item>();
-        long num = populateList(result);
-        if (num != -1) {
-            System.err.println(
-                "Warning! The output sequence contains "
-                    + num
-                    + " items and its materialization was capped at "
-                    + SparkSessionManager.COLLECT_ITEM_LIMIT
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
-            );
-        }
+        populateList(result);
         return result;
     }
 
     /*
      * Populates a existing list with the output items.
      *
-     * @return -1 if successful. Returns Long.MAX_VALUE if there were more items beyond the materialization cap.
+     * @return -1 if the full sequence could be materialized. If there were more items beyond the materialization cap,
+     * then the sequence length. If the sequence length is not known, then Long.MAX_VALUE.
      */
     public long populateList(List<Item> resultList) {
         resultList.clear();
-        if (!this.isMaterialisable()) {
+        if (this.availableAsPUL()) {
             return -1;
+        }
+        if (this.availableAsRDD()) {
+            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
+            return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
         }
         this.iterator.open(this.dynamicContext);
         Item result = null;
@@ -273,18 +264,6 @@ public class SequenceOfItems {
                 return Long.MAX_VALUE;
             }
             return -1;
-        }
-    }
-
-    public long populateListWithWarningOnlyIfCapReached(List<Item> resultList) {
-        if (this.availableAsRDD()) {
-            if (!this.isMaterialisable()) {
-                return -1;
-            }
-            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
-            return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
-        } else {
-            return populateList(resultList);
         }
     }
 }
