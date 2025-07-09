@@ -19,13 +19,14 @@ import sparksoniq.spark.SparkSessionManager;
 /**
  * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
  *
- * In particular, it is what Rumble returns after evaluating a query.
+ * In particular, it is what RumbleDB returns after evaluating a query.
  *
  * Sequences of items are flat and do not nest. A sequence may be empty. A sequence may consist of only one item: it is
  * then canonically identified
  * with that item. Or a sequence may contain more than one item.
  *
  * With an instance of this class, it is possible to iterate on a sequence of items, getting each item in turn.
+ * It is also possible to collect the items in a list.
  *
  * The number of items returned by the iterator API is capped by the collect-item-limit parameter of Spark to avoid an
  * overflow.
@@ -41,6 +42,14 @@ public class SequenceOfItems {
     private RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
 
+    /**
+     * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
+     * query.
+     * 
+     * @param iterator The top-level iterator of the query.
+     * @param dynamicContext An initialized dynamic context.
+     * @param configuration A RumbleDB configuration.
+     */
     public SequenceOfItems(
             RuntimeIterator iterator,
             DynamicContext dynamicContext,
@@ -82,7 +91,7 @@ public class SequenceOfItems {
     }
 
     /**
-     * Checks whether there are more items.
+     * Checks whether there are more items to get from the iterator.
      *
      * @return true if there are more items, false otherwise.
      */
@@ -183,10 +192,10 @@ public class SequenceOfItems {
     }
 
     /**
-     * Outputs the results as a list.
+     * Outputs the results as a list. Throws an exception if there are more items than the allowed materialization
+     * limit.
      * 
-     * @param
-     * @return a list of items.
+     * @return The list of all items in the sequence.
      */
     public List<Item> getList() {
         List<Item> result = new ArrayList<Item>();
@@ -205,12 +214,12 @@ public class SequenceOfItems {
     }
 
     /**
-     * Outputs the results as a list.
+     * Outputs the results as a list. If there are more items than the allowed materialization limit,
+     * then the list is incomplete and a message is output on standard error.
      * 
-     * @param
-     * @return a list of items.
+     * @return The list of items in the sequence, possibly capped.
      */
-    public List<Item> getListWithWarningOnlyIfCapReached() {
+    public List<Item> getListCapped() {
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result);
         if (num != -1) {
@@ -226,7 +235,7 @@ public class SequenceOfItems {
     }
 
     /*
-     * Populates a list of items with the output.
+     * Populates a existing list with the output items.
      *
      * @return -1 if successful. Returns Long.MAX_VALUE if there were more items beyond the materialization cap.
      */
