@@ -257,29 +257,27 @@ public class PendingUpdateList {
             }
         }
 
-        // TODO: Ascertain order of apply of top level primitives with specs
-
-        ////// APPLY CREATE COLLECTION
-        this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
-
-        ////// APPLY TRUNCATE COLLECTION
-        this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
-
-        ////// APPLY DELETE TUPLE
-        for (Map<Double, UpdatePrimitive> tables : this.deleteTupleMap.values()) {
-            tables.values().forEach(UpdatePrimitive::apply);
-        }
+        ////// APPLY INSERT TUPLE
+        this.insertBeforeList.forEach(UpdatePrimitive::apply);
+        this.insertAfterList.forEach(UpdatePrimitive::apply);
+        this.insertFirstList.forEach(UpdatePrimitive::apply);
+        this.insertLastList.forEach(UpdatePrimitive::apply);
 
         ////// APPLY EDIT TUPLE
         for (Map<Double, UpdatePrimitive> tables : this.editTupleMap.values()) {
             tables.values().forEach(UpdatePrimitive::apply);
         }
 
-        ////// APPLY INSERT TUPLE
-        this.insertBeforeList.forEach(UpdatePrimitive::apply);
-        this.insertAfterList.forEach(UpdatePrimitive::apply);
-        this.insertFirstList.forEach(UpdatePrimitive::apply);
-        this.insertLastList.forEach(UpdatePrimitive::apply);
+        ////// APPLY DELETE TUPLE
+        for (Map<Double, UpdatePrimitive> tables : this.deleteTupleMap.values()) {
+            tables.values().forEach(UpdatePrimitive::apply);
+        }
+
+        ////// APPLY CREATE COLLECTION
+        this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
+
+        ////// APPLY TRUNCATE COLLECTION
+        this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
 
     }
 
@@ -410,7 +408,6 @@ public class PendingUpdateList {
             this.truncateCollectionMap.putIfAbsent(entry.getKey(), entry.getValue());
         }
 
-        // TODO: MERGE CONFLICTS BETWEEN EDIT AND DELETE
         // DELETE TUPLE
         for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.deleteTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
@@ -424,7 +421,6 @@ public class PendingUpdateList {
             }
         }
 
-        // TODO: MERGE CONFLICTS BETWEEN EDIT AND DELETE
         // EDIT TUPLE
         for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.editTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
