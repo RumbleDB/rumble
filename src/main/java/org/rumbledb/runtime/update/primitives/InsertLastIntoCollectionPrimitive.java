@@ -75,10 +75,10 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
         );
         Double rowOrderBase = session.sql(selectRowOrderQuery).first().getAs("maxRowOrder");
         if (rowOrderBase == null) {
-            rowOrderBase = 0;
+            rowOrderBase = 0.0;
             rowOrderMax = (double)rowCount;
         } else {
-            rowOrderMax = 2 * rowOrderBase;
+            rowOrderMax = 2.0 * rowOrderBase;
         }
         
         double interval = (rowOrderMax - rowOrderBase) / (rowCount + 3);
