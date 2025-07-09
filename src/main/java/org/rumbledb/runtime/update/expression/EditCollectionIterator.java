@@ -10,6 +10,8 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -33,16 +35,8 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
 
         // TODO: For 1 item, this is a TreatIterator not conforming to DF; but for more than 1, it is DataFrame
         if (!contentIterator.isDataFrame()) {
-            System.out.println("##" + contentIterator);
             throw new CannotResolveUpdateSelectorException(
                     "The given content does not conform to a dataframe",
-                    this.getMetadata()
-            );
-        }
-
-        if (!targetIterator.isDataFrame()) {
-            throw new CannotResolveUpdateSelectorException(
-                    "The given target does not conform to a dataframe",
                     this.getMetadata()
             );
         }
@@ -89,11 +83,25 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        Item targetItem = null;
+        try {
+            targetItem = this.targetIterator.materializeExactlyOneItem(context);
+        } catch (MoreThanOneItemException e) {
+            throw new InvalidUpdateTargetException(
+                    "More than one target item cannot be Edited.",
+                    this.getMetadata()
+            );
+        } catch (NoItemException e) {
+            throw new InvalidUpdateTargetException(
+                    "One target item must be provided for Edit.",
+                    this.getMetadata()
+            );
+        }
+
+
         Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
-        Dataset<Row> targetDF = this.targetIterator.getDataFrame(context).getDataFrame();
 
         long contentCount = contentDF.count();
-        long targetCount = targetDF.count();
 
         if (contentCount != 1) {
             throw new InvalidUpdateTargetException(
@@ -101,16 +109,10 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
                     this.getMetadata()
             );
         }
-        if (targetCount != 1) {
-            throw new InvalidUpdateTargetException(
-                    "Exactly one target must be specified for edit, but " + targetCount + " found",
-                    this.getMetadata()
-            );
-        }
 
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        UpdatePrimitive up = factory.createEditTuplePrimitive(targetDF, contentDF, this.getMetadata());
+        UpdatePrimitive up = factory.createEditTuplePrimitive(targetItem, contentDF, this.getMetadata());
         pul.addUpdatePrimitive(up);
         return pul;
     }

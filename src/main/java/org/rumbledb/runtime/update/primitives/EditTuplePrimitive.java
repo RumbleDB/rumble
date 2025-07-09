@@ -3,6 +3,7 @@ package org.rumbledb.runtime.update.primitives;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -10,14 +11,13 @@ import static org.apache.spark.sql.functions.lit;
 
 
 public class EditTuplePrimitive implements UpdatePrimitive {
+    private Item target;
     private Dataset<Row> contents;
-    private Dataset<Row> target;
     private Row targetRow;
 
-    public EditTuplePrimitive(Dataset<Row> target, Dataset<Row> contents, ExceptionMetadata metadata) {
+    public EditTuplePrimitive(Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
         this.target = target;
         this.contents = contents;
-        this.targetRow = target.first();
     }
 
     @Override
@@ -27,12 +27,12 @@ public class EditTuplePrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        return this.targetRow.getAs(SparkSessionManager.tableLocationColumnName);
+        return this.target.getTableLocation();
     }
 
     @Override
     public double getRowOrder() {
-        return this.targetRow.getAs(SparkSessionManager.rowOrderColumnName);
+        return this.target.getTopLevelOrder();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     }
 
     @Override
-    public Dataset<Row> getTargetDataFrame() {
+    public Item getTarget() {
         return this.target;
     }
 
@@ -63,10 +63,10 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         String collectionPath = this.getCollectionPath();
-        int targetMutabilityLevel = this.targetRow.getAs(SparkSessionManager.mutabilityLevelColumnName);
-        long targetRowID = this.targetRow.getAs(SparkSessionManager.rowIdColumnName);
-        double targetRowOrder = this.targetRow.getAs(SparkSessionManager.rowOrderColumnName);
-        String pathInColumn = this.targetRow.getAs(SparkSessionManager.pathInColumnName);
+        int targetMutabilityLevel = this.target.getMutabilityLevel();
+        long targetRowID = this.target.getTopLevelID();
+        double targetRowOrder = this.target.getTopLevelOrder();
+        String pathInColumn = this.target.getPathIn();
 
         this.contents = this.contents
             .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
@@ -75,10 +75,6 @@ public class EditTuplePrimitive implements UpdatePrimitive {
             .withColumn(SparkSessionManager.pathInColumnName, lit(pathInColumn))
             .withColumn(SparkSessionManager.tableLocationColumnName, lit(collectionPath));
 
-        System.out.println("##Contents\n" + this.contents.schema().treeString());
-        System.out.println("##Target\n" + this.target.schema().treeString());
-
-        // System.out.println("##"+this.contents.schema().equals(this.target.schema()));
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
         String safeName = collectionPath.replaceAll("[^a-zA-Z0-9_]", "_");
         String tempViewName = String.format("__edit_tview_%s_%d", safeName, targetRowID);

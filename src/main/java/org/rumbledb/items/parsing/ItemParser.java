@@ -277,7 +277,7 @@ public class ItemParser implements Serializable {
         if (
             fields.length == 5
                 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
-                && fieldnames[4].equals("tableLocation")
+                && fieldnames[4].equals("tableLocation")        // replace with SparkSessionManager.tableLocationColumnName ??
         ) {
             ItemType resType = null;
             if (itemType != null) {
@@ -306,7 +306,7 @@ public class ItemParser implements Serializable {
                     res.setTableLocation(row.getString(i));
                 }
                 if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-                    // add setRowOrder(double) to the items API
+                    res.setTopLevelOrder(row.getDouble(i));
                     continue;
                 }
             }
@@ -328,6 +328,7 @@ public class ItemParser implements Serializable {
         long topLevelID = -1;
         String pathIn = "null";
         String tableLocation = "null";
+        double rowOrder = 0.0;
 
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
@@ -352,7 +353,7 @@ public class ItemParser implements Serializable {
                 continue;
             }
             if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-                // TODO: edit Items API to include rowOrder
+                rowOrder = row.getDouble(i);
                 continue;
             }
 
@@ -388,6 +389,7 @@ public class ItemParser implements Serializable {
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
         res.setTableLocation(tableLocation);
+        res.setTopLevelOrder(rowOrder);
 
         return res;
     }

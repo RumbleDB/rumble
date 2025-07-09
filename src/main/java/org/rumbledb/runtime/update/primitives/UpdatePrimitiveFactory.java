@@ -96,7 +96,7 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createEditTuplePrimitive(
-            Dataset<Row> target,
+            Item target,
             Dataset<Row> contents,
             ExceptionMetadata metadata
     ) {

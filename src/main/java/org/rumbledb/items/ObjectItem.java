@@ -43,6 +43,7 @@ public class ObjectItem implements Item {
     private long topLevelID;
     private String pathIn;
     private String location;
+    private double topLevelOrder;
 
     public ObjectItem() {
         super();
@@ -52,6 +53,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.topLevelOrder = 0.0;
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -63,6 +65,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.topLevelOrder = 0.0;
     }
 
     public boolean equals(Object otherItem) {
@@ -129,6 +132,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.topLevelOrder = 0.0;
     }
 
     @Override
@@ -190,6 +194,7 @@ public class ObjectItem implements Item {
         output.writeLong(this.topLevelID);
         kryo.writeObject(output, this.pathIn);
         kryo.writeObject(output, this.location);
+        output.writeDouble(this.topLevelOrder);
     }
 
     @SuppressWarnings("unchecked")
@@ -201,6 +206,7 @@ public class ObjectItem implements Item {
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
+        this.topLevelOrder = input.readDouble();
     }
 
     public int hashCode() {
@@ -245,6 +251,20 @@ public class ObjectItem implements Item {
         this.topLevelID = topLevelID;
         for (Item item : this.values) {
             item.setTopLevelID(topLevelID);
+        }
+    }
+
+    @Override
+    public double getTopLevelOrder() {
+        return this.topLevelOrder;
+    }
+
+    @Override
+    public void setTopLevelOrder(double topLevelOrder) {
+        this.topLevelOrder = topLevelOrder;
+        // The loop below is redundant now, but might be useful to port inner updates to rowOrder (since rowOrder is also candidate key)
+        for (Item item: this.values) {
+            item.setTopLevelOrder(topLevelOrder);
         }
     }
 
