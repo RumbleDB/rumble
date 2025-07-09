@@ -1,9 +1,12 @@
 package org.rumbledb.runtime.update.primitives;
 
+import java.util.Arrays;
+import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -13,29 +16,29 @@ import static org.apache.spark.sql.functions.monotonically_increasing_id;
 import static org.apache.spark.sql.functions.row_number;
 
 
-public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
+public class InsertBeforeIntoCollectionPrimitive implements UpdatePrimitive {
     private static final double DEFAULT_ROW_ORDER_BASE = -100000.0;     // TODO: Replace this literal with a better defined constant
 
-    private final String collection;
+    private final Item target;
     private Dataset<Row> contents;
 
-    public InsertFirstIntoCollectionPrimitive(
-            String collection,
+    public InsertBeforeIntoCollectionPrimitive(
+            Item target,
             Dataset<Row> contents,
             ExceptionMetadata metadata
     ) {
-        this.collection = collection;
+        this.target = target;
         this.contents = contents;
     }
 
     @Override
-    public boolean isInsertFirstIntoCollection() {
+    public boolean isInsertBeforeIntoCollection() {
         return true;
     }
 
     @Override
     public String getCollectionPath() {
-        return this.collection;
+        return this.target.getTableLocation();
     }
 
     @Override
@@ -55,34 +58,38 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyDelta() {
-        SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+        double targetRowOrder = this.target.getTopLevelOrder();
+        String collection = this.target.getTableLocation();
 
-        String selectQuery = String.format(
+        SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+        String selectRowOrderQuery = String.format(
+            "SELECT %s from %s WHERE %s <= %f ORDER BY %s DESC LIMIT 2",
+            SparkSessionManager.rowOrderColumnName,
+            collection,
+            SparkSessionManager.rowOrderColumnName,
+            targetRowOrder,
+            SparkSessionManager.rowOrderColumnName
+        );
+        List<Row> res = session.sql(selectRowOrderQuery).collectAsList();
+
+        double rowOrderBase, rowOrderMax;
+        rowOrderMax = res.get(0).getAs(SparkSessionManager.rowOrderColumnName);
+        if (res.size() == 1) {
+            rowOrderBase = InsertBeforeIntoCollectionPrimitive.DEFAULT_ROW_ORDER_BASE;
+        } else {
+            rowOrderBase = res.get(1).getAs(SparkSessionManager.rowOrderColumnName);
+        }
+
+        String selectRowIDQuery = String.format(
             "SELECT MAX(%s) as maxRowID FROM %s",
             SparkSessionManager.rowIdColumnName,
-            this.collection
+            collection
         );
-        Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
-        rowIDStart = rowIDStart == null ? 0L : rowIDStart;
-    
+        long rowIDStart = session.sql(selectRowIDQuery).first().getAs("maxRowID");
 
         long rowCount = this.contents.count();
-
-        double rowOrderBase = InsertFirstIntoCollectionPrimitive.DEFAULT_ROW_ORDER_BASE;
-        String selectRowOrderQuery = String.format(
-            "SELECT MIN(%s) as minRowOrder FROM %s",
-            SparkSessionManager.rowOrderColumnName,
-            this.collection
-        );
-        Double rowOrderMax = session.sql(selectRowOrderQuery).first().getAs("minRowOrder");
-        if (rowOrderMax == null) {
-            rowOrderBase = 0;
-            rowOrderMax = (double)rowCount+1;
-        }
-        
         double interval = (rowOrderMax - rowOrderBase) / (rowCount + 1);
 
-        // Adding metadata columns
         Dataset<Row> rowNumDF = this.contents.withColumn("rowNum", monotonically_increasing_id());
         Dataset<Row> rowNumDF2 = rowNumDF.withColumn(
             "rowNumSeq",
@@ -104,21 +111,21 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
         this.contents = rowNumOrderDF.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0))
             .withColumn(SparkSessionManager.pathInColumnName, lit(""))
-            .withColumn(SparkSessionManager.tableLocationColumnName, lit(this.collection));
+            .withColumn(SparkSessionManager.tableLocationColumnName, lit(collection));
 
-        // insertion
-        String safeName = String.format("__insert_tview_%s_%f_%f", this.collection, rowOrderBase, rowOrderMax)
+        String safeName = String.format("__insertb_tview_%s_%f_%f", collection, rowOrderBase, rowOrderMax)
             .replaceAll("[^a-zA-Z0-9_]", "_");
         this.contents.createOrReplaceTempView(safeName);
 
         String insertQuery = String.format(
             "INSERT INTO %s SELECT * FROM %s",
-            this.collection,
+            collection,
             safeName
         );
         session.sql(insertQuery);
 
         session.catalog().dropTempView(safeName);
+
     }
 
 }

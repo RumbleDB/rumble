@@ -25,7 +25,10 @@ public class PendingUpdateList {
     private Map<String, UpdatePrimitive> truncateCollectionMap;
     private Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
     private Map<String, Map<Double, UpdatePrimitive>> editTupleMap;
-    private List<UpdatePrimitive> insertTupleList;
+    private List<UpdatePrimitive> insertFirstList;
+    private List<UpdatePrimitive> insertLastList;
+    private List<UpdatePrimitive> insertBeforeList;
+    private List<UpdatePrimitive> insertAfterList;
 
 
     public PendingUpdateList() {
@@ -66,7 +69,10 @@ public class PendingUpdateList {
         this.truncateCollectionMap = new TreeMap<>();
         this.deleteTupleMap = new TreeMap<>();
         this.editTupleMap = new TreeMap<>();
-        this.insertTupleList = new ArrayList<>();
+        this.insertFirstList = new ArrayList<>();
+        this.insertLastList = new ArrayList<>();
+        this.insertBeforeList = new ArrayList<>();
+        this.insertAfterList = new ArrayList<>();
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -130,8 +136,14 @@ public class PendingUpdateList {
             String collection = updatePrimitive.getCollectionPath();
             Double rowOrder = updatePrimitive.getRowOrder();
             this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
-        } else if (updatePrimitive.isInsertTuple()) {
-            this.insertTupleList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertFirstIntoCollection()) {
+            this.insertFirstList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertLastIntoCollection()) {
+            this.insertLastList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertBeforeIntoCollection()) {
+            this.insertBeforeList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertAfterIntoCollection()) {
+            this.insertAfterList.add(updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -264,7 +276,10 @@ public class PendingUpdateList {
         }
 
         ////// APPLY INSERT TUPLE
-        this.insertTupleList.forEach(UpdatePrimitive::apply);
+        this.insertBeforeList.forEach(UpdatePrimitive::apply);
+        this.insertAfterList.forEach(UpdatePrimitive::apply);
+        this.insertFirstList.forEach(UpdatePrimitive::apply);
+        this.insertLastList.forEach(UpdatePrimitive::apply);
 
     }
 
@@ -424,8 +439,11 @@ public class PendingUpdateList {
             }
         }
 
-        // TODO: MERGE CONFLICT IN INSERT TUPLE & DELETE, EDIT
-        this.insertTupleList.addAll(otherPul.insertTupleList);
+        // No merge conflicts in present implementations of Insertion primitives
+        this.insertFirstList.addAll(otherPul.insertFirstList);
+        this.insertLastList.addAll(otherPul.insertLastList);
+        this.insertBeforeList.addAll(otherPul.insertBeforeList);
+        this.insertAfterList.addAll(otherPul.insertAfterList);
 
     }
 

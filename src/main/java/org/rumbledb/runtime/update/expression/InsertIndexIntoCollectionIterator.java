@@ -30,6 +30,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator contentIterator;
     private final boolean isTable;
     private final Integer pos;
+    private final boolean isFirst;
     private final boolean isLast;
 
     public InsertIndexIntoCollectionIterator(
@@ -37,6 +38,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator contentIterator,
             boolean isTable,
             Integer pos,
+            boolean isFirst,
             boolean isLast,
             RuntimeStaticContext staticContext
     ) {
@@ -45,6 +47,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.contentIterator = contentIterator;
         this.isTable = isTable;
         this.pos = pos;
+        this.isFirst = isFirst;
         this.isLast = isLast;
 
         if (!contentIterator.isDataFrame()) {
@@ -126,67 +129,17 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             collection = "delta.`" + targetItem.getStringValue() + "` ";
         }
 
-        double rowOrderBase = 0, rowOrderMax = 10000.0;
-        SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-
-        if (this.isLast) {
-            String selectQuery = String.format(
-                "SELECT rowOrder FROM %s ORDER BY rowOrder DESC LIMIT 1",
-                collection
-            );
-            List<Row> rows = session.sql(selectQuery).collectAsList();
-
-            if (!rows.isEmpty()) {
-                rowOrderBase = rows.get(0).getAs("rowOrder");
-            }
-
-        } else if (this.pos == 1) {
-            // Case: first
-            String selectQuery = String.format(
-                "SELECT rowOrder FROM %s ORDER BY rowOrder ASC LIMIT 1",
-                collection
-            );
-            List<Row> rows = session.sql(selectQuery).collectAsList();
-
-            if (!rows.isEmpty()) {
-                rowOrderMax = rows.get(0).getAs("rowOrder");
-            }
-        } else {
-            String selectQuery = String.format(
-                "SELECT rowOrder FROM %s ORDER BY rowOrder ASC OFFSET %d LIMIT 2",
-                collection,
-                this.pos - 2
-            );
-            List<Row> rows = session.sql(selectQuery).collectAsList();
-
-            if (rows.isEmpty()) {
-                throw new InvalidUpdateTargetException(
-                        String.format(
-                            "Unable to insert at index %d as target collection has less than %d rows",
-                            this.pos,
-                            this.pos - 1
-                        ),
-                        this.getMetadata()
-                );
-            } else if (rows.size() == 1) {
-                rowOrderBase = rows.get(0).getAs("rowOrder");
-            } else {
-                rowOrderBase = rows.get(0).getAs("rowOrder");
-                rowOrderMax = rows.get(1).getAs("rowOrder");
-            }
-        }
-
         Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
-
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        UpdatePrimitive up = factory.createInsertTuplePrimitive(
-            collection,
-            contentDF,
-            rowOrderBase,
-            rowOrderMax,
-            this.getMetadata()
-        );
+        UpdatePrimitive up = null;
+        if (this.isLast) {
+            up = factory.createInsertLastIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
+        } else if (this.isFirst) {
+            up = factory.createInsertFirstIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
+        } else {
+            // Obtain Item (containing atleast metadata) for given index to create InsertBeforeIntoCollection
+        }
 
         pul.addUpdatePrimitive(up);
         return pul;

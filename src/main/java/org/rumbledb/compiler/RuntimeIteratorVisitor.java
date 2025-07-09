@@ -599,6 +599,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
         boolean isTable = expression.isTable();
+        boolean isFirst = expression.isFirst();
         boolean isLast = expression.isLast();
         Integer pos = expression.getPosition();
 
@@ -607,6 +608,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 contentIterator,
                 isTable,
                 pos,
+                isFirst,
                 isLast,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

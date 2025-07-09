@@ -113,6 +113,38 @@ public class UpdatePrimitiveFactory {
         return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
     }
 
+    public UpdatePrimitive createInsertAfterIntoCollectionPrimitive(
+        Item target,
+        Dataset<Row> contents,
+        ExceptionMetadata metadata
+    ) {
+        return new InsertAfterIntoCollectionPrimitive(target, contents, metadata);
+    }
+
+    public UpdatePrimitive createInsertBeforeIntoCollectionPrimitive(
+        Item target,
+        Dataset<Row> contents,
+        ExceptionMetadata metadata
+    ) {
+        return new InsertBeforeIntoCollectionPrimitive(target, contents, metadata);
+    }
+
+    public UpdatePrimitive createInsertFirstIntoCollectionPrimitive(
+            String collection,
+            Dataset<Row> contents,
+            ExceptionMetadata metadata
+    ) {
+        return new InsertFirstIntoCollectionPrimitive(collection, contents, metadata);
+    }
+
+    public UpdatePrimitive createInsertLastIntoCollectionPrimitive(
+            String collection,
+            Dataset<Row> contents,
+            ExceptionMetadata metadata
+    ) {
+        return new InsertLastIntoCollectionPrimitive(collection, contents, metadata);
+    }
+
     public UpdatePrimitive createTruncateCollectionPrimitive(
             String collectionName,
             ExceptionMetadata metadata

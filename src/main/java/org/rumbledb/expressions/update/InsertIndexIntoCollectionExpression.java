@@ -14,6 +14,7 @@ public class InsertIndexIntoCollectionExpression extends Expression {
     private final Expression contentExpression;
     private final boolean isTable;
     private final Integer pos;
+    private final boolean isFirst;
     private final boolean isLast;
 
     public InsertIndexIntoCollectionExpression(
@@ -21,6 +22,7 @@ public class InsertIndexIntoCollectionExpression extends Expression {
             Expression contentExpression,
             boolean isTable,
             Integer pos,
+            boolean isFirst,
             boolean isLast,
             ExceptionMetadata metadata
     ) {
@@ -33,14 +35,12 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         if (contentExpression == null) {
             throw new OurBadException("Content must be specified for insertion.");
         }
-        if (!(pos != null ^ isLast)) {
-            throw new OurBadException("Invalid flags passed for insertion order");
-        }
 
         this.collection = collection;
         this.contentExpression = contentExpression;
         this.isTable = isTable;
         this.pos = pos;
+        this.isFirst = isFirst;
         this.isLast = isLast;
     }
 
@@ -58,6 +58,10 @@ public class InsertIndexIntoCollectionExpression extends Expression {
 
     public boolean isLast() {
         return this.isLast;
+    }
+
+    public boolean isFirst() {
+        return this.isFirst;
     }
 
     public Integer getPosition() {
@@ -80,7 +84,9 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         sb.append("insert ");
         this.contentExpression.serializeToJSONiq(sb, 1);
         if (this.isLast) {
-            sb.append(" last");
+            sb.append(" last ");
+        } else if (this.isFirst) {
+            sb.append(" first ");
         } else {
             sb.append(" at " + this.pos);
         }

@@ -11,6 +11,8 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -41,14 +43,6 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             System.out.println("##" + contentIterator);
             throw new CannotResolveUpdateSelectorException(
                     "The given content does not conform to a dataframe",
-                    this.getMetadata()
-            );
-        }
-
-        // TODO: For 1 item, this is a TreatIterator not conforming to DF; but for more than 1, it is DataFrame
-        if (!targetIterator.isDataFrame()) {
-            throw new CannotResolveUpdateSelectorException(
-                    "The given target does not conform to a dataframe",
                     this.getMetadata()
             );
         }
@@ -96,54 +90,37 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
-        List<Row> targetList = this.targetIterator.getDataFrame(context).getDataFrame().collectAsList();
-
-        long targetCount = targetList.size();
-
-        if (targetCount != 1) {
+        Item target = null;
+        try {
+            target = this.targetIterator.materializeExactlyOneItem(context);
+        } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
-                    "Exactly one target must be specified for search based insertion " + targetCount + " found",
+                    "More than one target item cannot be used for insertion.",
                     this.getMetadata()
             );
-        }
-        double targetRowOrder = targetList.get(0).getAs(SparkSessionManager.rowOrderColumnName);
-        String collection = targetList.get(0).getAs(SparkSessionManager.tableLocationColumnName);
-
-        SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        String selectQuery = String.format(
-            "SELECT %s from %s WHERE %s %s %f ORDER BY %s ASC LIMIT 2",
-            SparkSessionManager.rowOrderColumnName,
-            collection,
-            SparkSessionManager.rowOrderColumnName,
-            this.isBefore ? "<=" : ">=",
-            targetRowOrder,
-            SparkSessionManager.rowOrderColumnName
-        );
-        List<Row> res = session.sql(selectQuery).collectAsList();
-
-        Double rowOrderBase, rowOrderMax;
-        if (res.size() == 1) {
-            if (this.isBefore) {
-                rowOrderBase = -100000.0;
-                rowOrderMax = res.get(0).getAs(SparkSessionManager.rowOrderColumnName);
-            } else {
-                rowOrderBase = res.get(0).getAs(SparkSessionManager.rowOrderColumnName);
-                rowOrderMax = 100000.0;
-            }
-        } else {
-            rowOrderBase = res.get(0).getAs(SparkSessionManager.rowOrderColumnName);
-            rowOrderMax = res.get(1).getAs(SparkSessionManager.rowOrderColumnName);
+        } catch (NoItemException e) {
+            throw new InvalidUpdateTargetException(
+                    "One target item must be provided for search based insertion.",
+                    this.getMetadata()
+            );
         }
 
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        UpdatePrimitive up = factory.createInsertTuplePrimitive(
-            collection,
-            contentDF,
-            rowOrderBase,
-            rowOrderMax,
-            this.getMetadata()
-        );
+        UpdatePrimitive up = null;
+        if (this.isBefore) {
+            up = factory.createInsertBeforeIntoCollectionPrimitive(
+                target,
+                contentDF,
+                this.getMetadata()
+            );
+        } else {
+            up = factory.createInsertAfterIntoCollectionPrimitive(
+                target,
+                contentDF,
+                this.getMetadata()
+            );
+        }
         pul.addUpdatePrimitive(up);
         return pul;
     }
