@@ -155,27 +155,31 @@ public class JsoniqQueryExecutor {
                 default:
                     writer.format(format).save(outputPath);
             }
-        } else if (sequence.availableAsRDD() && outputPath != null) {
+        } else if (outputPath != null) {
+            // The output is not available as a data frame so we serialize.
             JavaRDD<Item> rdd = sequence.getAsRDD();
             RumbleRuntimeConfiguration configuration = this.configuration;
             JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+            // If the user explicitly requests exactly one partition, then we collect all items
+            // and write them to a single file.
+            if (this.configuration.getNumberOfOutputPartitions() == 1) {
+                List<String> lines = outputRDD.take(1000000000);
+                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            } else {
+                if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                    outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+                }
+                outputRDD.saveAsTextFile(outputPath);
             }
-
-            outputRDD.saveAsTextFile(outputPath);
         } else {
+            // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateList(outputList);
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
                 .map(x -> configuration.getSerializer().serialize(x))
                 .collect(Collectors.toList());
-            if (outputPath != null) {
-                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-            } else {
-                System.out.println(String.join("\n", lines));
-            }
+            System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
                 issueMaterializationWarning(materializationCount);
                 if (outputPath == null) {
