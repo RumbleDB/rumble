@@ -43,6 +43,7 @@ public class JavaAPITest {
 
     @BeforeClass
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
         sparkConfiguration.set("spark.submit.deployMode", "client");

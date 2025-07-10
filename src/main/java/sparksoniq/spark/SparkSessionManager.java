@@ -147,6 +147,15 @@ public class SparkSessionManager {
         }
     }
 
+    public void resetSession() {
+        if (this.session != null) {
+            this.session.stop();
+            this.session = null;
+        }
+        this.javaSparkContext = null;
+        this.configuration = null;
+    }
+
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
