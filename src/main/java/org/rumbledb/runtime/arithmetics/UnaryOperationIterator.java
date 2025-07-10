@@ -68,6 +68,14 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         if (!this.negated) {
+            if (!this.item.isNumeric()) {
+                throw new UnexpectedTypeException(
+                        "Unary expression has non numeric args "
+                            +
+                            this.item.serialize(),
+                        getMetadata()
+                );
+            }
             return this.item;
         }
         if (this.item.isInt()) {

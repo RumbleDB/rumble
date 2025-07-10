@@ -27,10 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -217,6 +214,17 @@ public class VariableValues implements Serializable, KryoSerializable {
             );
         }
 
+        if (
+            varName.equals(Name.CONTEXT_ITEM)
+                || varName.equals(Name.CONTEXT_COUNT)
+                || varName.equals(Name.CONTEXT_POSITION)
+        ) {
+            throw new AbsentPartOfDynamicContextException(
+                    "\"" + varName + "\" accessed, but the context item is absent",
+                    metadata
+            );
+        }
+
         throw new RumbleException(
                 "Runtime error retrieving variable " + varName + " value",
                 metadata
@@ -366,6 +374,9 @@ public class VariableValues implements Serializable, KryoSerializable {
             sb.append("    " + name + " (" + this.localVariableValues.get(name).size() + " items)\n");
             if (this.localVariableValues.get(name).size() == 1) {
                 sb.append("      " + this.localVariableValues.get(name).get(0).serialize() + "\n");
+                sb.append(
+                    "      Mutability level: " + this.localVariableValues.get(name).get(0).getMutabilityLevel() + "\n"
+                );
             }
         }
         sb.append("  Counts:\n");

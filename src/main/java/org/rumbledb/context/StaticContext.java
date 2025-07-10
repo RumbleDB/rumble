@@ -71,7 +71,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("xs", Name.XS_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
-        defaultBindings.put("an", Name.AN_NS);
+        // defaultBindings.put("an", Name.AN_NS);
     }
 
     private RumbleRuntimeConfiguration configuration;
@@ -134,6 +134,10 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getStaticBaseURI();
         }
         throw new OurBadException("Static context not set.");
+    }
+
+    public void setStaticBaseUri(URI staticBaseURI) {
+        this.staticBaseURI = staticBaseURI;
     }
 
     public boolean isInScope(Name varName) {
@@ -259,6 +263,11 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(" as " + entry.getValue().getSequenceType());
             stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
             stringBuilder.append(" | " + entry.getValue().getStorageMode());
+            if (entry.getValue().isAssignable()) {
+                stringBuilder.append(" | assignable");
+            } else {
+                stringBuilder.append(" | not assignable");
+            }
             stringBuilder.append("\n");
         }
         stringBuilder.append("Static context with user-defined functions:\n");
@@ -454,7 +463,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public int getCurrentMutabilityLevel() {
-        return currentMutabilityLevel;
+        return this.currentMutabilityLevel;
     }
 
     public void setCurrentMutabilityLevel(int currentMutabilityLevel) {

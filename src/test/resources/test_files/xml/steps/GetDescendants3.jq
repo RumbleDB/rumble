@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="(Giada De Laurentiis\n, 2005\n, 30.00\n, Harry Potter\n, J K. Rowling\n, 2005\n, 29.99\n, XQuery Kick Start\n, James McGovern\n, Per Bothner\n, Kurt Cagle\n, James Linn\n, Vaidyanathan Nagarajan\n, 2003\n, 49.99\n, Learning XML\n, Erik T. Ray\n, 2003\n, 39.95\n)":)
+doc("../../../queries/xml/books.xml")/descendant::node()/following::text()

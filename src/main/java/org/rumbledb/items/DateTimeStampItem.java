@@ -3,8 +3,8 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.OffsetDateTime;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -16,27 +16,26 @@ import org.rumbledb.types.ItemType;
 public class DateTimeStampItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private DateTime value;
+    private DateTimeItem value;
 
+    @SuppressWarnings("unused")
     public DateTimeStampItem() {
         super();
     }
 
-    DateTimeStampItem(DateTime value, boolean checkTimezone) {
+    DateTimeStampItem(OffsetDateTime value, boolean checkTimezone) {
         super();
-        if (checkTimezone) {
-            this.value = DateTimeItem.parseDateTime(
-                this.value.toString(),
-                BuiltinTypesCatalogue.dateTimeStampItem
-            );
-        } else {
-            this.value = value;
+        if (!checkTimezone) {
+            throw new IllegalArgumentException("There is no timezone in dateTime");
         }
-
+        this.value = new DateTimeItem(value, true);
     }
 
     DateTimeStampItem(String dateTimeStampString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
+        this.value = new DateTimeItem(dateTimeStampString);
+        if (!this.value.hasTimeZone()) {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override
@@ -54,22 +53,13 @@ public class DateTimeStampItem implements Item {
     }
 
     @Override
-    public DateTime getDateTimeValue() {
-        return this.value;
+    public OffsetDateTime getDateTimeValue() {
+        return this.value.getDateTimeValue();
     }
 
     @Override
     public String getStringValue() {
-        String originalValue = this.value.toString();
-        if (this.value.getZone() == DateTimeZone.UTC) {
-            String value = originalValue.substring(0, originalValue.length() - 1);
-            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-            return value + "Z";
-        }
-        String zoneString = originalValue.substring(originalValue.length() - 6);
-        String value = originalValue.substring(0, originalValue.length() - 6);
-        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + zoneString;
+        return this.value.getStringValue();
     }
 
     @Override
@@ -99,15 +89,12 @@ public class DateTimeStampItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.value.getMillis(), true);
-        output.writeString(this.value.getZone().getID());
+        this.value.write(kryo, output);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        Long millis = input.readLong(true);
-        DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this.value = new DateTime(millis, zone);
+        this.value.read(kryo, input);
     }
 
     @Override
@@ -118,6 +105,51 @@ public class DateTimeStampItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonth();
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYear();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDay();
+    }
+
+    @Override
+    public int getHour() {
+        return this.value.getHour();
+    }
+
+    @Override
+    public int getMinute() {
+        return this.value.getMinute();
+    }
+
+    @Override
+    public double getSecond() {
+        return this.value.getSecond();
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.value.getNanosecond();
+    }
+
+    @Override
+    public int getOffset() {
+        return this.value.getOffset();
+    }
+
+    @Override
+    public long getEpochMillis() {
+        return this.value.getEpochMillis();
     }
 }
 

@@ -1,5 +1,5 @@
 (:JIQS: ShouldCompile :)
-variable $log := json-file("log.json");
+variable $log := json-lines("log.json");
 variable $username := "username";
 variable $entry := {
     "access-attempt": {
@@ -8,7 +8,7 @@ variable $entry := {
     }
   };
 variable $result as xs:boolean;
-if ($username = json-file("log.json").current-users.user.name)
+if ($username = json-lines("log.json").current-users.user.name)
   then {
     replace value of json $entry.access-allowed with "Yes";
     $result := true;

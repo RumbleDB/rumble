@@ -162,11 +162,11 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
                 } else if (item.isInteger()) {
                     return !item.getIntegerValue().equals(BigInteger.ZERO);
                 } else if (item.isDouble()) {
-                    return item.getDoubleValue() != 0;
+                    return !item.isNaN() && item.getDoubleValue() != 0;
                 } else if (item.isFloat()) {
-                    return item.getFloatValue() != 0;
+                    return !item.isNaN() && item.getFloatValue() != 0;
                 } else if (item.isDecimal()) {
-                    return !item.getDecimalValue().equals(BigDecimal.ZERO);
+                    return !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                 } else {
                     throw new OurBadException(
                             "Unexpected numeric type found while calculating effective boolean value."
@@ -182,12 +182,23 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
             return !item.getStringValue().isEmpty();
         }
-        if (item.isObject()) {
+        if (item.isNode()) {
             return true;
         }
-        if (item.isArray()) {
-            return true;
+        if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+            if (item.isObject() || item.isArray()) {
+                return true;
+            }
+        } else {
+            if (item.isObject() || item.isArray()) {
+                System.err.println(
+                    "Note: effective boolean value of "
+                        + (item.isObject() ? "Object " : "Array ")
+                        + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                );
+            }
         }
+
         throw new InvalidArgumentTypeException(
                 "Effective boolean value not defined for items of type "
                     +

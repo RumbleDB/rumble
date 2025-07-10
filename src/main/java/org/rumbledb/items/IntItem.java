@@ -90,11 +90,11 @@ public class IntItem implements Item {
     }
 
     public double castToDoubleValue() {
-        return new Integer(this.value).doubleValue();
+        return Integer.valueOf(this.value).doubleValue();
     }
 
     public float castToFloatValue() {
-        return new Integer(this.value).floatValue();
+        return Integer.valueOf(this.value).floatValue();
     }
 
     public BigDecimal castToDecimalValue() {
@@ -160,5 +160,21 @@ public class IntItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "INT";
     }
 }

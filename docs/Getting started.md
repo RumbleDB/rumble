@@ -21,31 +21,31 @@ Once you want to take it to the next level and query your own data on your lapto
 
 ### Java version (important)
 
-You need to make sure that you have Java 8 or 11 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8 or 11. Spark only supports Java 8 or 11.
+You need to make sure that you have Java 11 or 17 and that, if you have several versions installed, JAVA_HOME correctly points to Java 11 or 17.
 
-RumbleDB works with both Java 8 and Java 11. You can check the Java version that is configured on your machine with:
+RumbleDB works with both Java 11 and Java 17. You can check the Java version that is configured on your machine with:
 
     java -version
 
-If you do not have Java, you can download version 8 or 11 from [AdoptOpenJDK](https://adoptopenjdk.net/).
+If you do not have Java, you can download version 11 or 17 from [AdoptOpenJDK](https://adoptopenjdk.net/).
 
-Do make sure it is not Java 17, which will not work.
+Do make sure it is not Java 8, which will not work.
 
 ### Download RumbleDB
 
 RumbleDB is just a download and no installation is required.
 
-In order to run RumbleDB, you simply need to download rumbledb-1.22.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
+In order to run RumbleDB, you simply need to download rumbledb-1.24.0-standalone.jar from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
 Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
 You can test that it works with:
 
-    java -jar rumbledb-1.22.0-standalone.jar run -q '1+1'
+    java -jar rumbledb-1.24.0-standalone.jar run -q '1+1'
 
 or launch a JSONiq shell with:
 
-    java -jar rumbledb-1.22.0-standalone.jar repl
+    java -jar rumbledb-1.24.0-standalone.jar repl
     
 If you run out of memory, you can set allocate more memory to Java with an additional Java parameter, e.g., -Xmx10g
 
@@ -76,13 +76,13 @@ If you use Linux, Florian Kellner also kindly contributed an [installation scrip
 
 ### Install Spark
 
-RumbleDB requires an Apache Spark installation on Linux, Mac or Windows.
+RumbleDB requires an Apache Spark installation on Linux, Mac or Windows. Important note: it needs to be the scala 2.13 version of spark as RumbleDB supports only that version.
 
-It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.2.2. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
+It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.5.5. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
 
 What you need to do then is to add the subdirectory "bin" within the unpacked directory to the PATH variable. On macOS this is done by adding
 
-    export SPARK_HOME=/path/to/spark-3.2.2-bin-hadoop3.2
+    export SPARK_HOME=/path/to/spark-3.5.5-bin-hadoop3-scala2.13
     export PATH=$SPARK_HOME/bin:$PATH
 
 (with SPARK_HOME appropriately set to match your unzipped Spark directory) to the file .zshrc in your home directory, then making sure to force the change with
@@ -99,9 +99,9 @@ You can test that Spark was correctly installed with:
    
 ### Java version (important)
 
-You need to make sure that you have Java 8 or 11 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8 or 11. Spark only supports Java 8 or 11.
+You need to make sure that you have Java 11 or 17 and that, if you have several versions installed, JAVA_HOME correctly points to Java 11 or 17. Spark only supports Java 11 or 17.
 
-Spark 3+ is documented to work with both Java 8 and Java 11. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
+Spark 3+ is documented to work with both Java 11 and Java 17. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
 
     java -version
 
@@ -111,9 +111,9 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download one of the small .jar files from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 3.2+, use rumbledb-1.22.0-for-spark-3.2.jar.
+If you use Spark 3.5, use rumbledb-1.24.0-for-spark-3.5.jar.
 
-If you use Spark 3.3+, use rumbledb-1.22.0-for-spark-3.3.jar.
+If you use Spark 4.0, use rumbledb-1.24.0-for-spark-4.0.jar.
 
 These jars do not embed Spark, since you chose to set it up separately. They will work with your Spark installation with the spark-submit command.
 
@@ -158,7 +158,7 @@ The RumbleDB shell appears:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.22.0 "Pyrenean oak" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.24.0 "Mountain ash" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     
@@ -184,24 +184,24 @@ or
      
 The above queries do not actually use Spark. Spark is used when the I/O workload can be parallelized. The following query should output the file created above.
      
-     json-file("data.json")
+     json-lines("data.json")
      
-json-file() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
+json-lines() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     return $i
 
 The above creates a very simple Spark job and executes it. More complex queries will create several Spark jobs. But you will not see anything of it: this is all done behind the scenes. If you are curious, you can go to [localhost:4040](http://localhost:4040) in your browser while your query is running (it will not be available once the job is complete) and look at what is going on behind the scenes.
 
 Data can be filtered with the where clause. Again, below the hood, a Spark transformation will be used:
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     where $i.quantity gt 99
     return $i
     
 RumbleDB also supports grouping and aggregation, like so:
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     return { "product" : $product, "total-quantity" : sum($quantity) }
@@ -210,7 +210,7 @@ RumbleDB also supports grouping and aggregation, like so:
 RumbleDB also supports ordering. Note that clauses (where, let, group by, order by) can appear in any order.
 The only constraint is that the first clause should be a for or a let clause.
 
-    for $i in json-file("data.json", 10)
+    for $i in json-lines("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     let $sum := sum($quantity)

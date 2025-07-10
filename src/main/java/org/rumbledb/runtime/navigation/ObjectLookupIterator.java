@@ -20,9 +20,17 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Map;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -31,7 +39,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.InvalidSelectorException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -44,13 +57,11 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Map;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
@@ -247,21 +258,29 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             nativeClauseContext.getClauseType().equals(FLWOR_CLAUSES.FILTER)
                 && (this.iterator instanceof ContextExpressionIterator)
         ) {
-            leftSchema = outerContextSchema;
-            if (outerContextSchema instanceof StructType) {
+            leftSchema = (nativeClauseContext.getResultingType() != null)
+                ? TypeMappings.getDataFrameDataTypeFromItemType(nativeClauseContext.getResultingType().getItemType())
+                : outerContextSchema;
+            if (leftSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
                         null
                 );
             } else {
+                if (leftSchema instanceof ArrayType) {
+                    leftSchema = ((ArrayType) leftSchema).elementType();
+                }
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
-                        SparkSessionManager.atomicJSONiqItemColumnName
+                        "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
+                        nativeClauseContext.getResultingType()
                 );
             }
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-            if (newContext == NativeClauseContext.NoNativeQuery) {
+            if (newContext != NativeClauseContext.NoNativeQuery) {
+                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(newContext.getResultingType().getItemType());
+            } else {
                 return NativeClauseContext.NoNativeQuery;
             }
             leftSchema = newContext.getSchema();
@@ -271,6 +290,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
         // get key (escape backtick)
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
+        String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
@@ -292,7 +312,13 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         StructType structSchema = (StructType) leftSchema;
-        if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))) {
+        if (
+            Arrays.asList(structSchema.fieldNames()).contains(key)
+                || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)
+        ) {
+            if (Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)) {
+                key = sequenceKey;
+            }
             String leftQuery = newContext.getResultingQuery();
             if (leftQuery != null) {
                 newContext.setResultingQuery(leftQuery + ".`" + key + "`");
@@ -300,6 +326,40 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 newContext.setResultingQuery("`" + key + "`");
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
+            newContext.setResultingType(
+                new SequenceType(
+                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
+                        SequenceType.Arity.OneOrZero
+                )
+            );
+            newContext.setSchema(field.dataType());
+        } else if (
+            newContext.getResultingType().getItemType().isObjectItemType()
+                && (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(key)
+                    || newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey))
+        ) {
+            if (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey)) {
+                key = sequenceKey;
+            }
+            String leftQuery = newContext.getResultingQuery();
+            if (leftQuery != null) {
+                newContext.setResultingQuery(leftQuery + ".`" + key + "`");
+            } else {
+                newContext.setResultingQuery("`" + key + "`");
+            }
+            ItemType resultType = newContext.getResultingType()
+                .getItemType()
+                .getObjectContentFacet()
+                .get(key)
+                .getType();
+            newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
+            StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
+            newContext.setResultingType(
+                new SequenceType(
+                        TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()),
+                        SequenceType.Arity.OneOrZero
+                )
+            );
             newContext.setSchema(field.dataType());
         } else {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
@@ -343,21 +403,61 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 type = fieldDescriptor.getType();
             }
             if (type.isObjectItemType()) {
+                // TODO: Find another way to check if delta dataframe -- e.g. flag and mutability level
+                // TODO: implement keyword vars to stop ust using strs
+                String sql;
+                if (childDataFrame.getKeys().contains("tableLocation")) {
+                    sql = String.format(
+                        "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                        key,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        key,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        object
+                    );
+
+                } else {
+                    sql = String.format("SELECT `%s`.* FROM %s", key, object);
+                }
                 JSoundDataFrame result = childDataFrame.evaluateSQL(
-                    String.format("SELECT `%s`.* FROM %s", key, object),
+                    sql,
                     type
                 );
                 return result;
             } else {
-                JSoundDataFrame result = childDataFrame.evaluateSQL(
-                    String.format(
+                String sql;
+                JSoundDataFrame result;
+                if (childDataFrame.getKeys().contains("tableLocation")) {
+                    sql = String.format(
+                        "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                        key,
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        key,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        object
+                    );
+                    Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                    ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
+                    result = new JSoundDataFrame(df, deltaItemType);
+                } else {
+                    sql = String.format(
                         "SELECT `%s` AS `%s` FROM %s",
                         key,
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         object
-                    ),
-                    type
-                );
+                    );
+                    result = childDataFrame.evaluateSQL(
+                        sql,
+                        type
+                    );
+                }
                 return result;
             }
         }

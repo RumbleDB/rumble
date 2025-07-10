@@ -24,7 +24,10 @@ import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -46,14 +49,13 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
@@ -254,7 +256,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (getConfiguration().nativeExecution()) {
             nativeQuery = filter.generateNativeQuery(nativeClauseContext);
         }
-        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+        if (nativeQuery == NativeClauseContext.NoNativeQuery || !this.isBooleanOnlyFilter) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
                 List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
@@ -282,13 +284,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
                     childDataFrame.getItemType()
                 );
             } else {
-                JSoundDataFrame zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
+                Dataset<Row> zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
                     childDataFrame,
                     1L
                 );
-                String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
+                String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame);
                 List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
-                    zippedChildDataFrame.getDataFrame().schema(),
+                    zippedChildDataFrame.schema(),
                     null,
                     null,
                     null
@@ -351,5 +353,54 @@ public class PredicateIterator extends HybridRuntimeIterator {
         result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.iterator.getVariableDependencies());
         return result;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (!(this.iterator instanceof ArrayUnboxingIterator)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext arrayReferenceQuery = ((ArrayUnboxingIterator) this.children.get(0))
+            .generateArrayReferenceQuery(nativeClauseContext);
+        if (arrayReferenceQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        arrayReferenceQuery.setSchema(
+            ((StructType) arrayReferenceQuery.getSchema()).add(
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                TypeMappings.getDataFrameDataTypeFromItemType(
+                    arrayReferenceQuery.getResultingType().getItemType().getArrayContentFacet()
+                )
+            )
+        );
+        FLWOR_CLAUSES previousType = arrayReferenceQuery.getClauseType();
+        arrayReferenceQuery.setClauseType(FLWOR_CLAUSES.FILTER);
+        NativeClauseContext filterQuery = this.filter.generateNativeQuery(arrayReferenceQuery);
+        if (
+            filterQuery == NativeClauseContext.NoNativeQuery
+                || filterQuery.getResultingType().getItemType() != BuiltinTypesCatalogue.booleanItem
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        arrayReferenceQuery.setClauseType(previousType);
+        if (
+            filterQuery != NativeClauseContext.NoNativeQuery
+        ) {
+            String resultingQuery = " explode ( filter ( "
+                + arrayReferenceQuery.getResultingQuery()
+                + ", "
+                + "`"
+                + SparkSessionManager.atomicJSONiqItemColumnName
+                + "`"
+                + " -> "
+                + filterQuery.getResultingQuery()
+                + " ) ) ";
+            return new NativeClauseContext(
+                    filterQuery,
+                    resultingQuery,
+                    arrayReferenceQuery.getResultingType()
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }

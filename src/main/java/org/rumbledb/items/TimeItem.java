@@ -3,9 +3,13 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -16,14 +20,18 @@ import org.rumbledb.types.ItemType;
 public class TimeItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private DateTime value;
+    private OffsetTime value;
     private boolean hasTimeZone = true;
+    Pattern timeRegex = Pattern.compile(
+        "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+    );
 
+    @SuppressWarnings("unused")
     public TimeItem() {
         super();
     }
 
-    TimeItem(DateTime value, boolean hasTimeZone) {
+    TimeItem(OffsetTime value, boolean hasTimeZone) {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
@@ -32,11 +40,30 @@ public class TimeItem implements Item {
         }
     }
 
-    TimeItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, BuiltinTypesCatalogue.timeItem);
-        if (doesLexicalValueHaveNoTimeZone(dateTimeString)) {
-            this.hasTimeZone = false;
-            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+    TimeItem(String timeString) {
+        if (!this.timeRegex.matcher(timeString).matches()) {
+            throw new IllegalArgumentException("Invalid time string: " + timeString);
+        }
+        getTimeFromString(timeString);
+    }
+
+    private void getTimeFromString(String timeString) {
+        try {
+            if (timeString.contains("24:00:00")) {
+                timeString = timeString.replace("24:00:00", "00:00:00");
+            }
+            if (timeString.contains("Z") || timeString.contains("+") || timeString.contains("-")) {
+                this.value = OffsetTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_TIME);
+                this.hasTimeZone = true;
+            } else {
+                this.value = LocalTime.parse(timeString).atOffset(ZoneOffset.UTC);
+                this.hasTimeZone = false;
+            }
+        } catch (Exception e) {
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:time: \"" + timeString + "\"",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 
@@ -56,11 +83,6 @@ public class TimeItem implements Item {
             return c == 0;
         }
         return false;
-    }
-
-    @Override
-    public DateTime getDateTimeValue() {
-        return this.value;
     }
 
     @Override
@@ -90,39 +112,21 @@ public class TimeItem implements Item {
 
     @Override
     public String getStringValue() {
-        String originalValue = this.value.toString();
-        if (!hasTimeZone()) {
-            String value = originalValue.substring(0, originalValue.length() - 1);
-            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-            value = value.substring(value.indexOf("T") + 1);;
-            return value;
-        }
-        if (this.value.getZone() == DateTimeZone.UTC) {
-            String value = originalValue.substring(0, originalValue.length() - 1);
-            value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-            value = value.substring(value.indexOf("T") + 1);;
-            return value + "Z";
-        }
-        String zoneString = originalValue.substring(originalValue.length() - 6);
-        String value = originalValue.substring(0, originalValue.length() - 6);
-        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        value = value.substring(value.indexOf("T") + 1);;
-        return value + zoneString;
+        return this.value.format(
+            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_TIME : DateTimeFormatter.ISO_LOCAL_TIME
+        );
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.value.getMillis(), true);
+        output.writeString(this.value.format(DateTimeFormatter.ISO_OFFSET_TIME));
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.value.getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        Long millis = input.readLong(true);
+        this.value = OffsetTime.parse(input.readString());
         this.hasTimeZone = input.readBoolean();
-        DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this.value = new DateTime(millis, zone);
     }
 
     @Override
@@ -133,5 +137,39 @@ public class TimeItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public int getHour() {
+        return this.value.getHour();
+    }
+
+    @Override
+    public int getMinute() {
+        return this.value.getMinute();
+    }
+
+    @Override
+    public double getSecond() {
+        return this.value.getSecond() + this.value.getNano() / 1_000_000_000.0;
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.value.getNano();
+    }
+
+    @Override
+    public int getOffset() {
+        return this.value.getOffset().getTotalSeconds() / 60;
+    }
+
+    public OffsetTime getTimeValue() {
+        return this.value;
+    }
+
+    @Override
+    public long getEpochMillis() {
+        return this.value.toEpochSecond(LocalDate.EPOCH) * 1000 + this.value.getNano() / 1_000_000;
     }
 }

@@ -24,5 +24,4 @@ public class CurrentDateFunctionIterator extends AtMostOneItemLocalRuntimeIterat
     public Item materializeFirstItemOrNull(DynamicContext context) {
         return ItemFactory.getInstance().createDateItem(context.getCurrentDateTime(), true);
     }
-
 }

@@ -21,9 +21,7 @@
 package org.rumbledb.runtime.primary;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -39,6 +37,9 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
 import java.util.List;
 import java.util.Map;
@@ -89,14 +90,14 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        String name = this.variableName.toString();
+        Name name = nativeClauseContext.getVariable(this.variableName);
         DataType schema = nativeClauseContext.getSchema();
         if (!(schema instanceof StructType)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
         StructType structSchema = (StructType) schema;
-        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, this.variableName)) {
+        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, name)) {
             List<Item> items = nativeClauseContext.getContext()
                 .getVariableValues()
                 .getLocalVariableValue(this.variableName, getMetadata());
@@ -106,15 +107,32 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             }
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
-        if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
+        String escapedName = name.toString().replace("`", FlworDataFrameUtils.backtickEscape);
+        SequenceType.Arity arity;
+        if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(structSchema, name)) {
+            escapedName = escapedName + ".sequence";
+            arity = SequenceType.Arity.ZeroOrMore;
+        } else if (FlworDataFrameUtils.isVariableAvailableAsCountOnly(structSchema, name)) {
+            escapedName = escapedName + ".count";
+            arity = SequenceType.Arity.One;
+        } else if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, name)) {
             return NativeClauseContext.NoNativeQuery;
+        } else {
+            arity = SequenceType.Arity.OneOrZero;
         }
-        String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
+        ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
+        if (arity == SequenceType.Arity.ZeroOrMore && fieldType instanceof ArrayType) {
+            if (((ArrayType) fieldType).elementType().equals(DataTypes.BinaryType)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            variableType = variableType.getArrayContentFacet();
+        }
         NativeClauseContext newContext = new NativeClauseContext(
                 nativeClauseContext,
-                "`" + escapedName + "`"
+                "`" + escapedName + "`",
+                new SequenceType(variableType, arity)
         );
         newContext.setSchema(fieldType);
         return newContext;

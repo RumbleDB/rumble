@@ -34,6 +34,8 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import com.esotericsoftware.kryo.KryoSerializable;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -156,7 +158,9 @@ public interface ItemType extends Serializable, KryoSerializable {
     /**
      *
      * @param superType another item type
-     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself
+     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself.
+     *         If [this] has a name, then this is determined strictly based on the hierarchy.
+     *         If [this] does not have a name, then this is determined based on facets.
      */
     default boolean isSubtypeOf(ItemType superType) {
         // the default methods works fine for all non-function types
@@ -455,6 +459,15 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
+    }
+
+    /**
+     * Returns the SparkSQL type of the item type for use in a query.
+     *
+     * @return String representing the SparkSQL type of the item type.
+     */
+    default String getSparkSQLType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getName());
     }
 
     String toString();

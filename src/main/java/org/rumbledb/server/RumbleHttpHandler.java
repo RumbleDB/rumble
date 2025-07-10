@@ -154,7 +154,7 @@ public class RumbleHttpHandler implements HttpHandler {
             );
         } else {
             if (results != null) {
-                Item values = ItemFactory.getInstance().createArrayItem(results);
+                Item values = ItemFactory.getInstance().createArrayItem(results, false);
                 output.putItemByKey("values", values);
             }
         }
@@ -226,7 +226,7 @@ public class RumbleHttpHandler implements HttpHandler {
                     );
                 } else if (ex instanceof IllegalArgumentException) {
                     return assembleErrorReponse(
-                        "It seems that you are not using Java 8. Spark only works with Java 8. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.",
+                        "It seems that you are not using Java 11. Spark only works with Java 11. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 11 installed, we recommend installing AdoptOpenJDK 11.",
                         ErrorCode.OurBadErrorCode.toString(),
                         ex.getStackTrace()
                     );

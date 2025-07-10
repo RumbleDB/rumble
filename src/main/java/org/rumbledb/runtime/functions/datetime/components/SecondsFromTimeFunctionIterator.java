@@ -13,7 +13,6 @@ import java.util.List;
 public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item timeItem = null;
 
     public SecondsFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -24,17 +23,11 @@ public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.timeItem = this.children.get(0).materializeFirstItemOrNull(context);
-        if (this.timeItem == null) {
+        Item timeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (timeItem == null) {
             return null;
         }
         return ItemFactory.getInstance()
-            .createDecimalItem(
-                BigDecimal.valueOf(
-                    this.timeItem.getDateTimeValue().getSecondOfMinute()
-                        + this.timeItem.getDateTimeValue().getMillisOfSecond() * 1.0 / 1000
-                )
-            );
+            .createDecimalItem(BigDecimal.valueOf(timeItem.getSecond()));
     }
-
 }

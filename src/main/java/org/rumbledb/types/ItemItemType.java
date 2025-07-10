@@ -16,14 +16,23 @@ public class ItemItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
+    static final ItemType item = new ItemItemType();
     private Name name;
 
     public ItemItemType() {
+        this.name = Name.createVariableInDefaultTypeNamespace("item");
     }
 
-    ItemItemType(Name name) {
+    public ItemItemType(Name name) {
         this.name = name;
+    }
+
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
     }
 
     @Override

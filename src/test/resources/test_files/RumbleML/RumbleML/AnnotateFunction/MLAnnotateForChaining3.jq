@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="({ "id" : 1, "sentence" : "Hi I heard about Spark", "tokenized" : [ "hi", "i", "heard", "about", "spark" ], "hashingTF" : { "0" : 4, "1" : 1 } }, { "id" : 2, "sentence" : "I wish Java could use case classes", "tokenized" : [ "i", "wish", "java", "could", "use", "case", "classes" ], "hashingTF" : { "0" : 3, "1" : 4 } }, { "id" : 3, "sentence" : "Logistic regression models are neat", "tokenized" : [ "logistic", "regression", "models", "are", "neat" ], "hashingTF" : { "0" : 2, "1" : 3 } })" :)
-let $data := structured-json-file("../../../../queries/rumbleML/sample-ml-data-sentence.json")
+let $data := structured-json-lines("../../../../queries/rumbleML/sample-ml-data-sentence.json")
 
 let $tokenizer := get-transformer("Tokenizer")
 let $intermediate-data := $tokenizer($data, {"inputCol": "sentence", "outputCol": "tokenized"})

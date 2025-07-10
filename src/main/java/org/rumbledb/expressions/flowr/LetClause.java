@@ -127,6 +127,7 @@ public class LetClause extends Clause {
         buffer.append(")");
         buffer.append(" | mode: " + this.highestExecutionMode);
         buffer.append(" | variable mode: " + this.variableHighestStorageMode);
+        buffer.append(this.isReferenced ? " | referenced" : " | not referenced");
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -157,6 +158,6 @@ public class LetClause extends Clause {
     }
 
     public void setReferenced(boolean isReferenced) {
-        this.isReferenced = false;
+        this.isReferenced = isReferenced;
     }
 }

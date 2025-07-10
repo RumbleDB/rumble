@@ -25,13 +25,16 @@ public class ObjectItemType implements ItemType {
             )
     );
 
-    final private Name name;
+    private Name name;
     private Map<String, FieldDescriptor> content;
     private boolean isClosed;
     private List<String> constraints;
     private List<Item> enumeration;
-    final private ItemType baseType;
+    private ItemType baseType;
     private int typeTreeDepth;
+
+    ObjectItemType() {
+    }
 
     ObjectItemType(
             Name name,
@@ -53,6 +56,111 @@ public class ObjectItemType implements ItemType {
                 checkSubtypeConsistency();
             }
         }
+    }
+
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        // Write the name
+        output.writeBoolean(this.name != null);
+        if (this.name != null) {
+            kryo.writeObject(output, this.name);
+        }
+
+        // Write baseType
+        kryo.writeClassAndObject(output, this.baseType);
+
+        // Write isClosed
+        output.writeBoolean(this.isClosed);
+
+        // Write content map
+        if (this.content != null) {
+            output.writeInt(this.content.size());
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+                output.writeString(entry.getKey());
+                kryo.writeObject(output, entry.getValue());
+            }
+        } else {
+            output.writeInt(-1);
+        }
+
+        // Write constraints list
+        if (this.constraints != null) {
+            output.writeInt(this.constraints.size());
+            for (String constraint : this.constraints) {
+                output.writeString(constraint);
+            }
+        } else {
+            output.writeInt(-1);
+        }
+
+        // Write enumeration list
+        if (this.enumeration != null) {
+            output.writeInt(this.enumeration.size());
+            for (Item item : this.enumeration) {
+                kryo.writeObject(output, item);
+            }
+        } else {
+            output.writeInt(-1);
+        }
+
+        // Write typeTreeDepth
+        output.writeInt(this.typeTreeDepth);
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        // Read the name
+        boolean hasName = input.readBoolean();
+        if (hasName) {
+            this.name = kryo.readObject(input, Name.class);
+        } else {
+            this.name = null;
+        }
+
+        // Read baseType
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+
+        // Read isClosed
+        this.isClosed = input.readBoolean();
+
+        // Read content map
+        int contentSize = input.readInt();
+        if (contentSize >= 0) {
+            this.content = new HashMap<>();
+            for (int i = 0; i < contentSize; i++) {
+                String key = input.readString();
+                FieldDescriptor value = kryo.readObject(input, FieldDescriptor.class);
+                this.content.put(key, value);
+            }
+        } else {
+            this.content = Collections.emptyMap();
+        }
+
+        // Read constraints list
+        int constraintsSize = input.readInt();
+        if (constraintsSize >= 0) {
+            this.constraints = new ArrayList<>();
+            for (int i = 0; i < constraintsSize; i++) {
+                this.constraints.add(input.readString());
+            }
+        } else {
+            this.constraints = Collections.emptyList();
+        }
+
+        // Read enumeration list
+        int enumSize = input.readInt();
+        if (enumSize >= 0) {
+            this.enumeration = new ArrayList<>();
+            for (int i = 0; i < enumSize; i++) {
+                Item item = kryo.readObject(input, Item.class);
+                this.enumeration.add(item);
+            }
+        } else {
+            this.enumeration = null;
+        }
+
+        // Read typeTreeDepth
+        this.typeTreeDepth = input.readInt();
     }
 
     @Override
@@ -193,32 +301,50 @@ public class ObjectItemType implements ItemType {
             return this.name.toString();
         } else {
             StringBuilder sb = new StringBuilder();
-            sb.append(this.name == null ? "#anonymous" : this.name.toString());
-            sb.append(" (object item)\n");
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"object\", ");
 
-            sb.append("base type : ");
+            sb.append("\"baseType\": \"");
             sb.append(this.baseType.toString());
-            sb.append("\n");
+            sb.append("\", ");
+
+            sb.append("\"treeDepth\": ");
+            sb.append(this.typeTreeDepth);
+            sb.append(", ");
+
+            sb.append("\"closed\": ");
+            sb.append(this.isClosed ? "true" : "false");
+            sb.append(", ");
 
             if (isResolved()) {
                 List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
                 if (fields.size() > 0) {
-                    sb.append("content facet:\n");
-                    // String comma = "";
+                    sb.append("\"content\": [ ");
+                    String comma = "";
                     for (FieldDescriptor field : fields) {
-                        sb.append("  ");
+                        sb.append(comma);
+                        comma = ", ";
+                        sb.append("{ \"name\": \"");
                         sb.append(field.getName());
+                        sb.append("\", ");
                         if (field.isRequired()) {
-                            sb.append(" (required)");
+                            sb.append("\"required\": true, ");
                         }
-                        sb.append(" : ");
+                        sb.append("\"type\": \"");
                         sb.append(field.getType().toString());
-                        sb.append("\n");
+                        sb.append("\" }");
                     }
+                    sb.append(" ]");
                 }
             } else {
-                sb.append("(content not resolved yet)");
+                sb.append(" (content not resolved yet) ");
             }
+            sb.append(" }");
             return sb.toString();
         }
     }
@@ -371,5 +497,28 @@ public class ObjectItemType implements ItemType {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        StringBuilder sb = new StringBuilder();
+        Map<String, FieldDescriptor> content = this.getObjectContentFacet();
+        String[] keys = content.keySet().toArray(new String[0]);
+
+        sb.append("STRUCT<");
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            FieldDescriptor field = content.get(key);
+
+            sb.append(key);
+            sb.append(":");
+            sb.append(field.getType().getSparkSQLType());
+            if (i < keys.length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append(">");
+
+        return sb.toString();
     }
 }

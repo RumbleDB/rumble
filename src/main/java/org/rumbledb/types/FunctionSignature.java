@@ -32,14 +32,24 @@ import com.esotericsoftware.kryo.io.Output;
 public class FunctionSignature implements Serializable, KryoSerializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;
+    private boolean isUpdating;
     private static final long serialVersionUID = 1L;
+
+    public FunctionSignature(
+            List<SequenceType> parameterTypes,
+            SequenceType returnType,
+            boolean isUpdating
+    ) {
+        this.parameterTypes = parameterTypes;
+        this.returnType = returnType;
+        this.isUpdating = isUpdating;
+    }
 
     public FunctionSignature(
             List<SequenceType> parameterTypes,
             SequenceType returnType
     ) {
-        this.parameterTypes = parameterTypes;
-        this.returnType = returnType;
+        this(parameterTypes, returnType, false);
     }
 
     public FunctionSignature() {
@@ -54,6 +64,10 @@ public class FunctionSignature implements Serializable, KryoSerializable {
 
     public SequenceType getReturnType() {
         return this.returnType;
+    }
+
+    public boolean isUpdating() {
+        return this.isUpdating;
     }
 
     @Override

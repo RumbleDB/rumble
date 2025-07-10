@@ -23,6 +23,8 @@ package org.rumbledb.runtime.navigation;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
@@ -39,6 +41,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -163,9 +167,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            // if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
-            // return NativeClauseContext.NoNativeQuery;
-            // }
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
             Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
@@ -230,6 +234,11 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        boolean isObject = childDataFrame.getItemType().isObjectItemType();
+        boolean hasAtomicJSONiqItem = isObject
+            && childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
@@ -259,6 +268,66 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 ),
                 elementType
             );
+        } else if (
+            hasAtomicJSONiqItem
+                &&
+                childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType()
+                    .isArrayItemType()
+                && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
+        ) {
+            ItemType elementType = childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType()
+                .getArrayContentFacet();
+            String sql;
+            JSoundDataFrame res;
+            if (elementType.isObjectItemType()) {
+                sql = String.format(
+                    "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    this.lookup - 1,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    this.lookup - 1,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    this.lookup
+                );
+                res = childDataFrame.evaluateSQL(sql, elementType);
+            } else {
+                sql = String.format(
+                    "SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    this.lookup - 1,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    this.lookup - 1,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    this.lookup
+                );
+                Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
+                res = new JSoundDataFrame(df, deltaItemType);
+            }
+            return res;
         }
         if (getConfiguration().doStaticAnalysis()) {
             throw new UnexpectedStaticTypeException(

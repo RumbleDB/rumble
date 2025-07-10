@@ -8,6 +8,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -37,11 +38,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -79,6 +76,16 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -355,6 +362,33 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitPostfixLookupExpression(PostfixLookupExpression expression, Node argument) {
+        PostfixLookupExpression result = new PostfixLookupExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (expression.getLookupExpression() != null)
+                    ? (Expression) visit(expression.getLookupExpression(), argument)
+                    : null,
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitUnaryLookupExpression(UnaryLookupExpression expression, Node argument) {
+        UnaryLookupExpression result = new UnaryLookupExpression(
+                (expression.getLookupExpression() != null)
+                    ? (Expression) visit(expression.getLookupExpression(), argument)
+                    : null,
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
     public Node visitFilterExpression(FilterExpression expression, Node argument) {
         FilterExpression result = new FilterExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
@@ -419,6 +453,142 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitDirElemConstructor(DirElemConstructorExpression expression, Node argument) {
+        List<Expression> content = expression.getContent()
+            .stream()
+            .map(child -> (Expression) visit(child, argument))
+            .collect(Collectors.toList());
+
+        List<Expression> attributes = expression.getAttributes()
+            .stream()
+            .map(child -> (Expression) visit(child, argument))
+            .collect(Collectors.toList());
+
+        DirElemConstructorExpression result = new DirElemConstructorExpression(
+                expression.getNodeName(),
+                content,
+                attributes,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedElementConstructor(ComputedElementConstructorExpression expression, Node argument) {
+        ComputedElementConstructorExpression result;
+        if (expression.hasStaticName()) {
+            result = new ComputedElementConstructorExpression(
+                    expression.getElementName(),
+                    expression.getContentExpression() != null
+                        ? (Expression) visit(expression.getContentExpression(), argument)
+                        : null,
+                    expression.getMetadata()
+            );
+        } else {
+            result = new ComputedElementConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    expression.getContentExpression() != null
+                        ? (Expression) visit(expression.getContentExpression(), argument)
+                        : null,
+                    expression.getMetadata()
+            );
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, Node argument) {
+        ComputedAttributeConstructorExpression result;
+        if (expression.hasStaticName()) {
+            result = new ComputedAttributeConstructorExpression(
+                    expression.getAttributeName(),
+                    (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata()
+            );
+        } else {
+            result = new ComputedAttributeConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata()
+            );
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression = contentExpression != null
+            ? (Expression) visit(contentExpression, argument)
+            : null;
+
+        DocumentNodeConstructorExpression result = new DocumentNodeConstructorExpression(
+                clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitTextNodeConstructor(TextNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression = contentExpression != null
+            ? (Expression) visit(contentExpression, argument)
+            : null;
+
+        TextNodeConstructorExpression result = new TextNodeConstructorExpression(
+                clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitTextNode(TextNodeExpression expression, Node argument) {
+        Expression result = new TextNodeExpression(expression.getContent(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitAttributeNode(AttributeNodeExpression expression, Node argument) {
+        List<Expression> value = expression.getValue()
+            .stream()
+            .map(child -> (Expression) visit(child, argument))
+            .collect(Collectors.toList());
+        AttributeNodeExpression result = new AttributeNodeExpression(
+                expression.getQName(),
+                value,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitAttributeNodeContent(AttributeNodeContentExpression expression, Node argument) {
+        Expression result = new AttributeNodeContentExpression(
+                expression.getContent(),
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
     public Node visitContextExpr(ContextItemExpression expression, Node argument) {
         Expression result = new ContextItemExpression(expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
@@ -448,7 +618,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getAnnotations(),
                 expression.getName(),
                 expression.getParams(),
-                expression.getReturnType(),
+                expression.getActualReturnType(),
                 (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
                 expression.getMetadata()
         );
@@ -626,6 +796,19 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
                 expression.getComparisonOperator(),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitNodeComparisonExpr(NodeComparisonExpression expression, Node argument) {
+        NodeComparisonExpression result = new NodeComparisonExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

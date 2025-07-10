@@ -28,29 +28,29 @@ public class InsertExpression extends Expression {
     }
 
     public boolean hasPositionExpression() {
-        return positionExpression != null;
+        return this.positionExpression != null;
     }
 
     public Expression getMainExpression() {
-        return mainExpression;
+        return this.mainExpression;
     }
 
     public Expression getToInsertExpression() {
-        return toInsertExpression;
+        return this.toInsertExpression;
     }
 
     public Expression getPositionExpression() {
-        if (positionExpression == null) {
+        if (this.positionExpression == null) {
             throw new OurBadException("No position expression present in Insert Expression");
         }
-        return positionExpression;
+        return this.positionExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         return this.positionExpression == null
-            ? Arrays.asList(mainExpression, toInsertExpression)
-            : Arrays.asList(mainExpression, toInsertExpression, positionExpression);
+            ? Arrays.asList(this.mainExpression, this.toInsertExpression)
+            : Arrays.asList(this.mainExpression, this.toInsertExpression, this.positionExpression);
     }
 
     @Override
@@ -62,12 +62,12 @@ public class InsertExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("insert json ");
-        toInsertExpression.serializeToJSONiq(sb, 0);
+        this.toInsertExpression.serializeToJSONiq(sb, 0);
         sb.append(" into ");
-        mainExpression.serializeToJSONiq(sb, 0);
+        this.mainExpression.serializeToJSONiq(sb, 0);
         if (this.hasPositionExpression()) {
             sb.append(" at position ");
-            positionExpression.serializeToJSONiq(sb, 0);
+            this.positionExpression.serializeToJSONiq(sb, 0);
         }
         sb.append("\n");
     }

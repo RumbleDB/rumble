@@ -69,7 +69,7 @@ public class DataFrameContext implements Serializable {
      */
     public DataFrameContext() {
         this.kryo = new Kryo();
-        this.kryo.setReferences(false);
+        this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
@@ -90,7 +90,7 @@ public class DataFrameContext implements Serializable {
         this.context = new DynamicContext(context);
 
         this.kryo = new Kryo();
-        this.kryo.setReferences(false);
+        this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
@@ -195,7 +195,7 @@ public class DataFrameContext implements Serializable {
         in.defaultReadObject();
 
         this.kryo = new Kryo();
-        this.kryo.setReferences(false);
+        this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();

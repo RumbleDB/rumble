@@ -32,7 +32,7 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         this.children.addAll(statements);
         this.children.add(exprIterator);
 
-        for (RuntimeIterator child : children) {
+        for (RuntimeIterator child : this.children) {
             if (child.isSequential()) {
                 this.isSequential = child.isSequential();
             }
@@ -154,6 +154,11 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         }
         RuntimeIterator exprIterator = this.children.get(childIndex);
         return exprIterator.getDataFrame(dynamicContext);
+    }
+
+    @Override
+    public boolean isUpdating() {
+        return this.children.get(this.children.size() - 1).isUpdating();
     }
 
     @Override

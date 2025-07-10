@@ -18,13 +18,16 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.List;
 import java.util.Set;
 
-public class DerivedAtomicItemType implements ItemType {
+public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
     private ItemType baseType;
+    private ItemType baseType;
     private ItemType primitiveType;
     private int typeTreeDepth;
+    private boolean isUserDefined;
+    private Name name;
     private boolean isUserDefined;
     private Name name;
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
@@ -32,6 +35,9 @@ public class DerivedAtomicItemType implements ItemType {
     private List<String> constraints;
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
+
+    DerivedAtomicItemType() {
+    }
 
     DerivedAtomicItemType() {
     }
@@ -86,6 +92,78 @@ public class DerivedAtomicItemType implements ItemType {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
         // to baseType
         this(name, baseType, null, facets, isUserDefined);
+    }
+
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        kryo.writeClassAndObject(output, this.baseType);
+        kryo.writeClassAndObject(output, this.primitiveType);
+        output.writeInt(this.typeTreeDepth);
+        output.writeBoolean(this.isUserDefined);
+        kryo.writeObjectOrNull(output, this.name, Name.class);
+        kryo.writeClassAndObject(output, this.minInclusive);
+        kryo.writeClassAndObject(output, this.maxInclusive);
+        kryo.writeClassAndObject(output, this.minExclusive);
+        kryo.writeClassAndObject(output, this.maxExclusive);
+        kryo.writeObjectOrNull(output, this.minLength, Integer.class);
+        kryo.writeObjectOrNull(output, this.length, Integer.class);
+        kryo.writeObjectOrNull(output, this.maxLength, Integer.class);
+        kryo.writeObjectOrNull(output, this.totalDigits, Integer.class);
+        kryo.writeObjectOrNull(output, this.fractionDigits, Integer.class);
+        if (this.constraints != null) {
+            output.writeInt(this.constraints.size());
+            for (String constraint : this.constraints) {
+                output.writeString(constraint);
+            }
+        } else {
+            output.writeInt(-1);
+        }
+        if (this.enumeration != null) {
+            output.writeInt(this.enumeration.size());
+            for (Item item : this.enumeration) {
+                kryo.writeClassAndObject(output, item);
+            }
+        } else {
+            output.writeInt(-1);
+        }
+        kryo.writeObjectOrNull(output, this.explicitTimezone, TimezoneFacet.class);
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.primitiveType = (ItemType) kryo.readClassAndObject(input);
+        this.typeTreeDepth = input.readInt();
+        this.isUserDefined = input.readBoolean();
+        this.name = kryo.readObjectOrNull(input, Name.class);
+        this.minInclusive = (Item) kryo.readClassAndObject(input);
+        this.maxInclusive = (Item) kryo.readClassAndObject(input);
+        this.minExclusive = (Item) kryo.readClassAndObject(input);
+        this.maxExclusive = (Item) kryo.readClassAndObject(input);
+        this.minLength = kryo.readObjectOrNull(input, Integer.class);
+        this.length = kryo.readObjectOrNull(input, Integer.class);
+        this.maxLength = kryo.readObjectOrNull(input, Integer.class);
+        this.totalDigits = kryo.readObjectOrNull(input, Integer.class);
+        this.fractionDigits = kryo.readObjectOrNull(input, Integer.class);
+        int constraintsSize = input.readInt();
+        if (constraintsSize >= 0) {
+            this.constraints = new java.util.ArrayList<>(constraintsSize);
+            for (int i = 0; i < constraintsSize; i++) {
+                this.constraints.add(input.readString());
+            }
+        } else {
+            this.constraints = null;
+        }
+        int enumerationSize = input.readInt();
+        if (enumerationSize >= 0) {
+            this.enumeration = new java.util.ArrayList<>(enumerationSize);
+            for (int i = 0; i < enumerationSize; i++) {
+                this.enumeration.add((Item) kryo.readClassAndObject(input));
+            }
+        } else {
+            this.enumeration = null;
+        }
+        this.explicitTimezone = kryo.readObjectOrNull(input, TimezoneFacet.class);
     }
 
     @Override
@@ -619,6 +697,23 @@ public class DerivedAtomicItemType implements ItemType {
                 "The base type of a user-defined atomic type must be an atomic type.",
                 ExceptionMetadata.EMPTY_METADATA
         );
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        if (this.equals(BuiltinTypesCatalogue.integerItem)) {
+            return "INT";
+        }
+        if (this.equals(BuiltinTypesCatalogue.intItem)) {
+            return "INT";
+        }
+        if (this.equals(BuiltinTypesCatalogue.longItem)) {
+            return "LONG";
+        }
+        if (this.equals(BuiltinTypesCatalogue.shortItem)) {
+            return "SHORT";
+        }
+        return this.primitiveType.getSparkSQLType();
     }
 
     @Override

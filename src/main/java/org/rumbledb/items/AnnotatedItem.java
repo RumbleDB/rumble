@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import java.time.OffsetDateTime;
+import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -19,7 +19,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -51,13 +50,16 @@ public class AnnotatedItem implements Item {
     @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
+            if (((Item) otherItem).isAtomic()) {
+                long c = ComparisonIterator.compareItems(
+                    this,
+                    (Item) otherItem,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                return c == 0;
+            }
+            return this.itemToAnnotate.equals(otherItem);
         }
         return false;
     }
@@ -65,14 +67,13 @@ public class AnnotatedItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.itemToAnnotate);
-        kryo.writeClassAndObject(output, this.type.getName());
+        kryo.writeClassAndObject(output, this.type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
-        Name name = (Name) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
-        this.type = new ItemTypeReference(name);
+        this.type = (ItemType) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
     }
 
     @Override
@@ -256,12 +257,12 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Period getDurationValue() {
-        return this.itemToAnnotate.getDurationValue();
+    public Period getPeriodValue() {
+        return this.itemToAnnotate.getPeriodValue();
     }
 
     @Override
-    public DateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.itemToAnnotate.getDateTimeValue();
     }
 
@@ -373,5 +374,80 @@ public class AnnotatedItem implements Item {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return this.itemToAnnotate.generateNativeQuery(context);
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.itemToAnnotate.getSparkSQLValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.itemToAnnotate.getSparkSQLValue(itemType);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        return this.itemToAnnotate.getSparkSQLType();
+    }
+
+    @Override
+    public void putItemAt(Item item, int i) {
+        this.itemToAnnotate.putItemAt(item, i);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> items, int i) {
+        this.itemToAnnotate.putItemsAt(items, i);
+    }
+
+    @Override
+    public void removeItemAt(int i) {
+        this.itemToAnnotate.removeItemAt(i);
+    }
+
+    @Override
+    public void removeItemByKey(String key) {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.itemToAnnotate.getMutabilityLevel();
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.itemToAnnotate.setMutabilityLevel(mutabilityLevel);
+    }
+
+    @Override
+    public long getTopLevelID() {
+        return this.itemToAnnotate.getTopLevelID();
+    }
+
+    @Override
+    public void setTopLevelID(long topLevelID) {
+        this.itemToAnnotate.setTopLevelID(topLevelID);
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.itemToAnnotate.getPathIn();
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.itemToAnnotate.setPathIn(pathIn);
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.itemToAnnotate.getTableLocation();
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.itemToAnnotate.setTableLocation(location);
     }
 }

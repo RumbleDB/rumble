@@ -37,6 +37,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.Serializer;
+import static org.jline.reader.LineReader.HISTORY_FILE;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.ConnectException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -151,6 +153,7 @@ public class RumbleJLineShell {
         this.lineReader = LineReaderBuilder.builder()
             .parser(parser)
             .terminal(terminal)
+            .variable(HISTORY_FILE, Paths.get(".rumble_shell_history"))
             // .completer(new MyCompleter())
             .highlighter(new DefaultHighlighter())
             // .parser(new JiqsJlineParser())

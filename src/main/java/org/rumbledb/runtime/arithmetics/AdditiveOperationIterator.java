@@ -22,11 +22,13 @@ package org.rumbledb.runtime.arithmetics;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.OffsetTime;
 import java.util.Arrays;
 
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import java.time.OffsetDateTime;
+import java.time.Period;
+import java.time.Duration;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -50,16 +52,9 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item left;
     private Item right;
-    private boolean isMinus;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
-
-    public AdditiveOperationIterator() {
-        super();
-        this.leftIterator = null;
-        this.rightIterator = null;
-        this.isMinus = false;
-    }
+    private final boolean isMinus;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
     public AdditiveOperationIterator(
             RuntimeIterator leftIterator,
@@ -126,8 +121,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     public static Item processItem(Item left, Item right, boolean isMinus) {
-        // The integer 0 is considered the default neutral element for addition in
-        // sum(), even though
+        // The integer 0 is considered the default neutral element for addition in sum(), even though
         // it is technically incompatible with durations. In the future, we should
         // make sure an error is thrown if an actual 0 appears in the sum with
         // durations.
@@ -152,7 +146,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         // General cases
         if (left.isDouble() && right.isNumeric()) {
             double l = left.getDoubleValue();
-            double r = 0;
+            double r;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
             } else {
@@ -167,7 +161,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         }
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
-            float r = 0;
+            float r;
             if (right.isFloat()) {
                 r = right.getFloatValue();
             } else {
@@ -191,94 +185,90 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             return processDecimal(l, r, isMinus);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processYearMonthDuration(l, r, isMinus);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Duration l = left.getDurationValue();
+            Duration r = right.getDurationValue();
             return processDayTimeDuration(l, r, isMinus);
         }
         if (left.isDate() && right.isYearMonthDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationDate(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDate() && right.isDayTimeDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            Duration r = right.getDurationValue();
             return processDateTimeDurationDate(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDate()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Period l = left.getPeriodValue();
+                OffsetDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDayTimeDuration() && right.isDate()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Duration l = left.getDurationValue();
+                OffsetDateTime r = right.getDateTimeValue();
                 return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isTime() && right.isDayTimeDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            OffsetTime l = left.getTimeValue();
+            Duration r = right.getDurationValue();
             return processDateTimeDurationTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
+                Duration l = left.getDurationValue();
+                OffsetTime r = right.getTimeValue();
                 return processDateTimeDurationTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDateTime() && right.isYearMonthDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            Period r = right.getPeriodValue();
             return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDateTime() && right.isDayTimeDuration()) {
-            DateTime l = left.getDateTimeValue();
-            Period r = right.getDurationValue();
+            OffsetDateTime l = left.getDateTimeValue();
+            Duration r = right.getDurationValue();
             return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDateTime()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone());
+                Period l = left.getPeriodValue();
+                OffsetDateTime r = right.getDateTimeValue();
+                return processDateTimeDurationDateTime(r, l, false, right.hasTimeZone());
             }
         }
         if (left.isDayTimeDuration() && right.isDateTime()) {
             if (!isMinus) {
-                Period l = left.getDurationValue();
-                DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone());
+                Duration l = left.getDurationValue();
+                OffsetDateTime r = right.getDateTimeValue();
+                return processDateTimeDurationDateTime(r, l, false, right.hasTimeZone());
             }
         }
         if (left.isDate() && right.isDate()) {
             if (isMinus) {
-                DateTime l = left.getDateTimeValue();
-                DateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r);
+
+                return processDateTimeDayTime(left, right);
             }
         }
         if (left.isTime() && right.isTime()) {
             if (isMinus) {
-                DateTime l = left.getDateTimeValue();
-                DateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r);
+
+                return processTimeDayTime(left, right);
             }
         }
         if (left.isDateTime() && right.isDateTime()) {
             if (isMinus) {
-                DateTime l = left.getDateTimeValue();
-                DateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r);
+                return processDateTimeDayTime(left, right);
             }
         }
         return null;
@@ -325,34 +315,34 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private static Item processYearMonthDuration(Period l, Period r, boolean isMinus) {
-        if (isMinus) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(l.minus(r));
-        } else {
-            return ItemFactory.getInstance().createYearMonthDurationItem(l.plus(r));
-        }
+        return ItemFactory.getInstance().createYearMonthDurationItem(isMinus ? l.minus(r) : l.plus(r));
     }
 
-    private static Item processDayTimeDuration(Period l, Period r, boolean isMinus) {
-        if (isMinus) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(l.minus(r));
-        } else {
-            return ItemFactory.getInstance().createDayTimeDurationItem(l.plus(r));
-        }
+    private static Item processDayTimeDuration(Duration l, Duration r, boolean isMinus) {
+        return ItemFactory.getInstance().createDayTimeDurationItem(isMinus ? l.minus(r) : l.plus(r));
     }
 
-    private static Item processDateTimeDayTime(DateTime l, DateTime r) {
-        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(r, l, PeriodType.dayTime()));
+    private static Item processDateTimeDayTime(Item left, Item right) {
+        OffsetDateTime l = left.getDateTimeValue();
+        OffsetDateTime r = right.getDateTimeValue();
+        return ItemFactory.getInstance().createDayTimeDurationItem(Duration.between(r, l));
     }
 
-    private static Item processDateTimeDurationDate(DateTime l, Period r, boolean isMinus, boolean timeZone) {
-        if (isMinus) {
-            return ItemFactory.getInstance().createDateItem(l.minus(r), timeZone);
-        } else {
-            return ItemFactory.getInstance().createDateItem(l.plus(r), timeZone);
-        }
+    private static Item processTimeDayTime(Item left, Item right) {
+        OffsetTime l = left.getTimeValue();
+        OffsetTime r = right.getTimeValue();
+        return ItemFactory.getInstance().createDayTimeDurationItem(Duration.between(r, l));
     }
 
-    private static Item processDateTimeDurationTime(DateTime l, Period r, boolean isMinus, boolean timeZone) {
+    private static Item processDateTimeDurationDate(OffsetDateTime l, Duration r, boolean isMinus, boolean timeZone) {
+        return ItemFactory.getInstance().createDateItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
+    }
+
+    private static Item processDateTimeDurationDate(OffsetDateTime l, Period r, boolean isMinus, boolean timeZone) {
+        return ItemFactory.getInstance().createDateItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
+    }
+
+    private static Item processDateTimeDurationTime(OffsetTime l, Duration r, boolean isMinus, boolean timeZone) {
         if (isMinus) {
             return ItemFactory.getInstance().createTimeItem(l.minus(r), timeZone);
         } else {
@@ -360,12 +350,17 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         }
     }
 
-    private static Item processDateTimeDurationDateTime(DateTime l, Period r, boolean isMinus, boolean timeZone) {
-        if (isMinus) {
-            return ItemFactory.getInstance().createDateTimeItem(l.minus(r), timeZone);
-        } else {
-            return ItemFactory.getInstance().createDateTimeItem(l.plus(r), timeZone);
-        }
+    private static Item processDateTimeDurationDateTime(
+            OffsetDateTime l,
+            Duration r,
+            boolean isMinus,
+            boolean timeZone
+    ) {
+        return ItemFactory.getInstance().createDateTimeItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
+    }
+
+    private static Item processDateTimeDurationDateTime(OffsetDateTime l, Period r, boolean isMinus, boolean timeZone) {
+        return ItemFactory.getInstance().createDateTimeItem(isMinus ? l.minus(r) : l.plus(r), timeZone);
     }
 
     @Override
@@ -384,74 +379,77 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if (!this.rightIterator.getStaticType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
+        ItemType resultType;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
-            this.leftIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)
-                && this.rightIterator.getStaticType().getItemType().isNumeric()
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
+                && rightResult.getResultingType().getItemType().isNumeric()
         ) {
             if (!this.rightIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
         } else if (
-            this.rightIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)
-                && this.leftIterator.getStaticType().getItemType().isNumeric()
+            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
+                && leftResult.getResultingType().getItemType().isNumeric()
         ) {
             if (!this.leftIterator.getStaticType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
         } else if (
-            this.leftIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)
-                && this.rightIterator.getStaticType().getItemType().isNumeric()
+            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
+                && rightResult.getResultingType().getItemType().isNumeric()
         ) {
             if (!this.rightIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
         } else if (
-            this.rightIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)
-                && this.leftIterator.getStaticType().getItemType().isNumeric()
+            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
+                && leftResult.getResultingType().getItemType().isNumeric()
         ) {
             if (!this.leftIterator.getStaticType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
         } else if (
-            this.leftIterator.getStaticType().isSubtypeOf(SequenceType.INTEGER_QM)
-                && this.rightIterator.getStaticType().isSubtypeOf(SequenceType.INTEGER_QM)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
         ) {
         } else if (
-            this.leftIterator.getStaticType().isSubtypeOf(SequenceType.DECIMAL_QM)
-                && this.rightIterator.getStaticType().isSubtypeOf(SequenceType.DECIMAL_QM)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
         ) {
         } else {
             return NativeClauseContext.NoNativeQuery;
         }
 
+        SequenceType.Arity resultingArity = leftResult.getResultingType()
+            .getArity()
+            .multiplyWith(rightResult.getResultingType().getArity());
+
+        if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
+            throw new UnexpectedTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
         if (this.isMinus) {
             String resultingQuery = "( " + leftQuery + " - " + rightQuery + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery);
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    resultingQuery,
+                    new SequenceType(resultType, resultingArity)
+            );
         } else {
             String resultingQuery = "( " + leftQuery + " + " + rightQuery + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery);
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    resultingQuery,
+                    new SequenceType(resultType, resultingArity)
+            );
         }
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        super.write(kryo, output);
-        kryo.writeClassAndObject(output, this.left);
-        kryo.writeClassAndObject(output, this.right);
-        kryo.writeObject(output, this.isMinus);
-        kryo.writeClassAndObject(output, this.leftIterator);
-        kryo.writeClassAndObject(output, this.rightIterator);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        super.read(kryo, input);
-        this.left = (Item) kryo.readClassAndObject(input);
-        this.right = (Item) kryo.readClassAndObject(input);
-        this.isMinus = kryo.readObject(input, Boolean.class);
-        this.leftIterator = (RuntimeIterator) kryo.readClassAndObject(input);
-        this.rightIterator = (RuntimeIterator) kryo.readClassAndObject(input);
     }
 }

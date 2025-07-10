@@ -26,6 +26,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -43,6 +46,12 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (this.children.get(0).isDataFrame()) {
+            return ItemFactory.getInstance()
+                .createBooleanItem(
+                    !this.children.get(0).getDataFrame(dynamicContext).take(1).isEmpty()
+                );
+        }
         if (this.children.get(0).isRDDOrDataFrame()) {
             List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
@@ -52,5 +61,31 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         return ItemFactory.getInstance().createBooleanItem(true);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childQuery != NativeClauseContext.NoNativeQuery) {
+            if (
+                childQuery.getResultingType().getItemType().isArrayItemType()
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())
+            ) {
+                String resultingQuery = String.format("size(%s) > 0", childQuery.getResultingQuery());
+                return new NativeClauseContext(
+                        childQuery,
+                        resultingQuery,
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                );
+            } else {
+                String resultingQuery = String.format("not %s is null", childQuery.getResultingQuery());
+                return new NativeClauseContext(
+                        childQuery,
+                        resultingQuery,
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+                );
+            }
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }
