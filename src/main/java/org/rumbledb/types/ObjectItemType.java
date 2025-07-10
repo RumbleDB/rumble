@@ -301,42 +301,50 @@ public class ObjectItemType implements ItemType {
             return this.name.toString();
         } else {
             StringBuilder sb = new StringBuilder();
-            sb.append("{");
-            if (this.name != null)
-                sb.append(this.name == null ? "#anonymous" : this.name.toString());
-            sb.append(" (object item)\n");
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"object\", ");
 
-            sb.append("base type: ");
+            sb.append("\"baseType\": \"");
             sb.append(this.baseType.toString());
-            sb.append("\n");
+            sb.append("\", ");
 
-            sb.append("tree depth: ");
+            sb.append("\"treeDepth\": ");
             sb.append(this.typeTreeDepth);
-            sb.append("\n");
+            sb.append(", ");
 
-            sb.append("closed: ");
-            sb.append(this.isClosed ? "yes" : "no");
-            sb.append("\n");
+            sb.append("\"closed\": ");
+            sb.append(this.isClosed ? "true" : "false");
+            sb.append(", ");
 
             if (isResolved()) {
                 List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
                 if (fields.size() > 0) {
-                    sb.append("content facet:\n");
-                    // String comma = "";
+                    sb.append("\"content\": [ ");
+                    String comma = "";
                     for (FieldDescriptor field : fields) {
-                        sb.append("  ");
+                        sb.append(comma);
+                        comma = ", ";
+                        sb.append("{ \"name\": \"");
                         sb.append(field.getName());
+                        sb.append("\", ");
                         if (field.isRequired()) {
-                            sb.append(" (required)");
+                            sb.append("\"required\": true, ");
                         }
-                        sb.append(" : ");
+                        sb.append("\"type\": \"");
                         sb.append(field.getType().toString());
-                        sb.append("\n");
+                        sb.append("\" }");
                     }
+                    sb.append(" ]");
                 }
             } else {
-                sb.append("(content not resolved yet)");
+                sb.append(" (content not resolved yet) ");
             }
+            sb.append(" }");
             return sb.toString();
         }
     }
