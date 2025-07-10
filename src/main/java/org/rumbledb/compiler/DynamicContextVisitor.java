@@ -20,13 +20,6 @@
 
 package org.rumbledb.compiler;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -34,21 +27,36 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -81,9 +89,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitFunctionDeclaration(FunctionDeclaration declaration, DynamicContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
-            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
+            if (!paramEntry.getValue().isResolved()) {
+                paramEntry.getValue().resolve(argument, expression.getMetadata());
+            }
+        }
+        if (!expression.getReturnType().isResolved()) {
+            expression.getReturnType().resolve(argument, expression.getMetadata());
         }
         RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);
@@ -97,14 +109,30 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             // named (static function declaration)
             argument.getNamedFunctions().addUserDefinedFunction(function, expression.getMetadata());
         }
-
         return defaultAction(expression, argument);
     }
+
+    // @Override
+    // public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
+    //
+    // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+    // Expression child = copyDecl.getSourceExpression();
+    // this.visit(child, argument);
+    // RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
+    // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
+    // }
+    //
+    // this.visit(expression.getModifyExpression(), argument);
+    //
+    // this.visit(expression.getReturnExpression(), argument);
+    //
+    // return argument;
+    // }
 
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
-
+        argument.addGlobalVariable(name);
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
@@ -187,7 +215,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             Item item = null;
             if (
                 !sequenceType.equals(SequenceType.EMPTY_SEQUENCE)
-                    && sequenceType.getItemType().equals(ItemType.anyURIItem)
+                    && sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
             ) {
                 URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     value,
@@ -197,6 +225,26 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
                 item = ItemFactory.getInstance().createStringItem(value);
+                ItemType itemType = variableDeclaration.getSequenceType().getItemType();
+                if (
+                    !InstanceOfIterator.doesItemTypeMatchItem(
+                        itemType,
+                        item
+                    )
+                ) {
+                    Item castItem = CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata());
+                    if (castItem == null) {
+                        throw new UnexpectedTypeException(
+                                "External variable value ("
+                                    + item.serialize()
+                                    + ") does not match the expected type ("
+                                    + variableDeclaration.getSequenceType()
+                                    + ").",
+                                variableDeclaration.getMetadata()
+                        );
+                    }
+                    item = castItem;
+                }
             }
             items.add(item);
             if (
@@ -208,7 +256,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             ) {
                 throw new UnexpectedTypeException(
                         "External variable value ("
-                            + value
+                            + item.serialize()
                             + ") does not match the expected type ("
                             + variableDeclaration.getSequenceType()
                             + ").",
@@ -222,6 +270,52 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 );
             return argument;
         }
+        if (name.equals(Name.CONTEXT_ITEM) && this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)) {
+            StringBuilder stringBuilder = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            String l;
+            try {
+                while ((l = reader.readLine()) != null) {
+                    stringBuilder.append(l);
+                }
+                value = stringBuilder.toString();
+                String inputFormat = this.configuration.getInputFormat(Name.CONTEXT_ITEM);
+                switch (inputFormat) {
+                    case "json":
+                        items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+                        break;
+                    case "text":
+                        items.add(ItemFactory.getInstance().createStringItem(value));
+                        break;
+                    default:
+                        throw new AbsentPartOfDynamicContextException(
+                                "Unrecognized input format: "
+                                    + this.configuration.getInputFormat(Name.CONTEXT_ITEM)
+                                    + ". Expecting text or json.",
+                                variableDeclaration.getMetadata()
+                        );
+                }
+                argument.getVariableValues()
+                    .addVariableValue(
+                        name,
+                        items
+                    );
+                return argument;
+            } catch (IOException e) {
+                throw new AbsentPartOfDynamicContextException(
+                        "Could not read context item from standard input!",
+                        variableDeclaration.getMetadata()
+                );
+            } catch (ParsingException ex) {
+                RuntimeException e = new ParsingException(
+                        "The text read from the standard input is not a well-formed JSON value!",
+                        variableDeclaration.getMetadata()
+                );
+                e.initCause(ex);
+                throw e;
+            }
+        }
+
 
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
@@ -238,6 +332,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     }
 
     @Override
+    public DynamicContext visitTypeDeclaration(TypeDeclaration declaration, DynamicContext argument) {
+        ItemType type = declaration.getDefinition();
+        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        return argument;
+    }
+
+    @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
             DynamicContext newContext = new DynamicContext(this.configuration);
@@ -247,9 +348,21 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
         argument.getVariableValues()
             .importModuleValues(
-                this.importedModuleContexts.get(module.getNamespace()).getVariableValues(),
-                module.getNamespace()
+                this.importedModuleContexts.get(module.getNamespace()).getVariableValues()
+            );
+        argument.getInScopeSchemaTypes()
+            .importModuleTypes(
+                this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes()
             );
         return argument;
+    }
+
+    @Override
+    public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
+        DynamicContext generatedContext = visitDescendants(prolog, argument);
+        for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
+            itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
+        }
+        return generatedContext;
     }
 }

@@ -21,45 +21,34 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class UpperCaseFunctionIterator extends LocalFunctionCallIterator {
+public class UpperCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public UpperCaseFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item stringItem = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
 
-            if (stringItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
-            } else {
-                String input = stringItem.getStringValue();
-                return ItemFactory.getInstance().createStringItem(input.toUpperCase());
-            }
-
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
-                    getMetadata()
-            );
+        if (stringItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
+        } else {
+            String input = stringItem.getStringValue();
+            return ItemFactory.getInstance().createStringItem(input.toUpperCase());
+        }
     }
 }

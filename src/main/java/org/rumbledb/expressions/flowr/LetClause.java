@@ -20,6 +20,9 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -31,14 +34,14 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Collections;
-import java.util.List;
-
 public class LetClause extends Clause {
 
     private final Name variableName;
     protected SequenceType sequenceType;
+    protected SequenceType staticType;
     protected Expression expression;
+
+    private boolean isReferenced;
 
     // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
@@ -56,6 +59,7 @@ public class LetClause extends Clause {
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
+        this.isReferenced = true;
     }
 
     public Name getVariableName() {
@@ -63,26 +67,15 @@ public class LetClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.ITEM_STAR : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
     public Expression getExpression() {
         return this.expression;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.previousClause == null)
-                ? ExecutionMode.LOCAL
-                : this.previousClause.getHighestExecutionMode(visitorConfig);
-
-        // if let clause is local, defined variables are stored according to the execution mode of the expression
-        if (this.highestExecutionMode == ExecutionMode.LOCAL) {
-            this.variableHighestStorageMode = this.expression.getHighestExecutionMode(visitorConfig);
-        } else {
-            this.variableHighestStorageMode = ExecutionMode.LOCAL;
-        }
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
@@ -95,9 +88,20 @@ public class LetClause extends Clause {
         return this.variableHighestStorageMode;
     }
 
+    public void setVariableHighestExecutionMode(ExecutionMode newMode) {
+        this.variableHighestStorageMode = newMode;
+    }
+
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.expression);
+        List<Node> result = new ArrayList<>();
+        if (this.expression != null) {
+            result.add(this.expression);
+        }
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
+        }
+        return result;
     }
 
     @Override
@@ -110,15 +114,50 @@ public class LetClause extends Clause {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.variableName) + ", " + this.sequenceType.toString() + ") ");
+        buffer.append(
+            " ("
+                + ("$" + this.variableName)
+                + ", "
+                + ((this.getSequenceType() != null) ? this.getSequenceType().toString() : "(unset)")
+                + ((this.getSequenceType() != null)
+                    ? (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                    : "")
+                + ") "
+        );
         buffer.append(")");
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
+        buffer.append(this.isReferenced ? " | referenced" : " | not referenced");
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
-        }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("let $" + this.variableName.toString());
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        sb.append(" := (");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+    }
+
+    public SequenceType getStaticType() {
+        return this.staticType;
+    }
+
+    public void setStaticType(SequenceType staticType) {
+        this.staticType = staticType;
+    }
+
+    public boolean getReferenced() {
+        return this.isReferenced;
+    }
+
+    public void setReferenced(boolean isReferenced) {
+        this.isReferenced = isReferenced;
     }
 }

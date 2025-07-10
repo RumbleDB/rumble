@@ -24,13 +24,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import java.math.BigDecimal;
 
-public class BooleanItem extends AtomicItem {
+public class BooleanItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -55,6 +52,11 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return this.getBooleanValue();
     }
@@ -62,43 +64,6 @@ public class BooleanItem extends AtomicItem {
     @Override
     public boolean isBoolean() {
         return true;
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.booleanItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(this.hashCode());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntItem(this.hashCode());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
-            &&
-            !itemType.equals(ItemType.nullItem);
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.getValue());
     }
 
     @Override
@@ -127,31 +92,29 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public int compareTo(Item other) {
-        return other.isNull() ? 1 : Boolean.compare(this.getBooleanValue(), other.getBooleanValue());
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isBoolean() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args for boolean comparison "
-                        + this.serialize()
-                        +
-                        ", "
-                        + other.serialize(),
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return ItemType.booleanItem;
+        return BuiltinTypesCatalogue.booleanItem;
     }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "BOOLEAN";
+    }
+
 }

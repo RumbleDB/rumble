@@ -23,99 +23,112 @@ package org.rumbledb.runtime.control;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
-    private Item nextResult = null;
 
     public IfRuntimeIterator(
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            boolean isUpdating,
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.add(condition);
         this.children.add(branch);
         this.children.add(elseBranch);
+        this.isUpdating = isUpdating;
+    }
+
+    public IfRuntimeIterator(
+            RuntimeIterator condition,
+            RuntimeIterator branch,
+            RuntimeIterator elseBranch,
+            RuntimeStaticContext staticContext
+    ) {
+        this(condition, branch, elseBranch, false, staticContext);
     }
 
     @Override
     public void resetLocal() {
-        this.selectedIterator = null;
-        setNextResult();
+        this.selectedIterator.close();
+        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.selectedIterator.hasNext();
     }
 
     @Override
     public void openLocal() {
-        this.selectedIterator = null;
-        setNextResult();
+        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.selectedIterator.hasNext();
+    }
+
+    @Override
+    public void closeLocal() {
+        this.selectedIterator.close();
     }
 
     @Override
     public Item nextLocal() {
-        if (this.nextResult == null) {
+        if (!this.hasNext) {
             throw new IteratorFlowException("No next item.");
         }
-        Item result = this.nextResult;
-        setNextResult();
+        Item result = this.selectedIterator.next();
+        this.hasNext = this.selectedIterator.hasNext();
         return result;
     }
 
     @Override
     public boolean hasNextLocal() {
-        return this.nextResult != null;
+        return this.hasNext;
     }
 
-    public void setNextResult() {
-        if (this.selectedIterator != null && this.nextResult == null) {
-            throw new IteratorFlowException("Branch iterator has been fully consumed already.");
-        }
-        if (this.selectedIterator == null) {
-            RuntimeIterator condition = this.children.get(0);
-            condition.open(this.currentDynamicContextForLocalExecution);
-            boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
-            condition.close();
-            if (effectiveBooleanValue) {
-                this.selectedIterator = this.children.get(1);
-            } else {
-                this.selectedIterator = this.children.get(2);
-            }
-            this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.selectedIterator.hasNext()) {
-            this.nextResult = this.selectedIterator.next();
+    public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
+        RuntimeIterator condition = this.children.get(0);
+        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
+        if (effectiveBooleanValue) {
+            return this.children.get(1);
         } else {
-            this.nextResult = null;
-            this.selectedIterator.close();
+            return this.children.get(2);
         }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.selectedIterator.close();
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.children.get(0);
-        condition.open(this.currentDynamicContextForLocalExecution);
-        boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
-        condition.close();
+        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+        return iterator.getRDD(dynamicContext);
+    }
 
-        if (effectiveBooleanValue) {
-            return this.children.get(1).getRDD(dynamicContext);
-        } else {
-            return this.children.get(2).getRDD(dynamicContext);
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+
+        return iterator.getDataFrame(dynamicContext);
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
         }
+
+        RuntimeIterator iterator = selectApplicableIterator(context);
+        return iterator.getPendingUpdateList(context);
     }
 }

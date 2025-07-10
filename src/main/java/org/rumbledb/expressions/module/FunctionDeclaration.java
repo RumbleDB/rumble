@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.module;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -35,6 +34,7 @@ import java.util.List;
 public class FunctionDeclaration extends Node {
 
     private final InlineFunctionExpression functionExpression;
+    private boolean recursive = false;
 
     public FunctionDeclaration(
             InlineFunctionExpression functionExpression,
@@ -62,11 +62,6 @@ public class FunctionDeclaration extends Node {
         return visitor.visitFunctionDeclaration(this, argument);
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.functionExpression.getBody().getHighestExecutionMode(visitorConfig);
-    }
-
     /**
      * Prints the node tree to a string buffer.
      *
@@ -78,11 +73,26 @@ public class FunctionDeclaration extends Node {
             buffer.append("  ");
         }
         buffer.append("FunctionDeclaration " + this.getFunctionIdentifier());
+        buffer.append(" | " + (this.recursive ? "recursive" : "non-recursive"));
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.functionExpression.serializeToJSONiq(sb, 0);
+    }
+
+    public boolean isRecursive() {
+        return this.recursive;
+    }
+
+    public void setRecursive(boolean recursive) {
+        this.recursive = recursive;
     }
 }
 

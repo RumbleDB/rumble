@@ -22,12 +22,11 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.ItemType;
@@ -38,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class InstanceOfIterator extends LocalRuntimeIterator {
+public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
@@ -47,57 +46,65 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
     public InstanceOfIterator(
             RuntimeIterator child,
             SequenceType sequenceType,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            if (!this.child.isRDD()) {
-                List<Item> items = new ArrayList<>();
-                this.child.open(this.currentDynamicContextForLocalExecution);
-
-                while (this.child.hasNext()) {
-                    items.add(this.child.next());
-                }
-                this.child.close();
-                this.hasNext = false;
-
-                if (this.sequenceType.isEmptySequence()) {
-                    return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
-                }
-
-                if (isInvalidArity(items.size())) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-
-                ItemType itemType = this.sequenceType.getItemType();
-                for (Item item : items) {
-                    if (!doesItemTypeMatchItem(itemType, item)) {
-                        return ItemFactory.getInstance().createBooleanItem(false);
-                    }
-                }
-
-                return ItemFactory.getInstance().createBooleanItem(true);
-            } else {
-                JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
-                this.hasNext = false;
-
-                if (isInvalidArity(childRDD.take(2).size())) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-
-                JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
-                return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
-            }
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(dynamicContext, getMetadata());
         }
+        if (!this.child.isRDDOrDataFrame()) {
+            List<Item> items = new ArrayList<>();
+            this.child.open(dynamicContext);
+
+            while (this.child.hasNext()) {
+                items.add(this.child.next());
+            }
+            this.child.close();
+
+            if (this.sequenceType.isEmptySequence()) {
+                return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
+            }
+
+            if (isInvalidArity(items.size())) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+
+            ItemType itemType = this.sequenceType.getItemType();
+            for (Item item : items) {
+                if (item != null && !item.getDynamicType().isResolved()) {
+                    item.getDynamicType().resolve(dynamicContext, getMetadata());
+                }
+                if (!doesItemTypeMatchItem(itemType, item)) {
+                    return ItemFactory.getInstance().createBooleanItem(false);
+                }
+            }
+
+            return ItemFactory.getInstance().createBooleanItem(true);
+        }
+        if (this.child.isDataFrame()) {
+            JSoundDataFrame childDF = this.child.getDataFrame(dynamicContext);
+            if (isInvalidArity(childDF.take(2).size())) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+
+            ItemType itemType = childDF.getItemType();
+            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
+        }
+        JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
+
+        if (isInvalidArity(childRDD.take(2).size())) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+
+        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
     private boolean isInvalidArity(long numOfItems) {
@@ -124,69 +131,6 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
-        if (itemType.equals(ItemType.item)) {
-            return true;
-        }
-        if (itemType.equals(ItemType.objectItem)) {
-            return itemToMatch.isObject();
-        }
-        if (itemType.equals(ItemType.atomicItem)) {
-            return itemToMatch.isAtomic();
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return itemToMatch.isString();
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return itemToMatch.isInteger();
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return itemToMatch.isDecimal();
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return itemToMatch.isDouble();
-        }
-        if (itemType.equals(ItemType.booleanItem)) {
-            return itemToMatch.isBoolean();
-        }
-        if (itemType.equals(ItemType.nullItem)) {
-            return itemToMatch.isNull();
-        }
-        if (itemType.equals(ItemType.arrayItem)) {
-            return itemToMatch.isArray();
-        }
-        if (itemType.equals(ItemType.JSONItem)) {
-            return itemToMatch.isObject() || itemToMatch.isArray();
-        }
-        if (itemType.equals(ItemType.durationItem)) {
-            return itemToMatch.isDuration();
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return itemToMatch.isYearMonthDuration();
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return itemToMatch.isDayTimeDuration();
-        }
-        if (itemType.equals(ItemType.dateTimeItem)) {
-            return itemToMatch.isDateTime();
-        }
-        if (itemType.equals(ItemType.dateItem)) {
-            return itemToMatch.isDate();
-        }
-        if (itemType.equals(ItemType.timeItem)) {
-            return itemToMatch.isTime();
-        }
-        if (itemType.equals(ItemType.anyURIItem)) {
-            return itemToMatch.isAnyURI();
-        }
-        if (itemType.equals(ItemType.hexBinaryItem)) {
-            return itemToMatch.isHexBinary();
-        }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
-            return itemToMatch.isBase64Binary();
-        }
-        if (itemType.equals(ItemType.functionItem)) {
-            return itemToMatch.isFunction();
-        }
-        throw new OurBadException("Type unrecognized: " + itemType);
+        return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
 }

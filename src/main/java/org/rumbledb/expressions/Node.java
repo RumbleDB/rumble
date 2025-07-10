@@ -49,14 +49,10 @@ public abstract class Node {
      * Initializes the highest execution mode of this node, which determines
      * whether evaluation will be done locally, with RDDs or with DataFrames.
      *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     * 
-     * @param visitorConfig the configuration of the visitor.
+     * This method is used during the static analysis.
      */
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
+    public void setHighestExecutionMode(ExecutionMode newMode) {
+        this.highestExecutionMode = newMode;
     }
 
     /**
@@ -82,6 +78,20 @@ public abstract class Node {
         ) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
+        return this.highestExecutionMode;
+    }
+
+    /**
+     * Gets the highest execution mode of this node, which determines
+     * whether evaluation will be done locally, with RDDs or with DataFrames.
+     *
+     * This method is used during the static analysis. It is meant to be
+     * overridden by subclasses that support higher execution modes. By
+     * default, the highest execution mode is assumed to be local.
+     *
+     * @return the highest execution mode.
+     */
+    public ExecutionMode getHighestExecutionMode() {
         return this.highestExecutionMode;
     }
 
@@ -176,4 +186,25 @@ public abstract class Node {
         return sb.toString();
     }
 
+    public abstract void serializeToJSONiq(StringBuffer sb, int indent);
+
+    protected void indentIt(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+    }
+
+    /**
+     * Tells whether the expression is context dependent.
+     * 
+     * @return true if it is context dependent, false otherwise.
+     */
+    public boolean isContextDependent() {
+        for (Node node : this.getChildren()) {
+            if (node.isContextDependent()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

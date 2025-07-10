@@ -34,7 +34,7 @@ public class RumbleException extends RuntimeException {
     private final String errorMessage;
     private ExceptionMetadata metadata;
 
-    public RumbleException(String message) {
+    RumbleException(String message) {
         super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
@@ -59,7 +59,7 @@ public class RumbleException extends RuntimeException {
     }
 
 
-    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+    RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(formatMessage(errorCode, metadata, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
@@ -84,14 +84,35 @@ public class RumbleException extends RuntimeException {
     }
 
     private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
-        return "There was an error.\n\nCode: ["
+        if (metadata.getTokenLineNumber() == 0) {
+            return "There was an error."
+                + "\nCode: ["
+                + errorCode
+                + "]\n"
+                + "Message: "
+                + message
+                + "\n"
+                + "Metadata: "
+                + ((metadata != null) ? metadata.toString() : null)
+                + "\n"
+                + "This code can also be looked up in the documentation and specifications for more information.\n";
+        }
+        return "There was an error on line "
+            + metadata.getTokenLineNumber()
+            + " in "
+            + metadata.getLocation()
+            + ":\n\n"
+            + metadata.getLineInContext()
+            + "\nCode: ["
             + errorCode
-            + "] (this code can be looked up in the documentation and specifications).\n\nLocation information: "
-            + (metadata != null
-                ? metadata.toString()
-                : "")
-            + "\n\n"
-            + message;
+            + "]\n"
+            + "Message: "
+            + message
+            + "\n"
+            + "Metadata: "
+            + ((metadata != null) ? metadata.toString() : null)
+            + "\n"
+            + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
     public String getErrorCode() {
@@ -100,6 +121,10 @@ public class RumbleException extends RuntimeException {
 
     public ExceptionMetadata getMetadata() {
         return this.metadata;
+    }
+
+    public void setMetadata(ExceptionMetadata metadata) {
+        this.metadata = metadata;
     }
 
     public String getJSONiqErrorMessage() {

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javassist.CannotCompileException;
 import org.apache.spark.SparkException;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
@@ -153,7 +155,7 @@ public class RumbleHttpHandler implements HttpHandler {
             );
         } else {
             if (results != null) {
-                Item values = ItemFactory.getInstance().createArrayItem(results);
+                Item values = ItemFactory.getInstance().createArrayItem(results, false);
                 output.putItemByKey("values", values);
             }
         }
@@ -204,16 +206,58 @@ public class RumbleHttpHandler implements HttpHandler {
                     if (sparkExceptionCause != null) {
                         return handleException(sparkExceptionCause);
                     }
-                    return handleException(new RumbleException(ex.getMessage()));
+                    return handleException(
+                        new OurBadException(
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                    + ex.getMessage()
+                        )
+                    );
                 } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                     return assembleErrorReponse(
                         ex.getMessage(),
                         ((RumbleException) ex).getErrorCode(),
                         ex.getStackTrace()
                     );
+                } else if (ex instanceof OutOfMemoryError) {
+                    return assembleErrorReponse(
+                        "⚠️  Java went out of memory."
+                            + " If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
                 } else if (ex instanceof IllegalArgumentException) {
                     return assembleErrorReponse(
-                        "It seems that you are not using Java 8. Spark only works with Java 8. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.",
+                        "It seems that you are not using Java 11. Spark only works with Java 11. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 11 installed, we recommend installing AdoptOpenJDK 11.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
+                } else if (ex instanceof CannotCompileException) {
+                    return assembleErrorReponse(
+                        "⚠️  There was a CannotCompileException."
+                            +
+                            " There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
+                            +
+                            " We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
+                            +
+                            " For more debug info, please try again using --show-error-info yes in your command line.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
+                } else if (ex instanceof ConnectException) {
+                    return assembleErrorReponse(
+                        "There was a problem with the connection to the cluster.",
+                        ErrorCode.ClusterConnectionErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
+                } else if (ex instanceof NullPointerException) {
+                    return assembleErrorReponse(
+                        "There was a null pointer exception."
+                            +
+                            " We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query."
+                            +
+                            " Link: https://github.com/RumbleDB/rumble/issues."
+                            +
+                            " For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.",
                         ErrorCode.OurBadErrorCode.toString(),
                         ex.getStackTrace()
                     );

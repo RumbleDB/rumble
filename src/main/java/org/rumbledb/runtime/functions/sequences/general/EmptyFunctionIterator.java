@@ -21,46 +21,56 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
-public class EmptyFunctionIterator extends LocalFunctionCallIterator {
+public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
 
     public EmptyFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
-        this.sequenceIterator = this.children.get(0);
+        super(parameters, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.hasNext = false;
-            if (this.sequenceIterator.isRDD()) {
-                List<Item> i = this.sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
-                return ItemFactory.getInstance().createBooleanItem(i.isEmpty());
-            }
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-            if (this.sequenceIterator.hasNext()) {
-                this.sequenceIterator.close();
-                return ItemFactory.getInstance().createBooleanItem(false);
-            } else {
-                return ItemFactory.getInstance().createBooleanItem(true);
-            }
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (this.children.get(0).isRDDOrDataFrame()) {
+            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
+            return ItemFactory.getInstance().createBooleanItem(i.isEmpty());
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "empty function", getMetadata());
+        Item first = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (first == null) {
+            return ItemFactory.getInstance().createBooleanItem(true);
+        }
+        return ItemFactory.getInstance().createBooleanItem(false);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultString = String.format(
+            "size (%s) = 0",
+            childContext.getResultingQuery()
+        );
+        return new NativeClauseContext(
+                childContext,
+                resultString,
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+        );
     }
 }

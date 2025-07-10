@@ -20,25 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionsNonSerializableException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,7 +30,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionItem extends ItemImpl {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.FunctionAtomizationException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
+import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
+
+public class FunctionItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
@@ -61,7 +67,7 @@ public class FunctionItem extends ItemImpl {
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<Name, Dataset<Row>> dataFrameVariablesInClosure;
+    private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -92,7 +98,7 @@ public class FunctionItem extends ItemImpl {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, Dataset<Row>> DFVariablesInClosure
+            Map<Name, JSoundDataFrame> DFVariablesInClosure
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -109,7 +115,8 @@ public class FunctionItem extends ItemImpl {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            RuntimeIterator bodyIterator,
+            boolean isUpdating
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -120,7 +127,7 @@ public class FunctionItem extends ItemImpl {
 
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
-        this.signature = new FunctionSignature(parameters, returnType);
+        this.signature = new FunctionSignature(parameters, returnType, isUpdating);
         this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
@@ -143,7 +150,7 @@ public class FunctionItem extends ItemImpl {
         return this.signature;
     }
 
-    public DynamicContext getDynamicModuleContext() {
+    public DynamicContext getModuleDynamicContext() {
         return this.dynamicModuleContext;
     }
 
@@ -159,7 +166,7 @@ public class FunctionItem extends ItemImpl {
         return this.RDDVariablesInClosure;
     }
 
-    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
@@ -180,18 +187,8 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.functionItem) || type.equals(ItemType.item);
-    }
-
-    @Override
     public boolean isFunction() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        throw new FunctionsNonSerializableException();
     }
 
     @Override
@@ -288,7 +285,7 @@ public class FunctionItem extends ItemImpl {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.functionItem;
+        return BuiltinTypesCatalogue.anyFunctionItem;
     }
 
     public FunctionItem deepCopy() {
@@ -332,12 +329,38 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a function!");
+    public boolean isEstimator() {
+        return this.bodyIterator instanceof ApplyEstimatorRuntimeIterator;
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
+    public Estimator<?> getEstimator() {
+        if (!isEstimator()) {
+            throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyEstimatorRuntimeIterator) this.bodyIterator).getEstimator();
+    }
+
+    @Override
+    public boolean isTransformer() {
+        return this.bodyIterator instanceof ApplyTransformerRuntimeIterator;
+    }
+
+    @Override
+    public Transformer getTransformer() {
+        if (!isTransformer()) {
+            throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyTransformerRuntimeIterator) this.bodyIterator).getTransformer();
+    }
+
+
+    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
+        this.dynamicModuleContext = dynamicModuleContext;
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        throw new FunctionAtomizationException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
     }
 }

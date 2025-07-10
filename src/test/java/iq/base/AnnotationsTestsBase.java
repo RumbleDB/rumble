@@ -20,6 +20,7 @@
 
 package iq.base;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
@@ -51,8 +52,12 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] { "--print-iterator-tree", "yes", "--variable:externalUnparsedString", "unparsed string" }
+    protected static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration(
+            new String[] {
+                "--print-iterator-tree",
+                "yes",
+                "--variable:externalUnparsedString",
+                "unparsed string" }
     ).setExternalVariableValue(
         Name.createVariableInNoNamespace("externalStringItem"),
         Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
@@ -70,6 +75,9 @@ public class AnnotationsTestsBase {
             )
         );
 
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return defaultConfiguration;
+    }
 
     public void initializeTests(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));
@@ -79,7 +87,7 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected void testAnnotations(String path)
+    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
             throws IOException {
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
@@ -91,10 +99,10 @@ public class AnnotationsTestsBase {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                AnnotationsTestsBase.configuration,
+                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
-            Rumble rumble = new Rumble(AnnotationsTestsBase.configuration);
+            Rumble rumble = new Rumble(configuration);
             sequence = rumble.runQuery(uri);
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
@@ -175,7 +183,7 @@ public class AnnotationsTestsBase {
                 checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
-                exception.printStackTrace();
+                errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {

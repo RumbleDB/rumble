@@ -47,11 +47,8 @@ public class FileSystemUtil {
     }
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
-        if (url == null || url.isEmpty()) {
-            throw new CannotRetrieveResourceException(
-                    "No path provided!",
-                    metadata
-            );
+        if (url.contains(" ")) {
+            url = url.replace(" ", "%20");
         }
         if (!base.isAbsolute()) {
             throw new OurBadException(
@@ -201,6 +198,7 @@ public class FileSystemUtil {
         try {
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
+                sb.append("\n");
             }
             return sb.toString();
         } catch (Exception e) {

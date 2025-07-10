@@ -3,12 +3,10 @@ package org.rumbledb.expressions.typing;
 import java.util.Collections;
 import java.util.List;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
@@ -35,37 +33,8 @@ public class TreatExpression extends Expression {
         this.sequenceType = sequenceType;
     }
 
-    public SequenceType getsequenceType() {
-        return this.sequenceType;
-    }
-
     public ErrorCode errorCodeThatShouldBeThrown() {
         return this.errorCode;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(
-            this.sequenceType,
-            this.mainExpression,
-            visitorConfig
-        );
-    }
-
-    private static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
-            SequenceType sequenceType,
-            Expression expression,
-            VisitorConfig visitorConfig
-    ) {
-        if (
-            !sequenceType.isEmptySequence()
-                && sequenceType.getArity() != SequenceType.Arity.One
-                && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                && expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-        ) {
-            return ExecutionMode.RDD;
-        }
-        return ExecutionMode.LOCAL;
     }
 
     @Override
@@ -91,12 +60,26 @@ public class TreatExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.sequenceType.toString()) + ") ");
+        buffer.append(
+            " ("
+                + (this.sequenceType.toString())
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ") "
+        );
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.mainExpression.serializeToJSONiq(sb, 0);
+        sb.append(" treat as " + this.sequenceType.toString() + "\n");
     }
 
 }

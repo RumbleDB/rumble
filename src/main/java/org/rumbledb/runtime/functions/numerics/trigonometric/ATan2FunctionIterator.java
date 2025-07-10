@@ -21,70 +21,71 @@
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
-public class ATan2FunctionIterator extends LocalFunctionCallIterator {
+public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public ATan2FunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item y;
-            RuntimeIterator yIterator = this.children.get(0);
-            yIterator.open(this.currentDynamicContextForLocalExecution);
-            if (yIterator.hasNext()) {
-                y = yIterator.next();
-            } else {
-                throw new UnexpectedTypeException("Type error; y parameter can't be empty sequence ", getMetadata());
-            }
-
-            Item x;
-            RuntimeIterator xIterator = this.children.get(1);
-            xIterator.open(this.currentDynamicContextForLocalExecution);
-            if (xIterator.hasNext()) {
-                x = xIterator.next();
-            } else {
-                throw new UnexpectedTypeException("Type error; x parameter can't be empty sequence ", getMetadata());
-            }
-
-            if (y.isNumeric() && x.isNumeric()) {
-                try {
-                    this.hasNext = false;
-                    return ItemFactory.getInstance()
-                        .createDoubleItem(Math.atan2(y.castToDoubleValue(), x.castToDoubleValue()));
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "ATan2 expression has non numeric args "
-                            +
-                            y.serialize()
-                            + ", "
-                            + x.serialize(),
-                        getMetadata()
-                );
-            }
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item valuey = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item valuex = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        double y = valuey.getDoubleValue();
+        double x = valuex.getDoubleValue();
+        if (Double.isNaN(x) || Double.isNaN(y)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
+        return ItemFactory.getInstance().createDoubleItem(Math.atan2(y, x));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext yQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (yQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext xQuery = this.children.get(1)
+            .generateNativeQuery(new NativeClauseContext(yQuery, null, null));
+        if (xQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (
+            SequenceType.Arity.OneOrMore.isSubtypeOf(yQuery.getResultingType().getArity())
+                ||
+                SequenceType.Arity.OneOrMore.isSubtypeOf(xQuery.getResultingType().getArity())
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        SequenceType.Arity resultingArity = (yQuery.getResultingType().getArity() == SequenceType.Arity.One
+            && xQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        String resultingQuery = "ATAN2( "
+            + yQuery.getResultingQuery()
+            + ", "
+            + xQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(
+                xQuery,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
+        );
     }
 }

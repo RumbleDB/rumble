@@ -53,6 +53,18 @@ public class WhereClause extends Clause {
         if (this.whereExpression != null) {
             result.add(this.whereExpression);
         }
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
+        }
         return result;
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("where (");
+        this.whereExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
     }
 }

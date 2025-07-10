@@ -20,16 +20,30 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import org.apache.log4j.LogManager;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+
+import scala.Tuple2;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,15 +61,15 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private Item nextResult;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
+    private long position;
 
 
     public SimpleMapExpressionIterator(
             RuntimeIterator sequence,
             RuntimeIterator mapExpression,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(sequence, mapExpression), executionMode, iteratorMetadata);
+        super(Arrays.asList(sequence, mapExpression), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = mapExpression;
         this.mapDynamicContext = null;
@@ -64,14 +78,33 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        FlatMapFunction<Item, Item> transformation = new SimpleMapExpressionClosure(this.rightIterator, dynamicContext);
-        return childRDD.flatMap(transformation);
+        JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
+        long count = childRDD.count();
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SimpleMapExpressionClosureZipped(
+                this.rightIterator,
+                dynamicContext,
+                count
+        );
+        return zippedChildRDD.flatMap(transformation);
+    }
+
+    private void setLast() {
+        long last = 0;
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        while (this.leftIterator.hasNext()) {
+            this.leftIterator.next();
+            ++last;
+        }
+        this.leftIterator.close();
+        this.mapDynamicContext.getVariableValues().setLast(last);
     }
 
     @Override
     protected void openLocal() {
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        setLast();
         this.mapValues = new LinkedList<>();
+        this.position = 0;
         this.leftIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -84,7 +117,9 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        setLast();
         this.mapValues = new LinkedList<>();
+        this.position = 0;
         this.leftIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -127,7 +162,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
             this.hasNext = true;
         } else {
             this.hasNext = false;
-            this.leftIterator.close();
         }
     }
 
@@ -135,6 +169,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         Item item = this.leftIterator.next();
         List<Item> currentItems = new ArrayList<>();
         this.mapDynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
+        this.mapDynamicContext.getVariableValues().setPosition(++this.position);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
         this.mapDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
@@ -149,4 +184,49 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         result.putAll(this.leftIterator.getVariableDependencies());
         return result;
     }
+
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame df = this.leftIterator.getDataFrame(context);
+        if (df.isEmptySequence()) {
+            return df;
+        }
+        NativeClauseContext forContext = new NativeClauseContext(
+                FLWOR_CLAUSES.FOR,
+                df.getDataFrame().schema(),
+                context
+        );
+        NativeClauseContext nativeQuery = this.rightIterator.generateNativeQuery(forContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            JavaRDD<Item> rdd = getRDDAux(context);
+            JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
+            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(getStaticType().getItemType());
+            schema.printTreeString();
+            Dataset<Row> result = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(rowRDD, schema);
+            return new JSoundDataFrame(result, getStaticType().getItemType());
+        }
+        LogManager.getLogger("SimpleMapExpressionIterator")
+            .info("Rumble was able to optimize a simple map expression to a native SQL query.");
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        Dataset<Row> result = df.getDataFrame()
+            .sparkSession()
+            .sql(
+                String.format(
+                    "select %s as `%s` from %s",
+                    nativeQuery.getResultingQuery(),
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    input
+                )
+            );
+        // execute query
+        return new JSoundDataFrame(result, getStaticType().getItemType());
+    }
+
+
 }

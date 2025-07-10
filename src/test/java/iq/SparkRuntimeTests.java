@@ -20,14 +20,21 @@
 
 package iq;
 
+import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import utils.ApproximatedDoubleComparator;
 
 @RunWith(Parameterized.class)
 public class SparkRuntimeTests extends RuntimeTests {
@@ -37,6 +44,19 @@ public class SparkRuntimeTests extends RuntimeTests {
                 +
                 "/src/test/resources/test_files/runtime-spark"
     );
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--dates-with-timezone",
+                    "yes"
+                }
+        );
+    }
 
     public SparkRuntimeTests(File testFile) {
         super(testFile);
@@ -57,10 +77,25 @@ public class SparkRuntimeTests extends RuntimeTests {
             SequenceOfItems sequence
     ) {
         String actualOutput = runIterators(sequence);
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
-        );
+        try {
+            if (expectedOutput.startsWith("(") && expectedOutput.endsWith(")")) {
+                expectedOutput = expectedOutput.substring(1, expectedOutput.length() - 1).replaceAll("\"", "");
+            }
+            if (actualOutput.startsWith("(") && actualOutput.endsWith(")")) {
+                actualOutput = actualOutput.substring(1, actualOutput.length() - 1).replaceAll("\"", "");
+            }
+            JSONAssert.assertEquals(
+                expectedOutput,
+                actualOutput,
+                new ApproximatedDoubleComparator(JSONCompareMode.STRICT, 1e-9)
+            );
+        } catch (JSONException e) {
+            Assert.assertEquals(
+                "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
+                expectedOutput,
+                actualOutput
+            );
+        }
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 }

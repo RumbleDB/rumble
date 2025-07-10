@@ -2,16 +2,25 @@
 
 - [FOAR0001] - Division by zero.
 
+- [FOAR0002] - Numeric operation overflow/underflow
+
 - [FOCA0002] - A value that is not lexically valid for a particular type has been encountered.
 
+- [FOCH0001] - Raised by fn:codepoints-to-string if the input contains an integer that is not the codepoint of a valid XML character.
+
+- [FOCH0003] - Raised by fn:normalize-unicode if the requested normalization form is not supported by the implementation.
+
 - [FODC0002] - Error retrieving resource.
+
+- [FODT0001] - Overflow/underflow in date/time operation.
+
+- [FODT0002] - Overflow/underflow in duration operation.
 
 - [FOFD1340] -This error is raised if the picture string or calendar supplied to fn:format-date, fn:format-time, or fn:format-dateTime has invalid syntax.
 
 - [FOFD1350] - This error is raised if the picture string supplied to fn:format-date selects a component that is not present in a date, or if the picture string supplied to fn:format-time selects a component that is not present in a time.
 
-- [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
- constructor or in a simple object union have the same name.
+- [FOTY0012] - The argument has no typed value (objects, arrays, functions cannot be atomized).
 
 - [JNTY0004] - Unexpected non-atomic element. Raised when objects
 or arrays are supplied where an atomic element is expected.
@@ -24,17 +33,17 @@ for an object or array selector.
 
 - [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --materialization-cap to increase the maximum  materialization size, or add an output path to write to.
 
-- [RBML0001] - Unrecognized Rumble ML Class Reference
-An unrecognized classname is used in query while accessing the Rumble ML API.
+- [RBML0001] - Unrecognized RumbleDB ML Class Reference
+An unrecognized classname is used in query while accessing the RumbleDB ML API.
 
-- [RBML0002] - Unrecognized Rumble ML Param Reference
-An unrecognized parameter is used in query while operating with a Rumble ML class.
+- [RBML0002] - Unrecognized RumbleDB ML Param Reference
+An unrecognized parameter is used in query while operating with a RumbleDB ML class.
 
-- [RBML0003] - Invalid Rumble ML Param
-Provided parameter does not match the expected type or value for the referenced Rumble ML class.
+- [RBML0003] - Invalid RumbleDB ML Param
+Provided parameter does not match the expected type or value for the referenced RumbleDB ML class.
 
 - [RBML0004] - Input is not a DataFrame
-Provided input of items does not form a DataFrame as expected by RumbleML.
+Provided input of items does not form a DataFrame as expected by RumbleDB ML.
 
 - [RBML0005] - Invalid schema for DataFrame in annotate()
 The provided schema can not be applied to the item data while converting the data to a DataFrame
@@ -42,7 +51,7 @@ The provided schema can not be applied to the item data while converting the dat
 - [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
 - [RBST0002] - Unimplemented feature error.
-Raised when a JSONiq feature that is not yet implemented in Rumble is used.
+Raised when a JSONiq feature that is not yet implemented in RumbleDB is used.
 
 - [RBST0003] - Invalid for clause expression error.
 Raised when an expression produces a different,
@@ -96,6 +105,17 @@ Example: using subtraction on strings.
 - [XQDY0054] - It is a dynamic error if a cycle is encountered
 in the definition of a module's dynamic context components,
 for example because of a cycle in variable declarations.
+
+- [XQTY0024] - Attribute After Non Attribute Error - It is a type error if the content sequence in an element constructor contains an attribute node following a node that is not an attribute node. 
+
+- [XQDY0025] - Duplicate Attribute Error - It is a dynamic error if any attribute of a constructed element does not have a name that is distinct from the names of all other attributes of the constructed element. 
+
+- [XQDY0074] - Invalid Element Name Error - It is a dynamic error if the value of the name expression in a computed element or attribute constructor cannot be converted to an expanded QName (for example, because it contains a namespace prefix not found in statically known namespaces.) 
+
+- [XQDY0096] - Invalid Node Name Error - It is a dynamic error if the node-name of a node constructed by a computed element constructor has any of the following properties: 1. Its namespace prefix is xmlns. 2. Its namespace URI is http://www.w3.org/2000/xmlns/. 3. Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace. 4. Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+
+- [XQDY0137] - Duplicate pair name. It is a dynamic error if two pairs in an object
+  constructor or in a simple object union have the same name.
 
 - [XQST0016] - Module declaration error. 
 Current implementation does not support the Module Feature 
@@ -154,3 +174,8 @@ variable, do not have distinct names (expanded QNames).
 The name of each grouping variable must be equal 
 (by the eq operator on expanded QNames) to the name of a 
 variable in the input tuple stream.
+
+- [XQST0118] - In a direct element constructor, the name
+used in the end tag must exactly match the name used in the
+corresponding start tag, including its prefix or absence of
+a prefix. 

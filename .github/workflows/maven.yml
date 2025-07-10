@@ -3,43 +3,91 @@
 
 name: Java CI with Maven
 
-on: push
+on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    continue-on-error: true
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Cache Maven packages
-      uses: actions/cache@v1
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Install with Maven
-      run: mvn install -DskipTests -Dgpg.skip --quiet
-    - name: Compile with Maven
-      run: mvn clean compile assembly:single
-    - name: FrontendTests
-      run: mvn -Dtest=FrontendTests test
-    - name: RuntimeTests
-      run: mvn -Dtest=RuntimeTests test
-    - name: SparkRuntimeTests
-      run: mvn -Dtest=SparkRuntimeTests test
-    - name: JavaAPITest
-      run: mvn -Dtest=JavaAPITest test
-    - name: Spotless check
-      run: mvn spotless:check
-    - name: Copying artefacts
-      run: mkdir staging && cp target/*.jar staging
-    - name: Package
-      uses: actions/upload-artifact@v1
-      with:
-        name: Package
-        path: staging
+      - uses: actions/checkout@v3
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: adopt
+      # Github ubuntu contain Maven, but other testing software use minimal size container
+      - name: Check if Maven is Installed
+        run: |
+          if ! command -v mvn &> /dev/null
+          then
+            echo "Maven not found! Installing..."
+            sudo apt-get update && sudo apt-get install -y maven
+          else
+            echo "Maven is already installed:"
+            mvn -version
+          fi
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Install with Maven
+        run: mvn install -DskipTests -Dgpg.skip --quiet
+      - name: Compile with Maven
+        run: mvn clean compile assembly:single
+      - name: Spotless Check
+        run: mvn spotless:check
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Package
+          path: target/*.jar
+
+  tests:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_class: [
+          "FrontendTests",
+          "RuntimeTests",
+          "RuntimeTestsNoParallelism",
+          "RuntimeTestsNoInlining",
+          "StaticTypeTests",
+          "JavaAPITest",
+          "SparkRuntimeTests",
+          "SparkRuntimeTestsNativeDeactivated",
+          "SparkRuntimeTestsDataFramesDeactivated",
+          "SparkRuntimeTestsParallelismDeactivated",
+          "Bugs",
+          "NativeFLWORRuntimeTests",
+          "NativeFLWORRuntimeTestsNativeDeactivated",
+          "NativeFLWORRuntimeTestsDataFramesDeactivated",
+          "NativeFLWORRuntimeTestsParallelismDeactivated",
+          "MLTests",
+          "MLTestsNativeDeactivated",
+          "XMLTests",
+          "XQueryTests",
+          "DeltaUpdateRuntimeTests"
+        ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: adopt
+      - name: Restore Cached Maven Packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      - name: Download Compiled Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: Package 
+          path: target
+      - name: Run Test ${{ matrix.test_class }}
+        run: mvn -Dtest=${{ matrix.test_class }} test

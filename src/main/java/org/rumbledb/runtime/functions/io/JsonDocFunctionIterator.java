@@ -21,18 +21,18 @@
 
 package org.rumbledb.runtime.functions.io;
 
-import com.jsoniter.JsonIterator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
+import com.google.gson.stream.JsonReader;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.List;
 
@@ -43,10 +43,9 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
 
     public JsonDocFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -74,7 +73,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
                     this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                     getMetadata()
                 );
-                JsonIterator object = JsonIterator.parse(is, 1024);
+                JsonReader object = new JsonReader(new InputStreamReader(is));
                 return ItemParser.getItemFromObject(object, getMetadata());
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

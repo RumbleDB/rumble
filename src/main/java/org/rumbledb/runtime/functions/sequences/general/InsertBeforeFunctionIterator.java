@@ -24,9 +24,8 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
@@ -49,10 +48,9 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     public InsertBeforeFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
         this.sequenceIterator = this.children.get(0);
         this.positionIterator = this.children.get(1);
         this.insertIterator = this.children.get(2);
@@ -64,7 +62,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
-        if (this.insertIterator.isRDD()) {
+        if (this.insertIterator.isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
                 .filter((item) -> item._2() < this.insertPosition - 1)

@@ -56,6 +56,14 @@ public class AdditiveExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
+    }
+
     public boolean isMinus() {
         return this.isMinus;
     }
@@ -67,10 +75,37 @@ public class AdditiveExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.isMinus ? "-" : "+") + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        if (this.isMinus)
+            sb.append("-\n");
+        else
+            sb.append("+\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
     }
 
 }

@@ -1,4 +1,33 @@
+.DS_Store
+.classpath
+.project
 .idea/
 target/
+.settings/
+.ipynb_checkpoints/
 *.iml
 /bin/
+rumble*.jar
+*.*~
+/.rumble_shell_history
+
+# for now ignore jsound package
+src/main/java/jsound/
+src/main/resources/log4j.properties
+
+/src/main/java/org/rumbledb/parser/jsoniq/
+!/src/main/java/org/rumbledb/parser/jsoniq/Jsoniq.g4
+
+# ANTLR
+*.tokens
+*.interp
+
+# ANTLR generated files for XQuery parser
+/src/main/java/org/rumbledb/parser/xquery/XQueryParser.java
+/src/main/java/org/rumbledb/parser/xquery/XQueryParserBaseVisitor.java
+/src/main/java/org/rumbledb/parser/xquery/XQueryParserVisitor.java
+
+# ANTLR generated files for XQuery lexer
+/src/main/java/org/rumbledb/parser/xquery/XQueryLexer.java
+
+.vscode/settings.json

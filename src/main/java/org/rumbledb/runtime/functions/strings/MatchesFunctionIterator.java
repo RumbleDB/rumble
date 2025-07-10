@@ -21,48 +21,45 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-public class MatchesFunctionIterator extends LocalFunctionCallIterator {
+public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public MatchesFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-
-            Item regexpItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            if (stringItem == null) {
-                stringItem = ItemFactory.getInstance().createStringItem("");
-            }
-
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item regexpItem = this.children.get(1)
+            .materializeFirstItemOrNull(context);
+        Item stringItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+        if (stringItem == null) {
+            stringItem = ItemFactory.getInstance().createStringItem("");
+        }
+        try {
             Matcher matcher = Pattern.compile(regexpItem.getStringValue()).matcher(stringItem.getStringValue());
             boolean result = matcher.find();
             return ItemFactory.getInstance().createBooleanItem(result);
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " matches function",
+        } catch (PatternSyntaxException e) {
+            throw new InvalidRegexPatternException(
+                    e.getDescription(),
                     getMetadata()
             );
         }

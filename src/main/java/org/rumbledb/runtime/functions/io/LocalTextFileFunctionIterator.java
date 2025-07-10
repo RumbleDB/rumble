@@ -23,10 +23,9 @@ package org.rumbledb.runtime.functions.io;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -50,10 +49,9 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
     public LocalTextFileFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -81,7 +79,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         BufferedReader br = new BufferedReader(r);
         this.stream = br.lines().iterator();
         this.hasNext = this.stream.hasNext();
-        this.iterator.close();
     }
 
     @Override
@@ -116,7 +113,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         BufferedReader br = new BufferedReader(r);
         this.stream = br.lines().iterator();
         this.hasNext = this.stream.hasNext();
-        this.iterator.close();
     }
 
     @Override

@@ -1,8 +1,5 @@
 package org.rumbledb.api;
 
-import java.net.URI;
-import java.io.IOException;
-
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -10,12 +7,15 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
+import java.net.URI;
+
 /**
  * The entry point for Java applications that want to execute JSONiq queries with Rumble.
  *
  * The query must be provided as a string and a sequence of items is returned.
  *
- * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file
+ * It is possible for the queries to use the text-file() and json-lines() functions if Spark and either the local file
  * system or HDFS are properly configured.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
@@ -43,13 +43,14 @@ public class Rumble {
     public SequenceOfItems runQuery(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            RumbleRuntimeConfiguration.getDefaultConfiguration()
+            this.configuration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
+
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 
@@ -70,6 +71,23 @@ public class Rumble {
             mainModule,
             this.configuration
         );
+
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+    }
+
+    /**
+     * Creates JSONiq Expression Tree from a query and returns serialization of the Tree.
+     *
+     * @param query the content of the JSONiq or XQuery main module.
+     * @return serialization of the JSONiq Expression Tree.
+     */
+    public String serializeToJSONiq(String query) {
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            query,
+            this.configuration
+        );
+        StringBuffer stringBuffer = new StringBuffer();
+        mainModule.serializeToJSONiq(stringBuffer, 0);
+        return stringBuffer.toString();
     }
 }

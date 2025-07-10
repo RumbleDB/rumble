@@ -22,12 +22,12 @@ package org.rumbledb.runtime.flwor.udfs;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import java.util.ArrayList;
@@ -44,10 +44,9 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
-            StructType schema,
-            List<String> columnNames
+            List<FlworDataFrameColumn> columns
     ) {
-        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expressionsWithIterator = expressionsWithIterator;
 
         this.result = new ArrayList<>();
@@ -86,17 +85,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
-        if (this.nextItem.isBinary()) {
-            String itemType = this.nextItem.getDynamicType().toString();
-            throw new UnexpectedTypeException(
-                    "\""
-                        + itemType
-                        + "\": invalid type: can not compare for equality to type \""
-                        + itemType
-                        + "\"",
-                    expressionWithIterator.getIterator().getMetadata()
-            );
-        }
-        this.result.add(this.nextItem.getDynamicType().getName());
+        this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

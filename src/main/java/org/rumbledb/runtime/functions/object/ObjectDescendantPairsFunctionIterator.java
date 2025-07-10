@@ -22,9 +22,8 @@ package org.rumbledb.runtime.functions.object;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -44,10 +43,9 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
 
     public ObjectDescendantPairsFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -59,6 +57,12 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
         this.nextResults = new LinkedList<>();
 
         setNextResult();
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        this.iterator.close();
     }
 
     @Override
@@ -91,7 +95,6 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
 
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -110,7 +113,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     List<Item> valueList = Collections.singletonList(value);
 
                     Item result = ItemFactory.getInstance()
-                        .createObjectItem(keyList, valueList, getMetadata());
+                        .createObjectItem(keyList, valueList, getMetadata(), true);
                     this.nextResults.add(result);
                     getDescendantPairs(valueList);
                 }

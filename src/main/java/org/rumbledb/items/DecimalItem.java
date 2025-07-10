@@ -25,16 +25,18 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 
-public class DecimalItem extends AtomicItem {
+public class DecimalItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -49,6 +51,20 @@ public class DecimalItem extends AtomicItem {
         this.value = decimal;
     }
 
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
     public BigDecimal getValue() {
         return this.value;
     }
@@ -59,12 +75,21 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
+    public String getStringValue() {
+        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.getDecimalValue().equals(BigDecimal.ZERO);
+        return !(this.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
     }
 
     public double castToDoubleValue() {
         return getDecimalValue().doubleValue();
+    }
+
+    public float castToFloatValue() {
+        return getDecimalValue().floatValue();
     }
 
     public BigDecimal castToDecimalValue() {
@@ -85,48 +110,6 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.decimalItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(!this.getDecimalValue().equals(BigDecimal.ZERO));
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
-            &&
-            !itemType.equals(ItemType.nullItem);
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.getValue());
     }
@@ -134,14 +117,6 @@ public class DecimalItem extends AtomicItem {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = kryo.readObject(input, BigDecimal.class);
-    }
-
-    public boolean equals(Object otherItem) {
-        try {
-            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch (IteratorFlowException e) {
-            return false;
-        }
     }
 
     public int hashCode() {
@@ -152,64 +127,37 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isInteger()) {
-            return this.value.compareTo(other.castToDecimalValue());
-        }
-        if (other.isDecimal()) {
-            return this.value.compareTo(other.getDecimalValue());
-        }
-        if (other.isDouble()) {
-            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
-        }
-        throw new OurBadException("Comparing an int to something that is not a number.");
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isNumeric() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args for numerics comparison "
-                        + this.serialize()
-                        +
-                        ", "
-                        + other.serialize(),
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return ItemType.decimalItem;
+        return BuiltinTypesCatalogue.decimalItem;
     }
 
     @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, this.value.toString(), SequenceType.DECIMAL);
+    }
+
     public boolean isNumeric() {
         return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DECIMAL";
     }
 }

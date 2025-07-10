@@ -1,0 +1,235 @@
+image: maven:3.9.9-eclipse-temurin-11
+
+stages:
+  - build
+  - tests
+  - downstream-tests
+
+Build:
+  stage: build
+  artifacts:
+    paths:
+      - target/
+  script:
+    - mvn clean compile assembly:single
+
+SparkRuntimeTest:
+  stage: tests
+  script:
+    - mvn -Dtest=SparkRuntimeTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.SparkRuntimeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.SparkRuntimeTests.xml
+
+SparkRuntimeTestsNativeDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.SparkRuntimeTestsNativeDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.SparkRuntimeTestsNativeDeactivated.xml
+
+SparkRuntimeTestsDataFramesDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.SparkRuntimeTestsDataFramesDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.SparkRuntimeTestsDataFramesDeactivated.xml
+
+SparkRuntimeTestsParallelismDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.SparkRuntimeTestsParallelismDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.SparkRuntimeTestsParallelismDeactivated.xml
+
+JavaAPITest:
+  stage: tests
+  script:
+    - mvn -Dtest=JavaAPITest test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.JavaAPITest.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.JavaAPITest.xml
+
+FrontendTests:
+  stage: tests
+  script:
+    - mvn -Dtest=FrontendTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.FrontendTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.FrontendTests.xml
+
+RuntimeTests:
+  stage: tests
+  script:
+    - mvn -Dtest=RuntimeTests test -Dsurefire.enableOutErrElements=false # tests debug output and report would get too large
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.RuntimeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.RuntimeTests.xml
+
+RuntimeTestsNoParallelism:
+  stage: tests
+  script:
+    - mvn -Dtest=RuntimeTestsNoParallelism test -Dsurefire.enableOutErrElements=false # tests debug output and report would get too large
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.RuntimeTestsNoParallelism.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.RuntimeTestsNoParallelism.xml
+
+RuntimeTestsNoInlining:
+  stage: tests
+  script:
+    - mvn -Dtest=RuntimeTestsNoInlining test -Dsurefire.enableOutErrElements=false # tests debug output and report would get too large
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.RuntimeTestsNoInlining.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.RuntimeTestsNoInlining.xml
+
+NativeFLWORRuntimeTests:
+  stage: tests
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTests.xml
+
+NativeFLWORRuntimeTestsNativeDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsNativeDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsNativeDeactivated.xml
+
+NativeFLWORRuntimeTestsDataFramesDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsDataFramesDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsDataFramesDeactivated.xml
+
+NativeFLWORRuntimeTestsParallelismDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsParallelismDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.NativeFLWORRuntimeTestsParallelismDeactivated.xml
+
+StaticTypingTest:
+  stage: tests
+  script:
+    - mvn -Dtest=StaticTypeTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.StaticTypeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.StaticTypeTests.xml
+
+MLTests:
+  stage: tests
+  script:
+    - mvn -Dtest=MLTests test --log-file target/ml_test.log
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.MLTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.MLTests.xml
+
+MLTestsNativeDeactivated:
+  stage: tests
+  script:
+    - mvn -Dtest=MLTestsNativeDeactivated test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
+
+BackwardsCompatibilityTests:
+  stage: tests
+  script:
+    - mvn -Dtest=BackwardsCompatibilityTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.BackwardsCompatibilityTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.BackwardsCompatibilityTests.xml
+
+XMLTests:
+  stage: tests
+  script:
+    - mvn -Dtest=XMLTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.XMLTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.XMLTests.xml
+
+XQueryTests:
+  stage: tests
+  script:
+    - mvn -Dtest=XQueryTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.XQueryTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.XQueryTests.xml
+
+SpotlessTest:
+  stage: tests
+  script:
+    - mvn spotless:check
+
+RunQt3tests:
+  stage: downstream-tests
+  variables:
+    TESTED_BRANCH: $CI_COMMIT_BRANCH
+  trigger:
+    project: gfourny/rumble-test-suite

@@ -7,8 +7,10 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
 /**
@@ -51,7 +53,9 @@ public class SequenceOfItems {
      * Opens the iterator.
      */
     public void open() {
-        this.iterator.open(this.dynamicContext);
+        if (this.isMaterialisable()) {
+            this.iterator.open(this.dynamicContext);
+        }
         this.isOpen = true;
     }
 
@@ -68,7 +72,9 @@ public class SequenceOfItems {
      * Closes the iterator.
      */
     public void close() {
-        this.iterator.close();
+        if (this.isOpen) {
+            this.iterator.close();
+        }
         this.isOpen = false;
     }
 
@@ -78,6 +84,9 @@ public class SequenceOfItems {
      * @return true if there are more items, false otherwise.
      */
     public boolean hasNext() {
+        if (!this.isMaterialisable()) {
+            return false;
+        }
         return this.iterator.hasNext();
     }
 
@@ -88,6 +97,9 @@ public class SequenceOfItems {
      * @return the next item.
      */
     public Item next() {
+        if (!this.isMaterialisable()) {
+            return ItemFactory.getInstance().createNullItem();
+        }
         return this.iterator.next();
     }
 
@@ -97,7 +109,7 @@ public class SequenceOfItems {
      * @return true if it is available as an RDD of Items.
      */
     public boolean availableAsRDD() {
-        return this.iterator.isRDD();
+        return this.iterator.isRDDOrDataFrame();
     }
 
     /**
@@ -110,12 +122,33 @@ public class SequenceOfItems {
     }
 
     /**
+     * Returns whether the iterator is updating
+     *
+     * @return true if updating; otherwise false.
+     */
+    public boolean availableAsPUL() {
+        return this.iterator.isUpdating();
+    }
+
+    /**
+     * Return whether the iterator of the sequence should be evaluated to materialise the sequence of items.
+     *
+     * @return true if materialisable; otherwise false
+     */
+    private boolean isMaterialisable() {
+        return !(this.availableAsPUL() && !this.iterator.isSequential());
+    }
+
+    /**
      * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
      * It is not possible to do so if the iterator is open.
      *
      * @return an RDD of Items.
      */
     public JavaRDD<Item> getAsRDD() {
+        if (!this.isMaterialisable()) {
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+        }
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
@@ -129,14 +162,33 @@ public class SequenceOfItems {
      * @return a data frame.
      */
     public Dataset<Row> getAsDataFrame() {
+        if (!this.isMaterialisable()) {
+            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+        }
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getDataFrame(this.dynamicContext);
+        return this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
     }
 
+    /**
+     * Applies the PUL available when the iterator is updating.
+     */
+    public void applyPUL() {
+        PendingUpdateList pul = this.iterator.getPendingUpdateList(this.dynamicContext);
+        pul.applyUpdates(this.iterator.getMetadata());
+    }
+
+    /*
+     * Populates a list of items with the output.
+     *
+     * @return -1 if successful. Returns Long.MAX_VALUE if there were more items beyond the materialization cap.
+     */
     public long populateList(List<Item> resultList) {
         resultList.clear();
+        if (!this.isMaterialisable()) {
+            return -1;
+        }
         this.iterator.open(this.dynamicContext);
         Item result = null;
         if (this.iterator.hasNext()) {
@@ -171,12 +223,14 @@ public class SequenceOfItems {
 
     public long populateListWithWarningOnlyIfCapReached(List<Item> resultList) {
         if (this.availableAsRDD()) {
+            if (!this.isMaterialisable()) {
+                return -1;
+            }
             JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
             return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
         } else {
             return populateList(resultList);
         }
     }
-
 
 }

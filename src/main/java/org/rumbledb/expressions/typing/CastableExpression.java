@@ -53,11 +53,42 @@ public class CastableExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.sequenceType.toString()) + ") ");
+        buffer.append(
+            " ("
+                + (this.sequenceType.toString())
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ") "
+        );
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("castable as\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        indentIt(sb, indent);
+        this.sequenceType.toString();
+        sb.append("\n");
+
+        indentIt(sb, indent);
+        sb.append(")\n");
     }
 }

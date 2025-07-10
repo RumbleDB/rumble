@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -24,6 +24,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -46,12 +47,9 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
-import org.rumbledb.expressions.postfix.PredicateExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -65,11 +63,49 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -159,7 +195,15 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitPredicateExpression(PredicateExpression expression, T argument) {
+    public T visitPostfixLookupExpression(PostfixLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitUnaryLookupExpression(UnaryLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitFilterExpression(FilterExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -192,6 +236,42 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
+
+    // region xml
+
+    public T visitDirElemConstructor(DirElemConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitComputedElementConstructor(ComputedElementConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTextNodeConstructor(TextNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTextNode(TextNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAttributeNode(AttributeNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAttributeNodeContent(AttributeNodeContentExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     // endregion
 
     // region literal
@@ -261,7 +341,15 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitNodeComparisonExpr(NodeComparisonExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     public T visitInstanceOfExpression(InstanceOfExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitIsStaticallyExpr(IsStaticallyExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -278,10 +366,32 @@ public abstract class AbstractNodeVisitor<T> {
     }
     // endregion
 
-    // region quantifiers
-    public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
+    // region update
+
+    public T visitDeleteExpression(DeleteExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
+    public T visitRenameExpression(RenameExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitReplaceExpression(ReplaceExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitInsertExpression(InsertExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAppendExpression(AppendExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTransformExpression(TransformExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     // endregion
 
     // region control
@@ -310,6 +420,102 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
-    // endregion
 
+    public T visitTypeDeclaration(TypeDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitValidateTypeExpression(ValidateTypeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitProgram(Program expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitStatementsAndOptionalExpr(StatementsAndOptionalExpr expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitStatementsAndExpr(StatementsAndExpr expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitApplyStatement(ApplyStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAssignStatement(AssignStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitBlockStatement(BlockStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitBreakStatement(BreakStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitContinueStatement(ContinueStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitExitStatement(ExitStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitReturnStatementClause(
+            ReturnStatementClause expression,
+            T argument
+    ) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitFlowrStatement(FlowrStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitConditionalStatement(
+            ConditionalStatement expression,
+            T argument
+    ) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitSwitchStatement(SwitchStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTryCatchStatement(TryCatchStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTypeSwitchStatement(TypeSwitchStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitWhileStatement(WhileStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitVariableDeclStatement(VariableDeclStatement expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitBlockExpr(BlockExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, T argument) {
+        return defaultAction(statement, argument);
+    }
+
+    public T visitStepExpr(StepExpr stepExpr, T argument) {
+        return defaultAction(stepExpr, argument);
+    }
+
+    public T visitSlashExpr(SlashExpr slashExpr, T argument) {
+        return defaultAction(slashExpr, argument);
+    }
 }

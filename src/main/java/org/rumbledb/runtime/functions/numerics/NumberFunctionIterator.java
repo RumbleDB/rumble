@@ -21,49 +21,46 @@
 package org.rumbledb.runtime.functions.numerics;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.ItemType;
-
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.util.List;
 
-public class NumberFunctionIterator extends LocalFunctionCallIterator {
+public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public NumberFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item anyItem = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            if (anyItem == null) {
-                return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-            }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 0) {
+            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return CastIterator.castItemToType(items.get(0), BuiltinTypesCatalogue.doubleItem, getMetadata());
+        }
 
-            if (anyItem.isCastableAs(ItemType.doubleItem)) {
-                try {
-                    return anyItem.castAs(ItemType.doubleItem);
-                } catch (ClassCastException e) {
-                    return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-                }
+        Item anyItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (anyItem == null) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        }
+        try {
+            Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
+            if (result != null) {
+                return result;
             }
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " number function",
-                    getMetadata()
-            );
+        } catch (Exception e) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        }
     }
 }

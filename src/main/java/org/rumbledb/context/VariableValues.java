@@ -25,17 +25,17 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,7 +49,8 @@ public class VariableValues implements Serializable, KryoSerializable {
     private Map<Name, List<Item>> localVariableValues;
     private Map<Name, Item> localVariableCounts;
     private Map<Name, JavaRDD<Item>> rddVariableValues;
-    private Map<Name, Dataset<Row>> dataFrameVariableValues;
+    private Map<Name, JSoundDataFrame> dataFrameVariableValues;
+    private boolean nestedQuery;
     private VariableValues parent;
 
     public VariableValues() {
@@ -58,6 +59,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.nestedQuery = false;
     }
 
     public VariableValues(VariableValues parent) {
@@ -69,13 +71,15 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.nestedQuery = false;
     }
 
     public VariableValues(
             VariableValues parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, Dataset<Row>> dataFrameVariableValues
+            Map<Name, JSoundDataFrame> dataFrameVariableValues,
+            GlobalVariables globalVariables
     ) {
         if (parent == null) {
             throw new OurBadException("Variable values defined with null parent");
@@ -85,7 +89,16 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = localVariableValues;
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
+        removeGlobalVariablesFromCopiedValues(globalVariables);
+        this.nestedQuery = false;
+    }
 
+    private void removeGlobalVariablesFromCopiedValues(GlobalVariables globalVariables) {
+        globalVariables.getGlobalVariables().forEach(globalVariable -> {
+            if (containsLocally(this, globalVariable)) {
+                removeVariable(globalVariable);
+            }
+        });
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
@@ -110,6 +123,14 @@ public class VariableValues implements Serializable, KryoSerializable {
 
     public Set<Name> getDataFrameVariableNames() {
         return this.dataFrameVariableValues.keySet();
+    }
+
+    public boolean isParallelAccessAllowed() {
+        return this.nestedQuery;
+    }
+
+    public void setParallelAccess(boolean b) {
+        this.nestedQuery = b;
     }
 
     public boolean contains(Name varName) {
@@ -154,7 +175,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues.put(varName, value);
     }
 
-    public void addVariableValue(Name varName, Dataset<Row> value) {
+    public void addVariableValue(Name varName, JSoundDataFrame value) {
         this.dataFrameVariableValues.put(varName, value);
     }
 
@@ -163,11 +184,21 @@ public class VariableValues implements Serializable, KryoSerializable {
     }
 
     public List<Item> getLocalVariableValue(Name varName, ExceptionMetadata metadata) {
+        if (this.localVariableValues.containsKey(varName) && this.localVariableValues.get(varName) == null) {
+            // Referencing an uninitialized local variable is illegal
+            throw new RumbleException(
+                    "Runtime error retrieving variable " + varName + " value",
+                    metadata
+            );
+        }
         if (this.localVariableValues.containsKey(varName)) {
             return this.localVariableValues.get(varName);
         }
 
         if (this.rddVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
             return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
         }
@@ -183,6 +214,17 @@ public class VariableValues implements Serializable, KryoSerializable {
             );
         }
 
+        if (
+            varName.equals(Name.CONTEXT_ITEM)
+                || varName.equals(Name.CONTEXT_COUNT)
+                || varName.equals(Name.CONTEXT_POSITION)
+        ) {
+            throw new AbsentPartOfDynamicContextException(
+                    "\"" + varName + "\" accessed, but the context item is absent",
+                    metadata
+            );
+        }
+
         throw new RumbleException(
                 "Runtime error retrieving variable " + varName + " value",
                 metadata
@@ -191,13 +233,19 @@ public class VariableValues implements Serializable, KryoSerializable {
 
     public JavaRDD<Item> getRDDVariableValue(Name varName, ExceptionMetadata metadata) {
         if (this.rddVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return this.rddVariableValues.get(varName);
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
-            Dataset<Row> df = this.dataFrameVariableValues.get(varName);
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
+            JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
             JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata));
+            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
 
         if (this.parent != null) {
@@ -210,8 +258,11 @@ public class VariableValues implements Serializable, KryoSerializable {
         );
     }
 
-    public Dataset<Row> getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
+    public JSoundDataFrame getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
         if (this.dataFrameVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return this.dataFrameVariableValues.get(varName);
         }
 
@@ -225,22 +276,28 @@ public class VariableValues implements Serializable, KryoSerializable {
         );
     }
 
-    public Item getVariableCount(Name varName) {
+    public Item getVariableCount(Name varName, ExceptionMetadata metadata) {
         if (this.localVariableCounts.containsKey(varName)) {
             return this.localVariableCounts.get(varName);
         }
         if (this.dataFrameVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return ItemFactory.getInstance()
                 .createLongItem(this.dataFrameVariableValues.get(varName).count());
         }
         if (this.rddVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return ItemFactory.getInstance().createLongItem(this.rddVariableValues.get(varName).count());
         }
         if (this.localVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance().createIntItem(this.localVariableValues.get(varName).size());
         }
         if (this.parent != null) {
-            return this.parent.getVariableCount(varName);
+            return this.parent.getVariableCount(varName, metadata);
         }
         throw new OurBadException("Runtime error retrieving variable " + varName + " value");
     }
@@ -264,8 +321,11 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, VariableValues.class);
         kryo.writeObject(output, this.localVariableValues);
-        // kryo.writeObject(output, this.rddVariableValues);
-        // kryo.writeObject(output, this.dataFrameVariableValues);
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        this.nestedQuery = true;
     }
 
     @SuppressWarnings("unchecked")
@@ -273,8 +333,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, VariableValues.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
-        // this.rddVariableValues = kryo.readObject(input, HashMap.class);
-        // this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
+        this.nestedQuery = true;
     }
 
     public Item getPosition() {
@@ -315,6 +374,9 @@ public class VariableValues implements Serializable, KryoSerializable {
             sb.append("    " + name + " (" + this.localVariableValues.get(name).size() + " items)\n");
             if (this.localVariableValues.get(name).size() == 1) {
                 sb.append("      " + this.localVariableValues.get(name).get(0).serialize() + "\n");
+                sb.append(
+                    "      Mutability level: " + this.localVariableValues.get(name).get(0).getMutabilityLevel() + "\n"
+                );
             }
         }
         sb.append("  Counts:\n");
@@ -336,31 +398,56 @@ public class VariableValues implements Serializable, KryoSerializable {
         return sb.toString();
     }
 
-    public void importModuleValues(VariableValues moduleValues, String targetNamespace) {
+    public void importModuleValues(VariableValues moduleValues) {
         for (Name name : moduleValues.localVariableValues.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                List<Item> items = moduleValues.localVariableValues.get(name);
-                this.localVariableValues.put(name, items);
-            }
+            List<Item> items = moduleValues.localVariableValues.get(name);
+            this.localVariableValues.put(name, items);
         }
         for (Name name : moduleValues.localVariableCounts.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                Item item = moduleValues.localVariableCounts.get(name);
-                this.localVariableCounts.put(name, item);
-            }
+            Item item = moduleValues.localVariableCounts.get(name);
+            this.localVariableCounts.put(name, item);
         }
         for (Name name : moduleValues.rddVariableValues.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                JavaRDD<Item> items = moduleValues.rddVariableValues.get(name);
-                this.rddVariableValues.put(name, items);
-            }
+            JavaRDD<Item> items = moduleValues.rddVariableValues.get(name);
+            this.rddVariableValues.put(name, items);
         }
         for (Name name : moduleValues.dataFrameVariableValues.keySet()) {
-            if (name.getNamespace().equals(targetNamespace)) {
-                Dataset<Row> items = moduleValues.dataFrameVariableValues.get(name);
-                this.dataFrameVariableValues.put(name, items);
-            }
+            JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
+            this.dataFrameVariableValues.put(name, items);
         }
+    }
+
+    private VariableValues findNodeWithVariableDeclaration(Name varName) {
+        VariableValues nodeWithVariableDecl = this;
+        // Invariant: there is a node among the current node or its parents that contains the variable
+        while (nodeWithVariableDecl != null && !containsLocally(nodeWithVariableDecl, varName)) {
+            nodeWithVariableDecl = nodeWithVariableDecl.parent;
+        }
+        if (nodeWithVariableDecl == null) {
+            throw new OurBadException("Changing undeclared variable value is not supported.");
+        }
+        return nodeWithVariableDecl;
+    }
+
+    public boolean containsLocally(VariableValues variableValues, Name varName) {
+        return variableValues.localVariableValues.containsKey(varName)
+            || variableValues.rddVariableValues.containsKey(varName)
+            || variableValues.dataFrameVariableValues.containsKey(varName);
+    }
+
+    public void changeVariableValue(Name varName, List<Item> value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.localVariableValues.put(varName, value);
+    }
+
+    public void changeVariableValue(Name varName, JavaRDD<Item> value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.rddVariableValues.put(varName, value);
+    }
+
+    public void changeVariableValue(Name varName, JSoundDataFrame value) {
+        VariableValues nodeWithVariableDecl = findNodeWithVariableDeclaration(varName);
+        nodeWithVariableDecl.dataFrameVariableValues.put(varName, value);
     }
 }
 

@@ -1,18 +1,16 @@
-# Installing Rumble
+# Installing RumbleDB
 
-We show here how to install Rumble from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use Rumble is to simply download the already compiled .jar files.
+We show here how to install RumbleDB from the GitHub repository and build it yourself if you wish to do so (for example, to use the latest master). However, the easiest way to use RumbleDB is to simply download the already compiled .jar files.
 
 ## Requirements
 
 The following software is required:
 
-- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 (and Scala 11 as of Spark 2.4.5).
-- [Spark](https://spark.apache.org/), version 2.4.5 (for example)
-- [Ant](http://www.ant.org/), version 1.10.1
-- [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository)
-- [Maven](https://maven.apache.org/) 3.6.0
+- [Java SE](https://adoptium.net/temurin/releases/) 11, the version of Java is important, as RumbleDB only works with Java 11 and 17.
+- [Spark](https://spark.apache.org/), version 3.5.5 (for example)
+- [Ant](http://ant.apache.org/), version 1.10
+- [Maven](https://maven.apache.org/) 3.9.9
 
-Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Rumble jar file.
 
 ### Checking the requirements
 
@@ -44,37 +42,27 @@ Go to the root of this repository:
     
 ## Compile
 
-### ANTLRv4
-
-For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib directory of the repository (see corresponding license). In the most recent and supported Spark versions, 4.7 is the correct ANTLR version to use.
-
-From the root directory of the rumble local checkout, you first need to build the parser:
-
-    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
-    
-### Rumble
-
-Once the ANTLR sources have been generated, you can compile the entire project like so:
+You can compile the entire project like so:
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.62.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-1.24.0-jar-with-dependencies.jar`.
     
 ## Running locally
 
-The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
+The most straightforward to test if the above steps were successful is to run the RumbleDB shell locally, like so:
 
-    $ spark-submit target/spark-rumble-1.9.1.jar --shell yes
+    $ spark-submit target/rumbledb-1.24.0.jar repl
 
-The Rumble shell should start:
+The RumbleDB shell should start:
 
     Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
 
-        ____                  __    __   
-       / __ \__  ______ ___  / /_  / /__ 
-      / /_/ / / / / __ `__ \/ __ \/ / _ \  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/  1.9.1 "Scots pine" beta
-    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/
+        ____                  __    __     ____  ____ 
+       / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
+      / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.24.0 "Mountain ash" beta
+    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     Master: local[2]
     Item Display Limit: 1000
@@ -107,8 +95,8 @@ You can try a few more queries.
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     
-This is it. Rumble is step and ready to go locally. You can now move on to a JSONiq tutorial. A Rumble tutorial will also follow soon.
+This is it. RumbleDB is setup and ready to go locally. You can now move on to a JSONiq tutorial. A RumbleDB tutorial will also follow soon.
 
 ## Running on a cluster
 
-You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done with the same command, as the master and deployment mode are usually already set up in cloud-managed clusters. More details are provided in the rest of the documentation.
+You can also try to run the RumbleDB shell on a cluster if you have one available and configured -- this is done with the same command, as the master and deployment mode are usually already set up in cloud-managed clusters. More details are provided in the rest of the documentation.

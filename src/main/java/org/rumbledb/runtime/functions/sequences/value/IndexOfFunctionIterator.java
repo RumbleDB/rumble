@@ -24,13 +24,13 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.*;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.List;
 
@@ -46,16 +46,27 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
     public IndexOfFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.sequenceIterator = this.children.get(0);
         this.searchIterator = this.children.get(1);
     }
 
+    private void checkCollation(DynamicContext context) {
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2)
+                .materializeFirstItemOrNull(context)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
+    }
+
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        checkCollation(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         this.search = this.searchIterator.materializeFirstItemOrNull(context);
 
@@ -67,6 +78,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         this.currentIndex = 0;
+        checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         this.search = this.searchIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         setNextResult();
@@ -80,6 +92,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         this.currentIndex = 0;
+        checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -111,7 +124,14 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             } else {
-                if (item.compareTo(this.search) == 0) {
+                long c = ComparisonIterator.compareItems(
+                    item,
+                    this.search,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                // if its double or float we additionally check that its not NanN, NaN cannot be found with indexOf
+                if (c == 0 && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }
@@ -120,7 +140,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }

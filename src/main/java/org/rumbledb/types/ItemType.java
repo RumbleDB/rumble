@@ -21,152 +21,460 @@
 package org.rumbledb.types;
 
 
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+
+import com.esotericsoftware.kryo.KryoSerializable;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class ItemType implements Serializable {
+public interface ItemType extends Serializable, KryoSerializable {
 
-    private static final long serialVersionUID = 1L;
-    private String name;
+    long serialVersionUID = 1L;
 
-    public static final ItemType objectItem = new ItemType("object");
-    public static final ItemType atomicItem = new ItemType("atomic");
-    public static final ItemType stringItem = new ItemType("string");
-    public static final ItemType integerItem = new ItemType("integer");
-    public static final ItemType decimalItem = new ItemType("decimal");
-    public static final ItemType doubleItem = new ItemType("double");
-    public static final ItemType booleanItem = new ItemType("boolean");
-    public static final ItemType arrayItem = new ItemType("array");
-    public static final ItemType nullItem = new ItemType("null");
-    public static final ItemType JSONItem = new ItemType("json-item");
-    public static final ItemType durationItem = new ItemType("duration");
-    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
-    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
-    public static final ItemType dateTimeItem = new ItemType("dateTime");
-    public static final ItemType dateItem = new ItemType("date");
-    public static final ItemType timeItem = new ItemType("time");
-    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
-    public static final ItemType anyURIItem = new ItemType("anyURI");
-    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
-    public static final ItemType item = new ItemType("item");
-    public static final ItemType functionItem = new ItemType("function");
+    /**
+     * Tests for itemType equality.
+     *
+     * @param other another object.
+     * @return true it is equal to other, false otherwise.
+     */
+    boolean equals(Object other);
 
-    public ItemType() {
+
+    /**
+     * Tests for itemType equality.
+     *
+     * @param otherType another item type.
+     * @return true it is equal to other, false otherwise.
+     */
+    default boolean isEqualTo(ItemType otherType) {
+        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
+            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
+                return false;
+            }
+            return this.toString().equals(otherType.toString());
+        }
+        if (this.getName() == null || otherType.getName() == null) {
+            return this == otherType;
+        }
+        return this.getName().equals(otherType.getName());
     }
+    // region kind
 
-    private ItemType(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public static ItemType getItemTypeByName(String name) {
-        if (name.equals(objectItem.name)) {
-            return objectItem;
-        }
-        if (name.equals(atomicItem.name)) {
-            return atomicItem;
-        }
-        if (name.equals(stringItem.name)) {
-            return stringItem;
-        }
-        if (name.equals(integerItem.name)) {
-            return integerItem;
-        }
-        if (name.equals(decimalItem.name)) {
-            return decimalItem;
-        }
-        if (name.equals(doubleItem.name)) {
-            return doubleItem;
-        }
-        if (name.equals(booleanItem.name)) {
-            return booleanItem;
-        }
-        if (name.equals(nullItem.name)) {
-            return nullItem;
-        }
-        if (name.equals(arrayItem.name)) {
-            return arrayItem;
-        }
-        if (name.equals(JSONItem.name)) {
-            return JSONItem;
-        }
-        if (name.equals(durationItem.name)) {
-            return durationItem;
-        }
-        if (name.equals(yearMonthDurationItem.name)) {
-            return yearMonthDurationItem;
-        }
-        if (name.equals(dayTimeDurationItem.name)) {
-            return dayTimeDurationItem;
-        }
-        if (name.equals(dateTimeItem.name)) {
-            return dateTimeItem;
-        }
-        if (name.equals(dateItem.name)) {
-            return dateItem;
-        }
-        if (name.equals(timeItem.name)) {
-            return timeItem;
-        }
-        if (name.equals(anyURIItem.name)) {
-            return anyURIItem;
-        }
-        if (name.equals(hexBinaryItem.name)) {
-            return hexBinaryItem;
-        }
-        if (name.equals(base64BinaryItem.name)) {
-            return base64BinaryItem;
-        }
-        if (name.equals(item.name)) {
-            return item;
-        }
-        throw new OurBadException("Type unrecognized: " + name);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return this.name.equals(((ItemType) other).getName());
-    }
-
-
-    public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(item)) {
-            return true;
-        }
-        if (superType.equals(this)) {
-            return true;
-        }
-        if (superType.equals(decimalItem)) {
-            return this.equals(decimalItem)
-                || this.equals(integerItem);
-        }
-        if (superType.equals(JSONItem)) {
-            return this.equals(objectItem)
-                || this.equals(arrayItem)
-                || this.equals(JSONItem);
-        }
-
-        if (superType.equals(atomicItem)) {
-            return this.equals(stringItem)
-                || this.equals(integerItem)
-                || this.equals(decimalItem)
-                || this.equals(doubleItem)
-                || this.equals(booleanItem)
-                || this.equals(anyURIItem);
-        }
-
+    /**
+     * @return true it [this] is a subtype of an atomic item type.
+     */
+    default boolean isAtomicItemType() {
         return false;
     }
 
-    @Override
-    public String toString() {
-        return this.name;
+    /**
+     * @return true it [this] is an object item type.
+     */
+    default boolean isObjectItemType() {
+        return false;
+    }
+
+    /**
+     * @return true it [this] is an array item type.
+     */
+    default boolean isArrayItemType() {
+        return false;
+    }
+
+    /**
+     * @return test if [this] is a subptype of a json item type
+     */
+    default boolean isJsonItemType() {
+        return this.equals(BuiltinTypesCatalogue.JSONItem) || isObjectItemType() || isArrayItemType();
+    }
+
+    default boolean isUnionType() {
+        return false;
+    }
+
+    /**
+     * @return true it [this] is a function item type.
+     */
+    default boolean isFunctionItemType() {
+        return false;
+    }
+
+    /**
+     *
+     * @return [true] if this is a numeric item type, false otherwise
+     */
+    default boolean isNumeric() {
+        return false;
+    }
+
+    // endregion
+
+    // region concrete-specific-function
+
+    /**
+     * Tests for QName.
+     *
+     * @return true if [this] item type has a QName
+     */
+    default boolean hasName() {
+        return false;
+    }
+
+
+    /**
+     *
+     * @return the itemtype QName if available
+     */
+    default Name getName() {
+        throw new UnsupportedOperationException("getName operation is not supported for this itemType");
+    }
+
+    /**
+     *
+     * @return the signature of the function item type if available
+     */
+    default FunctionSignature getSignature() {
+        throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
+    }
+
+    // endregion
+
+    // region hierarchy
+
+    /**
+     *
+     * @param superType another item type
+     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself.
+     *         If [this] has a name, then this is determined strictly based on the hierarchy.
+     *         If [this] does not have a name, then this is determined based on facets.
+     */
+    default boolean isSubtypeOf(ItemType superType) {
+        // the default methods works fine for all non-function types
+        // we exploit the fact that the type system is a tree (except for union types, that needs special checks)
+
+        // special check for unions
+        if (superType.isUnionType()) {
+            for (ItemType unionItemType : superType.getUnionContentFacet().getTypes()) {
+                if (this.isSubtypeOf(unionItemType)) {
+                    return true;
+                }
+            }
+        }
+
+        // get up the type tree and check for equality
+        ItemType current = this;
+        while (current.getTypeTreeDepth() > superType.getTypeTreeDepth()) {
+            current = current.getBaseType();
+        }
+
+        return current.equals(superType);
+    }
+
+    /**
+     *
+     * @param other another item type
+     * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
+     *         and [other] (does not take into account union types as common ancestor, but only the type tree)
+     */
+    default ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        ItemType current = this;
+        while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
+            other = other.getBaseType();
+        }
+        while (other.getTypeTreeDepth() < current.getTypeTreeDepth()) {
+            current = current.getBaseType();
+        }
+        while (!current.equals(other)) {
+            current = current.getBaseType();
+            other = other.getBaseType();
+        }
+        return current;
+    }
+
+    /**
+     *
+     * @return an int representing the depth of the item type in the type tree ('item' is the root with depth 0)
+     */
+    int getTypeTreeDepth();
+
+    /**
+     *
+     * @return the base type for a type, return null for the topmost item type
+     */
+    ItemType getBaseType();
+
+    /**
+     * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
+     *
+     * @param other a strict subtype of atomic item type to which we are trying to cast
+     * @return true if it is possible at static time to cast [this] to [other], false otherwise
+     */
+    default boolean isStaticallyCastableAs(ItemType other) {
+        throw new UnsupportedOperationException(
+                "isStaticallyCastableAs operation is not supported for non-atomic item types"
+        );
+    }
+
+    /**
+     *
+     * @param itemType another item type
+     * @return true if [this] can be promoted to [itemType]
+     */
+    default boolean canBePromotedTo(ItemType itemType) {
+        return false;
+    }
+
+    // endregion
+
+    // region user-defined
+
+    /**
+     *
+     * @return [true] if it is a user-defined type, false otherwise
+     */
+    default boolean isUserDefined() {
+        return false;
+    }
+
+    /**
+     *
+     * @return [true] if it is a primitive type
+     */
+    default boolean isPrimitive() {
+        return true;
+    }
+
+    /**
+     *
+     * @return the primitive type for a derived type, throw an error for primitive types
+     */
+    default ItemType getPrimitiveType() {
+        throw new UnsupportedOperationException("getPrimitiveType operation is supported only for non-primitive types");
+    }
+
+    /**
+     *
+     * @return a set containing the allowed facets for restricting the type
+     */
+    public Set<FacetTypes> getAllowedFacets();
+
+    /**
+     *
+     * @return the list of possible values for [this] item type or null if the enumeration facet is not set
+     */
+    default List<Item> getEnumerationFacet() {
+        throw new UnsupportedOperationException(
+                "enumeration facet is allowed only for atomic, object and array item types"
+        );
+    }
+
+    /**
+     *
+     * @return the list of constraints in the implementation-defined language for [this] item type (note that this facet
+     *         is cumulative) or an empty list if the constraints facet is not set
+     */
+    default List<String> getConstraintsFacet() {
+        throw new UnsupportedOperationException(
+                "constraints facet is allowed only for atomic, object and array item types"
+        );
+    }
+
+    /**
+     *
+     * @return the minimum length facet value for [this] item type or null if the restriction is not set
+     */
+    default Integer getMinLengthFacet() {
+        throw new UnsupportedOperationException(
+                "minimum length facet is not allowed for " + this.toString() + " item type"
+        );
+    }
+
+    /**
+     *
+     * @return the length facet value for [this] item type or null if the restriction is not set
+     */
+    default Integer getLengthFacet() {
+        throw new UnsupportedOperationException("length facet is not allowed for " + this.toString() + " item type");
+    }
+
+    /**
+     *
+     * @return the maximum length facet value for [this] item type or null if the restriction is not set
+     */
+    default Integer getMaxLengthFacet() {
+        throw new UnsupportedOperationException(
+                "maximum length facet is not allowed for " + this.toString() + " item type"
+        );
+    }
+
+    /**
+     *
+     * @return an item representing the minimum possible value (excluded) for [this] item type or null if the
+     *         restriction is not set
+     */
+    default Item getMinExclusiveFacet() {
+        throw new UnsupportedOperationException(
+                "minimum exclusive facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return an item representing the minimum possible value (included) for [this] item type or null if the
+     *         restriction is not set
+     */
+    default Item getMinInclusiveFacet() {
+        throw new UnsupportedOperationException(
+                "minimum inclusive facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return an item representing the maximum possible value (excluded) for [this] item type or null if the
+     *         restriction is not set
+     */
+    default Item getMaxExclusiveFacet() {
+        throw new UnsupportedOperationException(
+                "maximum exclusive facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return an item representing the maximum possible value (included) for [this] item type or null if the
+     *         restriction is not set
+     */
+    default Item getMaxInclusiveFacet() {
+        throw new UnsupportedOperationException(
+                "maximum inclusive facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return the total digits facet value for [this] item type or null if the restriction is not set
+     */
+    default Integer getTotalDigitsFacet() {
+        throw new UnsupportedOperationException(
+                "total digits facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return the fraction digits facet value for [this] item type or null if the restriction is not set
+     */
+    default Integer getFractionDigitsFacet() {
+        throw new UnsupportedOperationException(
+                "fraction digits facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return the explicit timezone facet value for [this] item type or null if the restriction is not set
+     */
+    default TimezoneFacet getExplicitTimezoneFacet() {
+        throw new UnsupportedOperationException(
+                "explicit timezone facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
+     * @return content facet value for object item types (cumulative facet)
+     */
+    default Map<String, FieldDescriptor> getObjectContentFacet() {
+        throw new UnsupportedOperationException(
+                "object content facet is allowed only for object item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     *
+     * @return closed facet value for object item types
+     */
+    default boolean getClosedFacet() {
+        throw new UnsupportedOperationException("closed facet is not allowed only for object item types");
+    }
+
+    /**
+     *
+     * @return content facet value for array item types
+     */
+    default ItemType getArrayContentFacet() {
+        throw new UnsupportedOperationException(
+                "array content facet is allowed only for array item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     *
+     * @return content facet value for union item types
+     */
+    default UnionContentDescriptor getUnionContentFacet() {
+        throw new UnsupportedOperationException("union content facet is allowed only for union item types");
+    }
+
+    // endregion
+
+    /**
+     *
+     * @return a String that uniquely identify an item type
+     */
+    default String getIdentifierString() {
+        if (!this.hasName()) {
+            return "<anonymous>";
+        }
+        return this.getName().toString();
+    }
+
+    /**
+     * Checks compatibility with DataFrames.
+     * 
+     * @return true if compatible with DataFrames and false otherwise.
+     */
+    default boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+        return false;
+    }
+
+    /**
+     * Returns the SparkSQL type of the item type for use in a query.
+     *
+     * @return String representing the SparkSQL type of the item type.
+     */
+    default String getSparkSQLType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getName());
+    }
+
+    String toString();
+
+    default boolean isResolved() {
+        return true;
+    }
+
+    default void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        return;
+    }
+
+    default void resolve(StaticContext context, ExceptionMetadata metadata) {
+        return;
     }
 }

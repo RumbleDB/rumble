@@ -21,6 +21,8 @@
 package org.rumbledb.expressions.module;
 
 
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -37,11 +39,13 @@ public class Prolog extends Node {
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
             List<FunctionDeclaration> functionDeclarations,
+            List<TypeDeclaration> typeDeclarations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         this.declarations = new ArrayList<Node>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
+        this.declarations.addAll(typeDeclarations);
         this.importedModules = new ArrayList<>();
     }
 
@@ -67,8 +71,32 @@ public class Prolog extends Node {
             .collect(Collectors.toList());
     }
 
+    public List<TypeDeclaration> getTypeDeclarations() {
+        return this.declarations.stream()
+            .filter(x -> x instanceof TypeDeclaration)
+            .map(x -> (TypeDeclaration) x)
+            .collect(Collectors.toList());
+    }
+
+    public boolean hasContextItemDeclaration() {
+        for (Node d : this.declarations) {
+            if (!(d instanceof VariableDeclaration)) {
+                continue;
+            }
+            VariableDeclaration vd = (VariableDeclaration) d;
+            if (vd.getVariableName().equals(Name.CONTEXT_ITEM)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void setDeclarations(List<Node> declarations) {
         this.declarations = declarations;
+    }
+
+    public void addDeclaration(Node declaration) {
+        this.declarations.add(declaration);
     }
 
     public void clearDeclarations() {
@@ -84,8 +112,34 @@ public class Prolog extends Node {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        for (int i = 0; i < this.declarations.size(); i++) {
+            this.declarations.get(i).serializeToJSONiq(sb, indent);
+            this.importedModules.get(i).serializeToJSONiq(sb, indent);
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitProlog(this, argument);
+    }
+
+    public static FunctionDeclaration getFunctionDeclarationFromProlog(
+            Prolog prolog,
+            FunctionIdentifier functionIdentifier
+    ) {
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
+                return declaration;
+            }
+        }
+        for (LibraryModule module : prolog.getImportedModules()) {
+            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 }
 
