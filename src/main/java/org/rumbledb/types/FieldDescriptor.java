@@ -9,7 +9,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.runtime.typing.CastIterator;
 
-public class FieldDescriptor implements Serializable {
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+public class FieldDescriptor implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -133,5 +138,27 @@ public class FieldDescriptor implements Serializable {
             }
             this.defaultValue = castValue;
         }
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.name);
+        kryo.writeClassAndObject(output, this.type);
+        output.writeBoolean(this.required);
+        kryo.writeClassAndObject(output, this.defaultValue);
+        output.writeBoolean(this.unique);
+        output.writeBoolean(this.requiredIsSet);
+        output.writeBoolean(this.uniqueIsSet);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.name = input.readString();
+        this.type = (ItemType) kryo.readClassAndObject(input);
+        this.required = input.readBoolean();
+        this.defaultValue = (Item) kryo.readClassAndObject(input);
+        this.unique = input.readBoolean();
+        this.requiredIsSet = input.readBoolean();
+        this.uniqueIsSet = input.readBoolean();
     }
 }

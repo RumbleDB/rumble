@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="[ 1, 2, 3 ]" :)
-declare variable $x := {"c": 5};
+declare %assignable variable $x := {"c": 5};
 while ($x.c eq 5) {
     $x := {"c": 3};
     exit returning [1, 2, 3];

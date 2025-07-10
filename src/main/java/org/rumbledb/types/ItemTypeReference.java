@@ -18,11 +18,26 @@ public class ItemTypeReference implements ItemType {
     private ItemType resolvedItemType;
     private Name name;
 
+    public ItemTypeReference() {
+    }
+
     public ItemTypeReference(Name name) {
         if (name == null) {
             throw new OurBadException("A type name cannot be null!");
         }
         this.name = name;
+    }
+
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        kryo.writeObjectOrNull(output, this.name, Name.class);
+        kryo.writeClassAndObject(output, this.resolvedItemType);
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        this.name = kryo.readObjectOrNull(input, Name.class);
+        this.resolvedItemType = (ItemType) kryo.readClassAndObject(input);
     }
 
     public boolean isResolved() {
@@ -39,14 +54,41 @@ public class ItemTypeReference implements ItemType {
         }
     }
 
+
+
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
-        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.name)) {
-            throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
+
+        Name renamed = renameAtomic(context.getRumbleConfiguration(), this.name);
+
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(renamed)) {
+            throw new UndefinedTypeException("Type undefined: " + renamed, metadata);
         }
-        this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(renamed);
         if (!this.resolvedItemType.isResolved()) {
             this.resolvedItemType.resolve(context, metadata);
         }
+    }
+
+    private static final Name oldAtomicName = new Name(Name.JS_NS, "js", "atomic");
+    private static final Name newAtomicName = new Name(Name.XS_NS, "xs", "anyAtomicType");
+
+    /**
+     * in jsoniq 1.0 anyAtomicType was called atomic. This function gives backwards compatibility by replacing atomic
+     * with anyAtomicType depending on the jsoniq version.
+     */
+    public static Name renameAtomic(RumbleRuntimeConfiguration config, Name oldName) {
+        if (config.getQueryLanguage().equals("jsoniq10")) {
+            if (oldName.getNamespace() != null && oldName.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
+                if (oldAtomicName.getLocalName().equals(oldName.getLocalName())) {
+                    return newAtomicName;
+                }
+            } else {
+                if (oldAtomicName.equals(oldName)) {
+                    return newAtomicName;
+                }
+            }
+        }
+        return oldName;
     }
 
     @Override

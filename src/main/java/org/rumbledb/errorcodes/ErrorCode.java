@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -23,6 +23,9 @@ package org.rumbledb.errorcodes;
 public enum ErrorCode {
 
     DivisionByZero("FOAR0001"),
+    NumericOverflowOrUnderflow("FOAR0002"),
+
+    ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
@@ -46,11 +49,10 @@ public enum ErrorCode {
     MatchesEmptyStringErrorCode("FORX0003"),
     InvalidReplacementStringErrorCode("FORX0004"),
 
-    NoTypedValueErrorCode("FOTY0012"),
+    FunctionAtomizationErrorCode("FOTY0013"),
 
 
-
-    DuplicatePairNameErrorCode("JNDY0003"),
+    DuplicatePairNameErrorCode("XQDY0137"),
 
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),
@@ -97,6 +99,8 @@ public enum ErrorCode {
 
 
     UnexpectedTypeErrorCode("XPTY0004"),
+    NodeAndNonNode("XTPY0018"),
+    UnexpectedNode("XPTY0019"),
 
     InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
@@ -104,6 +108,7 @@ public enum ErrorCode {
     InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
+    MultipleBaseURIExceptionCode("XQST0032"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
     DefaultCollationExceptionCode("XQST0038"),
@@ -117,10 +122,12 @@ public enum ErrorCode {
     EmptyModuleURIErrorCode("XQST0088"),
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
+    DirectElementConstructorTagMismatchErrorCode("XQST0118"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
-    ArithmeticOverflowOrUnderflow("FODT0002"),
+    DatetimeOverflowOrUnderflow("FODT0001"),
+    DurationOverflowOrUnderflow("FODT0002"),
     InvalidTimezoneValue("FODT0003"),
 
     InvalidUpdatingExpressionPositionErrorCode("XUST0001"),
@@ -133,6 +140,11 @@ public enum ErrorCode {
     UpdateTargetIsEmptySeqErrorCode("XUDY0027"),
 
     UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
+
+    InvalidElementNameErrorCode("XQDY0074"),
+    InvalidNodeNameErrorCode("XQDY0096"),
+    DuplicateAttributeErrorCode("XQDY0025"),
+    AttributeAfterNonAttributeErrorCode("XQTY0024"),
 
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
@@ -153,7 +165,6 @@ public enum ErrorCode {
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
     InvalidVariableDeclaration("SCIN0001");
-
 
     private String code;
 

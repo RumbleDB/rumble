@@ -1,43 +1,41 @@
 package org.rumbledb.api;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-
+import com.esotericsoftware.kryo.KryoSerializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+
+import java.time.*;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.KryoSerializable;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 
 /**
  * An instance of this class is an item in the JSONiq data model.
- *
  * JSONiq manipulates sequences of items.
- *
  * All calls should be made via this interface. Objects of type Item should never be cast to a subclass (in a subsequent
  * version,
  * we will make the classes implementing this interface visible only at the package level).
- *
  * An item can be structured or atomic or a function.
- *
  * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
  * lists of items.
- *
  * Atomic items have a lexical value and a type. Rumble does not support all atomic types yet.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
@@ -171,6 +169,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an atomic item of type period.
+     *
+     * @return true if it is an atomic item of type period, false otherwise.
+     */
+    default boolean isPeriod() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type yearMonthDuration.
      *
      * @return true if it is an atomic item of type yearMonthDuration, false otherwise.
@@ -186,6 +193,88 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default boolean isDayTimeDuration() {
         return false;
+    }
+
+    /**
+     * Return only month of the item, if it's DateTime or Duration
+     * It will not convert years into months
+     * 
+     * @return only month
+     */
+    default int getMonth() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Return year of the item, if it's DateTime or Duration
+     *
+     * @return year
+     */
+    default int getYear() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Return only day of the item, if it's DateTime or Duration
+     * It will not convert months and years into days.
+     * 
+     * @return only day
+     */
+    default int getDay() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Offset is an integer between −840 and 840 inclusive
+     *
+     * @return offset in minutes
+     */
+    default int getOffset() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Return only hour of the item, if it's DateTime, Time or Duration
+     *
+     * @return only hour
+     */
+    default int getHour() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
+    }
+
+    /**
+     * Return only minutes of the item, if it's DateTime, Time or Duration
+     * It will not convert hours into minutes
+     * 
+     * @return only minute
+     */
+    default int getMinute() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
+    }
+
+    /**
+     * Return only seconds of the item, if it's DateTime, Time or Duration
+     * It will not convert hours and minutes into seconds
+     * 
+     * @return only seconds
+     */
+    default double getSecond() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
+    }
+
+    /**
+     * Return the only nanoseconds of the item, if it's DateTime, Time or Duration
+     * It will not convert hours, minutes and seconds into nanoseconds
+     * It exists only if the value in seconds will have decimal values, otherwise it will return 0
+     * 
+     * @return only nanoseconds
+     */
+    default int getNanosecond() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+
     }
 
     /**
@@ -294,6 +383,55 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if it is an atomic item of type base64Binary, false otherwise.
      */
     default boolean isBase64Binary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Element node.
+     *
+     * @return true if it is an XML Element node, false otherwise.
+     */
+    default boolean isElementNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Attribute node.
+     *
+     * @return true if it is an XML Attribute node, false otherwise.
+     */
+    default boolean isAttributeNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Text node.
+     *
+     * @return true if it is an XML Text node, false otherwise.
+     */
+    default boolean getContent() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Document node.
+     *
+     * @return true if it is an XML Document node, false otherwise.
+     */
+    default boolean isDocumentNode() {
+        return false;
+    }
+
+    default boolean isTextNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML node.
+     *
+     * @return true if it is an XML node, false otherwise.
+     */
+    default boolean isNode() {
         return false;
     }
 
@@ -421,21 +559,49 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return the period value as a Period.
      */
-    default Period getDurationValue() {
+    default Period getPeriodValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem or dateItem or timeItem.
+     * Returns the duration value of the item, if it is a duration.
      *
-     * @return the dateTime value as a DateTime.
+     * @return the duration value as a Duration.
      */
-    default DateTime getDateTimeValue() {
+    default Duration getDurationValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
+     * Returns the EpochMillis of the item, if it's DateTime or Duration
+     * It will collect all the parts of the item and compress it into the EpochMillis
+     * 
+     * @return the EpochMillis
+     */
+    default long getEpochMillis() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the dateTime value of the item, if it is an atomic item of type dateTimeItem or dateItem or timeItem.
+     *
+     * @return the dateTime value as a OffsetDateTime.
+     */
+    default OffsetDateTime getDateTimeValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the time value of the item, if it is an atomic item of type or timeItem.
+     *
+     * @return the time value as a OffsetTime.
+     */
+    default OffsetTime getTimeValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the byte[] value of the item, if it is an atomic item of type hexBinary or Base64Binary.
      *
      * @return the binary value as an array of bytes.
      */
@@ -484,7 +650,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public RuntimeIterator getBodyIterator() {
+    default RuntimeIterator getBodyIterator() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -493,7 +659,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public Map<Name, List<Item>> getLocalVariablesInClosure() {
+    default Map<Name, List<Item>> getLocalVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -502,7 +668,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
+    default Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -511,7 +677,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    default Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -520,7 +686,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public DynamicContext getModuleDynamicContext() {
+    default DynamicContext getModuleDynamicContext() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -623,7 +789,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param context a dynamic context.
      * @param isArray whether to always wrap the result in an array.
      */
-    default public void putLazyItemByKey(
+    default void putLazyItemByKey(
             String key,
             RuntimeIterator iterator,
             DynamicContext context,
@@ -841,6 +1007,72 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default Transformer getTransformer() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the string value of the text item, if it is a text item.
+     *
+     * @return the string value.
+     */
+    default String getTextValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Method sets the parent item for all descendents of the current item.
+     */
+    default void addParentToDescendants() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default List<Item> attributes() {
+        return new ArrayList<>();
+    }
+
+    default List<Item> children() {
+        return new ArrayList<>();
+    }
+
+    default String nodeName() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default Item parent() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default List<Item> atomizedValue() {
+        if (isAtomic())
+            return Collections.singletonList(this);
+        else
+            throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default void setParent(Item parent) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+
+    /**
+     * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * uniqueness
+     * 
+     * @return the XML document position
+     */
+    default XMLDocumentPosition getXmlDocumentPosition() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Set the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
+     * uniqueness
+     * 
+     * @param path the path of the XML document
+     * @param current the current position
+     * @return the new position
+     */
+    default int setXmlDocumentPosition(String path, int current) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }

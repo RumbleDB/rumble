@@ -44,7 +44,6 @@ public class StaticTypeTests extends AnnotationsTestsBase {
                 return "unknown";
             }
         });
-
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 

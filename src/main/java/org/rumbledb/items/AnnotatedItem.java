@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import java.time.OffsetDateTime;
+import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -19,7 +19,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -48,13 +47,16 @@ public class AnnotatedItem implements Item {
     @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
+            if (((Item) otherItem).isAtomic()) {
+                long c = ComparisonIterator.compareItems(
+                    this,
+                    (Item) otherItem,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                return c == 0;
+            }
+            return this.itemToAnnotate.equals(otherItem);
         }
         return false;
     }
@@ -62,14 +64,13 @@ public class AnnotatedItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.itemToAnnotate);
-        kryo.writeClassAndObject(output, this.type.getName());
+        kryo.writeClassAndObject(output, this.type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
-        Name name = (Name) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
-        this.type = new ItemTypeReference(name);
+        this.type = (ItemType) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
     }
 
     @Override
@@ -253,12 +254,12 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Period getDurationValue() {
-        return this.itemToAnnotate.getDurationValue();
+    public Period getPeriodValue() {
+        return this.itemToAnnotate.getPeriodValue();
     }
 
     @Override
-    public DateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.itemToAnnotate.getDateTimeValue();
     }
 

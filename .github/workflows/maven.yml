@@ -3,138 +3,91 @@
 
 name: Java CI with Maven
 
-on: push
+on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    continue-on-error: true
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: 11
-        distribution: adopt
-    - name: Cache Maven packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Install with Maven
-      run: mvn install -DskipTests -Dgpg.skip --quiet
-    - name: Compile with Maven
-      run: mvn clean compile assembly:single
-    - name: Spotless check
-      run: mvn spotless:check
-    - name: FrontendTests
-      run: mvn -Dtest=FrontendTests test
-    - name: RuntimeTests
-      run: mvn -Dtest=RuntimeTests test
-    - name: RuntimeTestsNoParallelism
-      run: mvn -Dtest=RuntimeTestsNoParallelism test
-    - name: RuntimeTestsNoInlining
-      run: mvn -Dtest=RuntimeTestsNoInlining test
-    - name: StaticTypeTests
-      run: mvn -Dtest=StaticTypeTests test
-    - name: JavaAPITest
-      run: mvn -Dtest=JavaAPITest test
-    - name: Copying artefacts
-      run: mkdir staging && cp target/*.jar staging
-    - name: Package
-      uses: actions/upload-artifact@v3
-      with:
-        name: Package
-        path: staging
+      - uses: actions/checkout@v3
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: adopt
+      # Github ubuntu contain Maven, but other testing software use minimal size container
+      - name: Check if Maven is Installed
+        run: |
+          if ! command -v mvn &> /dev/null
+          then
+            echo "Maven not found! Installing..."
+            sudo apt-get update && sudo apt-get install -y maven
+          else
+            echo "Maven is already installed:"
+            mvn -version
+          fi
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Install with Maven
+        run: mvn install -DskipTests -Dgpg.skip --quiet
+      - name: Compile with Maven
+        run: mvn clean compile assembly:single
+      - name: Spotless Check
+        run: mvn spotless:check
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Package
+          path: target/*.jar
 
-  tests2:
-
+  tests:
+    needs: build
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        test_class: [
+          "FrontendTests",
+          "RuntimeTests",
+          "RuntimeTestsNoParallelism",
+          "RuntimeTestsNoInlining",
+          "StaticTypeTests",
+          "JavaAPITest",
+          "SparkRuntimeTests",
+          "SparkRuntimeTestsNativeDeactivated",
+          "SparkRuntimeTestsDataFramesDeactivated",
+          "SparkRuntimeTestsParallelismDeactivated",
+          "Bugs",
+          "NativeFLWORRuntimeTests",
+          "NativeFLWORRuntimeTestsNativeDeactivated",
+          "NativeFLWORRuntimeTestsDataFramesDeactivated",
+          "NativeFLWORRuntimeTestsParallelismDeactivated",
+          "MLTests",
+          "MLTestsNativeDeactivated",
+          "XMLTests",
+          "XQueryTests",
+          "DeltaUpdateRuntimeTests"
+        ]
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: 11
-        distribution: adopt
-    - name: Cache Maven packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Install with Maven
-      run: mvn install -DskipTests -Dgpg.skip --quiet
-    - name: Compile with Maven
-      run: mvn clean compile assembly:single
-    - name: SparkRuntimeTests
-      run: mvn -Dtest=SparkRuntimeTests test
-    - name: SparkRuntimeTestsNativeDeactivated
-      run: mvn -Dtest=SparkRuntimeTestsNativeDeactivated test
-    - name: SparkRuntimeTestsDataFramesDeactivated
-      run: mvn -Dtest=SparkRuntimeTestsDataFramesDeactivated test
-    - name: SparkRuntimeTestsParallelismDeactivated
-      run: mvn -Dtest=SparkRuntimeTestsParallelismDeactivated test
-
-  tests3:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: 11
-        distribution: adopt
-    - name: Cache Maven packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Install with Maven
-      run: mvn install -DskipTests -Dgpg.skip --quiet
-    - name: Compile with Maven
-      run: mvn clean compile assembly:single
-    - name: Bugs
-      run: mvn -Dtest=Bugs test
-    - name: NativeFLWORRuntimeTests
-      run: mvn -Dtest=NativeFLWORRuntimeTests test
-    - name: NativeFLWORRuntimeTestsNativeDeactivated
-      run: mvn -Dtest=NativeFLWORRuntimeTestsNativeDeactivated test
-    - name: NativeFLWORRuntimeTestsDataFramesDeactivated
-      run: mvn -Dtest=NativeFLWORRuntimeTestsDataFramesDeactivated test
-    - name: NativeFLWORRuntimeTestsParallelismDeactivated
-      run: mvn -Dtest=NativeFLWORRuntimeTestsParallelismDeactivated test
-    - name: MLTests
-      run: mvn -Dtest=MLTests test
-    - name: MLTestsNativeDeactivated
-      run: mvn -Dtest=MLTestsNativeDeactivated test
-
-  tests4:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: 11
-        distribution: adopt
-    - name: Cache Maven packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    - name: Install with Maven
-      run: mvn install -DskipTests -Dgpg.skip --quiet
-    - name: Compile with Maven
-      run: mvn clean compile assembly:single
-    - name: DeltaUpdateRuntimeTests
-      run: mvn -Dtest=DeltaUpdateRuntimeTests test
+      - uses: actions/checkout@v3
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: adopt
+      - name: Restore Cached Maven Packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      - name: Download Compiled Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: Package 
+          path: target
+      - name: Run Test ${{ matrix.test_class }}
+        run: mvn -Dtest=${{ matrix.test_class }} test

@@ -39,7 +39,6 @@ import utils.FileManager;
 import scala.Function0;
 import scala.util.Properties;
 
-
 import java.io.File;
 import java.util.*;
 
@@ -60,7 +59,6 @@ public class RuntimeTests extends AnnotationsTestsBase {
                 return "unknown";
             }
         });
-
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 

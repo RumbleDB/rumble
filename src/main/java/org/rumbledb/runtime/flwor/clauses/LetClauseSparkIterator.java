@@ -61,14 +61,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -294,7 +287,12 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
             }
         }
-
+        if (inputTupleValueExpression == null) {
+            throw new JobWithinAJobException(
+                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.",
+                    getMetadata()
+            );
+        }
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
         Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
@@ -822,25 +820,37 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
+        letContext.setView(input);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         LogManager.getLogger("LetClauseSparkIterator")
             .info(
-                "Rumble was able to optimize a let clause to a native SQL query."
+                "Rumble was able to optimize a let clause to a native SQL query: "
+                    + String.format(
+                        "select %s %s as `%s` from (%s)",
+                        selectSQL,
+                        nativeQuery.getResultingQuery(),
+                        SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
+                            ? newVariableName + ".sequence"
+                            : newVariableName,
+                        nativeQuery.getView()
+                    )
             );
-        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-        String input = FlworDataFrameUtils.createTempView(dataFrame);
         return dataFrame.sparkSession()
             .sql(
                 String.format(
-                    "select %s %s as `%s` from %s",
+                    "select %s %s as `%s` from (%s)",
                     selectSQL,
                     nativeQuery.getResultingQuery(),
-                    newVariableName,
-                    input
+                    SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
+                        ? newVariableName + ".sequence"
+                        : newVariableName,
+                    nativeQuery.getView()
                 )
             );
     }
@@ -880,5 +890,50 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.child != null) {
+            nativeClauseContext = this.child.generateNativeQuery(nativeClauseContext);
+            if (nativeClauseContext == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        } else if (nativeClauseContext.getView() == null) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
+        NativeClauseContext expressionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+        if (expressionContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String variableName = nativeClauseContext.addVariable(this.variableName).toString();
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
+            (StructType) nativeClauseContext.getSchema(),
+            null,
+            null,
+            null
+        );
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(expressionContext.getResultingType().getArity())) {
+            variableName = variableName + ".sequence";
+        }
+        String resultString = String.format(
+            "select %s %s as `%s` from (%s)",
+            FlworDataFrameUtils.getSQLColumnProjection(allColumns, true),
+            expressionContext.getResultingQuery(),
+            variableName,
+            expressionContext.getView()
+        );
+        NativeClauseContext letClauseContext = new NativeClauseContext(nativeClauseContext);
+        letClauseContext.setSchema(
+            ((StructType) letClauseContext.getSchema()).add(
+                variableName,
+                TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
+            )
+        );
+        letClauseContext.setView(resultString);
+        letClauseContext.setResultingQuery(null);
+        letClauseContext.setResultingType(null);
+        return letClauseContext;
     }
 }

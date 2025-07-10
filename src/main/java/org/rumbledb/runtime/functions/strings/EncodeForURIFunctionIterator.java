@@ -68,6 +68,7 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
             try {
                 encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
                     .replace("+", "%20")
+                    .replace("*", "%2A")
                     .replace("%7E", "~");
             } catch (UnsupportedEncodingException e) {
                 throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or

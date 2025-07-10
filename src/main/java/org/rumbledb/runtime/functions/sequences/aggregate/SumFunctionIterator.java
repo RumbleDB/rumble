@@ -33,8 +33,11 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
@@ -115,21 +118,28 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         iterator.open(context);
 
-        Item result = zeroElement;
+        Item result = null;
         while (iterator.hasNext()) {
             Item nextValue = iterator.next();
-            Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
-            if (sum == null) {
-                throw new InvalidArgumentTypeException(
-                        " \"+\": operation not possible with parameters of type \""
-                            + result.getDynamicType().toString()
-                            + "\" and \""
-                            + result.getDynamicType().toString()
-                            + "\"",
-                        metadata
-                );
+            if (result == null) {
+                result = nextValue;
+            } else {
+                Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
+                if (sum == null) {
+                    throw new InvalidArgumentTypeException(
+                            " \"+\": operation not possible with parameters of type \""
+                                + result.getDynamicType().toString()
+                                + "\" and \""
+                                + nextValue.getDynamicType().toString()
+                                + "\"",
+                            metadata
+                    );
+                }
+                result = sum;
             }
-            result = sum;
+        }
+        if (result == null) {
+            result = zeroElement;
         }
         iterator.close();
         return result;
@@ -142,8 +152,10 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ExceptionMetadata metadata
     ) {
         JavaRDD<Item> rdd = iterator.getRDD(context);
-        Item result = rdd.fold(zeroElement, new SumClosure(metadata));
-        return result;
+        if (rdd.count() == 0) {
+            return zeroElement;
+        }
+        return rdd.reduce(new SumClosure(metadata));
     }
 
     private static Item computeDataFrame(
@@ -179,5 +191,28 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } else {
             return super.getVariableDependencies();
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!childContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
+            return new NativeClauseContext(
+                    childContext,
+                    String.format(
+                        "aggregate(%s, decimal(0), (x, y) -> decimal(x + y))",
+                        childContext.getResultingQuery()
+                    ),
+                    SequenceType.INTEGER
+            );
+        }
+        // each row contains a single value
+        return childContext;
     }
 }

@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.joda.time.DateTime;
+import java.time.OffsetDateTime;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -9,39 +10,31 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.OffsetTime;
 import java.util.List;
 
 public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateItem = null;
-    private Item timeItem = null;
 
-    public DateTimeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public DateTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateItem = this.children.get(0)
-            .materializeFirstItemOrNull(context);
-        this.timeItem = this.children.get(1)
-            .materializeFirstItemOrNull(context);
-        if (this.dateItem == null || this.timeItem == null) {
+        Item dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item timeItem = this.children.get(1).materializeFirstItemOrNull(context);
+        if (dateItem == null || timeItem == null) {
             return null;
         }
-        DateTime dt = null;
-        DateTime dateDt = this.dateItem.getDateTimeValue();
-        DateTime timeDt = this.timeItem.getDateTimeValue();
+        OffsetDateTime dt;
+        OffsetDateTime dateDt = dateItem.getDateTimeValue();
+        OffsetTime timeDt = timeItem.getTimeValue();
 
-        if (this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            if (dateDt.getZone() == timeDt.getZone()) {
-                dt = new DateTime().withZone(dateDt.getZone())
-                    .withDate(dateDt.toLocalDate())
-                    .withTime(timeDt.toLocalTime());
+        if (dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
+            if (dateDt.getOffset() == timeDt.getOffset()) {
+                dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
                 throw new InconsistentTimezonesException(
@@ -49,21 +42,14 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         getMetadata()
                 );
             }
-        } else if (this.dateItem.hasTimeZone() && !this.timeItem.hasTimeZone()) {
-            dt = new DateTime().withZone(dateDt.getZone())
-                .withDate(dateDt.toLocalDate())
-                .withTime(timeDt.toLocalTime());
+        } else if (dateItem.hasTimeZone() && !timeItem.hasTimeZone()) {
+            dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
-        } else if (!this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            dt = new DateTime().withZone(timeDt.getZone())
-                .withDate(dateDt.toLocalDate())
-                .withTime(timeDt.toLocalTime());
-            return ItemFactory.getInstance().createDateTimeItem(dt.withTime(timeDt.toLocalTime()), true);
+        } else if (!dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
+            dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), timeDt.getOffset());
+            return ItemFactory.getInstance().createDateTimeItem(dt, true);
         }
-        dt = new DateTime(dateDt).withTime(timeDt.toLocalTime());
+        dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
         return ItemFactory.getInstance().createDateTimeItem(dt, false);
-
     }
-
-
 }

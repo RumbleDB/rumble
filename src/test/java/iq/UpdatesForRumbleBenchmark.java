@@ -36,7 +36,6 @@ public class UpdatesForRumbleBenchmark {
             }
         });
 
-
     public List<FileTuple> benchmarkFiles;
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
@@ -193,7 +192,7 @@ public class UpdatesForRumbleBenchmark {
         ////// NEW ORDER TRANSACTION
         // RUMBLE
         for (Integer power : powersOf2) {
-            benchmarkFiles.add(
+            this.benchmarkFiles.add(
                 new FileTuple(
                         "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta-benchmark/new_order_trans/update_new_order_"
                             + power
@@ -218,7 +217,7 @@ public class UpdatesForRumbleBenchmark {
 
         // SPARK
         for (Integer power : powersOf2) {
-            benchmarkFiles.add(
+            this.benchmarkFiles.add(
                 new FileTuple(
                         null,
                         (tables) -> {
@@ -697,19 +696,19 @@ public class UpdatesForRumbleBenchmark {
         }
 
         public List<String> getTablePaths() {
-            return tablePaths;
+            return this.tablePaths;
         }
 
         public List<String> getCreateTablePaths() {
-            return createTablePaths;
+            return this.createTablePaths;
         }
 
         public String getOutputPath() {
-            return outputPath;
+            return this.outputPath;
         }
 
         public boolean isSQL() {
-            return isSQL;
+            return this.isSQL;
         }
     }
 }

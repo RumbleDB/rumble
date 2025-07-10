@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -24,6 +24,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -48,11 +49,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -97,6 +94,18 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -186,6 +195,14 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitPostfixLookupExpression(PostfixLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitUnaryLookupExpression(UnaryLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     public T visitFilterExpression(FilterExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -219,6 +236,42 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
+
+    // region xml
+
+    public T visitDirElemConstructor(DirElemConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitComputedElementConstructor(ComputedElementConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTextNodeConstructor(TextNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTextNode(TextNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAttributeNode(AttributeNodeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitAttributeNodeContent(AttributeNodeContentExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     // endregion
 
     // region literal
@@ -285,6 +338,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitComparisonExpr(ComparisonExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitNodeComparisonExpr(NodeComparisonExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -452,5 +509,13 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, T argument) {
         return defaultAction(statement, argument);
+    }
+
+    public T visitStepExpr(StepExpr stepExpr, T argument) {
+        return defaultAction(stepExpr, argument);
+    }
+
+    public T visitSlashExpr(SlashExpr slashExpr, T argument) {
+        return defaultAction(slashExpr, argument);
     }
 }

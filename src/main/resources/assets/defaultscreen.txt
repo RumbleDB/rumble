@@ -39,7 +39,7 @@ rumbledb repl
 
 **** resource use configuration ****
 
-The docker edition of RumbleDB cannot change the number of cores or the memory allocation.
+The homebrew edition of RumbleDB cannot change the number of cores or the memory allocation.
 If you wish to do so, you could consider using the standalone RumbleDB jar.
 
 More documentation on available CLI parameters is available on https://www.rumbledb.org/
