@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.OurBadException;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 
-@SuppressWarnings("restriction")
 public class RumbleServer {
 
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;

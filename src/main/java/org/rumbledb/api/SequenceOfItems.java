@@ -2,11 +2,16 @@ package org.rumbledb.api;
 
 import java.util.List;
 
+import org.apache.spark.SparkRuntimeException;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -87,7 +92,25 @@ public class SequenceOfItems {
         if (!this.isMaterialisable()) {
             return false;
         }
-        return this.iterator.hasNext();
+        try {
+            return this.iterator.hasNext();
+        } catch (NumberFormatException e) {
+            RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            ex.initCause(e);
+            throw ex;
+        } catch (SparkRuntimeException e) {
+            if (e.getMessage().contains("CAST_INVALID_INPUT")) {
+                RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                ex.initCause(e);
+                throw ex;
+            } else {
+                throw e;
+            }
+        } catch (UnsupportedOperationException e) {
+            RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            ex.initCause(e);
+            throw ex;
+        }
     }
 
     /**
@@ -152,7 +175,25 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getRDD(this.dynamicContext);
+        try {
+            return this.iterator.getRDD(this.dynamicContext);
+        } catch (NumberFormatException e) {
+            RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            ex.initCause(e);
+            throw ex;
+        } catch (SparkRuntimeException e) {
+            if (e.getMessage().contains("CAST_INVALID_INPUT")) {
+                RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                ex.initCause(e);
+                throw ex;
+            } else {
+                throw e;
+            }
+        } catch (UnsupportedOperationException e) {
+            RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+            ex.initCause(e);
+            throw ex;
+        }
     }
 
     /**
@@ -226,8 +267,26 @@ public class SequenceOfItems {
             if (!this.isMaterialisable()) {
                 return -1;
             }
-            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
-            return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+            try {
+                JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
+                return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+            } catch (NumberFormatException e) {
+                RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                ex.initCause(e);
+                throw ex;
+            } catch (SparkRuntimeException e) {
+                if (e.getMessage().contains("CAST_INVALID_INPUT")) {
+                    RumbleException ex = new CastException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                    ex.initCause(e);
+                    throw ex;
+                } else {
+                    throw e;
+                }
+            } catch (UnsupportedOperationException e) {
+                RumbleException ex = new UnexpectedTypeException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+                ex.initCause(e);
+                throw ex;
+            }
         } else {
             return populateList(resultList);
         }

@@ -453,7 +453,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .info(
                 "Rumble was able to optimize a where clause to a native SQL query: "
                     + String.format(
-                        "select %s from (%s) where %s",
+                        "select %s from (%s) where true and %s",
                         FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                         nativeQuery.getView(),
                         nativeQuery.getResultingQuery()
@@ -464,7 +464,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "select %s from (%s) where %s",
+                            // Spark SQL but confusing where (FALSE) with a table and column name.
+                            "select %s from (%s) where true and %s",
                             FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                             nativeQuery.getView(),
                             nativeQuery.getResultingQuery()

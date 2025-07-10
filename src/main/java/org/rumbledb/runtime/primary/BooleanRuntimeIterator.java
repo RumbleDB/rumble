@@ -28,6 +28,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -51,6 +52,14 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 nativeClauseContext,
                 "" + this.item.getBooleanValue(),
                 new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+        );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                this.item.getBooleanValue() ? "(TRUE)" : "(FALSE)"
         );
     }
 }

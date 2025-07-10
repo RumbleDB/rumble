@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 import java.math.BigDecimal;
@@ -110,22 +109,21 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
+        if (!this.child.getStaticType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String leftQuery = leftResult.getResultingQuery();
-        SequenceType resultType = leftResult.getResultingType();
         if (this.negated) {
             String resultingQuery = "( "
                 + " - "
                 + leftQuery
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+            return new NativeClauseContext(nativeClauseContext, resultingQuery);
         } else {
             String resultingQuery = "( "
                 + leftQuery
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+            return new NativeClauseContext(nativeClauseContext, resultingQuery);
         }
     }
 }

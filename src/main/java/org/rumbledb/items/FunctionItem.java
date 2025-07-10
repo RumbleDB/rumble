@@ -58,10 +58,9 @@ import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 public class FunctionItem implements Item {
 
     private static final long serialVersionUID = 1L;
+
     private FunctionIdentifier identifier;
     private List<Name> parameterNames;
-
-    // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
     private DynamicContext dynamicModuleContext;
@@ -232,28 +231,20 @@ public class FunctionItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
-        kryo.writeObject(output, this.signature.getParameterTypes());
-        kryo.writeObject(output, this.signature.getReturnType());
-        // kryo.writeObject(output, this.bodyIterator);
+        kryo.writeObject(output, this.signature);
         kryo.writeObject(output, this.localVariablesInClosure);
-        kryo.writeObject(output, this.RDDVariablesInClosure);
-        kryo.writeObject(output, this.dataFrameVariablesInClosure);
-        kryo.writeObject(output, this.dynamicModuleContext);
-
-        // convert RuntimeIterator to byte[] data
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this.bodyIterator);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            output.writeInt(data.length);
-            output.writeBytes(data);
-        } catch (Exception e) {
+        if (!this.RDDVariablesInClosure.isEmpty()) {
             throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
+                    "We do not support serializing RDDs in function closures."
             );
         }
+        if (!this.dataFrameVariablesInClosure.isEmpty()) {
+            throw new OurBadException(
+                    "We do not support serializing DataFrames in function closures."
+            );
+        }
+        kryo.writeObject(output, this.dynamicModuleContext);
+        kryo.writeClassAndObject(output, this.bodyIterator);
     }
 
     @SuppressWarnings("unchecked")
@@ -261,26 +252,12 @@ public class FunctionItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
-        List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
-        SequenceType returnType = kryo.readObject(input, SequenceType.class);
-        this.signature = new FunctionSignature(parameters, returnType);
-        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
+        this.signature = kryo.readObject(input, FunctionSignature.class);
         this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.RDDVariablesInClosure = new HashMap<>();
+        this.dataFrameVariablesInClosure = new HashMap<>();
         this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
-
-        try {
-            int dataLength = input.readInt();
-            byte[] data = input.readBytes(dataLength);
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIterator = (RuntimeIterator) ois.readObject();
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
-            );
-        }
+        this.bodyIterator = (RuntimeIterator) kryo.readClassAndObject(input);
     }
 
     @Override

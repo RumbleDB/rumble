@@ -11,6 +11,10 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.util.List;
 import java.util.Set;
 
@@ -19,8 +23,11 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
     private static final long serialVersionUID = 1L;
 
     private ItemType baseType;
+    private ItemType baseType;
     private ItemType primitiveType;
     private int typeTreeDepth;
+    private boolean isUserDefined;
+    private Name name;
     private boolean isUserDefined;
     private Name name;
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
@@ -28,6 +35,9 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
     private List<String> constraints;
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
+
+    DerivedAtomicItemType() {
+    }
 
     DerivedAtomicItemType() {
     }
@@ -704,5 +714,47 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
             return "SHORT";
         }
         return this.primitiveType.getSparkSQLType();
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.name);
+        kryo.writeClassAndObject(output, this.baseType);
+        kryo.writeClassAndObject(output, this.primitiveType);
+        kryo.writeObject(output, this.typeTreeDepth);
+        kryo.writeObject(output, this.isUserDefined);
+        kryo.writeClassAndObject(output, this.minInclusive);
+        kryo.writeClassAndObject(output, this.maxInclusive);
+        kryo.writeClassAndObject(output, this.minExclusive);
+        kryo.writeClassAndObject(output, this.maxExclusive);
+        kryo.writeObjectOrNull(output, this.minLength, Integer.class);
+        kryo.writeObjectOrNull(output, this.length, Integer.class);
+        kryo.writeObjectOrNull(output, this.maxLength, Integer.class);
+        kryo.writeObjectOrNull(output, this.totalDigits, Integer.class);
+        kryo.writeObjectOrNull(output, this.fractionDigits, Integer.class);
+        // kryo.writeObject(output, this.constraints);
+        // kryo.writeObjectOrNull(output, this.enumeration, ArrayList.class);
+        // kryo.writeObject(output, this.explicitTimezone);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.name = kryo.readObject(input, Name.class);
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.primitiveType = (ItemType) kryo.readClassAndObject(input);
+        this.typeTreeDepth = kryo.readObject(input, Integer.class);
+        this.isUserDefined = kryo.readObject(input, Boolean.class);
+        this.minInclusive = (Item) kryo.readClassAndObject(input);
+        this.maxInclusive = (Item) kryo.readClassAndObject(input);
+        this.minExclusive = (Item) kryo.readClassAndObject(input);
+        this.maxExclusive = (Item) kryo.readClassAndObject(input);
+        this.minLength = kryo.readObjectOrNull(input, Integer.class);
+        this.length = kryo.readObjectOrNull(input, Integer.class);
+        this.maxLength = kryo.readObjectOrNull(input, Integer.class);
+        this.totalDigits = kryo.readObjectOrNull(input, Integer.class);
+        this.fractionDigits = kryo.readObjectOrNull(input, Integer.class);
+        // this.constraints = kryo.readObject(input, ArrayList.class);
+        // this.enumeration = kryo.readObjectOrNull(input, ArrayList.class);
+        // this.explicitTimezone = kryo.readObject(input, TimezoneFacet.class);
     }
 }

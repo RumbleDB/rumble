@@ -80,14 +80,14 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
+            SequenceType.Arity.OneOrMore.isSubtypeOf(this.leftIterator.getStaticType().getArity())
                 ||
                 SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
         ) {
             return NativeClauseContext.NoNativeQuery;
         }
         SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
-            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+            && this.leftIterator.getStaticType().getArity() == SequenceType.Arity.One)
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
         String resultingQuery = "( "

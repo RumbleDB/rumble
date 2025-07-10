@@ -264,8 +264,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             if (leftSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
-                        null,
-                        nativeClauseContext.getResultingType()
+                        null
                 );
             } else {
                 if (leftSchema instanceof ArrayType) {

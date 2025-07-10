@@ -3,6 +3,10 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.util.Set;
 
 /**
@@ -87,5 +91,15 @@ public class ItemItemType implements ItemType {
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.name);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.name = kryo.readObject(input, Name.class);
     }
 }

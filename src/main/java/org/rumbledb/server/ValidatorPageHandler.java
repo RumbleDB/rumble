@@ -8,7 +8,6 @@ import org.rumbledb.cli.Main;
 import java.io.IOException;
 import java.io.OutputStream;
 
-@SuppressWarnings("restriction")
 public class ValidatorPageHandler implements HttpHandler {
 
     public ValidatorPageHandler() {

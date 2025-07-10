@@ -4,6 +4,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.util.*;
 
 import static org.rumbledb.types.BuiltinTypesCatalogue.*;
@@ -379,5 +383,25 @@ public class AtomicItemType implements ItemType, com.esotericsoftware.kryo.KryoS
             return "DECIMAL";
         }
         throw new UnsupportedOperationException("getSparkSQLType is unsupported for " + this.getPrimitiveType());
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.name);
+        kryo.writeObject(output, this.allowedFacets.size());
+        for (FacetTypes f : this.allowedFacets) {
+            kryo.writeObject(output, f);
+        }
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.name = kryo.readObject(input, Name.class);
+        int n = kryo.readObject(input, Integer.class);
+        this.allowedFacets = new HashSet<>(n);
+        for (int i = 0; i < n; ++i) {
+            FacetTypes t = kryo.readObject(input, FacetTypes.class);
+            this.allowedFacets.add(t);
+        }
     }
 }
