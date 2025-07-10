@@ -36,16 +36,6 @@ public class Main {
     public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
-        String javaVersion = System.getProperty("java.version");
-        if (!javaVersion.startsWith("11.") && !javaVersion.startsWith("17.")) {
-            System.err.println("[Error] RumbleDB requires Java 11 or 17.");
-            System.err.println("Your Java version: " + System.getProperty("java.version"));
-            System.err.println("You can download Java 11 or 17 from https://adoptium.net/");
-            System.err.println(
-                "If you do have Java 11 or 17, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 11 or 17."
-            );
-            System.exit(43);
-        }
         RumbleRuntimeConfiguration sparksoniqConf = null;
         // Parse arguments
         try {
