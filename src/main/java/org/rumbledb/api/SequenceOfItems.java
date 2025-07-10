@@ -192,10 +192,10 @@ public class SequenceOfItems {
      * 
      * @return The list of all items in the sequence.
      */
-    public List<Item> getList(boolean cap) {
+    public List<Item> getList() {
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result);
-        if (!cap && num != -1) {
+        if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
@@ -214,7 +214,7 @@ public class SequenceOfItems {
      * 
      * @return The list of items in the sequence, possibly capped.
      */
-    public List<Item> getCappedList() {
+    public List<Item> getFirstItems() {
         List<Item> result = new ArrayList<Item>();
         populateList(result);
         return result;
