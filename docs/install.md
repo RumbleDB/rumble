@@ -46,13 +46,13 @@ You can compile the entire project like so:
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-1.23.0-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-1.24.0-jar-with-dependencies.jar`.
     
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the RumbleDB shell locally, like so:
 
-    $ spark-submit target/rumbledb-1.23.0.jar repl
+    $ spark-submit target/rumbledb-1.24.0.jar repl
 
 The RumbleDB shell should start:
 
@@ -61,7 +61,7 @@ The RumbleDB shell should start:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.23.0 "Mountain ash" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.24.0 "Mountain ash" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     Master: local[2]

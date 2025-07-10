@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import java.time.OffsetDateTime;
+import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -254,12 +254,12 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Period getDurationValue() {
-        return this.itemToAnnotate.getDurationValue();
+    public Period getPeriodValue() {
+        return this.itemToAnnotate.getPeriodValue();
     }
 
     @Override
-    public DateTime getDateTimeValue() {
+    public OffsetDateTime getDateTimeValue() {
         return this.itemToAnnotate.getDateTimeValue();
     }
 

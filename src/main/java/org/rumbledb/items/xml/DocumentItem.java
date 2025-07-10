@@ -29,6 +29,33 @@ public class DocumentItem implements Item {
         this.children = children;
     }
 
+    /**
+     * Constructor for creating a document node with children items.
+     * Used by document node constructors when no actual DOM node is available.
+     * 
+     * @param children the child nodes of the document
+     */
+    public DocumentItem(List<Item> children) {
+        this.children = children;
+        // Compute string value as concatenated text content of children in document order
+        StringBuilder sb = new StringBuilder();
+        computeStringValue(children, sb);
+        this.stringValue = sb.toString();
+    }
+
+    /**
+     * Recursively computes the string value by concatenating text node descendants in document order.
+     */
+    private void computeStringValue(List<Item> items, StringBuilder sb) {
+        for (Item item : items) {
+            if (item.isTextNode()) {
+                sb.append(item.getStringValue());
+            } else if (item.isElementNode() && item.children() != null) {
+                computeStringValue(item.children(), sb);
+            }
+        }
+    }
+
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);

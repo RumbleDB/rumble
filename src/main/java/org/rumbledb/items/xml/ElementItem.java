@@ -24,15 +24,23 @@ public class ElementItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
+    @SuppressWarnings("unused")
     public ElementItem() {
     }
 
-    public ElementItem(String tagName, List<Item> children, List<Item> attributes) {
-        this.nodeName = tagName;
+    /**
+     * Constructor for an element item.
+     * 
+     * @param nodeName The name of the element
+     * @param children The children items of the element
+     * @param attributes The attributes items of the element
+     */
+    public ElementItem(String nodeName, List<Item> children, List<Item> attributes) {
+        this.nodeName = nodeName;
         this.children = children;
         this.attributes = attributes;
         // TODO: add support for attributes and children
-        this.stringValue = "<" + tagName + "/>";
+        this.stringValue = "<" + nodeName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
@@ -149,6 +157,21 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
+        // Reference: https://www.w3.org/TR/xpath-functions-31/#func-data
+        // If the item is a node, the typed value of the node is appended to the result sequence.
+        // The typed value is a sequence of zero or more atomic values: specifically, the result of the dm:typed-value
+        // accessor as defined in [XQuery and XPath Data Model (XDM) 3.1] (See Section 5.14 typed-value Accessor DM31).
+        // TODO: implement this following the spec. Most importantly, implement the dm:typed-value accessor.
+        // This naive implementation is enough for now
+        StringBuilder stringValueBuilder = new StringBuilder();
+        for (Item child : this.children) {
+            stringValueBuilder.append(child.atomizedValue().get(0).getStringValue());
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(stringValueBuilder.toString()));
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
     }
 }

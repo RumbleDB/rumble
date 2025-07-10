@@ -1,7 +1,7 @@
 package org.rumbledb.items;
 
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import java.time.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
@@ -126,7 +126,11 @@ public class ItemFactory {
         return new AnnotatedItem(itemToAnnotate, type);
     }
 
-    public Item createDurationItem(Period p) {
+    public Item createDurationItem(Duration p) {
+        return new DurationItem(p);
+    }
+
+    public Item createDurationItem(String p) {
         return new DurationItem(p);
     }
 
@@ -134,11 +138,19 @@ public class ItemFactory {
         return new YearMonthDurationItem(p);
     }
 
-    public Item createDayTimeDurationItem(Period p) {
+    public Item createYearMonthDurationItem(String p) {
+        return new YearMonthDurationItem(p);
+    }
+
+    public Item createDayTimeDurationItem(Duration p) {
         return new DayTimeDurationItem(p);
     }
 
-    public Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
+    public Item createDayTimeDurationItem(String p) {
+        return new DayTimeDurationItem(p);
+    }
+
+    public Item createDateTimeItem(OffsetDateTime dt, boolean hasTimeZone) {
         return new DateTimeItem(dt, hasTimeZone);
     }
 
@@ -146,7 +158,7 @@ public class ItemFactory {
         return new DateTimeItem(s);
     }
 
-    public Item createDateTimeStampItem(DateTime dt, boolean checkTimezone) {
+    public Item createDateTimeStampItem(OffsetDateTime dt, boolean checkTimezone) {
         return new DateTimeStampItem(dt, checkTimezone);
     }
 
@@ -154,7 +166,7 @@ public class ItemFactory {
         return new DateTimeStampItem(s);
     }
 
-    public Item createDateItem(DateTime dt, boolean hasTimeZone) {
+    public Item createDateItem(OffsetDateTime dt, boolean hasTimeZone) {
         return new DateItem(dt, hasTimeZone);
     }
 
@@ -162,7 +174,7 @@ public class ItemFactory {
         return new DateItem(s);
     }
 
-    public Item createTimeItem(DateTime dt, boolean hasTimeZone) {
+    public Item createTimeItem(OffsetTime dt, boolean hasTimeZone) {
         return new TimeItem(dt, hasTimeZone);
     }
 
@@ -170,12 +182,24 @@ public class ItemFactory {
         return new TimeItem(s);
     }
 
+    public Item createGDayItem(OffsetDateTime s, boolean timezone) {
+        return new gDayItem(s, timezone);
+    }
+
     public Item createGDayItem(String s) {
         return new gDayItem(s);
     }
 
+    public Item createGMonthItem(OffsetDateTime s, boolean timezone) {
+        return new gMonthItem(s, timezone);
+    }
+
     public Item createGMonthItem(String s) {
         return new gMonthItem(s);
+    }
+
+    public Item createGYearItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gYearItem(s, hasTimeZone);
     }
 
     public Item createGYearItem(String s) {
@@ -186,8 +210,16 @@ public class ItemFactory {
         return new gMonthDayItem(s);
     }
 
+    public Item createGMonthDayItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gMonthDayItem(s, hasTimeZone);
+    }
+
     public Item createGYearMonthItem(String s) {
         return new gYearMonthItem(s);
+    }
+
+    public Item createGYearMonthItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gYearMonthItem(s, hasTimeZone);
     }
 
     public Item createAnyURIItem(String s) {
@@ -253,6 +285,12 @@ public class ItemFactory {
         return new TextItem(currentNode);
     }
 
+    /**
+     * Create a text item.
+     * 
+     * @param content The string content of the text item
+     * @return The text item
+     */
     public Item createXmlTextNode(String content) {
         return new TextItem(content);
     }
@@ -261,15 +299,44 @@ public class ItemFactory {
         return new AttributeItem(attribute);
     }
 
+    /**
+     * Create an attribute item.
+     * 
+     * @param nodeName The name of the attribute
+     * @param stringValue The string value of the attribute
+     * @return The attribute item
+     */
+    public Item createXmlAttributeNode(String nodeName, String stringValue) {
+        return new AttributeItem(nodeName, stringValue);
+    }
+
     public Item createXmlDocumentNode(Node documentNode, List<Item> children) {
         return new DocumentItem(documentNode, children);
+    }
+
+    /**
+     * Create a document item.
+     * 
+     * @param children The children items of the document
+     * @return The document item
+     */
+    public Item createXmlDocumentNode(List<Item> children) {
+        return new DocumentItem(children);
     }
 
     public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
         return new ElementItem(elementNode, children, attributes);
     }
 
-    public Item createXmlElementNode(String tagName, List<Item> children, List<Item> attributes) {
-        return new ElementItem(tagName, children, attributes);
+    /**
+     * Create an element item.
+     * 
+     * @param nodeName The name of the element
+     * @param children The children items of the element
+     * @param attributes The attributes items of the element
+     * @return The element item
+     */
+    public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
+        return new ElementItem(nodeName, children, attributes);
     }
 }
