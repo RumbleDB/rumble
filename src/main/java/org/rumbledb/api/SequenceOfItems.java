@@ -1,6 +1,7 @@
 package org.rumbledb.api;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -147,6 +148,29 @@ public class SequenceOfItems {
     }
 
     /**
+     * Returns available output modes, order by decreasing efficiency.
+     * 
+     * "DataFrame" means getAsDataFrame() can be called.
+     * "RDD" means getAsRDD() can be called.
+     * "PUL" means applyPUL() can be called.
+     * "Local" means getAsList() (if the count does not exceed the materialization cap) or getFirstItemsAsList() can be
+     * called, or the streaming methods (open/hasNext/next/close).
+     *
+     * @return a list of output modes, among "DataFrame", "RDD", "PUL", and "Local".
+     */
+    public List<String> availableExecutionModes() {
+        if (this.iterator.isDataFrame()) {
+            return Arrays.asList("DataFrame", "RDD", "Local");
+        } else if (this.iterator.isRDD()) {
+            return Arrays.asList("RDD", "Local");
+        } else if (this.iterator.isUpdating()) {
+            return Arrays.asList("PUL");
+        } else {
+            return Arrays.asList("Local");
+        }
+    }
+
+    /**
      * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
      * It is not possible to do so if the iterator is open.
      *
@@ -192,7 +216,7 @@ public class SequenceOfItems {
      * 
      * @return The list of all items in the sequence.
      */
-    public List<Item> getList() {
+    public List<Item> getAsList() {
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result);
         if (num != -1) {
@@ -214,7 +238,7 @@ public class SequenceOfItems {
      * 
      * @return The list of items in the sequence, possibly capped.
      */
-    public List<Item> getFirstItems() {
+    public List<Item> getFirstItemsAsList() {
         List<Item> result = new ArrayList<Item>();
         populateList(result);
         return result;
@@ -241,11 +265,13 @@ public class SequenceOfItems {
             result = this.iterator.next();
         }
         if (result == null) {
+            this.iterator.close();
             return -1;
         }
         Item singleOutput = result;
         if (!this.iterator.hasNext()) {
             resultList.add(singleOutput);
+            this.iterator.close();
             return -1;
         } else {
             int itemCount = 1;
@@ -261,8 +287,10 @@ public class SequenceOfItems {
                 itemCount++;
             }
             if (this.iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+                this.iterator.close();
                 return Long.MAX_VALUE;
             }
+            this.iterator.close();
             return -1;
         }
     }
