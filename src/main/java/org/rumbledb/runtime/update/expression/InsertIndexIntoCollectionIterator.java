@@ -3,9 +3,9 @@ package org.rumbledb.runtime.update.expression;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
+import org.rumbledb.items.ObjectItem;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -17,6 +17,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 
@@ -135,7 +136,21 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         } else if (this.isFirst) {
             up = factory.createInsertFirstIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
         } else {
-            // Obtain Item (containing atleast metadata) for given index to create InsertBeforeIntoCollection
+            Item targetMetadataItem = new ObjectItem();
+            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            String selectQuery = String.format(
+                "SELECT rowOrder FROM %s ORDER BY rowOrder ASC OFFSET %d LIMIT 1",
+                collection,
+                this.pos - 1
+            );
+            Row res = session.sql(selectQuery).collectAsList().get(0);
+            targetMetadataItem.setMutabilityLevel(res.getAs(SparkSessionManager.mutabilityLevelColumnName));
+            targetMetadataItem.setPathIn(res.getAs(SparkSessionManager.pathInColumnName));
+            targetMetadataItem.setTableLocation(res.getAs(SparkSessionManager.tableLocationColumnName));
+            targetMetadataItem.setTopLevelID(res.getAs(SparkSessionManager.rowIdColumnName));
+            targetMetadataItem.setTopLevelOrder(res.getAs(SparkSessionManager.rowOrderColumnName));
+
+            up = factory.createInsertBeforeIntoCollectionPrimitive(targetMetadataItem, contentDF, this.getMetadata());
         }
 
         pul.addUpdatePrimitive(up);
