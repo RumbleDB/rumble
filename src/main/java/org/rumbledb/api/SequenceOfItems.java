@@ -10,11 +10,11 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 import org.rumbledb.runtime.update.PendingUpdateList;
+
 import sparksoniq.spark.SparkSessionManager;
 
 /**
@@ -192,7 +192,7 @@ public class SequenceOfItems {
      *
      * @return an RDD of strings.
      */
-    public JavaRDD<String> getAsStringRDD() {
+    public JavaRDD<byte[]> getAsPickledStringRDD() {
         if (this.availableAsPUL()) {
             return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
         }
@@ -200,7 +200,20 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         return this.iterator.getRDD(this.dynamicContext)
-            .map(item -> item.serializeAsJSON());
+            .map(item -> ("\u0080\u0005\u0095" + longToLittleEndianString(item.serializeAsJSON().length()+7) + "]\u0094\u008c" + Character.toString((char)item.serializeAsJSON().length()) + item.serializeAsJSON() +  "\u0094a.").getBytes("ISO-8859-1"));
+    }
+
+    public static String longToLittleEndianString(long value) {
+        byte[] bytes = new byte[8];
+        for (int i = 0; i < 8; i++) {
+            bytes[i] = (byte) (value >> (8 * i));
+        }
+        // Convert to a hex string representation
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(Character.toString((char)b));
+        }
+        return sb.toString();
     }
 
     /**
