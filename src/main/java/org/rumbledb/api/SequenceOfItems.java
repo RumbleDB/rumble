@@ -158,7 +158,7 @@ public class SequenceOfItems {
      *
      * @return a list of output modes, among "DataFrame", "RDD", "PUL", and "Local".
      */
-    public List<String> availableExecutionModes() {
+    public List<String> availableOutputs() {
         if (this.iterator.isDataFrame()) {
             return Arrays.asList("DataFrame", "RDD", "Local");
         } else if (this.iterator.isRDD()) {
