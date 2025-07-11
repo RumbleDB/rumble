@@ -187,6 +187,23 @@ public class SequenceOfItems {
     }
 
     /**
+     * Returns the sequence of strings as an RDD of Items rather than iterating over them locally.
+     * It is not possible to do so if the iterator is open.
+     *
+     * @return an RDD of strings.
+     */
+    public JavaRDD<String> getAsStringRDD() {
+        if (this.availableAsPUL()) {
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+        }
+        if (this.isOpen) {
+            throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
+        }
+        return this.iterator.getRDD(this.dynamicContext)
+            .map(item -> item.serializeAsJSON());
+    }
+
+    /**
      * Returns the sequence of items as a data frame rather than iterating over them locally.
      * It is not possible to do so if the iterator is open.
      *
