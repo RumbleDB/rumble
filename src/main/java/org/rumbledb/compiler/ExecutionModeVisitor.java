@@ -621,7 +621,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (
             variableDeclaration.external()
                 && (arity.equals(Arity.ZeroOrMore) || arity.equals(Arity.OneOrMore))
-                && configuration.getExternalVariableValueReadFromDataFrame(
+                && this.configuration.getExternalVariableValueReadFromDataFrame(
                     variableDeclaration.getVariableName()
                 ) != null
         ) {

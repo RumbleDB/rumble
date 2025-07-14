@@ -346,11 +346,9 @@ public class SequenceWriter {
             ExceptionMetadata.EMPTY_METADATA
         );
         if (this.dataFrameWriter != null) {
-            System.err.println("Found DataFrameWriter!");
             this.dataFrameWriter.save(outputUri.toString());
             return;
         }
-        System.err.println("No DataFrameWriter!");
         if (
             !(this.source.equals("json")
                 || this.source.equals("tyson")
