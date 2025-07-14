@@ -21,6 +21,9 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import scala.Function0;
+import scala.util.Properties;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
@@ -111,6 +114,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
+        sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");

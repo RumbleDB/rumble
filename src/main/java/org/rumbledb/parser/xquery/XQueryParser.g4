@@ -1,11 +1,27 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Authors: Matteo Agnoletto (EPMatt)
+ *
  * A parser grammar for XQuery 3.1 that includes the XQuery Scripting Extensions, and additional update features.
  * This file is based on the XQuery parser grammar from the xqdoc project:
  * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
  * 
  * See LICENSE-xqdoc.txt for the original license terms.
  * 
- * @author Matteo Agnoletto (EPMatt)
  */
 
 parser grammar XQueryParser;
@@ -427,14 +443,14 @@ directConstructor: dirElemConstructorOpenClose
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE open_tag_name=qname dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: LANGLE open_tag_name=qname attributes=dirAttributeList endOpen=RANGLE
                              dirElemContent*
                              startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE open_tag_name=qname dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeList slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
-dirAttributeList: (qname EQUAL dirAttributeValue)* ;
+dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
 
 dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
 dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
@@ -443,17 +459,20 @@ dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
                      ;
 
-dirAttributeContentQuot : ContentChar+                     
+dirAttributeContentQuot : contentChar                     
                         | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueApos
                         | LBRACE expr? RBRACE
                         ;
 
-dirAttributeContentApos : ContentChar+                     
+dirAttributeContentApos : contentChar                    
                         | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueQuot
                         | LBRACE expr? RBRACE
-                        ;                     
+                        ;
+
+// helper rule to match any content character
+contentChar:              ContentChar+ ;
 
 dirElemContent: directConstructor
               | commonContent
@@ -481,7 +500,7 @@ compElemConstructor: KW_ELEMENT ( eqName |(LBRACE expr RBRACE)) enclosedContentE
 
 enclosedContentExpr: enclosedExpression ;
 
-compAttrConstructor: KW_ATTRIBUTE (eqName | (LBRACE expr RBRACE)) enclosedExpression ;
+compAttrConstructor: KW_ATTRIBUTE (name=eqName | (LBRACE name_expr=expr RBRACE)) enclosedExpression ;
 
 // replaced with the prefix production to allow the usage of the prefix label in the moduleImport rule
 compNamespaceConstructor: KW_NAMESPACE (ncName | enclosedPrefixExpr) enclosedURIExpr ;

@@ -11,6 +11,7 @@ import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import scala.Function0;
 import scala.util.Properties;
 import scala.Function0;
 import sparksoniq.spark.SparkSessionManager;
