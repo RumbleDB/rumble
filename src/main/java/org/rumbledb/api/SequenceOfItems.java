@@ -240,6 +240,15 @@ public class SequenceOfItems {
     }
 
     /**
+     * Synonym for getAsDataFrame() for the Python library.
+     * 
+     * @return a data frame.
+     */
+    public Dataset<Row> df() {
+        return getAsDataFrame();
+    }
+
+    /**
      * Applies the PUL available when the iterator is updating.
      */
     public void applyPUL() {
@@ -270,6 +279,15 @@ public class SequenceOfItems {
     }
 
     /**
+     * Synonym for getAsDataFrame() for the Python library.
+     * 
+     * @return The list of all items in the sequence.
+     */
+    public List<Item> items() {
+        return getAsList();
+    }
+
+    /**
      * Outputs the results as a list. If there are more items than the allowed materialization limit,
      * then the list is incomplete and no error is thrown.
      * 
@@ -279,6 +297,15 @@ public class SequenceOfItems {
         List<Item> result = new ArrayList<Item>();
         populateList(result);
         return result;
+    }
+
+    /**
+     * Synonym for getAsDataFrame() for the Python library.
+     * 
+     * @return The list of items in the sequence, possibly capped.
+     */
+    public List<Item> first() {
+        return getFirstItemsAsList();
     }
 
     /*
