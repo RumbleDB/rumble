@@ -64,11 +64,31 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
+            SaveMode mode = null;
+            switch(saveMode.toLowerCase()) {
+                case "overwrite":
+                    mode = SaveMode.Overwrite;
+                    break;
+                case "append":
+                    mode = SaveMode.Append;
+                    break;
+                case "ignore":
+                    mode = SaveMode.Ignore;
+                    break;
+                case "error":
+                case "errorifexists":
+                case "default":
+                    mode = SaveMode.ErrorIfExists;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown save mode: " + saveMode + ". Accepted " +
+                            "save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists', 'default'.");
+            }
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
-                    SaveMode.valueOf(saveMode),
+                    mode,
                     this.outputFormatOptions,
                     this.configuration
             );
@@ -322,9 +342,11 @@ public class SequenceWriter {
             ExceptionMetadata.EMPTY_METADATA
         );
         if (this.dataFrameWriter != null) {
+        System.err.println("Found DataFrameWriter!");
             this.dataFrameWriter.save(outputUri.toString());
             return;
         }
+        System.err.println("No DataFrameWriter!");
         if (
             !(this.source.equals("json")
                 || this.source.equals("tyson")
@@ -355,20 +377,10 @@ public class SequenceWriter {
                     );
             }
         }
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        RumbleRuntimeConfiguration configuration = this.configuration;
-        JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
-        // If the user explicitly requests exactly one partition, then we collect all items
-        // and write them to a single file.
-        if (this.configuration.getNumberOfOutputPartitions() == 1) {
-            List<String> lines = outputRDD.take(1000000000);
-            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-        } else {
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
-            }
-            outputRDD.saveAsTextFile(outputUri.toString());
-        }
+        JavaRDD<Item> rdd = this.sequence.getAsRDD();
+        Serializer serializer = getSerializer();
+        JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
+        outputRDD.saveAsTextFile(outputUri.toString());
     }
 
     public Serializer getSerializer() {
@@ -383,18 +395,18 @@ public class SequenceWriter {
             method = Serializer.Method.YAML;
         }
         boolean indent = false;
-        if (outputFormatOptions.containsKey("indent")) {
-            if (outputFormatOptions.get("indent").equals("yes")) {
+        if (this.outputFormatOptions.containsKey("indent")) {
+            if (this.outputFormatOptions.get("indent").equals("yes")) {
                 indent = true;
             }
         }
         String itemSeparator = "\n";
-        if (outputFormatOptions.containsKey("item-separator")) {
-            itemSeparator = outputFormatOptions.get("item-separator");
+        if (this.outputFormatOptions.containsKey("item-separator")) {
+            itemSeparator = this.outputFormatOptions.get("item-separator");
         }
         String encoding = "UTF-8";
-        if (outputFormatOptions.containsKey("encoding")) {
-            encoding = outputFormatOptions.get("encoding");
+        if (this.outputFormatOptions.containsKey("encoding")) {
+            encoding = this.outputFormatOptions.get("encoding");
         }
         return new Serializer(
                 encoding,
@@ -421,6 +433,14 @@ public class SequenceWriter {
         if (this.dataFrameWriter != null) {
             this.dataFrameWriter.saveAsTable(tableName);
         }
+    }
+
+    public void tyson(String path) {
+        format("tyson").save(path);
+    }
+
+    public void yaml(String path) {
+        format("yaml").save(path);
     }
 
     public void json(String path) {
