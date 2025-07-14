@@ -46,7 +46,7 @@ public class SequenceWriter {
             this.dataFrameWriter = sequence.getAsDataFrame().write();
         } else {
             this.dataFrameWriter = null;
-            this.source = "text";
+            this.source = "xml-json-hybrid"; // Default source
             this.mode = SaveMode.ErrorIfExists; // Default save mode
             this.outputFormatOptions = new HashMap<>();
         }
@@ -454,7 +454,7 @@ public class SequenceWriter {
     }
 
     public void text(String path) {
-        format("text").save(path);
+        format("xml-json-hybrid").save(path);
     }
 
     public void orc(String path) {
