@@ -200,7 +200,14 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         return this.iterator.getRDD(this.dynamicContext)
-            .map(item -> ("\u0080\u0005\u0095" + longToLittleEndianString(item.serializeAsJSON().length()+7) + "]\u0094\u008c" + Character.toString((char)item.serializeAsJSON().length()) + item.serializeAsJSON() +  "\u0094a.").getBytes("ISO-8859-1"));
+            .map(
+                item -> ("\u0080\u0005\u0095"
+                    + longToLittleEndianString(item.serializeAsJSON().length() + 7)
+                    + "]\u0094\u008c"
+                    + Character.toString((char) item.serializeAsJSON().length())
+                    + item.serializeAsJSON()
+                    + "\u0094a.").getBytes("ISO-8859-1")
+            );
     }
 
     public static String longToLittleEndianString(long value) {
@@ -211,7 +218,7 @@ public class SequenceOfItems {
         // Convert to a hex string representation
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
-            sb.append(Character.toString((char)b));
+            sb.append(Character.toString((char) b));
         }
         return sb.toString();
     }
@@ -324,4 +331,12 @@ public class SequenceOfItems {
             return -1;
         }
     }
+
+    /**
+     * Returns a SequenceWriter to save the sequence in various formats.
+     */
+    public SequenceWriter getWriter() {
+        return new SequenceWriter(this, this.configuration);
+    }
+
 }
