@@ -2,7 +2,6 @@ package org.rumbledb.api;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -65,7 +64,7 @@ public class SequenceWriter {
             );
         } else {
             SaveMode mode = null;
-            switch(saveMode.toLowerCase()) {
+            switch (saveMode.toLowerCase()) {
                 case "overwrite":
                     mode = SaveMode.Overwrite;
                     break;
@@ -81,8 +80,13 @@ public class SequenceWriter {
                     mode = SaveMode.ErrorIfExists;
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown save mode: " + saveMode + ". Accepted " +
-                            "save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists', 'default'.");
+                    throw new IllegalArgumentException(
+                            "Unknown save mode: "
+                                + saveMode
+                                + ". Accepted "
+                                +
+                                "save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists', 'default'."
+                    );
             }
             return new SequenceWriter(
                     this.sequence,
@@ -342,7 +346,7 @@ public class SequenceWriter {
             ExceptionMetadata.EMPTY_METADATA
         );
         if (this.dataFrameWriter != null) {
-        System.err.println("Found DataFrameWriter!");
+            System.err.println("Found DataFrameWriter!");
             this.dataFrameWriter.save(outputUri.toString());
             return;
         }

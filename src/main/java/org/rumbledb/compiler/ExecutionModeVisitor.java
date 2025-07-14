@@ -617,7 +617,18 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(variableDeclaration.getExpression(), null);
         }
         variableDeclaration.setHighestExecutionMode(ExecutionMode.LOCAL);
-        variableDeclaration.setVariableHighestStorageMode(ExecutionMode.LOCAL);
+        Arity arity = argument.getVariableSequenceType(variableDeclaration.getVariableName()).getArity();
+        if (
+            variableDeclaration.external()
+                && (arity.equals(Arity.ZeroOrMore) || arity.equals(Arity.OneOrMore))
+                && configuration.getExternalVariableValueReadFromDataFrame(
+                    variableDeclaration.getVariableName()
+                ) != null
+        ) {
+            variableDeclaration.setVariableHighestStorageMode(ExecutionMode.DATAFRAME);
+        } else {
+            variableDeclaration.setVariableHighestStorageMode(ExecutionMode.LOCAL);
+        }
         // first pass.
         argument.setVariableStorageMode(
             variableDeclaration.getVariableName(),
