@@ -35,7 +35,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.joda.time.DateTime;
+import java.time.ZoneId;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -43,9 +44,6 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -323,6 +321,7 @@ public class ItemParser implements Serializable {
                 );
             }
         }
+        // array
 
         int mutabilityLevel = -1;
         long topLevelID = -1;
@@ -379,8 +378,20 @@ public class ItemParser implements Serializable {
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
                         && fieldType.equals(DataTypes.NullType))
             ) {
-                keys.add(fieldName);
-                values.add(newItem);
+                // don't return array for single sequence item
+                if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
+                    if (newItem.getSize() == 0) {
+                        values.add(null);
+                    } else if (newItem.getSize() == 1) {
+                        values.add(newItem.getItemAt(0));
+                    } else {
+                        values.add(newItem);
+                    }
+                    keys.add(fieldName.substring(0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
+                } else {
+                    keys.add(fieldName);
+                    values.add(newItem);
+                }
             }
         }
 
@@ -549,7 +560,7 @@ public class ItemParser implements Serializable {
                 value = (Timestamp) o;
             }
             Instant instant = value.toInstant();
-            DateTime dt = new DateTime(instant);
+            OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 return item;
@@ -564,7 +575,7 @@ public class ItemParser implements Serializable {
                 value = (Date) o;
             }
             long instant = value.getTime();
-            DateTime dt = new DateTime(instant);
+            OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return item;
@@ -723,7 +734,10 @@ public class ItemParser implements Serializable {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers));
-            } else if (childNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(childNode)) {
+            } else if (
+                (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
+                    && !hasWhitespaceText(childNode)
+            ) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
         }

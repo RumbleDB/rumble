@@ -11,7 +11,7 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.util.*;
 
-public class ArrayItemType implements ItemType {
+public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -25,13 +25,17 @@ public class ArrayItemType implements ItemType {
             )
     );
 
-    final private Name name;
-    final private ItemType baseType;
+    private Name name;
+    private ItemType baseType;
     private int typeTreeDepth;
 
     private ItemType content;
     private List<Item> enumeration;
     private Integer minLength, maxLength;
+
+    ArrayItemType() {
+        super();
+    }
 
     ArrayItemType(
             Name name,
@@ -56,6 +60,17 @@ public class ArrayItemType implements ItemType {
                 checkSubtypeConsistency();
             }
         }
+    }
+
+    public static ItemType arrayOf(ItemType itemType) {
+        return new ArrayItemType(
+                new Name(Name.JS_NS, "js", "array"),
+                BuiltinTypesCatalogue.arrayItem,
+                itemType,
+                null,
+                null,
+                null
+        );
     }
 
     @Override
@@ -273,5 +288,33 @@ public class ArrayItemType implements ItemType {
         sb.append(this.getArrayContentFacet().getSparkSQLType());
         sb.append(">");
         return sb.toString();
+    }
+
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        kryo.writeObjectOrNull(output, this.name, Name.class);
+        kryo.writeClassAndObject(output, this.baseType);
+        kryo.writeClassAndObject(output, this.content);
+        kryo.writeObjectOrNull(output, this.enumeration, ArrayList.class);
+        output.writeInt(this.minLength != null ? this.minLength : -1);
+        output.writeInt(this.maxLength != null ? this.maxLength : -1);
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        this.name = kryo.readObjectOrNull(input, Name.class);
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.content = (ItemType) kryo.readClassAndObject(input);
+        this.enumeration = kryo.readObjectOrNull(input, ArrayList.class);
+        int min = input.readInt();
+        int max = input.readInt();
+        this.minLength = (min == -1) ? null : min;
+        this.maxLength = (max == -1) ? null : max;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+            if (this.content != null && this.content.isResolved()) {
+                checkSubtypeConsistency();
+            }
+        }
     }
 }

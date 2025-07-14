@@ -22,7 +22,7 @@ public class CurrentTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return ItemFactory.getInstance().createTimeItem(context.getCurrentDateTime(), true);
+        return ItemFactory.getInstance()
+            .createTimeItem(context.getCurrentDateTime().toOffsetTime(), true);
     }
-
 }

@@ -12,7 +12,6 @@ import java.util.List;
 public class DayFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item dateTimeItem = null;
 
     public DayFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -23,12 +22,11 @@ public class DayFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.dateTimeItem = this.children.get(0)
+        Item dateTimeItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
-        if (this.dateTimeItem == null) {
+        if (dateTimeItem == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getDayOfMonth());
+        return ItemFactory.getInstance().createIntItem(dateTimeItem.getDay());
     }
-
 }

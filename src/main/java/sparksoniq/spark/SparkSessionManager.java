@@ -89,6 +89,8 @@ public class SparkSessionManager {
     public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
     public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b ";
     public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
+    public static String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
     public static String mutabilityLevelColumnName = "mutabilityLevel";
     public static String rowIdColumnName = "rowID";
     public static String pathInColumnName = "pathIn";
@@ -144,6 +146,15 @@ public class SparkSessionManager {
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
             );
         }
+    }
+
+    public void resetSession() {
+        if (this.session != null) {
+            this.session.stop();
+            this.session = null;
+        }
+        this.javaSparkContext = null;
+        this.configuration = null;
     }
 
     private void initializeSession() {

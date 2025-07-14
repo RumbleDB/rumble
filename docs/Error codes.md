@@ -106,6 +106,14 @@ Example: using subtraction on strings.
 in the definition of a module's dynamic context components,
 for example because of a cycle in variable declarations.
 
+- [XQTY0024] - Attribute After Non Attribute Error - It is a type error if the content sequence in an element constructor contains an attribute node following a node that is not an attribute node. 
+
+- [XQDY0025] - Duplicate Attribute Error - It is a dynamic error if any attribute of a constructed element does not have a name that is distinct from the names of all other attributes of the constructed element. 
+
+- [XQDY0074] - Invalid Element Name Error - It is a dynamic error if the value of the name expression in a computed element or attribute constructor cannot be converted to an expanded QName (for example, because it contains a namespace prefix not found in statically known namespaces.) 
+
+- [XQDY0096] - Invalid Node Name Error - It is a dynamic error if the node-name of a node constructed by a computed element constructor has any of the following properties: 1. Its namespace prefix is xmlns. 2. Its namespace URI is http://www.w3.org/2000/xmlns/. 3. Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace. 4. Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+
 - [XQDY0137] - Duplicate pair name. It is a dynamic error if two pairs in an object
   constructor or in a simple object union have the same name.
 
@@ -166,3 +174,8 @@ variable, do not have distinct names (expanded QNames).
 The name of each grouping variable must be equal 
 (by the eq operator on expanded QNames) to the name of a 
 variable in the input tuple stream.
+
+- [XQST0118] - In a direct element constructor, the name
+used in the end tag must exactly match the name used in the
+corresponding start tag, including its prefix or absence of
+a prefix. 
