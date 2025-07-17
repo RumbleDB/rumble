@@ -13,6 +13,11 @@ rumble*.jar
 sample_json_delta
 _delta_log
 
+delta/
+spark-warehouse/
+metastore_db/
+derby.log
+
 # for now ignore jsound package
 src/main/java/jsound/
 src/main/resources/log4j.properties

@@ -37,8 +37,7 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
-        // DeltaTable deltaTable = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(),
-        // uri.toString());
+
         SparkSessionManager.getInstance()
             .getOrCreateSession()
             .read()
@@ -59,7 +58,7 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
         dataFrame = dataFrame.withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id());
         dataFrame = dataFrame.withColumn(SparkSessionManager.pathInColumnName, lit(""));
         dataFrame = dataFrame.withColumn(SparkSessionManager.tableLocationColumnName, lit(uri.toString()));
-        // TODO: Make unique DeltaTable code
+
         return new JSoundDataFrame(dataFrame);
     }
 }
