@@ -143,6 +143,12 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
@@ -249,7 +255,7 @@
                 <version>0.8.0</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <publishingServerId>central</publishingServerId>
+                    <publishingServerId>ossrh</publishingServerId>
                 </configuration>
             </plugin>
         </plugins>
