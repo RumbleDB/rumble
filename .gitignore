@@ -10,6 +10,8 @@ target/
 rumble*.jar
 *.*~
 /.rumble_shell_history
+sample_json_delta
+_delta_log
 
 # for now ignore jsound package
 src/main/java/jsound/
