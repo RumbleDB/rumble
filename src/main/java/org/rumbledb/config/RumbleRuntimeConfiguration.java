@@ -20,6 +20,8 @@
 
 package org.rumbledb.config;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
@@ -56,6 +58,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
     private Map<Name, String> externalVariableValuesReadFromFiles;
+    private Map<Name, Dataset<Row>> externalVariableValuesReadFromDataFrames;
     private Set<Name> externalVariablesReadFromStandardInput;
     private Map<Name, String> externalVariablesInputFormats;
     private boolean checkReturnTypeOfBuiltinFunctions;
@@ -189,14 +192,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return RumbleRuntimeConfiguration.defaultConfiguration;
     }
 
-    public String getConfigurationArgument(String key) {
-        if (this.arguments.containsKey(key)) {
-            return this.arguments.get(key);
-        } else {
-            return null;
-        }
-    }
-
     public int getPort() {
         if (this.arguments.containsKey("port")) {
             return Integer.parseInt(this.arguments.get("port"));
@@ -306,6 +301,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
         this.externalVariableValuesReadFromFiles = new HashMap<>();
+        this.externalVariableValuesReadFromDataFrames = new HashMap<>();
         this.externalVariablesInputFormats = new HashMap<>();
         this.externalVariablesReadFromStandardInput = new HashSet<>();
         for (String s : this.arguments.keySet()) {
@@ -574,6 +570,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this;
     }
 
+    public List<Name> getExternalVariablesReadFromDataFrames() {
+        return new java.util.ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
+    }
+
+    public List<Name> getExternalVariablesReadFromListsOfItems() {
+        return new java.util.ArrayList<>(this.externalVariableValues.keySet());
+    }
+
     public List<Item> getExternalVariableValue(Name name) {
         if (this.externalVariableValues.containsKey(name)) {
             return this.externalVariableValues.get(name);
@@ -595,8 +599,30 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return null;
     }
 
+    public Dataset<Row> getExternalVariableValueReadFromDataFrame(Name name) {
+        if (this.externalVariableValuesReadFromDataFrames.containsKey(name)) {
+            return this.externalVariableValuesReadFromDataFrames.get(name);
+        }
+        return null;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(Name name, Dataset<Row> dataFrame) {
+        this.externalVariableValuesReadFromDataFrames.put(name, dataFrame);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(String variableName, Dataset<Row> dataFrame) {
+        setExternalVariableValue(new Name(null, null, variableName), dataFrame);
+        return this;
+    }
+
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(String variableName, List<Item> items) {
+        setExternalVariableValue(new Name(null, null, variableName), items);
         return this;
     }
 
