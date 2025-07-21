@@ -574,6 +574,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return new java.util.ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
     }
 
+    public List<Name> getExternalVariablesReadFromListsOfItems() {
+        return new java.util.ArrayList<>(this.externalVariableValues.keySet());
+    }
+
     public List<Item> getExternalVariableValue(Name name) {
         if (this.externalVariableValues.containsKey(name)) {
             return this.externalVariableValues.get(name);
@@ -610,9 +614,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         setExternalVariableValue(new Name(null, null, variableName), dataFrame);
     }
 
-    public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
+    public void setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
-        return this;
+    }
+
+    public void setExternalVariableValue(String variableName, List<Item> items) {
+        setExternalVariableValue(new Name(null, null, variableName), items);
     }
 
     public boolean readFromStandardInput(Name variableName) {

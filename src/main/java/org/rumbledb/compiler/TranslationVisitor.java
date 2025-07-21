@@ -267,6 +267,28 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 )
             );
         }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.ITEM_STAR,
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
 
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
