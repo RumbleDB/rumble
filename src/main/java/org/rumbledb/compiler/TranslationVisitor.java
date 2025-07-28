@@ -1371,9 +1371,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         boolean isTable = (ctx.table != null);
         boolean isFirst = (ctx.first != null);
 
-        int numDelete = 1;
+        Expression numDelete = null;
         if (ctx.num != null) {
-            numDelete = Integer.parseInt(ctx.num.getText());
+            numDelete = (Expression) this.visitExprSingle(ctx.num);
         }
 
         return new DeleteIndexFromCollectionExpression(

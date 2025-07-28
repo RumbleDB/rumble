@@ -11,13 +11,13 @@ import java.util.List;
 
 public class DeleteIndexFromCollectionExpression extends Expression {
     private Expression collection;
-    private int numDelete;
+    private Expression numDelete;
     private boolean isFirst;
     private boolean isTable;
 
     public DeleteIndexFromCollectionExpression(
             Expression collection,
-            int numDelete,
+            Expression numDelete,
             boolean isFirst,
             boolean isTable,
             ExceptionMetadata metadata
@@ -38,6 +38,10 @@ public class DeleteIndexFromCollectionExpression extends Expression {
         return this.collection;
     }
 
+    public Expression getNumDelete() {
+        return this.numDelete;
+    }
+
     public boolean isTable() {
         return this.isTable;
     }
@@ -46,13 +50,9 @@ public class DeleteIndexFromCollectionExpression extends Expression {
         return this.isFirst;
     }
 
-    public int getNumDelete() {
-        return this.numDelete;
-    }
-
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.collection);
+        return this.numDelete == null ? Arrays.asList(this.collection) : Arrays.asList(this.collection, this.numDelete);
     }
 
     @Override

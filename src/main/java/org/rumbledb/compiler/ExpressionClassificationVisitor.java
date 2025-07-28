@@ -660,6 +660,16 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             );
         }
 
+        if (expression.getNumDelete() != null) {
+            ExpressionClassification numResult = this.visit(expression.getNumDelete(), argument);
+            if (!numResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException(
+                        "Expression for the number to be deleted from the collection must be Simple",
+                        expression.getMetadata()
+                );
+            }
+        }
+
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
         return ExpressionClassification.BASIC_UPDATING;
     }

@@ -548,15 +548,26 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
         boolean isTable = expression.isTable();
         boolean isFirst = expression.isFirst();
-        int numDelete = expression.getNumDelete();
 
-        RuntimeIterator runtimeIterator = new DeleteIndexFromCollectionIterator(
-                targetIterator,
-                numDelete,
-                isFirst,
-                isTable,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        RuntimeIterator runtimeIterator = null;
+        if (expression.getNumDelete() != null) {
+            RuntimeIterator numDelete = this.visit(expression.getNumDelete(), argument);
+            runtimeIterator = new DeleteIndexFromCollectionIterator(
+                    targetIterator,
+                    numDelete,
+                    isFirst,
+                    isTable,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            runtimeIterator = new DeleteIndexFromCollectionIterator(
+                    targetIterator,
+                    isFirst,
+                    isTable,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+
 
         return runtimeIterator;
     }

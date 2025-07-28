@@ -357,7 +357,7 @@ copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
 createCollectionExpr    : Kcreate Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
 
-deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=IntegerLiteral? ) Kfrom Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
 
 deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
 

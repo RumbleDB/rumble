@@ -23,20 +23,34 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
-    private final int numDelete;
+    private final RuntimeIterator numDeleteIterator;
     private final boolean isFirst;
     private final boolean isTable;
 
     public DeleteIndexFromCollectionIterator(
             RuntimeIterator targetIterator,
-            int numDelete,
             boolean isFirst,
             boolean isTable,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
-        this.numDelete = numDelete;
+        this.numDeleteIterator = null;
+        this.isFirst = isFirst;
+        this.isTable = isTable;
+        this.isUpdating = true;
+    }
+    
+    public DeleteIndexFromCollectionIterator(
+            RuntimeIterator targetIterator,
+            RuntimeIterator numDeleteIterator,
+            boolean isFirst,
+            boolean isTable,
+            RuntimeStaticContext staticContext
+    ) {
+        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext);
+        this.targetIterator = targetIterator;
+        this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
         this.isTable = isTable;
         this.isUpdating = true;
@@ -103,6 +117,38 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
+        int numDeleteInt = 1;
+        if (this.numDeleteIterator != null) {   
+            System.out.println("##Here");
+            Item numDeleteItem = null;
+            try {
+                numDeleteItem = this.numDeleteIterator.materializeExactlyOneItem(context);
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidUpdateTargetException(
+                        "The number to be deleted must be an integer, but more than one item was provided.",
+                        this.getMetadata()
+                );
+            } catch (NoItemException e) {
+                throw new InvalidUpdateTargetException(
+                        "The number to be deleted must be an integer, but no item was provided.",
+                        this.getMetadata()
+                );
+            }
+
+            if (!numDeleteItem.isInt()) {
+                throw new InvalidUpdateTargetException(
+                    "Expecting number to be deleted name as an integer, but it was: "
+                        + targetItem.getDynamicType().getIdentifierString(),
+                    this.getMetadata()
+                );
+            }
+
+            numDeleteInt = numDeleteItem.getIntValue();
+
+        }
+        System.out.println("##"+this.numDeleteIterator);
+        System.out.println("##"+numDeleteInt);
+
         String collection = null;
         if (this.isTable) {
             collection = targetItem.getStringValue();
@@ -118,9 +164,8 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             collection,
             SparkSessionManager.rowOrderColumnName,
             this.isFirst ? "ASC" : "DESC",
-            this.numDelete
+            numDeleteInt
         );
-        System.out.println("##" + selectQuery);
         List<Row> rows = session.sql(selectQuery).collectAsList();
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
