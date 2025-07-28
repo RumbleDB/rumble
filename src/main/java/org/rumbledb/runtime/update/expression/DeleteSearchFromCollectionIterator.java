@@ -29,7 +29,6 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
         super(Arrays.asList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
 
-        // TODO: In case of sequence dereference, SequenceLookupIterator is the type of contentIterator
         if (!contentIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
                     "The given content doesn not conform to a dataframe",
@@ -82,13 +81,14 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
         Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
         List<Row> rows = contentDF.collectAsList();
 
+        PendingUpdateList pul = new PendingUpdateList();
+        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
+
         if (rows.isEmpty()) {
             // Not throwing an error for empty deletion
             return null;
         }
 
-        PendingUpdateList pul = new PendingUpdateList();
-        UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         String collection = rows.get(0).getAs(SparkSessionManager.tableLocationColumnName);
         for (Row row : rows) {
             UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(

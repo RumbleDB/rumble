@@ -415,9 +415,14 @@ public class PendingUpdateList {
                 collection,
                 k -> new TreeMap<>()
             );
+            Map<Double, UpdatePrimitive> editMap = this.editTupleMap.get(collection);
 
             for (Map.Entry<Double, UpdatePrimitive> entry : tableEntry.getValue().entrySet()) {
-                tableMap.putIfAbsent(entry.getKey(), entry.getValue());
+                if (editMap != null && editMap.containsKey(entry.getKey())) {
+                    continue;
+                } else {
+                    tableMap.putIfAbsent(entry.getKey(), entry.getValue());
+                }
             }
         }
 
@@ -425,8 +430,13 @@ public class PendingUpdateList {
         for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.editTupleMap.entrySet()) {
             String collection = tableEntry.getKey();
             Map<Double, UpdatePrimitive> tableMap = this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>());
+            Map<Double, UpdatePrimitive> deleteMap = this.deleteTupleMap.get(collection);
 
             for (Map.Entry<Double, UpdatePrimitive> entry : tableEntry.getValue().entrySet()) {
+                if (deleteMap != null) {
+                    deleteMap.remove(entry.getKey());
+                }
+
                 if (tableMap.containsKey(entry.getKey())) {
                     throw new TooManyEditsOnSameTargetException(collection, entry.getKey(), metadata);
                 } else {

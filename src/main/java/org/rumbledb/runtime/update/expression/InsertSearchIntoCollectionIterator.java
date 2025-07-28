@@ -37,7 +37,6 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
         this.isBefore = isBefore;
 
         if (!contentIterator.isDataFrame()) {
-            System.out.println("##" + contentIterator);
             throw new CannotResolveUpdateSelectorException(
                     "The given content does not conform to a dataframe",
                     this.getMetadata()
@@ -97,7 +96,7 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
-                    "One target item must be provided for search based insertion.",
+                    "One target item must be provided for search based insertion. Please check if the target expression provided resolves to a valid target in the collection.",
                     this.getMetadata()
             );
         }
