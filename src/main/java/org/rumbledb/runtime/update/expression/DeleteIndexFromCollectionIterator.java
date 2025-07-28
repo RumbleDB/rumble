@@ -40,7 +40,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         this.isTable = isTable;
         this.isUpdating = true;
     }
-    
+
     public DeleteIndexFromCollectionIterator(
             RuntimeIterator targetIterator,
             RuntimeIterator numDeleteIterator,
@@ -118,8 +118,7 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
         }
 
         int numDeleteInt = 1;
-        if (this.numDeleteIterator != null) {   
-            System.out.println("##Here");
+        if (this.numDeleteIterator != null) {
             Item numDeleteItem = null;
             try {
                 numDeleteItem = this.numDeleteIterator.materializeExactlyOneItem(context);
@@ -137,17 +136,15 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
             if (!numDeleteItem.isInt()) {
                 throw new InvalidUpdateTargetException(
-                    "Expecting number to be deleted name as an integer, but it was: "
-                        + targetItem.getDynamicType().getIdentifierString(),
-                    this.getMetadata()
+                        "Expecting number to be deleted name as an integer, but it was: "
+                            + targetItem.getDynamicType().getIdentifierString(),
+                        this.getMetadata()
                 );
             }
 
             numDeleteInt = numDeleteItem.getIntValue();
 
         }
-        System.out.println("##"+this.numDeleteIterator);
-        System.out.println("##"+numDeleteInt);
 
         String collection = null;
         if (this.isTable) {
