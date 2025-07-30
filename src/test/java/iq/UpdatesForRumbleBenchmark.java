@@ -397,7 +397,7 @@ public class UpdatesForRumbleBenchmark {
     public List<Item> benchmarkDeltaTest(Rumble rumble, URI uri) throws IOException {
         SequenceOfItems sequence = rumble.runQuery(uri);
         List<Item> res = new ArrayList<>();
-        sequence.populateList(res);
+        sequence.populateList(res, configuration.getResultSizeCap());
         return res;
     }
 

@@ -187,6 +187,13 @@ public class SequenceOfItems {
     }
 
     /**
+     * Returns the number of items in the sequence.
+     */
+    public long count() {
+        return getAsRDD().count();
+    }
+
+    /**
      * Returns the sequence of strings as an RDD of Items rather than iterating over them locally.
      * It is not possible to do so if the iterator is open.
      *
@@ -240,15 +247,6 @@ public class SequenceOfItems {
     }
 
     /**
-     * Synonym for getAsDataFrame() for the Python library.
-     * 
-     * @return a data frame.
-     */
-    public Dataset<Row> df() {
-        return getAsDataFrame();
-    }
-
-    /**
      * Applies the PUL available when the iterator is updating.
      */
     public void applyPUL() {
@@ -264,7 +262,7 @@ public class SequenceOfItems {
      */
     public List<Item> getAsList() {
         List<Item> result = new ArrayList<Item>();
-        long num = populateList(result);
+        long num = populateList(result, this.configuration.getResultSizeCap());
         if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
@@ -279,33 +277,52 @@ public class SequenceOfItems {
     }
 
     /**
-     * Synonym for getAsDataFrame() for the Python library.
-     * 
-     * @return The list of all items in the sequence.
-     */
-    public List<Item> items() {
-        return getAsList();
-    }
-
-    /**
      * Outputs the results as a list. If there are more items than the allowed materialization limit,
      * then the list is incomplete and no error is thrown.
      * 
      * @return The list of items in the sequence, possibly capped.
      */
-    public List<Item> getFirstItemsAsList() {
-        List<Item> result = new ArrayList<Item>();
-        populateList(result);
-        return result;
-    }
-
-    /**
-     * Synonym for getAsDataFrame() for the Python library.
-     * 
-     * @return The list of items in the sequence, possibly capped.
-     */
-    public List<Item> first() {
-        return getFirstItemsAsList();
+    public List<Item> getFirstItemsAsList(int maxNumberOfItems) {
+        List<Item> resultList = new ArrayList<Item>();
+        if (this.availableAsPUL()) {
+            return resultList;
+        }
+        if (this.iterator.isRDDOrDataFrame()) {
+            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
+            List<Item> result = rdd.take(maxNumberOfItems);
+            resultList.addAll(result);
+            return resultList;
+        }
+        this.iterator.open(this.dynamicContext);
+        Item result = null;
+        if (this.iterator.hasNext()) {
+            result = this.iterator.next();
+        }
+        if (result == null) {
+            this.iterator.close();
+            return resultList;
+        }
+        Item singleOutput = result;
+        if (!this.iterator.hasNext()) {
+            resultList.add(singleOutput);
+            this.iterator.close();
+            return resultList;
+        } else {
+            int itemCount = 1;
+            resultList.add(result);
+            while (
+                this.iterator.hasNext()
+                    &&
+                    ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
+                        ||
+                        maxNumberOfItems == 0)
+            ) {
+                resultList.add(this.iterator.next());
+                itemCount++;
+            }
+            this.iterator.close();
+            return resultList;
+        }
     }
 
     /*
@@ -314,7 +331,7 @@ public class SequenceOfItems {
      * @return -1 if the full sequence could be materialized. If there were more items beyond the materialization cap,
      * then the sequence length. If the sequence length is not known, then Long.MAX_VALUE.
      */
-    public long populateList(List<Item> resultList) {
+    public long populateList(List<Item> resultList, int maxNumberOfItems) {
         resultList.clear();
         if (this.availableAsPUL()) {
             return -1;
@@ -343,14 +360,14 @@ public class SequenceOfItems {
             while (
                 this.iterator.hasNext()
                     &&
-                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
+                    ((itemCount < maxNumberOfItems && maxNumberOfItems > 0)
                         ||
-                        this.configuration.getResultSizeCap() == 0)
+                        maxNumberOfItems == 0)
             ) {
                 resultList.add(this.iterator.next());
                 itemCount++;
             }
-            if (this.iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+            if (this.iterator.hasNext() && itemCount == maxNumberOfItems) {
                 this.iterator.close();
                 return Long.MAX_VALUE;
             }

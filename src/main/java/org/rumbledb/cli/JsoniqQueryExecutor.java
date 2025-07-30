@@ -174,7 +174,7 @@ public class JsoniqQueryExecutor {
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateList(outputList);
+            long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
                 .map(x -> configuration.getSerializer().serialize(x))
@@ -235,7 +235,7 @@ public class JsoniqQueryExecutor {
         if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
-        return sequence.populateList(resultList);
+        return sequence.populateList(resultList, this.configuration.getResultSizeCap());
     }
 
 }
