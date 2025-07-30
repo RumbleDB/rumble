@@ -12,22 +12,20 @@ import java.util.List;
 public class InsertIndexIntoCollectionExpression extends Expression {
     private final Expression collection;
     private final Expression contentExpression;
+    private final Expression pos;
     private final boolean isTable;
-    private final Integer pos;
     private final boolean isFirst;
     private final boolean isLast;
 
     public InsertIndexIntoCollectionExpression(
             Expression collection,
             Expression contentExpression,
+            Expression pos,
             boolean isTable,
-            Integer pos,
             boolean isFirst,
             boolean isLast,
             ExceptionMetadata metadata
     ) {
-        // TODO: The current implementations only accounts for two callening modes- table, and delta-file
-        // Extension to other modes can be done by increasing flags for using enum instead
         super(metadata);
         if (collection == null) {
             throw new OurBadException("Collection must be identified for insertion.");
@@ -52,6 +50,10 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         return this.contentExpression;
     }
 
+    public Expression getPosition() {
+        return this.pos;
+    }
+
     public boolean isTable() {
         return this.isTable;
     }
@@ -64,13 +66,11 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         return this.isFirst;
     }
 
-    public Integer getPosition() {
-        return this.pos;
-    }
-
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.contentExpression, this.collection);
+        return this.pos != null
+            ? Arrays.asList(this.contentExpression, this.collection, this.pos)
+            : Arrays.asList(this.contentExpression, this.collection);
     }
 
     @Override
@@ -88,7 +88,8 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         } else if (this.isFirst) {
             sb.append(" first ");
         } else {
-            sb.append(" at " + this.pos);
+            sb.append(" at ");
+            this.pos.serializeToJSONiq(sb, 1);
         }
         sb.append(" into collection ");
         sb.append(this.isTable ? "table" : "delta-file");

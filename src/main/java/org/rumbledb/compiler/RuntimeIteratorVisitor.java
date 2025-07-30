@@ -612,17 +612,29 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         boolean isTable = expression.isTable();
         boolean isFirst = expression.isFirst();
         boolean isLast = expression.isLast();
-        Integer pos = expression.getPosition();
 
-        RuntimeIterator runtimeIterator = new InsertIndexIntoCollectionIterator(
-                targetIterator,
-                contentIterator,
-                isTable,
-                pos,
-                isFirst,
-                isLast,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        RuntimeIterator runtimeIterator = null;
+        if (expression.getPosition() != null) {
+            RuntimeIterator pos = this.visit(expression.getPosition(), argument);
+            runtimeIterator = new InsertIndexIntoCollectionIterator(
+                    targetIterator,
+                    contentIterator,
+                    pos,
+                    isTable,
+                    isFirst,
+                    isLast,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            runtimeIterator = new InsertIndexIntoCollectionIterator(
+                    targetIterator,
+                    contentIterator,
+                    isTable,
+                    isFirst,
+                    isLast,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         return runtimeIterator;
     }

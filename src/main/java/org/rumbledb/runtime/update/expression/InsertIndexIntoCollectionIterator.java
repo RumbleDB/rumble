@@ -26,16 +26,43 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
+    private final RuntimeIterator posIterator;
     private final boolean isTable;
-    private final Integer pos;
     private final boolean isFirst;
     private final boolean isLast;
 
     public InsertIndexIntoCollectionIterator(
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
+            RuntimeIterator posIterator,
             boolean isTable,
-            Integer pos,
+            boolean isFirst,
+            boolean isLast,
+            RuntimeStaticContext staticContext
+    ) {
+        super(Arrays.asList(targetIterator, contentIterator, posIterator), staticContext);
+        this.targetIterator = targetIterator;
+        this.contentIterator = contentIterator;
+        this.posIterator = posIterator;
+        this.isTable = isTable;
+        this.isFirst = isFirst;
+        this.isLast = isLast;
+
+        if (!contentIterator.isDataFrame()) {
+            throw new CannotResolveUpdateSelectorException(
+                    "The given content does not conform to a dataframe",
+                    this.getMetadata()
+            );
+        }
+
+        this.isUpdating = true;
+
+    }
+
+    public InsertIndexIntoCollectionIterator(
+            RuntimeIterator targetIterator,
+            RuntimeIterator contentIterator,
+            boolean isTable,
             boolean isFirst,
             boolean isLast,
             RuntimeStaticContext staticContext
@@ -43,8 +70,8 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         super(Arrays.asList(targetIterator, contentIterator), staticContext);
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
+        this.posIterator = null;
         this.isTable = isTable;
-        this.pos = pos;
         this.isFirst = isFirst;
         this.isLast = isLast;
 
@@ -85,13 +112,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        // TODO: Ascertain this
         return false;
     }
 
     @Override
     protected Item nextLocal() {
-        // TODO: Check for this
         return null;
     }
 
@@ -136,12 +161,39 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         } else if (this.isFirst) {
             up = factory.createInsertFirstIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
         } else {
+            int posInt;
+            Item posItem = null;
+
+            try {
+                posItem = this.posIterator.materializeExactlyOneItem(context);
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidUpdateTargetException(
+                        "The insertion index must be a unique integer, but more than one item was provided.",
+                        this.getMetadata()
+                );
+            } catch (NoItemException e) {
+                throw new InvalidUpdateTargetException(
+                        "The insertion index must be a unique integer, but no item was provided.",
+                        this.getMetadata()
+                );
+            }
+
+            if (!posItem.isInt()) {
+                throw new InvalidUpdateTargetException(
+                        "Expecting insertion index as a integer, but it was: "
+                            + posItem.getDynamicType().getIdentifierString(),
+                        this.getMetadata()
+                );
+            } else {
+                posInt = posItem.getIntValue();
+            }
+
             Item targetMetadataItem = new ObjectItem();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
             String selectQuery = String.format(
-                "SELECT rowOrder FROM %s ORDER BY rowOrder ASC OFFSET %d LIMIT 1",
+                "SELECT * FROM %s ORDER BY rowOrder ASC LIMIT 1 OFFSET %d",
                 collection,
-                this.pos - 1
+                posInt - 1
             );
             Row res = session.sql(selectQuery).collectAsList().get(0);
             targetMetadataItem.setMutabilityLevel(res.getAs(SparkSessionManager.mutabilityLevelColumnName));

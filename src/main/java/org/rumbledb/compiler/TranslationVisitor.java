@@ -1409,19 +1409,16 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
         Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        Expression pos = (Expression) this.visitExprSingle(ctx.pos);
         boolean isTable = (ctx.table != null);
         boolean isLast = (ctx.last != null);
         boolean isFirst = (ctx.first != null);
-        Integer pos = null;
-        if (ctx.pos != null) {
-            pos = Integer.parseInt(ctx.pos.getText());
-        }
 
         return new InsertIndexIntoCollectionExpression(
                 collection,
                 contentExpression,
-                isTable,
                 pos,
+                isTable,
                 isFirst,
                 isLast,
                 createMetadataFromContext(ctx)
