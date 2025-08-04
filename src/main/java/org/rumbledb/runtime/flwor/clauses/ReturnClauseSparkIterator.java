@@ -178,6 +178,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                     result = result.union(intermediateResult);
                 }
             }
+            this.child.close();
             if (result == null) {
                 return JSoundDataFrame.emptyDataFrame();
             }
