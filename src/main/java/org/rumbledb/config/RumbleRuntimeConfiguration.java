@@ -67,6 +67,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String logPath;
     private String query;
     private String shell;
+    private boolean printIteratorTree;
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
@@ -260,6 +261,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void init() {
+        if (this.arguments.containsKey("print-iterator-tree")) {
+            this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
+        } else {
+            this.printIteratorTree = false;
+        }
+
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
@@ -650,12 +657,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
+    public void setPrintIteratorTree(boolean value) {
+        this.printIteratorTree = value;
+    }
+
     public boolean isPrintIteratorTree() {
-        if (this.arguments.containsKey("print-iterator-tree")) {
-            return this.arguments.get("print-iterator-tree").equals("yes");
-        } else {
-            return false;
-        }
+        return this.printIteratorTree;
     }
 
     public boolean doStaticAnalysis() {
