@@ -737,12 +737,14 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
             );
         }
 
-        ExpressionClassification positionResult = this.visit(expression.getPosition(), argument);
-        if (!positionResult.isSimple()) {
-            throw new InvalidUpdatingExpressionPositionException(
-                    "Position of insertion must be Simple",
-                    expression.getMetadata()
-            );
+        if (expression.getPosition() != null) {
+            ExpressionClassification positionResult = this.visit(expression.getPosition(), argument);
+            if (!positionResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException(
+                        "Position of insertion must be Simple",
+                        expression.getMetadata()
+                );
+            }
         }
 
         expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
