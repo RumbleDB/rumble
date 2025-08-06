@@ -243,7 +243,11 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
+        Dataset<Row> res = this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
+        if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            res = res.withColumnRenamed(SparkSessionManager.atomicJSONiqItemColumnName, "value");
+        }
+        return res;
     }
 
     /**
