@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -350,6 +350,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
+    /**
+     * Materialize the items of the iterator into the result list.
+     * 
+     * @param context the dynamic context
+     * @param result the list to materialize the items into. The list is cleared before the materialization.
+     */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
         this.open(context);
@@ -433,6 +439,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
         return result;
+    }
+
+    public void printToStandardError() {
+        StringBuffer sb = new StringBuffer();
+        this.print(sb, 0);
+        System.err.println(sb);
     }
 
     public void print(StringBuffer buffer, int indent) {

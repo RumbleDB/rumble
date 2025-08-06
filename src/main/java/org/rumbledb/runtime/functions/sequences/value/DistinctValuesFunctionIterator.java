@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 
 import java.util.ArrayList;
@@ -132,5 +133,17 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         checkCollation(dynamicContext);
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         return df.distinct();
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext sequenceQuery = this.sequenceIterator.generateNativeQuery(nativeClauseContext);
+        if (sequenceQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "DISTINCT( "
+            + sequenceQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
     }
 }

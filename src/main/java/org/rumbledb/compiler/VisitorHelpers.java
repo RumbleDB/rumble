@@ -66,10 +66,35 @@ public class VisitorHelpers {
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
         // Annotate recursive functions as such
+        if (conf.isPrintIteratorTree()) {
+            System.err.println("***************************************");
+            System.err.println("Function dependencies visitor");
+            System.err.println("***************************************");
+        }
         new FunctionDependenciesVisitor().visit(result, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
         // Inline non-recursive functions
         if (conf.functionInlining()) {
+            if (conf.isPrintIteratorTree()) {
+                System.err.println("***************************************");
+                System.err.println("Function inlining");
+                System.err.println("***************************************");
+            }
             result = (MainModule) new FunctionInliningVisitor().visit(result, null);
+            if (conf.isPrintIteratorTree()) {
+                printTree(result, conf);
+            }
+        }
+        if (conf.isPrintIteratorTree()) {
+            System.err.println("***************************************");
+            System.err.println("Projection pushdown");
+            System.err.println("***************************************");
+        }
+        result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(result, conf);
         }
         return result;
     }
@@ -213,6 +238,12 @@ public class VisitorHelpers {
             }
             populateExpressionClassifications(mainModule, configuration);
             if (configuration.isPrintIteratorTree()) {
+                System.err.println("********************************");
+                System.err.println("Verify composability constraints");
+                System.err.println("********************************");
+            }
+            verifyComposabilityConstraints(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
                 System.err.println("**************");
                 System.err.println("Infering types");
                 System.err.println("**************");
@@ -236,12 +267,6 @@ public class VisitorHelpers {
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
-                System.err.println("********************************");
-                System.err.println("Verify composability constraints");
-                System.err.println("********************************");
-            }
-            verifyComposabilityConstraints(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
