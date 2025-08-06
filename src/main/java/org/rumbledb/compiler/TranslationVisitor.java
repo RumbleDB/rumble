@@ -272,8 +272,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         externalVariable,
                         true,
                         new SequenceType(
-                            itemType,
-                            SequenceType.Arity.ZeroOrMore
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
                         ),
                         null,
                         null,
