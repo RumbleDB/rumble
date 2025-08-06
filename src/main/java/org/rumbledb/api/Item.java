@@ -933,7 +933,7 @@ public interface Item extends Serializable, KryoSerializable {
     /**
      * Sets the top level order parameter (rowOrder)
      * 
-     * @param double new rowOrder value
+     * @param topLevelOrder new rowOrder value
      */
     default void setTopLevelOrder(double topLevelOrder) {
     }
