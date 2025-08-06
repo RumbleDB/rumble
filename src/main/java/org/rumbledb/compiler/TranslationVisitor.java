@@ -121,6 +121,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
@@ -655,7 +662,29 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (content instanceof JsoniqParser.PathExprContext) {
             return this.visitPathExpr((JsoniqParser.PathExprContext) content);
         }
-        throw new OurBadException("Unrecognized ExprSimple.");
+
+        if (content instanceof JsoniqParser.CreateCollectionExprContext) {
+            return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteIndexExprContext) {
+            return this.visitDeleteIndexExpr((JsoniqParser.DeleteIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteSearchExprContext) {
+            return this.visitDeleteSearchExpr((JsoniqParser.DeleteSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.EditCollectionExprContext) {
+            return this.visitEditCollectionExpr((JsoniqParser.EditCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertIndexExprContext) {
+            return this.visitInsertIndexExpr((JsoniqParser.InsertIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertSearchExprContext) {
+            return this.visitInsertSearchExpr((JsoniqParser.InsertSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
+            return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
+        }
+        throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
 
     // endregion
@@ -1321,6 +1350,101 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression arrayExpression = (Expression) this.visitExprSingle(ctx.array_expr);
         Expression toAppendExpression = (Expression) this.visitExprSingle(ctx.to_append_expr);
         return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isTable = (ctx.table != null);
+        return new CreateCollectionExpression(
+                collection,
+                contentExpression,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
+        boolean isFirst = (ctx.first != null);
+
+        Expression numDelete = null;
+        if (ctx.num != null) {
+            numDelete = (Expression) this.visitExprSingle(ctx.num);
+        }
+
+        return new DeleteIndexFromCollectionExpression(
+                collection,
+                numDelete,
+                isFirst,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new DeleteSearchFromCollectionExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new EditCollectionExpression(
+                targetExpression,
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        Expression pos = ctx.pos != null ? (Expression) this.visitExprSingle(ctx.pos) : null;
+        boolean isTable = (ctx.table != null);
+        boolean isLast = (ctx.last != null);
+        boolean isFirst = (ctx.first != null);
+
+        return new InsertIndexIntoCollectionExpression(
+                collection,
+                contentExpression,
+                pos,
+                isTable,
+                isFirst,
+                isLast,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isBefore = (ctx.before != null);
+        return new InsertSearchIntoCollectionExpression(
+                targetExpression,
+                contentExpression,
+                isBefore,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
+        Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+        return new TruncateCollectionExpression(
+                collectionName,
+                createMetadataFromContext(ctx)
+        );
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {

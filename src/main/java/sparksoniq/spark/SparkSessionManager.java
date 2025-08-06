@@ -95,6 +95,7 @@ public class SparkSessionManager {
     public static String rowIdColumnName = "rowID";
     public static String pathInColumnName = "pathIn";
     public static String tableLocationColumnName = "tableLocation";
+    public static String rowOrderColumnName = "rowOrder";
 
     private SparkSessionManager() {
     }
@@ -162,7 +163,7 @@ public class SparkSessionManager {
             Logger.getLogger("org").setLevel(LOG_LEVEL);
             Logger.getLogger("akka").setLevel(LOG_LEVEL);
 
-            this.session = SparkSession.builder().config(this.configuration).getOrCreate();
+            this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
