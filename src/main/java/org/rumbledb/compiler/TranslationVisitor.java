@@ -24,6 +24,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
@@ -256,11 +258,16 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             if (isAlreadyDeclared) {
                 continue;
             }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
             prolog.addDeclaration(
                 new VariableDeclaration(
                         externalVariable,
                         true,
-                        SequenceType.OBJECTS,
+                        new SequenceType(
+                            itemType,
+                            SequenceType.Arity.ZeroOrMore
+                        ),
                         null,
                         null,
                         createMetadataFromContext(ctx)
