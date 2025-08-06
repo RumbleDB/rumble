@@ -94,6 +94,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
@@ -389,6 +396,34 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTransformExpression(TransformExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCreateCollectionExpression(CreateCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitInsertIndexIntoCollectionExpression(InsertIndexIntoCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitInsertSearchIntoCollectionExpression(InsertSearchIntoCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDeleteIndexFromCollectionExpression(DeleteIndexFromCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDeleteSearchFromCollectionExpression(DeleteSearchFromCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitEditCollectionExpression(EditCollectionExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTruncateCollectionExpression(TruncateCollectionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

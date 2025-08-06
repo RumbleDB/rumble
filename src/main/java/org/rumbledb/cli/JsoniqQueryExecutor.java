@@ -190,7 +190,7 @@ public class JsoniqQueryExecutor {
             }
         }
 
-        if (this.configuration.applyUpdates() && sequence.availableAsPUL() && outputPath != null) {
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
 

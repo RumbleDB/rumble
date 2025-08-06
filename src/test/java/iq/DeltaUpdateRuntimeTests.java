@@ -157,6 +157,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
