@@ -72,22 +72,11 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
             monotonically_increasing_id().cast("double")
         );
 
-        this.contents = this.contents.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0));
-        this.contents = this.contents.withColumn(SparkSessionManager.pathInColumnName, lit(""));
-
         if (this.isTable) {
-            this.contents = this.contents.withColumn(
-                SparkSessionManager.tableLocationColumnName,
-                lit(this.collectionName)
-            );
             this.contents.write()
                 .format("delta")
                 .saveAsTable(this.collectionName);
         } else {
-            this.contents = this.contents.withColumn(
-                SparkSessionManager.tableLocationColumnName,
-                lit("delta.`" + this.collectionName + "`")
-            );
             this.contents.write()
                 .format("delta")
                 .option("path", "delta/" + this.collectionName)
