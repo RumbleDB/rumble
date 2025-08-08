@@ -12,7 +12,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -41,6 +41,7 @@ public class Base64BinaryItem implements Item {
     }
 
     public Base64BinaryItem(String stringValue) {
+        stringValue = stringValue.replaceAll("\\s", "");
         this.value = parseBase64BinaryString(stringValue);
         this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
@@ -86,7 +87,7 @@ public class Base64BinaryItem implements Item {
         if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString.replaceAll("\\s", ""))) {
             throw new IllegalArgumentException();
         }
-        return DatatypeConverter.parseBase64Binary(base64BinaryString);
+        return Base64.getDecoder().decode(base64BinaryString);
     }
 
     @Override
