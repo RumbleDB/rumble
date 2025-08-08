@@ -96,7 +96,9 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                 + setOldFieldClause
                 + ", "
                 + setNewFieldClause
-                + " WHERE `" + SparkSessionManager.rowIdColumnName + "` == "
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
                 + rowID;
 
             // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
@@ -157,7 +159,9 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             + SparkSessionManager.atomicJSONiqItemColumnName
             + "` FROM delta.`"
             + location
-            + "` WHERE `" + SparkSessionManager.rowIdColumnName + "` == "
+            + "` WHERE `"
+            + SparkSessionManager.rowIdColumnName
+            + "` == "
             + rowID;
 
         Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
