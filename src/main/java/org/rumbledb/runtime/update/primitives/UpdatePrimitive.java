@@ -207,7 +207,7 @@ public interface UpdatePrimitive {
         }
 
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
-        String query = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
+        String query = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE `" + SparkSessionManager.rowIdColumnName+ "` == " + rowID;
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }

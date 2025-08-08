@@ -62,7 +62,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
                 .collect(Collectors.toList());
             String concatSetNulls = String.join(", ", setFieldsToNulls);
 
-            String query = "UPDATE delta.`" + location + "` SET " + concatSetNulls + " WHERE rowID == " + rowID;
+            String query = "UPDATE delta.`" + location + "` SET " + concatSetNulls + " WHERE `" + SparkSessionManager.rowIdColumnName + "` == " + rowID;
 
             SparkSessionManager.getInstance().getOrCreateSession().sql(query);
         } else {

@@ -78,7 +78,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                 .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
                 .collect(Collectors.toList());
 
-            String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + " WHERE rowID == " + rowID;
+            String setFieldQuery = "UPDATE delta.`" + location + "` SET " + setClauses + " WHERE `" + SparkSessionManager.rowIdColumnName + "` == " + rowID;
 
             SparkSessionManager manager = SparkSessionManager.getInstance();
 

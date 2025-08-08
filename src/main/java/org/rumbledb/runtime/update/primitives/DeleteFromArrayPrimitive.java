@@ -55,7 +55,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
                 + SparkSessionManager.atomicJSONiqItemColumnName
                 + "` FROM delta.`"
                 + location
-                + "` WHERE rowID == "
+                + "` WHERE `" + SparkSessionManager.rowIdColumnName + "` == "
                 + rowID;
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
@@ -68,7 +68,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
             this.applyItem();
             setClause = setClause + this.target.getSparkSQLValue(arrayType);
 
-            String query = "UPDATE delta.`" + location + "` " + setClause + " WHERE rowID == " + rowID;
+            String query = "UPDATE delta.`" + location + "` " + setClause + " WHERE `" + SparkSessionManager.rowIdColumnName + "` == " + rowID;
 
             SparkSessionManager.getInstance().getOrCreateSession().sql(query);
         } else {
