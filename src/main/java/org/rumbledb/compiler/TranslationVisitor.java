@@ -24,6 +24,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
@@ -251,6 +253,55 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     )
                 );
             }
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        new SequenceType(
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.ITEM_STAR,
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
         }
 
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
