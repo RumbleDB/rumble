@@ -367,7 +367,7 @@ insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kaf
 
 truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
 
-editCollectionExpr      : Kedit target=exprSingle Kby content=exprSingle Kfrom Kcollection;
+editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle Kfrom Kcollection;
 
 
 ///////////////////////// XPath
