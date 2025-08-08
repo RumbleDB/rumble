@@ -167,6 +167,13 @@ exprSimple              : quantifiedExpr
                         | replaceExpr
                         | transformExpr
                         | appendExpr
+                        | createCollectionExpr
+                        | truncateCollectionExpr
+                        | deleteIndexExpr
+                        | deleteSearchExpr
+                        | editCollectionExpr
+                        | insertIndexExpr
+                        | insertSearchExpr
                         ;
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
@@ -341,9 +348,26 @@ appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_ex
 
 updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
 
-copyDecl                    : var_ref=varRef ':=' src_expr=exprSingle;
+copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
 // TODO: Direct element constructors
+
+
+///////////////////////// Top Level Updating Expressions
+
+createCollectionExpr    : Kcreate Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
+
+deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+
+deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
+
+insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+
+insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
+
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
+
+editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle Kfrom Kcollection;
 
 
 ///////////////////////// XPath
@@ -548,6 +572,17 @@ keyWords                : Kjsoniq
                         | Kjson
                         | Ktext
                         | Kupdating
+                        | Kcreate
+                        | Kcollection
+                        | Ktable
+                        | Kdeltafile
+                        | Ktruncate
+                        | Kfirst
+                        | Klast
+                        | Kfrom
+                        | Kedit
+                        | Kbefore
+                        | Kafter
                         ;
 
 ///////////////////////// literals
@@ -685,6 +720,28 @@ Kposition               : 'position';
 Kjson                   : 'json';
 
 Kupdating               :  'updating';
+
+Kcreate                 : 'create';
+
+Kcollection             : 'collection';
+
+Ktable                  : 'table';
+
+Kdeltafile              : 'delta-file';
+
+Ktruncate               : 'truncate';
+
+Kfirst                  : 'first';
+
+Klast                   : 'last';
+
+Kfrom                   : 'from';
+
+Kedit                   : 'edit';
+
+Kafter                  : 'after';
+
+Kbefore                 : 'before';
 
 
 ///////////////////////// XPath
