@@ -5,7 +5,6 @@ import sparksoniq.spark.SparkSessionManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
 
