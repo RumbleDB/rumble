@@ -407,7 +407,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 // TODO: Find another way to check if delta dataframe -- e.g. flag and mutability level
                 // TODO: implement keyword vars to stop ust using strs
                 String sql;
-                if (childDataFrame.getKeys().contains("tableLocation")) {
+                if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
                         "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
                         key,
@@ -431,7 +431,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } else {
                 String sql;
                 JSoundDataFrame result;
-                if (childDataFrame.getKeys().contains("tableLocation")) {
+                if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
                         "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
                         key,
