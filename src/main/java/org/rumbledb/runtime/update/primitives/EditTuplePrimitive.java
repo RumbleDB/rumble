@@ -70,10 +70,7 @@ public class EditTuplePrimitive implements UpdatePrimitive {
 
         this.contents = this.contents
             .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
-            .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder))
-            .withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(targetMutabilityLevel))
-            .withColumn(SparkSessionManager.pathInColumnName, lit(pathInColumn))
-            .withColumn(SparkSessionManager.tableLocationColumnName, lit(collectionPath));
+            .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder));
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
         String safeName = collectionPath.replaceAll("[^a-zA-Z0-9_]", "_");
