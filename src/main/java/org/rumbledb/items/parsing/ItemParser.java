@@ -275,7 +275,9 @@ public class ItemParser implements Serializable {
         if (
             fields.length == 5
                 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
-                && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName) // replace with SparkSessionManager.tableLocationColumnName ??
+                && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName) // replace with
+                                                                                     // SparkSessionManager.tableLocationColumnName
+                                                                                     // ??
         ) {
             ItemType resType = null;
             if (itemType != null) {

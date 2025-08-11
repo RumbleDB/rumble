@@ -224,7 +224,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     .get(SparkSessionManager.atomicJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
-                && childDataFrame.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.tableLocationColumnName)
+                && childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .containsKey(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
                 .getObjectContentFacet()
