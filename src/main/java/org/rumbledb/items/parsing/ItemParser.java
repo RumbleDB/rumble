@@ -396,6 +396,7 @@ public class ItemParser implements Serializable {
         }
 
         Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+        System.err.println("After parsing, setting mutabilityLevel of " + res.serialize() + " to " + mutabilityLevel);
         res.setMutabilityLevel(mutabilityLevel);
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
