@@ -23,7 +23,13 @@ public interface UpdatePrimitive {
 
     boolean hasSelector();
 
-    Item getTarget();
+    default Item getTarget() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default Dataset<Row> getTargetDataFrame() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
 
     default Item getSelector() {
         throw new UnsupportedOperationException("Operation not defined");
@@ -38,6 +44,10 @@ public interface UpdatePrimitive {
     }
 
     default List<Item> getContentList() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default Dataset<Row> getContentDataFrame() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
@@ -73,7 +83,63 @@ public interface UpdatePrimitive {
         return false;
     }
 
+    default boolean isCreateCollection() {
+        return false;
+    }
+
+    default boolean isDeleteTuple() {
+        return false;
+    }
+
+    default boolean isEditTuple() {
+        return false;
+    }
+
+    default boolean isInsertTuple() {
+        return false;
+    }
+
+    default boolean isInsertAfterIntoCollection() {
+        return false;
+    }
+
+    default boolean isInsertBeforeIntoCollection() {
+        return false;
+    }
+
+    default boolean isInsertFirstIntoCollection() {
+        return false;
+    }
+
+    default boolean isInsertLastIntoCollection() {
+        return false;
+    }
+
+    default boolean isTruncateCollection() {
+        return false;
+    }
+
     default void arrayIndexingUpdateSchemaDelta() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default String getCollectionPath() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default String getCollectionName() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default double getRowOrder() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default double getRowOrderRangeBase() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    default double getRowOrderRangeMax() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
@@ -100,7 +166,9 @@ public interface UpdatePrimitive {
             + SparkSessionManager.atomicJSONiqItemColumnName
             + "` FROM delta.`"
             + location
-            + "` WHERE rowID == "
+            + "` WHERE `"
+            + SparkSessionManager.rowIdColumnName
+            + "` == "
             + rowID;
 
         Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
@@ -141,7 +209,14 @@ public interface UpdatePrimitive {
         }
 
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
-        String query = "UPDATE delta.`" + location + "` SET " + setClause + " WHERE rowID == " + rowID;
+        String query = "UPDATE delta.`"
+            + location
+            + "` SET "
+            + setClause
+            + " WHERE `"
+            + SparkSessionManager.rowIdColumnName
+            + "` == "
+            + rowID;
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }
