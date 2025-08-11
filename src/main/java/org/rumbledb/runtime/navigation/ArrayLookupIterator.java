@@ -282,7 +282,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     .get(SparkSessionManager.atomicJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
-                && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
+                && childDataFrame.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
                 .getObjectContentFacet()

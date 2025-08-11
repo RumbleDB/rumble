@@ -247,14 +247,12 @@ public class ItemFactory {
     }
 
     public Item createArrayItem(List<Item> items, boolean mutable) {
-        System.err.println("Creating array item. Mutable: " + mutable);
         Item result = new ArrayItem(items);
         if (mutable) {
             result.setMutabilityLevel(0);
         } else {
             result.setMutabilityLevel(-1);
         }
-        System.err.println(result.serialize());
         return result;
     }
 
@@ -264,14 +262,12 @@ public class ItemFactory {
             ExceptionMetadata itemMetadata,
             boolean mutable
     ) {
-        System.err.println("Creating object item. Mutable: " + mutable);
         Item result = new ObjectItem(keys, values, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
         } else {
             result.setMutabilityLevel(-1);
         }
-        System.err.println(result.serialize());
         return result;
     }
 

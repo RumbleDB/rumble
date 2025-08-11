@@ -478,7 +478,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ItemType maxType;
             if (
                 df.getItemType().isObjectItemType()
-                    && df.getItemType().getObjectContentFacet().containsKey("tableLocation")
+                    && df.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.tableLocationColumnName)
             ) {
                 maxType = df.getItemType()
                     .getObjectContentFacet()
