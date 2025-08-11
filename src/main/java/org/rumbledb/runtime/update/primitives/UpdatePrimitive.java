@@ -166,7 +166,9 @@ public interface UpdatePrimitive {
             + SparkSessionManager.atomicJSONiqItemColumnName
             + "` FROM delta.`"
             + location
-            + "` WHERE `" + SparkSessionManager.rowIdColumnName + "` == "
+            + "` WHERE `"
+            + SparkSessionManager.rowIdColumnName
+            + "` == "
             + rowID;
 
         Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);

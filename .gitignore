@@ -10,8 +10,6 @@ target/
 rumble*.jar
 *.*~
 /.rumble_shell_history
-sample_json_delta
-_delta_log
 
 delta/
 spark-warehouse/
