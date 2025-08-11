@@ -3,17 +3,18 @@
 # Script provided by https://github.com/fkellner, Thank you!
 
 INSTALL_PATH=$HOME/RumbleDB
-APACHE_SPARK_RELEASE=3.5.5
+APACHE_SPARK_RELEASE=3.5.6
 HADOOP_RELEASE=3
 SCALA_RELEASE=2.13
-RUMBLEDB_VERSION=1.22.0
+RUMBLEDB_VERSION=1.23.0
+JAVA_VERSION=17
 
 SPARK_BASE_URL=https://dlcdn.apache.org/spark
 
 if [ "$1" == "--help" ]; then
   echo "Usage:"
   echo "    ./install-rumbledb.sh"
-  echo "Downloads Apache Spark and RumbleDB (and installs Java 11 if not present)"
+  echo "Downloads Apache Spark and RumbleDB (and installs Java $JAVA_VERSION if not present)"
   echo "Creates a RumbleDB REPL script and a RumbleDB File execution script"
   echo "Scripts are added to PATH via an edit to ~/.bashrc"
   echo "Everything, including an uninstaller, will be stored in $INSTALL_PATH"
@@ -24,20 +25,17 @@ if [ "$1" == "--help" ]; then
   exit 0
 fi
 
-echo "######### Checking if Java 11 is installed"
+command -v wget >/dev/null 2>&1 || { echo "wget not found"; exit 1; }
+command -v gpg >/dev/null 2>&1 || echo "WARNING: gpg not found — skipping verification"
+
+echo "######### Checking if Java $JAVA_VERSION is installed"
 if command -v java >/dev/null 2>&1; then
-  JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
-  echo "Java version is $JAVA_VERSION. Version 11 is required."
+  JAVA_FOUND=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+  echo "Java version is $JAVA_FOUND. Version $JAVA_VERSION is required."
 else
-  if command -v apt-get >/dev/null 2>&1; then
-    echo "No Java found, trying to install OpenJDK 11 JRE via apt-get"
-    echo "You will need to enter your password for this"
-    sudo apt-get update &
-    apt-get install -y openjdk-11-jdk
-  else
-    echo "No Java and no apt-get package manager found. Please install Java 11 manually."
-    exit 1
-  fi
+  echo "No Java found. Please install Java $JAVA_VERSION manually."
+  echo "Reccomended OpenJDK $JAVA_VERSION JDK"
+  exit 1
 fi
 
 echo "########## Creating installation folder"
@@ -87,8 +85,6 @@ else
   echo "GPG not installed, could not verify download"
 fi
 
-sleep 5
-
 echo "##### Unpacking file"
 tar -xzf "$SPARK_FILENAME"
 
@@ -125,11 +121,8 @@ EOF
 chmod +x scripts/*
 
 if ! grep -q "$INSTALL_PATH/scripts" ~/.bashrc; then
-  echo "PATH=\$PATH:$INSTALL_PATH/scripts" >>~/.bashrc
+  echo "export PATH=\"\$PATH:$INSTALL_PATH/scripts\"" >>~/.bashrc
 fi
 
-echo "########## Done. Reloading ~/.bashrc and showing help output of scripts"
-source ~/.bashrc
-~/RumbleDB/scripts/rumble-file --help
-~/RumbleDB/scripts/rumble-repl --help
-~/RumbleDB/scripts/uninstall-rumble --help
+echo "########## Done. To use RumbleDB, restart your shell or run:"
+echo "    export PATH=\"\$PATH:$INSTALL_PATH/scripts\""
