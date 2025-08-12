@@ -196,33 +196,9 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             Assert.fail();
         }
         boolean didDelete = checkTableDeletion();
-        boolean didCreate = checkTableCreation(this.testFile.getAbsolutePath());
-        if (!(didCreate || didDelete)) {
+        if (!didDelete) {
             testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
         }
-    }
-
-    private boolean checkTableCreation(String path) throws IOException, InterruptedException {
-        if (!this.currentAnnotation.shouldCreateTable()) {
-            return false;
-        }
-
-        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            this.currentAnnotation.getDeltaTablePath(),
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-        URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            path,
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-
-        DeltaUpdateRuntimeTests.createDeltaConfiguration.setOutputPath(tableURI.getPath());
-        DeltaUpdateRuntimeTests.createDeltaConfiguration.setQueryPath(queryURI.getPath());
-        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(DeltaUpdateRuntimeTests.createDeltaConfiguration);
-        executor.runQuery();
-        return true;
     }
 
     private boolean checkTableDeletion() {
