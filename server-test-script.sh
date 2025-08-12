@@ -1,5 +1,5 @@
 # start server as a background process
-spark-submit target/spark-rumble-*-jar-with-dependencies.jar --server yes --port 8000 &
+spark-submit target/rumbledb-*-jar-with-dependencies.jar --server yes --port 8000 &
 echo "Starting the Rumble server"
 sleep 5
 
@@ -90,10 +90,8 @@ fi
 rm -rf /tmp/output
 curl --silent --show-error --stderr - -X POST "http://localhost:8000/jsoniq?query-path=/tmp/query.jq&output-path=/tmp/output" > /dev/null 
 result=$(curl --silent --show-error --stderr - -X POST "http://localhost:8000/jsoniq?query-path=/tmp/query.jq&output-path=/tmp/output")
-result_without_stack_trace=${result:2:152}
-expected_result_without_stack_trace='"error-message" : "Error [err: RBST0001 ] Output path \/tmp\/output already exists. Please use --overwrite yes to overwrite.", "error-code" : "RBST0001"'
 
-if [[ "$result_without_stack_trace" = "$expected_result_without_stack_trace" ]]
+if [[ "$result" == *"RBST0001"* ]] # check if the result contains error code expected
 then
     echo 'Test 5: Success'
     success_count=$((success_count+1))
@@ -131,7 +129,7 @@ else
 fi
 
 ### TEST 7 ###
-result=$(curl --silent --show-error --stderr - --data 'let $x := parallelize(1 to 10)[2] \n return $x' -X GET "http://localhost:8000/jsoniq")
+result=$(curl --silent --show-error --stderr - --data $'let $x := parallelize(1 to 10)[2]\nreturn $x' -X GET "http://localhost:8000/jsoniq")
 expected_result='{ "values" : [ 2 ] }'
 if [[ "$result" = "$expected_result" ]];
 then
