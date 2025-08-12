@@ -10,6 +10,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
@@ -117,6 +118,9 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         // If it is a delta-file() call we need to resolve the path to an absolute path.
         if (!this.isTable) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, collectionName, getMetadata());
+            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+            }
             collectionName = uri.toString();
         }
 
