@@ -3024,17 +3024,6 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
-     * function that creates a delta lake table at a given path location
-     */
-    static final BuiltinFunction create_delta_lake_table = createBuiltinFunction(
-        new Name(Name.JN_NS, "jn", "create-delta-lake-table"),
-        "string",
-        "boolean",
-        CreateDeltaLakeTableFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-    /**
      * function that deletes a delta lake table at a given path location
      */
     static final BuiltinFunction delete_delta_lake_table = createBuiltinFunction(
