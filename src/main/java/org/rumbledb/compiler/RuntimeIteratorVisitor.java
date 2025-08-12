@@ -682,8 +682,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
+        boolean isTable = expression.isTable();
         RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
                 targetIterator,
+                isTable,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

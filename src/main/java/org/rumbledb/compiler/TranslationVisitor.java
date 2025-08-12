@@ -1441,8 +1441,10 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
         Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
         return new TruncateCollectionExpression(
                 collectionName,
+                isTable,
                 createMetadataFromContext(ctx)
         );
     }

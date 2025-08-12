@@ -147,9 +147,10 @@ public class UpdatePrimitiveFactory {
 
     public UpdatePrimitive createTruncateCollectionPrimitive(
             String collectionName,
+            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new TruncateCollectionPrimitive(collectionName, metadata);
+        return new TruncateCollectionPrimitive(collectionName, isTable, metadata);
     }
 
 }

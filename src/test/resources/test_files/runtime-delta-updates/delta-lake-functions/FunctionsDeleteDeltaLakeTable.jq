@@ -1,3 +1,2 @@
-(:JIQS: ShouldRun; UpdateDim=[5,8]; Output="true" :)
-let $ret := delete-delta-lake-table("./tempDeltaTable")
-return $ret
+(:JIQS: ShouldRun; UpdateDim=[5,8]; Output="" :)
+delete collection delta-file("./tempDeltaTable");

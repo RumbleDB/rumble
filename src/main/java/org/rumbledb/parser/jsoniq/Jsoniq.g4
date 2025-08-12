@@ -365,7 +365,7 @@ insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=exprSingle) | fi
 
 insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
 
-truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
 
 editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle Kfrom Kcollection;
 
