@@ -304,11 +304,25 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    /**
+     * Checks whether this iterator natively produces DataFrames.
+     * 
+     * @return true if it does, false otherwise.
+     */
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
         return this.staticContext.getExecutionMode().isDataFrame();
+    }
+
+    /**
+     * Checks whether this iterator can produce DataFrames with no error (natively or not).
+     * 
+     * @return true if it can, false otherwise.
+     */
+    public boolean canProduceDataFrame() {
+        return isDataFrame();
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {

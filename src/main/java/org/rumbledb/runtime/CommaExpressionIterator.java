@@ -26,7 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -249,5 +249,16 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
         }
         return pul;
+    }
+
+    public boolean canProduceDataFrame() {
+        return isDataFrame() || this.children.size() == 0;
+    }
+
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        if (this.children.size() == 0) {
+            return JSoundDataFrame.emptyDataFrame();
+        }
+        return super.getDataFrame(dynamicContext);
     }
 }

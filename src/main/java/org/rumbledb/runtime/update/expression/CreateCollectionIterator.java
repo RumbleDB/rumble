@@ -6,7 +6,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -18,7 +17,6 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -41,16 +39,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         this.contentIterator = contentIterator;
         this.isTable = isTable;
 
-        if (contentIterator instanceof CommaExpressionIterator) {
-            CommaExpressionIterator commaExpressionIterator = (CommaExpressionIterator) contentIterator;
-            if (commaExpressionIterator.getChildren().size() != 0)
-                throw new CannotResolveUpdateSelectorException(
-                        "The given content doesn not conform to a dataframe and is also not the empty sequence.",
-                        this.getMetadata()
-                );
-        }
-
-        else if (!contentIterator.isDataFrame()) {
+        if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
                     "The given content doesn not conform to a dataframe and is also not the empty sequence.",
                     this.getMetadata()
@@ -131,12 +120,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             collectionName = uri.toString();
         }
 
-        Dataset<Row> contentDF = null;
-        if (this.contentIterator.isDataFrame()) {
-            contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
-        } else {
-            contentDF = SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
-        }
+        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
 

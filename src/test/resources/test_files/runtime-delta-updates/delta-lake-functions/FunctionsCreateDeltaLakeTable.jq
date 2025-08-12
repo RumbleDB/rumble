@@ -1,2 +1,2 @@
-(:JIQS: ShouldRun; UpdateDim=[5,0]; Output="true" :)
-create collection delta-file("tempDeltaTable") with ();
+(:JIQS: ShouldRun; UpdateDim=[5,0]; Output="" :)
+create collection delta-file("tempDeltaTable") with {};
