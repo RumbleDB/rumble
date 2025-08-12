@@ -19,7 +19,8 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
             boolean isTable,
             ExceptionMetadata metadata
     ) {
-        // The target should be the name of the collection, an object of the class String
+        // The target should be the name of the collection if isTable is true,
+        // or an absolute path to a delta file if isTable is false.
         this.collectionName = collectionName;
         this.contents = contents;
         this.isTable = isTable;
@@ -34,7 +35,7 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
     public String getCollectionPath() {
         return this.isTable
             ? this.collectionName
-            : "delta." + this.collectionName;
+            : "delta.`" + this.collectionName + "`";
     }
 
     @Override
@@ -78,7 +79,7 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
         } else {
             this.contents.write()
                 .format("delta")
-                .option("path", "delta/" + this.collectionName)
+                .option("path", this.collectionName)
                 .save();
         }
 

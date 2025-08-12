@@ -38,7 +38,6 @@ import org.rumbledb.runtime.functions.datetime.components.TimezoneFromDateTimeFu
 import org.rumbledb.runtime.functions.datetime.components.TimezoneFromTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.delta_lake.CreateDeltaLakeTableFunctionIterator;
 import org.rumbledb.runtime.functions.delta_lake.DeleteDeltaLakeTableFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
@@ -3024,17 +3023,6 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
-     * function that creates a delta lake table at a given path location
-     */
-    static final BuiltinFunction create_delta_lake_table = createBuiltinFunction(
-        new Name(Name.JN_NS, "jn", "create-delta-lake-table"),
-        "string",
-        "boolean",
-        CreateDeltaLakeTableFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-    /**
      * function that deletes a delta lake table at a given path location
      */
     static final BuiltinFunction delete_delta_lake_table = createBuiltinFunction(
@@ -3081,7 +3069,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(avro_file2.getIdentifier(), avro_file2);
         builtinFunctions.put(parse_json.getIdentifier(), parse_json);
 
-        builtinFunctions.put(create_delta_lake_table.getIdentifier(), create_delta_lake_table);
         builtinFunctions.put(delete_delta_lake_table.getIdentifier(), delete_delta_lake_table);
 
         builtinFunctions.put(count.getIdentifier(), count);
