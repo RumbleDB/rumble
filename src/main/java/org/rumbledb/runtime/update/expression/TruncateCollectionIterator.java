@@ -31,6 +31,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
     ) {
         super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
+        this.isTable = isTable;
         this.isUpdating = true;
     }
 
