@@ -6,7 +6,6 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import static org.apache.spark.sql.functions.regexp_substr;
 
 import java.util.Arrays;
 import java.util.List;

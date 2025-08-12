@@ -7,6 +7,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
@@ -94,11 +95,18 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         String collectionName = collectionNameItem.getStringValue();
         if (!this.isTable) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, collectionName, getMetadata());
+            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+            }
             collectionName = uri.toString();
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-        UpdatePrimitive up = factory.createTruncateCollectionPrimitive(collectionName, this.isTable, this.getMetadata());
+        UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
+            collectionName,
+            this.isTable,
+            this.getMetadata()
+        );
 
         PendingUpdateList pul = new PendingUpdateList();
         pul.addUpdatePrimitive(up);
