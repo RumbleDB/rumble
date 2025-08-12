@@ -33,21 +33,26 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
         StructField[] fields = dataFrame.schema().fields();
-        boolean hasIntRowId = false;
+        boolean hasLongRowId = false;
         for (org.apache.spark.sql.types.StructField field : fields) {
-            if (field.name().equals("__rowId") && field.dataType().typeName().equals("int")) {
-                hasIntRowId = true;
+            if (
+                field.name().equals(SparkSessionManager.rowIdColumnName) && field.dataType().typeName().equals("long")
+            ) {
+                hasLongRowId = true;
                 break;
             }
         }
         boolean hasDoubleRowOrder = false;
         for (org.apache.spark.sql.types.StructField field : fields) {
-            if (field.name().equals("__rowOrder") && field.dataType().typeName().equals("double")) {
+            if (
+                field.name().equals(SparkSessionManager.rowOrderColumnName)
+                    && field.dataType().typeName().equals("double")
+            ) {
                 hasDoubleRowOrder = true;
                 break;
             }
         }
-        if (!hasIntRowId) {
+        if (!hasLongRowId) {
             return new JSoundDataFrame(dataFrame);
         } else if (hasDoubleRowOrder) {
             dataFrame = dataFrame.orderBy(SparkSessionManager.rowOrderColumnName);
