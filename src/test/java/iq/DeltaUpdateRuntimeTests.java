@@ -22,7 +22,6 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.apache.commons.io.FileUtils;
-import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
