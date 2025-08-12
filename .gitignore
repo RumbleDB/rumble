@@ -38,3 +38,6 @@ src/main/resources/log4j.properties
 /src/main/java/org/rumbledb/parser/xquery/XQueryLexer.java
 
 .vscode/settings.json
+
+# NixOS file to preserve the versions of the apps
+flake.lock
