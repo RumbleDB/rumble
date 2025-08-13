@@ -73,9 +73,9 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
                 + pathIn
                 + " AS `"
                 + SparkSessionManager.atomicJSONiqItemColumnName
-                + "` FROM delta.`"
+                + "` FROM "
                 + location
-                + "` WHERE `"
+                + " WHERE `"
                 + SparkSessionManager.rowIdColumnName
                 + "` == "
                 + rowID;
@@ -91,9 +91,9 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
             this.applyItem();
             setField = setField + this.target.getSparkSQLValue(arrayType);
 
-            String query = "UPDATE delta.`"
+            String query = "UPDATE "
                 + location
-                + "` SET "
+                + " SET "
                 + setField
                 + " WHERE `"
                 + SparkSessionManager.rowIdColumnName

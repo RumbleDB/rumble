@@ -69,9 +69,9 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
                 + pathIn
                 + " AS `"
                 + SparkSessionManager.atomicJSONiqItemColumnName
-                + "` FROM delta.`"
+                + "` FROM "
                 + location
-                + "` WHERE `"
+                + " WHERE `"
                 + SparkSessionManager.rowIdColumnName
                 + "` == "
                 + rowID;
@@ -87,9 +87,9 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
             this.applyItem();
             setClause = setClause + this.target.getSparkSQLValue(arrayType);
 
-            String setFieldQuery = "UPDATE delta.`"
+            String setFieldQuery = "UPDATE "
                 + location
-                + "` SET "
+                + " SET "
                 + setClause
                 + " WHERE `"
                 + SparkSessionManager.rowIdColumnName
