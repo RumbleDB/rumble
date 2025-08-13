@@ -76,27 +76,29 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             String setNewFieldClause = fullNewPath + " = " + this.target.getItemByKey(oldName).getSparkSQLValue();
             String type = SparkSessionManager.getInstance()
                 .getOrCreateSession()
-                .sql("DESC (SELECT " + fullOldPath + " FROM delta.`" + location + "`)")
+                .sql("DESC (SELECT " + fullOldPath + " FROM " + location + ")")
                 .filter(col("col_name").equalTo(oldName))
                 .select("data_type")
                 .collectAsList()
                 .get(0)
                 .getString(0);
 
-            String insertNewColumnQuery = "ALTER TABLE delta.`"
+            String insertNewColumnQuery = "ALTER TABLE "
                 + location
-                + "` ADD COLUMNS ("
+                + " ADD COLUMNS ("
                 + fullNewPath
                 + " "
                 + type
                 + ");";
-            String setFieldsQuery = "UPDATE delta.`"
+            String setFieldsQuery = "UPDATE "
                 + location
-                + "` SET "
+                + " SET "
                 + setOldFieldClause
                 + ", "
                 + setNewFieldClause
-                + " WHERE rowID == "
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
                 + rowID;
 
             // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
@@ -155,9 +157,11 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             + this.selector.getStringValue()
             + " AS `"
             + SparkSessionManager.atomicJSONiqItemColumnName
-            + "` FROM delta.`"
+            + "` FROM "
             + location
-            + "` WHERE rowID == "
+            + " WHERE `"
+            + SparkSessionManager.rowIdColumnName
+            + "` == "
             + rowID;
 
         Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
@@ -170,9 +174,9 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
         String fullNewPath = pathInSchema + this.content.getStringValue();
 
-        String insertNewColumnQuery = "ALTER TABLE delta.`"
+        String insertNewColumnQuery = "ALTER TABLE "
             + location
-            + "` ADD COLUMNS ("
+            + " ADD COLUMNS ("
             + fullNewPath
             + " "
             + colType.getSparkSQLType()

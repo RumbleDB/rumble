@@ -91,11 +91,11 @@ public class SparkSessionManager {
     public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
     public static String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
     public static String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
-    public static String mutabilityLevelColumnName = "mutabilityLevel";
-    public static String rowIdColumnName = "rowID";
-    public static String pathInColumnName = "pathIn";
-    public static String tableLocationColumnName = "tableLocation";
-    public static String rowOrderColumnName = "rowOrder";
+    public static String mutabilityLevelColumnName = "__mutabilityLevel";
+    public static String rowIdColumnName = "__rowID";
+    public static String pathInColumnName = "__pathIn";
+    public static String tableLocationColumnName = "__tableLocation";
+    public static String rowOrderColumnName = "__rowOrder";
 
     private SparkSessionManager() {
     }

@@ -21,11 +21,7 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
-import org.apache.commons.io.FileUtils;
-import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
@@ -46,7 +42,6 @@ import utils.FileManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
 import java.util.*;
 
 @RunWith(Parameterized.class)
@@ -196,56 +191,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             e.printStackTrace();
             Assert.fail();
         }
-        boolean didDelete = checkTableDeletion();
-        boolean didCreate = checkTableCreation(this.testFile.getAbsolutePath());
-        if (!(didCreate || didDelete)) {
-            testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
-        }
-    }
-
-    private boolean checkTableCreation(String path) throws IOException, InterruptedException {
-        if (!this.currentAnnotation.shouldCreateTable()) {
-            return false;
-        }
-
-        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            this.currentAnnotation.getDeltaTablePath(),
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-        URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            path,
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-
-        DeltaUpdateRuntimeTests.createDeltaConfiguration.setOutputPath(tableURI.getPath());
-        DeltaUpdateRuntimeTests.createDeltaConfiguration.setQueryPath(queryURI.getPath());
-        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(DeltaUpdateRuntimeTests.createDeltaConfiguration);
-        executor.runQuery();
-        return true;
-    }
-
-    private boolean checkTableDeletion() {
-        if (!this.currentAnnotation.shouldDeleteTable()) {
-            return false;
-        }
-        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            this.currentAnnotation.getDeltaTablePath(),
-            DeltaUpdateRuntimeTests.deleteDeltaConfiguration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-
-        try {
-            File oldTable = new File(tableURI.getPath());
-            FileUtils.deleteDirectory(oldTable);
-            System.err.println("Deleted file: " + oldTable.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
-        return true;
-
+        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
     }
 
     @Override
