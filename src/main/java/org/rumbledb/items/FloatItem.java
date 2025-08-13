@@ -33,7 +33,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -188,7 +187,7 @@ public class FloatItem implements Item {
         if (Float.isNaN(this.value)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.FLOAT);
+        return new NativeClauseContext(context, "CAST (" + this.value + "F AS FLOAT)");
     }
 
     @Override

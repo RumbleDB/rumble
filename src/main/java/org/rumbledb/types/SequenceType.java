@@ -27,12 +27,17 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SequenceType implements Serializable {
+public class SequenceType implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
     private ItemType itemType;
@@ -749,5 +754,16 @@ public class SequenceType implements Serializable {
     }
 
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeClassAndObject(output, this.itemType);
+        kryo.writeObject(output, this.arity);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.itemType = (ItemType) kryo.readClassAndObject(input);
+        this.arity = kryo.readObject(input, Arity.class);
+    }
 
 }

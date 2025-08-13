@@ -121,6 +121,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
                                                                                                                       // delta
                                                                                                                       // store
+        sparkConfiguration.set("spark.sql.ansi.enabled", "true");
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");

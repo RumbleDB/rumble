@@ -35,6 +35,10 @@ public class DateTimeItem implements Item {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
+        if (!hasTimeZone) {
+            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+        }
+
     }
 
     public DateTimeItem(String dateTimeString) {
@@ -86,6 +90,10 @@ public class DateTimeItem implements Item {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
+    }
+
+    private static boolean doesLexicalValueHaveNoTimeZone(String dateTimeString) {
+        return DATETIME_NOTIMEZONE_PATTERN.matcher(dateTimeString).matches();
     }
 
     @Override

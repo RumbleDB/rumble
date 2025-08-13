@@ -147,7 +147,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (SequenceType.Arity.OneOrMore.isSubtypeOf(value.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+        if (!this.children.get(0).getStaticType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("

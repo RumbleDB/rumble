@@ -33,6 +33,10 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
@@ -48,6 +52,13 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     private Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
+
+    public VariableReferenceIterator() {
+        super();
+        this.variableName = null;
+        this.items = null;
+        this.currentIndex = 0;
+    }
 
     public VariableReferenceIterator(
             Name variableName,
@@ -174,5 +185,17 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);
         return result;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        super.write(kryo, output);
+        kryo.writeObject(output, this.variableName);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        super.read(kryo, input);
+        this.variableName = kryo.readObject(input, Name.class);
     }
 }

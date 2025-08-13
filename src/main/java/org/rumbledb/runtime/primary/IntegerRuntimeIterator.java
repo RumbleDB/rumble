@@ -25,7 +25,11 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -51,8 +55,19 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "" + this.item.getIntValue(),
-                SequenceType.INTEGER
+                "CAST (" + this.item.getIntValue() + "BD AS DECIMAL(38, 0))"
         );
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        super.write(kryo, output);
+        kryo.writeClassAndObject(output, this.item);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        super.read(kryo, input);
+        this.item = (Item) kryo.readClassAndObject(input);
     }
 }

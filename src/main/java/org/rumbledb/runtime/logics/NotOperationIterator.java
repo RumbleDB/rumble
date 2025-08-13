@@ -57,7 +57,7 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (childResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childResult.getResultingType().getArity())) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(this.child.getStaticType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";

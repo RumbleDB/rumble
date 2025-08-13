@@ -37,6 +37,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.TypeMappings;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -128,6 +129,12 @@ public class DataFrameContext implements Serializable {
             }
             if (!column.isCount()) {
                 List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
+                /*
+                 * for (Item j : i) {
+                 * System.err.println(j.getDynamicType());
+                 * System.err.println(j.serialize());
+                 * }
+                 */
                 this.context.getVariableValues()
                     .addVariableValue(
                         column.getVariableName(),
@@ -251,6 +258,9 @@ public class DataFrameContext implements Serializable {
                 }
                 return items;
             }
+        }
+        if (itemType == null) {
+            itemType = TypeMappings.getItemTypeFromDataFrameDataType(dt);
         }
         Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, itemType);
         return Collections.singletonList(item);

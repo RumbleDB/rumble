@@ -142,13 +142,21 @@ public class DynamicContext implements Serializable, KryoSerializable {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, DynamicContext.class);
+        kryo.writeObject(output, this.conf);
         kryo.writeObject(output, this.variableValues);
+        // kryo.writeObject(output, this.namedFunctions);
+        kryo.writeObject(output, this.inScopeSchemaTypes);
+        kryo.writeObject(output, this.currentDateTime.getMillis());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
+        this.conf = kryo.readObject(input, RumbleRuntimeConfiguration.class);
         this.variableValues = kryo.readObject(input, VariableValues.class);
+        this.namedFunctions = new NamedFunctions(this.conf);
+        this.inScopeSchemaTypes = kryo.readObject(input, InScopeSchemaTypes.class);
+        this.currentDateTime = new DateTime(kryo.readObject(input, Long.class));
     }
 
     public int getCurrentMutabilityLevel() {

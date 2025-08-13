@@ -82,7 +82,12 @@ import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.DerivedAtomicItemType;
+import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.ItemItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -132,9 +137,13 @@ public class FlworDataFrameUtils {
         kryo.register(FunctionItem.class);
         kryo.register(FunctionIdentifier.class);
         kryo.register(Name.class);
+
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
+        kryo.register(ItemItemType.class);
+        kryo.register(AtomicItemType.class);
+        kryo.register(DerivedAtomicItemType.class);
 
         kryo.register(ArrayList.class);
 
@@ -144,6 +153,9 @@ public class FlworDataFrameUtils {
         kryo.register(ElementItem.class);
         kryo.register(AttributeItem.class);
         kryo.register(TextItem.class);
+
+        kryo.register(AdditiveOperationIterator.class);
+        kryo.register(VariableReferenceIterator.class);
     }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {

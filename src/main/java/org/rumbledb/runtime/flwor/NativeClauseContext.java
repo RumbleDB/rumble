@@ -5,7 +5,6 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;

@@ -142,7 +142,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         if (newContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        ItemType newContextType = newContext.getResultingType().getItemType();
+        ItemType newContextType = this.iterator.getStaticType().getItemType();
         if (!newContextType.isArrayItemType()) {
             // let control to UDF when what we are unboxing is not an array
             if (getConfiguration().doStaticAnalysis()) {
@@ -160,12 +160,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 );
             return NativeClauseContext.NoNativeQuery;
         }
-        newContext.setResultingType(
-            new SequenceType(
-                    newContextType.getArrayContentFacet(),
-                    SequenceType.Arity.ZeroOrMore
-            )
-        );
 
         List<String> lateralViewPart = newContext.getLateralViewPart();
         if (lateralViewPart.size() == 0) {

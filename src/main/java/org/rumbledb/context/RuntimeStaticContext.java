@@ -8,13 +8,25 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
-public class RuntimeStaticContext implements Serializable {
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+public class RuntimeStaticContext implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
 
     private RumbleRuntimeConfiguration configuration;
     private SequenceType staticType;
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
+
+    public RuntimeStaticContext() {
+        this.configuration = null;
+        this.staticType = null;
+        this.executionMode = null;
+        this.metadata = null;
+    }
 
     public RuntimeStaticContext(
             RumbleRuntimeConfiguration configuration,
@@ -60,6 +72,22 @@ public class RuntimeStaticContext implements Serializable {
 
     public ExceptionMetadata getMetadata() {
         return this.metadata;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.configuration);
+        kryo.writeObject(output, this.staticType);
+        kryo.writeObject(output, this.executionMode);
+        kryo.writeObject(output, this.metadata);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
+        this.staticType = kryo.readObject(input, SequenceType.class);
+        this.executionMode = kryo.readObject(input, ExecutionMode.class);
+        this.metadata = kryo.readObject(input, ExceptionMetadata.class);
     }
 
 }

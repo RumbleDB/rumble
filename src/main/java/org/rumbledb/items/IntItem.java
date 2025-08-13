@@ -31,7 +31,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -151,7 +150,7 @@ public class IntItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, "" + this.value, SequenceType.INT);
+        return new NativeClauseContext(context, "CAST (" + this.value + " AS INT)");
     }
 
     public boolean isNumeric() {

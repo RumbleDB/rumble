@@ -195,8 +195,17 @@ public class AnnotationsTestsBase {
             ) {
                 try {
                     checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
+                } catch (RumbleException exception) {
+                    String errorOutput = exception.getMessage();
+                    checkErrorCode(
+                        errorOutput,
+                        this.currentAnnotation.getErrorCode(),
+                        this.currentAnnotation.getErrorMetadata()
+                    );
+                    return;
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
+                    exception.printStackTrace();
                     checkErrorCode(
                         errorOutput,
                         this.currentAnnotation.getErrorCode(),

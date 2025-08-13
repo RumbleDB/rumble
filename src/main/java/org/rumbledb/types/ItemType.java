@@ -27,6 +27,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import com.esotericsoftware.kryo.KryoSerializable;
 
@@ -476,5 +482,19 @@ public interface ItemType extends Serializable, KryoSerializable {
 
     default void resolve(StaticContext context, ExceptionMetadata metadata) {
         return;
+    }
+
+    @Override
+    default void write(Kryo kryo, Output output) {
+        throw new OurBadException(
+                "Kryo serialization for type " + this.getClass().getCanonicalName() + " not implemented."
+        );
+    }
+
+    @Override
+    default void read(Kryo kryo, Input input) {
+        throw new OurBadException(
+                "Kryo deserialization for type " + this.getClass().getCanonicalName() + " not implemented."
+        );
     }
 }

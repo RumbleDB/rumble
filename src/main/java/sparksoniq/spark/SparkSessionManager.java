@@ -138,6 +138,7 @@ public class SparkSessionManager {
                 "spark.sql.catalog.spark_catalog",
                 "org.apache.spark.sql.delta.catalog.DeltaCatalog"
             );
+            this.configuration.set("spark.sql.ansi.enabled", "true"); // enables throwing errors in SPark SQL
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
