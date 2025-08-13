@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
@@ -18,7 +17,6 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
@@ -603,7 +601,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                return false;
             }
             try {
                 StructType s = SparkSessionManager.getInstance()
@@ -616,10 +614,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
                 return true;
             } catch (Exception e) {
-                if (e instanceof AnalysisException) {
-                    throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
-                }
-                throw e;
+                return false;
             }
         }
 
@@ -632,7 +627,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                return false;
             }
             StructType s = SparkSessionManager.getInstance()
                 .getOrCreateSession()
@@ -646,7 +641,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return true;
         }
 
-        // handle 'delta-table' function
+        // handle 'table' function
         if (
             functionName.equals(Name.createVariableInDefaultFunctionNamespace("table"))
                 && args.size() > 0
@@ -655,10 +650,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String name = ((StringLiteralExpression) args.get(0)).getValue();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
             if (session.catalog().tableExists(name) == false) {
-                throw new CannotRetrieveResourceException(
-                        "Table " + name + " not found in hive catalogue.",
-                        expression.getMetadata()
-                );
+                return false;
             }
 
             StructType s = session
