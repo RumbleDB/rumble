@@ -1451,18 +1451,23 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
         Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
-        return mainExpression;
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getMainExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getMainExpression();
+        } else {
+            throw new OurBadException("Unrecognized main expression found in update expression.");
+        }
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
-        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
-            return (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) locatorExprCtx);
-        }
-        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
-            return (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) locatorExprCtx);
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getLookupExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getLookupExpression();
         } else {
-            throw new OurBadException("Unrecognized locator found in update expression.");
+            throw new OurBadException("Unrecognized main expression found in update expression.");
         }
     }
 
