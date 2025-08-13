@@ -1450,26 +1450,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
-            if (child instanceof JsoniqParser.ObjectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
-                mainExpression = new ObjectLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else if (child instanceof JsoniqParser.ArrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
-                mainExpression = new ArrayLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else {
-                throw new OurBadException("Unrecognized locator expression found in update expression.");
-            }
-        }
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
         return mainExpression;
     }
 
