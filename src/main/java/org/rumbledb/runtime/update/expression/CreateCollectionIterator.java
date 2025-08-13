@@ -8,6 +8,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -16,6 +17,8 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+
+import java.net.URI;
 import java.util.Arrays;
 
 public class CreateCollectionIterator extends HybridRuntimeIterator {
@@ -36,9 +39,9 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         this.contentIterator = contentIterator;
         this.isTable = isTable;
 
-        if (!contentIterator.isDataFrame()) {
+        if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content doesn not conform to a dataframe",
+                    "The given content doesn not conform to a dataframe and is also not the empty sequence.",
                     this.getMetadata()
             );
         }
@@ -111,6 +114,11 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         }
 
         String collectionName = targetItem.getStringValue();
+        // If it is a delta-file() call we need to resolve the path to an absolute path.
+        if (!this.isTable) {
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, collectionName, getMetadata());
+            collectionName = uri.toString();
+        }
 
         Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
 

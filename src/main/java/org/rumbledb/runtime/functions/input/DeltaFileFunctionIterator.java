@@ -55,9 +55,11 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             .format("delta")
             .load(uri.toString());
         dataFrame = dataFrame.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0));
-        dataFrame = dataFrame.withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id());
         dataFrame = dataFrame.withColumn(SparkSessionManager.pathInColumnName, lit(""));
-        dataFrame = dataFrame.withColumn(SparkSessionManager.tableLocationColumnName, lit(uri.toString()));
+        dataFrame = dataFrame.withColumn(
+            SparkSessionManager.tableLocationColumnName,
+            lit("delta.`" + uri.toString() + "`")
+        );
 
         return new JSoundDataFrame(dataFrame);
     }
