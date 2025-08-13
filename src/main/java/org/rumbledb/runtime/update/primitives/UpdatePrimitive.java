@@ -164,9 +164,9 @@ public interface UpdatePrimitive {
             + preIndexingPathIn
             + " AS `"
             + SparkSessionManager.atomicJSONiqItemColumnName
-            + "` FROM delta.`"
+            + "` FROM "
             + location
-            + "` WHERE `"
+            + " WHERE `"
             + SparkSessionManager.rowIdColumnName
             + "` == "
             + rowID;
@@ -209,9 +209,9 @@ public interface UpdatePrimitive {
         }
 
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
-        String query = "UPDATE delta.`"
+        String query = "UPDATE "
             + location
-            + "` SET "
+            + " SET "
             + setClause
             + " WHERE `"
             + SparkSessionManager.rowIdColumnName
