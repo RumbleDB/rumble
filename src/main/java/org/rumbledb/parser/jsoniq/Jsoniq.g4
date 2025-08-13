@@ -346,7 +346,7 @@ transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=expr
 
 appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+updateLocator           : main_expr=postFixExpr;
 
 copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
