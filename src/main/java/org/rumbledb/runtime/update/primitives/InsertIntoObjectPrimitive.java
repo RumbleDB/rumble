@@ -75,12 +75,12 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
             String setClauses = String.join(", ", setClauseList);
 
             List<String> insertColumnQueries = columnsClauseList.stream()
-                .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
+                .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
                 .collect(Collectors.toList());
 
-            String setFieldQuery = "UPDATE delta.`"
+            String setFieldQuery = "UPDATE "
                 + location
-                + "` SET "
+                + " SET "
                 + setClauses
                 + " WHERE `"
                 + SparkSessionManager.rowIdColumnName
@@ -152,7 +152,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         }
 
         List<String> insertColumnQueries = columnsClauseList.stream()
-            .map(c -> "ALTER TABLE delta.`" + location + "` ADD COLUMNS (" + c + ");")
+            .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
             .collect(Collectors.toList());
 
         SparkSessionManager manager = SparkSessionManager.getInstance();
