@@ -10,6 +10,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -19,6 +20,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.Arrays;
 
 public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
@@ -145,11 +147,10 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
-        String collection = null;
-        if (this.isTable) {
-            collection = targetItem.getStringValue();
-        } else {
-            collection = "delta.`" + targetItem.getStringValue() + "` ";
+        String collection = targetItem.getStringValue();
+        if (!this.isTable) {
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, collection, getMetadata());
+            collection = uri.toString();
         }
 
         Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
@@ -200,6 +201,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
             Item targetMetadataItem = new ObjectItem();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (this.isTable) {
+                collection = targetItem.getStringValue();
+            } else {
+                collection = "delta.`" + targetItem.getStringValue() + "` ";
+            }
             String selectQuery = String.format(
                 "SELECT * FROM %s ORDER BY rowOrder ASC LIMIT 1 OFFSET %d",
                 collection,
