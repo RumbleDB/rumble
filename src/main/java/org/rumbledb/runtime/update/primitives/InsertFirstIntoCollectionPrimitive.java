@@ -19,14 +19,17 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
     private final String collection;
     private Dataset<Row> contents;
+    private boolean isTable;
 
     public InsertFirstIntoCollectionPrimitive(
             String collection,
             Dataset<Row> contents,
+            boolean isTable,
             ExceptionMetadata metadata
     ) {
         this.collection = collection;
         this.contents = contents;
+        this.isTable = isTable;
     }
 
     @Override
@@ -36,7 +39,9 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        return this.collection;
+        return this.isTable
+            ? this.collection
+            : "delta.`" + this.collection + "`";
     }
 
     @Override
@@ -61,7 +66,7 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         String selectQuery = String.format(
             "SELECT MAX(%s) as maxRowID FROM %s",
             SparkSessionManager.rowIdColumnName,
-            this.collection
+            this.getCollectionPath()
         );
         Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
         rowIDStart = rowIDStart == null ? 0L : rowIDStart;
@@ -73,7 +78,7 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         String selectRowOrderQuery = String.format(
             "SELECT MIN(%s) as minRowOrder FROM %s",
             SparkSessionManager.rowOrderColumnName,
-            this.collection
+            this.getCollectionPath()
         );
         Double rowOrderMax = session.sql(selectRowOrderQuery).first().getAs("minRowOrder");
         if (rowOrderMax == null) {
@@ -112,7 +117,7 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
         String insertQuery = String.format(
             "INSERT INTO %s SELECT * FROM %s",
-            this.collection,
+            this.getCollectionPath(),
             safeName
         );
         session.sql(insertQuery);

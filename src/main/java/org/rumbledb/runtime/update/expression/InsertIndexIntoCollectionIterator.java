@@ -157,9 +157,19 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isLast) {
-            up = factory.createInsertLastIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
+            up = factory.createInsertLastIntoCollectionPrimitive(
+                collection,
+                contentDF,
+                this.isTable,
+                this.getMetadata()
+            );
         } else if (this.isFirst) {
-            up = factory.createInsertFirstIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
+            up = factory.createInsertFirstIntoCollectionPrimitive(
+                collection,
+                contentDF,
+                this.isTable,
+                this.getMetadata()
+            );
         } else {
             int posInt;
             Item posItem = null;
