@@ -340,6 +340,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @return the DataFrame.
      */
     public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+        if (isDataFrame()) {
+            return this.getDataFrame(context);
+        }
         List<Item> items = new ArrayList<>();
         materialize(context, items);
         return ValidateTypeIterator.convertLocalItemsToDataFrame(

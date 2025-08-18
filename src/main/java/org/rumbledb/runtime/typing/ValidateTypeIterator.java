@@ -188,6 +188,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             DynamicContext context,
             boolean isValidate
     ) {
+        System.err.println(itemType.toString());
         if (items.isEmpty()) {
             return new JSoundDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
