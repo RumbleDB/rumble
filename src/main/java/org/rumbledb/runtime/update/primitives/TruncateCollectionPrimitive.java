@@ -1,14 +1,15 @@
 package org.rumbledb.runtime.update.primitives;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.File;
-import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.spark.sql.SparkSession;
 
 
@@ -16,11 +17,18 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
     private String collectionName;
     private boolean isTable;
     private ExceptionMetadata metadata;
+    private RumbleRuntimeConfiguration configuration;
 
-    public TruncateCollectionPrimitive(String collectionName, boolean isTable, ExceptionMetadata metadata) {
+    public TruncateCollectionPrimitive(
+            String collectionName,
+            boolean isTable,
+            ExceptionMetadata metadata,
+            RumbleRuntimeConfiguration configuration
+    ) {
         this.collectionName = collectionName;
         this.isTable = isTable;
         this.metadata = metadata;
+        this.configuration = configuration;
     }
 
     @Override
@@ -53,6 +61,7 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+        System.err.println("Applying delta " + this.collectionName);
 
         if (this.isTable) {
             if (session.catalog().tableExists(this.collectionName) == false) {
@@ -68,10 +77,10 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
             );
             session.sql(truncateQuery);
         } else {
+            System.err.println("Not a table. Deleting " + this.collectionName);
             try {
-                File oldTable = new File(this.collectionName);
-                FileUtils.deleteDirectory(oldTable);
-            } catch (IOException e) {
+                FileSystemUtil.delete(new URI(this.collectionName), this.configuration, this.metadata);
+            } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
         }
