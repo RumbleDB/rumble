@@ -360,7 +360,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     public boolean canProduceDataFrame() {
-        return isDataFrame() || this.keys.size() == 0 || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
+        return isDataFrame()
+            || this.keys.size() == 0
+            || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
@@ -375,7 +377,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 .createDataFrame(List.of(newRow), schema);
             return new JSoundDataFrame(newRowDataFrame);
         }
-        if(this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
+        if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
             // If the item type is compatible with data frames, we can create a data frame
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 List.of(this.materializeFirstItemOrNull(dynamicContext)),

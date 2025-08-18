@@ -62,15 +62,21 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyDelta() {
+        this.contents.show();
+
         this.contents = this.contents.withColumn(
             SparkSessionManager.rowIdColumnName,
             monotonically_increasing_id()
         );
 
+        this.contents.show();
+
         this.contents = this.contents.withColumn(
             SparkSessionManager.rowOrderColumnName,
             monotonically_increasing_id().cast("double")
         );
+
+        this.contents.show();
 
         if (this.isTable) {
             this.contents.write()

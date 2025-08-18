@@ -153,9 +153,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public boolean canProduceDataFrame() {
+        return this.expression.canProduceDataFrame()
+            && this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
+    }
+
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
-        if (expression.isRDDOrDataFrame()) {
+        if (expression.isRDDOrDataFrame() || (!this.child.isDataFrame() && this.expression.canProduceDataFrame())) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
