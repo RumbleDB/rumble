@@ -52,7 +52,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
         if (!contentIterator.isDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content does not conform to a dataframe",
+                    "The given content cannot be obtained as a DataFrame You may need to specify a schema.",
                     this.getMetadata()
             );
         }
@@ -153,7 +153,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             collection = uri.toString();
         }
 
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;

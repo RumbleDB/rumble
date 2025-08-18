@@ -41,7 +41,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
         if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content doesn not conform to a dataframe and is also not the empty sequence.",
+                    "The given content cannot be obtained as a DataFrame You may need to specify a schema.",
                     this.getMetadata()
             );
         }
@@ -120,7 +120,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             collectionName = uri.toString();
         }
 
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
 

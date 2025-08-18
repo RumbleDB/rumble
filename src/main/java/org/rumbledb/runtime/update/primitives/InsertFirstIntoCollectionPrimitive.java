@@ -72,7 +72,7 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
                 .load(this.collection);
             collectionTableName = String.format("__query_tview_%s", this.collection)
                 .replaceAll("[^a-zA-Z0-9_]", "_");
-            dataFrame.createOrReplaceGlobalTempView(collectionTableName);
+            dataFrame.createOrReplaceTempView(collectionTableName);
         }
 
         String selectQuery = String.format(

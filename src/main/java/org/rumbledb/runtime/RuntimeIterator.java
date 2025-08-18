@@ -45,6 +45,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -322,13 +323,30 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @return true if it can, false otherwise.
      */
     public boolean canProduceDataFrame() {
-        return isDataFrame();
+        return isDataFrame()
+            || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
+        );
+    }
+
+    /**
+     * Gets the output as a DataFrame. If necessary and possible, forcibly converts the items to a DataFrame.
+     * 
+     * @return the DataFrame.
+     */
+    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+        List<Item> items = new ArrayList<>();
+        materialize(context, items);
+        return ValidateTypeIterator.convertLocalItemsToDataFrame(
+            items,
+            this.getStaticType().getItemType(),
+            context,
+            true
         );
     }
 

@@ -99,7 +99,7 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
         }
 
 
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
 
         long contentCount = contentDF.count();
 
