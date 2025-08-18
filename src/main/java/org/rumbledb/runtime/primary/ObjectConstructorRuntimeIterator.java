@@ -36,6 +36,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
@@ -359,7 +360,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     public boolean canProduceDataFrame() {
-        return isDataFrame() || this.keys.size() == 0;
+        return isDataFrame() || this.keys.size() == 0 || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
@@ -373,6 +374,15 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 .getOrCreateSession()
                 .createDataFrame(List.of(newRow), schema);
             return new JSoundDataFrame(newRowDataFrame);
+        }
+        if(this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
+            // If the item type is compatible with data frames, we can create a data frame
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                List.of(this.materializeFirstItemOrNull(dynamicContext)),
+                this.getStaticType().getItemType(),
+                dynamicContext,
+                true
+            );
         }
         return super.getDataFrame(dynamicContext);
     }
