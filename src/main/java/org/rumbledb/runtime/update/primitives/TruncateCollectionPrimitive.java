@@ -61,7 +61,6 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        System.err.println("Applying delta " + this.collectionName);
 
         if (this.isTable) {
             if (session.catalog().tableExists(this.collectionName) == false) {
@@ -77,7 +76,6 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
             );
             session.sql(truncateQuery);
         } else {
-            System.err.println("Not a table. Deleting " + this.collectionName);
             try {
                 FileSystemUtil.delete(new URI(this.collectionName), this.configuration, this.metadata);
             } catch (URISyntaxException e) {
