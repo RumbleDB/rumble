@@ -32,6 +32,10 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
         String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
+        return postProcess(dataFrame, collectionName);
+    }
+
+    public static JSoundDataFrame postProcess(Dataset<Row> dataFrame, String collectionName) {
         StructField[] fields = dataFrame.schema().fields();
         boolean hasLongRowId = false;
         for (org.apache.spark.sql.types.StructField field : fields) {

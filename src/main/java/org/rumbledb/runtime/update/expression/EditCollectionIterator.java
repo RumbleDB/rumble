@@ -34,9 +34,9 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
         this.contentIterator = contentIterator;
 
         // TODO: For 1 item, this is a TreatIterator not conforming to DF; but for more than 1, it is DataFrame
-        if (!contentIterator.isDataFrame()) {
+        if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content does not conform to a dataframe",
+                    "No schema could be detected by RumbleDB for the content that you are attempting to edit a collection record into. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
                     this.getMetadata()
             );
         }
@@ -99,7 +99,7 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
         }
 
 
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
 
         long contentCount = contentDF.count();
 
