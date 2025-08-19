@@ -41,7 +41,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
         if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content cannot be obtained as a DataFrame You may need to specify a schema.",
+                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a new collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
                     this.getMetadata()
             );
         }
