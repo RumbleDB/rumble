@@ -50,7 +50,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
-        if (!contentIterator.isDataFrame()) {
+        if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
                     "The given content cannot be obtained as a DataFrame You may need to specify a schema.",
                     this.getMetadata()

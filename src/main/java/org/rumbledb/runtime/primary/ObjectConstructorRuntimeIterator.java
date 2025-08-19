@@ -20,11 +20,6 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,7 +27,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -356,20 +350,5 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
         }
         return constructorKeyNames;
-    }
-
-    public JSoundDataFrame foo(DynamicContext dynamicContext) {
-        if (this.keys.size() == 0) {
-            StructType schema = new StructType()
-                .add(SparkSessionManager.rowIdColumnName, DataTypes.IntegerType, false);
-
-            Row newRow = RowFactory.create(0);
-
-            Dataset<Row> newRowDataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(List.of(newRow), schema);
-            return new JSoundDataFrame(newRowDataFrame);
-        }
-        return null;
     }
 }
