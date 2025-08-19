@@ -1,5 +1,4 @@
 (:JIQS: ShouldRun; UpdateDim=[8,11]; Output="51" :)
-declare type local:t as { "key" : "integer" };
 (insert  (51 to 51) ! { "key" : $$ } after delta-file("upcollectdelta")[8] into collection,
 edit delta-file("upcollectdelta")[8] into { "key" : 400 } from collection);
 delta-file("upcollectdelta")[9].key
