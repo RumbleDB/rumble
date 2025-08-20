@@ -41,7 +41,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
 
         if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content doesn not conform to a dataframe and is also not the empty sequence.",
+                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a new collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
                     this.getMetadata()
             );
         }
@@ -120,7 +120,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             collectionName = uri.toString();
         }
 
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
 
