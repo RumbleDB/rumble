@@ -387,7 +387,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+        ItemType contentItemType = expression.getExpression().getStaticSequenceType().getItemType();
+        ItemType arrayType = ItemTypeFactory.createAnonymousArrayType(contentItemType);
+        expression.setStaticSequenceType(new SequenceType(arrayType));
         return argument;
     }
 

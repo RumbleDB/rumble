@@ -161,6 +161,8 @@ public class SequenceOfItems {
     public List<String> availableOutputs() {
         if (this.iterator.isDataFrame()) {
             return Arrays.asList("DataFrame", "RDD", "Local");
+        } else if (this.iterator.canProduceDataFrame()) {
+            return Arrays.asList("RDD", "Local", "DataFrame");
         } else if (this.iterator.isRDD()) {
             return Arrays.asList("RDD", "Local");
         } else if (this.iterator.isUpdating()) {
@@ -243,7 +245,7 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        Dataset<Row> res = this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
+        Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
         if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             res = res.withColumnRenamed(SparkSessionManager.atomicJSONiqItemColumnName, "value");
         }
