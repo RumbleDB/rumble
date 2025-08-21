@@ -633,6 +633,16 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this;
     }
 
+    public RumbleRuntimeConfiguration resetExternalVariableValue(Name name) {
+        this.externalVariableValuesReadFromDataFrames.remove(name);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration resetExternalVariableValue(String variableNameString) {
+        resetExternalVariableValue(new Name(null, null, variableNameString));
+        return this;
+    }
+
     public boolean readFromStandardInput(Name variableName) {
         return this.externalVariablesReadFromStandardInput.contains(variableName);
     }
