@@ -24,6 +24,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
@@ -251,6 +253,55 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     )
                 );
             }
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        new SequenceType(
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.ITEM_STAR,
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
         }
 
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
@@ -1441,45 +1492,33 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
         Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
         return new TruncateCollectionExpression(
                 collectionName,
+                isTable,
                 createMetadataFromContext(ctx)
         );
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
-            if (child instanceof JsoniqParser.ObjectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
-                mainExpression = new ObjectLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else if (child instanceof JsoniqParser.ArrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
-                mainExpression = new ArrayLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else {
-                throw new OurBadException("Unrecognized locator expression found in update expression.");
-            }
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getMainExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getMainExpression();
+        } else {
+            throw new OurBadException("Unrecognized main expression found in update expression.");
         }
-        return mainExpression;
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
-        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
-            return (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) locatorExprCtx);
-        }
-        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
-            return (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) locatorExprCtx);
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getLookupExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getLookupExpression();
         } else {
-            throw new OurBadException("Unrecognized locator found in update expression.");
+            throw new OurBadException("Unrecognized main expression found in update expression.");
         }
     }
 
