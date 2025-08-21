@@ -552,6 +552,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 isTable,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -583,7 +584,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-
+        runtimeIterator.setStaticContext(expression.getStaticContext());
 
         return runtimeIterator;
     }
@@ -598,6 +599,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 
@@ -614,7 +616,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-
+        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 
@@ -651,7 +653,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
-
+        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 
@@ -670,7 +672,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 isBefore,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-
+        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 
@@ -680,11 +682,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
+        boolean isTable = expression.isTable();
         RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
                 targetIterator,
+                isTable,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
-
+        runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
 

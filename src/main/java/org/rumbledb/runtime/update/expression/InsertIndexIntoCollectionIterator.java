@@ -10,6 +10,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -19,6 +20,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.Arrays;
 
 public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
@@ -48,9 +50,9 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
-        if (!contentIterator.isDataFrame()) {
+        if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content does not conform to a dataframe",
+                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
                     this.getMetadata()
             );
         }
@@ -75,9 +77,9 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
-        if (!contentIterator.isDataFrame()) {
+        if (!contentIterator.canProduceDataFrame()) {
             throw new CannotResolveUpdateSelectorException(
-                    "The given content does not conform to a dataframe",
+                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
                     this.getMetadata()
             );
         }
@@ -145,21 +147,30 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
-        String collection = null;
-        if (this.isTable) {
-            collection = targetItem.getStringValue();
-        } else {
-            collection = "delta.`" + targetItem.getStringValue() + "` ";
+        String collection = targetItem.getStringValue();
+        if (!this.isTable) {
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, collection, getMetadata());
+            collection = uri.toString();
         }
 
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isLast) {
-            up = factory.createInsertLastIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
+            up = factory.createInsertLastIntoCollectionPrimitive(
+                collection,
+                contentDF,
+                this.isTable,
+                this.getMetadata()
+            );
         } else if (this.isFirst) {
-            up = factory.createInsertFirstIntoCollectionPrimitive(collection, contentDF, this.getMetadata());
+            up = factory.createInsertFirstIntoCollectionPrimitive(
+                collection,
+                contentDF,
+                this.isTable,
+                this.getMetadata()
+            );
         } else {
             int posInt;
             Item posItem = null;
@@ -190,6 +201,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
             Item targetMetadataItem = new ObjectItem();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (this.isTable) {
+                collection = targetItem.getStringValue();
+            } else {
+                collection = "delta.`" + targetItem.getStringValue() + "` ";
+            }
             String selectQuery = String.format(
                 "SELECT * FROM %s ORDER BY rowOrder ASC LIMIT 1 OFFSET %d",
                 collection,

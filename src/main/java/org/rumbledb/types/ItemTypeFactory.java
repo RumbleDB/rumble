@@ -138,6 +138,23 @@ public class ItemTypeFactory {
         );
     }
 
+    /**
+     * Create an anonymous array type from keys and values.
+     * 
+     * @param content an item type for the content
+     * @return an anonymous array type based on the provided content type
+     */
+    public static ItemType createAnonymousArrayType(ItemType content) {
+        return new ArrayItemType(
+                null,
+                BuiltinTypesCatalogue.arrayItem,
+                content,
+                null,
+                null,
+                null
+        );
+    }
+
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
         if (!item.isObject()) {
             throw new InvalidSchemaException(

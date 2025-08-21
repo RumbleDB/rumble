@@ -346,7 +346,7 @@ transformExpr           : Kcopy copyDecl ( ',' copyDecl )* Kmodify mod_expr=expr
 
 appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( arrayLookup | objectLookup )+;
+updateLocator           : main_expr=postFixExpr;
 
 copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
@@ -365,9 +365,9 @@ insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=exprSingle) | fi
 
 insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
 
-truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection Ktable '(' collection_name=exprSimple ')';
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
 
-editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle Kfrom Kcollection;
+editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle Kin Kcollection;
 
 
 ///////////////////////// XPath

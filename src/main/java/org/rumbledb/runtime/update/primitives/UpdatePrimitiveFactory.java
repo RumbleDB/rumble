@@ -3,6 +3,7 @@ package org.rumbledb.runtime.update.primitives;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
@@ -132,24 +133,28 @@ public class UpdatePrimitiveFactory {
     public UpdatePrimitive createInsertFirstIntoCollectionPrimitive(
             String collection,
             Dataset<Row> contents,
+            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertFirstIntoCollectionPrimitive(collection, contents, metadata);
+        return new InsertFirstIntoCollectionPrimitive(collection, contents, isTable, metadata);
     }
 
     public UpdatePrimitive createInsertLastIntoCollectionPrimitive(
             String collection,
             Dataset<Row> contents,
+            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertLastIntoCollectionPrimitive(collection, contents, metadata);
+        return new InsertLastIntoCollectionPrimitive(collection, contents, isTable, metadata);
     }
 
     public UpdatePrimitive createTruncateCollectionPrimitive(
             String collectionName,
-            ExceptionMetadata metadata
+            boolean isTable,
+            ExceptionMetadata metadata,
+            RumbleRuntimeConfiguration configuration
     ) {
-        return new TruncateCollectionPrimitive(collectionName, metadata);
+        return new TruncateCollectionPrimitive(collectionName, isTable, metadata, configuration);
     }
 
 }

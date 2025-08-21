@@ -107,9 +107,7 @@ public class InsertAfterIntoCollectionPrimitive implements UpdatePrimitive {
             expr(String.format("%f + (rowNumOrder) * %f", rowOrderBase, interval))
         ).drop("rowNumOrder");
 
-        this.contents = rowNumOrderDF.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0))
-            .withColumn(SparkSessionManager.pathInColumnName, lit(""))
-            .withColumn(SparkSessionManager.tableLocationColumnName, lit(collection));
+        this.contents = rowNumOrderDF;
 
         String safeName = String.format("__insertb_tview_%s_%f_%f", collection, rowOrderBase, rowOrderMax)
             .replaceAll("[^a-zA-Z0-9_]", "_");

@@ -13,8 +13,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.net.URI;
 import java.util.List;
 
-import static org.apache.spark.sql.functions.lit;
-import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
 public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
 
@@ -38,27 +36,13 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
 
-        SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .read()
-            .format("delta")
-            .load(uri.toString())
-            .withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id())
-            .write()
-            .format("delta")
-            .mode("overwrite")
-            .option("overwriteSchema", true)
-            .save(uri.toString());
         Dataset<Row> dataFrame = SparkSessionManager.getInstance()
             .getOrCreateSession()
             .read()
             .format("delta")
             .load(uri.toString());
-        dataFrame = dataFrame.withColumn(SparkSessionManager.mutabilityLevelColumnName, lit(0));
-        dataFrame = dataFrame.withColumn(SparkSessionManager.rowIdColumnName, monotonically_increasing_id());
-        dataFrame = dataFrame.withColumn(SparkSessionManager.pathInColumnName, lit(""));
-        dataFrame = dataFrame.withColumn(SparkSessionManager.tableLocationColumnName, lit(uri.toString()));
 
-        return new JSoundDataFrame(dataFrame);
+        return DeltaTableFunctionIterator.postProcess(dataFrame, "delta.`" + uri.toString() + "`");
     }
 }
+
