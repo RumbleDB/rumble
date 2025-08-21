@@ -133,17 +133,19 @@ public class UpdatePrimitiveFactory {
     public UpdatePrimitive createInsertFirstIntoCollectionPrimitive(
             String collection,
             Dataset<Row> contents,
+            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertFirstIntoCollectionPrimitive(collection, contents, metadata);
+        return new InsertFirstIntoCollectionPrimitive(collection, contents, isTable, metadata);
     }
 
     public UpdatePrimitive createInsertLastIntoCollectionPrimitive(
             String collection,
             Dataset<Row> contents,
+            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertLastIntoCollectionPrimitive(collection, contents, metadata);
+        return new InsertLastIntoCollectionPrimitive(collection, contents, isTable, metadata);
     }
 
     public UpdatePrimitive createTruncateCollectionPrimitive(

@@ -1,5 +1,4 @@
 (:JIQS: ShouldRun; UpdateDim=[6,10]; Output="50" :)
-declare type local:t as { "key" : "integer" };
-(insert (validate type local:t* { (50 to 50) ! { "key" : $$ }}) before table("upcollect")[8] into collection,
-edit table("upcollect")[8] into (validate type local:t* { { "key" : 300 }, {"key" : 301 }})[position() gt 1] from collection);
+(insert (50 to 50) ! { "key" : $$ } before table("upcollect")[8] into collection,
+edit table("upcollect")[8] into { "key" : 300 } in collection);
 table("upcollect")[8].key

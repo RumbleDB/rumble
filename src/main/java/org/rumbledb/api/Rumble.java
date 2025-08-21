@@ -1,10 +1,12 @@
 package org.rumbledb.api;
 
+import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -25,13 +27,33 @@ public class Rumble {
     private RumbleRuntimeConfiguration configuration;
 
     /**
-     * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
+     * Creates a new Rumble instance. This initializes a brand new Spark session.
      *
      * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+        SparkSessionManager.getInstance().getOrCreateSession();
+    }
+
+    /**
+     * Creates a new Rumble instance. It uses the supplied spark session.
+     *
+     */
+    public Rumble(SparkSession session) {
+        this.configuration = new RumbleRuntimeConfiguration();
+        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+        SparkSessionManager.getInstance(session);
+    }
+
+    /**
+     * Gets the configuration
+     * 
+     * @return the configuration
+     */
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     /**

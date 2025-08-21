@@ -1,3 +1,2 @@
 (:JIQS: ShouldRun; UpdateDim=[6,0]; Output="" :)
-declare type local:t as { "key" : "integer" };
-create collection table("upcollect") with validate type local:t* { (1 to 10) ! { "key" : $$ }};
+create collection table("upcollect") with for $i in 1 to 10 return { "key" : $i };
