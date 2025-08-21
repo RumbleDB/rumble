@@ -25,7 +25,7 @@
     <!-- <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/> prepends full path as comment-->
     <property name="src.dir" value="./src/main/java/org/rumbledb"/>
     <property name="parser.dir" value="${src.dir}/parser/jsoniq"/>
-    <property name="antlr.jar" value="./lib/antlr-4.13.1-complete.jar"/>
+    <property name="antlr.jar" value="./lib/antlr-4.9.3-complete.jar"/>
 
 
     <target name="clean-parser">

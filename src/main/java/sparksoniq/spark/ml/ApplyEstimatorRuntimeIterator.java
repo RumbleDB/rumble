@@ -81,29 +81,6 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             fittedModel = this.estimator.fit(this.inputDataset.getDataFrame(), paramMap);
         } catch (IllegalArgumentException | NoSuchElementException e) {
             String message = e.getMessage();
-            if (message == null) {
-                System.err.println("Exception stack trace:");
-                e.printStackTrace();
-                RumbleException ex = new InvalidRumbleMLParamException(
-                        "Parameters provided to "
-                            + this.estimatorShortName
-                            + " caused an error with no message."
-                            + "Exception class: "
-                            + e.getClass().getName()
-                            + "\n"
-                            + "\n\nWe are happy to give you a few hints:"
-                            + "\nBy default, we look for the features used to train the model in the field 'features'."
-                            + "\nIf this field does not exist, you can build it with the VectorAssembler transformer by combining the fields you want to include."
-                            + "\n\nFor example:"
-                            + "\nlet $vector-assembler := get-transformer(\"VectorAssembler\")"
-                            + "\nlet $data := $vector-assembler($data, {\"inputCols\" : [ \"age\", \"weight\" ], \"outputCol\" : \"features\" })"
-                            + "\n\nIf the features are in your data, but in a different field than 'features', you can specify that different field name with the parameter 'featuresCol' or 'inputCol' (check the documentation of the estimator to be sure) passed to your estimator."
-                            + "\n\nIf the error says that it must be of the type struct<type:tinyint,size:int,indices:array<int>,values:array<double>> but was actually something different, then it means you specified a field that is not an assembled features array. You need to use the VectorAssembler to prepare it.",
-                        getMetadata()
-                );
-                ex.initCause(e);
-                throw ex;
-            }
             Pattern pattern = Pattern.compile("(.* ]) does not exist. Available: (.*)");
             Matcher matcher = pattern.matcher(message);
             if (matcher.find()) {
