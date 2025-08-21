@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class Serializer {
+public class Serializer implements java.io.Serializable {
     public enum Method {
         JSON,
         TYSON,

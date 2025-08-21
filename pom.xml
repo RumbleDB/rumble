@@ -41,12 +41,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.13.0</version>
                 <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
                     <compilerId>eclipse</compilerId>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                     <compilerArgs>
                         <arg>-properties</arg>
                         <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
@@ -56,12 +56,12 @@
                     <dependency>
                         <groupId>org.codehaus.plexus</groupId>
                         <artifactId>plexus-compiler-eclipse</artifactId>
-                        <version>2.8.5</version>
+                        <version>2.13.0</version>
                     </dependency>
                     <dependency>
                         <groupId>org.eclipse.jdt</groupId>
                         <artifactId>ecj</artifactId>
-                        <version>3.20.0</version>
+                        <version>3.36.0</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -76,7 +76,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.4.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -117,7 +117,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.7.0</version>
                 <configuration>
                     <excludePackageNames>org.rumbledb.cli:org.rumbledb.config:sparksoniq.*:sparksoniq</excludePackageNames>
                 </configuration>
@@ -235,7 +235,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.1</version>
+            <version>3.3.0</version>
                 <configuration>
                     <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
                     <!-- arguments needed for unit tests to work with Java 17
@@ -247,6 +247,7 @@
                         --add-opens=java.base/java.util=ALL-UNNAMED
                         --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
                         --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
+                        --add-opens java.base/java.net=ALL-UNNAMED
                     </argLine>
                 </configuration>
             </plugin>
@@ -276,25 +277,25 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.13</artifactId>
-            <version>3.5.6</version>
+            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.13</artifactId>
-            <version>3.5.6</version>
+            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.13</artifactId>
-            <version>3.5.6</version>
+            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_2.13</artifactId>
-            <version>3.5.4</version>
+            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -306,12 +307,12 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.13</artifactId>
-            <version>3.5.6</version>
+            <version>4.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.9.3</version>
+            <version>4.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
@@ -321,7 +322,7 @@
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>4.0.2</version> <!-- dont upgrade for now! -->
+            <version>5.6.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -337,7 +338,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
+            <version>3.14.0</version>
         </dependency>
         <dependency>
             <groupId>commons-net</groupId>
@@ -349,38 +350,49 @@
             <artifactId>commons-io</artifactId>
             <version>2.18.0</version>
         </dependency>
-		<dependency>
-		  <groupId>org.apache.httpcomponents</groupId>
-		  <artifactId>httpclient</artifactId>
-		  <version>4.5.13</version>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+	      <!--<dependency>
+	          <groupId>edu.vanderbilt.accre</groupId>
+	          <artifactId>laurelin</artifactId>
+      	    <version>1.0.1</version>
+      	</dependency>-->
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.10.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-spark_2.13</artifactId>
+            <version>4.0.0</version>
+        </dependency>
         <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
             <version>1.5.1</version>
             <scope>test</scope>
         </dependency>
-		<!--<dependency>
-		    <groupId>edu.vanderbilt.accre</groupId>
-		    <artifactId>laurelin</artifactId>
-		    <version>1.0.1</version>
-		</dependency>-->
-		<dependency>
-			<groupId>org.jgrapht</groupId>
-			<artifactId>jgrapht-core</artifactId>
-			<version>1.4.0</version>
-		</dependency>
-		<dependency>
-		  <groupId>com.fasterxml.jackson.dataformat</groupId>
-		  <artifactId>jackson-dataformat-yaml</artifactId>
-		  <version>2.15.2</version>
-		</dependency>
-    <dependency>
-      <groupId>io.delta</groupId>
-      <artifactId>delta-spark_2.13</artifactId>
-      <version>3.2.1</version>
-    </dependency>
-  </dependencies>
+        <!-- https://mvnrepository.com/artifact/net.sf.py4j/py4j -->
+        <dependency>
+            <groupId>net.sf.py4j</groupId>
+            <artifactId>py4j</artifactId>
+            <version>0.10.9.9</version>
+        </dependency>
+    </dependencies>
 
     <distributionManagement>
         <snapshotRepository>
