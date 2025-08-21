@@ -33,7 +33,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
-import scala.Function0;
 import scala.util.Properties;
 import scala.Function0;
 import sparksoniq.spark.SparkSessionManager;
