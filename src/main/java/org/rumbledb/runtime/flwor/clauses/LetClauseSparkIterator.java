@@ -276,6 +276,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
             }
         }
+
         if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
             if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
                 contextItemValueExpression = rightHandSideOfJoinEqualityCriterion;
@@ -293,6 +294,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     getMetadata()
             );
         }
+
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
         Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
@@ -325,8 +327,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             context,
             sequenceDependencies
         ).getDataFrame();
-
-        LogManager.getLogger("LetClauseSparkIterator").info("Rumble detected an equi-join in the left clause.");
 
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
