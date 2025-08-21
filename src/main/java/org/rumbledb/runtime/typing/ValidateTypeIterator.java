@@ -137,9 +137,20 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             fields.add(field);
             return DataTypes.createStructType(fields);
         }
+        if (itemType.isArrayItemType()) {
+            List<StructField> fields = new ArrayList<>();
+            String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
+            StructField field = createStructField(
+                columnName,
+                itemType,
+                false
+            );
+            fields.add(field);
+            return DataTypes.createStructType(fields);
+        }
         if (!itemType.isObjectItemType()) {
             throw new InvalidInstanceException(
-                    "Error while checking against the DataFrame schema: it is not an object or an atomic type: "
+                    "Error while checking against the DataFrame schema: it is not an object, an array, or an atomic type: "
                         + itemType
             );
 
