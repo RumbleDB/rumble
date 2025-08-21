@@ -1001,6 +1001,10 @@ public interface Item extends Serializable, KryoSerializable {
         return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
     }
 
+    default String serializeAsJSON() {
+        return new Serializer("UTF-8", Serializer.Method.JSON, false, "\n").serialize(this);
+    }
+
     /**
      * Get sparkSql string for the item
      * 
