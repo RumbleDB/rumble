@@ -38,8 +38,6 @@ import org.rumbledb.runtime.functions.datetime.components.TimezoneFromDateTimeFu
 import org.rumbledb.runtime.functions.datetime.components.TimezoneFromTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.delta_lake.CreateDeltaLakeTableFunctionIterator;
-import org.rumbledb.runtime.functions.delta_lake.DeleteDeltaLakeTableFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.ImplicitTimezoneIterator;
@@ -621,6 +619,18 @@ public class BuiltinFunctionCatalogue {
         DeltaFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
+
+    /**
+     * function that parses a hive registered delta table
+     */
+    static final BuiltinFunction delta_table = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "table"),
+        "string",
+        "item*",
+        DeltaTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
     /**
      * function that parses a csv file
      */
@@ -3011,28 +3021,6 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
-    /**
-     * function that creates a delta lake table at a given path location
-     */
-    static final BuiltinFunction create_delta_lake_table = createBuiltinFunction(
-        new Name(Name.JN_NS, "jn", "create-delta-lake-table"),
-        "string",
-        "boolean",
-        CreateDeltaLakeTableFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-    /**
-     * function that deletes a delta lake table at a given path location
-     */
-    static final BuiltinFunction delete_delta_lake_table = createBuiltinFunction(
-        new Name(Name.JN_NS, "jn", "delete-delta-lake-table"),
-        "string",
-        "boolean",
-        DeleteDeltaLakeTableFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
     static {
         builtinFunctions = new HashMap<>();
 
@@ -3060,6 +3048,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(parquet_file1.getIdentifier(), parquet_file1);
         builtinFunctions.put(parquet_file2.getIdentifier(), parquet_file2);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
+        builtinFunctions.put(delta_table.getIdentifier(), delta_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);
@@ -3067,9 +3056,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(avro_file1.getIdentifier(), avro_file1);
         builtinFunctions.put(avro_file2.getIdentifier(), avro_file2);
         builtinFunctions.put(parse_json.getIdentifier(), parse_json);
-
-        builtinFunctions.put(create_delta_lake_table.getIdentifier(), create_delta_lake_table);
-        builtinFunctions.put(delete_delta_lake_table.getIdentifier(), delete_delta_lake_table);
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);

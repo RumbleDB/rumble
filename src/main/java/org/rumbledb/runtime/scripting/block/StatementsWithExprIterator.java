@@ -158,7 +158,8 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean isUpdating() {
-        return this.children.get(this.children.size() - 1).isUpdating();
+        this.isUpdating = this.children.get(this.children.size() - 1).isUpdating();
+        return this.isUpdating;
     }
 
     @Override

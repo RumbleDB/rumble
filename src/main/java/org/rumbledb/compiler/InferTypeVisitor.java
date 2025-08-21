@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
@@ -18,7 +17,6 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
@@ -109,6 +107,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
@@ -129,6 +134,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
+import org.apache.spark.sql.SparkSession;
 
 
 
@@ -595,7 +601,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                return false;
             }
             try {
                 StructType s = SparkSessionManager.getInstance()
@@ -608,10 +614,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
                 return true;
             } catch (Exception e) {
-                if (e instanceof AnalysisException) {
-                    throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
-                }
-                throw e;
+                return false;
             }
         }
 
@@ -624,7 +627,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                return false;
             }
             StructType s = SparkSessionManager.getInstance()
                 .getOrCreateSession()
@@ -634,6 +637,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 .schema();
             ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             // TODO : check if arity is correct
+            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+            return true;
+        }
+
+        // handle 'table' function
+        if (
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("table"))
+                && args.size() > 0
+                && args.get(0) instanceof StringLiteralExpression
+        ) {
+            String name = ((StringLiteralExpression) args.get(0)).getValue();
+            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (session.catalog().tableExists(name) == false) {
+                return false;
+            }
+
+            StructType s = session
+                .read()
+                .table(name)
+                .schema();
+            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
             return true;
         }
@@ -964,6 +988,73 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visit(expression.getReturnExpression(), argument);
         expression.setStaticSequenceType(expression.getReturnExpression().getStaticSequenceType());
 
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitEditCollectionExpression(EditCollectionExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;
     }
 
