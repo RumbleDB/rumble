@@ -61,7 +61,7 @@ The RumbleDB shell should start:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.24.0 "Mountain ash" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.24.0 "Lemon Ironwood" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     Master: local[2]

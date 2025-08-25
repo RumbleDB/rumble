@@ -24,6 +24,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
@@ -121,6 +123,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
@@ -244,6 +253,55 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     )
                 );
             }
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        new SequenceType(
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.ITEM_STAR,
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
         }
 
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
@@ -655,7 +713,29 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (content instanceof JsoniqParser.PathExprContext) {
             return this.visitPathExpr((JsoniqParser.PathExprContext) content);
         }
-        throw new OurBadException("Unrecognized ExprSimple.");
+
+        if (content instanceof JsoniqParser.CreateCollectionExprContext) {
+            return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteIndexExprContext) {
+            return this.visitDeleteIndexExpr((JsoniqParser.DeleteIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteSearchExprContext) {
+            return this.visitDeleteSearchExpr((JsoniqParser.DeleteSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.EditCollectionExprContext) {
+            return this.visitEditCollectionExpr((JsoniqParser.EditCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertIndexExprContext) {
+            return this.visitInsertIndexExpr((JsoniqParser.InsertIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertSearchExprContext) {
+            return this.visitInsertSearchExpr((JsoniqParser.InsertSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
+            return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
+        }
+        throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
 
     // endregion
@@ -1323,39 +1403,122 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
     }
 
-    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
-        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 1)) {
-            if (child instanceof JsoniqParser.ObjectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
-                mainExpression = new ObjectLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else if (child instanceof JsoniqParser.ArrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
-                mainExpression = new ArrayLookupExpression(
-                        mainExpression,
-                        expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else {
-                throw new OurBadException("Unrecognized locator expression found in update expression.");
-            }
+    @Override
+    public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isTable = (ctx.table != null);
+        return new CreateCollectionExpression(
+                collection,
+                contentExpression,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
+        boolean isFirst = (ctx.first != null);
+
+        Expression numDelete = null;
+        if (ctx.num != null) {
+            numDelete = (Expression) this.visitExprSingle(ctx.num);
         }
-        return mainExpression;
+
+        return new DeleteIndexFromCollectionExpression(
+                collection,
+                numDelete,
+                isFirst,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new DeleteSearchFromCollectionExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new EditCollectionExpression(
+                targetExpression,
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        Expression pos = ctx.pos != null ? (Expression) this.visitExprSingle(ctx.pos) : null;
+        boolean isTable = (ctx.table != null);
+        boolean isLast = (ctx.last != null);
+        boolean isFirst = (ctx.first != null);
+
+        return new InsertIndexIntoCollectionExpression(
+                collection,
+                contentExpression,
+                pos,
+                isTable,
+                isFirst,
+                isLast,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isBefore = (ctx.before != null);
+        return new InsertSearchIntoCollectionExpression(
+                targetExpression,
+                contentExpression,
+                isBefore,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
+        Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
+        return new TruncateCollectionExpression(
+                collectionName,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getMainExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getMainExpression();
+        } else {
+            throw new OurBadException("Unrecognized main expression found in update expression.");
+        }
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        ParseTree locatorExprCtx = ctx.getChild(ctx.getChildCount() - 1);
-        if (locatorExprCtx instanceof JsoniqParser.ObjectLookupContext) {
-            return (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) locatorExprCtx);
-        }
-        if (locatorExprCtx instanceof JsoniqParser.ArrayLookupContext) {
-            return (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) locatorExprCtx);
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getLookupExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getLookupExpression();
         } else {
-            throw new OurBadException("Unrecognized locator found in update expression.");
+            throw new OurBadException("Unrecognized main expression found in update expression.");
         }
     }
 

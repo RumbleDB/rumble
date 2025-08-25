@@ -112,6 +112,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
@@ -199,6 +206,13 @@ import org.rumbledb.runtime.update.expression.InsertExpressionIterator;
 import org.rumbledb.runtime.update.expression.RenameExpressionIterator;
 import org.rumbledb.runtime.update.expression.ReplaceExpressionIterator;
 import org.rumbledb.runtime.update.expression.TransformExpressionIterator;
+import org.rumbledb.runtime.update.expression.CreateCollectionIterator;
+import org.rumbledb.runtime.update.expression.DeleteIndexFromCollectionIterator;
+import org.rumbledb.runtime.update.expression.DeleteSearchFromCollectionIterator;
+import org.rumbledb.runtime.update.expression.EditCollectionIterator;
+import org.rumbledb.runtime.update.expression.InsertIndexIntoCollectionIterator;
+import org.rumbledb.runtime.update.expression.InsertSearchIntoCollectionIterator;
+import org.rumbledb.runtime.update.expression.TruncateCollectionIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
@@ -523,6 +537,160 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return runtimeIterator;
     }
 
+    @Override
+    public RuntimeIterator visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+        boolean isTable = expression.isTable();
+
+        RuntimeIterator runtimeIterator = new CreateCollectionIterator(
+                targetIterator,
+                contentIterator,
+                isTable,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+        boolean isTable = expression.isTable();
+        boolean isFirst = expression.isFirst();
+
+        RuntimeIterator runtimeIterator = null;
+        if (expression.getNumDelete() != null) {
+            RuntimeIterator numDelete = this.visit(expression.getNumDelete(), argument);
+            runtimeIterator = new DeleteIndexFromCollectionIterator(
+                    targetIterator,
+                    numDelete,
+                    isFirst,
+                    isTable,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            runtimeIterator = new DeleteIndexFromCollectionIterator(
+                    targetIterator,
+                    isFirst,
+                    isTable,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+        RuntimeIterator runtimeIterator = new DeleteSearchFromCollectionIterator(
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitEditCollectionExpression(
+            EditCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator targetIterator = this.visit(expression.getTargetExpression(), argument);
+        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+
+        RuntimeIterator runtimeIterator = new EditCollectionIterator(
+                targetIterator,
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+        RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
+        boolean isTable = expression.isTable();
+        boolean isFirst = expression.isFirst();
+        boolean isLast = expression.isLast();
+
+        RuntimeIterator runtimeIterator = null;
+        if (expression.getPosition() != null) {
+            RuntimeIterator pos = this.visit(expression.getPosition(), argument);
+            runtimeIterator = new InsertIndexIntoCollectionIterator(
+                    targetIterator,
+                    contentIterator,
+                    pos,
+                    isTable,
+                    isFirst,
+                    isLast,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            runtimeIterator = new InsertIndexIntoCollectionIterator(
+                    targetIterator,
+                    contentIterator,
+                    isTable,
+                    isFirst,
+                    isLast,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator targetIterator = this.visit(expression.getTargetExpression(), argument);
+        RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
+        boolean isBefore = expression.isBefore();
+
+        RuntimeIterator runtimeIterator = new InsertSearchIntoCollectionIterator(
+                targetIterator,
+                contentIterator,
+                isBefore,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
+        boolean isTable = expression.isTable();
+        RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
+                targetIterator,
+                isTable,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
 
     // endregion
 
