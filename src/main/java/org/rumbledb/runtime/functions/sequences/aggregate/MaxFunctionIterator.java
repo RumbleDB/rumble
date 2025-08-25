@@ -21,24 +21,29 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.joda.time.DateTime;
-import org.joda.time.Instant;
-import org.joda.time.Period;
+import java.time.Duration;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.time.OffsetDateTime;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
+import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
@@ -50,7 +55,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private transient boolean currentMinIsNullItem = false; // Only happens if all elements are null
     private transient double currentMaxDouble;
     private transient float currentMaxFloat;
@@ -60,15 +65,15 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient String currentMaxString;
     private transient boolean currentMaxBoolean;
     private transient boolean hasTimeZone = false;
-    private transient DateTime currentMaxDate; // TODO: Change to Date type but had issues with Java compiler
-    private transient DateTime currentMaxDateTime;
-    private transient Period currentMaxDayTimeDuration;
+    private transient OffsetDateTime currentMaxDate;
+    private transient OffsetDateTime currentMaxDateTime;
+    private transient Duration currentMaxDayTimeDuration;
     private transient Period currentMaxYearMonthDuration;
-    private transient DateTime currentMaxTime;
+    private transient OffsetTime currentMaxTime;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
-    private ItemComparator comparator;
+    private final ItemComparator comparator;
 
 
     public MaxFunctionIterator(
@@ -94,6 +99,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
+        Duration candidateDuration;
+        Duration currentMaxDayTimeDurationVar;
+        Period candidatePeriod;
+
+
         this.currentMinIsNullItem = false;
         this.currentMaxDouble = 0;
         this.currentMaxFloat = 0;
@@ -111,9 +121,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
-            Item candidateItem = null;
-            ItemType candidateType = null;
-            Instant now = null;
+            Item candidateItem;
+            ItemType candidateType;
             while (this.iterator.hasNext()) {
                 candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
@@ -161,10 +170,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.currentMaxDayTimeDuration = candidateItem.getDurationValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                             this.activeType = 11;
-                            this.currentMaxYearMonthDuration = candidateItem.getDurationValue();
+                            this.currentMaxYearMonthDuration = candidateItem.getPeriodValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.timeItem)) {
                             this.activeType = 12;
-                            this.currentMaxTime = candidateItem.getDateTimeValue();
+                            this.currentMaxTime = candidateItem.getTimeValue();
                             if (candidateItem.hasTimeZone()) {
                                 this.hasTimeZone = true;
                             }
@@ -344,7 +353,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().toDate().compareTo(this.currentMaxDate.toDate()) > 0) {
+                        if (candidateItem.getDateTimeValue().isAfter(this.currentMaxDate)) {
                             this.currentMaxDate = candidateItem.getDateTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
@@ -356,7 +365,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxDateTime) > 0) {
+                        if (candidateItem.getDateTimeValue().isAfter(this.currentMaxDateTime)) {
                             this.currentMaxDateTime = candidateItem.getDateTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
@@ -368,13 +377,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        now = new Instant();
-                        if (
-                            candidateItem.getDurationValue()
-                                .toDurationFrom(now)
-                                .compareTo(this.currentMaxDayTimeDuration.toDurationFrom(now)) > 0
-                        ) {
-                            this.currentMaxDayTimeDuration = candidateItem.getDurationValue();
+                        candidateDuration = candidateItem.getDurationValue();
+                        currentMaxDayTimeDurationVar = this.currentMaxDayTimeDuration;
+                        if (currentMaxDayTimeDurationVar.compareTo(candidateDuration) < 0) {
+                            this.currentMaxDayTimeDuration = candidateDuration;
                         }
                         break;
                     case 11:
@@ -384,13 +390,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        now = new Instant();
+                        candidatePeriod = candidateItem.getPeriodValue();
                         if (
-                            candidateItem.getDurationValue()
-                                .toDurationFrom(now)
-                                .compareTo(this.currentMaxYearMonthDuration.toDurationFrom(now)) > 0
+                            DurationItem.periodComparator.compare(this.currentMaxYearMonthDuration, candidatePeriod) < 0
                         ) {
-                            this.currentMaxYearMonthDuration = candidateItem.getDurationValue();
+                            this.currentMaxYearMonthDuration = candidatePeriod;
                         }
                         break;
                     case 12:
@@ -400,8 +404,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxTime) > 0) {
-                            this.currentMaxTime = candidateItem.getDateTimeValue();
+                        if (candidateItem.getTimeValue().isAfter(this.currentMaxTime)) {
+                            this.currentMaxTime = candidateItem.getTimeValue();
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
@@ -456,7 +460,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         .createYearMonthDurationItem(this.currentMaxYearMonthDuration);
                     break;
                 case 12:
-                    itemResult = ItemFactory.getInstance().createTimeItem(this.currentMaxTime, this.hasTimeZone);
+                    itemResult = ItemFactory.getInstance()
+                        .createTimeItem(this.currentMaxTime, this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
@@ -470,6 +475,18 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (df.isEmptySequence()) {
                 return null;
             }
+            ItemType maxType;
+            if (
+                df.getItemType().isObjectItemType()
+                    && df.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.tableLocationColumnName)
+            ) {
+                maxType = df.getItemType()
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
+            } else {
+                maxType = df.getItemType();
+            }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             JSoundDataFrame maxDF = df.evaluateSQL(
                 String.format(
@@ -478,7 +495,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     SparkSessionManager.atomicJSONiqItemColumnName,
                     input
                 ),
-                df.getItemType()
+                maxType
             );
             return itemTypePromotion(maxDF.getExactlyOneItem());
         }
@@ -496,7 +513,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);
             return result;
         } else {
@@ -515,5 +532,25 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
         return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.children.size() > 1) {
+            // for now, only consider max over a sequence
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(
+                nativeChildQuery,
+                "array_max(" + nativeChildQuery.getResultingQuery() + ")",
+                nativeChildQuery.getResultingType()
+        );
     }
 }

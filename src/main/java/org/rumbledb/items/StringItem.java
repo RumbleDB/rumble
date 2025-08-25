@@ -154,4 +154,19 @@ public class StringItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return "\"" + this.value + "\"";
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return "\"" + this.value + "\"";
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        return "STRING";
+    }
 }

@@ -50,6 +50,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     private int startPosition;
     private int currentLength;
     private int length;
+    private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
+                                                          // threshold
 
     public SubsequenceFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -90,6 +92,16 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        if (this.startPosition < this.optimizationThreshold) {
+            return getDataFrameOld(dynamicContext);
+        } else
+            return getDataFrameOffset(dynamicContext);
+    }
+
+    /**
+     * Old implementation of getDataFrame, it is faster for low starting positions
+     */
+    private JSoundDataFrame getDataFrameOld(DynamicContext dynamicContext) {
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
 
@@ -129,6 +141,38 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         return new JSoundDataFrame(ds, df.getItemType());
     }
 
+    /**
+     * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower
+     * for small values
+     */
+    private JSoundDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+        setInstanceVariables(dynamicContext);
+
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        if (this.length != -1) {
+            df = df.evaluateSQL(
+                String.format(
+                    "SELECT * FROM %s LIMIT %s OFFSET %s",
+                    input,
+                    Integer.toString(this.length),
+                    Integer.toString(this.startPosition - 1)
+                ),
+                df.getItemType()
+            );
+        } else {
+            df = df.evaluateSQL(
+                String.format(
+                    "SELECT * FROM %s OFFSET %s",
+                    input,
+                    Integer.toString(this.startPosition - 1)
+                ),
+                df.getItemType()
+            );
+        }
+        return new JSoundDataFrame(df.getDataFrame(), df.getItemType());
+    }
+
     @Override
     protected void openLocal() {
         setInstanceVariables(this.currentDynamicContextForLocalExecution);
@@ -164,6 +208,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         int currentPosition = 1; // JSONiq indices start from 1
 
         this.currentLength = this.length;
+        if (this.startPosition <= 0 && this.currentLength != -1) {
+            this.currentLength += this.startPosition - 1;
+        }
         // if length is 0, just return empty sequence
         if (this.currentLength == 0) {
             this.hasNext = false;

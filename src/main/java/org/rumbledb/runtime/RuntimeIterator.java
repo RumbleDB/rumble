@@ -14,11 +14,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
 package org.rumbledb.runtime;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,39 +63,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.SequenceType;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
+    protected boolean isUpdating;
+    protected transient boolean isSequential;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
@@ -80,6 +85,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             );
         }
         this.isOpen = false;
+        this.isUpdating = false;
+        this.isSequential = false;
+
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
@@ -123,11 +131,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     } else if (item.isInteger()) {
                         result = !item.getIntegerValue().equals(BigInteger.ZERO);
                     } else if (item.isDouble()) {
-                        result = item.getDoubleValue() != 0;
+                        result = !item.isNaN() && item.getDoubleValue() != 0;
                     } else if (item.isFloat()) {
-                        result = item.getFloatValue() != 0;
+                        result = !item.isNaN() && item.getFloatValue() != 0;
                     } else if (item.isDecimal()) {
-                        result = !item.getDecimalValue().equals(BigDecimal.ZERO);
+                        result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                     } else {
                         throw new OurBadException(
                                 "Unexpected numeric type found while calculating effective boolean value."
@@ -145,13 +153,24 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = false;
             } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
-            } else if (item.isObject()) {
-                this.close();
-                return true;
-            } else if (item.isArray()) {
-                this.close();
+            } else if (item.isNode()) {
+                // returns true even if sequence has more items according to spec
                 return true;
             } else {
+                if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+                    if (item.isObject() || item.isArray()) {
+                        this.close();
+                        return true;
+                    }
+                } else {
+                    if (item.isObject() || item.isArray()) {
+                        System.err.println(
+                            "Note: effective boolean value of "
+                                + (item.isObject() ? "Object " : "Array ")
+                                + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                        );
+                    }
+                }
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
@@ -286,11 +305,26 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    /**
+     * Checks whether this iterator natively produces DataFrames.
+     * 
+     * @return true if it does, false otherwise.
+     */
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
         return this.staticContext.getExecutionMode().isDataFrame();
+    }
+
+    /**
+     * Checks whether this iterator can produce DataFrames with no error (natively or not).
+     * 
+     * @return true if it can, false otherwise.
+     */
+    public boolean canProduceDataFrame() {
+        return isDataFrame()
+            || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {
@@ -300,18 +334,63 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    /**
+     * Gets the output as a DataFrame. If necessary and possible, forcibly converts the items to a DataFrame.
+     * 
+     * @return the DataFrame.
+     */
+    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+        if (isDataFrame()) {
+            return this.getDataFrame(context);
+        }
+        List<Item> items = new ArrayList<>();
+        materialize(context, items);
+        return ValidateTypeIterator.convertLocalItemsToDataFrame(
+            items,
+            this.getStaticType().getItemType(),
+            context,
+            true
+        );
+    }
+
+    public boolean isUpdating() {
+        return this.isUpdating;
+    }
+
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        throw new OurBadException(
+                "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
+    }
+
+    public boolean isSequential() {
+        return this.isSequential;
+    }
+
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
-        List<Item> result = new ArrayList<>();
-        this.open(context);
-        while (this.hasNext()) {
-            result.add(this.next());
+        try {
+            List<Item> result = new ArrayList<>();
+            this.open(context);
+            while (this.hasNext()) {
+                result.add(this.next());
+            }
+            this.close();
+            return result;
+        } catch (BreakStatementException | ContinueStatementException controlException) {
+            this.close();
+            throw controlException;
         }
-        this.close();
-        return result;
     }
 
+    /**
+     * Materialize the items of the iterator into the result list.
+     * 
+     * @param context the dynamic context
+     * @param result the list to materialize the items into. The list is cleared before the materialization.
+     */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
         this.open(context);
@@ -397,6 +476,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
+    public void printToStandardError() {
+        StringBuffer sb = new StringBuffer();
+        this.print(sb, 0);
+        System.err.println(sb);
+    }
+
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -406,6 +491,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(this.staticContext.getExecutionMode());
         buffer.append(" | ");
         buffer.append(getStaticType());
+        buffer.append(" | ");
+        buffer.append(this.isUpdating() ? "updating" : "simple");
+        buffer.append(" | ");
+        buffer.append(this.isSequential ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

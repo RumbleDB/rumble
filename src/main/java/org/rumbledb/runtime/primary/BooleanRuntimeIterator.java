@@ -25,6 +25,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -40,6 +43,15 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         return this.item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getBooleanValue(),
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+        );
     }
 }
 

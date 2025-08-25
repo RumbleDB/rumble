@@ -81,7 +81,7 @@ public class DecimalItem implements Item {
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.getDecimalValue().equals(BigDecimal.ZERO);
+        return !(this.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
     }
 
     public double castToDoubleValue() {
@@ -143,5 +143,21 @@ public class DecimalItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DECIMAL";
     }
 }

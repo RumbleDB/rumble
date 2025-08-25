@@ -1,6 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
@@ -13,12 +12,13 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -30,25 +30,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
+
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
     public FunctionInliningVisitor() {
-    }
-
-    private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
-        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
-            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
-                return declaration;
-            }
-        }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
@@ -280,20 +267,29 @@ public class FunctionInliningVisitor extends CloneVisitor {
     public Node visitMainModule(MainModule mainModule, Node argument) {
         MainModule result = new MainModule(
                 mainModule.getProlog(),
-                (Expression) visit(mainModule.getExpression(), mainModule.getProlog()),
+                (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
                 mainModule.getMetadata()
         );
         result.setStaticContext(mainModule.getStaticContext());
         return result;
     }
 
+    // Inlining is disabled for functions that:
+    // 1. Are sequential.
+    // 2. Contain an exit statement.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
             (Prolog) argument,
             expression.getFunctionIdentifier()
         );
-        if (expression.isPartialApplication() || targetFunction == null || targetFunction.isRecursive()) {
+        if (
+            expression.isPartialApplication()
+                || targetFunction == null
+                || targetFunction.isRecursive()
+                || targetFunction.getExpression().isSequential()
+                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()
+        ) {
             List<Expression> arguments = new ArrayList<>();
             for (Expression arg : expression.getArguments()) {
                 arguments.add(arg == null ? null : (Expression) visit(arg, argument));
@@ -307,16 +303,18 @@ public class FunctionInliningVisitor extends CloneVisitor {
             return result;
         }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
-        Expression body = (Expression) visit(inlineFunction.getBody(), argument);
+        StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
-        if (expression.getArguments().size() == 0 || allArgumentsMatch(expression, paramNames)) {
+        if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
-                return new TreatExpression(
+                TreatExpression result = new TreatExpression(
                         body,
                         inlineFunction.getReturnType(),
                         ErrorCode.UnexpectedTypeErrorCode,
                         expression.getMetadata()
                 );
+                result.setSequential(inlineFunction.isSequential());
+                return result;
             }
             return body;
         }

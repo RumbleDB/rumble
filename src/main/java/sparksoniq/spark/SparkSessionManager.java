@@ -20,9 +20,9 @@
 
 package sparksoniq.spark;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -83,14 +83,44 @@ public class SparkSessionManager {
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
-    public static String emptyObjectJSONiqItemColumnName = "a84bc646-05af-4383-8853-2e9f31a710f2";
-    public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
-    public static String countColumnName = "5af0c0c8-e84c-482a-82ce-1887565cf448";
-    public static String rightHandSideHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
-    public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String atomicJSONiqItemColumnName = "atomic0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
+    public static String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
+    public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
+    public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b ";
+    public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
+    public static String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
+    public static String mutabilityLevelColumnName = "__mutabilityLevel";
+    public static String rowIdColumnName = "__rowID";
+    public static String pathInColumnName = "__pathIn";
+    public static String tableLocationColumnName = "__tableLocation";
+    public static String rowOrderColumnName = "__rowOrder";
 
     private SparkSessionManager() {
+    }
+
+    private SparkSessionManager(SparkConf conf) {
+        if (this.configuration == null) {
+            this.configuration = conf;
+        } else {
+            throw new OurBadException("Configuration already exists: new configuration initialization prevented.");
+        }
+    }
+
+    private SparkSessionManager(SparkSession session) {
+        if (this.session == null) {
+            this.session = session;
+            this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+            if (this.configuration == null) {
+                setDefaultConfiguration();
+            }
+            initializeKryoSerialization();
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
+        } else {
+            throw new OurBadException("Session already exists: new session initialization prevented.");
+        }
     }
 
     public static boolean LIMIT_COLLECT() {
@@ -100,6 +130,20 @@ public class SparkSessionManager {
     public static SparkSessionManager getInstance() {
         if (instance == null) {
             instance = new SparkSessionManager();
+        }
+        return instance;
+    }
+
+    public static SparkSessionManager getInstance(SparkConf conf) {
+        if (instance == null) {
+            instance = new SparkSessionManager(conf);
+        }
+        return instance;
+    }
+
+    public static SparkSessionManager getInstance(SparkSession session) {
+        if (instance == null) {
+            instance = new SparkSessionManager(session);
         }
         return instance;
     }
@@ -126,6 +170,11 @@ public class SparkSessionManager {
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+            this.configuration.set(
+                "spark.sql.catalog.spark_catalog",
+                "org.apache.spark.sql.delta.catalog.DeltaCatalog"
+            );
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
@@ -136,13 +185,22 @@ public class SparkSessionManager {
         }
     }
 
+    public void resetSession() {
+        if (this.session != null) {
+            this.session.stop();
+            this.session = null;
+        }
+        this.javaSparkContext = null;
+        this.configuration = null;
+    }
+
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Logger.getLogger("org").setLevel(LOG_LEVEL);
-            Logger.getLogger("akka").setLevel(LOG_LEVEL);
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
 
-            this.session = SparkSession.builder().config(this.configuration).getOrCreate();
+            this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }

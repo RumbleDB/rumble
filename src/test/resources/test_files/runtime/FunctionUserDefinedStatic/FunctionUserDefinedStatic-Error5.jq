@@ -2,4 +2,4 @@
 declare function price($x as decimal?, $y as double) as double* { $x + $y };
 price(1, "hello")
 
-(: Invalid argument. string cannot be promoted to type double. :)
+(: Message: xs:string is not expected here. The expected type is xs:double :)

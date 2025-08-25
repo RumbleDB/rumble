@@ -59,7 +59,9 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
     public static final String JS_NS = "http://jsoniq.org/types";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
+    public static final String AN_NS = "http://www.w3.org/2012/xquery";
     public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
@@ -118,6 +120,18 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
      */
     public static Name createVariableInDefaultFunctionNamespace(String localName) {
         return new Name(JSONIQ_DEFAULT_FUNCTION_NS, "", localName);
+    }
+
+    /**
+     * Creates an expanded name that has the default annotations namespace. By default, in Rumble, unprefixed
+     * annotations live in this namespace. This namespace includes
+     * all builtin annotations.
+     * 
+     * @param localName the name of the variable
+     * @return the expanded name
+     */
+    public static Name createVariableInDefaultAnnotationsNamespace(String localName) {
+        return new Name(AN_NS, "", localName);
     }
 
     public static Name createVariableInDefaultXQueryTypeNamespace(String localName) {

@@ -36,6 +36,18 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        // Implement serialization logic here if needed
+        throw new UnsupportedOperationException("Serialization not implemented yet.");
+    }
+
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        // Implement deserialization logic here if needed
+        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (!(other instanceof ItemType)) {
             return false;

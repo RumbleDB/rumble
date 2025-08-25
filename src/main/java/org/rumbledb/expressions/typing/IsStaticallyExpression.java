@@ -52,6 +52,7 @@ public class IsStaticallyExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.sequenceType.toString()) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + this.expressionClassification);
         buffer.append(
             " | "
                 + (this.staticSequenceType == null

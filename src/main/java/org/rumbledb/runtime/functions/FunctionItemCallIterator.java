@@ -37,16 +37,17 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -78,6 +79,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
         this.functionBodyIterator = null;
+        this.isUpdating = functionItem.getSignature().isUpdating();
 
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
@@ -232,7 +234,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 partialApplicationParamNames,
                 new FunctionSignature(
                         partialApplicationParamTypes,
-                        this.functionItem.getSignature().getReturnType()
+                        this.functionItem.getSignature().getReturnType(),
+                        this.functionItem.getSignature().isUpdating()
                 ),
                 this.functionItem.getModuleDynamicContext(),
                 this.functionItem.getBodyIterator(),
@@ -345,5 +348,17 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         populateDynamicContextWithArguments(dynamicContext);
         this.functionBodyIterator = this.functionItem.getBodyIterator();
         return this.functionBodyIterator.getDataFrame(this.dynamicContextForCalls);
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+        this.populateDynamicContextWithArguments(context);
+        DynamicContext contextForUpdates = new DynamicContext(this.dynamicContextForCalls);
+        contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
+        this.functionBodyIterator = this.functionItem.getBodyIterator();
+        return this.functionBodyIterator.getPendingUpdateList(contextForUpdates);
     }
 }

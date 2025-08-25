@@ -34,6 +34,8 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
+import static org.apache.spark.sql.functions.*;
+
 public class JavaAPITest {
 
     public JavaAPITest() {
@@ -41,6 +43,7 @@ public class JavaAPITest {
 
     @BeforeClass
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
         sparkConfiguration.set("spark.submit.deployMode", "client");
@@ -48,6 +51,9 @@ public class JavaAPITest {
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
         sparkConfiguration.set("spark.driver.bindAddress", "127.0.0.1");
+        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
+        sparkConfiguration.set("spark.databricks.delta.schema.autoMerge.enabled", "true");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
 
     }

@@ -20,6 +20,8 @@
 
 package org.rumbledb.config;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
@@ -56,6 +58,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
     private Map<Name, String> externalVariableValuesReadFromFiles;
+    private Map<Name, Dataset<Row>> externalVariableValuesReadFromDataFrames;
     private Set<Name> externalVariablesReadFromStandardInput;
     private Map<Name, String> externalVariablesInputFormats;
     private boolean checkReturnTypeOfBuiltinFunctions;
@@ -64,6 +67,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String logPath;
     private String query;
     private String shell;
+    private boolean printIteratorTree;
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
@@ -73,6 +77,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean nativeExecution;
     private boolean functionInlining;
     private boolean thirdFeature;
+    private boolean applyUpdates;
+    private String queryLanguage;
+    private String staticBaseUri;
+    private boolean optimizeSteps; // do optimized version in SlashExpr that may violate stability condition of document
+                                   // order
+    private boolean optimizeStepsExperimental; // experimentally optimize steps even more, correctness not yet verified
+    private boolean optimizeParentPointers; // true if no steps in query require the parent pointer, allows removal of
+                                            // parent pointer from node items
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -111,7 +123,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
-                if (i == 0) {
+                if (args[i].equals("--run") || args[i].equals("--serve") || args[i].equals("--repl")) {
                     System.err.println("Did you know?  🧑‍🏫");
                     System.err.println(
                         "The RumbleDB command line interface was extended with convenient shortcuts. For example:"
@@ -179,14 +191,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public static RumbleRuntimeConfiguration getDefaultConfiguration() {
         return RumbleRuntimeConfiguration.defaultConfiguration;
-    }
-
-    public String getConfigurationArgument(String key) {
-        if (this.arguments.containsKey(key)) {
-            return this.arguments.get(key);
-        } else {
-            return null;
-        }
     }
 
     public int getPort() {
@@ -257,6 +261,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void init() {
+        if (this.arguments.containsKey("print-iterator-tree")) {
+            this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
+        } else {
+            this.printIteratorTree = false;
+        }
+
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
@@ -298,6 +308,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
         this.externalVariableValuesReadFromFiles = new HashMap<>();
+        this.externalVariableValuesReadFromDataFrames = new HashMap<>();
         this.externalVariablesInputFormats = new HashMap<>();
         this.externalVariablesReadFromStandardInput = new HashSet<>();
         for (String s : this.arguments.keySet()) {
@@ -422,12 +433,46 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.functionInlining = true;
         }
 
+        if (this.arguments.containsKey("apply-updates")) {
+            this.applyUpdates = this.arguments.get("apply-updates").equals("yes");
+        } else {
+            this.applyUpdates = false;
+        }
+
         if (this.arguments.containsKey("optimize-general-comparison-to-value-comparison")) {
             this.optimizeGeneralComparisonToValueComparison = this.arguments.get(
                 "optimize-general-comparison-to-value-comparison"
             ).equals("yes");
         } else {
             this.optimizeGeneralComparisonToValueComparison = true;
+        }
+
+        if (this.arguments.containsKey("default-language")) {
+            this.queryLanguage = this.arguments.get("default-language");
+        } else {
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
+        }
+
+        if (this.arguments.containsKey("static-base-uri")) {
+            this.staticBaseUri = this.arguments.get("static-base-uri");
+        }
+
+        if (this.arguments.containsKey("optimize-steps")) {
+            this.optimizeSteps = this.arguments.get("optimize-steps").equals("yes");
+        } else {
+            this.optimizeSteps = true;
+        }
+
+        if (this.arguments.containsKey("optimize-steps-experimental")) {
+            this.optimizeStepsExperimental = this.arguments.get("optimize-steps-experimental").equals("yes");
+        } else {
+            this.optimizeStepsExperimental = false;
+        }
+
+        if (this.arguments.containsKey("optimize-parent-pointers")) {
+            this.optimizeParentPointers = this.arguments.get("optimize-parent-pointers").equals("yes");
+        } else {
+            this.optimizeParentPointers = true;
         }
     }
 
@@ -532,6 +577,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this;
     }
 
+    public List<Name> getExternalVariablesReadFromDataFrames() {
+        return new java.util.ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
+    }
+
+    public List<Name> getExternalVariablesReadFromListsOfItems() {
+        return new java.util.ArrayList<>(this.externalVariableValues.keySet());
+    }
+
     public List<Item> getExternalVariableValue(Name name) {
         if (this.externalVariableValues.containsKey(name)) {
             return this.externalVariableValues.get(name);
@@ -553,8 +606,41 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return null;
     }
 
+    public Dataset<Row> getExternalVariableValueReadFromDataFrame(Name name) {
+        if (this.externalVariableValuesReadFromDataFrames.containsKey(name)) {
+            return this.externalVariableValuesReadFromDataFrames.get(name);
+        }
+        return null;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(Name name, Dataset<Row> dataFrame) {
+        this.externalVariableValuesReadFromDataFrames.put(name, dataFrame);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(String variableName, Dataset<Row> dataFrame) {
+        setExternalVariableValue(new Name(null, null, variableName), dataFrame);
+        return this;
+    }
+
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(String variableName, List<Item> items) {
+        setExternalVariableValue(new Name(null, null, variableName), items);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration resetExternalVariableValue(Name name) {
+        this.externalVariableValues.remove(name);
+        this.externalVariableValuesReadFromDataFrames.remove(name);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration resetExternalVariableValue(String variableNameString) {
+        resetExternalVariableValue(new Name(null, null, variableNameString));
         return this;
     }
 
@@ -582,12 +668,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
+    public void setPrintIteratorTree(boolean value) {
+        this.printIteratorTree = value;
+    }
+
     public boolean isPrintIteratorTree() {
-        if (this.arguments.containsKey("print-iterator-tree")) {
-            return this.arguments.get("print-iterator-tree").equals("yes");
-        } else {
-            return false;
-        }
+        return this.printIteratorTree;
     }
 
     public boolean doStaticAnalysis() {
@@ -644,12 +730,56 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.functionInlining = b;
     }
 
+    public boolean applyUpdates() {
+        return this.applyUpdates;
+    }
+
+    public void setApplyUpdates(boolean b) {
+        this.applyUpdates = b;
+    }
+
     public boolean optimizeGeneralComparisonToValueComparison() {
         return this.optimizeGeneralComparisonToValueComparison;
     }
 
     public void setOptimizeGeneralComparisonToValueComparison(boolean b) {
         this.optimizeGeneralComparisonToValueComparison = b;
+    }
+
+    public String getQueryLanguage() {
+        return this.queryLanguage;
+    }
+
+    public void setQueryLanguage(String version) {
+        this.queryLanguage = version;
+    }
+
+    public String getStaticBaseUri() {
+        return this.staticBaseUri;
+    }
+
+    public boolean optimizeSteps() {
+        return this.optimizeSteps;
+    }
+
+    public void setOptimizeSteps(boolean optimizeSteps) {
+        this.optimizeSteps = optimizeSteps;
+    }
+
+    public boolean optimizeStepExperimental() {
+        return this.optimizeStepsExperimental;
+    }
+
+    public void setOptimizeStepsExperimental(boolean optimizeStepsExperimental) {
+        this.optimizeStepsExperimental = optimizeStepsExperimental;
+    }
+
+    public boolean optimizeParentPointers() {
+        return this.optimizeParentPointers;
+    }
+
+    public void setOptimizeParentPointers(boolean optimizeParentPointers) {
+        this.optimizeParentPointers = optimizeParentPointers;
     }
 
     public boolean isLocal() {

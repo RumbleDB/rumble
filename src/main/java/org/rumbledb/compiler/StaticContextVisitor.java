@@ -20,15 +20,11 @@
 
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -37,9 +33,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
@@ -53,15 +49,37 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -88,6 +106,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
+        }
+        if (node instanceof Statement) {
+            ((Statement) node).setStaticContext(argument);
         }
         if (node instanceof Clause) {
             ((Clause) node).setStaticContext(argument);
@@ -167,7 +188,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getFunctionIdentifier(),
             new FunctionSignature(
                     new ArrayList<>(expression.getParams().values()),
-                    expression.getReturnType()
+                    expression.getReturnType(),
+                    expression.isUpdating()
             )
         );
         return argument;
@@ -205,7 +227,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // TODO visit at...
         this.visit(clause.getExpression(), argument);
 
-        StaticContext result = new StaticContext(argument);
+        StaticContext result = new StaticContext(argument);// add a block level to function declaration body
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -349,9 +371,57 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         argument.addVariable(
             variableDeclaration.getVariableName(),
             variableDeclaration.getActualSequenceType(),
-            variableDeclaration.getMetadata()
+            variableDeclaration.getMetadata(),
+            variableDeclaration.isAssignable()
         );
         return argument;
+    }
+
+    @Override
+    public StaticContext visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, StaticContext argument) {
+        StaticContext currentContext = new StaticContext(argument);
+        for (VariableDeclStatement variableDeclStatement : statement.getVariables()) {
+            currentContext = this.visit(variableDeclStatement, currentContext);
+        }
+        statement.setStaticContext(currentContext);
+        return currentContext;
+    }
+
+    @Override
+    public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() + 1);
+        StaticContext result = argument;
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            result = this.visitCopyDecl(copyDecl, result, argument);
+        }
+
+        result = this.visit(expression.getModifyExpression(), result);
+        result = this.visit(expression.getReturnExpression(), result);
+
+        expression.setStaticContext(result);
+        expression.setMutabilityLevel(result.getCurrentMutabilityLevel());
+
+        argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() - 1);
+        return argument;
+    }
+
+    private StaticContext visitCopyDecl(
+            CopyDeclaration copyDeclaration,
+            StaticContext argument,
+            StaticContext copyContext
+    ) {
+        this.visit(copyDeclaration.getSourceExpression(), copyContext);
+
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+            copyDeclaration.getVariableName(),
+            copyDeclaration.getSourceSequenceType(),
+            copyDeclaration.getSourceExpression().getMetadata()
+        );
+        copyDeclaration.getSourceSequenceType()
+            .resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
+
+        return result;
     }
 
     @Override
@@ -406,4 +476,152 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    @Override
+    public StaticContext visitVariableDeclStatement(
+            VariableDeclStatement variableDeclStatement,
+            StaticContext argument
+    ) {
+        if (variableDeclStatement.getVariableExpression() != null) {
+            this.visit(variableDeclStatement.getVariableExpression(), argument);
+        }
+        if (argument.hasVariableInScopeOnly(variableDeclStatement.getVariableName())) {
+            throw new VariableAlreadyExistsException(
+                    variableDeclStatement.getVariableName(),
+                    variableDeclStatement.getMetadata()
+            );
+        }
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+            variableDeclStatement.getVariableName(),
+            variableDeclStatement.getActualSequenceType(),
+            variableDeclStatement.getMetadata(),
+            variableDeclStatement.isAssignable()
+        );
+        variableDeclStatement.setStaticContext(result);
+        return result;
+    }
+
+    @Override
+    public StaticContext visitProgram(Program program, StaticContext argument) {
+        StaticContext currentContext = new StaticContext(argument);
+        visitDescendants(program, currentContext);
+        return currentContext;
+    }
+
+    @Override
+    public StaticContext visitBlockStatement(
+            BlockStatement statement,
+            StaticContext argument
+    ) {
+        StaticContext currentContext = new StaticContext(argument);
+        for (Statement child : statement.getBlockStatements()) {
+            currentContext = this.visit(child, currentContext);
+        }
+        return currentContext;
+    }
+
+    @Override
+    public StaticContext visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, StaticContext argument) {
+        StaticContext currentContext = argument;
+        for (Statement statement : statementsAndExpr.getStatements()) {
+            currentContext = this.visit(statement, currentContext);
+        }
+        this.visit(statementsAndExpr.getExpression(), currentContext);
+        statementsAndExpr.setStaticContext(argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitStatementsAndOptionalExpr(
+            StatementsAndOptionalExpr statementsAndOptionalExpr,
+            StaticContext argument
+    ) {
+        StaticContext currentContext = argument;
+        for (Statement statement : statementsAndOptionalExpr.getStatements()) {
+            currentContext = this.visit(statement, currentContext);
+        }
+        if (statementsAndOptionalExpr.getExpression() != null) {
+            this.visit(statementsAndOptionalExpr.getExpression(), currentContext);
+        }
+        statementsAndOptionalExpr.setStaticContext(argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTypeSwitchStatement(TypeSwitchStatement statement, StaticContext argument) {
+        this.visit(statement.getTestCondition(), argument);
+        for (TypeSwitchStatementCase tssc : statement.getCases()) {
+            StaticContext caseContext = new StaticContext(argument);
+            Name variableName = tssc.getVariableName();
+            if (variableName != null) {
+                caseContext.addVariable(variableName, null, statement.getMetadata());
+            }
+            this.visit(tssc.getReturnStatement(), caseContext);
+            for (SequenceType sequenceType : tssc.getUnion()) {
+                sequenceType.resolve(argument, statement.getMetadata());
+            }
+        }
+        Name defaultCaseVariableName = statement.getDefaultCase().getVariableName();
+        if (defaultCaseVariableName == null) {
+            this.visit(statement.getDefaultCase().getReturnStatement(), argument);
+        } else {
+            StaticContext defaultCaseStaticContext = new StaticContext(argument);
+            defaultCaseStaticContext.addVariable(defaultCaseVariableName, null, statement.getMetadata());
+            this.visit(statement.getDefaultCase().getReturnStatement(), defaultCaseStaticContext);
+        }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitSwitchStatement(SwitchStatement statement, StaticContext argument) {
+        this.visit(statement.getTestCondition(), argument);
+        for (SwitchCaseStatement switchCaseStatement : statement.getCases()) {
+            StaticContext caseContext = new StaticContext(argument);
+            for (Expression conditionalExpr : switchCaseStatement.getConditionExpressions()) {
+                this.visit(conditionalExpr, caseContext);
+            }
+            this.visit(switchCaseStatement.getReturnStatement(), caseContext);
+        }
+        StaticContext defaultCaseStaticContext = new StaticContext(argument);
+        this.visit(statement.getDefaultStatement(), defaultCaseStaticContext);
+        statement.setStaticContext(argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitConditionalStatement(ConditionalStatement statement, StaticContext argument) {
+        StaticContext thenContext = new StaticContext(argument);
+        StaticContext elseContext = new StaticContext(argument);
+        this.visit(statement.getCondition(), argument);
+        this.visit(statement.getBranch(), thenContext);
+        this.visit(statement.getElseBranch(), elseContext);
+
+        statement.setStaticContext(argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
+        visit(statement.getAssignExpression(), argument);
+        if (!argument.isInScope(statement.getName())) {
+            throw new UndeclaredVariableException(
+                    "Uninitialized variable reference: " + statement.getName(),
+                    statement.getMetadata()
+            );
+        }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
+        Clause clause = statement.getReturnStatementClause().getFirstClause();
+        this.visit(clause, argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitReturnStatementClause(ReturnStatementClause clause, StaticContext argument) {
+        this.visit(clause.getReturnStatement(), argument);
+        return argument;
+    }
 }

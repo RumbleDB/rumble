@@ -118,7 +118,8 @@ public class JsoniqQueryExecutor {
             !(this.configuration.getOutputFormat().equals("json")
                 || this.configuration.getOutputFormat().equals("tyson")
                 || this.configuration.getOutputFormat().equals("xml-json-hybrid")
-                || this.configuration.getOutputFormat().equals("yaml"))
+                || this.configuration.getOutputFormat().equals("yaml")
+                || this.configuration.getOutputFormat().equals("delta"))
                 &&
                 !sequence.availableAsDataFrame()
         ) {
@@ -154,27 +155,31 @@ public class JsoniqQueryExecutor {
                 default:
                     writer.format(format).save(outputPath);
             }
-        } else if (sequence.availableAsRDD() && outputPath != null) {
+        } else if (outputPath != null) {
+            // The output is not available as a data frame so we serialize.
             JavaRDD<Item> rdd = sequence.getAsRDD();
             RumbleRuntimeConfiguration configuration = this.configuration;
             JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+            // If the user explicitly requests exactly one partition, then we collect all items
+            // and write them to a single file.
+            if (this.configuration.getNumberOfOutputPartitions() == 1) {
+                List<String> lines = outputRDD.take(1000000000);
+                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            } else {
+                if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                    outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+                }
+                outputRDD.saveAsTextFile(outputPath);
             }
-
-            outputRDD.saveAsTextFile(outputPath);
         } else {
+            // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
+            long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
                 .map(x -> configuration.getSerializer().serialize(x))
                 .collect(Collectors.toList());
-            if (outputPath != null) {
-                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-            } else {
-                System.out.println(String.join("\n", lines));
-            }
+            System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
                 issueMaterializationWarning(materializationCount);
                 if (outputPath == null) {
@@ -183,6 +188,10 @@ public class JsoniqQueryExecutor {
                     );
                 }
             }
+        }
+
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
 
         long endTime = System.currentTimeMillis();
@@ -220,14 +229,13 @@ public class JsoniqQueryExecutor {
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
+        resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(query);
-        if (!sequence.availableAsRDD()) {
-            return sequence.populateList(resultList);
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
-        resultList.clear();
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+        return sequence.populateList(resultList, this.configuration.getResultSizeCap());
     }
 
 }

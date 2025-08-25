@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -189,5 +189,33 @@ public class FloatItem implements Item {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.FLOAT);
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "FLOAT";
     }
 }

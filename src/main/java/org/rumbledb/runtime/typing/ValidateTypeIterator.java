@@ -85,8 +85,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate);
-            return jdf;
+            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -110,7 +109,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
-            new Function<Item, Row>() {
+            new Function<>() {
                 private static final long serialVersionUID = 1L;
 
                 @Override
@@ -138,9 +137,20 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             fields.add(field);
             return DataTypes.createStructType(fields);
         }
+        if (itemType.isArrayItemType()) {
+            List<StructField> fields = new ArrayList<>();
+            String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
+            StructField field = createStructField(
+                columnName,
+                itemType,
+                false
+            );
+            fields.add(field);
+            return DataTypes.createStructType(fields);
+        }
         if (!itemType.isObjectItemType()) {
             throw new InvalidInstanceException(
-                    "Error while checking against the DataFrame schema: it is not an object or an atomic type: "
+                    "Error while checking against the DataFrame schema: it is not an object, an array, or an atomic type: "
                         + itemType
             );
 
@@ -189,7 +199,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             DynamicContext context,
             boolean isValidate
     ) {
-        if (items.size() == 0) {
+        if (items.isEmpty()) {
             return new JSoundDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     itemType
@@ -301,10 +311,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
-                return new Date(item.getDateTimeValue().getMillis());
+                return Date.valueOf(item.getDateTimeValue().toLocalDate());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                return new Timestamp(item.getDateTimeValue().getMillis());
+                return Timestamp.valueOf(item.getDateTimeValue().toLocalDateTime());
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 return item.getBinaryValue();
@@ -348,8 +358,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        Item i = validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate);
-        return i;
+        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate);
     }
 
     private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata, boolean isValidate) {
@@ -365,17 +374,23 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
-            Item castType = CastIterator.castItemToType(
-                ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                itemType,
-                metadata
-            );
-            if (castType == null) {
+            try {
+                Item castType = CastIterator.castItemToType(
+                    ItemFactory.getInstance().createStringItem(item.getStringValue()),
+                    itemType,
+                    metadata
+                );
+                if (castType == null) {
+                    throw new InvalidInstanceException(
+                            "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+                    );
+                }
+                return castType;
+            } catch (Exception e) {
                 throw new InvalidInstanceException(
                         "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
                 );
             }
-            return castType;
         }
         if (itemType.isArrayItemType()) {
             if (!item.isArray()) {
@@ -389,7 +404,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, true);
             if (itemType.getName() == null) {
                 itemType = itemType.getBaseType();
             }
@@ -453,7 +468,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 }
             }
             Item objectItem = ItemFactory.getInstance()
-                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
             if (itemType.getName() == null) {
                 itemType = itemType.getBaseType();
             }

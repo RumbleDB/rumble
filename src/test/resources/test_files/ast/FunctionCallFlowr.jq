@@ -1,3 +1,3 @@
 (:JIQS: ShouldParse :)
-for $var as integer in json-file("link")
+for $var as integer in json-lines("link")
 return $var

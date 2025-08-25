@@ -457,7 +457,7 @@ public class SequenceType implements Serializable {
                 return this == Arity.Zero;
             }
             if (this == Zero) {
-                return this == Arity.ZeroOrMore || this == Arity.OneOrZero;
+                return superArity == Arity.ZeroOrMore || superArity == Arity.OneOrZero;
             }
             if (superArity == Arity.ZeroOrMore || superArity == this)
                 return true;
@@ -487,9 +487,14 @@ public class SequenceType implements Serializable {
         if (isEmptySequence()) {
             return "()";
         }
+        ItemType itemType = this.getItemType();
         StringBuilder result = new StringBuilder();
-        Name name = this.getItemType().getName();
-        result.append(name != null ? name : "<anonymous>");
+        Name name = itemType.getName();
+        if (name != null) {
+            result.append(name);
+        } else {
+            result.append("<anonymous>(" + itemType + ")");
+        }
         result.append(this.arity.getSymbol());
         return result.toString();
     }
@@ -515,9 +520,15 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("array?", new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero));
         sequenceTypes.put("array*", new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore));
 
-        sequenceTypes.put("atomic", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One));
-        sequenceTypes.put("atomic?", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("atomic*", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("anyAtomicType", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One));
+        sequenceTypes.put(
+            "anyAtomicType?",
+            new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.OneOrZero)
+        );
+        sequenceTypes.put(
+            "anyAtomicType*",
+            new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore)
+        );
 
         sequenceTypes.put("string", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One));
         sequenceTypes.put("string?", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.OneOrZero));

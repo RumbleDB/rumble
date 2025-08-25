@@ -21,6 +21,7 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
@@ -32,13 +33,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
+import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
+import scala.Function0;
+import scala.util.Properties;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
@@ -51,12 +56,44 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", "unknown");
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
     public RuntimeTests(File testFile) {
         this.testFile = testFile;
+    }
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--print-iterator-tree",
+                    "yes",
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--apply-updates",
+                    "yes" }
+        ).setExternalVariableValue(
+            Name.createVariableInNoNamespace("externalStringItem"),
+            Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
+        )
+            .setExternalVariableValue(
+                Name.createVariableInNoNamespace("externalIntegerItems"),
+                Arrays.asList(
+                    new Item[] {
+                        ItemFactory.getInstance().createIntItem(1),
+                        ItemFactory.getInstance().createIntItem(2),
+                        ItemFactory.getInstance().createIntItem(3),
+                        ItemFactory.getInstance().createIntItem(4),
+                        ItemFactory.getInstance().createIntItem(5),
+                    }
+                )
+            );
     }
 
     public static void readFileList(File dir) {
@@ -73,14 +110,21 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
+        sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
+                                                                                                   // store
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
+                                                                                                                      // delta
+                                                                                                                      // store
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
