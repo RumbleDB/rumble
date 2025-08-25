@@ -20,9 +20,9 @@
 
 package sparksoniq.spark;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -100,6 +100,29 @@ public class SparkSessionManager {
     private SparkSessionManager() {
     }
 
+    private SparkSessionManager(SparkConf conf) {
+        if (this.configuration == null) {
+            this.configuration = conf;
+        } else {
+            throw new OurBadException("Configuration already exists: new configuration initialization prevented.");
+        }
+    }
+
+    private SparkSessionManager(SparkSession session) {
+        if (this.session == null) {
+            this.session = session;
+            this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+            if (this.configuration == null) {
+                setDefaultConfiguration();
+            }
+            initializeKryoSerialization();
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
+        } else {
+            throw new OurBadException("Session already exists: new session initialization prevented.");
+        }
+    }
+
     public static boolean LIMIT_COLLECT() {
         return COLLECT_ITEM_LIMIT > 0;
     }
@@ -107,6 +130,20 @@ public class SparkSessionManager {
     public static SparkSessionManager getInstance() {
         if (instance == null) {
             instance = new SparkSessionManager();
+        }
+        return instance;
+    }
+
+    public static SparkSessionManager getInstance(SparkConf conf) {
+        if (instance == null) {
+            instance = new SparkSessionManager(conf);
+        }
+        return instance;
+    }
+
+    public static SparkSessionManager getInstance(SparkSession session) {
+        if (instance == null) {
+            instance = new SparkSessionManager(session);
         }
         return instance;
     }
@@ -180,8 +217,8 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Logger.getLogger("org").setLevel(LOG_LEVEL);
-            Logger.getLogger("akka").setLevel(LOG_LEVEL);
+            Configurator.setLevel("org", LOG_LEVEL);
+            Configurator.setLevel("akka", LOG_LEVEL);
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
         } else {
