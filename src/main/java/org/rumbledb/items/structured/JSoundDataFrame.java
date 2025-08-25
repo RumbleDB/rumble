@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.VariantType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -40,6 +41,16 @@ public class JSoundDataFrame implements Serializable {
             int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
+            if (type instanceof VariantType) {
+                if (!this.itemType.equals(BuiltinTypesCatalogue.item)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: "
+                                + this.itemType
+                                + " is not the topmost item type."
+                    );
+                }
+            }
             if (type instanceof ArrayType) {
                 if (
                     this.itemType.equals(BuiltinTypesCatalogue.item)

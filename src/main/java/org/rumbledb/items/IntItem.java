@@ -71,6 +71,11 @@ public class IntItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getIntValue();
+    }
+
+    @Override
     public BigInteger getIntegerValue() {
         return BigInteger.valueOf(this.value);
     }

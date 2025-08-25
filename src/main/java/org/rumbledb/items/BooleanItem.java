@@ -52,6 +52,11 @@ public class BooleanItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getBooleanValue();
+    }
+
+    @Override
     public String getStringValue() {
         return String.valueOf(this.value);
     }

@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.sql.Date;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -193,6 +194,11 @@ public class DateItem implements Item {
     @Override
     public OffsetDateTime getDateTimeValue() {
         return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return Date.valueOf(this.getDateTimeValue().toLocalDate());
     }
 
     @Override

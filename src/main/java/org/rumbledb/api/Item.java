@@ -966,6 +966,16 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the Object containing the converted value of the item for a DataFrame.
+     * For use to build Variant columns.
+     *
+     * @return Object representing the converted value of the item.
+     */
+    default Object getVariantValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Tests for physical equality. The semantics are that of the eq operator.
      *
      * @param other another item.

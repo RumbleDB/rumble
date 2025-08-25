@@ -3,6 +3,8 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 import org.rumbledb.api.Item;
@@ -150,6 +152,11 @@ public class DateTimeStampItem implements Item {
     @Override
     public long getEpochMillis() {
         return this.value.getEpochMillis();
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return Timestamp.valueOf(this.getDateTimeValue().toLocalDateTime());
     }
 }
 

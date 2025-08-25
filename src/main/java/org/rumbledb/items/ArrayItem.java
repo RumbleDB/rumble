@@ -23,6 +23,7 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -266,5 +267,15 @@ public class ArrayItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         return getItems();
+    }
+
+    @Override
+    public Object getVariantValue() {
+        List<Item> arrayItems = this.getItems();
+        Object[] arrayItemsForRow = new Object[arrayItems.size()];
+        for (int i = 0; i < arrayItems.size(); i++) {
+            arrayItemsForRow[i] = this.getItemAt(i).getVariantValue();
+        }
+        return arrayItemsForRow;
     }
 }

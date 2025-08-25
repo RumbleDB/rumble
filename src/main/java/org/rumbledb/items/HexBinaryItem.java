@@ -58,6 +58,11 @@ public class HexBinaryItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getBinaryValue();
+    }
+
+    @Override
     public String getStringValue() {
         return this.stringValue.toUpperCase();
     }

@@ -93,6 +93,11 @@ public class AnyURIItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getStringValue();
+    }
+
+    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.getValue());
     }

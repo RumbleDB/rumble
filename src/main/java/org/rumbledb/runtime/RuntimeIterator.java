@@ -318,7 +318,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     /**
-     * Checks whether this iterator can produce DataFrames with no error (natively or not).
+     * Checks whether this iterator can produce valid DataFrames with no error (natively or not).
      * 
      * @return true if it can, false otherwise.
      */
@@ -345,12 +345,16 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         List<Item> items = new ArrayList<>();
         materialize(context, items);
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(
-            items,
-            this.getStaticType().getItemType(),
-            context,
-            true
-        );
+        if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                items,
+                this.getStaticType().getItemType(),
+                context,
+                true
+            );
+        } else {
+            return ValidateTypeIterator.convertLocalItemsToVariantDataFrame(items);
+        }
     }
 
     public boolean isUpdating() {
