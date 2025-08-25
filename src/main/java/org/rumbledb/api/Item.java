@@ -922,6 +922,23 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the top level order (sequence number) identifier
+     * 
+     * @return double representing rowOrder of the tuple
+     */
+    default double getTopLevelOrder() {
+        return 0.0;
+    }
+
+    /**
+     * Sets the top level order parameter (rowOrder)
+     * 
+     * @param topLevelOrder new rowOrder value
+     */
+    default void setTopLevelOrder(double topLevelOrder) {
+    }
+
+    /**
      * Returns the SparkSQL value of the item for use in a query.
      *
      * @return String representing the SparkSQL value of the item.
@@ -982,6 +999,10 @@ public interface Item extends Serializable, KryoSerializable {
 
     default String serialize() {
         return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
+    }
+
+    default String serializeAsJSON() {
+        return new Serializer("UTF-8", Serializer.Method.JSON, false, "\n").serialize(this);
     }
 
     /**

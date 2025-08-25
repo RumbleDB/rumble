@@ -231,7 +231,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                 )
             );
             newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
-            newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
+            newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
         }
         return newContext;
     }
@@ -282,7 +282,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     .get(SparkSessionManager.atomicJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
-                && childDataFrame.getItemType().getObjectContentFacet().containsKey("tableLocation")
+                && childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .containsKey(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
                 .getObjectContentFacet()
