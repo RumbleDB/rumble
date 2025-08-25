@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -45,6 +45,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -304,6 +305,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         );
     }
 
+    /**
+     * Checks whether this iterator natively produces DataFrames.
+     * 
+     * @return true if it does, false otherwise.
+     */
     public boolean isDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
@@ -311,10 +317,39 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getExecutionMode().isDataFrame();
     }
 
+    /**
+     * Checks whether this iterator can produce DataFrames with no error (natively or not).
+     * 
+     * @return true if it can, false otherwise.
+     */
+    public boolean canProduceDataFrame() {
+        return isDataFrame()
+            || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
+    }
+
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         throw new OurBadException(
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
+        );
+    }
+
+    /**
+     * Gets the output as a DataFrame. If necessary and possible, forcibly converts the items to a DataFrame.
+     * 
+     * @return the DataFrame.
+     */
+    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+        if (isDataFrame()) {
+            return this.getDataFrame(context);
+        }
+        List<Item> items = new ArrayList<>();
+        materialize(context, items);
+        return ValidateTypeIterator.convertLocalItemsToDataFrame(
+            items,
+            this.getStaticType().getItemType(),
+            context,
+            true
         );
     }
 
@@ -350,6 +385,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
+    /**
+     * Materialize the items of the iterator into the result list.
+     * 
+     * @param context the dynamic context
+     * @param result the list to materialize the items into. The list is cleared before the materialization.
+     */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
         this.open(context);
@@ -451,7 +492,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
         buffer.append(getStaticType());
         buffer.append(" | ");
-        buffer.append(this.isUpdating ? "updating" : "simple");
+        buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
         buffer.append(this.isSequential ? "sequential" : "non-sequential");
         buffer.append(" | ");

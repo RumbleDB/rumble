@@ -275,7 +275,7 @@ public class ItemParser implements Serializable {
         if (
             fields.length == 5
                 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
-                && fieldnames[4].equals("tableLocation")
+                && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType resType = null;
             if (itemType != null) {
@@ -303,6 +303,10 @@ public class ItemParser implements Serializable {
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                     res.setTableLocation(row.getString(i));
                 }
+                if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                    res.setTopLevelOrder(row.getDouble(i));
+                    continue;
+                }
             }
             return res;
         }
@@ -323,6 +327,7 @@ public class ItemParser implements Serializable {
         long topLevelID = -1;
         String pathIn = "null";
         String tableLocation = "null";
+        double rowOrder = 0.0;
 
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
@@ -344,6 +349,10 @@ public class ItemParser implements Serializable {
             }
             if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                 tableLocation = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                rowOrder = row.getDouble(i);
                 continue;
             }
 
@@ -391,6 +400,7 @@ public class ItemParser implements Serializable {
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
         res.setTableLocation(tableLocation);
+        res.setTopLevelOrder(rowOrder);
 
         return res;
     }
@@ -724,7 +734,10 @@ public class ItemParser implements Serializable {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers));
-            } else if (childNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(childNode)) {
+            } else if (
+                (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
+                    && !hasWhitespaceText(childNode)
+            ) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
         }

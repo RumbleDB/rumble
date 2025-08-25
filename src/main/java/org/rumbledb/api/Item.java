@@ -922,6 +922,23 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the top level order (sequence number) identifier
+     * 
+     * @return double representing rowOrder of the tuple
+     */
+    default double getTopLevelOrder() {
+        return 0.0;
+    }
+
+    /**
+     * Sets the top level order parameter (rowOrder)
+     * 
+     * @param topLevelOrder new rowOrder value
+     */
+    default void setTopLevelOrder(double topLevelOrder) {
+    }
+
+    /**
      * Returns the SparkSQL value of the item for use in a query.
      *
      * @return String representing the SparkSQL value of the item.
@@ -982,6 +999,10 @@ public interface Item extends Serializable, KryoSerializable {
 
     default String serialize() {
         return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
+    }
+
+    default String serializeAsJSON() {
+        return new Serializer("UTF-8", Serializer.Method.JSON, false, "\n").serialize(this);
     }
 
     /**
@@ -1055,16 +1076,22 @@ public interface Item extends Serializable, KryoSerializable {
 
 
     /**
-     * Method gets the position of the Node inside the XML document (and path in case of multiple docs) for sorting /
+     * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
+     * 
+     * @return the XML document position
      */
     default XMLDocumentPosition getXmlDocumentPosition() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Method sets the position of the Node inside the XML document (and path in case of multiple docs) for sorting /
+     * Set the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
+     * 
+     * @param path the path of the XML document
+     * @param current the current position
+     * @return the new position
      */
     default int setXmlDocumentPosition(String path, int current) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());

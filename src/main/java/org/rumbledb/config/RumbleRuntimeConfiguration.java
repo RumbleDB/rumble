@@ -67,6 +67,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String logPath;
     private String query;
     private String shell;
+    private boolean printIteratorTree;
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
@@ -192,14 +193,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return RumbleRuntimeConfiguration.defaultConfiguration;
     }
 
-    public String getConfigurationArgument(String key) {
-        if (this.arguments.containsKey(key)) {
-            return this.arguments.get(key);
-        } else {
-            return null;
-        }
-    }
-
     public int getPort() {
         if (this.arguments.containsKey("port")) {
             return Integer.parseInt(this.arguments.get("port"));
@@ -268,6 +261,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void init() {
+        if (this.arguments.containsKey("print-iterator-tree")) {
+            this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
+        } else {
+            this.printIteratorTree = false;
+        }
+
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
@@ -578,6 +577,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this;
     }
 
+    public List<Name> getExternalVariablesReadFromDataFrames() {
+        return new java.util.ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
+    }
+
+    public List<Name> getExternalVariablesReadFromListsOfItems() {
+        return new java.util.ArrayList<>(this.externalVariableValues.keySet());
+    }
+
     public List<Item> getExternalVariableValue(Name name) {
         if (this.externalVariableValues.containsKey(name)) {
             return this.externalVariableValues.get(name);
@@ -606,20 +613,34 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return null;
     }
 
-    public Set<Name> getExternalVariablesReadFromDataFrame() {
-        return this.externalVariableValuesReadFromDataFrames.keySet();
-    }
-
-    public void setExternalVariableValueReadFromDataFrame(Name name, Dataset<Row> dataFrame) {
+    public RumbleRuntimeConfiguration setExternalVariableValue(Name name, Dataset<Row> dataFrame) {
         this.externalVariableValuesReadFromDataFrames.put(name, dataFrame);
+        return this;
     }
 
-    public void setExternalVariableValueReadFromDataFrame(String variableName, Dataset<Row> dataFrame) {
-        setExternalVariableValueReadFromDataFrame(new Name(null, null, variableName), dataFrame);
+    public RumbleRuntimeConfiguration setExternalVariableValue(String variableName, Dataset<Row> dataFrame) {
+        setExternalVariableValue(new Name(null, null, variableName), dataFrame);
+        return this;
     }
 
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(String variableName, List<Item> items) {
+        setExternalVariableValue(new Name(null, null, variableName), items);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration resetExternalVariableValue(Name name) {
+        this.externalVariableValues.remove(name);
+        this.externalVariableValuesReadFromDataFrames.remove(name);
+        return this;
+    }
+
+    public RumbleRuntimeConfiguration resetExternalVariableValue(String variableNameString) {
+        resetExternalVariableValue(new Name(null, null, variableNameString));
         return this;
     }
 
@@ -647,12 +668,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
+    public void setPrintIteratorTree(boolean value) {
+        this.printIteratorTree = value;
+    }
+
     public boolean isPrintIteratorTree() {
-        if (this.arguments.containsKey("print-iterator-tree")) {
-            return this.arguments.get("print-iterator-tree").equals("yes");
-        } else {
-            return false;
-        }
+        return this.printIteratorTree;
     }
 
     public boolean doStaticAnalysis() {

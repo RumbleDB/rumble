@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -141,12 +141,19 @@ public enum ErrorCode {
 
     UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
 
+    InvalidElementNameErrorCode("XQDY0074"),
+    InvalidNodeNameErrorCode("XQDY0096"),
+    DuplicateAttributeErrorCode("XQDY0025"),
+    AttributeAfterNonAttributeErrorCode("XQTY0024"),
+
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
     CannotCastUpdateSelectorErrorCode("JNUP0007"),
     InvalidUpdateTargetErrorCode("JNUP0008"),
     TooManyReplacesOnSameTargetSelectorErrorCode("JNUP0009"),
     TooManyRenamesOnSameTargetSelectorErrorCode("JNUP0010"),
+    TooManyCollectionCreationsOnSameTargetException("JNUP0011"),
+    TooManyEditsOnSameTargetException("JNUP0012"),
     CannotResolveUpdateSelectorErrorCode("JNUP0016"),
     ObjectInsertContentIsNotObjectSeqErrorCode("JNUP0019"),
 

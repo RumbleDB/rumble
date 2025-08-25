@@ -5,6 +5,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TooManyRenamesOnSameTargetSelectorException;
 import org.rumbledb.exceptions.TooManyReplacesOnSameTargetSelectorException;
+import org.rumbledb.exceptions.TooManyCollectionCreationsOnSameTargetException;
+import org.rumbledb.exceptions.TooManyEditsOnSameTargetException;
 import org.rumbledb.runtime.update.primitives.*;
 
 import java.util.*;
@@ -18,6 +20,16 @@ public class PendingUpdateList {
     private Map<Item, Map<Item, Item>> renameObjMap;
     private Comparator<Item> targetComparator;
     private Comparator<Item> arraySelectorComparator;
+
+    private Map<String, UpdatePrimitive> createCollectionMap;
+    private Map<String, UpdatePrimitive> truncateCollectionMap;
+    private Map<String, Map<Double, UpdatePrimitive>> deleteTupleMap;
+    private Map<String, Map<Double, UpdatePrimitive>> editTupleMap;
+    private List<UpdatePrimitive> insertFirstList;
+    private List<UpdatePrimitive> insertLastList;
+    private List<UpdatePrimitive> insertBeforeList;
+    private List<UpdatePrimitive> insertAfterList;
+
 
     public PendingUpdateList() {
         // TODO: diff comparator for delta
@@ -53,6 +65,14 @@ public class PendingUpdateList {
         this.delReplaceObjMap = new TreeMap<>(this.targetComparator);
         this.delReplaceArrayMap = new TreeMap<>(this.targetComparator);
         this.renameObjMap = new TreeMap<>(this.targetComparator);
+        this.createCollectionMap = new TreeMap<>();
+        this.truncateCollectionMap = new TreeMap<>();
+        this.deleteTupleMap = new TreeMap<>();
+        this.editTupleMap = new TreeMap<>();
+        this.insertFirstList = new ArrayList<>();
+        this.insertLastList = new ArrayList<>();
+        this.insertBeforeList = new ArrayList<>();
+        this.insertAfterList = new ArrayList<>();
     }
 
     public PendingUpdateList(UpdatePrimitive updatePrimitive) {
@@ -61,8 +81,8 @@ public class PendingUpdateList {
     }
 
     public void addUpdatePrimitive(UpdatePrimitive updatePrimitive) {
-        Item target = updatePrimitive.getTarget();
         if (updatePrimitive.isDeleteObject()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
             for (Item locator : updatePrimitive.getContentList()) {
                 locSrcMap.put(locator, null);
@@ -70,32 +90,60 @@ public class PendingUpdateList {
             this.delReplaceObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isReplaceObject()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceObjMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
             this.delReplaceObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isInsertObject()) {
+            Item target = updatePrimitive.getTarget();
             this.insertObjMap.put(target, updatePrimitive.getContent());
 
         } else if (updatePrimitive.isRenameObject()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.renameObjMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
             this.renameObjMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isDeleteArray()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), null);
             this.delReplaceArrayMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isReplaceArray()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, Item> locSrcMap = this.delReplaceArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContent());
             this.delReplaceArrayMap.put(target, locSrcMap);
 
         } else if (updatePrimitive.isInsertArray()) {
+            Item target = updatePrimitive.getTarget();
             Map<Item, List<Item>> locSrcMap = this.insertArrayMap.getOrDefault(target, new HashMap<>());
             locSrcMap.put(updatePrimitive.getSelector(), updatePrimitive.getContentList());
             this.insertArrayMap.put(target, locSrcMap);
+        } else if (updatePrimitive.isCreateCollection()) {
+            String collectionPath = updatePrimitive.getCollectionPath();
+            this.createCollectionMap.put(collectionPath, updatePrimitive);
+        } else if (updatePrimitive.isTruncateCollection()) {
+            String collectionName = updatePrimitive.getCollectionName();
+            this.truncateCollectionMap.put(collectionName, updatePrimitive);
+        } else if (updatePrimitive.isDeleteTuple()) {
+            String collection = updatePrimitive.getCollectionPath();
+            Double rowOrder = updatePrimitive.getRowOrder();
+            this.deleteTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
+        } else if (updatePrimitive.isEditTuple()) {
+            String collection = updatePrimitive.getCollectionPath();
+            Double rowOrder = updatePrimitive.getRowOrder();
+            this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>()).put(rowOrder, updatePrimitive);
+        } else if (updatePrimitive.isInsertFirstIntoCollection()) {
+            this.insertFirstList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertLastIntoCollection()) {
+            this.insertLastList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertBeforeIntoCollection()) {
+            this.insertBeforeList.add(updatePrimitive);
+        } else if (updatePrimitive.isInsertAfterIntoCollection()) {
+            this.insertAfterList.add(updatePrimitive);
         } else {
             throw new OurBadException("Invalid UpdatePrimitive created");
         }
@@ -209,12 +257,31 @@ public class PendingUpdateList {
             }
         }
 
+        ////// APPLY INSERT TUPLE
+        this.insertBeforeList.forEach(UpdatePrimitive::apply);
+        this.insertAfterList.forEach(UpdatePrimitive::apply);
+        this.insertFirstList.forEach(UpdatePrimitive::apply);
+        this.insertLastList.forEach(UpdatePrimitive::apply);
+
+        ////// APPLY EDIT TUPLE
+        for (Map<Double, UpdatePrimitive> tables : this.editTupleMap.values()) {
+            tables.values().forEach(UpdatePrimitive::apply);
+        }
+
+        ////// APPLY DELETE TUPLE
+        for (Map<Double, UpdatePrimitive> tables : this.deleteTupleMap.values()) {
+            tables.values().forEach(UpdatePrimitive::apply);
+        }
+
+        ////// APPLY CREATE COLLECTION
+        this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
+
+        ////// APPLY TRUNCATE COLLECTION
+        this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
+
     }
 
-    public void mergeUpdates(
-            PendingUpdateList otherPul,
-            ExceptionMetadata metadata
-    ) {
+    public void mergeUpdates(PendingUpdateList otherPul, ExceptionMetadata metadata) {
         Map<Item, Item> tempSelSrcMap;
         Map<Item, List<Item>> tempSelSrcListMap;
         Map<Item, Item> tempSelSrcResMap;
@@ -326,6 +393,64 @@ public class PendingUpdateList {
             }
             this.insertArrayMap.put(target, tempSelSrcResListMap);
         }
+
+        // CREATE COLLECTION
+        for (Map.Entry<String, UpdatePrimitive> entry : otherPul.createCollectionMap.entrySet()) {
+            if (this.createCollectionMap.containsKey(entry.getKey())) {
+                throw new TooManyCollectionCreationsOnSameTargetException(entry.getKey(), metadata);
+            } else {
+                this.createCollectionMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // TRUNCATE COLLECTION
+        for (Map.Entry<String, UpdatePrimitive> entry : otherPul.truncateCollectionMap.entrySet()) {
+            this.truncateCollectionMap.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+
+        // DELETE TUPLE
+        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.deleteTupleMap.entrySet()) {
+            String collection = tableEntry.getKey();
+            Map<Double, UpdatePrimitive> tableMap = this.deleteTupleMap.computeIfAbsent(
+                collection,
+                k -> new TreeMap<>()
+            );
+            Map<Double, UpdatePrimitive> editMap = this.editTupleMap.get(collection);
+
+            for (Map.Entry<Double, UpdatePrimitive> entry : tableEntry.getValue().entrySet()) {
+                if (editMap != null && editMap.containsKey(entry.getKey())) {
+                    continue;
+                } else {
+                    tableMap.putIfAbsent(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        // EDIT TUPLE
+        for (Map.Entry<String, Map<Double, UpdatePrimitive>> tableEntry : otherPul.editTupleMap.entrySet()) {
+            String collection = tableEntry.getKey();
+            Map<Double, UpdatePrimitive> tableMap = this.editTupleMap.computeIfAbsent(collection, k -> new TreeMap<>());
+            Map<Double, UpdatePrimitive> deleteMap = this.deleteTupleMap.get(collection);
+
+            for (Map.Entry<Double, UpdatePrimitive> entry : tableEntry.getValue().entrySet()) {
+                if (deleteMap != null) {
+                    deleteMap.remove(entry.getKey());
+                }
+
+                if (tableMap.containsKey(entry.getKey())) {
+                    throw new TooManyEditsOnSameTargetException(collection, entry.getKey(), metadata);
+                } else {
+                    tableMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        // No merge conflicts in present implementations of Insertion primitives
+        this.insertFirstList.addAll(otherPul.insertFirstList);
+        this.insertLastList.addAll(otherPul.insertLastList);
+        this.insertBeforeList.addAll(otherPul.insertBeforeList);
+        this.insertAfterList.addAll(otherPul.insertAfterList);
+
     }
 
 }

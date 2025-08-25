@@ -41,6 +41,13 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
 
 import java.util.ArrayList;
@@ -614,6 +621,178 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         expression.setExpressionClassification(ExpressionClassification.SIMPLE);
         return ExpressionClassification.SIMPLE;
     }
+
+    @Override
+    public ExpressionClassification visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
+        if (!collectionResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for the Name of the collection to be created must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content of new collection must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
+        if (!collectionResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for the name of the collection must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        if (expression.getNumDelete() != null) {
+            ExpressionClassification numResult = this.visit(expression.getNumDelete(), argument);
+            if (!numResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException(
+                        "Expression for the number to be deleted from the collection must be Simple",
+                        expression.getMetadata()
+                );
+            }
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content of deletion must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitEditCollectionExpression(
+            EditCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification targetResult = this.visit(expression.getTargetExpression(), argument);
+        if (!targetResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for the edit target must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content to be inserted must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification collectionResult = this.visit(expression.getCollection(), argument);
+        if (!collectionResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for the Name of the collection to be created must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content to be inserted must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        if (expression.getPosition() != null) {
+            ExpressionClassification positionResult = this.visit(expression.getPosition(), argument);
+            if (!positionResult.isSimple()) {
+                throw new InvalidUpdatingExpressionPositionException(
+                        "Position of insertion must be Simple",
+                        expression.getMetadata()
+                );
+            }
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification targetResult = this.visit(expression.getTargetExpression(), argument);
+        if (!targetResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for insertion target must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
+        if (!contentResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Content of insertion must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
+    @Override
+    public ExpressionClassification visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            ExpressionClassification argument
+    ) {
+        ExpressionClassification collectionNameResult = this.visit(expression.getCollectionName(), argument);
+        if (!collectionNameResult.isSimple()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expression for the Name of the collection to be truncated must be Simple",
+                    expression.getMetadata()
+            );
+        }
+
+        expression.setExpressionClassification(ExpressionClassification.BASIC_UPDATING);
+        return ExpressionClassification.BASIC_UPDATING;
+    }
+
 
     // Endregion
 

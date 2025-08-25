@@ -279,7 +279,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (df != null) {
             JSoundDataFrame jdf = new JSoundDataFrame(df);
             argument.getVariableValues()
-            .addVariableValue(name, jdf);
+                .addVariableValue(name, jdf);
             return argument;
         }
 

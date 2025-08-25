@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
@@ -18,7 +17,6 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
@@ -33,6 +31,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -66,7 +65,6 @@ import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
-import org.rumbledb.expressions.primary.DirElemConstructorExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -75,7 +73,6 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
-import org.rumbledb.expressions.primary.TextNodeExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
@@ -110,9 +107,24 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -122,6 +134,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
+import org.apache.spark.sql.SparkSession;
 
 
 
@@ -374,7 +387,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+        Expression contentExpr = expression.getExpression();
+        if (contentExpr == null) {
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+            return argument;
+        }
+        ItemType contentItemType = contentExpr.getStaticSequenceType().getItemType();
+        ItemType arrayType = ItemTypeFactory.createAnonymousArrayType(contentItemType);
+        expression.setStaticSequenceType(new SequenceType(arrayType));
         return argument;
     }
 
@@ -456,8 +476,64 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitTextNodeExpression(TextNodeExpression expression, StaticContext argument) {
+    public StaticContext visitComputedElementConstructor(
+            ComputedElementConstructorExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
         // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitComputedAttributeConstructor(
+            ComputedAttributeConstructorExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTextNodeConstructor(TextNodeConstructorExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTextNode(TextNodeExpression expression, StaticContext argument) {
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAttributeNode(AttributeNodeExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitAttributeNodeContent(AttributeNodeContentExpression expression, StaticContext argument) {
+        // Attribute content should be typed as string
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
         return argument;
     }
@@ -532,7 +608,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                return false;
             }
             try {
                 StructType s = SparkSessionManager.getInstance()
@@ -545,10 +621,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
                 return true;
             } catch (Exception e) {
-                if (e instanceof AnalysisException) {
-                    throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
-                }
-                throw e;
+                return false;
             }
         }
 
@@ -561,7 +634,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                return false;
             }
             StructType s = SparkSessionManager.getInstance()
                 .getOrCreateSession()
@@ -571,6 +644,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 .schema();
             ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             // TODO : check if arity is correct
+            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+            return true;
+        }
+
+        // handle 'table' function
+        if (
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("table"))
+                && args.size() > 0
+                && args.get(0) instanceof StringLiteralExpression
+        ) {
+            String name = ((StringLiteralExpression) args.get(0)).getValue();
+            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (session.catalog().tableExists(name) == false) {
+                return false;
+            }
+
+            StructType s = session
+                .read()
+                .table(name)
+                .schema();
+            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
             return true;
         }
@@ -901,6 +995,73 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visit(expression.getReturnExpression(), argument);
         expression.setStaticSequenceType(expression.getReturnExpression().getStaticSequenceType());
 
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCreateCollectionExpression(
+            CreateCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitEditCollectionExpression(EditCollectionExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTruncateCollectionExpression(
+            TruncateCollectionExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
         return argument;
     }
 
@@ -1398,6 +1559,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, returnArity));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitNodeComparisonExpr(NodeComparisonExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        // According to XQuery 3.1 specification section 3.7.3:
+        // Each operand must be either a single node or an empty sequence; otherwise a type error is raised
+        // [err:XPTY0004].
+        // TODO: implement static type checking, to exclude evaluation of operands that we can
+        // infer statically that are not empty sequences or nodes (e.g. strings, etc.)
+
+        // Node comparisons always return a boolean
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
         return argument;
     }
 

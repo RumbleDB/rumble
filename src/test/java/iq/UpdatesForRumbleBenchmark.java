@@ -11,6 +11,7 @@ import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import scala.Function0;
 import scala.util.Properties;
 import scala.Function0;
 import sparksoniq.spark.SparkSessionManager;
@@ -356,7 +357,7 @@ public class UpdatesForRumbleBenchmark {
     }
 
     public static void setupSparkSession() {
-
+        SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
@@ -396,7 +397,7 @@ public class UpdatesForRumbleBenchmark {
     public List<Item> benchmarkDeltaTest(Rumble rumble, URI uri) throws IOException {
         SequenceOfItems sequence = rumble.runQuery(uri);
         List<Item> res = new ArrayList<>();
-        sequence.populateList(res);
+        sequence.populateList(res, configuration.getResultSizeCap());
         return res;
     }
 
