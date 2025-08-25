@@ -23,6 +23,7 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionAtomizationException;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
@@ -370,5 +371,15 @@ public class ObjectItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         throw new FunctionAtomizationException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public Object getVariantValue() {
+        Map<String, Object> resultMap = new HashMap<>();
+        int numColumns = keys.size();
+        for (int fieldIndex = 0; fieldIndex < numColumns; fieldIndex++) {
+            resultMap.put(keys.get(fieldIndex), values.get(fieldIndex).getVariantValue());
+        }
+        return resultMap;
     }
 }

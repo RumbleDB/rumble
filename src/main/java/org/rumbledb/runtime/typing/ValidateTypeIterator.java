@@ -22,6 +22,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.TypeMappings;
@@ -125,6 +126,34 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
+    public static JSoundDataFrame convertRDDToVariantDataFrame(
+            JavaRDD<Item> itemRDD
+    ) {
+        StructType schema = new StructType(
+                new StructField[] {
+                    DataTypes.createStructField(
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        DataTypes.VariantType,
+                        false
+                    )
+                }
+        );
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    return RowFactory.create(item.getVariantValue());
+                }
+            }
+        );
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
+                BuiltinTypesCatalogue.item
+        );
+    }
+
     public static StructType convertToDataFrameSchema(ItemType itemType) {
         if (itemType.isAtomicItemType()) {
             List<StructField> fields = new ArrayList<>();
@@ -215,6 +244,34 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return new JSoundDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
                 itemType
+        );
+    }
+
+    public static JSoundDataFrame convertLocalItemsToVariantDataFrame(
+            List<Item> items
+    ) {
+        if (items.isEmpty()) {
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    BuiltinTypesCatalogue.item
+            );
+        }
+        StructType schema = new StructType(
+                new StructField[] {
+                    DataTypes.createStructField(
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        DataTypes.VariantType,
+                        false
+                    )
+                }
+        );
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            rows.add(RowFactory.create(item.getVariantValue()));
+        }
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
+                BuiltinTypesCatalogue.item
         );
     }
 

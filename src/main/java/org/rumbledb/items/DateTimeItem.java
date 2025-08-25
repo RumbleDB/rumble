@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.sql.Timestamp;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -207,6 +208,11 @@ public class DateTimeItem implements Item {
     @Override
     public int getOffset() {
         return this.value.getOffset().getTotalSeconds() / 60;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return Timestamp.valueOf(this.getDateTimeValue().toLocalDateTime());
     }
 
     @Override

@@ -75,6 +75,11 @@ public class DecimalItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getDecimalValue();
+    }
+
+    @Override
     public String getStringValue() {
         return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }

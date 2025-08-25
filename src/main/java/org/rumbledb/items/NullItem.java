@@ -60,6 +60,11 @@ public class NullItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return null;
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }

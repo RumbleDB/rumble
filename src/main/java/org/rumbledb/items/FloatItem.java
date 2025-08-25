@@ -70,6 +70,11 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getFloatValue();
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return this.value != 0;
     }
