@@ -2,6 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
@@ -260,17 +261,23 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 new StructField[] {
                     DataTypes.createStructField(
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        DataTypes.VariantType,
+                        DataTypes.StringType,
                         false
                     )
                 }
         );
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            rows.add(RowFactory.create(item.getVariantValue()));
+            rows.add(RowFactory.create(item.serializeAsJSON()));
         }
+        Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+        dataFrame = dataFrame.withColumn(
+            SparkSessionManager.atomicJSONiqItemColumnName,
+            org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
+        );
+        
         return new JSoundDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
+                dataFrame,
                 BuiltinTypesCatalogue.item
         );
     }

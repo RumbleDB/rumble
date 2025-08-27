@@ -73,6 +73,17 @@ public class JSoundDataFrame implements Serializable {
                         "Inconsistency in internal representation: " + this.itemType + " is an object type."
                 );
             }
+            if (type instanceof VariantType) {
+                if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.item)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: "
+                                + this.itemType
+                                + " is not the topmost item type."
+                    );
+                }
+                return;
+            }
             if (
                 this.itemType.equals(BuiltinTypesCatalogue.item)
                     || this.itemType.equals(BuiltinTypesCatalogue.atomicItem)
@@ -218,5 +229,28 @@ public class JSoundDataFrame implements Serializable {
             result.add(new FlworDataFrameColumn(s, this.dataFrame.schema()));
         }
         return result;
+    }
+
+    public static boolean containsVariantType(Dataset<Row> dataFrame) {
+        return containsVariantTypeInSchema(dataFrame.schema());
+    }
+
+    private static boolean containsVariantTypeInSchema(DataType dataType) {
+        if (dataType instanceof VariantType) {
+            return true;
+        }
+        if (dataType instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dataType;
+            return containsVariantTypeInSchema(arrayType.elementType());
+        }
+        if (dataType instanceof StructType) {
+            StructType structType = (StructType) dataType;
+            for (StructField field : structType.fields()) {
+                if (containsVariantTypeInSchema(field.dataType())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

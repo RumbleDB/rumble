@@ -247,7 +247,7 @@ public class SequenceOfItems {
         }
         Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
         if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            res = res.withColumnRenamed(SparkSessionManager.atomicJSONiqItemColumnName, "value");
+            res = res.withColumnRenamed(SparkSessionManager.atomicJSONiqItemColumnName, "__value");
         }
         return res;
     }

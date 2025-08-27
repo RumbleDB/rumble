@@ -82,6 +82,7 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
             return DataTypes.createArrayType(getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet()));
         }
+        Thread.dumpStack();
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
         );

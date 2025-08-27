@@ -24,7 +24,14 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.SparkSessionManager;
+
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -48,6 +55,8 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
@@ -353,7 +362,33 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 true
             );
         } else {
-            return ValidateTypeIterator.convertLocalItemsToVariantDataFrame(items);
+            Dataset<Row> df = ValidateTypeIterator.convertLocalItemsToVariantDataFrame(items).getDataFrame();
+            df.createOrReplaceTempView("variant_table");
+            df.printSchema();
+            df.show(false);
+
+            // Step 1: Infer schema using schema_of_variant_agg
+            Dataset<Row> schemaDf = SparkSessionManager.getInstance().getOrCreateSession().sql(
+                    String.format("SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table", SparkSessionManager.atomicJSONiqItemColumnName)
+            );
+            schemaDf.printSchema();
+            schemaDf.show(false);
+            String ddl = schemaDf.collectAsList().get(0).getString(0);
+
+            // Step 3: Use the resulting typed DataFrame
+
+            if(ddl.contains("VARIANT"))
+            {
+                
+            }
+
+            ddl = ddl.replace("OBJECT<", "STRUCT<");
+            ItemType type = ItemTypeFactory.createItemType(DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl)));
+            type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+            df = ValidateTypeIterator.convertLocalItemsToDataFrame(items, type, context, true).getDataFrame();
+
+
+            return new JSoundDataFrame(df, type);
         }
     }
 

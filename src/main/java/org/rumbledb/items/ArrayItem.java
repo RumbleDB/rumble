@@ -272,9 +272,9 @@ public class ArrayItem implements Item {
     @Override
     public Object getVariantValue() {
         List<Item> arrayItems = this.getItems();
-        Object[] arrayItemsForRow = new Object[arrayItems.size()];
+        List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
-            arrayItemsForRow[i] = this.getItemAt(i).getVariantValue();
+            arrayItemsForRow.add(this.getItemAt(i).getVariantValue());
         }
         return arrayItemsForRow;
     }
