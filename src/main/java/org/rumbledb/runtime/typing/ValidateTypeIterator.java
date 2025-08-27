@@ -280,11 +280,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             rows.add(RowFactory.create(item.serializeAsJSON()));
         }
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-        // Parse the string column to a variant column using parse_json in Spark SQL
-        // dataFrame = dataFrame.withColumn(
-        // SparkSessionManager.atomicJSONiqItemColumnName,
-        // org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
-        // );
+        dataFrame = dataFrame.withColumn(
+            SparkSessionManager.atomicJSONiqItemColumnName,
+            org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
+        );
 
         return new JSoundDataFrame(
                 dataFrame,

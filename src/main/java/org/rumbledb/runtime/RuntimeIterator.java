@@ -364,10 +364,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         } else {
             Dataset<Row> df = ValidateTypeIterator.convertLocalItemsToVariantDataFrame(items).getDataFrame();
             df.createOrReplaceTempView("variant_table");
-            df.printSchema();
-            df.show(false);
 
-            // Step 1: Infer schema using schema_of_variant_agg
             Dataset<Row> schemaDf = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .sql(
@@ -376,11 +373,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                         SparkSessionManager.atomicJSONiqItemColumnName
                     )
                 );
-            schemaDf.printSchema();
-            schemaDf.show(false);
             String ddl = schemaDf.collectAsList().get(0).getString(0);
-
-            // Step 3: Use the resulting typed DataFrame
 
             if (ddl.contains("VARIANT")) {
                 throw new CannotInferSchemaOnNonStructuredDataException(
