@@ -69,6 +69,13 @@ public interface ItemType extends Serializable, KryoSerializable {
     // region kind
 
     /**
+     * @return true it [this] is the topmost item type.
+     */
+    default boolean isTopmostItemType() {
+        return false;
+    }
+
+    /**
      * @return true it [this] is a subtype of an atomic item type.
      */
     default boolean isAtomicItemType() {

@@ -11,7 +11,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
@@ -50,13 +50,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
-        if (!contentIterator.canProduceDataFrame()) {
-            throw new CannotResolveUpdateSelectorException(
-                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
-                    this.getMetadata()
-            );
-        }
-
         this.isUpdating = true;
 
     }
@@ -76,13 +69,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isTable = isTable;
         this.isFirst = isFirst;
         this.isLast = isLast;
-
-        if (!contentIterator.canProduceDataFrame()) {
-            throw new CannotResolveUpdateSelectorException(
-                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
-                    this.getMetadata()
-            );
-        }
 
         this.isUpdating = true;
 
@@ -153,7 +139,13 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             collection = uri.toString();
         }
 
-        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = null;
+        try {
+            contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
+        } catch (CannotInferSchemaOnNonStructuredDataException e) {
+            e.setMetadata(getMetadata());
+            throw e;
+        }
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;

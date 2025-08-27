@@ -79,6 +79,11 @@ public class Base64BinaryItem implements Item {
         return this.stringValue;
     }
 
+    @Override
+    public Object getVariantValue() {
+        return getBinaryValue();
+    }
+
     private static boolean checkInvalidBase64BinaryFormat(String base64BinaryString) {
         return base64BinaryPattern.matcher(base64BinaryString).matches();
     }

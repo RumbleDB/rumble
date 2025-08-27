@@ -24,7 +24,13 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.SparkSessionManager;
+
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -32,6 +38,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -48,6 +55,8 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
@@ -318,7 +327,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     /**
-     * Checks whether this iterator can produce DataFrames with no error (natively or not).
+     * Checks whether this iterator can produce valid DataFrames with no error (natively or not).
      * 
      * @return true if it can, false otherwise.
      */
@@ -345,12 +354,44 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         List<Item> items = new ArrayList<>();
         materialize(context, items);
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(
-            items,
-            this.getStaticType().getItemType(),
-            context,
-            true
-        );
+        if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                items,
+                this.getStaticType().getItemType(),
+                context,
+                true
+            );
+        } else {
+            Dataset<Row> df = ValidateTypeIterator.convertLocalItemsToVariantDataFrame(items).getDataFrame();
+            df.createOrReplaceTempView("variant_table");
+
+            Dataset<Row> schemaDf = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .sql(
+                    String.format(
+                        "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
+                        SparkSessionManager.atomicJSONiqItemColumnName
+                    )
+                );
+            String ddl = schemaDf.collectAsList().get(0).getString(0);
+
+            if (ddl.contains("VARIANT")) {
+                throw new CannotInferSchemaOnNonStructuredDataException(
+                        "Cannot infer fully structured schema on non-structured data. The detected schema is: " + ddl,
+                        getMetadata()
+                );
+            }
+
+            ddl = ddl.replace("OBJECT<", "STRUCT<");
+            ItemType type = ItemTypeFactory.createItemType(
+                DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl))
+            );
+            type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+            df = ValidateTypeIterator.convertLocalItemsToDataFrame(items, type, context, true).getDataFrame();
+
+
+            return new JSoundDataFrame(df, type);
+        }
     }
 
     public boolean isUpdating() {

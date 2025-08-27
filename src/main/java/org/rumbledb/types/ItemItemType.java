@@ -23,6 +23,10 @@ public class ItemItemType implements ItemType {
         this.name = name;
     }
 
+    public boolean isTopmostItemType() {
+        return true;
+    }
+
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
     }
