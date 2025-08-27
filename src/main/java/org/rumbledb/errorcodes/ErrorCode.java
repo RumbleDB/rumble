@@ -77,6 +77,7 @@ public enum ErrorCode {
     ClusterConnectionErrorCode("RBDY0005"),
     DatesWithTimezonesNotSupported("RBDY0006"),
     CannotModifyImmutableValue("RBDY0007"),
+    CannotInferSchemaOnNonStructuredData("RBDY0008"),
 
     UnexpectedStaticType("RBTY0001"),
 

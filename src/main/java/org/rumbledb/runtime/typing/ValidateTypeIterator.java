@@ -134,7 +134,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 new StructField[] {
                     DataTypes.createStructField(
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        DataTypes.VariantType,
+                        DataTypes.StringType,
                         false
                     )
                 }
@@ -145,12 +145,21 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
                 @Override
                 public Row call(Item item) {
-                    return RowFactory.create(item.getVariantValue());
+                    return RowFactory.create(item.getStringValue());
                 }
             }
         );
+
         return new JSoundDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
+                SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .createDataFrame(rowRDD, schema)
+                    .withColumn(
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        org.apache.spark.sql.functions.expr(
+                            "parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)"
+                        )
+                    ),
                 BuiltinTypesCatalogue.item
         );
     }
@@ -271,11 +280,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             rows.add(RowFactory.create(item.serializeAsJSON()));
         }
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-        dataFrame = dataFrame.withColumn(
-            SparkSessionManager.atomicJSONiqItemColumnName,
-            org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
-        );
-        
+        // Parse the string column to a variant column using parse_json in Spark SQL
+        // dataFrame = dataFrame.withColumn(
+        // SparkSessionManager.atomicJSONiqItemColumnName,
+        // org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
+        // );
+
         return new JSoundDataFrame(
                 dataFrame,
                 BuiltinTypesCatalogue.item

@@ -31,7 +31,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -39,6 +38,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -368,22 +368,31 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             df.show(false);
 
             // Step 1: Infer schema using schema_of_variant_agg
-            Dataset<Row> schemaDf = SparkSessionManager.getInstance().getOrCreateSession().sql(
-                    String.format("SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table", SparkSessionManager.atomicJSONiqItemColumnName)
-            );
+            Dataset<Row> schemaDf = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .sql(
+                    String.format(
+                        "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
+                        SparkSessionManager.atomicJSONiqItemColumnName
+                    )
+                );
             schemaDf.printSchema();
             schemaDf.show(false);
             String ddl = schemaDf.collectAsList().get(0).getString(0);
 
             // Step 3: Use the resulting typed DataFrame
 
-            if(ddl.contains("VARIANT"))
-            {
-                
+            if (ddl.contains("VARIANT")) {
+                throw new CannotInferSchemaOnNonStructuredDataException(
+                        "Cannot infer fully structured schema on non-structured data. The detected schema is: " + ddl,
+                        getMetadata()
+                );
             }
 
             ddl = ddl.replace("OBJECT<", "STRUCT<");
-            ItemType type = ItemTypeFactory.createItemType(DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl)));
+            ItemType type = ItemTypeFactory.createItemType(
+                DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl))
+            );
             type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
             df = ValidateTypeIterator.convertLocalItemsToDataFrame(items, type, context, true).getDataFrame();
 
