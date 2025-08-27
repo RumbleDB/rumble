@@ -72,6 +72,11 @@ public class DoubleItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getDoubleValue();
+    }
+
+    @Override
     public String getStringValue() {
         if (Double.isNaN(this.value)) {
             return "NaN";

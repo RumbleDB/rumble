@@ -648,6 +648,8 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.dateItem;
         } else if (dt.equals(DataTypes.BinaryType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
+        } else if (dt.equals(DataTypes.VariantType)) {
+            return BuiltinTypesCatalogue.item;
         } else if (dt instanceof VectorUDT) {
             return createArrayTypeWithSparkDataTypeContent(
                 DataTypes.DoubleType
