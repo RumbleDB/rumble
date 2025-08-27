@@ -9,7 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
@@ -38,14 +38,6 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.isTable = isTable;
-
-        if (!contentIterator.canProduceDataFrame()) {
-            throw new CannotResolveUpdateSelectorException(
-                    "No schema could be detected by RumbleDB for the content that you are attempting to insert into a new collection. You can solve this issue by specifying a schema manually and wrapping the content in a validate expression. See https://docs.rumbledb.org/rumbledb-reference/types",
-                    this.getMetadata()
-            );
-        }
-
         this.isUpdating = true;
 
     }
@@ -120,7 +112,14 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             collectionName = uri.toString();
         }
 
-        Dataset<Row> contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
+        Dataset<Row> contentDF = null;
+        try {
+            contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
+        } catch (CannotInferSchemaOnNonStructuredDataException e) {
+            e.setMetadata(getMetadata());
+            throw e;
+        }
+
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
 

@@ -82,11 +82,13 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
             return DataTypes.createArrayType(getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet()));
         }
+        Thread.dumpStack();
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
         );
     }
 
+    // This method is redundant with ItemTypeFactory.createItemType() and the latter should fall back to this one.
     public static ItemType getItemTypeFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
             return BuiltinTypesCatalogue.booleanItem;

@@ -74,6 +74,11 @@ public class StringItem implements Item {
         return this.value;
     }
 
+    @Override
+    public Object getVariantValue() {
+        return getStringValue();
+    }
+
     public double castToDoubleValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
