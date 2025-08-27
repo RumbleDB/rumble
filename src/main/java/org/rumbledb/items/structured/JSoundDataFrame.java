@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.VariantType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -40,6 +41,16 @@ public class JSoundDataFrame implements Serializable {
             int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
+            if (type instanceof VariantType) {
+                if (!this.itemType.equals(BuiltinTypesCatalogue.item)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: "
+                                + this.itemType
+                                + " is not the topmost item type."
+                    );
+                }
+            }
             if (type instanceof ArrayType) {
                 if (
                     this.itemType.equals(BuiltinTypesCatalogue.item)
@@ -61,6 +72,17 @@ public class JSoundDataFrame implements Serializable {
                 throw new OurBadException(
                         "Inconsistency in internal representation: " + this.itemType + " is an object type."
                 );
+            }
+            if (type instanceof VariantType) {
+                if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.item)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: "
+                                + this.itemType
+                                + " is not the topmost item type."
+                    );
+                }
+                return;
             }
             if (
                 this.itemType.equals(BuiltinTypesCatalogue.item)
@@ -207,5 +229,28 @@ public class JSoundDataFrame implements Serializable {
             result.add(new FlworDataFrameColumn(s, this.dataFrame.schema()));
         }
         return result;
+    }
+
+    public static boolean containsVariantType(Dataset<Row> dataFrame) {
+        return containsVariantTypeInSchema(dataFrame.schema());
+    }
+
+    private static boolean containsVariantTypeInSchema(DataType dataType) {
+        if (dataType instanceof VariantType) {
+            return true;
+        }
+        if (dataType instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dataType;
+            return containsVariantTypeInSchema(arrayType.elementType());
+        }
+        if (dataType instanceof StructType) {
+            StructType structType = (StructType) dataType;
+            for (StructField field : structType.fields()) {
+                if (containsVariantTypeInSchema(field.dataType())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
