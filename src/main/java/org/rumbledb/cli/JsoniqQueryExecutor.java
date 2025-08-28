@@ -143,7 +143,7 @@ public class JsoniqQueryExecutor {
                     default:
                         writer.format(format).save(outputPath);
                 }
-            } catch (Exception e) {
+            } catch (CannotInferSchemaOnNonStructuredDataException e) {
                 // The output is not available as a data frame so we serialize.
                 JavaRDD<Item> rdd = sequence.getAsRDD();
                 RumbleRuntimeConfiguration configuration = this.configuration;
