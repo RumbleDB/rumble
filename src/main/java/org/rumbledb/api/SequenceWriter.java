@@ -9,6 +9,7 @@ import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -42,14 +43,15 @@ public class SequenceWriter {
     public SequenceWriter(SequenceOfItems sequence, RumbleRuntimeConfiguration configuration) {
         this.sequence = sequence;
         this.configuration = configuration;
-        if (sequence.availableAsDataFrame()) {
-            this.dataFrameWriter = sequence.getAsDataFrame().write();
-        } else {
-            this.dataFrameWriter = null;
+        DataFrameWriter<Row> w = null;
+        try {
+            w = sequence.getAsDataFrame().write();
+        } catch (CannotInferSchemaOnNonStructuredDataException e) {
             this.source = "xml-json-hybrid"; // Default source
             this.mode = SaveMode.ErrorIfExists; // Default save mode
             this.outputFormatOptions = new HashMap<>();
         }
+        this.dataFrameWriter = w;
     }
 
     public SequenceWriter mode(String saveMode) {
