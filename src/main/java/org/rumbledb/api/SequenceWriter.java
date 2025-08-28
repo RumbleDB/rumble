@@ -43,7 +43,7 @@ public class SequenceWriter {
     public SequenceWriter(SequenceOfItems sequence, RumbleRuntimeConfiguration configuration) {
         this.sequence = sequence;
         this.configuration = configuration;
-       DataFrameWriter<Row> w = null;
+        DataFrameWriter<Row> w = null;
         try {
             w = sequence.getAsDataFrame().write();
         } catch (CannotInferSchemaOnNonStructuredDataException e) {
