@@ -67,10 +67,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String logPath;
     private String query;
     private String shell;
+    private boolean showErrorInfo;
     private boolean printIteratorTree;
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean datesWithTimeZone;
+    private boolean laxJSONNullValidation;
     private boolean optimizeGeneralComparisonToValueComparison;
     private boolean parallelExecution;
     private boolean dataFrameExecution;
@@ -266,7 +268,16 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.printIteratorTree = false;
         }
-
+        if (this.arguments.containsKey("show-error-info")) {
+            this.showErrorInfo = this.arguments.get("show-error-info").equals("yes");
+        } else {
+            this.showErrorInfo = false;
+        }
+        if (this.arguments.containsKey("lax-json-null-validation")) {
+            this.laxJSONNullValidation = this.arguments.get("lax-json-null-validation").equals("yes");
+        } else {
+            this.laxJSONNullValidation = true;
+        }
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
@@ -485,11 +496,19 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public boolean getShowErrorInfo() {
-        if (this.arguments.containsKey("show-error-info")) {
-            return this.arguments.get("show-error-info").equals("yes");
-        } else {
-            return false;
-        }
+        return this.showErrorInfo;
+    }
+
+    public void setShowErrorInfo(boolean value) {
+        this.showErrorInfo = value;
+    }
+
+    public boolean getLaxJSONNullValidation() {
+        return this.laxJSONNullValidation;
+    }
+
+    public void setLaxJSONNullValidation(boolean value) {
+        this.laxJSONNullValidation = value;
     }
 
     public String getLogPath() {
