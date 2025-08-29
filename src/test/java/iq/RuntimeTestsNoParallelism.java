@@ -46,7 +46,7 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--parallel-execution",
-                    "no", 
+                    "no",
                     "--lax-json-null-validation",
                     "no" }
         ).setExternalVariableValue(

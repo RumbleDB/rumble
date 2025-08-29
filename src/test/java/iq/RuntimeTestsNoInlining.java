@@ -50,7 +50,7 @@ public class RuntimeTestsNoInlining extends RuntimeTests {
                     "--function-inlining",
                     "no",
                     "--apply-updates",
-                    "yes", 
+                    "yes",
                     "--lax-json-null-validation",
                     "no" }
         ).setExternalVariableValue(

@@ -77,7 +77,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--apply-updates",
-                    "yes", 
+                    "yes",
                     "--lax-json-null-validation",
                     "no" }
         ).setExternalVariableValue(
