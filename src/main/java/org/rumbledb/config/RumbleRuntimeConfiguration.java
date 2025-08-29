@@ -232,7 +232,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     /**
      * Sets the allowed URI prefixes for read/write (with I/O functions to read data)
      * 
-     * @newValue the allowed URI prefixes.
+     * @param newValue the allowed URI prefixes.
      */
     public void setAllowedURIPrefixes(List<String> newValue) {
         this.allowedPrefixes = newValue;
