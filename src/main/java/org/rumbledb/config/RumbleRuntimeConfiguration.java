@@ -478,12 +478,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.dataFrameExecutionModeDetection = true;
         }
 
-        if (this.arguments.containsKey("third-feature")) {
-            this.thirdFeature = this.arguments.get("third-feature").equals("yes");
-        } else {
-            this.thirdFeature = true;
-        }
-
         if (this.arguments.containsKey("dates-with-timezone")) {
             this.datesWithTimeZone = this.arguments.get("dates-with-timezone").equals("yes");
         } else {
