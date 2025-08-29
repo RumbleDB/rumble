@@ -116,7 +116,6 @@ public class JsoniqQueryExecutor {
         }
 
         if (outputPath != null) {
-            System.err.println(this.configuration.getOutputFormat());
             if (this.configuration.getOutputFormat().equals("xml-json-hybrid")) {
                 outputRDDToFile(outputPath, outputUri, sequence);
             } else {
