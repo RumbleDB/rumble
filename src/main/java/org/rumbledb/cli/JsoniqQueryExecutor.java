@@ -116,48 +116,39 @@ public class JsoniqQueryExecutor {
         }
 
         if (outputPath != null) {
-            try {
-                Dataset<Row> df = sequence.getAsDataFrame();
-                if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                    df = df.repartition(this.configuration.getNumberOfOutputPartitions());
-                }
-                DataFrameWriter<Row> writer = df.write();
-                Map<String, String> options = this.configuration.getOutputFormatOptions();
-                for (String key : options.keySet()) {
-                    writer.option(key, options.get(key));
-                    LogManager.getLogger("JsoniqQueryExecutor")
-                        .info("Writing with option " + key + " : " + options.get(key));
-                }
-                String format = this.configuration.getOutputFormat();
-                LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
-                switch (format) {
-                    case "json":
-                        writer.json(outputPath);
-                        break;
-                    case "csv":
-                        writer.csv(outputPath);
-                        break;
-                    case "parquet":
-                        writer.parquet(outputPath);
-                        break;
-                    default:
-                        writer.format(format).save(outputPath);
-                }
-            } catch (CannotInferSchemaOnNonStructuredDataException e) {
-                // The output is not available as a data frame so we serialize.
-                JavaRDD<Item> rdd = sequence.getAsRDD();
-                RumbleRuntimeConfiguration configuration = this.configuration;
-                JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
-                // If the user explicitly requests exactly one partition, then we collect all items
-                // and write them to a single file.
-                if (this.configuration.getNumberOfOutputPartitions() == 1) {
-                    List<String> lines = outputRDD.take(1000000000);
-                    FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-                } else {
+            if (this.configuration.getOutputFormat().equals("xml-json-hybrid")) {
+                outputRDDToFile(outputPath, outputUri, sequence);
+            } else {
+                try {
+                    Dataset<Row> df = sequence.getAsDataFrame();
                     if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                        outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+                        df = df.repartition(this.configuration.getNumberOfOutputPartitions());
                     }
-                    outputRDD.saveAsTextFile(outputPath);
+                    DataFrameWriter<Row> writer = df.write();
+                    Map<String, String> options = this.configuration.getOutputFormatOptions();
+                    for (String key : options.keySet()) {
+                        writer.option(key, options.get(key));
+                        LogManager.getLogger("JsoniqQueryExecutor")
+                            .info("Writing with option " + key + " : " + options.get(key));
+                    }
+                    String format = this.configuration.getOutputFormat();
+                    LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
+                    switch (format) {
+                        case "json":
+                            writer.json(outputPath);
+                            break;
+                        case "csv":
+                            writer.csv(outputPath);
+                            break;
+                        case "parquet":
+                            writer.parquet(outputPath);
+                            break;
+                        default:
+                            writer.format(format).save(outputPath);
+                    }
+                } catch (CannotInferSchemaOnNonStructuredDataException e) {
+                    // The output is not available as a data frame so we serialize.
+                    outputRDDToFile(outputPath, outputUri, sequence);
                 }
             }
         } else {
@@ -196,6 +187,23 @@ public class JsoniqQueryExecutor {
             );
         }
         return outputList;
+    }
+
+    private void outputRDDToFile(String outputPath, URI outputUri, SequenceOfItems sequence) {
+        JavaRDD<Item> rdd = sequence.getAsRDD();
+        RumbleRuntimeConfiguration configuration = this.configuration;
+        JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
+        // If the user explicitly requests exactly one partition, then we collect all items
+        // and write them to a single file.
+        if (this.configuration.getNumberOfOutputPartitions() == 1) {
+            List<String> lines = outputRDD.take(1000000000);
+            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+        } else {
+            if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+            }
+            outputRDD.saveAsTextFile(outputPath);
+        }
     }
 
     public static void issueMaterializationWarning(long materializationCount) {

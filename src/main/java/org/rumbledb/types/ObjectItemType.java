@@ -334,10 +334,19 @@ public class ObjectItemType implements ItemType {
                         sb.append("\", ");
                         if (field.isRequired()) {
                             sb.append("\"required\": true, ");
+                        } else {
+                            sb.append("\"required\": false, ");
                         }
-                        sb.append("\"type\": \"");
-                        sb.append(field.getType().toString());
-                        sb.append("\" }");
+                        String type = field.getType().toString();
+                        if (type.startsWith("{")) {
+                            sb.append("\"type\": ");
+                            sb.append(type);
+                            sb.append(" }");
+                        } else {
+                            sb.append("\"type\": \"");
+                            sb.append(type);
+                            sb.append("\" }");
+                        }
                     }
                     sb.append(" ]");
                 }
