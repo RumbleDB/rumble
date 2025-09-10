@@ -695,6 +695,29 @@ public class BuiltinFunctionCatalogue {
         RootFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
+    /**
+     * function that opens a table from PostgreSQL.
+     */
+    static final BuiltinFunction postgresql_table2 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "postgresql-table"),
+        "string",
+        "string",
+        "object*",
+        PostgreSQLTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+    /**
+     * function that opens a table from PostgreSQL.
+     */
+    static final BuiltinFunction postgresql_table3 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "postgresql-table"),
+        "string",
+        "string",
+        "integer",
+        "object*",
+        PostgreSQLTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
 
     /**
      * function that returns the length of a sequence
@@ -3047,6 +3070,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtinFunctions.put(parquet_file1.getIdentifier(), parquet_file1);
         builtinFunctions.put(parquet_file2.getIdentifier(), parquet_file2);
+        builtinFunctions.put(postgresql_table2.getIdentifier(), postgresql_table2);
+        builtinFunctions.put(postgresql_table3.getIdentifier(), postgresql_table3);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(delta_table.getIdentifier(), delta_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
