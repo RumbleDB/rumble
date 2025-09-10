@@ -20,20 +20,20 @@
 
 package org.rumbledb.runtime.functions.input;
 
-import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.net.URI;
 import java.util.List;
+import java.util.Properties;
 
 public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
 
@@ -51,23 +51,30 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
 
         String connectionString = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
         String table = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
-        String query = "SELECT * FROM `" + table + "`";
+        String query = "SELECT * FROM " + table + "";
         int partitions = -1;
         if (this.children.size() > 2) {
             partitions = this.children.get(2).materializeFirstItemOrNull(context).getIntValue();
         }
 
         try {
+            Properties properties = new java.util.Properties();
+            properties.setProperty("Driver", "org.postgresql.Driver");
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
-                .jdbc(connectionString, query, new java.util.Properties());
+                .jdbc(connectionString, table, properties);
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }
             return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
-            throw e;
+            RumbleException ex = new CannotRetrieveResourceException(
+                    "Error retrieving PostgreSQL table: " + e.getMessage(),
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
         }
     }
 }
