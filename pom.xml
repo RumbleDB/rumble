@@ -393,6 +393,11 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.7</version>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb.spark</groupId>
+            <artifactId>mongo-spark-connector_2.13</artifactId>
+            <version>10.5.0</version>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

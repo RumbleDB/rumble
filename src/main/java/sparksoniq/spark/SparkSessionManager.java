@@ -169,6 +169,7 @@ public class SparkSessionManager {
                     );
                 this.configuration.setAppName(APP_NAME);
             }
+            this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
             this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
             this.configuration.set(

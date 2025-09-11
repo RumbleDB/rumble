@@ -718,6 +718,29 @@ public class BuiltinFunctionCatalogue {
         PostgreSQLTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
+    /**
+     * function that opens a table from PostgreSQL.
+     */
+    static final BuiltinFunction mongodb_collection2 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "mongodb-collection"),
+        "string",
+        "string",
+        "object*",
+        MongoDBCollectionFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+    /**
+     * function that opens a table from PostgreSQL.
+     */
+    static final BuiltinFunction mongodb_collection3 = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "mongodb-collection"),
+        "string",
+        "string",
+        "integer",
+        "object*",
+        MongoDBCollectionFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
 
     /**
      * function that returns the length of a sequence
@@ -3072,6 +3095,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(parquet_file2.getIdentifier(), parquet_file2);
         builtinFunctions.put(postgresql_table2.getIdentifier(), postgresql_table2);
         builtinFunctions.put(postgresql_table3.getIdentifier(), postgresql_table3);
+        builtinFunctions.put(mongodb_collection2.getIdentifier(), mongodb_collection2);
+        builtinFunctions.put(mongodb_collection3.getIdentifier(), mongodb_collection3);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(delta_table.getIdentifier(), delta_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
