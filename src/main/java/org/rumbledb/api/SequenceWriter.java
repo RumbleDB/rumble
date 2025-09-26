@@ -12,6 +12,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.serialization.Serializer;
 
@@ -37,6 +38,34 @@ public class SequenceWriter {
         this.dataFrameWriter = dataFrameWriter;
         this.source = source;
         this.mode = mode;
+        if (dataFrameWriter == null && source == null) {
+            throw new OurBadException(
+                    "Internal error: it is not possible for both the writer and the source to be null"
+            );
+        }
+        if (dataFrameWriter == null && mode == null) {
+            throw new OurBadException("Internal error: it is not possible for both the writer and the mode to be null");
+        }
+        if (dataFrameWriter == null && options == null) {
+            throw new OurBadException(
+                    "Internal error: it is not possible for both the writer and the options to be null"
+            );
+        }
+        if (dataFrameWriter != null && source != null) {
+            throw new OurBadException(
+                    "Internal error: it is not possible for both the writer and the source to be non null"
+            );
+        }
+        if (dataFrameWriter != null && mode != null) {
+            throw new OurBadException(
+                    "Internal error: it is not possible for both the writer and the mode to be non null"
+            );
+        }
+        if (dataFrameWriter != null && options != null) {
+            throw new OurBadException(
+                    "Internal error: it is not possible for both the writer and the options to be non null"
+            );
+        }
         this.outputFormatOptions = options;
     }
 
@@ -44,12 +73,22 @@ public class SequenceWriter {
         this.sequence = sequence;
         this.configuration = configuration;
         DataFrameWriter<Row> w = null;
-        try {
-            w = sequence.getAsDataFrame().write();
-        } catch (CannotInferSchemaOnNonStructuredDataException e) {
-            this.source = "xml-json-hybrid"; // Default source
+        if (
+            this.configuration.getOutputFormat().equals("xml-json-hybrid")
+                ||
+                this.configuration.getOutputFormat().equals("tyson")
+        ) {
+            this.source = this.configuration.getOutputFormat(); // Default source
             this.mode = SaveMode.ErrorIfExists; // Default save mode
             this.outputFormatOptions = new HashMap<>();
+        } else {
+            try {
+                w = sequence.getAsDataFrame().write();
+            } catch (CannotInferSchemaOnNonStructuredDataException e) {
+                this.source = "xml-json-hybrid"; // Default source
+                this.mode = SaveMode.ErrorIfExists; // Default save mode
+                this.outputFormatOptions = new HashMap<>();
+            }
         }
         this.dataFrameWriter = w;
     }
@@ -124,7 +163,7 @@ public class SequenceWriter {
     }
 
     public SequenceWriter format(String source) {
-        if (this.dataFrameWriter != null) {
+        if (this.dataFrameWriter != null && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             return new SequenceWriter(
                     this.sequence,
                     this.dataFrameWriter.format(source),
@@ -138,8 +177,8 @@ public class SequenceWriter {
                     this.sequence,
                     null,
                     source,
-                    this.mode,
-                    this.outputFormatOptions,
+                    (this.dataFrameWriter == null) ? this.mode : this.dataFrameWriter.curmode(),
+                    (this.dataFrameWriter == null) ? this.outputFormatOptions : new HashMap<>(),
                     this.configuration
             );
         }
