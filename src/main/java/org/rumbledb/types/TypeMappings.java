@@ -82,9 +82,6 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
             return DataTypes.createArrayType(getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet()));
         }
-        if (itemType.isTopmostItemType()) {
-            return DataTypes.VariantType;
-        }
         Thread.dumpStack();
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
@@ -134,9 +131,6 @@ public class TypeMappings {
         }
         if (DataTypes.BinaryType.equals(dataType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
-        }
-        if (DataTypes.VariantType.equals(dataType)) {
-            return BuiltinTypesCatalogue.item;
         }
         if (vectorType.equals(dataType)) {
             return BuiltinTypesCatalogue.objectItem;
