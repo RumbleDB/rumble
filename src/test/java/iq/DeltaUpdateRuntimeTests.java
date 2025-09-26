@@ -156,6 +156,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
+        sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");

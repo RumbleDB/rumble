@@ -228,7 +228,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             rdd,
             this.expression.getStaticType().getItemType(),
             context,
-            true
+            true,
+            getConfiguration()
         );
     }
 

@@ -47,13 +47,20 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                     inputDataAsRDDOfItems,
                     schemaType,
                     context,
-                    true
+                    true,
+                    getConfiguration()
                 );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, schemaType, context, true);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    rdd,
+                    schemaType,
+                    context,
+                    true,
+                    getConfiguration()
+                );
             }
 
             List<Item> items = inputDataIterator.materialize(context);
@@ -61,7 +68,8 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                 items,
                 schemaType,
                 context,
-                true
+                true,
+                getConfiguration()
             );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
