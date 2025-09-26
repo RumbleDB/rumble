@@ -1,0 +1,89 @@
+aws emr create-cluster --applications Name=Spark --release-label emr-6.7.0 --instance-count 5 --instance-type m5.24xlarge --ec2-attributes KeyName=EMR --service-role EMR_DefaultRole
+
+aws emr describe-cluster --cluster-id ..............
+
+
+ssh -i ~/.ssh/RumbleDBEMRTests.pem hadoop@ec2-18-197-156-51.eu-central-1.compute.amazonaws.com
+
+wget https://www.rumbledb.org/download/rumble-2.0.0-for-spark-3.5-scala-2.13.jar
+
+spark-submit --num-executors 50 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run https://raw.githubusercontent.com/RumbleDB/rumble/master/src/test/resources/test_files/runtime/Array.jq
+
+spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q '1+1'
+
+spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/copy.jq -o s3://rumble-datasets/great-language-game/output -O
+
+  Unrecognized exception. Message: Class org.apache.hadoop.fs.s3.EMRFSDelegate not found? -> wait and retry a few seconds later (server not fully set up yet)
+
+hadoop fs -cat s3://rumble-datasets/great-language-game/output/part-00000
+
+spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/copy.jq -o /user/hadoop/output -O
+
+hadoop fs -ls /user/hadoop/output
+
+spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar repl
+
+  json-file("/user/hadoop/output/part-00000")
+
+  structured-json-file("/user/hadoop/output/part-00000")
+
+  count(json-file("/user/hadoop/output/*"))
+
+  exit
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/q1.jq
+
+24s
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/q1-s.jq
+
+32s
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/q4.jq -o /user/hadoop/output4
+
+41s
+
+hadoop fs -cat /user/hadoop/output4/part-00000
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/q4-s.jq -o /user/hadoop/output4 -O
+
+38s
+
+hadoop fs -cat /user/hadoop/output4/part-00000
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/q5.jq -o /user/hadoop/output5 
+
+40s
+
+hadoop fs -cat /user/hadoop/output5/part-00000
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar run s3://rumble-datasets/great-language-game/queries/q5-s.jq -o /user/hadoop/output5 -O
+
+33s
+
+hadoop fs -cat /user/hadoop/output5/part-00000
+
+time spark-submit --num-executors 36 --executor-memory 35G --executor-cores 9 rumble-2.0.0-for-spark-3.5-scala-2.13.jar serve -p 9090 -h ec2-3-75-229-111.eu-central-1.compute.amazonaws.com
+
+
+Locally:
+
+jupyter notebook
+
+spark-submit --num-executors 12 --executor-memory 3G --executor-cores 1 --master spark://ec2-3-75-229-111.eu-central-1.compute.amazonaws.com:7077 rumble-2.0.0-for-spark-3.5-scala-2.13.jar repl
+
+
+locally
+
+spark-submit rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q 'declare type local:a as { "foo" : "integer" }; validate type local:a* {  for $i in 1 to 10000  return { "foo" : $i } }' -o /tmp/output -O -f csv
+
+spark-submit rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q 'for $i in 1 to 10000  return { "foo" : $i }' -o /tmp/output -O -f csv
+
+spark-submit rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q 'declare type local:a as { "foo" : "integer", "bar" : "date" }; validate type local:a* {  for $i in 1 to 10000  return { "foo" : $i, "bar" : "2022-01-01" } }' -o /tmp/output -O -f parquet
+
+spark-submit rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q 'declare type local:a as { "foo" : "integer" }; validate type local:a* {  for $i in 1 to 10000  return { "foo" : $i } }' -o /tmp/output -O --output-format csv --output-format-option:sep ';'
+
+spark-submit rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q 'declare type local:a as { "foo" : "integer" }; validate type local:a* {  for $i in 1 to 10000  return { "foo" : $i } }' -o /tmp/output -O -f avro
+
+spark-submit rumble-2.0.0-for-spark-3.5-scala-2.13.jar run -q 'declare type local:a as { "foo" : "integer" }; validate type local:a* {  for $i in 1 to 10000  return { "foo" : $i } }' -o /tmp/output -O -f json
+
