@@ -119,7 +119,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
-                    <excludePackageNames>org.rumbledb.cli:org.rumbledb.config:sparksoniq.*:sparksoniq</excludePackageNames>
+                    <excludePackageNames>sparksoniq.*:sparksoniq</excludePackageNames>
                 </configuration>
                 <executions>
                     <execution>
@@ -277,25 +277,25 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.13</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.13</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.13</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_2.13</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -306,7 +306,7 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.13</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
@@ -385,6 +385,17 @@
             <groupId>net.sf.py4j</groupId>
             <artifactId>py4j</artifactId>
             <version>0.10.9.9</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb.spark</groupId>
+            <artifactId>mongo-spark-connector_2.13</artifactId>
+            <version>10.5.0</version>
         </dependency>
     </dependencies>
 

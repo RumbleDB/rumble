@@ -178,11 +178,43 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
 
     @Override
     public String toString() {
-        // consider add content and various stuff
-        return ((this.name == null) ? "<anonymous>" : this.name.toString())
-            + "(array of "
-            + this.getArrayContentFacet()
-            + ")";
+        if ((new Name(Name.JS_NS, "js", "array")).equals(this.name)) {
+            // generic object
+            return this.name.toString();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"array\", ");
+
+            sb.append("\"baseType\": \"");
+            sb.append(this.baseType.toString());
+            sb.append("\", ");
+
+            sb.append("\"treeDepth\": ");
+            sb.append(this.typeTreeDepth);
+            sb.append(", ");
+
+            if (isResolved()) {
+                sb.append("\"content\": ");
+                String type = this.getArrayContentFacet().toString();
+                if (type.startsWith("{")) {
+                    sb.append(type);
+                } else {
+                    sb.append("\"");
+                    sb.append(type);
+                    sb.append("\"");
+                }
+            } else {
+                sb.append(" (content not resolved yet) ");
+            }
+            sb.append(" }");
+            return sb.toString();
+        } // consider add content and various stuff
     }
 
     public void processBaseType() {

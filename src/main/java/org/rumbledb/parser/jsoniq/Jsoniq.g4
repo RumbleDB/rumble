@@ -583,6 +583,39 @@ keyWords                : Kjsoniq
                         | Kedit
                         | Kbefore
                         | Kafter
+                        | Kimport
+                        | Kschema
+                        | Knamespace
+                        | Kelement
+                        | Kslash
+                        | Kdslash
+                        | Kat_symbol
+                        | Kchild
+                        | Kdescendant
+                        | Kattribute
+                        | Kself
+                        | Kdescendant_or_self
+                        | Kfollowing_sibling
+                        | Kfollowing
+                        | Kparent
+                        | Kancestor
+                        | Kpreceding_sibling
+                        | Kpreceding
+                        | Kancestor_or_self
+                        | Knode
+                        | Kbinary
+                        | Kdocument
+                        | Kdocument_node
+                        | Kpi
+                        | Knamespace_node
+                        | Kschema_attribute
+                        | Kschema_element
+                        | Karray_node
+                        | Kboolean_node
+                        | Knull_node
+                        | Knumber_node
+                        | Kobject_node
+                        | Kcomment
                         ;
 
 ///////////////////////// literals
