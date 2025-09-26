@@ -24,9 +24,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -48,10 +47,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     public ObjectKeysFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
 
@@ -71,6 +69,18 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     private void setResultsFromDF() {
         JSoundDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
         for (String key : childDF.getKeys()) {
+            if (key.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.rowIdColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.tableLocationColumnName)) {
+                continue;
+            }
+            if (key.equals(SparkSessionManager.pathInColumnName)) {
+                continue;
+            }
             if (
                 !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
                     && !key.equals(SparkSessionManager.atomicJSONiqItemColumnName)

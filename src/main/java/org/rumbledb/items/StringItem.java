@@ -31,6 +31,8 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -70,6 +72,11 @@ public class StringItem implements Item {
     @Override
     public String getStringValue() {
         return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getStringValue();
     }
 
     public double castToDoubleValue() {
@@ -145,11 +152,26 @@ public class StringItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, '"' + this.value + '"', BuiltinTypesCatalogue.stringItem);
+        return new NativeClauseContext(context, '"' + this.value + '"', SequenceType.STRING);
     }
 
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return "\"" + this.value + "\"";
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return "\"" + this.value + "\"";
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        return "STRING";
     }
 }

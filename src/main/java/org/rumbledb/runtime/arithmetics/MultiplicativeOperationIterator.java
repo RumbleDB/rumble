@@ -23,23 +23,25 @@ package org.rumbledb.runtime.arithmetics;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.Arrays;
 
-import org.joda.time.Instant;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import java.time.Period;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -49,17 +51,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     Item left;
     Item right;
     MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
     public MultiplicativeOperationIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.multiplicativeOperator = multiplicativeOperator;
@@ -92,8 +93,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (!this.left.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                    +
-                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                    + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 this.left.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
@@ -101,8 +101,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (!this.right.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                    +
-                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                    + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 this.right.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
@@ -116,10 +115,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
     ) {
-        if (
-            left.isInt()
-                && right.isInt()
-        ) {
+        if (left.isInt() && right.isInt()) {
             switch (multiplicativeOperator) {
                 case MUL:
                     if (
@@ -142,7 +138,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         // General cases
         if (left.isDouble() && right.isNumeric()) {
             double l = left.getDoubleValue();
-            double r = 0;
+            double r;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
             } else {
@@ -157,7 +153,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         }
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
-            float r = 0;
+            float r;
             if (right.isFloat()) {
                 r = right.getFloatValue();
             } else {
@@ -181,18 +177,18 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return processDecimal(l, r, multiplicativeOperator, metadata);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
             return processYearMonthDuration(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Duration l = left.getDurationValue();
+            Duration r = right.getDurationValue();
             return processDayTimeDuration(l, r, multiplicativeOperator, metadata);
         }
         if (left.isYearMonthDuration() && right.isNumeric()) {
-            Period l = left.getDurationValue();
-            double r = 0;
+            Period l = left.getPeriodValue();
+            double r;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
             } else {
@@ -201,8 +197,8 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             return processYearMonthDurationDouble(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDayTimeDuration() && right.isNumeric()) {
-            Period l = left.getDurationValue();
-            double r = 0;
+            Duration l = left.getDurationValue();
+            double r;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
             } else {
@@ -213,8 +209,8 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (
             left.isNumeric() && right.isYearMonthDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
         ) {
-            Period r = right.getDurationValue();
-            double l = 0;
+            Period r = right.getPeriodValue();
+            double l;
             if (left.isDouble()) {
                 l = left.getDoubleValue();
             } else {
@@ -225,8 +221,8 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (
             left.isNumeric() && right.isDayTimeDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
         ) {
-            Period r = right.getDurationValue();
-            double l = 0;
+            Duration r = right.getDurationValue();
+            double l;
             if (left.isDouble()) {
                 l = left.getDoubleValue();
             } else {
@@ -261,8 +257,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createLongItem((long) (l / r));
+                if (Double.isNaN(l) || Double.isInfinite(l)) {
+                    throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
+                }
+                if (Double.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Right side of division is NaN: " + r, metadata);
+                }
+                if (Double.isInfinite(r)) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
+                return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createDoubleItem(l % r);
             default:
@@ -288,8 +292,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createLongItem((long) (l / r));
+                if (Float.isNaN(l) || Float.isInfinite(l)) {
+                    throw new NumericOverflowOrUnderflow("Left side of division is infinite or NaN: " + l, metadata);
+                }
+                if (Float.isNaN(r)) {
+                    throw new NumericOverflowOrUnderflow("Right side of division is NaN: " + r, metadata);
+                }
+                if (Float.isInfinite(r)) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
+                return processDecimal(BigDecimal.valueOf(l), BigDecimal.valueOf(r), multiplicativeOperator, metadata);
             case MOD:
                 return ItemFactory.getInstance().createFloatItem(l % r);
             default:
@@ -313,16 +325,12 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+                return ItemFactory.getInstance().createDecimalItem(l.divide(r, 18, RoundingMode.HALF_UP));
             case IDIV:
                 if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createIntegerItem(
-                        l.divide(r, 0, RoundingMode.DOWN).toBigInteger()
-                    );
+                return ItemFactory.getInstance().createIntegerItem(l.divide(r, 0, RoundingMode.DOWN).toBigInteger());
             case MOD:
                 if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
@@ -349,8 +357,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r.equals(BigInteger.ZERO)) {
                     throw new DivisionByZeroException(metadata);
                 }
-                BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                BigDecimal bdResult = new BigDecimal(l).divide(new BigDecimal(r), 18, RoundingMode.HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
                 } else {
@@ -360,16 +367,12 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r.equals(BigInteger.ZERO)) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createIntegerItem(
-                        l.divide(r)
-                    );
+                return ItemFactory.getInstance().createIntegerItem(l.divide(r));
             case MOD:
                 if (r.equals(BigInteger.ZERO)) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createIntegerItem(l.mod(r));
+                return ItemFactory.getInstance().createIntegerItem(l.remainder(r));
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
@@ -391,8 +394,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                BigDecimal bdResult = new BigDecimal(l)
-                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                BigDecimal bdResult = new BigDecimal(l).divide(new BigDecimal(r), 18, RoundingMode.HALF_UP);
                 if (bdResult.stripTrailingZeros().scale() <= 0) {
                     return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
                 } else {
@@ -407,8 +409,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance()
-                    .createIntItem(l % r);
+                return ItemFactory.getInstance().createIntItem(l % r);
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
@@ -427,6 +428,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV:
                 int months = l.getYears() * 12 + l.getMonths();
                 int otherMonths = 12 * r.getYears() + r.getMonths();
+                if (otherMonths == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
                 return ItemFactory.getInstance()
                     .createDecimalItem(
                         BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
@@ -450,25 +454,26 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (Double.isNaN(r)) {
             throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
         }
+        if (Double.isInfinite(r)) {
+            throw new DurationOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
+        }
         switch (multiplicativeOperator) {
             case MUL: {
                 int months = l.getYears() * 12 + l.getMonths();
                 int totalMonths = (int) Math.round(months * r);
-                return ItemFactory.getInstance()
-                    .createYearMonthDurationItem(
-                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                    );
+                try {
+                    return ItemFactory.getInstance().createYearMonthDurationItem(Period.ofMonths(totalMonths));
+                } catch (ArithmeticException e) {
+                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
+                }
             }
             case DIV: {
                 int months = l.getYears() * 12 + l.getMonths();
-                if (r == 0 || r == -0) {
-                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                if (r == -0) {
+                    throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 int totalMonths = (int) Math.round(months / r);
-                return ItemFactory.getInstance()
-                    .createYearMonthDurationItem(
-                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
-                    );
+                return ItemFactory.getInstance().createYearMonthDurationItem(Period.ofMonths(totalMonths));
             }
             default:
                 throw new UnexpectedTypeException(
@@ -481,22 +486,15 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     private static Item processDayTimeDuration(
-            Period l,
-            Period r,
+            Duration l,
+            Duration r,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
     ) {
         switch (multiplicativeOperator) {
             case DIV:
-                Instant now = Instant.now();
                 return ItemFactory.getInstance()
-                    .createDecimalItem(
-                        BigDecimal.valueOf(
-                            l.toDurationFrom(now).getMillis()
-                                /
-                                (double) r.toDurationFrom(now).getMillis()
-                        )
-                    );
+                    .createDecimalItem(BigDecimal.valueOf(l.toNanos() / (double) r.toNanos()));
             default:
                 throw new UnexpectedTypeException(
                         " \""
@@ -508,7 +506,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     private static Item processDayTimeDurationDouble(
-            Period l,
+            Duration l,
             double r,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
@@ -518,20 +516,19 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         }
         switch (multiplicativeOperator) {
             case MUL: {
-                long durationInMillis = l.toStandardDuration().getMillis();
-                long durationResult = Math.round(durationInMillis * r);
-                return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                long duration = l.toNanos();
+                return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofNanos((long) (duration * r)));
             }
             case DIV: {
-                long durationInMillis = l.toStandardDuration().getMillis();
-                // Check r is 0 and throw exception
+                long duration = l.toNanos();
                 if (r == 0) {
-                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                    throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
-                long durationResult = Math.round(durationInMillis / r);
-                return ItemFactory.getInstance()
-                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+                try {
+                    return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofNanos((long) (duration / r)));
+                } catch (ArithmeticException e) {
+                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
+                }
             }
             default:
                 throw new UnexpectedTypeException(
@@ -546,54 +543,109 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
+        if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        if (rightResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!rightResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        ItemType resultType;
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
-        if (!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            if (leftResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
-                return NativeClauseContext.NoNativeQuery;
+        if (
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
+                && rightResult.getResultingType().getItemType().isNumeric()
+        ) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
+                rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
-            if (
-                leftResult.getResultingType().isNumeric()
-                    && rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
-            ) {
-                leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
-            } else {
-                return NativeClauseContext.NoNativeQuery;
+            resultType = BuiltinTypesCatalogue.doubleItem;
+        } else if (
+            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
+                && leftResult.getResultingType().getItemType().isNumeric()
+        ) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
+                leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
-        }
-        if (!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            if (rightResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            if (
-                rightResult.getResultingType().isNumeric()
-                    && leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
-            ) {
+            resultType = BuiltinTypesCatalogue.doubleItem;
+        } else if (
+            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
+                && rightResult.getResultingType().getItemType().isNumeric()
+        ) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
-            } else {
-                return NativeClauseContext.NoNativeQuery;
             }
+            resultType = BuiltinTypesCatalogue.floatItem;
+        } else if (
+            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
+                && leftResult.getResultingType().getItemType().isNumeric()
+        ) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
+                leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
+            }
+            resultType = BuiltinTypesCatalogue.floatItem;
+        } else if (
+            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+        ) {
+            if (this.multiplicativeOperator.equals(MultiplicativeExpression.MultiplicativeOperator.DIV)) {
+                resultType = BuiltinTypesCatalogue.decimalItem;
+            } else {
+                resultType = BuiltinTypesCatalogue.integerItem;
+            }
+        } else if (
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
+        ) {
+            resultType = BuiltinTypesCatalogue.decimalItem;
+        } else {
+            return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = null;
+        String resultingQuery;
+
+        SequenceType.Arity resultingArity = leftResult.getResultingType()
+            .getArity()
+            .multiplyWith(rightResult.getResultingType().getArity());
+
+        if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
+            throw new UnexpectedTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
         switch (this.multiplicativeOperator) {
             case MUL:
-                resultingQuery = "( "
-                    + leftResult.getResultingQuery()
-                    + " * "
-                    + rightResult.getResultingQuery()
-                    + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+                resultingQuery = "( " + leftQuery + " * " + rightQuery + " )";
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        resultingQuery,
+                        new SequenceType(resultType, resultingArity)
+                );
             case DIV:
-                resultingQuery = "( "
-                    + leftResult.getResultingQuery()
-                    + " / "
-                    + rightResult.getResultingQuery()
-                    + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+                resultingQuery = "( " + leftQuery + " / " + rightQuery + " )";
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        resultingQuery,
+                        new SequenceType(resultType, resultingArity)
+                );
+            case MOD:
+                resultingQuery = "( " + leftQuery + " % " + rightQuery + " )";
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        resultingQuery,
+                        new SequenceType(resultType, resultingArity)
+                );
             default:
                 return NativeClauseContext.NoNativeQuery;
         }

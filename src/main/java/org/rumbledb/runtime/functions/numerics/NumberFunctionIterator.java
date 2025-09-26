@@ -23,8 +23,7 @@ package org.rumbledb.runtime.functions.numerics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -38,10 +37,9 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public NumberFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 
     @Override
@@ -55,12 +53,14 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (anyItem == null) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
-
-        Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
-        if (result != null) {
-            return result;
+        try {
+            Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
+            if (result != null) {
+                return result;
+            }
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        } catch (Exception e) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
-        return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-
     }
 }

@@ -2,6 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
@@ -13,17 +14,21 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.DatesWithTimezonesNotSupported;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -41,15 +46,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     private ItemType itemType;
 
+    private boolean isValidate;
+
     public ValidateTypeIterator(
             RuntimeIterator instance,
             ItemType itemType,
-            ExecutionMode executionMode,
-            RumbleRuntimeConfiguration configuration,
-            ExceptionMetadata iteratorMetadata
+            boolean isValidate,
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(instance), executionMode, iteratorMetadata);
+        super(Collections.singletonList(instance), staticContext);
         this.itemType = itemType;
+        this.isValidate = isValidate;
     }
 
     @Override
@@ -74,18 +81,22 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType, context);
+                return convertRDDToValidDataFrame(
+                    inputDataAsRDDOfItems,
+                    this.itemType,
+                    context,
+                    this.isValidate,
+                    getConfiguration()
+                );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType, context);
+                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, getConfiguration());
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context);
-            // jdf.getDataFrame().show();
-            return jdf;
+            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, getConfiguration());
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -99,7 +110,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     public static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
             ItemType itemType,
-            DynamicContext context
+            DynamicContext context,
+            boolean isValidate,
+            RumbleRuntimeConfiguration configuration
     ) {
         if (!itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
             throw new OurBadException(
@@ -108,12 +121,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
-            new Function<Item, Row>() {
+            new Function<>() {
                 private static final long serialVersionUID = 1L;
 
                 @Override
                 public Row call(Item item) {
-                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
+                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, configuration);
                     return convertLocalItemToRow(item, schema, context);
                 }
             }
@@ -121,6 +134,43 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return new JSoundDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
                 itemType
+        );
+    }
+
+    public static JSoundDataFrame convertRDDToVariantDataFrame(
+            JavaRDD<Item> itemRDD
+    ) {
+        StructType schema = new StructType(
+                new StructField[] {
+                    DataTypes.createStructField(
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        DataTypes.StringType,
+                        false
+                    )
+                }
+        );
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    return RowFactory.create(item.serializeAsJSON());
+                }
+            }
+        );
+
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .createDataFrame(rowRDD, schema)
+                    .withColumn(
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        org.apache.spark.sql.functions.expr(
+                            "parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)"
+                        )
+                    ),
+                BuiltinTypesCatalogue.item
         );
     }
 
@@ -136,9 +186,20 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             fields.add(field);
             return DataTypes.createStructType(fields);
         }
+        if (itemType.isArrayItemType()) {
+            List<StructField> fields = new ArrayList<>();
+            String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
+            StructField field = createStructField(
+                columnName,
+                itemType,
+                false
+            );
+            fields.add(field);
+            return DataTypes.createStructType(fields);
+        }
         if (!itemType.isObjectItemType()) {
             throw new InvalidInstanceException(
-                    "Error while checking against the DataFrame schema: it is not an object or an atomic type: "
+                    "Error while checking against the DataFrame schema: it is not an object, an array, or an atomic type: "
                         + itemType
             );
 
@@ -184,9 +245,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     public static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
             ItemType itemType,
-            DynamicContext context
+            DynamicContext context,
+            boolean isValidate,
+            RumbleRuntimeConfiguration configuration
     ) {
-        if (items.size() == 0) {
+        if (items.isEmpty()) {
             return new JSoundDataFrame(
                     SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                     itemType
@@ -195,13 +258,47 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = convertToDataFrameSchema(itemType);
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
+            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, configuration);
             Row row = convertLocalItemToRow(item, schema, context);
             rows.add(row);
         }
         return new JSoundDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
                 itemType
+        );
+    }
+
+    public static JSoundDataFrame convertLocalItemsToVariantDataFrame(
+            List<Item> items
+    ) {
+        if (items.isEmpty()) {
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    BuiltinTypesCatalogue.item
+            );
+        }
+        StructType schema = new StructType(
+                new StructField[] {
+                    DataTypes.createStructField(
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        DataTypes.StringType,
+                        false
+                    )
+                }
+        );
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            rows.add(RowFactory.create(item.serializeAsJSON()));
+        }
+        Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+        dataFrame = dataFrame.withColumn(
+            SparkSessionManager.atomicJSONiqItemColumnName,
+            org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
+        );
+
+        return new JSoundDataFrame(
+                dataFrame,
+                BuiltinTypesCatalogue.item
         );
     }
 
@@ -298,10 +395,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
-                return new Date(item.getDateTimeValue().getMillis());
+                return Date.valueOf(item.getDateTimeValue().toLocalDate());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                return new Timestamp(item.getDateTimeValue().getMillis());
+                return Timestamp.valueOf(item.getDateTimeValue().toLocalDateTime());
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 return item.getBinaryValue();
@@ -320,7 +417,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
-        return childrenItems.map(x -> validate(x, this.itemType, getMetadata()));
+        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, getConfiguration()));
     }
 
     @Override
@@ -345,11 +442,19 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        Item i = validate(this.children.get(0).next(), this.itemType, getMetadata());
-        return i;
+        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, getConfiguration());
     }
 
-    private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata) {
+    private static Item validate(
+            Item item,
+            ItemType itemType,
+            ExceptionMetadata metadata,
+            boolean isValidate,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        if (!isValidate) {
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+        }
         if (itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
                 throw new InvalidInstanceException(
@@ -359,17 +464,23 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
-            Item castType = CastIterator.castItemToType(
-                ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                itemType,
-                metadata
-            );
-            if (castType == null) {
+            try {
+                Item castType = CastIterator.castItemToType(
+                    ItemFactory.getInstance().createStringItem(item.getStringValue()),
+                    itemType,
+                    metadata
+                );
+                if (castType == null) {
+                    throw new InvalidInstanceException(
+                            "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+                    );
+                }
+                return castType;
+            } catch (Exception e) {
                 throw new InvalidInstanceException(
                         "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
                 );
             }
-            return castType;
         }
         if (itemType.isArrayItemType()) {
             if (!item.isArray()) {
@@ -379,11 +490,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, itemType.getArrayContentFacet(), metadata));
+                members.add(validate(member, itemType.getArrayContentFacet(), metadata, true, configuration));
             }
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, true);
             if (itemType.getName() == null) {
                 itemType = itemType.getBaseType();
             }
@@ -404,7 +515,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (!item.isObject()) {
                 throw new InvalidInstanceException(
                         "Expected an object item for object type "
-                            + itemType.getIdentifierString()
+                            + itemType.toString()
                             + ", but have "
                             + item.serialize()
                 );
@@ -414,8 +525,28 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
             for (String key : item.getKeys()) {
                 if (facets.containsKey(key)) {
-                    keys.add(key);
-                    values.add(validate(item.getItemByKey(key), facets.get(key).getType(), metadata));
+                    FieldDescriptor fieldDescriptor = facets.get(key);
+                    ItemType expectedType = fieldDescriptor.getType();
+                    Item value = item.getItemByKey(key);
+                    if (value.isNull()) {
+                        if (expectedType.equals(BuiltinTypesCatalogue.nullItem)) {
+                            keys.add(key);
+                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                        } else if (fieldDescriptor.isRequired()) {
+                            throw new InvalidInstanceException(
+                                    "Null associated with required key in object type "
+                                        + itemType.getIdentifierString()
+                                        + " : "
+                                        + key
+                            );
+                        } else if (!configuration.getLaxJSONNullValidation()) {
+                            keys.add(key);
+                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                        }
+                    } else {
+                        keys.add(key);
+                        values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                    }
                 } else {
                     if (itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
@@ -447,7 +578,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 }
             }
             Item objectItem = ItemFactory.getInstance()
-                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
             if (itemType.getName() == null) {
                 itemType = itemType.getBaseType();
             }
@@ -462,5 +593,42 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.isValidate) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return this.children.get(0).generateNativeQuery(nativeClauseContext);
+    }
+
+
+    public static ItemType inferSchemaTypeOfVariantDataFrame(Dataset<Row> df, ExceptionMetadata metadata) {
+        df.createOrReplaceTempView("variant_table");
+
+        Dataset<Row> schemaDf = SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .sql(
+                String.format(
+                    "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
+                    SparkSessionManager.atomicJSONiqItemColumnName
+                )
+            );
+        String ddl = schemaDf.collectAsList().get(0).getString(0);
+
+        if (ddl.contains("VARIANT")) {
+            throw new CannotInferSchemaOnNonStructuredDataException(
+                    "Cannot infer fully structured schema on non-structured data. The detected schema is: " + ddl,
+                    metadata
+            );
+        }
+
+        ddl = ddl.replace("OBJECT<", "STRUCT<");
+        ItemType type = ItemTypeFactory.createItemType(
+            DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl))
+        );
+        type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+        return type;
     }
 }

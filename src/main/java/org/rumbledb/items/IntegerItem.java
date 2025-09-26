@@ -30,6 +30,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -70,6 +72,11 @@ public class IntegerItem implements Item {
     @Override
     public BigDecimal getDecimalValue() {
         return new BigDecimal(this.value);
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getDecimalValue();
     }
 
     @Override
@@ -138,7 +145,7 @@ public class IntegerItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, this.value.toString(), BuiltinTypesCatalogue.integerItem);
+        return new NativeClauseContext(context, this.value.toString(), SequenceType.INTEGER);
     }
 
     public boolean isNumeric() {
@@ -148,5 +155,21 @@ public class IntegerItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "INTEGER";
     }
 }

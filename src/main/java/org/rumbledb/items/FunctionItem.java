@@ -37,6 +37,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.FunctionAtomizationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
@@ -114,7 +115,8 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            RuntimeIterator bodyIterator,
+            boolean isUpdating
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -125,7 +127,7 @@ public class FunctionItem implements Item {
 
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
-        this.signature = new FunctionSignature(parameters, returnType);
+        this.signature = new FunctionSignature(parameters, returnType, isUpdating);
         this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
@@ -353,4 +355,12 @@ public class FunctionItem implements Item {
     }
 
 
+    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
+        this.dynamicModuleContext = dynamicModuleContext;
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        throw new FunctionAtomizationException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
+    }
 }

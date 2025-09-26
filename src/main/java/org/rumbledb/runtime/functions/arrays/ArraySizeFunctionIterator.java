@@ -22,11 +22,13 @@ package org.rumbledb.runtime.functions.arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -37,10 +39,9 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     public ArraySizeFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -52,4 +53,16 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return ItemFactory.getInstance().createIntItem(array.getSize());
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "SIZE (" + nativeChildQuery.getResultingQuery() + ")",
+                    new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

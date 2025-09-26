@@ -23,11 +23,13 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -37,10 +39,9 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     public StringLengthFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -59,4 +60,20 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
         return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.children.size() == 0) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultString = String.format("character_length(%s)", childContext.getResultingQuery());
+        return new NativeClauseContext(
+                childContext,
+                resultString,
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+        );
+    }
 }

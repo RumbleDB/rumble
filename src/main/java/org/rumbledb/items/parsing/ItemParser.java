@@ -20,6 +20,9 @@
 
 package org.rumbledb.items.parsing;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -32,7 +35,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.joda.time.DateTime;
+import java.time.ZoneId;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -40,19 +44,19 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import scala.collection.mutable.WrappedArray;
+import scala.collection.immutable.ArraySeq;
+import scala.collection.Iterator;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -116,7 +120,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata));
                 }
                 object.endArray();
-                return ItemFactory.getInstance().createArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
             if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
@@ -128,7 +132,7 @@ public class ItemParser implements Serializable {
                 }
                 object.endObject();
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                    .createObjectItem(keys, values, metadata, false);
             }
             if (object.peek() == JsonToken.NULL) {
                 object.nextNull();
@@ -137,7 +141,7 @@ public class ItemParser implements Serializable {
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
             RumbleException r = new ParsingException(
-                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-lines(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
             );
             r.initCause(e);
@@ -203,7 +207,7 @@ public class ItemParser implements Serializable {
                     // System.err.println("Next token (reading array): " + nt.toString());
                 }
                 // System.err.println("Finished reading array.");
-                return ItemFactory.getInstance().createArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
                 List<String> keys = new ArrayList<>();
@@ -223,7 +227,7 @@ public class ItemParser implements Serializable {
                 }
                 // System.err.println("Finished reading object.");
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                    .createObjectItem(keys, values, metadata, false);
             }
             if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
                 return ItemFactory.getInstance().createNullItem();
@@ -261,6 +265,52 @@ public class ItemParser implements Serializable {
             return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
         }
 
+        if (fields.length == 2 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
+        }
+        if (fields.length == 2 && fieldnames[1].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 1, null, fields[1].dataType(), metadata, itemType);
+        }
+
+        if (
+            fields.length == 5
+                && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
+                && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName)
+        ) {
+            ItemType resType = null;
+            if (itemType != null) {
+                resType = itemType.getObjectContentFacet()
+                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .getType();
+            }
+            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
+            // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
+            for (int i = 0; i < fields.length; ++i) {
+                String fieldName = fields[i].name();
+
+                if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                    res.setMutabilityLevel(row.getInt(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
+                    res.setTopLevelID(row.getLong(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
+                    res.setPathIn(row.getString(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
+                    res.setTableLocation(row.getString(i));
+                }
+                if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                    res.setTopLevelOrder(row.getDouble(i));
+                    continue;
+                }
+            }
+            return res;
+        }
+
         Map<String, FieldDescriptor> content = null;
 
         if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
@@ -271,12 +321,41 @@ public class ItemParser implements Serializable {
                 );
             }
         }
+        // array
+
+        int mutabilityLevel = -1;
+        long topLevelID = -1;
+        String pathIn = "null";
+        String tableLocation = "null";
+        double rowOrder = 0.0;
 
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
+
+            if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                mutabilityLevel = row.getInt(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
+                topLevelID = row.getLong(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
+                pathIn = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
+                tableLocation = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                rowOrder = row.getDouble(i);
+                continue;
+            }
+
             if (content != null) {
                 FieldDescriptor descriptor = content.get(fieldName);
                 if (descriptor != null) {
@@ -299,12 +378,31 @@ public class ItemParser implements Serializable {
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
                         && fieldType.equals(DataTypes.NullType))
             ) {
-                keys.add(fieldName);
-                values.add(newItem);
+                // don't return array for single sequence item
+                if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
+                    if (newItem.getSize() == 0) {
+                        values.add(null);
+                    } else if (newItem.getSize() == 1) {
+                        values.add(newItem.getItemAt(0));
+                    } else {
+                        values.add(newItem);
+                    }
+                    keys.add(fieldName.substring(0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
+                } else {
+                    keys.add(fieldName);
+                    values.add(newItem);
+                }
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+        res.setMutabilityLevel(mutabilityLevel);
+        res.setTopLevelID(topLevelID);
+        res.setPathIn(pathIn);
+        res.setTableLocation(tableLocation);
+        res.setTopLevelOrder(rowOrder);
+
+        return res;
     }
 
     public static Item convertValueToItem(
@@ -462,7 +560,7 @@ public class ItemParser implements Serializable {
                 value = (Timestamp) o;
             }
             Instant instant = value.toInstant();
-            DateTime dt = new DateTime(instant);
+            OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 return item;
@@ -477,7 +575,7 @@ public class ItemParser implements Serializable {
                 value = (Date) o;
             }
             long instant = value.getTime();
-            DateTime dt = new DateTime(instant);
+            OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateItem(dt, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return item;
@@ -525,13 +623,18 @@ public class ItemParser implements Serializable {
                 }
             } else {
                 @SuppressWarnings("unchecked")
-                Object arrayObject = ((WrappedArray<Object>) o).array();
-                for (int index = 0; index < Array.getLength(arrayObject); index++) {
-                    Object value = Array.get(arrayObject, index);
+                Iterator<Object> iterator = null;
+                if (o instanceof scala.collection.mutable.ArraySeq) {
+                    iterator = ((scala.collection.mutable.ArraySeq<Object>) o).iterator();
+                } else {
+                    iterator = ((ArraySeq<Object>) o).iterator();
+                }
+                while (iterator.hasNext()) {
+                    Object value = iterator.next();
                     members.add(convertValueToItem(value, dataType, metadata, memberType));
                 }
             }
-            Item item = ItemFactory.getInstance().createArrayItem(members);
+            Item item = ItemFactory.getInstance().createArrayItem(members, false);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                 return item;
             } else {
@@ -551,7 +654,7 @@ public class ItemParser implements Serializable {
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
-                Item item = ItemFactory.getInstance().createArrayItem(members);
+                Item item = ItemFactory.getInstance().createArrayItem(members, false);
                 if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                     return item;
                 } else {
@@ -568,7 +671,7 @@ public class ItemParser implements Serializable {
                     objectKeyList.add(String.valueOf(vectorIndices[j]));
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata);
+                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
                 if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                     return item;
                 } else {
@@ -580,5 +683,85 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
+    }
+
+    /**
+     * Parses an XML document to an item.
+     *
+     * @param currentNode The current node
+     * @param path The path of the original file
+     * @return the parsed item
+     */
+    public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
+            return getTextNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
+            return getDocumentNodeItem(currentNode, path, removeParentPointers);
+        }
+        return getElementNodeItem(currentNode, path, removeParentPointers);
+    }
+
+    private static Item getDocumentNodeItem(Node currentNode, String path, boolean removeParentPointers) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers);
+        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
+        if (!removeParentPointers)
+            addParentToChildrenAndAttributes(documentItem);
+        documentItem.setXmlDocumentPosition(path, 0);
+        return documentItem;
+    }
+
+    private static Item getElementNodeItem(Node currentNode, String path, boolean removeParentPointers) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers);
+        List<Item> attributes = getAttributes(currentNode);
+        Item elementItem = ItemFactory.getInstance()
+            .createXmlElementNode(currentNode, children, attributes);
+        if (!removeParentPointers)
+            addParentToChildrenAndAttributes(elementItem);
+        elementItem.setXmlDocumentPosition(path, 0);
+        return elementItem;
+    }
+
+    private static boolean hasWhitespaceText(Node currentNode) {
+        String content = currentNode.getTextContent();
+        content = content.replaceAll("[\\r\\n]+\\s", "");
+        return content.trim().isEmpty();
+    }
+
+    private static List<Item> getChildren(Node currentNode, String path, boolean removeParentPointers) {
+        List<Item> children = new ArrayList<>();
+        NodeList nodeList = currentNode.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Node childNode = nodeList.item(i);
+            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                children.add(getItemFromXML(childNode, path, removeParentPointers));
+            } else if (
+                (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
+                    && !hasWhitespaceText(childNode)
+            ) {
+                children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
+            }
+        }
+        return children;
+    }
+
+    private static List<Item> getAttributes(Node currentNode) {
+        List<Item> attributes = new ArrayList<>();
+        NamedNodeMap attributesMap = currentNode.getAttributes();
+
+        for (int i = 0; i < attributesMap.getLength(); ++i) {
+            Node attribute = attributesMap.item(i);
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
+        }
+        return attributes;
+    }
+
+    private static void addParentToChildrenAndAttributes(Item nodeItem) {
+        nodeItem.addParentToDescendants();
+    }
+
+    private static Item getTextNodeItem(Node currentNode, String path) {
+        Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
+        textItem.setXmlDocumentPosition(path, 0);
+        return textItem;
     }
 }

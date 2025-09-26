@@ -3,9 +3,8 @@ package sparksoniq.spark.ml;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidInstanceException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -21,10 +20,9 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
     public AnnotateFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -45,19 +43,33 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return ValidateTypeIterator.convertRDDToValidDataFrame(inputDataAsRDDOfItems, schemaType, context);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    inputDataAsRDDOfItems,
+                    schemaType,
+                    context,
+                    true,
+                    getConfiguration()
+                );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, schemaType, context);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    rdd,
+                    schemaType,
+                    context,
+                    true,
+                    getConfiguration()
+                );
             }
 
             List<Item> items = inputDataIterator.materialize(context);
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
                 schemaType,
-                context
+                context,
+                true,
+                getConfiguration()
             );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(

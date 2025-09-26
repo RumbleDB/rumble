@@ -22,12 +22,13 @@ package org.rumbledb.runtime.functions.numerics;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -37,10 +38,9 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public AbsFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -68,5 +68,21 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDecimalItem(value.getDecimalValue().abs());
         }
         throw new OurBadException("Numeric value expected in abs()");
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(nativeChildQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(
+                nativeChildQuery,
+                "ABS(" + nativeChildQuery.getResultingQuery() + ")",
+                nativeChildQuery.getResultingType()
+        );
     }
 }

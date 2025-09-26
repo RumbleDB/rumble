@@ -21,7 +21,7 @@
 package utils;
 
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.jsoniq.JsoniqParser;
 
 import java.util.Arrays;
 
@@ -180,8 +180,11 @@ public class AstSerialization {
             MainModule mainModule,
             JsoniqParser.MainModuleContext context
     ) {
-
-        String antlrSerializedTree = context.expr().toStringTree(Arrays.asList(SERIALIZATION_RULES_PARTIAL));
+        // TODO: update to scripting.
+        String antlrSerializedTree = context.program()
+            .statementsAndOptionalExpr()
+            .expr()
+            .toStringTree(Arrays.asList(SERIALIZATION_RULES_PARTIAL));
         antlrSerializedTree = filterNotSupportedFeatures(antlrSerializedTree);
         String expressionTree = mainModule.toString();
         boolean isEqual = antlrSerializedTree.equals(expressionTree);

@@ -1,6 +1,6 @@
 package sparksoniq.spark.ml;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.param.ParamMap;
@@ -11,12 +11,11 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -44,10 +43,9 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     public ApplyTransformerRuntimeIterator(
             String transformerShortName,
             Transformer transformer,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.transformerShortName = transformerShortName;
         this.transformer = transformer;
     }

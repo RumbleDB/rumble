@@ -104,6 +104,57 @@ public class ItemTypeFactory {
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
+    /**
+     * Create an anonymous object type from keys and values.
+     * 
+     * @param keys a list of String representing the keys of the object
+     * @param values a list of ItemType of the values, all with arity == Arity.One
+     * @return an anonymous object type based on the provided keys and values
+     */
+    public static ItemType createAnonymousObjectType(List<String> keys, List<ItemType> values) {
+        if (keys.size() != values.size()) {
+            throw new InvalidSchemaException(
+                    "Key list and value list must have the same dimensions",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            ItemType field = values.get(i);
+            FieldDescriptor fieldDescriptor = new FieldDescriptor();
+            fieldDescriptor.setName(key);
+            fieldDescriptor.setType(field);
+            fieldDescriptor.setRequired(true);
+            content.put(key, fieldDescriptor);
+        }
+        return new ObjectItemType(
+                null,
+                BuiltinTypesCatalogue.objectItem,
+                true,
+                content,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
+    /**
+     * Create an anonymous array type from keys and values.
+     * 
+     * @param content an item type for the content
+     * @return an anonymous array type based on the provided content type
+     */
+    public static ItemType createAnonymousArrayType(ItemType content) {
+        return new ArrayItemType(
+                null,
+                BuiltinTypesCatalogue.arrayItem,
+                content,
+                null,
+                null,
+                null
+        );
+    }
+
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
         if (!item.isObject()) {
             throw new InvalidSchemaException(
@@ -571,8 +622,6 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.stringItem;
         } else if (dt instanceof CharType) {
             return BuiltinTypesCatalogue.stringItem;
-        } else if (dt.equals(DataTypes.StringType)) {
-            return BuiltinTypesCatalogue.stringItem;
         } else if (dt.equals(DataTypes.BooleanType)) {
             return BuiltinTypesCatalogue.booleanItem;
         } else if (dt.equals(DataTypes.DoubleType)) {
@@ -599,6 +648,8 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.dateItem;
         } else if (dt.equals(DataTypes.BinaryType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
+        } else if (dt.equals(DataTypes.VariantType)) {
+            return BuiltinTypesCatalogue.item;
         } else if (dt instanceof VectorUDT) {
             return createArrayTypeWithSparkDataTypeContent(
                 DataTypes.DoubleType

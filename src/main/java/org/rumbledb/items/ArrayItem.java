@@ -23,7 +23,10 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
@@ -34,15 +37,27 @@ public class ArrayItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private List<Item> arrayItems;
+    private int mutabilityLevel;
+    private long topLevelID;
+    private String pathIn;
+    private String location;
 
     public ArrayItem() {
         super();
         this.arrayItems = new ArrayList<>();
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
     }
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
+        this.mutabilityLevel = -1;
+        this.topLevelID = -1;
+        this.pathIn = "null";
+        this.location = "null";
     }
 
     public boolean equals(Object otherItem) {
@@ -75,12 +90,33 @@ public class ArrayItem implements Item {
 
     @Override
     public Item getItemAt(int i) {
+        if (i >= this.arrayItems.size() || i < 0) {
+            throw new ArrayIndexOutOfBoundsException(
+                    "Tried to access array index: " + (i + 1) + ", of array with length: " + this.arrayItems.size(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         return this.arrayItems.get(i);
     }
 
     @Override
     public void putItem(Item value) {
         this.arrayItems.add(value);
+    }
+
+    @Override
+    public void putItemAt(Item value, int i) {
+        this.arrayItems.add(i, value);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> values, int i) {
+        this.arrayItems.addAll(i, values);
+    }
+
+    @Override
+    public void removeItemAt(int i) {
+        this.arrayItems.remove(i);
     }
 
     @Override
@@ -96,12 +132,20 @@ public class ArrayItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.arrayItems);
+        output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        kryo.writeObject(output, this.pathIn);
+        kryo.writeObject(output, this.location);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
         this.arrayItems = kryo.readObject(input, ArrayList.class);
+        this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = kryo.readObject(input, String.class);
+        this.location = kryo.readObject(input, String.class);
     }
 
     public int hashCode() {
@@ -121,5 +165,117 @@ public class ArrayItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return true;
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.mutabilityLevel;
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.mutabilityLevel = mutabilityLevel;
+        for (Item item : this.arrayItems) {
+            item.setMutabilityLevel(mutabilityLevel);
+        }
+    }
+
+    @Override
+    public long getTopLevelID() {
+        return this.topLevelID;
+    }
+
+    @Override
+    public void setTopLevelID(long topLevelID) {
+        this.topLevelID = topLevelID;
+        for (Item item : this.arrayItems) {
+            item.setTopLevelID(topLevelID);
+        }
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.pathIn;
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.pathIn = pathIn;
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            item.setPathIn(pathIn + "[" + i + "]");
+        }
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.location;
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.location = location;
+        for (Item item : this.arrayItems) {
+            item.setTableLocation(location);
+        }
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("array(");
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            sb.append(item.getSparkSQLValue());
+            if (i + 1 < this.arrayItems.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        StringBuilder sb = new StringBuilder();
+        ItemType elementType = itemType.getArrayContentFacet();
+        sb.append("array(");
+        for (int i = 0; i < this.arrayItems.size(); i++) {
+            Item item = this.arrayItems.get(i);
+            sb.append(item.getSparkSQLValue(elementType));
+            if (i + 1 < this.arrayItems.size()) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Is it okay to assume first elem type is same as rest?
+        StringBuilder sb = new StringBuilder();
+        sb.append("ARRAY<");
+        if (this.getSize() <= 0) {
+            // TODO: Throw error? No empty arrays?
+        }
+        sb.append(this.getItemAt(0).getSparkSQLType());
+        sb.append(">");
+        return sb.toString();
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        return getItems();
+    }
+
+    @Override
+    public Object getVariantValue() {
+        List<Item> arrayItems = this.getItems();
+        List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
+        for (int i = 0; i < arrayItems.size(); i++) {
+            arrayItemsForRow.add(this.getItemAt(i).getVariantValue());
+        }
+        return arrayItemsForRow;
     }
 }

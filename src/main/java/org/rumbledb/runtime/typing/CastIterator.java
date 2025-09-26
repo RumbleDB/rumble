@@ -2,16 +2,16 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.AnnotatedItem;
-import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -20,7 +20,7 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
-
+import java.util.List;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -31,10 +31,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     public CastIterator(
             RuntimeIterator child,
             SequenceType sequenceType,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }
@@ -74,28 +73,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     getMetadata()
             );
         }
-        if (item != null && !item.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "Only atomics can be cast to atomic types.",
-                    getMetadata()
-            );
-        }
         if (item == null) {
             return null;
-        }
-        if (!item.getDynamicType().isStaticallyCastableAs(this.sequenceType.getItemType())) {
-            String message = String.format(
-                "\"%s\": a value of type %s is not castable to type %s",
-                item.serialize(),
-                item.getDynamicType(),
-                this.sequenceType.getItemType()
-            );
-            throw new UnexpectedTypeException(message, getMetadata());
         }
         Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
             String message = String.format(
-                "\"%s\": this literal is not castable to type %s",
+                "\"%s\": this literal is not castable to type %s.",
                 item.serialize(),
                 this.sequenceType.getItemType()
             );
@@ -105,8 +89,40 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
-        Item result = null;
+        // first we try to atomize if item is not atomic
+        if (!item.isAtomic()) {
+            try {
+                List<Item> atomized = item.atomizedValue();
+                if (atomized.size() > 1) {
+                    throw new UnexpectedTypeException(
+                            "Atomization in cast resulted in more than one item.",
+                            metadata
+                    );
+                }
+                item = atomized.get(0);
+            } catch (FunctionAtomizationException e) {
+                // need to add metadata, e has no metadata
+                RumbleException castE = new FunctionAtomizationException(
+                        "Atomization in cast failed: \"" + item.serialize() + "\"",
+                        metadata
+                );
+                castE.initCause(e);
+                throw castE;
+            }
+        }
+
+        if (!item.getDynamicType().isStaticallyCastableAs(targetType)) {
+            String message = String.format(
+                "\"%s\": a value of type %s is not castable to type %s",
+                item.serialize(),
+                item.getDynamicType(),
+                targetType
+            );
+            throw new UnexpectedTypeException(message, metadata);
+        }
+
         try {
+            Item result = null;
             ItemType itemType = item.getDynamicType();
 
             if (itemType.isSubtypeOf(targetType)) {
@@ -129,7 +145,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-                result = ItemFactory.getInstance().createStringItem(item.serialize());
+                result = ItemFactory.getInstance().createStringItem(item.getStringValue());
                 if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
                     return result;
                 }
@@ -339,10 +355,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+                } else if (item.isDate() || item.isDateTime()) {
+                    result = ItemFactory.getInstance()
+                        .createDateItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -358,9 +373,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
                 } else if (item.isTime()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+                    result = ItemFactory.getInstance().createTimeItem(item.getTimeValue(), item.hasTimeZone());
+                } else if (item.isDate() || item.isDateTime()) {
+                    result = ItemFactory.getInstance()
+                        .createTimeItem(item.getDateTimeValue().toOffsetTime(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -375,9 +391,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
-                } else if (item.isDateTime()) {
+                } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
@@ -393,10 +407,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
-                } else if (item.isDate()) {
-                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
-                } else if (item.isDateTime()) {
-                    result = ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
+                } else if (item.isDate() || item.isDateTime()) {
+                    result = ItemFactory.getInstance()
+                        .createDateTimeStampItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -410,17 +423,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance()
-                        .createYearMonthDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.yearMonthDurationItem
-                            )
-                        );
-                } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
-                } else if (item.isDayTimeDuration()) {
-                    result = ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
+                    return ItemFactory.getInstance().createYearMonthDurationItem(item.getStringValue().trim());
+                } else if (item.isDuration() || item.isDayTimeDuration()) {
+                    result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
                 } else {
                     return null;
                 }
@@ -434,16 +439,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
                 if (item.isString()) {
-                    result = ItemFactory.getInstance()
-                        .createDayTimeDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.dayTimeDurationItem
-                            )
-                        );
-                } else if (item.isDuration()) {
-                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
-                } else if (item.isYearMonthDuration()) {
+                    result = ItemFactory.getInstance().createDayTimeDurationItem(item.getStringValue().trim());
+                } else if (item.isDuration() || item.isYearMonthDuration()) {
                     result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
                 } else {
                     return null;
@@ -460,10 +457,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     result = ItemFactory.getInstance()
                         .createDurationItem(
-                            DurationItem.getDurationFromString(
-                                item.getStringValue().trim(),
-                                BuiltinTypesCatalogue.durationItem
-                            )
+                            item.getStringValue().trim()
                         );
                 } else if (item.isDayTimeDuration()) {
                     result = ItemFactory.getInstance().createDurationItem(item.getDurationValue());
@@ -481,6 +475,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGDayItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -492,6 +488,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGMonthItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -503,6 +501,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGYearItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -514,6 +514,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance().createGMonthDayItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -525,6 +527,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
+                } else if (item.isDateTime() || item.isDate()) {
+                    result = ItemFactory.getInstance()
+                        .createGYearMonthItem(item.getDateTimeValue(), item.hasTimeZone());
                 } else {
                     return null;
                 }
@@ -534,14 +539,25 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+                }
+                if (item.isBoolean()) {
+                    return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
+                }
+            }
             return null;
-        } catch (InvalidLexicalValueException i) {
-            throw new InvalidLexicalValueException(
-                    "NaN or INF cannot be cast to another type than Float or Double",
-                    metadata
-            );
+        } catch (DatetimeOverflowOrUnderflow | DurationOverflowOrUnderflow | InvalidLexicalValueException e) {
+            throw e;
         } catch (Exception e) {
-            return null;
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s. %s",
+                item.serialize(),
+                targetType,
+                e
+            );
+            throw new CastException(message, metadata);
         }
     }
 
@@ -744,6 +760,24 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
+        if (1 > item.getMonth() || item.getMonth() > 12) {
+            return false;
+        }
+        if (1 > item.getDay() || item.getDay() > 31) {
+            return false;
+        }
+        if (0 > item.getHour() || item.getHour() > 23) {
+            return false;
+        }
+        if (0 > item.getMinute() || item.getMinute() > 59) {
+            return false;
+        }
+        if (0 > item.getSecond() || item.getSecond() >= 60) {
+            return false;
+        }
+        if (-840 > item.getOffset() || item.getOffset() > 840) {
+            return false;
+        }
 
         if (
             targetType.getExplicitTimezoneFacet() != null
@@ -760,6 +794,24 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
+        if (1 > item.getMonth() || item.getMonth() > 12) {
+            return false;
+        }
+        if (1 > item.getDay() || item.getDay() > 31) {
+            return false;
+        }
+        if (0 > item.getHour() || item.getHour() > 23) {
+            return false;
+        }
+        if (0 > item.getMinute() || item.getMinute() > 59) {
+            return false;
+        }
+        if (0 > item.getSecond() || item.getSecond() >= 60) {
+            return false;
+        }
+        if (-840 > item.getOffset() || item.getOffset() > 840) {
+            return false;
+        }
 
         if (
             targetType.getExplicitTimezoneFacet() != null
@@ -773,32 +825,78 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
-        // * TODO: fix this that causes pipeline to fail all tests involving duration
-        if (
-            (targetType.getMinInclusiveFacet() != null
-                && item.getDurationValue()
-                    .toStandardDuration()
-                    .compareTo(targetType.getMinInclusiveFacet().getDurationValue().toStandardDuration()) < 0)
-                || (targetType.getMaxInclusiveFacet() != null
-                    && item.getDurationValue()
-                        .toStandardDuration()
-                        .compareTo(targetType.getMaxInclusiveFacet().getDurationValue().toStandardDuration()) > 0)
-                || (targetType.getMinExclusiveFacet() != null
-                    &&
-                    item.getDurationValue()
-                        .toStandardDuration()
-                        .compareTo(targetType.getMinExclusiveFacet().getDurationValue().toStandardDuration()) <= 0)
-                || (targetType.getMaxExclusiveFacet() != null
-                    &&
-                    item.getDurationValue()
-                        .toStandardDuration()
-                        .compareTo(targetType.getMaxExclusiveFacet().getDurationValue().toStandardDuration()) >= 0)
-        ) {
-            return false;
+        if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
+            if (item.getMonth() < 0 && item.getSecond() > 0) {
+                return false;
+            }
+            if (item.getMonth() > 0 && item.getSecond() < 0) {
+                return false;
+            }
         }
-
-
         return true;
+        // * TODO: fix this that causes pipeline to fail all tests involving duration
+        // Period itemPeriod = item.getPeriodValue();
+        // Duration itemDuration = Duration.ofDays(itemPeriod.toTotalMonths() * 30 + itemPeriod.getDays());
+        //
+        // return (targetType.getMinInclusiveFacet() == null
+        // || itemDuration.compareTo(
+        // Duration.ofDays(
+        // targetType.getMinInclusiveFacet().getPeriodValue().toTotalMonths() * 30
+        // + targetType.getMinInclusiveFacet().getPeriodValue().getDays()
+        // )
+        // ) >= 0)
+        // && (targetType.getMaxInclusiveFacet() == null
+        // || itemDuration.compareTo(
+        // Duration.ofDays(
+        // targetType.getMaxInclusiveFacet().getPeriodValue().toTotalMonths() * 30
+        // + targetType.getMaxInclusiveFacet().getPeriodValue().getDays()
+        // )
+        // ) <= 0)
+        // && (targetType.getMinExclusiveFacet() == null
+        // || itemDuration.compareTo(
+        // Duration.ofDays(
+        // targetType.getMinExclusiveFacet().getPeriodValue().toTotalMonths() * 30
+        // + targetType.getMinExclusiveFacet().getPeriodValue().getDays()
+        // )
+        // ) > 0)
+        // && (targetType.getMaxExclusiveFacet() == null
+        // || itemDuration.compareTo(
+        // Duration.ofDays(
+        // targetType.getMaxExclusiveFacet().getPeriodValue().toTotalMonths() * 30
+        // + targetType.getMaxExclusiveFacet().getPeriodValue().getDays()
+        // )
+        // ) < 0);
+        //
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childQuery = this.child.generateNativeQuery(nativeClauseContext);
+        if (childQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            return new NativeClauseContext(
+                    childQuery,
+                    "CAST (" + childQuery.getResultingQuery() + " AS FLOAT)",
+                    new SequenceType(BuiltinTypesCatalogue.floatItem, childQuery.getResultingType().getArity())
+            );
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+            return new NativeClauseContext(
+                    childQuery,
+                    "CAST (" + childQuery.getResultingQuery() + " AS STRING)",
+                    new SequenceType(BuiltinTypesCatalogue.stringItem, childQuery.getResultingType().getArity())
+            );
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            return new NativeClauseContext(
+                    childQuery,
+                    "CAST (" + childQuery.getResultingQuery() + " AS DOUBLE)",
+                    new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }
 

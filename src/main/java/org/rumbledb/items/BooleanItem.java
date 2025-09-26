@@ -52,6 +52,11 @@ public class BooleanItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getBooleanValue();
+    }
+
+    @Override
     public String getStringValue() {
         return String.valueOf(this.value);
     }
@@ -100,4 +105,21 @@ public class BooleanItem implements Item {
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "BOOLEAN";
+    }
+
 }

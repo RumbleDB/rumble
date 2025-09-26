@@ -20,7 +20,7 @@
 
 package iq.base;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
@@ -52,7 +52,7 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
+    protected static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
                 "yes",
@@ -75,6 +75,9 @@ public class AnnotationsTestsBase {
             )
         );
 
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return defaultConfiguration;
+    }
 
     public void initializeTests(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));

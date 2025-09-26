@@ -20,49 +20,19 @@
 
 package org.rumbledb.compiler;
 
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.DefaultCollationException;
-import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
-import org.rumbledb.exceptions.DuplicateParamNameException;
-import org.rumbledb.exceptions.EmptyModuleURIException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidSchemaException;
-import org.rumbledb.exceptions.JsoniqVersionException;
-import org.rumbledb.exceptions.ModuleNotFoundException;
-import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
-import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
-import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
-import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -117,18 +87,69 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.ForwardAxis;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseAxis;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
+import org.rumbledb.expressions.xml.node_test.AnyKindTest;
+import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.DocumentTest;
+import org.rumbledb.expressions.xml.node_test.ElementTest;
+import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.parser.JsoniqParser;
-import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
-import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.JsoniqParser.SetterContext;
-import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
+import org.rumbledb.parser.jsoniq.JsoniqBaseVisitor;
+import org.rumbledb.parser.jsoniq.JsoniqParser;
+import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
+import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
+import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
+import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -137,6 +158,21 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
+
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -144,7 +180,7 @@ import org.rumbledb.types.SequenceType;
  *
  * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
-public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Node> {
+public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
@@ -169,7 +205,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // region module
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
+        if (
+            !(ctx.vers == null)
+                && !ctx.vers.isEmpty()
+                && (!ctx.vers.getText().trim().equals("1.0") || !ctx.vers.getText().trim().equals("3.1"))
+        ) {
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
         }
         if (this.isMainModule) {
@@ -195,7 +235,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         // We override with a context item declaration if not present already.
-        Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
+        Program program = (Program) this.visitProgram(ctx.program());
         if (!prolog.hasContextItemDeclaration()) {
             if (
                 this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)
@@ -208,16 +248,76 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                             true,
                             SequenceType.ITEM,
                             null,
+                            null,
                             createMetadataFromContext(ctx)
                     )
                 );
             }
         }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        new SequenceType(
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.ITEM_STAR,
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
 
-        MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
+
+    // region program
+    @Override
+    public Node visitProgram(JsoniqParser.ProgramContext ctx) {
+        StatementsAndOptionalExpr statementsAndOptionalExpr = (StatementsAndOptionalExpr) this
+            .visitStatementsAndOptionalExpr(ctx.statementsAndOptionalExpr());
+        return new Program(statementsAndOptionalExpr, createMetadataFromContext(ctx));
+    }
+
+    // end region
 
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
@@ -252,6 +352,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         List<SetterContext> setters = ctx.setter();
         boolean emptyOrderSet = false;
         boolean defaultCollationSet = false;
+        boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
             if (setterContext.emptyOrderDecl() != null) {
                 if (emptyOrderSet) {
@@ -273,6 +374,23 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 }
                 processDefaultCollation(setterContext.defaultCollationDecl());
                 defaultCollationSet = true;
+                continue;
+            }
+            if (setterContext.baseURIDecl() != null) {
+                if (baseURISet) {
+                    throw new MultipleBaseURIException(
+                            "The base-uri was already set.",
+                            createMetadataFromContext(setterContext.baseURIDecl())
+                    );
+                }
+                String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
+                URI uri = FileSystemUtil.resolveURI(
+                    this.moduleContext.getStaticBaseURI(),
+                    uriString,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                this.moduleContext.setStaticBaseUri(uri);
+                baseURISet = true;
                 continue;
             }
             throw new UnsupportedFeatureException(
@@ -385,7 +503,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return prolog;
     }
 
-    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction, boolean isType) {
+    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -404,6 +522,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 name = Name.createVariableInDefaultFunctionNamespace(localName);
             } else if (isType) {
                 name = Name.createVariableInDefaultTypeNamespace(localName);
+            } else if (isAnnotation) {
+                name = Name.createVariableInDefaultAnnotationsNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -421,14 +541,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-        Name name = parseName(ctx.qname(), true, false);
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
+        Name name = parseName(ctx.qname(), true, false, false);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false);
+                paramName = parseName(param.qname(), false, false, false);
                 paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -450,18 +571,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        Expression bodyExpression = null;
-        if (ctx.fn_body != null) {
-            bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
-        } else {
-            bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
-        }
+        StatementsAndOptionalExpr funcBody = (StatementsAndOptionalExpr) this
+            .visitStatementsAndOptionalExpr(ctx.fn_body);
+
+        boolean isExternal = ctx.is_external != null;
 
         return new InlineFunctionExpression(
+                annotations,
                 name,
                 fnParams,
                 fnReturnType,
-                bodyExpression,
+                funcBody,
+                isExternal,
                 createMetadataFromContext(ctx)
         );
     }
@@ -492,7 +613,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             pe.initCause(e);
             throw pe;
         }
-        Name name = parseName(ctx.qname(), false, true);
+        Name name = parseName(ctx.qname(), false, true, false);
         String schemaLanguage = null;
         if (ctx.schema != null) {
             schemaLanguage = ctx.schema.getText();
@@ -529,7 +650,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         List<Expression> expressions = new ArrayList<>();
         for (JsoniqParser.ExprSingleContext expr : ctx.exprSingle()) {
             expressions.add((Expression) this.visitExprSingle(expr));
-
         }
         if (expressions.size() == 1) {
             return expressions.get(0);
@@ -540,17 +660,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.OrExprContext) {
-            return this.visitOrExpr((JsoniqParser.OrExprContext) content);
+        if (content instanceof JsoniqParser.ExprSimpleContext) {
+            return this.visitExprSimple((JsoniqParser.ExprSimpleContext) content);
         }
         if (content instanceof JsoniqParser.FlowrExprContext) {
             return this.visitFlowrExpr((JsoniqParser.FlowrExprContext) content);
         }
         if (content instanceof JsoniqParser.IfExprContext) {
             return this.visitIfExpr((JsoniqParser.IfExprContext) content);
-        }
-        if (content instanceof JsoniqParser.QuantifiedExprContext) {
-            return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
         }
         if (content instanceof JsoniqParser.SwitchExprContext) {
             return this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
@@ -561,8 +678,66 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (content instanceof JsoniqParser.TryCatchExprContext) {
             return this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
         }
-        throw new OurBadException("Unrecognized ExprSingle.");
+        throw new OurBadException("Unrecognized ExprSingle:" + content.getClass().getName());
     }
+    // endregion
+
+    // begin region ExprSimple
+    @Override
+    public Node visitExprSimple(JsoniqParser.ExprSimpleContext ctx) {
+        ParseTree content = ctx.children.get(0);
+        if (content instanceof JsoniqParser.OrExprContext) {
+            return this.visitOrExpr((JsoniqParser.OrExprContext) content);
+        }
+        if (content instanceof JsoniqParser.QuantifiedExprContext) {
+            return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteExprContext) {
+            return this.visitDeleteExpr((JsoniqParser.DeleteExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertExprContext) {
+            return this.visitInsertExpr((JsoniqParser.InsertExprContext) content);
+        }
+        if (content instanceof JsoniqParser.ReplaceExprContext) {
+            return this.visitReplaceExpr((JsoniqParser.ReplaceExprContext) content);
+        }
+        if (content instanceof JsoniqParser.RenameExprContext) {
+            return this.visitRenameExpr((JsoniqParser.RenameExprContext) content);
+        }
+        if (content instanceof JsoniqParser.AppendExprContext) {
+            return this.visitAppendExpr((JsoniqParser.AppendExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TransformExprContext) {
+            return this.visitTransformExpr((JsoniqParser.TransformExprContext) content);
+        }
+        if (content instanceof JsoniqParser.PathExprContext) {
+            return this.visitPathExpr((JsoniqParser.PathExprContext) content);
+        }
+
+        if (content instanceof JsoniqParser.CreateCollectionExprContext) {
+            return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteIndexExprContext) {
+            return this.visitDeleteIndexExpr((JsoniqParser.DeleteIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.DeleteSearchExprContext) {
+            return this.visitDeleteSearchExpr((JsoniqParser.DeleteSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.EditCollectionExprContext) {
+            return this.visitEditCollectionExpr((JsoniqParser.EditCollectionExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertIndexExprContext) {
+            return this.visitInsertIndexExpr((JsoniqParser.InsertIndexExprContext) content);
+        }
+        if (content instanceof JsoniqParser.InsertSearchExprContext) {
+            return this.visitInsertSearchExpr((JsoniqParser.InsertSearchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
+            return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
+        }
+        throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
+    }
+
     // endregion
 
     // region Flowr
@@ -795,7 +970,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitCountClause(JsoniqParser.CountClauseContext ctx) {
         VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarRef(ctx.varRef());
-        return new CountClause(child, createMetadataFromContext(ctx));
+        return new CountClause(child.getVariableName(), createMetadataFromContext(ctx));
     }
     // endregion
 
@@ -850,11 +1025,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
             ctx.op.get(0).getText()
         );
-        if (kind.isValueComparison()) {
+        if (kind.isValueComparison() || this.configuration.optimizeGeneralComparisonToValueComparison()) {
             return new ComparisonExpression(
                     mainExpression,
                     childExpression,
-                    ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
+                    kind,
                     createMetadataFromContext(ctx)
             );
         }
@@ -968,13 +1143,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
-        Expression result = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitPathExpr(ctx.main_expr);
         if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.map_expr.size(); ++i) {
-            JsoniqParser.PostFixExprContext child = ctx.map_expr.get(i);
-            Expression rightExpression = (Expression) this.visitPostFixExpr(child);
+            JsoniqParser.PathExprContext child = ctx.map_expr.get(i);
+            Expression rightExpression = (Expression) this.visitPathExpr(child);
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
@@ -1064,7 +1239,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             children.add(mainExpression);
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
             if (functionCallContext.qname() != null) {
-                Name name = parseName(functionCallContext.qname(), true, false);
+                Name name = parseName(functionCallContext.qname(), true, false, false);
                 mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
                 continue;
             } else if (functionCallContext.varRef() != null) {
@@ -1108,15 +1283,245 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.simpleMap_expr != null) {
             return this.visitSimpleMapExpr(ctx.simpleMap_expr);
         }
-        return this.visitValidateExpr(ctx.validate_expr);
+        if (ctx.validate_expr != null) {
+            return this.visitValidateExpr(ctx.validate_expr);
+        }
+        return this.visitAnnotateExpr(ctx.annotate_expr);
+    }
+
+    @Override
+    public Node visitAnnotateExpr(JsoniqParser.AnnotateExprContext ctx) {
+        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
+        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+        return new ValidateTypeExpression(mainExpr, false, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
         Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
         SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, sequenceType, createMetadataFromContext(ctx));
+        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
     }
+    // endregion
+
+    // region update
+
+    @Override
+    public Node visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
+        Expression toInsertExpr;
+        Expression posExpr = null;
+        if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
+            List<Expression> keys = new ArrayList<>();
+            List<Expression> values = new ArrayList<>();
+            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+                Node lhs = this.visitExprSingle(currentPair.lhs);
+                if (lhs instanceof StepExpr) {
+                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                        keys.add(
+                            new StringLiteralExpression(
+                                    ((StepExpr) lhs).getNodeTest().toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                    } else {
+                        throw new ParsingException(
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
+                                createMetadataFromContext(ctx)
+                        );
+                    }
+                } else {
+                    keys.add((Expression) lhs);
+                }
+                values.add((Expression) this.visitExprSingle(currentPair.rhs));
+            }
+            toInsertExpr = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+        } else if (ctx.to_insert_expr != null) {
+            toInsertExpr = (Expression) this.visitExprSingle(ctx.to_insert_expr);
+            if (ctx.pos_expr != null) {
+                posExpr = (Expression) this.visitExprSingle(ctx.pos_expr);
+            }
+        } else {
+            throw new OurBadException("Unrecognised expression to insert in Insert Expression");
+        }
+        Expression mainExpr = (Expression) this.visitExprSingle(ctx.main_expr);
+
+        return new InsertExpression(mainExpr, toInsertExpr, posExpr, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        return new DeleteExpression(mainExpression, locatorExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression nameExpression = (Expression) this.visitExprSingle(ctx.name_expr);
+        return new RenameExpression(
+                mainExpression,
+                locatorExpression,
+                nameExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
+        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
+        Expression newExpression = (Expression) this.visitExprSingle(ctx.replacer_expr);
+        return new ReplaceExpression(
+                mainExpression,
+                locatorExpression,
+                newExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
+        List<CopyDeclaration> copyDecls = ctx.copyDecl()
+            .stream()
+            .map(copyDeclCtx -> {
+                Name var = ((VariableReferenceExpression) this.visitVarRef(copyDeclCtx.var_ref)).getVariableName();
+                Expression expr = (Expression) this.visitExprSingle(copyDeclCtx.src_expr);
+                return new CopyDeclaration(var, expr);
+            })
+            .collect(Collectors.toList());
+        Expression modifyExpression = (Expression) this.visitExprSingle(ctx.mod_expr);
+        Expression returnExpression = (Expression) this.visitExprSingle(ctx.ret_expr);
+        return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
+        Expression arrayExpression = (Expression) this.visitExprSingle(ctx.array_expr);
+        Expression toAppendExpression = (Expression) this.visitExprSingle(ctx.to_append_expr);
+        return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isTable = (ctx.table != null);
+        return new CreateCollectionExpression(
+                collection,
+                contentExpression,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
+        boolean isFirst = (ctx.first != null);
+
+        Expression numDelete = null;
+        if (ctx.num != null) {
+            numDelete = (Expression) this.visitExprSingle(ctx.num);
+        }
+
+        return new DeleteIndexFromCollectionExpression(
+                collection,
+                numDelete,
+                isFirst,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new DeleteSearchFromCollectionExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        return new EditCollectionExpression(
+                targetExpression,
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
+        Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        Expression pos = ctx.pos != null ? (Expression) this.visitExprSingle(ctx.pos) : null;
+        boolean isTable = (ctx.table != null);
+        boolean isLast = (ctx.last != null);
+        boolean isFirst = (ctx.first != null);
+
+        return new InsertIndexIntoCollectionExpression(
+                collection,
+                contentExpression,
+                pos,
+                isTable,
+                isFirst,
+                isLast,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
+        Expression targetExpression = (Expression) this.visitExprSingle(ctx.target);
+        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        boolean isBefore = (ctx.before != null);
+        return new InsertSearchIntoCollectionExpression(
+                targetExpression,
+                contentExpression,
+                isBefore,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
+        Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
+        boolean isTable = (ctx.table != null);
+        return new TruncateCollectionExpression(
+                collectionName,
+                isTable,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getMainExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getMainExpression();
+        } else {
+            throw new OurBadException("Unrecognized main expression found in update expression.");
+        }
+    }
+
+    public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
+        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (mainExpression instanceof ObjectLookupExpression) {
+            return ((ObjectLookupExpression) mainExpression).getLookupExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression) {
+            return ((ArrayLookupExpression) mainExpression).getLookupExpression();
+        } else {
+            throw new OurBadException("Unrecognized main expression found in update expression.");
+        }
+    }
+
     // endregion
 
     // region postfix
@@ -1239,6 +1644,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (child instanceof JsoniqParser.FunctionItemExprContext) {
             return this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
         }
+        if (child instanceof JsoniqParser.BlockExprContext) {
+            return this.visitBlockExpr((JsoniqParser.BlockExprContext) child);
+        }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",
                 createMetadataFromContext(ctx)
@@ -1276,10 +1684,23 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                if (currentPair.lhs != null) {
-                    keys.add((Expression) this.visitExprSingle(currentPair.lhs));
+                Node lhs = this.visitExprSingle(currentPair.lhs);
+                if (lhs instanceof StepExpr) {
+                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                        keys.add(
+                            new StringLiteralExpression(
+                                    ((StepExpr) lhs).getNodeTest().toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                    } else {
+                        throw new ParsingException(
+                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
+                                createMetadataFromContext(ctx)
+                        );
+                    }
                 } else {
-                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                    keys.add((Expression) lhs);
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
@@ -1313,7 +1734,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        Name name = parseName(ctx.qname(), false, false);
+        Name name = parseName(ctx.qname(), false, false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -1384,7 +1805,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        Name name = parseName(itemTypeContext.qname(), false, true);
+        Name name = parseName(itemTypeContext.qname(), false, true, false);
+        name = ItemTypeReference.renameAtomic(this.configuration, name);
         if (!BuiltinTypesCatalogue.typeExists(name)) {
             return new ItemTypeReference(name);
         }
@@ -1417,7 +1839,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false);
+        Name name = parseName(ctx.fn_name, true, false, false);
         return processFunctionCall(
             name,
             getArgumentsFromArgumentListContext(ctx.argumentList()),
@@ -1461,7 +1883,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false);
+        Name name = parseName(ctx.fn_name, true, false, false);
         int arity = 0;
         try {
             arity = Integer.parseInt(ctx.arity.getText());
@@ -1479,13 +1901,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false);
+                paramName = parseName(param.qname(), false, false, false);
                 paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -1507,18 +1930,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        Expression expr = null;
-        if (ctx.fn_body != null) {
-            expr = (Expression) this.visitExpr(ctx.fn_body);
-        } else {
-            expr = new CommaExpression(createMetadataFromContext(ctx));
-        }
+        StatementsAndOptionalExpr funcBody = (StatementsAndOptionalExpr) this
+            .visitStatementsAndOptionalExpr(ctx.fn_body);
 
         return new InlineFunctionExpression(
+                annotations,
                 null,
                 fnParams,
                 fnReturnType,
-                expr,
+                funcBody,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1670,7 +2090,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
-                Name name = parseName(qnameCtx, false, false);
+                Name name = parseName(qnameCtx, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
@@ -1698,6 +2118,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
         // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
         // but it is actually treated as if it was item*
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
         SequenceType seq = null;
         boolean external;
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
@@ -1712,8 +2133,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
-
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+        return new VariableDeclaration(var, external, seq, expr, annotations, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1735,8 +2155,586 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
         }
 
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+        return new VariableDeclaration(var, external, seq, expr, null, createMetadataFromContext(ctx));
     }
+
+    // region scripting
+    @Override
+    public Node visitStatements(JsoniqParser.StatementsContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext stmt : ctx.statement()) {
+            statements.add((Statement) this.visitStatement(stmt));
+        }
+        return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitStatementsAndExpr(JsoniqParser.StatementsAndExprContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext stmt : ctx.statements().statement()) {
+            statements.add((Statement) this.visitStatement(stmt));
+        }
+        Expression expression = (Expression) this.visitExpr(ctx.expr());
+        return new StatementsAndExpr(statements, expression, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitStatementsAndOptionalExpr(JsoniqParser.StatementsAndOptionalExprContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext stmt : ctx.statements().statement()) {
+            statements.add((Statement) this.visitStatement(stmt));
+        }
+        if (ctx.expr() != null) {
+            Expression expression = (Expression) this.visitExpr(ctx.expr());
+            return new StatementsAndOptionalExpr(statements, expression, createMetadataFromContext(ctx));
+        }
+        return new StatementsAndOptionalExpr(statements, null, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitStatement(JsoniqParser.StatementContext ctx) {
+        ParseTree content = ctx.children.get(0);
+        if (content instanceof JsoniqParser.ApplyStatementContext) {
+            return this.visitApplyStatement((JsoniqParser.ApplyStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.AssignStatementContext) {
+            return this.visitAssignStatement((JsoniqParser.AssignStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.BlockStatementContext) {
+            return this.visitBlockStatement((JsoniqParser.BlockStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.BreakStatementContext) {
+            return this.visitBreakStatement((JsoniqParser.BreakStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.ContinueStatementContext) {
+            return this.visitContinueStatement((JsoniqParser.ContinueStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.ExitStatementContext) {
+            return this.visitExitStatement((JsoniqParser.ExitStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.FlowrStatementContext) {
+            return this.visitFlowrStatement((JsoniqParser.FlowrStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.IfStatementContext) {
+            return this.visitIfStatement((JsoniqParser.IfStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.SwitchStatementContext) {
+            return this.visitSwitchStatement((JsoniqParser.SwitchStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.TryCatchStatementContext) {
+            return this.visitTryCatchStatement((JsoniqParser.TryCatchStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.TypeSwitchStatementContext) {
+            return this.visitTypeSwitchStatement((JsoniqParser.TypeSwitchStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.VarDeclStatementContext) {
+            return this.visitVarDeclStatement((JsoniqParser.VarDeclStatementContext) content);
+        }
+        if (content instanceof JsoniqParser.WhileStatementContext) {
+            return this.visitWhileStatement((JsoniqParser.WhileStatementContext) content);
+        }
+        throw new OurBadException("Unrecognized Statement.");
+    }
+
+    // mutation
+    @Override
+    public Node visitApplyStatement(JsoniqParser.ApplyStatementContext ctx) {
+        Expression exprSimple = (Expression) this.visitExprSimple(ctx.exprSimple());
+        return new ApplyStatement(exprSimple, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
+        Name paramName = parseName(ctx.qname(), false, false, false);
+        Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+        return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
+    }
+    // end mutation
+
+    // block
+    @Override
+    public Node visitBlockStatement(JsoniqParser.BlockStatementContext ctx) {
+        List<Statement> statements = new ArrayList<>();
+        for (JsoniqParser.StatementContext statement : ctx.statements().statement()) {
+            statements.add((Statement) this.visitStatement(statement));
+        }
+        return new BlockStatement(statements, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitBlockExpr(JsoniqParser.BlockExprContext ctx) {
+        StatementsAndExpr statementsAndExpr = (StatementsAndExpr) this.visitStatementsAndExpr(ctx.statementsAndExpr());
+        return new BlockExpression(statementsAndExpr, createMetadataFromContext(ctx));
+    }
+    // end block
+
+    // loops
+    @Override
+    public Node visitBreakStatement(JsoniqParser.BreakStatementContext ctx) {
+        return new BreakStatement(createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitContinueStatement(JsoniqParser.ContinueStatementContext ctx) {
+        return new ContinueStatement(createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitExitStatement(JsoniqParser.ExitStatementContext ctx) {
+        Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
+        return new ExitStatement(exprSingle, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitFlowrStatement(JsoniqParser.FlowrStatementContext ctx) {
+        Clause clause;
+        // Check for start clause. Only for or let allowed.
+        if (ctx.start_for == null) {
+            clause = (Clause) this.visitLetClause(ctx.start_let);
+        } else {
+            clause = (Clause) this.visitForClause(ctx.start_for);
+        }
+        Clause lastFlowrClause = clause.getLastClause();
+        for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
+            if (child instanceof JsoniqParser.ForClauseContext) {
+                clause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
+            } else if (child instanceof JsoniqParser.LetClauseContext) {
+                clause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
+            } else if (child instanceof JsoniqParser.WhereClauseContext) {
+                clause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
+            } else if (child instanceof JsoniqParser.GroupByClauseContext) {
+                clause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
+            } else if (child instanceof JsoniqParser.OrderByClauseContext) {
+                clause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
+            } else if (child instanceof JsoniqParser.CountClauseContext) {
+                clause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
+            } else {
+                throw new UnsupportedFeatureException(
+                        "FLOWR clause not implemented yet",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            lastFlowrClause.chainWith(clause.getFirstClause());
+            lastFlowrClause = clause.getLastClause();
+        }
+        Statement returnStatement = (Statement) this.visitStatement(ctx.returnStmt);
+        ReturnStatementClause returnStatementClause = new ReturnStatementClause(
+                returnStatement,
+                generateMetadata(ctx.getStop())
+        );
+        lastFlowrClause.chainWith(returnStatementClause);
+        returnStatementClause = returnStatementClause.detachInitialLetClausesForStatements();
+        return new FlowrStatement(returnStatementClause, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitWhileStatement(JsoniqParser.WhileStatementContext ctx) {
+        Expression testCondition = (Expression) this.visitExpr(ctx.test_expr);
+        Statement statement = (Statement) this.visitStatement(ctx.stmt);
+        return new WhileStatement(testCondition, statement, createMetadataFromContext(ctx));
+    }
+
+
+    // end loops
+
+    // control
+
+    @Override
+    public Node visitIfStatement(JsoniqParser.IfStatementContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.test_expr);
+        // Verify and set branch.
+        ParseTree branchContent = ctx.children.get(5);
+        checkForUnsupportedStatement(branchContent);
+        Statement branch = (Statement) this.visitStatement(ctx.branch);
+        // Verify and set else branch.
+        ParseTree elseBranchContent = ctx.children.get(7);
+        checkForUnsupportedStatement(elseBranchContent);
+        Statement elseBranch = (Statement) this.visitStatement(ctx.else_branch);
+        return new ConditionalStatement(condition, branch, elseBranch, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitSwitchStatement(JsoniqParser.SwitchStatementContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.condExpr);
+        List<SwitchCaseStatement> cases = new ArrayList<>();
+        for (JsoniqParser.SwitchCaseStatementContext stmt : ctx.cases) {
+            List<Expression> conditionExpressions = new ArrayList<>();
+            stmt.cond.forEach(exprSingle -> {
+                conditionExpressions.add((Expression) this.visitExprSingle(exprSingle));
+            });
+            // TODO: Test this behaviour with return!
+            // Verify return statement
+            ParseTree caseTree = stmt.children.get(stmt.children.size() - 1);
+            checkForUnsupportedStatement(caseTree);
+            SwitchCaseStatement swCase = new SwitchCaseStatement(
+                    conditionExpressions,
+                    (Statement) this.visitStatement(stmt.ret)
+            );
+            cases.add(swCase);
+        }
+        // Verify default statement
+        ParseTree defaultTree = ctx.children.get(ctx.children.size() - 1);
+        checkForUnsupportedStatement(defaultTree);
+        Statement defaultCase = (Statement) this.visitStatement(ctx.def);
+        return new SwitchStatement(condition, cases, defaultCase, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx) {
+        BlockStatement tryBlock = (BlockStatement) this.visitBlockStatement(ctx.try_block);
+        Map<String, BlockStatement> catchBlockStatements = new HashMap<>();
+        BlockStatement catchAllBlockStatement = null;
+        for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
+            BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
+            for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
+                Name name = parseName(qnameCtx, false, false, false);
+                if (!catchBlockStatements.containsKey(name.getLocalName())) {
+                    catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
+                }
+            }
+            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
+            if (doesCatchAll && catchAllBlockStatement == null) {
+                catchAllBlockStatement = catchBlockStatement;
+            }
+        }
+        return new TryCatchStatement(
+                tryBlock,
+                catchBlockStatements,
+                catchAllBlockStatement,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTypeSwitchStatement(JsoniqParser.TypeSwitchStatementContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.cond);
+        List<TypeSwitchStatementCase> cases = new ArrayList<>();
+        for (JsoniqParser.CaseStatementContext stmt : ctx.cases) {
+            List<SequenceType> union = new ArrayList<>();
+            Name variableName = null;
+            if (stmt.var_ref != null) {
+                variableName = ((VariableReferenceExpression) this.visitVarRef(stmt.var_ref)).getVariableName();
+            }
+            if (stmt.union != null && !stmt.union.isEmpty()) {
+                stmt.union.forEach(sequenceTypeContext -> {
+                    union.add(this.processSequenceType(sequenceTypeContext));
+                });
+            }
+            Statement returnStatement = (Statement) this.visitStatement(stmt.ret);
+            cases.add(new TypeSwitchStatementCase(variableName, union, returnStatement));
+        }
+        Name defaultVariableName = null;
+        if (ctx.var_ref != null) {
+            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        }
+        Statement defaultStatement = (Statement) this.visitStatement(ctx.def);
+        return new TypeSwitchStatement(
+                condition,
+                cases,
+                new TypeSwitchStatementCase(defaultVariableName, defaultStatement),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public void checkForUnsupportedStatement(ParseTree content) {
+        if (content instanceof JsoniqParser.BreakStatementContext) {
+            throw new OurBadException("Break statement is not supported in an if branch!");
+        } else if (content instanceof JsoniqParser.ContinueStatementContext) {
+            throw new OurBadException("Continue statement is not supported in an if branch!");
+        } else if (content instanceof JsoniqParser.ExitStatementContext) {
+            throw new OurBadException("Exit statement is not supported in an if branch!");
+        }
+    }
+
+    // end control
+
+    // declaration
+
+    @Override
+    public Node visitVarDeclStatement(JsoniqParser.VarDeclStatementContext ctx) {
+        List<Annotation> annotations = processAnnotations(ctx.annotations());
+        List<VariableDeclStatement> variables = new ArrayList<>();
+        for (JsoniqParser.VarDeclForStatementContext varDecl : ctx.varDeclForStatement()) {
+            SequenceType seq = null;
+            Name var = ((VariableReferenceExpression) this.visitVarRef(varDecl.var_ref)).getVariableName();
+            Expression exprSingle = null;
+
+            if (varDecl.sequenceType() != null) {
+                seq = this.processSequenceType(varDecl.sequenceType());
+            }
+            if (varDecl.exprSingle() != null) {
+                exprSingle = (Expression) this.visitExprSingle(varDecl.exprSingle());
+                if (seq != null) {
+                    exprSingle = new TreatExpression(
+                            exprSingle,
+                            seq,
+                            ErrorCode.UnexpectedTypeErrorCode,
+                            exprSingle.getMetadata()
+                    );
+                }
+            }
+            variables.add(
+                new VariableDeclStatement(
+                        annotations,
+                        var,
+                        seq,
+                        exprSingle,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        if (variables.size() == 1) {
+            return variables.get(0);
+        }
+        return new CommaVariableDeclStatement(variables, createMetadataFromContext(ctx));
+    }
+
+    // end declaration
+
+    // start xml
+
+    @Override
+    public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
+        if (ctx.singleslash != null) {
+            return visitSingleSlash(ctx.singleslash);
+        } else if (ctx.doubleslash != null) {
+            return visitDoubleSlash(ctx.doubleslash);
+        } else if (ctx.relative != null) {
+            return visitRelativeWithoutSlash(ctx.relative);
+        }
+        return visitSingleSlashNoStepExpr(ctx);
+    }
+
+    private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
+        // Case: No StepExpr, only dash
+        return new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
+        if (relativeContext.stepExpr().size() == 1 && relativeContext.stepExpr(0).postFixExpr() != null) {
+            // We only have a postfix expression, not a path expression
+            return this.visitPostFixExpr(relativeContext.stepExpr(0).postFixExpr());
+        }
+        return getSlashes(relativeContext, null);
+    }
+
+    private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(doubleSlashContext)
+        );
+        StepExpr stepExpr = new ForwardStepExpr(
+                ForwardAxis.DESCENDANT_OR_SELF,
+                new AnyKindTest(),
+                createMetadataFromContext(doubleSlashContext)
+        );
+        Expression starter = new SlashExpr(
+                functionCallExpression,
+                stepExpr,
+                createMetadataFromContext(doubleSlashContext)
+        );
+        return getSlashes(doubleSlashContext, starter);
+    }
+
+    private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
+        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
+                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Collections.emptyList(),
+                createMetadataFromContext(singleSlashContext)
+        );
+        return getSlashes(singleSlashContext, functionCallExpression);
+    }
+
+    /**
+     * This method takes a leftMost expression and a path and returns a nested tree of slash expressions which
+     * correspond to the steps in the path applied to the leftMost expression
+     */
+    private Expression getSlashes(
+            JsoniqParser.RelativePathExprContext relativePathExprContext,
+            Expression leftMost
+    ) {
+        Expression currentTop = leftMost; // can be null
+        Expression currentStepExpr;
+        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
+            currentStepExpr = (Expression) this.visitStepExpr(relativePathExprContext.stepExpr(i));
+            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
+                // Unroll '//' to forward axis
+                StepExpr intermediaryStepExpr = new ForwardStepExpr(
+                        ForwardAxis.DESCENDANT_OR_SELF,
+                        new AnyKindTest(),
+                        createMetadataFromContext(relativePathExprContext)
+                );
+                if (currentTop == null) {
+                    currentTop = intermediaryStepExpr;
+                } else {
+                    currentTop = new SlashExpr(
+                            currentTop,
+                            intermediaryStepExpr,
+                            createMetadataFromContext(relativePathExprContext)
+                    );
+
+                }
+            }
+            if (currentTop == null) {
+                currentTop = currentStepExpr;
+            } else {
+                currentTop = new SlashExpr(
+                        currentTop,
+                        currentStepExpr,
+                        createMetadataFromContext(relativePathExprContext)
+                );
+            }
+        }
+        return currentTop;
+    }
+
+    @Override
+    public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
+        if (ctx.postFixExpr() == null) {
+            Expression stepExpr = getStep(ctx.axisStep());
+            for (JsoniqParser.PredicateContext predicateContext : ctx.axisStep().predicateList().predicate()) {
+                Expression predicate = (Expression) this.visitPredicate(predicateContext);
+                stepExpr = new FilterExpression(
+                        stepExpr,
+                        predicate,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            return stepExpr;
+        }
+        return this.visitPostFixExpr(ctx.postFixExpr());
+    }
+
+    private StepExpr getStep(JsoniqParser.AxisStepContext ctx) {
+        if (ctx.forwardStep() == null) {
+            return getReverseStep(ctx.reverseStep());
+        }
+        return getForwardStep(ctx.forwardStep());
+    }
+
+    private StepExpr getForwardStep(JsoniqParser.ForwardStepContext ctx) {
+        ForwardAxis forwardAxis;
+        NodeTest nodeTest;
+        if (ctx.nodeTest() == null) {
+            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
+            if (ctx.abbrevForwardStep().Kat_symbol() != null) {
+                // @ equivalent with 'attribute::'
+                forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else if (nodeTest instanceof AttributeTest) {
+                forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else {
+                forwardAxis = ForwardAxis.CHILD;
+            }
+            return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
+        }
+        forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
+        nodeTest = getNodeTest(ctx.nodeTest());
+        return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
+    }
+
+    private StepExpr getReverseStep(JsoniqParser.ReverseStepContext ctx) {
+        if (ctx.nodeTest() == null) {
+            // .. equivalent with 'parent::node()'
+            ReverseAxis reverseAxis = ReverseAxis.PARENT;
+            NodeTest nodeTest = new AnyKindTest();
+            return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
+        }
+        ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
+        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
+    }
+
+    private NodeTest getNodeTest(JsoniqParser.NodeTestContext nodeTestContext) {
+        if (nodeTestContext.nameTest() == null) {
+            // kind test
+            return getKindTest(nodeTestContext.kindTest().children.get(0));
+        }
+        if (nodeTestContext.nameTest().wildcard() == null) {
+            Name name = parseName(nodeTestContext.nameTest().qname(), false, false, false);
+            return new NameTest(name);
+        } else {
+            String wildcard = nodeTestContext.nameTest().wildcard().getText();
+            return new NameTest(wildcard);
+        }
+    }
+
+    private NodeTest getKindTest(ParseTree kindTest) {
+        if (kindTest instanceof JsoniqParser.DocumentTestContext) {
+            JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTest;
+            if (docContext.schemaElementTest() != null) {
+                throw new UnsupportedFeatureException(
+                        "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                        createMetadataFromContext((ParserRuleContext) kindTest)
+                );
+            }
+            if (docContext.elementTest() == null) {
+                return new DocumentTest(null);
+            }
+            return new DocumentTest(getKindTest(docContext.elementTest()));
+        } else if (kindTest instanceof JsoniqParser.ElementTestContext) {
+            JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTest;
+            Name elementName;
+            if (elementContext.elementNameOrWildcard() != null) {
+                boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
+                if (!hasWildcard) {
+                    elementName = parseName(
+                        elementContext.elementNameOrWildcard().elementName().qname(),
+                        false,
+                        false,
+                        false
+                    );
+                    if (elementContext.typeName() == null) {
+                        return new ElementTest(elementName, null);
+                    }
+                    Name typeName = parseName(elementContext.typeName().qname(), false, false, false);
+                    return new ElementTest(elementName, typeName);
+                }
+                return new ElementTest(true);
+            }
+            return new ElementTest();
+        } else if (kindTest instanceof JsoniqParser.AttributeTestContext) {
+            JsoniqParser.AttributeTestContext attributeTestContext =
+                (JsoniqParser.AttributeTestContext) kindTest;
+            Name elementName;
+            if (attributeTestContext.attributeNameOrWildcard() != null) {
+                boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
+                if (!hasWildcard) {
+                    elementName = parseName(
+                        attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
+                        false,
+                        false,
+                        false
+                    );
+                    if (attributeTestContext.typeName() != null) {
+                        Name typeName = parseName(attributeTestContext.typeName().qname(), false, false, false);
+                        return new AttributeTest(elementName, typeName);
+                    } else {
+                        return new AttributeTest(elementName, null);
+                    }
+                } else {
+                    return new AttributeTest(true);
+                }
+            }
+            return new AttributeTest();
+        } else if (kindTest instanceof JsoniqParser.TextTestContext) {
+            return new TextTest();
+        } else if (kindTest instanceof JsoniqParser.AnyKindTestContext) {
+            return new AnyKindTest();
+        } else {
+            throw new UnsupportedFeatureException(
+                    "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                    createMetadataFromContext((ParserRuleContext) kindTest)
+            );
+        }
+    }
+
+
+    // end region
 
     public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
         bindNamespace(
@@ -1838,6 +2836,26 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 token.getCharPositionInLine(),
                 this.code
         );
+    }
+
+    private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
+        List<Annotation> parsedAnnotations = new ArrayList<>();
+        for (JsoniqParser.AnnotationContext annotationContext : annotations.annotation()) {
+            // for backwards compatibility, the specification allows for updating without % sign
+            if (annotationContext.updating != null) {
+                Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
+                parsedAnnotations.add(new Annotation(name, null));
+                continue;
+            }
+            JsoniqParser.QnameContext qnameContext = annotationContext.qname();
+            Name name = parseName(qnameContext, false, false, true);
+            if (!annotationContext.Literal().isEmpty()) {
+                throw new OurBadException("Literals are currently not supported in annotations!");
+            }
+            parsedAnnotations.add(new Annotation(name, null));
+        }
+
+        return parsedAnnotations;
     }
 
 }

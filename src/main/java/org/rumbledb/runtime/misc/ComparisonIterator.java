@@ -20,18 +20,17 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.joda.time.DateTime;
-import org.joda.time.Instant;
-import org.joda.time.Period;
+import java.time.*;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
@@ -39,7 +38,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
+import org.rumbledb.types.SequenceType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -51,19 +50,18 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private Item left;
     private Item right;
-    private ComparisonExpression.ComparisonOperator comparisonOperator;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final ComparisonExpression.ComparisonOperator comparisonOperator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
 
     public ComparisonIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.comparisonOperator = comparisonOperator;
@@ -152,7 +150,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         long comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
-        if (comparison == -Long.MIN_VALUE) {
+        if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
                         + this.comparisonOperator
@@ -165,25 +163,21 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         // NaN never compares successfully.
-        if (left.isDouble() && left.isNaN()) {
+        if ((left.isFloat() || left.isDouble()) && left.isNaN()) {
             return ItemFactory
                 .getInstance()
-                .createBooleanItem(false);
+                .createBooleanItem(
+                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
+                        .equals(ComparisonOperator.VC_NE)
+                );
         }
-        if (right.isDouble() && right.isNaN()) {
+        if ((right.isFloat() || right.isDouble()) && right.isNaN()) {
             return ItemFactory
                 .getInstance()
-                .createBooleanItem(false);
-        }
-        if (left.isFloat() && left.isNaN()) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(false);
-        }
-        if (right.isFloat() && right.isNaN()) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(false);
+                .createBooleanItem(
+                    ComparisonOperator.getValueComparisonFromComparison(this.comparisonOperator)
+                        .equals(ComparisonOperator.VC_NE)
+                );
         }
         return comparisonResultToBooleanItem(
             (int) comparison,
@@ -196,7 +190,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             Item left,
             Item right,
             ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
+            ExceptionMetadata ignoredMetadata
     ) {
         if (left.isNull() && right.isNull()) {
             return 0;
@@ -217,7 +211,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         // General cases
         if (left.isDouble() && right.isNumeric()) {
             double l = left.getDoubleValue();
-            double r = 0;
+            double r;
             if (right.isDouble()) {
                 r = right.getDoubleValue();
             } else {
@@ -238,7 +232,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
-            float r = 0;
+            float r;
             if (right.isFloat()) {
                 r = right.getFloatValue();
             } else {
@@ -247,7 +241,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processFloat(l, r);
         }
         if (left.isNumeric() && right.isFloat()) {
-            float l = 0;
+            float l;
             float r = right.getFloatValue();
             if (left.isFloat()) {
                 l = left.getFloatValue();
@@ -267,13 +261,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return processDecimal(l, r);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
-            return processDuration(l, r);
+            Period l = left.getPeriodValue();
+            Period r = right.getPeriodValue();
+            return processPeriod(l, r);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
-            Period l = left.getDurationValue();
-            Period r = right.getDurationValue();
+            Duration l = left.getDurationValue();
+            Duration r = right.getDurationValue();
             return processDuration(l, r);
         }
         if (left.isDuration() && right.isDuration()) {
@@ -282,8 +276,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 case GC_EQ:
                 case VC_NE:
                 case GC_NE:
-                    Period l = left.getDurationValue();
-                    Period r = right.getDurationValue();
+                    Duration l = left.getDurationValue();
+                    Duration r = right.getDurationValue();
                     return processDuration(l, r);
                 default:
             }
@@ -298,45 +292,29 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             byte[] r = right.getBinaryValue();
             return processBytes(l, r);
         }
-        if (left.isDate() && right.isDate()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
-        }
         if (left.isTime() && right.isTime()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processTime(left, right);
+        }
+        if (left.isDate() && right.isDate()) {
+            return processDateTime(left, right);
         }
         if (left.isDateTime() && right.isDateTime()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processDateTime(left, right);
         }
         if (left.isGDay() && right.isGDay()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processDateTime(left, right);
         }
         if (left.isGMonth() && right.isGMonth()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processDateTime(left, right);
         }
         if (left.isGYear() && right.isGYear()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processDateTime(left, right);
         }
         if (left.isGMonthDay() && right.isGMonthDay()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processDateTime(left, right);
         }
         if (left.isGYearMonth() && right.isGYearMonth()) {
-            DateTime l = left.getDateTimeValue();
-            DateTime r = right.getDateTimeValue();
-            return processDateTime(l, r);
+            return processDateTime(left, right);
         }
         if (left.isBoolean() && right.isBoolean()) {
             Boolean l = left.getBooleanValue();
@@ -361,6 +339,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         if (left.isAnyURI() && right.isString()) {
             String l = left.serialize();
             String r = right.getStringValue();
+            return processString(l, r);
+        }
+        if (left.getContent() && right.getContent()) {
+            String l = left.getTextValue();
+            String r = right.getTextValue();
             return processString(l, r);
         }
         return Long.MIN_VALUE;
@@ -416,18 +399,40 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static int processDuration(
+            Duration l,
+            Duration r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processPeriod(
             Period l,
             Period r
     ) {
-        Instant now = new Instant();
-        return l.toDurationFrom(now).compareTo(r.toDurationFrom(now));
+        LocalDate baseDate = LocalDate.of(2000, 1, 1);
+        return baseDate.plus(l).compareTo(baseDate.plus(r));
     }
 
     private static int processDateTime(
-            DateTime l,
-            DateTime r
+            Item left,
+            Item right
     ) {
-        return l.compareTo(r);
+        OffsetDateTime l = left.getDateTimeValue();
+        OffsetDateTime r = right.getDateTimeValue();
+        return l.toInstant().compareTo(r.toInstant());
+    }
+
+    private static int processTime(
+            Item left,
+            Item right
+    ) {
+        OffsetTime l = left.getTimeValue();
+        OffsetTime r = right.getTimeValue();
+        return l.atDate(LocalDate.of(1970, 1, 1))
+            .toInstant()
+            .compareTo(
+                r.atDate(LocalDate.of(1970, 1, 1)).toInstant()
+            );
     }
 
     private static int processBoolean(
@@ -507,24 +512,34 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.comparisonOperator.isValueComparison()) {
             NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
-            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-
-            if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+            if (leftResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-
+            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+                new NativeClauseContext(leftResult, null, null)
+            );
+            if (rightResult == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            if (
+                SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
+                    ||
+                    SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
             // TODO: once done type system do proper comparison
             if (
                 !(leftResult.getResultingType() != null
                     && rightResult.getResultingType() != null
-                    && leftResult.getResultingType().isNumeric()
-                    && rightResult.getResultingType().isNumeric()
-                    || leftResult.getResultingType() == rightResult.getResultingType())
+                    && leftResult.getResultingType().getItemType().isNumeric()
+                    && rightResult.getResultingType().getItemType().isNumeric()
+                    || leftResult.getResultingType().getItemType().equals(rightResult.getResultingType().getItemType()))
             ) {
                 return NativeClauseContext.NoNativeQuery;
             }
 
-            String operator = " = ";
+            String operator;
             switch (this.comparisonOperator.name()) {
                 case "VC_EQ":
                     operator = " = ";
@@ -547,10 +562,17 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 default:
                     return NativeClauseContext.NoNativeQuery;
             }
+            SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+                && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                    ? SequenceType.Arity.One
+                    : SequenceType.Arity.OneOrZero;
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
-            return new NativeClauseContext(nativeClauseContext, query, BuiltinTypesCatalogue.booleanItem);
-        } else {
-            return NativeClauseContext.NoNativeQuery;
+            return new NativeClauseContext(
+                    rightResult,
+                    query,
+                    new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
+            );
         }
+        return NativeClauseContext.NoNativeQuery;
     }
 }

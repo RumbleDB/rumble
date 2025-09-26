@@ -29,6 +29,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
@@ -114,67 +115,51 @@ public class JsoniqQueryExecutor {
             sequence = rumble.runQuery(queryUri);
         }
 
-        if (
-            !(this.configuration.getOutputFormat().equals("json")
-                || this.configuration.getOutputFormat().equals("tyson")
-                || this.configuration.getOutputFormat().equals("xml-json-hybrid")
-                || this.configuration.getOutputFormat().equals("yaml"))
-                &&
-                !sequence.availableAsDataFrame()
-        ) {
-            throw new CliException(
-                    "Rumble cannot output another format than json or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
-            );
-        }
-
-        if (sequence.availableAsDataFrame() && outputPath != null) {
-            Dataset<Row> df = sequence.getAsDataFrame();
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                df = df.repartition(this.configuration.getNumberOfOutputPartitions());
+        if (outputPath != null) {
+            if (this.configuration.getOutputFormat().equals("xml-json-hybrid")) {
+                outputRDDToFile(outputPath, outputUri, sequence);
+            } else {
+                try {
+                    Dataset<Row> df = sequence.getAsDataFrame();
+                    if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                        df = df.repartition(this.configuration.getNumberOfOutputPartitions());
+                    }
+                    DataFrameWriter<Row> writer = df.write();
+                    Map<String, String> options = this.configuration.getOutputFormatOptions();
+                    for (String key : options.keySet()) {
+                        writer.option(key, options.get(key));
+                        LogManager.getLogger("JsoniqQueryExecutor")
+                            .info("Writing with option " + key + " : " + options.get(key));
+                    }
+                    String format = this.configuration.getOutputFormat();
+                    LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
+                    switch (format) {
+                        case "json":
+                            writer.json(outputPath);
+                            break;
+                        case "csv":
+                            writer.csv(outputPath);
+                            break;
+                        case "parquet":
+                            writer.parquet(outputPath);
+                            break;
+                        default:
+                            writer.format(format).save(outputPath);
+                    }
+                } catch (CannotInferSchemaOnNonStructuredDataException e) {
+                    // The output is not available as a data frame so we serialize.
+                    outputRDDToFile(outputPath, outputUri, sequence);
+                }
             }
-            DataFrameWriter<Row> writer = df.write();
-            Map<String, String> options = this.configuration.getOutputFormatOptions();
-            for (String key : options.keySet()) {
-                writer.option(key, options.get(key));
-                LogManager.getLogger("JsoniqQueryExecutor")
-                    .info("Writing with option " + key + " : " + options.get(key));
-            }
-            String format = this.configuration.getOutputFormat();
-            LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
-            switch (format) {
-                case "json":
-                    writer.json(outputPath);
-                    break;
-                case "csv":
-                    writer.csv(outputPath);
-                    break;
-                case "parquet":
-                    writer.parquet(outputPath);
-                    break;
-                default:
-                    writer.format(format).save(outputPath);
-            }
-        } else if (sequence.availableAsRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = sequence.getAsRDD();
-            RumbleRuntimeConfiguration configuration = this.configuration;
-            JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
-            }
-
-            outputRDD.saveAsTextFile(outputPath);
         } else {
+            // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
+            long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
                 .map(x -> configuration.getSerializer().serialize(x))
                 .collect(Collectors.toList());
-            if (outputPath != null) {
-                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-            } else {
-                System.out.println(String.join("\n", lines));
-            }
+            System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
                 issueMaterializationWarning(materializationCount);
                 if (outputPath == null) {
@@ -183,6 +168,10 @@ public class JsoniqQueryExecutor {
                     );
                 }
             }
+        }
+
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
 
         long endTime = System.currentTimeMillis();
@@ -198,6 +187,23 @@ public class JsoniqQueryExecutor {
             );
         }
         return outputList;
+    }
+
+    private void outputRDDToFile(String outputPath, URI outputUri, SequenceOfItems sequence) {
+        JavaRDD<Item> rdd = sequence.getAsRDD();
+        RumbleRuntimeConfiguration configuration = this.configuration;
+        JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
+        // If the user explicitly requests exactly one partition, then we collect all items
+        // and write them to a single file.
+        if (this.configuration.getNumberOfOutputPartitions() == 1) {
+            List<String> lines = outputRDD.take(1000000000);
+            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+        } else {
+            if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+            }
+            outputRDD.saveAsTextFile(outputPath);
+        }
     }
 
     public static void issueMaterializationWarning(long materializationCount) {
@@ -220,14 +226,13 @@ public class JsoniqQueryExecutor {
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
+        resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(query);
-        if (!sequence.availableAsRDD()) {
-            return sequence.populateList(resultList);
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
-        resultList.clear();
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+        return sequence.populateList(resultList, this.configuration.getResultSizeCap());
     }
 
 }

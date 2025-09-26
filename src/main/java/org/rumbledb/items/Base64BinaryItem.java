@@ -3,32 +3,33 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.net.util.Base64;
+import org.apache.commons.lang3.StringUtils;
+import java.util.Base64;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-import javax.xml.bind.DatatypeConverter;
+
+import java.util.Base64;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class Base64BinaryItem implements Item {
 
-    private static final String b04char = "([AQgw])";
-    private static final String b04 = "(" + b04char + "(\\s)?)";
-    private static final String b16char = "([AEIMQUYcgkosw048])";
-    private static final String b16 = "(" + b16char + "(\\s)?)";
-    private static final String b64char = "([A-Za-z0-9+/])";
-    private static final String b64 = "(" + b64char + "(\\s)?)";
-    private static final String padded8 = "(" + b64 + b04 + "=(\\s)?=)";
-    private static final String padded16 = "(" + b64 + b64 + b16 + "=)";
-    private static final String b64finalQuad = "(" + b64 + b64 + b64 + b64char + ")";
+    private static final String B64 = "[A-Za-z0-9+/]";
+    private static final String B64S = B64 + "\\s?";
+    private static final String B16 = "[AEIMQUYcgkosw048]";
+    private static final String B16S = B16 + "\\s?";
+    private static final String B04 = "[AQgw]";
+    private static final String B04S = B04 + "\\s?";
+    private static final String padded8 = B64S + B04S + "=\\s?=\\s?";
+    private static final String padded16 = B64S + B64S + B16S + "=\\s?";
+    private static final String b64finalQuad = B64S + B64S + B64S + B64;
     private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
-    private static final String b64quad = "(" + b64 + b64 + b64 + b64 + ")";
-    private static final String base64Binary = "((" + b64quad + ")*" + "(" + b64final + "))?";
+    private static final String b64quad = B64S + B64S + B64S + B64S;
+    private static final String base64Binary = "((" + b64quad + ")*" + b64final + ")?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
     private static final long serialVersionUID = 1L;
@@ -40,8 +41,9 @@ public class Base64BinaryItem implements Item {
     }
 
     public Base64BinaryItem(String stringValue) {
-        this.stringValue = stringValue;
+        stringValue = stringValue.replaceAll("\\s", "");
         this.value = parseBase64BinaryString(stringValue);
+        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
 
     @Override
@@ -77,15 +79,20 @@ public class Base64BinaryItem implements Item {
         return this.stringValue;
     }
 
+    @Override
+    public Object getVariantValue() {
+        return getBinaryValue();
+    }
+
     private static boolean checkInvalidBase64BinaryFormat(String base64BinaryString) {
         return base64BinaryPattern.matcher(base64BinaryString).matches();
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) {
+        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString.replaceAll("\\s", ""))) {
             throw new IllegalArgumentException();
         }
-        return DatatypeConverter.parseBase64Binary(base64BinaryString);
+        return Base64.getDecoder().decode(base64BinaryString);
     }
 
     @Override
@@ -113,7 +120,7 @@ public class Base64BinaryItem implements Item {
     public void read(Kryo kryo, Input input) {
         int bytesLength = input.readInt();
         this.value = input.readBytes(bytesLength);
-        this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
+        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
 
     @Override

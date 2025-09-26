@@ -22,11 +22,13 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
@@ -37,10 +39,9 @@ public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public EmptyFunctionIterator(
             List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(parameters, executionMode, iteratorMetadata);
+        super(parameters, staticContext);
     }
 
     @Override
@@ -54,5 +55,22 @@ public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
         return ItemFactory.getInstance().createBooleanItem(false);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultString = String.format(
+            "size (%s) = 0",
+            childContext.getResultingQuery()
+        );
+        return new NativeClauseContext(
+                childContext,
+                resultString,
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+        );
     }
 }

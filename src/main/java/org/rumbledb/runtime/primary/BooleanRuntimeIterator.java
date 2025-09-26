@@ -22,18 +22,20 @@ package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item item;
 
-    public BooleanRuntimeIterator(boolean value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public BooleanRuntimeIterator(boolean value, RuntimeStaticContext staticContext) {
+        super(null, staticContext);
         this.item = ItemFactory.getInstance().createBooleanItem(value);
 
     }
@@ -41,6 +43,15 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         return this.item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getBooleanValue(),
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
+        );
     }
 }
 

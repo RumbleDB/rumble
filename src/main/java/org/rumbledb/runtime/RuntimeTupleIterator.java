@@ -24,15 +24,18 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
@@ -47,9 +50,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    private final ExceptionMetadata metadata;
+    private final RuntimeStaticContext staticContext;
     protected RuntimeTupleIterator child;
-    protected ExecutionMode highestExecutionMode;
     protected int evaluationDepthLimit;
 
     protected transient DynamicContext currentDynamicContext;
@@ -60,12 +62,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
+            RuntimeStaticContext staticContext
     ) {
-        this.metadata = metadata;
+        this.staticContext = staticContext;
         this.isOpen = false;
-        this.highestExecutionMode = executionMode;
         this.child = child;
         this.evaluationDepthLimit = -1;
     }
@@ -124,18 +124,22 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract FlworTuple next();
 
     public ExceptionMetadata getMetadata() {
-        return this.metadata;
+        return this.staticContext.getMetadata();
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        return this.highestExecutionMode;
+        return this.staticContext.getExecutionMode();
+    }
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return this.staticContext.getConfiguration();
     }
 
     public boolean isDataFrame() {
-        if (this.highestExecutionMode == ExecutionMode.UNSET) {
+        if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return this.highestExecutionMode.isDataFrame();
+        return this.staticContext.getExecutionMode().isDataFrame();
     }
 
     /**
@@ -146,7 +150,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
      * @return the DataFrame with the tuples returned by the child clause.
      */
-    public abstract Dataset<Row> getDataFrame(
+    public abstract FlworDataFrame getDataFrame(
             DynamicContext context
     );
 
@@ -394,4 +398,16 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
      */
     public abstract boolean isSparkJobNeeded();
+
+    /**
+     * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
+     *
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
+     *         it is not possible
+     * @param nativeClauseContext context information to generate the native query
+     */
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

@@ -60,6 +60,11 @@ public class NullItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return null;
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -92,5 +97,15 @@ public class NullItem implements Item {
     @Override
     public String getStringValue() {
         return "null";
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return "NULL";
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return "NULL";
     }
 }

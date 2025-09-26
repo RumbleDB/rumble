@@ -24,12 +24,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -46,10 +46,9 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     public ObjectRemoveKeysFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
 
@@ -122,7 +121,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata());
+            .createObjectItem(finalKeylist, finalValueList, getMetadata(), true);
     }
 
     @Override
@@ -164,5 +163,27 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
                 getMetadata()
         );
         return childRDD.flatMap(transformation);
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame dataFrame = this.iterator.getDataFrame(context);
+        List<Item> columnsToDropItems = this.children.get(1).materialize(context);
+        if (columnsToDropItems.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
+                    getMetadata()
+            );
+        }
+        String[] columnsToDrop = new String[columnsToDropItems.size()];
+        int i = 0;
+        for (Item columnItem : columnsToDropItems) {
+            if (!columnItem.isString()) {
+                throw new UnexpectedTypeException("drop-columns invoked with non-string columns", getMetadata());
+            }
+            columnsToDrop[i] = columnItem.getStringValue();
+            ++i;
+        }
+        return new JSoundDataFrame(dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
     }
 }

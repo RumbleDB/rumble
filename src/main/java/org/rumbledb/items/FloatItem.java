@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -33,6 +33,8 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -65,6 +67,11 @@ public class FloatItem implements Item {
     @Override
     public float getFloatValue() {
         return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getFloatValue();
     }
 
     @Override
@@ -186,6 +193,34 @@ public class FloatItem implements Item {
         if (Float.isNaN(this.value)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", BuiltinTypesCatalogue.floatItem);
+        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.FLOAT);
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "FLOAT";
     }
 }

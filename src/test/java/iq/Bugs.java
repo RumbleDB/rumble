@@ -21,6 +21,7 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
@@ -51,7 +52,12 @@ public class Bugs extends AnnotationsTestsBase {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", "unknown");
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
@@ -73,6 +79,7 @@ public class Bugs extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
@@ -91,14 +98,14 @@ public class Bugs extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        SparkSessionManager.COLLECT_ITEM_LIMIT = defaultConfiguration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
+        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
     }
 
     @Override
@@ -145,16 +152,16 @@ public class Bugs extends AnnotationsTestsBase {
             while (
                 sequence.hasNext()
                     &&
-                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
-                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
+                    ((itemCount < getConfiguration().getResultSizeCap()
+                        && getConfiguration().getResultSizeCap() > 0)
                         ||
-                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
+                        getConfiguration().getResultSizeCap() == 0)
             ) {
                 sb.append(sequence.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
+            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT

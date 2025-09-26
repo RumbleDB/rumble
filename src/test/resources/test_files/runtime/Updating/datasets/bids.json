@@ -1,0 +1,16 @@
+{"userID" : "U02", "itemNO" : 1001, "bid" : 35, "bid_date" : "1999-01-07"}
+{"userID" : "U04", "itemNO" : 1001, "bid" : 40, "bid_date" : "1999-01-08"}
+{"userID" : "U02", "itemNO" : 1001, "bid" : 45, "bid_date" : "1999-01-11"}
+{"userID" : "U04", "itemNO" : 1001, "bid" : 50, "bid_date" : "1999-01-13"}
+{"userID" : "U02", "itemNO" : 1001, "bid" : 55, "bid_date" : "1999-01-15"}
+{"userID" : "U01", "itemNO" : 1002, "bid" : 400, "bid_date" : "1999-02-14"}
+{"userID" : "U02", "itemNO" : 1002, "bid" : 600, "bid_date" : "1999-02-16"}
+{"userID" : "U03", "itemNO" : 1002, "bid" : 800, "bid_date" : "1999-02-17"}
+{"userID" : "U04", "itemNO" : 1002, "bid" : 1000, "bid_date" : "1999-02-25"}
+{"userID" : "U02", "itemNO" : 1002, "bid" : 1200, "bid_date" : "1999-03-02"}
+{"userID" : "U04", "itemNO" : 1003, "bid" : 15, "bid_date" : "1999-01-22"}
+{"userID" : "U05", "itemNO" : 1003, "bid" : 20, "bid_date" : "1999-02-03"}
+{"userID" : "U01", "itemNO" : 1004, "bid" : 40, "bid_date" : "1999-03-05"}
+{"userID" : "U03", "itemNO" : 1007, "bid" : 175, "bid_date" : "1999-01-25"}
+{"userID" : "U05", "itemNO" : 1007, "bid" : 200, "bid_date" : "1999-02-08"}
+{"userID" : "U04", "itemNO" : 1007, "bid" : 225, "bid_date" : "1999-02-12"}

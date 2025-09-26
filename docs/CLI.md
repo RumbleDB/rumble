@@ -35,7 +35,14 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --variable:foo | N/A | variable:foo  |  bar |  --variable:foo bar initialize the global variable $foo to "bar". The query must contain the corresponding global variable declaration, e.g., "declare variable $foo external;" |
 | --context-item | -I | context-item  |  bar |  initializes the global context item $$ to "bar". The query must contain the corresponding global variable declaration, e.g., "declare context item external;" |
 | --context-item-input | -i | context-item-input  | - |  reads the context item value from the standard input |
-| --context-item-input-format | N/A | context-item-input-format  |  text or json |  sets the input format to use
-for parsing the standard input (as text or as a serialized json value) |
+| --context-item-input-format | N/A | context-item-input-format  |  text or json |  sets the input format to use for parsing the standard input (as text or as a serialized json value) |
 | --dates-with-timezone | N/A | dates-with-timezone  |  yes or no | activates timezone support for the type xs:date (deactivated by default) |
-
+| --optimize-general-comparison-to-value-comparison | N/A | optimize-general-comparison-to-value-comparison  |  yes or no | activates automatic conversion of general comparisons to value comparisons when applicable (activated by default) |
+| --function-inlining | N/A | function-inlining  |  yes or no | activates function inlining for non-recursive functions (activated by default) |
+| --parallel-execution | N/A | parallel-execution |  yes or no | activates parallel execution when possible (activated by default) |
+| --native-execution | N/A | native-execution |  yes or no | activates native (Spark SQL) execution when possible (activated by default) |
+| --default-language | N/A | N/A | jsoniq10, jsoniq31, xquery31 | specifies the query language to be used
+| --optimize-steps | N/A | N/A | yes or no| allows RumbleDB to optimize steps, might violate stability of document order (activated by default)
+| --optimize-steps-experimental | N/A | N/A | yes or no| experimentally optimizes steps more by skipping uniqueness and sorting in some cases. correctness is not yet verified (disabled by default)
+| --optimize-parent-pointers | N/A | N/A | yes or no| allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)
+| --static-base-uri | N/A | N/A | "../data/"| sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query

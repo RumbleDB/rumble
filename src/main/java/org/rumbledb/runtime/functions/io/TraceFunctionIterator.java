@@ -24,9 +24,8 @@ package org.rumbledb.runtime.functions.io;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -45,10 +44,9 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
     public TraceFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.position = 0;
     }
 
@@ -56,8 +54,12 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
         this.valueIterator = this.children.get(0);
-        this.labelIterator = this.children.get(1);
-        this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
+        if (this.children.size() == 2) {
+            this.labelIterator = this.children.get(1);
+            this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
+        } else {
+            this.label = "";
+        }
         this.valueIterator.open(context);
         this.hasNext = this.valueIterator.hasNext();
         this.position = 0;
@@ -66,7 +68,11 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void reset(DynamicContext context) {
         super.open(context);
-        this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
+        if (this.children.size() == 2) {
+            this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
+        } else {
+            this.label = "";
+        }
         this.valueIterator.reset(context);
         this.hasNext = this.valueIterator.hasNext();
         this.position = 0;

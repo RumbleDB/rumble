@@ -24,8 +24,8 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -46,10 +46,9 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
     public IndexOfFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.sequenceIterator = this.children.get(0);
         this.searchIterator = this.children.get(1);
     }
@@ -131,8 +130,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
-
-                if (c == 0) {
+                // if its double or float we additionally check that its not NanN, NaN cannot be found with indexOf
+                if (c == 0 && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }

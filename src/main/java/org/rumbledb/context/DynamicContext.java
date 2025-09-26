@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
  *
  */
 
@@ -27,13 +27,15 @@ import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
-import org.joda.time.DateTime;
+import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +47,14 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
-    private DateTime currentDateTime;
+    private OffsetDateTime currentDateTime;
+    private int currentMutabilityLevel;
+    private final GlobalVariables globalVariables;
+    /**
+     * The top-level runtime iterator for constructing the XML Node Tree.
+     * This is used in the context of direct constructors.
+     */
+    private RuntimeIterator topLevelRuntimeIterator;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -56,7 +65,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
-        this.currentDateTime = new DateTime();
+        this.currentDateTime = OffsetDateTime.now();
+        this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
+        this.topLevelRuntimeIterator = null;
     }
 
     /**
@@ -68,9 +80,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.parent = null;
         this.variableValues = new VariableValues();
         this.conf = conf;
-        this.namedFunctions = new NamedFunctions();
+        this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
-        this.currentDateTime = new DateTime();
+        this.currentDateTime = OffsetDateTime.now();
+        this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
+        this.topLevelRuntimeIterator = null;
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -82,6 +97,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
+        this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
     public DynamicContext(
@@ -98,9 +116,13 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 this.parent.variableValues,
                 localVariableValues,
                 rddVariableValues,
-                dataFrameVariableValues
+                dataFrameVariableValues,
+                parent.globalVariables
         );
         this.namedFunctions = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
+        this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -127,6 +149,14 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
         this.variableValues = kryo.readObject(input, VariableValues.class);
+    }
+
+    public int getCurrentMutabilityLevel() {
+        return this.currentMutabilityLevel;
+    }
+
+    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
+        this.currentMutabilityLevel = currentMutabilityLevel;
     }
 
     public enum VariableDependency {
@@ -156,6 +186,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 into.put(v, from.get(v));
             }
         }
+    }
+
+    public static Map<Name, DynamicContext.VariableDependency> copyVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> from
+    ) {
+        Map<Name, DynamicContext.VariableDependency> result = new HashMap<>();
+        for (Name v : from.keySet()) {
+            result.put(v, from.get(v));
+        }
+        return result;
     }
 
     @Override
@@ -210,9 +250,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         throw new OurBadException("In-scope schema types are not set up properly in dynamic context.");
     }
 
-    public DateTime getCurrentDateTime() {
+    public OffsetDateTime getCurrentDateTime() {
         if (this.parent != null) {
-            return this.parent.currentDateTime;
+            return this.parent.getCurrentDateTime();
         }
         return this.currentDateTime;
     }
@@ -222,6 +262,29 @@ public class DynamicContext implements Serializable, KryoSerializable {
         for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
             LogManager.getLogger("DynamicContext").debug(e.getKey() + " : " + e.getValue());
         }
+    }
+
+
+    public void addGlobalVariable(Name globalVariable) {
+        this.globalVariables.addGlobalVariable(globalVariable);
+    }
+
+    /**
+     * Gets the top-level runtime iterator for XML tree building.
+     * 
+     * @return the top-level runtime iterator, or null if not set
+     */
+    public RuntimeIterator getTopLevelRuntimeIterator() {
+        return this.topLevelRuntimeIterator;
+    }
+
+    /**
+     * Sets the top-level runtime iterator for XML tree building.
+     * 
+     * @param topLevelRuntimeIterator the top-level runtime iterator to set
+     */
+    public void setTopLevelRuntimeIterator(RuntimeIterator topLevelRuntimeIterator) {
+        this.topLevelRuntimeIterator = topLevelRuntimeIterator;
     }
 }
 

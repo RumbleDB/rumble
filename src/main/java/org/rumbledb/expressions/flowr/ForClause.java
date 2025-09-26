@@ -20,6 +20,9 @@
 
 package org.rumbledb.expressions.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -30,9 +33,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
-
-import java.util.Collections;
-import java.util.List;
 
 public class ForClause extends Clause {
 
@@ -90,18 +90,6 @@ public class ForClause extends Clause {
         return this.expression;
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-                || (this.previousClause != null
-                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
-                        ? ExecutionMode.DATAFRAME
-                        : ExecutionMode.LOCAL;
-
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -112,9 +100,20 @@ public class ForClause extends Clause {
         return this.variableHighestStorageMode;
     }
 
+    public void setVariableHighestStorageMode(ExecutionMode mode) {
+        this.variableHighestStorageMode = mode;
+    }
+
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.expression);
+        List<Node> result = new ArrayList<>();
+        if (this.expression != null) {
+            result.add(this.expression);
+        }
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
+        }
+        return result;
     }
 
     @Override
@@ -129,7 +128,7 @@ public class ForClause extends Clause {
         buffer.append(getClass().getSimpleName());
         buffer.append(
             " ("
-                + (this.variableName)
+                + ("$" + this.variableName)
                 + ", "
                 + this.getSequenceType().toString()
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
@@ -138,7 +137,8 @@ public class ForClause extends Clause {
                 + this.positionalVariableName
                 + ") "
         );
-        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

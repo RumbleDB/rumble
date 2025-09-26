@@ -28,18 +28,19 @@ import java.util.stream.LongStream;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 public class RangeOperationIterator extends HybridRuntimeIterator {
@@ -56,10 +57,9 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     public RangeOperationIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightiterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(leftIterator, rightiterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightiterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightiterator;
     }
@@ -192,5 +192,29 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftContext = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        if (leftContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext rightContext = this.rightIterator.generateNativeQuery(
+            new NativeClauseContext(leftContext, null, null)
+        );
+        if (rightContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(
+                rightContext,
+                String.format("sequence(%s, %s)", leftContext.getResultingQuery(), rightContext.getResultingQuery()),
+                new SequenceType(
+                        leftContext.getResultingType()
+                            .getItemType()
+                            .findLeastCommonSuperTypeWith(rightContext.getResultingType().getItemType()),
+                        SequenceType.Arity.ZeroOrMore
+                )
+        );
     }
 }

@@ -23,12 +23,12 @@ package org.rumbledb.runtime.control;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
@@ -40,13 +40,23 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            boolean isUpdating,
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.children.add(condition);
         this.children.add(branch);
         this.children.add(elseBranch);
+        this.isUpdating = isUpdating;
+    }
+
+    public IfRuntimeIterator(
+            RuntimeIterator condition,
+            RuntimeIterator branch,
+            RuntimeIterator elseBranch,
+            RuntimeStaticContext staticContext
+    ) {
+        this(condition, branch, elseBranch, false, staticContext);
     }
 
     @Override
@@ -110,5 +120,15 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
 
         return iterator.getDataFrame(dynamicContext);
+    }
+
+    @Override
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!isUpdating()) {
+            return new PendingUpdateList();
+        }
+
+        RuntimeIterator iterator = selectApplicableIterator(context);
+        return iterator.getPendingUpdateList(context);
     }
 }

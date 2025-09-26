@@ -1,95 +1,67 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
-import org.joda.time.DateTimeZone;
-import org.joda.time.Instant;
+import java.time.Duration;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidTimezoneException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item timeItem = null;
     private Item timezone = null;
 
-    public AdjustTimeToTimezone(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public AdjustTimeToTimezone(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.timeItem = this.children.get(0).materializeFirstItemOrNull(context);
-        if (this.children.size() == 2) {
-            this.timezone = this.children.get(1)
-                .materializeFirstItemOrNull(context);
-        }
-        if (this.timeItem == null) {
+        Item timeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (timeItem == null) {
             return null;
+        }
+        if (this.children.size() == 2) {
+            this.timezone = this.children.get(1).materializeFirstItemOrNull(context);
         }
         if (this.timezone == null && this.children.size() == 1) {
             return ItemFactory.getInstance()
-                .createTimeItem(this.timeItem.getDateTimeValue().withZone(DateTimeZone.UTC), true);
+                .createTimeItem(timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }
         if (this.timezone == null) {
-            if (this.timeItem.hasTimeZone()) {
-                return ItemFactory.getInstance()
-                    .createTimeItem(
-                        this.timeItem.getDateTimeValue()
-                            .withZoneRetainFields(this.timeItem.getDateTimeValue().getZone()),
-                        false
-                    );
-            }
             return ItemFactory.getInstance()
-                .createTimeItem(this.timeItem.getDateTimeValue(), this.timeItem.hasTimeZone());
+                .createTimeItem(timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.UTC), false);
         } else {
             if (this.checkTimeZoneArgument()) {
                 throw new InvalidTimezoneException("Invalid timezone", getMetadata());
             }
-            if (this.timeItem.hasTimeZone()) {
+            Duration timezoneDuration = this.timezone.getDurationValue();
+            int hours = (int) timezoneDuration.toHours();
+            int minutes = (int) timezoneDuration.toMinutes() % 60;
+            if (timeItem.hasTimeZone()) {
                 return ItemFactory.getInstance()
                     .createTimeItem(
-                        this.timeItem.getDateTimeValue()
-                            .withZone(
-                                DateTimeZone.forOffsetHoursMinutes(
-                                    this.timezone.getDurationValue().getHours(),
-                                    this.timezone.getDurationValue().getMinutes()
-                                )
-                            ),
+                        timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.ofHoursMinutes(hours, minutes)),
                         true
                     );
             }
             return ItemFactory.getInstance()
                 .createTimeItem(
-                    this.timeItem.getDateTimeValue()
-                        .withZoneRetainFields(
-                            DateTimeZone.forOffsetHoursMinutes(
-                                this.timezone.getDurationValue().getHours(),
-                                this.timezone.getDurationValue().getMinutes()
-                            )
-                        ),
+                    timeItem.getTimeValue().withOffsetSameLocal(ZoneOffset.ofHoursMinutes(hours, minutes)),
                     true
                 );
         }
     }
 
     private boolean checkTimeZoneArgument() {
-        return (Math.abs(this.timezone.getDurationValue().toDurationFrom(Instant.now()).getMillis()) > 50400000)
-            ||
-            (Double.compare(
-                this.timezone.getDurationValue().getSeconds()
-                    + this.timezone.getDurationValue().getMillis() * 1.0 / 1000,
-                0
-            ) != 0);
+        Duration timezoneDuration = this.timezone.getDurationValue();
+        return (Math.abs(timezoneDuration.toMinutes()) > 840) || (Double.compare(timezoneDuration.getNano(), 0) != 0);
     }
 }

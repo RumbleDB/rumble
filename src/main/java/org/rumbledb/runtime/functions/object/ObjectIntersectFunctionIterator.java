@@ -25,8 +25,7 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -46,10 +45,9 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     public ObjectIntersectFunctionIterator(
             List<RuntimeIterator> children,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(children, executionMode, iteratorMetadata);
+        super(children, staticContext);
         this.iterator = this.children.get(0);
     }
 
@@ -90,7 +88,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 }
             }
 
-            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
+            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
 
             return result;
         }

@@ -23,13 +23,16 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 import java.util.Map;
@@ -43,10 +46,9 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public CountFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
 
@@ -149,5 +151,42 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } else {
             return super.getVariableDependencies();
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
+            if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
+                return new NativeClauseContext(
+                        nativeClauseContext,
+                        "size"
+                            + nativeChildQuery.getResultingQuery()
+                                .substring(nativeChildQuery.getResultingQuery().indexOf("explode") + 7),
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                );
+            } else if (nativeChildQuery.getResultingQuery().contains(".count")) {
+                return nativeChildQuery;
+            } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.One)) {
+                return new NativeClauseContext(
+                        nativeChildQuery,
+                        "1",
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                );
+            } else if (nativeChildQuery.getResultingType().getArity().equals(SequenceType.Arity.OneOrZero)) {
+                return new NativeClauseContext(
+                        nativeChildQuery,
+                        "CASE WHEN (" + nativeChildQuery.getResultingQuery() + ") IS NULL THEN 0 ELSE 1 END",
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                );
+            } else {
+                return new NativeClauseContext(
+                        nativeChildQuery,
+                        "size (" + nativeChildQuery.getResultingQuery() + ")",
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                );
+            }
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 }

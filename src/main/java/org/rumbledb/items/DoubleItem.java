@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -33,6 +33,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -67,6 +69,11 @@ public class DoubleItem implements Item {
     @Override
     public double getDoubleValue() {
         return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getDoubleValue();
     }
 
     @Override
@@ -172,7 +179,7 @@ public class DoubleItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, "" + this.value, BuiltinTypesCatalogue.doubleItem);
+        return new NativeClauseContext(context, "" + this.value, SequenceType.DOUBLE);
     }
 
     @Override
@@ -183,5 +190,33 @@ public class DoubleItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DOUBLE";
     }
 }

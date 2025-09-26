@@ -1,6 +1,7 @@
 package org.rumbledb.items.structured;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,10 +12,12 @@ import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.VariantType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -38,6 +41,16 @@ public class JSoundDataFrame implements Serializable {
             int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
+            if (type instanceof VariantType) {
+                if (!this.itemType.equals(BuiltinTypesCatalogue.item)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: "
+                                + this.itemType
+                                + " is not the topmost item type."
+                    );
+                }
+            }
             if (type instanceof ArrayType) {
                 if (
                     this.itemType.equals(BuiltinTypesCatalogue.item)
@@ -59,6 +72,17 @@ public class JSoundDataFrame implements Serializable {
                 throw new OurBadException(
                         "Inconsistency in internal representation: " + this.itemType + " is an object type."
                 );
+            }
+            if (type instanceof VariantType) {
+                if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.item)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: "
+                                + this.itemType
+                                + " is not the topmost item type."
+                    );
+                }
+                return;
             }
             if (
                 this.itemType.equals(BuiltinTypesCatalogue.item)
@@ -124,6 +148,24 @@ public class JSoundDataFrame implements Serializable {
         return Arrays.asList(this.dataFrame.schema().fieldNames());
     }
 
+    public String getSQLColumnProjection(
+            boolean trailingComma
+    ) {
+        StringBuilder queryColumnString = new StringBuilder();
+        String comma = "";
+        for (String var : Arrays.asList(this.dataFrame.schema().fieldNames())) {
+            queryColumnString.append(comma);
+            comma = ",";
+            queryColumnString.append("`");
+            queryColumnString.append(var);
+            queryColumnString.append("`");
+        }
+        if (trailingComma) {
+            queryColumnString.append(comma);
+        }
+        return queryColumnString.toString();
+    }
+
     public void createOrReplaceTempView(String name) {
         this.dataFrame.createOrReplaceTempView(name);
     }
@@ -176,5 +218,39 @@ public class JSoundDataFrame implements Serializable {
 
     public JSoundDataFrame repartition(int n) {
         return new JSoundDataFrame(this.getDataFrame().repartition(n), this.itemType);
+    }
+
+    /**
+     * @return list of FLWOR columns in the schema
+     */
+    public List<FlworDataFrameColumn> getColumns() {
+        List<FlworDataFrameColumn> result = new ArrayList<>();
+        for (String s : this.dataFrame.schema().fieldNames()) {
+            result.add(new FlworDataFrameColumn(s, this.dataFrame.schema()));
+        }
+        return result;
+    }
+
+    public static boolean containsVariantType(Dataset<Row> dataFrame) {
+        return containsVariantTypeInSchema(dataFrame.schema());
+    }
+
+    private static boolean containsVariantTypeInSchema(DataType dataType) {
+        if (dataType instanceof VariantType) {
+            return true;
+        }
+        if (dataType instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dataType;
+            return containsVariantTypeInSchema(arrayType.elementType());
+        }
+        if (dataType instanceof StructType) {
+            StructType structType = (StructType) dataType;
+            for (StructField field : structType.fields()) {
+                if (containsVariantTypeInSchema(field.dataType())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
