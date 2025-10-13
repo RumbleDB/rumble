@@ -109,10 +109,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
-            String path = uri.toString();
-            if (uri.getScheme().contentEquals("file")) {
-                path = path.replaceAll("%20", " ");
-            }
+            String path = FileSystemUtil.convertURIToStringForSpark(uri);
 
             if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()

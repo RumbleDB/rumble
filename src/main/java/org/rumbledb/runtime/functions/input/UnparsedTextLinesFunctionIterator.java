@@ -103,14 +103,14 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
             if (this.children.size() == 1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .textFile(uri.toString(), MIN_PARTITIONS);
+                    .textFile(FileSystemUtil.convertURIToStringForSpark(uri), MIN_PARTITIONS);
             } else {
                 RuntimeIterator partitionsIterator = this.children.get(1);
                 partitionsIterator.open(context);
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .textFile(
-                        uri.toString(),
+                        FileSystemUtil.convertURIToStringForSpark(uri),
                         partitionsIterator.next().getIntValue()
                     );
                 partitionsIterator.close();

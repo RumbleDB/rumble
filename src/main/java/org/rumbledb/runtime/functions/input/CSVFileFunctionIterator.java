@@ -28,6 +28,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -88,11 +89,13 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                     }
                 }
             }
-            Dataset<Row> dataFrame = dfr.csv(uri.toString());
+            Dataset<Row> dataFrame = dfr.csv(FileSystemUtil.convertURIToStringForSpark(uri));
             return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException || e instanceof IllegalArgumentException) {
-                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                RumbleException ex = new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                ex.initCause(e);
+                throw ex;
             } else {
                 throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
             }

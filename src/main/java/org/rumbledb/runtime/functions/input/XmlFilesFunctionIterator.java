@@ -89,7 +89,9 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .parallelizePairs(
-                    Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)),
+                    Collections.singletonList(
+                        new Tuple2<>(FileSystemUtil.convertURIToStringForSpark(uri), fileContent)
+                    ),
                     partitions
                 );
         } else {
@@ -97,10 +99,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
-            String path = uri.toString();
-            if (uri.getScheme().contentEquals("file")) {
-                path = path.replaceAll("%20", " ");
-            }
+            String path = FileSystemUtil.convertURIToStringForSpark(uri);
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .wholeTextFiles(

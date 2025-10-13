@@ -68,6 +68,13 @@ public class FileSystemUtil {
         }
     }
 
+    public static String convertURIToStringForSpark(URI uri) {
+        if (uri.getScheme().equals("file")) {
+            return uri.getPath();
+        }
+        return uri.toString();
+    }
+
     public static URI resolveURIAgainstWorkingDirectory(
             String url,
             RumbleRuntimeConfiguration conf,
