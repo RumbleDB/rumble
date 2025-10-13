@@ -76,11 +76,13 @@ public class FileSystemUtil {
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path workingDirectory = fileContext.getWorkingDirectory();
-            URI baseUri = new URI(workingDirectory.toString() + Path.SEPARATOR + "foo");
+            String escapedWorkingDirectory = workingDirectory.toString().replace(" ", "%20");
+            URI baseUri = new URI(escapedWorkingDirectory + Path.SEPARATOR + "foo");
             if (url == null || url.isEmpty()) {
                 return baseUri.resolve(".");
             }
-            return baseUri.resolve(url);
+            String escapedUrl = url.replace(" ", "%20");
+            return baseUri.resolve(escapedUrl);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
                     "The default file system is not supported!",
