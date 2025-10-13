@@ -77,7 +77,11 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
             session.sql(truncateQuery);
         } else {
             try {
-                FileSystemUtil.delete(new URI(this.collectionName), this.configuration, this.metadata);
+                URI collectionURI = new URI(this.collectionName);
+                if (collectionURI.getScheme() == null) {
+                    collectionURI = new URI("file://" + this.collectionName);
+                }
+                FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
