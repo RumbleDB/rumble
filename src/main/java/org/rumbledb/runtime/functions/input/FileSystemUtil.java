@@ -46,8 +46,6 @@ public class FileSystemUtil {
     }
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
-        Path basePath = new Path(base);
-        Path resolvedPath = new Path(basePath, url);
         if (!base.isAbsolute()) {
             throw new OurBadException(
                     "The base URI is not absolute!",
@@ -55,7 +53,8 @@ public class FileSystemUtil {
             );
         }
         try {
-            return resolvedPath.toUri();
+            URI resolvedURI = base.resolve(url);
+            return resolvedURI;
         } catch (IllegalArgumentException e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "Malformed URI: " + url + " Cause: " + e.getMessage(),
@@ -85,8 +84,9 @@ public class FileSystemUtil {
             if (url == null || url.isEmpty()) {
                 url = ".";
             }
-            Path resolvedPath = new Path(workingDirectory, url);
-            return resolvedPath.toUri();
+            Path virtualPath = new Path(workingDirectory, "foo");
+            URI virtualURI = virtualPath.toUri();
+            return virtualURI.resolve(url);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
                     "The default file system is not supported!",
