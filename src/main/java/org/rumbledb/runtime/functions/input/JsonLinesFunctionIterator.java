@@ -67,7 +67,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        url = url.replaceAll(" ", "%20");
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
         int partitions = -1;
