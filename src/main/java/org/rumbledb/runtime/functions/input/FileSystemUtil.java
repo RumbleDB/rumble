@@ -54,10 +54,7 @@ public class FileSystemUtil {
         }
         try {
             Path relativePath = new Path(url);
-            System.err.println("URL:  " + url);
-            System.err.println("Relative Path:  " + relativePath);
             URI relativeURI = relativePath.toUri();
-            System.err.println("Relative URI:  " + relativeURI);
             URI resolvedURI = base.resolve(relativeURI);
             return resolvedURI;
         } catch (Exception e) {
@@ -86,23 +83,20 @@ public class FileSystemUtil {
     ) {
         try {
             Path workingDirectory = FileContext.getFileContext().getWorkingDirectory();
+            Path virtualPath = new Path(workingDirectory, "foo");
+            URI virtualURI = virtualPath.toUri();
             if (url == null || url.isEmpty()) {
                 url = ".";
             }
-            Path virtualPath = new Path(workingDirectory, "foo");
-            URI virtualURI = virtualPath.toUri();
             Path relativePath = new Path(url);
-            System.err.println("URL:  " + url);
-            System.err.println("Relative Path:  " + relativePath);
             URI relativeURI = relativePath.toUri();
-            System.err.println("Relative URI:  " + relativeURI);
             return virtualURI.resolve(relativeURI);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
                     "The default file system is not supported!",
                     metadata
             );
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "Malformed URI: " + url + " Cause: " + e.getMessage(),
                     metadata
