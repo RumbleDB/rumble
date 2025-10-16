@@ -10,13 +10,13 @@ on:
 
 jobs:
   qt3-jsoniq:
-    uses: EPMatt/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: jsoniq
       mvn_args: ''
       run_analytics: true
   qt3-xquery:
-    uses: EPMatt/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: xquery
       mvn_args: ''
