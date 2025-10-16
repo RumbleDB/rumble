@@ -39,12 +39,12 @@ jobs:
       - name: Download JSONiq artifacts
         uses: actions/download-artifact@v4
         with:
-          name: collect-artifacts-jsoniq
+          name: collected-artifacts-jsoniq
           path: artifacts/jsoniq
       - name: Download XQuery artifacts
         uses: actions/download-artifact@v4
         with:
-          name: collect-artifacts-xquery
+          name: collected-artifacts-xquery
           path: artifacts/xquery
       - name: Generate and post comment
         uses: actions/github-script@v7
