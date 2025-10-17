@@ -109,7 +109,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         // If it is a delta-file() call we need to resolve the path to an absolute path.
         if (!this.isTable) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, collectionName, getMetadata());
-            collectionName = uri.toString();
+            collectionName = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 
         Dataset<Row> contentDF = null;
