@@ -56,6 +56,15 @@ public class FileSystemUtil {
             Path relativePath = new Path(url);
             URI relativeURI = relativePath.toUri();
             URI resolvedURI = base.resolve(relativeURI);
+            if (url.endsWith("/")) {
+                // preserve trailing slash if any for correct resolution against it as a directory in the future.
+                String resolvedString = resolvedURI.toString();
+                if (!resolvedString.endsWith("/")) {
+                    resolvedString += "/";
+                    resolvedURI = new URI(resolvedString);
+                }
+            }
+            System.err.println("Resolved URI: " + resolvedURI);
             return resolvedURI;
         } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
