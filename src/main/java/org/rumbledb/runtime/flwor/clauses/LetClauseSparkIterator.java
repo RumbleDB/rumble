@@ -414,7 +414,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = inputDF.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(this.variableName);
-        inputSchema.printTreeString();
         Map<Name, VariableDependency> prefilterProjection = DynamicContext.copyVariableDependencies(parentProjection);
         DynamicContext.mergeVariableDependencies(prefilterProjection, predicateDependencies);
         prefilterProjection.put(this.variableName, prefilterProjection.get(Name.CONTEXT_ITEM));
