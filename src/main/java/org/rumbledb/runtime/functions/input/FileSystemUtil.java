@@ -64,7 +64,6 @@ public class FileSystemUtil {
                     resolvedURI = new URI(resolvedString);
                 }
             }
-            System.err.println("Resolved URI: " + resolvedURI);
             return resolvedURI;
         } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
