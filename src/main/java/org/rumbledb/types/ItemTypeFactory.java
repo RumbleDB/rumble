@@ -58,16 +58,18 @@ public class ItemTypeFactory {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
                 boolean unique = false;
+                boolean canBeNull = false;
                 if (key.startsWith("!")) {
                     key = key.substring(1);
                     required = true;
                 }
-                if (key.endsWith("?")) {
-                    throw new InvalidSchemaException("? not supported yet", ExceptionMetadata.EMPTY_METADATA);
-                }
                 if (key.startsWith("@")) {
                     key = key.substring(1);
                     unique = true;
+                }
+                if (key.endsWith("?")) {
+                    key = key.substring(0, key.length() - 1);
+                    canBeNull = true;
                 }
                 Item defaultValueLiteral = null;
                 if (value.isString() && value.getStringValue().contains("=")) {
@@ -89,6 +91,13 @@ public class ItemTypeFactory {
                 fieldDescriptor.setName(key);
                 fieldDescriptor.setRequired(required);
                 ItemType type = createItemTypeFromJSoundCompactItem(null, value, staticContext);
+                if (canBeNull) {
+                    type = new UnionItemType(
+                            null,
+                            BuiltinTypesCatalogue.item,
+                            Arrays.asList(type, BuiltinTypesCatalogue.nullItem)
+                    );
+                }
                 fieldDescriptor.setType(type);
                 fieldDescriptor.setUnique(unique);
                 fieldDescriptor.setDefaultValue(defaultValueLiteral);

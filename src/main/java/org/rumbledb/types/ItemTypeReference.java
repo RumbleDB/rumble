@@ -344,11 +344,11 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getArrayContentFacet();
     }
 
-    public UnionContentDescriptor getUnionContentFacet() {
+    public List<ItemType> getTypes() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
-        return this.resolvedItemType.getUnionContentFacet();
+        return this.resolvedItemType.getTypes();
     }
 
     public String getIdentifierString() {
