@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 42 }, { "foo" : null }, { "foo" : null }, { "foo" : 42 }, { }, Success, { "foo" : 42 }, Success, Success, { "foo" : 42 }, { "foo" : null }, { "foo" : null }, { "foo" : [ { "bar" : "foo" } ] }, { "foo" : null }, { "foo" : null }, { "foo" : { "bar" : "foo" } }, { "foo" : null }, { "foo" : null }" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 42 }, { "foo" : null }, { "foo" : null }, { "foo" : 42 }, { }, Success, { "foo" : 42 }, Success, Success, { "foo" : 42 }, { "foo" : null }, { "foo" : null }, { "foo" : [ { "bar" : "foo" } ] }, { "foo" : null }, { "foo" : null }, { "foo" : { "bar" : "foo" } }, { "foo" : null }, { "foo" : null })" :)
 declare type local:canbenull as { "foo?" : "integer" };
 declare type local:optional as { "foo" : "integer" };
 declare type local:required as { "!foo" : "integer" };
