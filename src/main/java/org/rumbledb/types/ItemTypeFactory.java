@@ -57,6 +57,7 @@ public class ItemTypeFactory {
             for (String key : item.getKeys()) {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
+                boolean unique = false;
                 if (key.startsWith("!")) {
                     key = key.substring(1);
                     required = true;
@@ -65,7 +66,8 @@ public class ItemTypeFactory {
                     throw new InvalidSchemaException("? not supported yet", ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (key.startsWith("@")) {
-                    throw new InvalidSchemaException("@ not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                    key = key.substring(1);
+                    unique = true;
                 }
                 Item defaultValueLiteral = null;
                 if (value.isString() && value.getStringValue().contains("=")) {
@@ -88,7 +90,7 @@ public class ItemTypeFactory {
                 fieldDescriptor.setRequired(required);
                 ItemType type = createItemTypeFromJSoundCompactItem(null, value, staticContext);
                 fieldDescriptor.setType(type);
-                fieldDescriptor.setUnique(false);
+                fieldDescriptor.setUnique(unique);
                 fieldDescriptor.setDefaultValue(defaultValueLiteral);
                 fields.put(key, fieldDescriptor);
             }

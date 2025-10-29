@@ -37,8 +37,10 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ValidateTypeIterator extends HybridRuntimeIterator {
 
@@ -492,12 +494,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             for (Item member : item.getItems()) {
                 members.add(validate(member, itemType.getArrayContentFacet(), metadata, true, configuration));
             }
+
+            // Test of length facets
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members, true);
-            if (itemType.getName() == null) {
-                itemType = itemType.getBaseType();
-            }
             if (minLength != null && members.size() < minLength) {
                 throw new InvalidInstanceException(
                         "Array has " + members.size() + " members but the type requires at least " + minLength
@@ -509,6 +510,35 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
 
+            // Test of uniqueness
+            if (itemType.getArrayContentFacet().isObjectItemType()) {
+                Map<String, FieldDescriptor> contentFacets = itemType.getArrayContentFacet().getObjectContentFacet();
+                List<String> uniqueKeys = new ArrayList<>();
+                for (Map.Entry<String, FieldDescriptor> entry : contentFacets.entrySet()) {
+                    if (entry.getValue().isUnique()) {
+                        uniqueKeys.add(entry.getKey());
+                        System.err.println("Unique key: " + entry.getKey());
+                    }
+                }
+                if (!uniqueKeys.isEmpty()) {
+                    Set<List<Item>> uniqueCombinations = new HashSet<>();
+                    for (Item member : members) {
+                        List<Item> combination = new ArrayList<>();
+                        for (String uniqueKey : uniqueKeys) {
+                            combination.add(member.getItemByKey(uniqueKey));
+                        }
+                        if (!uniqueCombinations.add(combination)) {
+                            throw new InvalidInstanceException(
+                                    "Duplicate combination found for unique keys " + uniqueKeys
+                            );
+                        }
+                    }
+                }
+            }
+
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
             return ItemFactory.getInstance().createAnnotatedItem(arrayItem, itemType);
         }
         if (itemType.isObjectItemType()) {
