@@ -517,7 +517,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 for (Map.Entry<String, FieldDescriptor> entry : contentFacets.entrySet()) {
                     if (entry.getValue().isUnique()) {
                         uniqueKeys.add(entry.getKey());
-                        System.err.println("Unique key: " + entry.getKey());
                     }
                 }
                 if (!uniqueKeys.isEmpty()) {
@@ -559,7 +558,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     ItemType expectedType = fieldDescriptor.getType();
                     Item value = item.getItemByKey(key);
                     if (value.isNull()) {
-                        if (expectedType.equals(BuiltinTypesCatalogue.nullItem)) {
+                        if (expectedType.equals(BuiltinTypesCatalogue.nullItem) || expectedType.isUnionType()) {
                             keys.add(key);
                             values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
                         } else if (fieldDescriptor.isRequired()) {
@@ -621,6 +620,18 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             return item;
+        }
+        if (itemType.isUnionType()) {
+            for (ItemType memberType : itemType.getTypes()) {
+                try {
+                    return validate(item, memberType, metadata, true, configuration);
+                } catch (InvalidInstanceException ex) {
+                    // try next type
+                }
+            }
+            throw new InvalidInstanceException(
+                    "Item " + item.serialize() + " does not conform to union type " + itemType.getIdentifierString()
+            );
         }
         return item;
     }
