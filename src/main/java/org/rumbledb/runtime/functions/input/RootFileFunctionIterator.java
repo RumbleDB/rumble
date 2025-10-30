@@ -72,7 +72,7 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
             if (path != null) {
                 reader.option("tree", path);
             }
-            Dataset<Row> dataFrame = reader.load(uri.toString());
+            Dataset<Row> dataFrame = reader.load(FileSystemUtil.convertURIToStringForSpark(uri));
             return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
