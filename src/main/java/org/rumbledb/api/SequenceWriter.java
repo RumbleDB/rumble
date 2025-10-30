@@ -177,7 +177,7 @@ public class SequenceWriter {
                     this.sequence,
                     null,
                     source,
-                    (this.dataFrameWriter == null) ? this.mode : this.dataFrameWriter.curmode(),
+                    (this.dataFrameWriter == null) ? this.mode : SaveMode.ErrorIfExists,
                     (this.dataFrameWriter == null) ? this.outputFormatOptions : new HashMap<>(),
                     this.configuration
             );
