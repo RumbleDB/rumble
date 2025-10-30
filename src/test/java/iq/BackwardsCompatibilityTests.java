@@ -35,7 +35,6 @@ import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 import scala.Function0;
-import scala.util.Properties;
 
 import java.io.File;
 import java.util.*;

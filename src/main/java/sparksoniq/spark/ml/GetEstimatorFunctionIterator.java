@@ -86,7 +86,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
         }
 
         try {
-            Estimator<?> estimator = (Estimator<?>) estimatorSparkMLClass.newInstance();
+            Estimator<?> estimator = (Estimator<?>) estimatorSparkMLClass.getDeclaredConstructor().newInstance();
 
             if (paramMapItem != null) {
                 for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
@@ -141,7 +141,8 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                     bodyIterator
             );
 
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException | java.lang.reflect.InvocationTargetException
+                | NoSuchMethodException e) {
             throw new OurBadException(
                     "Error while generating an instance from the estimator class " + estimatorFullClassName,
                     getMetadata()

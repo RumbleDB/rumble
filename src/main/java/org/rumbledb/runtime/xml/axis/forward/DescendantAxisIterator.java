@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DescendantAxisIterator extends AxisIterator {
+    private static final long serialVersionUID = 1L;
     public DescendantAxisIterator(RuntimeStaticContext staticContext) {
         super(staticContext);
     }

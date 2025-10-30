@@ -13,7 +13,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import scala.Function0;
 import scala.util.Properties;
-import scala.Function0;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.BufferedWriter;
@@ -413,6 +412,7 @@ public class UpdatesForRumbleBenchmark {
         long start;
         long end;
         long diff;
+        @SuppressWarnings("unused")
         List<Item> res;
 
         this.appendToFile(outputPath, "RUMBLE");

@@ -12,6 +12,7 @@ import java.util.List;
  * It is expected that no results are returned for this iterator.
  */
 public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
 

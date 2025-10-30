@@ -7,6 +7,7 @@ import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class BreakStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     public BreakStatementIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);
     }

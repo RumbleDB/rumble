@@ -9,6 +9,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.List;
 
 public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private Item low;
     private Item high;
     private Item type;
