@@ -274,7 +274,7 @@ public class SequenceOfItems {
                     "Cannot materialize a sequence of "
                         + num
                         + " items because the limit is set to "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + this.configuration.getResultSizeCap()
                         + ". This value can be configured with the --materialization-cap parameter at startup",
                     ExceptionMetadata.EMPTY_METADATA
             );
