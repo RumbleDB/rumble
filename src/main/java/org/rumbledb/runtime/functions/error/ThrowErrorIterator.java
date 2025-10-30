@@ -11,6 +11,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.List;
 
 public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
+
     public ThrowErrorIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }

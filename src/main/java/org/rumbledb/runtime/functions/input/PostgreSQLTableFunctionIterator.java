@@ -51,7 +51,6 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
 
         String connectionString = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
         String table = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
-        String query = "SELECT * FROM " + table + "";
         int partitions = -1;
         if (this.children.size() > 2) {
             partitions = this.children.get(2).materializeFirstItemOrNull(context).getIntValue();

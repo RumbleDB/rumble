@@ -11,7 +11,7 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.util.*;
 
-public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
+public class ArrayItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
@@ -332,6 +332,7 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
         output.writeInt(this.maxLength != null ? this.maxLength : -1);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.name = kryo.readObjectOrNull(input, Name.class);

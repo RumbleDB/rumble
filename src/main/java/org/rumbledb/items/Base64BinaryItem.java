@@ -12,7 +12,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-import java.util.Base64;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
