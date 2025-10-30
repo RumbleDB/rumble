@@ -164,7 +164,11 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
     }
 
-    public static List<Item> collectRDDwithLimit(JavaRDD<Item> rdd, RumbleRuntimeConfiguration configuration, ExceptionMetadata metadata) {
+    public static List<Item> collectRDDwithLimit(
+            JavaRDD<Item> rdd,
+            RumbleRuntimeConfiguration configuration,
+            ExceptionMetadata metadata
+    ) {
         if (configuration.getMaterializationCap() > 0) {
             List<Item> result = rdd.take(configuration.getMaterializationCap() + 1);
             if (result.size() == configuration.getMaterializationCap() + 1) {

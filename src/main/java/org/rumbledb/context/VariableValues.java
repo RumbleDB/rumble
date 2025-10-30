@@ -35,7 +35,6 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -216,7 +215,7 @@ public class VariableValues implements Serializable, KryoSerializable {
                 throw new JobWithinAJobException(metadata);
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration,metadata);
+            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {

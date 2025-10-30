@@ -37,8 +37,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.CannotMaterializeException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.AnyURIItem;
@@ -283,26 +281,6 @@ public class SparkSessionManager {
             this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return this.javaSparkContext;
-    }
-
-    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, ExceptionMetadata metadata) {
-        if (SparkSessionManager.LIMIT_COLLECT()) {
-            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
-            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
-                long count = rdd.count();
-                throw new CannotMaterializeException(
-                        "Cannot materialize a sequence of "
-                            + count
-                            + " items because the limit is set to "
-                            + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + ". This value can be configured with the --materialization-cap parameter at startup",
-                        metadata
-                );
-            }
-            return result;
-        } else {
-            return rdd.collect();
-        }
     }
 
     public static <T> long collectRDDwithLimitWarningOnly(JavaRDD<T> rdd, List<T> outputList) {
