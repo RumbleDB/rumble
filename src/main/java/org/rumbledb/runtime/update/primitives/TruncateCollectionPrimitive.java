@@ -8,7 +8,6 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.spark.sql.SparkSession;
 
@@ -76,11 +75,12 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
             );
             session.sql(truncateQuery);
         } else {
-            try {
-                FileSystemUtil.delete(new URI(this.collectionName), this.configuration, this.metadata);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+            URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                collectionName,
+                configuration,
+                metadata
+            );
+            FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
         }
 
 

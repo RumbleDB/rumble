@@ -387,7 +387,7 @@ public class SequenceWriter {
             ExceptionMetadata.EMPTY_METADATA
         );
         if (this.dataFrameWriter != null) {
-            this.dataFrameWriter.save(outputUri.toString());
+            this.dataFrameWriter.save(FileSystemUtil.convertURIToStringForSpark(outputUri));
             return;
         }
         if (
@@ -423,7 +423,7 @@ public class SequenceWriter {
         JavaRDD<Item> rdd = this.sequence.getAsRDD();
         Serializer serializer = getSerializer();
         JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
-        outputRDD.saveAsTextFile(outputUri.toString());
+        outputRDD.saveAsTextFile(FileSystemUtil.convertURIToStringForSpark(outputUri));
     }
 
     public Serializer getSerializer() {

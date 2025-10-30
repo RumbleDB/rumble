@@ -99,7 +99,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
             if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
-            collectionName = uri.toString();
+            collectionName = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();

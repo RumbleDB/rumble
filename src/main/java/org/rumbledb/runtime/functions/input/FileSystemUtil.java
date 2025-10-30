@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -47,9 +46,6 @@ public class FileSystemUtil {
     }
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
-        if (url.contains(" ")) {
-            url = url.replace(" ", "%20");
-        }
         if (!base.isAbsolute()) {
             throw new OurBadException(
                     "The base URI is not absolute!",
@@ -57,8 +53,19 @@ public class FileSystemUtil {
             );
         }
         try {
-            return base.resolve(url);
-        } catch (IllegalArgumentException e) {
+            Path relativePath = new Path(url);
+            URI relativeURI = relativePath.toUri();
+            URI resolvedURI = base.resolve(relativeURI);
+            if (url.endsWith("/")) {
+                // preserve trailing slash if any for correct resolution against it as a directory in the future.
+                String resolvedString = resolvedURI.toString();
+                if (!resolvedString.endsWith("/")) {
+                    resolvedString += "/";
+                    resolvedURI = new URI(resolvedString);
+                }
+            }
+            return resolvedURI;
+        } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "Malformed URI: " + url + " Cause: " + e.getMessage(),
                     metadata
@@ -68,32 +75,36 @@ public class FileSystemUtil {
         }
     }
 
+    /*
+     * Spark methods cannot handle URIs (e.g. with % escaping) so
+     * we need to convert them to paths.
+     */
+    public static String convertURIToStringForSpark(URI uri) {
+        Path path = new Path(uri);
+        return path.toString();
+    }
+
     public static URI resolveURIAgainstWorkingDirectory(
             String url,
             RumbleRuntimeConfiguration conf,
             ExceptionMetadata metadata
     ) {
         try {
-            FileContext fileContext = FileContext.getFileContext();
-            Path workingDirectory = fileContext.getWorkingDirectory();
-            URI baseUri = new URI(workingDirectory.toString() + Path.SEPARATOR + "foo");
+            Path workingDirectory = FileContext.getFileContext().getWorkingDirectory();
+            Path virtualPath = new Path(workingDirectory, "foo");
+            URI virtualURI = virtualPath.toUri();
             if (url == null || url.isEmpty()) {
-                return baseUri.resolve(".");
+                url = ".";
             }
-            return baseUri.resolve(url);
+            Path relativePath = new Path(url);
+            URI relativeURI = relativePath.toUri();
+            return virtualURI.resolve(relativeURI);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
                     "The default file system is not supported!",
                     metadata
             );
-        } catch (IllegalArgumentException e) {
-            RumbleException rumbleException = new CannotRetrieveResourceException(
-                    "Malformed URI: " + url + " Cause: " + e.getMessage(),
-                    metadata
-            );
-            rumbleException.initCause(e);
-            throw rumbleException;
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "Malformed URI: " + url + " Cause: " + e.getMessage(),
                     metadata

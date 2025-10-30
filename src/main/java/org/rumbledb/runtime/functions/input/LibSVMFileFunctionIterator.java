@@ -61,7 +61,7 @@ public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
                 .getOrCreateSession()
                 .read()
                 .format("libsvm")
-                .load(uri.toString());
+                .load(FileSystemUtil.convertURIToStringForSpark(uri));
             return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
