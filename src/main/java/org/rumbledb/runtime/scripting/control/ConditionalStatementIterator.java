@@ -11,6 +11,7 @@ import java.util.List;
 
 public class ConditionalStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
+
     public ConditionalStatementIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }

@@ -12,6 +12,7 @@ import java.io.IOException;
 
 public class Serializer implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
+
     public enum Method {
         JSON,
         TYSON,

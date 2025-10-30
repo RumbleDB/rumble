@@ -150,8 +150,12 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     bodyIterator
             );
 
-        } catch (InstantiationException | IllegalAccessException  | java.lang.reflect.InvocationTargetException
-                | NoSuchMethodException e) {
+        } catch (
+                InstantiationException
+                | IllegalAccessException
+                | java.lang.reflect.InvocationTargetException
+                | NoSuchMethodException e
+        ) {
             throw new OurBadException(
                     "Error while generating an instance from transformer class + " + transformerFullClassName,
                     getMetadata()

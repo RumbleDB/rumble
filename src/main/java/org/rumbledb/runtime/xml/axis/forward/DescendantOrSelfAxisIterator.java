@@ -11,6 +11,7 @@ import java.util.List;
 
 public class DescendantOrSelfAxisIterator extends AxisIterator {
     private static final long serialVersionUID = 1L;
+
     public DescendantOrSelfAxisIterator(RuntimeStaticContext staticContext) {
         super(staticContext);
     }

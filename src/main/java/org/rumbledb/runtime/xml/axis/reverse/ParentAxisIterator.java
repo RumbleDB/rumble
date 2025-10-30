@@ -11,6 +11,7 @@ import java.util.List;
 
 public class ParentAxisIterator extends AxisIterator {
     private static final long serialVersionUID = 1L;
+
     public ParentAxisIterator(RuntimeStaticContext staticContext) {
         super(staticContext);
     }

@@ -11,6 +11,7 @@ import java.util.List;
 
 public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
+
     public IsNullIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }

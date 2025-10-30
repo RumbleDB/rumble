@@ -141,8 +141,12 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                     bodyIterator
             );
 
-        } catch (InstantiationException | IllegalAccessException | java.lang.reflect.InvocationTargetException
-                | NoSuchMethodException e) {
+        } catch (
+                InstantiationException
+                | IllegalAccessException
+                | java.lang.reflect.InvocationTargetException
+                | NoSuchMethodException e
+        ) {
             throw new OurBadException(
                     "Error while generating an instance from the estimator class " + estimatorFullClassName,
                     getMetadata()

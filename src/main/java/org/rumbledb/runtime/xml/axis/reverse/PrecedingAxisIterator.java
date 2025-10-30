@@ -12,6 +12,7 @@ import java.util.List;
 
 public class PrecedingAxisIterator extends AxisIterator {
     private static final long serialVersionUID = 1L;
+
     public PrecedingAxisIterator(RuntimeStaticContext staticContext) {
         super(staticContext);
     }
