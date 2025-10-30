@@ -13,7 +13,6 @@ import static org.apache.spark.sql.functions.lit;
 public class EditTuplePrimitive implements UpdatePrimitive {
     private Item target;
     private Dataset<Row> contents;
-    private Row targetRow;
 
     public EditTuplePrimitive(Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
         this.target = target;
@@ -63,10 +62,8 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         String collectionPath = this.getCollectionPath();
-        int targetMutabilityLevel = this.target.getMutabilityLevel();
         long targetRowID = this.target.getTopLevelID();
         double targetRowOrder = this.target.getTopLevelOrder();
-        String pathInColumn = this.target.getPathIn();
 
         this.contents = this.contents
             .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))

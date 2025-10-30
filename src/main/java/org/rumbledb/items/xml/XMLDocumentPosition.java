@@ -34,6 +34,7 @@ import java.util.Objects;
  * This class is used to ensure the uniqueness and ordering of items across XML documents.
  */
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable, KryoSerializable {
+    private static final long serialVersionUID = 1L;
     private String path;
     private int docPosition;
 

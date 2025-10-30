@@ -7,6 +7,7 @@ import org.rumbledb.context.Name;
 
 // TODO: Add support for name test
 public class NameTest implements NodeTest {
+    private static final long serialVersionUID = 1L;
     private Name qname;
     private String wildcardWithNCName;
 

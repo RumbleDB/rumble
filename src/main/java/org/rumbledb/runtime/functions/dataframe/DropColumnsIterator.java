@@ -13,6 +13,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.List;
 
 public class DropColumnsIterator extends HybridRuntimeIterator {
+    private static final long serialVersionUID = 1L;
+
     public DropColumnsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }

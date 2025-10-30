@@ -13,6 +13,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.Map;
 
 public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryStatementIterator;
     private final Map<String, RuntimeIterator> catchStatements;
     private final RuntimeIterator catchAllStatements;

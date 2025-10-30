@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class AxisIterator extends LocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     protected List<Item> results;
     protected int resultCounter = 0;
     protected Item nextResult;

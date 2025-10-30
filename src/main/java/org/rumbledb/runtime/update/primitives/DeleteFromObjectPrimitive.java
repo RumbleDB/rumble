@@ -8,8 +8,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.apache.spark.sql.functions.*;
-
 public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
     private Item target;

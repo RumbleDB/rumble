@@ -59,6 +59,7 @@ public class gMonthDayItem implements Item {
         this.month = Month.of(Integer.parseInt(matcher.group(1)));
         this.day = Integer.parseInt(matcher.group(2));
         try {
+            @SuppressWarnings("unused")
             LocalDate ignore = LocalDate.of(2000, this.month.getValue(), this.day);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid xs:gMonthDay: \"" + gMonthDayString + "\"");

@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 public class AnyKindTest implements NodeTest {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public String toString() {

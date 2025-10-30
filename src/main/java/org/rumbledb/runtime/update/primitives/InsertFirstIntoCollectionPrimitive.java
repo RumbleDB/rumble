@@ -64,7 +64,7 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
         String collectionTableName = this.collection;
-        if (!isTable) {
+        if (!this.isTable) {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()

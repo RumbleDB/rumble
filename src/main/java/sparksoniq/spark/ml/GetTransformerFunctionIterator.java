@@ -88,7 +88,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
 
         try {
-            Transformer transformer = (Transformer) transformerSparkMLClass.newInstance();
+            Transformer transformer = (Transformer) transformerSparkMLClass.getDeclaredConstructor().newInstance();
 
             if (paramMapItem != null) {
                 for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
@@ -150,7 +150,12 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     bodyIterator
             );
 
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (
+                InstantiationException
+                | IllegalAccessException
+                | java.lang.reflect.InvocationTargetException
+                | NoSuchMethodException e
+        ) {
             throw new OurBadException(
                     "Error while generating an instance from transformer class + " + transformerFullClassName,
                     getMetadata()

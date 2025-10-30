@@ -6,8 +6,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
 
-import static org.apache.spark.sql.functions.*;
-
 public class ReplaceInObjectPrimitive implements UpdatePrimitive {
 
     private Item target;

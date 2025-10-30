@@ -7,14 +7,13 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
-import java.util.Random;
 
 public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private Item low;
     private Item high;
     private int size;
     private Item type;
-    private Random random;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
     public RandomSequenceWithBoundsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
@@ -27,7 +26,6 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
         this.high = this.children.get(1).materializeFirstItemOrNull(context);
         this.size = this.children.get(2).materializeFirstItemOrNull(context).castToIntValue();
         this.type = this.children.get(3).materializeFirstItemOrNull(context);
-        this.random = new Random();
         this.generatedRandomsIterator = createRandomNumberStream();
     }
 

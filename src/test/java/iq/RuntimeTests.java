@@ -36,11 +36,8 @@ import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
-import scala.Function0;
-import scala.util.Properties;
 
 import java.io.File;
 import java.util.*;
