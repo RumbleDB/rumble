@@ -67,7 +67,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        url = url.replaceAll(" ", "%20");
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
         int partitions = -1;
@@ -109,10 +108,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
-            String path = uri.toString();
-            if (uri.getScheme().contentEquals("file")) {
-                path = path.replaceAll("%20", " ");
-            }
+            String path = FileSystemUtil.convertURIToStringForSpark(uri);
 
             if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()

@@ -1,0 +1,74 @@
+name: Run QT3 Suite
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  qt3-jsoniq:
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    with:
+      tested_parser: jsoniq
+      mvn_args: ''
+      run_analytics: true
+  qt3-xquery:
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    with:
+      tested_parser: xquery
+      mvn_args: ''
+      run_analytics: true
+  post-results:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    needs: [qt3-jsoniq, qt3-xquery]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Download JSONiq artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: collected-artifacts-jsoniq
+          path: artifacts/jsoniq
+      - name: Download XQuery artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: collected-artifacts-xquery
+          path: artifacts/xquery
+      - name: Generate and post comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
+            
+            if (context.eventName === 'pull_request') {
+              // Post comment to PR
+              const prNumber = context.payload.pull_request.number;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body
+              });
+            } else if (context.eventName === 'push') {
+              // Post comment to commit
+              const commitSha = context.sha;
+              await github.rest.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: commitSha,
+                body
+              });
+            }

@@ -614,7 +614,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 StructType s = SparkSessionManager.getInstance()
                     .getOrCreateSession()
                     .read()
-                    .parquet(uri.toString())
+                    .parquet(FileSystemUtil.convertURIToStringForSpark(uri))
                     .schema();
                 ItemType schemaItemType = ItemTypeFactory.createItemType(s);
                 // TODO : check if arity is correct
@@ -640,7 +640,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 .getOrCreateSession()
                 .read()
                 .format("delta")
-                .load(uri.toString())
+                .load(FileSystemUtil.convertURIToStringForSpark(uri))
                 .schema();
             ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             // TODO : check if arity is correct

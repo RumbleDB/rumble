@@ -40,9 +40,12 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
             .getOrCreateSession()
             .read()
             .format("delta")
-            .load(uri.toString());
+            .load(FileSystemUtil.convertURIToStringForSpark(uri));
 
-        return DeltaTableFunctionIterator.postProcess(dataFrame, "delta.`" + uri.toString() + "`");
+        return DeltaTableFunctionIterator.postProcess(
+            dataFrame,
+            "delta.`" + FileSystemUtil.convertURIToStringForSpark(uri) + "`"
+        );
     }
 }
 
