@@ -94,7 +94,6 @@ public class RumbleHttpHandler implements HttpHandler {
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
             configuration.setAllowedURIPrefixes(this.rumbleRuntimeConfiguration.getAllowedURIPrefixes());
             validateConfiguration(exchange, configuration);
-            SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
             List<Item> items = null;
@@ -170,7 +169,7 @@ public class RumbleHttpHandler implements HttpHandler {
                         "Warning! The output sequence contains "
                             + count
                             + " items but its materialization was capped at "
-                            + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + configuration.getResultSizeCap()
                             + " items. This value can be configured with the result-size parameter in the query string of the HTTP request."
                     )
             );

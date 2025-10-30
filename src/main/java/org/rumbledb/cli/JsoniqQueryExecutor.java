@@ -50,7 +50,6 @@ public class JsoniqQueryExecutor {
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
@@ -161,7 +160,7 @@ public class JsoniqQueryExecutor {
                 .collect(Collectors.toList());
             System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
-                issueMaterializationWarning(materializationCount);
+                issueMaterializationWarning(materializationCount, this.configuration.getResultSizeCap());
                 if (outputPath == null) {
                     System.err.println(
                         "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
@@ -206,12 +205,12 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    public static void issueMaterializationWarning(long materializationCount) {
+    public static void issueMaterializationWarning(long materializationCount, long resultSizeCap) {
         if (materializationCount == Long.MAX_VALUE) {
             System.err.println(
                 "Warning! The output sequence contains "
                     + "too many items and its materialization was capped at "
-                    + SparkSessionManager.COLLECT_ITEM_LIMIT
+                    + resultSizeCap
                     + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
             );
         } else {
@@ -219,7 +218,7 @@ public class JsoniqQueryExecutor {
                 "Warning! The output sequence contains "
                     + materializationCount
                     + " items but its materialization was capped at "
-                    + SparkSessionManager.COLLECT_ITEM_LIMIT
+                    + resultSizeCap
                     + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
             );
         }

@@ -44,6 +44,7 @@ import scala.util.Properties;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
@@ -216,10 +217,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
     }
 
     private String getRDDResults(SequenceOfItems sequence) {
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = new ArrayList<String>();
-        SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
+        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
+        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
 
         if (collectedOutput.isEmpty()) {
             return "";

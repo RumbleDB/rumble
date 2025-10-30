@@ -3,6 +3,7 @@ package org.rumbledb.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -343,8 +344,16 @@ public class SequenceOfItems {
             return -1;
         }
         if (this.iterator.isRDDOrDataFrame()) {
+            long count = -1;
             JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
-            return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+            List<Item> result = rdd.take(maxNumberOfItems + 1);
+            if (result.size() == maxNumberOfItems + 1) {
+                count = rdd.count();
+            }
+            result.stream()
+                .limit(maxNumberOfItems)
+                .collect(Collectors.toCollection(() -> result));
+            return count;
         }
         this.iterator.open(this.dynamicContext);
         Item result = null;
