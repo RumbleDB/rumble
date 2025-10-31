@@ -13,7 +13,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import scala.Function0;
 import scala.util.Properties;
-import scala.Function0;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.BufferedWriter;
@@ -390,7 +389,6 @@ public class UpdatesForRumbleBenchmark {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
@@ -413,6 +411,7 @@ public class UpdatesForRumbleBenchmark {
         long start;
         long end;
         long diff;
+        @SuppressWarnings("unused")
         List<Item> res;
 
         this.appendToFile(outputPath, "RUMBLE");

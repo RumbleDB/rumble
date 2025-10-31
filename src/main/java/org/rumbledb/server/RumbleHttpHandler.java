@@ -26,7 +26,6 @@ import org.rumbledb.items.ItemFactory;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import sparksoniq.spark.SparkSessionManager;
 
 @SuppressWarnings("restriction")
 public class RumbleHttpHandler implements HttpHandler {

@@ -35,7 +35,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
