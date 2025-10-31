@@ -29,6 +29,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -671,5 +672,52 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
         type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
         return type;
+    }
+
+    public static ItemType inferSchemaTypeOfRDDItems(
+            JavaRDD<Item> itemRDD,
+            ExceptionMetadata metadata
+    ) {
+        // Handle empty RDD
+        if (itemRDD.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
+
+        // Neutral element for aggregation
+        ItemType neutralElement = new NeutralItemType();
+
+        // Aggregate using Spark's aggregate method with findLeastCommonSuperTypeWith
+        ItemType result = itemRDD.aggregate(
+            neutralElement,
+            (ItemType acc, Item item) -> {
+                ItemType itemType = item.getDynamicType();
+                return acc.equals(neutralElement) ? itemType : acc.findLeastCommonSuperTypeWith(itemType);
+            },
+            (ItemType a, ItemType b) -> {
+                if (a.equals(neutralElement))
+                    return b;
+                if (b.equals(neutralElement))
+                    return a;
+                return a.findLeastCommonSuperTypeWith(b);
+            }
+        );
+
+        return result;
+    }
+
+    public static ItemType inferSchemaTypeOfLocalItems(
+            List<Item> items,
+            ExceptionMetadata metadata
+    ) {
+        if (items.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
+
+        ItemType result = items.get(0).getDynamicType();
+        for (int i = 1; i < items.size(); i++) {
+            result = result.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+        }
+
+        return result;
     }
 }
