@@ -43,7 +43,11 @@ public class NativeFLWORRuntimeTestsNativeDeactivated extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--native-execution",
-                    "no"
+                    "no",
+                    "--materialization-cap",
+                    "100000",
+                    "--result-size",
+                    "200"
                 }
         );
     }
