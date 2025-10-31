@@ -50,7 +50,9 @@ public class MLTests extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--native-execution",
-                    "no"
+                    "no",
+                    "--result-size",
+                    "200"
                 }
         );
     }

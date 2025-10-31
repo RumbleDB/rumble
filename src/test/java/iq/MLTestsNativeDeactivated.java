@@ -48,7 +48,9 @@ public class MLTestsNativeDeactivated extends RuntimeTests {
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--escape-backticks",
-                    "yes"
+                    "yes",
+                    "--result-size",
+                    "200"
                 }
         );
     }
