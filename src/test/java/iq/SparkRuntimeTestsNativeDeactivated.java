@@ -44,7 +44,11 @@ public class SparkRuntimeTestsNativeDeactivated extends RuntimeTests {
                     "--native-execution",
                     "no",
                     "--dates-with-timezone",
-                    "yes"
+                    "yes",
+                    "--materialization-cap",
+                    "100000",
+                    "--result-size",
+                    "200"
                 }
         );
     }

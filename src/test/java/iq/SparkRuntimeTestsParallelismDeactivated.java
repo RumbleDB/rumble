@@ -44,9 +44,9 @@ public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
                     "--parallel-execution",
                     "no",
                     "--materialization-cap",
-                    "1000000",
+                    "100000",
                     "--result-size",
-                    "1000000"
+                    "200"
                 }
         );
     }
