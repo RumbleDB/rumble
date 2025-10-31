@@ -72,6 +72,8 @@ public class XMLTests extends AnnotationsTestsBase {
                     "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
+                    "--materialization-cap",
+                    "200",
                     "--result-size",
                     "200",
                     "--apply-updates",

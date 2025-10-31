@@ -77,6 +77,8 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
                     "--apply-updates",
                     "yes",
                     "--materialization-cap",
+                    "900000",
+                    "--result-size",
                     "900000"
                 }
         );

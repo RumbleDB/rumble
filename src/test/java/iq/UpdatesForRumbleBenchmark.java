@@ -53,6 +53,8 @@ public class UpdatesForRumbleBenchmark {
                 "--show-error-info",
                 "yes",
                 "--materialization-cap",
+                "900000",
+                "--result-size",
                 "900000"
             }
     );
@@ -68,6 +70,8 @@ public class UpdatesForRumbleBenchmark {
                 "--apply-updates",
                 "yes",
                 "--materialization-cap",
+                "900000",
+                "--result-size",
                 "900000"
             }
     );
