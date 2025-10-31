@@ -57,7 +57,9 @@ public class AnnotationsTestsBase {
                 "--print-iterator-tree",
                 "yes",
                 "--variable:externalUnparsedString",
-                "unparsed string" }
+                "unparsed string",
+                "--materialization-cap",
+                "200" }
     ).setExternalVariableValue(
         Name.createVariableInNoNamespace("externalStringItem"),
         Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))

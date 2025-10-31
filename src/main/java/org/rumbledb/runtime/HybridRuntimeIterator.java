@@ -23,8 +23,10 @@ package org.rumbledb.runtime;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -113,7 +115,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             } else {
                 rdd = this.getRDDAux(this.currentDynamicContextForLocalExecution);
             }
-            this.result = SparkSessionManager.collectRDDwithLimit(rdd, this.getMetadata());
+            this.result = collectRDDwithLimit(rdd, this.getConfiguration(), this.getMetadata());
             this.hasNext = !this.result.isEmpty();
         }
         return this.hasNext;
@@ -162,13 +164,37 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
     }
 
+    public static List<Item> collectRDDwithLimit(
+            JavaRDD<Item> rdd,
+            RumbleRuntimeConfiguration configuration,
+            ExceptionMetadata metadata
+    ) {
+        if (configuration.getMaterializationCap() > 0) {
+            List<Item> result = rdd.take(configuration.getMaterializationCap() + 1);
+            if (result.size() == configuration.getMaterializationCap() + 1) {
+                long count = rdd.count();
+                throw new CannotMaterializeException(
+                        "Cannot materialize a sequence of "
+                            + count
+                            + " items because the limit is set to "
+                            + configuration.getMaterializationCap()
+                            + ". This value can be configured with the --materialization-cap parameter at startup",
+                        metadata
+                );
+            }
+            return result;
+        } else {
+            return rdd.collect();
+        }
+    }
+
     public void materialize(DynamicContext context, List<Item> result) {
         if (!isRDDOrDataFrame()) {
             super.materialize(context, result);
             return;
         }
         JavaRDD<Item> items = this.getRDD(context);
-        List<Item> collectedItems = SparkSessionManager.collectRDDwithLimit(items, this.getMetadata());
+        List<Item> collectedItems = collectRDDwithLimit(items, this.getConfiguration(), this.getMetadata());
         result.clear();
         result.addAll(collectedItems);
     }

@@ -210,7 +210,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             // Set the for item
             if (this.child == null || this.evaluationDepthLimit == 0) { // if initial for clause
-                this.nextLocalTupleResult = new FlworTuple();
+                this.nextLocalTupleResult = new FlworTuple(this.getConfiguration());
             } else {
                 this.nextLocalTupleResult = new FlworTuple(this.inputTuple);
             }
@@ -240,7 +240,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // If nothing was output yet by this expression but we allow empty, we need to bind
         // the empty sequence.
         if (this.child == null || this.evaluationDepthLimit == 0) { // if initial for clause
-            this.nextLocalTupleResult = new FlworTuple();
+            this.nextLocalTupleResult = new FlworTuple(this.getConfiguration());
         } else {
             this.nextLocalTupleResult = new FlworTuple(this.inputTuple);
         }

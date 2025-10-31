@@ -43,7 +43,11 @@ public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests 
                     "--escape-backticks",
                     "yes",
                     "--parallel-execution",
-                    "no"
+                    "no",
+                    "--materialization-cap",
+                    "100000",
+                    "--result-size",
+                    "200"
                 }
         );
     }

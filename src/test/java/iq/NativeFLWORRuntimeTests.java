@@ -36,7 +36,13 @@ public class NativeFLWORRuntimeTests extends RuntimeTests {
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
-                new String[] { "--variable:externalUnparsedString", "unparsed string", "--escape-backticks", "yes" }
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--result-size",
+                    "200" }
         );
     }
 

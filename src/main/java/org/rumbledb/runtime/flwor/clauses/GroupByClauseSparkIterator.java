@@ -242,7 +242,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     private void linearizeTuples(List<FlworTuple> keyTuplePairs) {
         Iterator<FlworTuple> iterator = keyTuplePairs.iterator();
         FlworTuple oldFirstTuple = iterator.next();
-        FlworTuple newTuple = new FlworTuple(oldFirstTuple.getLocalKeys().size());
+        FlworTuple newTuple = new FlworTuple(this.getConfiguration(), oldFirstTuple.getLocalKeys().size());
         for (Name tupleVariable : oldFirstTuple.getLocalKeys()) {
             iterator = keyTuplePairs.iterator();
             if (
