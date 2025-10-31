@@ -35,12 +35,8 @@ import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
-import scala.Function0;
-import scala.util.Properties;
-
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,7 +75,11 @@ public class RuntimeTests extends AnnotationsTestsBase {
                     "--apply-updates",
                     "yes",
                     "--lax-json-null-validation",
-                    "no" }
+                    "no",
+                    "--result-size",
+                    "200",
+                    "--materialization-cap",
+                    "200" }
         ).setExternalVariableValue(
             Name.createVariableInNoNamespace("externalStringItem"),
             Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
