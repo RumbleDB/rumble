@@ -88,7 +88,13 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
+    public static void testAnnotations(
+            String path,
+            RumbleRuntimeConfiguration configuration,
+            boolean checkOutput,
+            boolean applyUpdates,
+            int resultSizeCap
+    )
             throws IOException {
         AnnotationProcessor.TestAnnotation currentAnnotation = null;
         try {
@@ -182,7 +188,7 @@ public class AnnotationsTestsBase {
                 currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(currentAnnotation.getOutput(), sequence);
+                checkExpectedOutput(currentAnnotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
                 errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
@@ -196,7 +202,13 @@ public class AnnotationsTestsBase {
                     !currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(currentAnnotation.getOutput(), sequence);
+                    checkExpectedOutput(
+                        currentAnnotation.getOutput(),
+                        sequence,
+                        checkOutput,
+                        applyUpdates,
+                        resultSizeCap
+                    );
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(
@@ -213,11 +225,24 @@ public class AnnotationsTestsBase {
         return;
     }
 
-    protected void checkExpectedOutput(
+    static void checkExpectedOutput(
             String expectedOutput,
-            SequenceOfItems sequence
+            SequenceOfItems sequence,
+            boolean checkOutput,
+            boolean applyUpdates,
+            int resultSizeCap
     ) {
-        Assert.assertTrue(true);
+        String actualOutput = getIteratorOutput(sequence, resultSizeCap);
+        if (applyUpdates && sequence.availableAsPUL()) {
+            sequence.applyPUL();
+        }
+        if (!checkOutput) {
+            return;
+        }
+        Assert.assertTrue(
+            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
+            expectedOutput.equals(actualOutput)
+        );
     }
 
     protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
