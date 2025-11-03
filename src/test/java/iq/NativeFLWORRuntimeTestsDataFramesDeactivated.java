@@ -43,7 +43,11 @@ public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--data-frame-execution",
-                    "no"
+                    "no",
+                    "--materialization-cap",
+                    "100000",
+                    "--result-size",
+                    "200"
                 }
         );
     }

@@ -135,7 +135,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     private FlworTuple generateTupleFromExpressionWithContext(FlworTuple inputTuple, DynamicContext context) {
         FlworTuple resultTuple;
         if (inputTuple == null) {
-            resultTuple = new FlworTuple();
+            resultTuple = new FlworTuple(this.getConfiguration());
         } else {
             resultTuple = new FlworTuple(inputTuple);
         }

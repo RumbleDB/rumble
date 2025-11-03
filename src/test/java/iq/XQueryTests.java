@@ -22,7 +22,6 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,6 +39,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class XQueryTests extends AnnotationsTestsBase {
@@ -109,7 +109,6 @@ public class XQueryTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
 
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = defaultConfiguration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
@@ -169,7 +168,7 @@ public class XQueryTests extends AnnotationsTestsBase {
             if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + getConfiguration().getResultSizeCap()
                         + " items. This value can be configured with the --result-size parameter at startup"
                 );
             }
@@ -182,10 +181,8 @@ public class XQueryTests extends AnnotationsTestsBase {
     }
 
     private String getRDDResults(SequenceOfItems sequence) {
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = new ArrayList<String>();
-        SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
+        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
+        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
 
         if (collectedOutput.isEmpty()) {
             return "";

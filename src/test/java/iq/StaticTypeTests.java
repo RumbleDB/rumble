@@ -7,7 +7,6 @@ import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,6 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class StaticTypeTests extends AnnotationsTestsBase {
@@ -84,7 +84,6 @@ public class StaticTypeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
@@ -148,7 +147,7 @@ public class StaticTypeTests extends AnnotationsTestsBase {
             if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + getConfiguration().getResultSizeCap()
                         + " items. This value can be configured with the --result-size parameter at startup"
                 );
             }
@@ -161,10 +160,8 @@ public class StaticTypeTests extends AnnotationsTestsBase {
     }
 
     private String getRDDResults(SequenceOfItems sequence) {
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = new ArrayList<String>();
-        SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
+        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
+        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
 
         if (collectedOutput.isEmpty()) {
             return "";

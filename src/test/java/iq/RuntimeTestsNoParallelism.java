@@ -20,16 +20,16 @@
 
 package iq;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
 
 @RunWith(Parameterized.class)
 public class RuntimeTestsNoParallelism extends RuntimeTests {
@@ -48,7 +48,9 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
                     "--parallel-execution",
                     "no",
                     "--lax-json-null-validation",
-                    "no" }
+                    "no",
+                    "--result-size",
+                    "200" }
         ).setExternalVariableValue(
             Name.createVariableInNoNamespace("externalStringItem"),
             Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
