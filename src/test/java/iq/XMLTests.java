@@ -22,13 +22,10 @@ package iq;
 
 import org.rumbledb.tests.commons.RumbleDBTestCommons;
 import org.apache.spark.SparkConf;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.Item;
-import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import scala.Function0;
 import scala.util.Properties;
@@ -39,7 +36,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class XMLTests {
