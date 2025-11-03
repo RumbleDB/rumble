@@ -34,6 +34,8 @@ import java.util.List;
 
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
+
+import iq.base.AnnotationsTestsBase;
 import utils.ApproximatedDoubleComparator;
 
 @RunWith(Parameterized.class)
@@ -80,7 +82,7 @@ public class SparkRuntimeTests extends RuntimeTests {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        String actualOutput = runIterators(sequence);
+        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         try {
             if (expectedOutput.startsWith("(") && expectedOutput.endsWith(")")) {
                 expectedOutput = expectedOutput.substring(1, expectedOutput.length() - 1).replaceAll("\"", "");

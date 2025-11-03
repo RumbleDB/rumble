@@ -110,15 +110,10 @@ public class Bugs extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        String actualOutput = runIterators(sequence);
+        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         Assert.assertTrue(
             "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
-    }
-
-    protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        return actualOutput;
     }
 }

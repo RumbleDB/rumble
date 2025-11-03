@@ -26,6 +26,8 @@ import org.junit.runners.Parameterized;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
+import iq.base.AnnotationsTestsBase;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +77,7 @@ public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        String actualOutput = runIterators(sequence);
+        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         Assert.assertTrue(
             "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
             expectedOutput.equals(actualOutput)

@@ -198,24 +198,15 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        String actualOutput = runIterators(sequence);
+        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
+        if (getConfiguration().applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
+        }
         Assert.assertTrue(
             "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
-    }
-
-    protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        applyPossibleUpdates(sequence);
-        return actualOutput;
-    }
-
-    private void applyPossibleUpdates(SequenceOfItems sequence) {
-        if (getConfiguration().applyUpdates() && sequence.availableAsPUL()) {
-            sequence.applyPUL();
-        }
     }
 
 }
