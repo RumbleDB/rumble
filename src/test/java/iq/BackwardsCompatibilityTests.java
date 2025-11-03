@@ -111,9 +111,7 @@ public class BackwardsCompatibilityTests {
         RumbleDBTestCommons.testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
+            true
         );
     }
 }

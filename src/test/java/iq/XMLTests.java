@@ -20,7 +20,7 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
 import org.apache.spark.SparkConf;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
-public class XMLTests extends AnnotationsTestsBase {
+public class XMLTests {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -116,94 +116,7 @@ public class XMLTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput;
-        if (!sequence.availableAsRDD()) {
-            actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence);
-        } else {
-            actualOutput = getRDDResults(sequence);
-        }
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
-        );
-    }
-
-    protected String getIteratorOutput(SequenceOfItems sequence) {
-        sequence.open();
-        Item result = null;
-        if (sequence.hasNext()) {
-            result = sequence.next();
-        }
-        if (result == null) {
-            return "";
-        }
-        String singleOutput = result.serialize();
-        if (!sequence.hasNext()) {
-            return singleOutput;
-        } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            sb.append(result.serialize());
-            sb.append(", ");
-            while (
-                sequence.hasNext()
-                    &&
-                    ((itemCount < getConfiguration().getResultSizeCap()
-                        && getConfiguration().getResultSizeCap() > 0)
-                        ||
-                        getConfiguration().getResultSizeCap() == 0)
-            ) {
-                sb.append(sequence.next().serialize());
-                sb.append(", ");
-                itemCount++;
-            }
-            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + getConfiguration().getResultSizeCap()
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            String output = sb.toString();
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
-        }
-    }
-
-    private String getRDDResults(SequenceOfItems sequence) {
-        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
-        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
-
-        if (collectedOutput.isEmpty()) {
-            return "";
-        }
-
-        if (collectedOutput.size() == 1) {
-            return collectedOutput.get(0);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append(", ");
-        }
-
-        String result = sb.toString();
-        result = result.substring(0, result.length() - 2);
-        result += ")";
-        return result;
+        // System.err.println(RumbleDBTestCommons.counter++ + " : " + this.testFile);
+        RumbleDBTestCommons.testAnnotations(this.testFile.getAbsolutePath(), getConfiguration(), true);
     }
 }
