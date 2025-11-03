@@ -7,12 +7,10 @@ import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -88,17 +86,12 @@ public class StaticTypeTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), StaticTypeTests.configuration);
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        @SuppressWarnings("unused")
-        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        // For static typing check we just need to check that the program run, no need to compare the output
-        Assert.assertTrue(true);
+        testAnnotations(
+            this.testFile.getAbsolutePath(),
+            StaticTypeTests.configuration,
+            false,
+            StaticTypeTests.configuration.applyUpdates(),
+            StaticTypeTests.configuration.getResultSizeCap()
+        );
     }
 }

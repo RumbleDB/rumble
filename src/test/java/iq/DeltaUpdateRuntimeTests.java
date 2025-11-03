@@ -30,7 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.SequenceOfItems;
 import scala.Function0;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
@@ -190,23 +189,13 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             e.printStackTrace();
             Assert.fail();
         }
-        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        if (getConfiguration().applyUpdates() && sequence.availableAsPUL()) {
-            sequence.applyPUL();
-        }
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
+        testAnnotations(
+            this.testFile.getAbsolutePath(),
+            getConfiguration(),
+            true,
+            getConfiguration().applyUpdates(),
+            getConfiguration().getResultSizeCap()
         );
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
 }

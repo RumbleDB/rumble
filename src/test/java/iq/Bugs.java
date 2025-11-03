@@ -25,12 +25,10 @@ import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -102,18 +100,12 @@ public class Bugs extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
+        AnnotationsTestsBase.testAnnotations(
+            this.testFile.getAbsolutePath(),
+            getConfiguration(),
+            true,
+            getConfiguration().applyUpdates(),
+            getConfiguration().getResultSizeCap()
         );
     }
 }
