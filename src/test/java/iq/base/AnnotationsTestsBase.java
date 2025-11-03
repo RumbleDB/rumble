@@ -88,7 +88,7 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected static void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
+    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
             throws IOException {
         AnnotationProcessor.TestAnnotation currentAnnotation = null;
         try {
@@ -220,7 +220,7 @@ public class AnnotationsTestsBase {
         Assert.assertTrue(true);
     }
 
-    protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
+    protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
         if (errorOutput != null && expectedErrorCode != null)
             Assert.assertTrue(
                 "Unexpected error code returned; Expected: "
