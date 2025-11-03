@@ -12,7 +12,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
@@ -21,7 +20,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class StaticTypeTests extends AnnotationsTestsBase {
@@ -99,43 +97,8 @@ public class StaticTypeTests extends AnnotationsTestsBase {
             SequenceOfItems sequence
     ) {
         @SuppressWarnings("unused")
-        String actualOutput;
-        if (!sequence.availableAsRDD()) {
-            actualOutput = runIterators(sequence);
-        } else {
-            actualOutput = getRDDResults(sequence);
-        }
+        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         // For static typing check we just need to check that the program run, no need to compare the output
         Assert.assertTrue(true);
-    }
-
-    protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        return actualOutput;
-    }
-
-    private String getRDDResults(SequenceOfItems sequence) {
-        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
-        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
-
-        if (collectedOutput.isEmpty()) {
-            return "";
-        }
-
-        if (collectedOutput.size() == 1) {
-            return collectedOutput.get(0);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append(", ");
-        }
-
-        String result = sb.toString();
-        result = result.substring(0, result.length() - 2);
-        result += ")";
-        return result;
     }
 }

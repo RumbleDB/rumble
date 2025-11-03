@@ -39,7 +39,6 @@ import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
@@ -151,46 +150,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        String actualOutput;
-        if (!sequence.availableAsRDD()) {
-            actualOutput = runIterators(sequence);
-        } else {
-            actualOutput = getRDDResults(sequence);
-        }
+        String actualOutput = getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         Assert.assertTrue(
             "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
-    }
-
-    protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
-        return actualOutput;
-    }
-
-    private String getRDDResults(SequenceOfItems sequence) {
-        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
-        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
-
-        if (collectedOutput.isEmpty()) {
-            return "";
-        }
-
-        if (collectedOutput.size() == 1) {
-            return collectedOutput.get(0);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append(", ");
-        }
-
-        String result = sb.toString();
-        result = result.substring(0, result.length() - 2);
-        result += ")";
-        return result;
     }
 }
