@@ -30,7 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
@@ -39,7 +38,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class Bugs extends AnnotationsTestsBase {
@@ -112,91 +110,10 @@ public class Bugs extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        String actualOutput;
-        if (!sequence.availableAsRDD()) {
-            actualOutput = runIterators(sequence);
-        } else {
-            actualOutput = getRDDResults(sequence);
-        }
+        String actualOutput = AnnotationsTestsBase.getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         Assert.assertTrue(
             "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
-    }
-
-    protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = getIteratorOutput(sequence);
-        return actualOutput;
-    }
-
-    protected String getIteratorOutput(SequenceOfItems sequence) {
-        sequence.open();
-        Item result = null;
-        if (sequence.hasNext()) {
-            result = sequence.next();
-        }
-        if (result == null) {
-            return "";
-        }
-        String singleOutput = result.serialize();
-        if (!sequence.hasNext()) {
-            return singleOutput;
-        } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            sb.append(result.serialize());
-            sb.append(", ");
-            while (
-                sequence.hasNext()
-                    &&
-                    ((itemCount < getConfiguration().getResultSizeCap()
-                        && getConfiguration().getResultSizeCap() > 0)
-                        ||
-                        getConfiguration().getResultSizeCap() == 0)
-            ) {
-                sb.append(sequence.next().serialize());
-                sb.append(", ");
-                itemCount++;
-            }
-            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + getConfiguration().getResultSizeCap()
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            String output = sb.toString();
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
-        }
-    }
-
-    private String getRDDResults(SequenceOfItems sequence) {
-        List<Item> res = sequence.getFirstItemsAsList(getConfiguration().getResultSizeCap());
-        List<String> collectedOutput = res.stream().map(item -> item.serialize()).collect(Collectors.toList());
-
-        if (collectedOutput.isEmpty()) {
-            return "";
-        }
-
-        if (collectedOutput.size() == 1) {
-            return collectedOutput.get(0);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append(", ");
-        }
-
-        String result = sb.toString();
-        result = result.substring(0, result.length() - 2);
-        result += ")";
-        return result;
     }
 }
