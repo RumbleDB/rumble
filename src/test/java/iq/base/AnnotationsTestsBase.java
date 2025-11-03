@@ -220,7 +220,7 @@ public class AnnotationsTestsBase {
         Assert.assertTrue(true);
     }
 
-    protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
+    protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
         if (errorOutput != null && expectedErrorCode != null)
             Assert.assertTrue(
                 "Unexpected error code returned; Expected: "
@@ -239,5 +239,50 @@ public class AnnotationsTestsBase {
                     + errorOutput,
                 errorOutput.contains(errorMetadata)
             );
+    }
+
+    public static String getIteratorOutput(SequenceOfItems sequence, int resultSizeCap) {
+        sequence.open();
+        Item result = null;
+        if (sequence.hasNext()) {
+            result = sequence.next();
+        }
+        if (result == null) {
+            return "";
+        }
+        String singleOutput = result.serialize();
+        if (!sequence.hasNext()) {
+            return singleOutput;
+        } else {
+            int itemCount = 1;
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            sb.append(result.serialize());
+            sb.append(", ");
+            while (
+                sequence.hasNext()
+                    &&
+                    ((itemCount < resultSizeCap
+                        && resultSizeCap > 0)
+                        ||
+                        resultSizeCap == 0)
+            ) {
+                sb.append(sequence.next().serialize());
+                sb.append(", ");
+                itemCount++;
+            }
+            if (sequence.hasNext() && itemCount == resultSizeCap) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + resultSizeCap
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
+            // remove last comma
+            String output = sb.toString();
+            output = output.substring(0, output.length() - 2);
+            output += ")";
+            return output;
+        }
     }
 }

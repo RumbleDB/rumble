@@ -165,53 +165,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
     }
 
     protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = getIteratorOutput(sequence);
+        String actualOutput = getIteratorOutput(sequence, getConfiguration().getResultSizeCap());
         return actualOutput;
-    }
-
-    protected String getIteratorOutput(SequenceOfItems sequence) {
-        sequence.open();
-        Item result = null;
-        if (sequence.hasNext()) {
-            result = sequence.next();
-        }
-        if (result == null) {
-            return "";
-        }
-        String singleOutput = result.serialize();
-        if (!sequence.hasNext()) {
-            return singleOutput;
-        } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            sb.append(result.serialize());
-            sb.append(", ");
-            while (
-                sequence.hasNext()
-                    &&
-                    ((itemCount < getConfiguration().getResultSizeCap()
-                        && getConfiguration().getResultSizeCap() > 0)
-                        ||
-                        getConfiguration().getResultSizeCap() == 0)
-            ) {
-                sb.append(sequence.next().serialize());
-                sb.append(", ");
-                itemCount++;
-            }
-            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + getConfiguration().getResultSizeCap()
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            String output = sb.toString();
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
-        }
     }
 
     private String getRDDResults(SequenceOfItems sequence) {
