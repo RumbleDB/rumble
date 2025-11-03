@@ -1,6 +1,5 @@
 package iq;
 
-import iq.base.AnnotationsTestsBase;
 import org.junit.Test;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -26,26 +25,28 @@ import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class SequentialClassificationTests extends AnnotationsTestsBase {
+public class SequentialClassificationTests {
 
     private MainModule parseAndCompile(String filePath) throws IOException {
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             filePath,
-            getConfiguration(),
+            RumbleDBTestCommons.getDefaultConfiguration(),
             ExceptionMetadata.EMPTY_METADATA
         );
         return VisitorHelpers.parseMainModuleFromLocation(
             uri,
-            getConfiguration()
+            RumbleDBTestCommons.getDefaultConfiguration()
         );
     }
 
@@ -292,9 +293,9 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
                     +
                     "/src/test/resources/test_files/sequential/non-sequential"
         );
-        initializeTests(nonsequentialTestsDirectory);
-        for (File testFile : this.testFiles) {
-            System.err.println(counter++ + " : " + testFile);
+        List<File> testFiles = RumbleDBTestCommons.extractTestFilesFromDirectory(nonsequentialTestsDirectory);
+        for (File testFile : testFiles) {
+            // System.err.println(counter++ + " : " + testFile);
             MainModule mainModule = parseAndCompile(testFile.getAbsolutePath());
             for (Node descendant : mainModule.getDescendants()) {
                 if (descendant instanceof Expression) {

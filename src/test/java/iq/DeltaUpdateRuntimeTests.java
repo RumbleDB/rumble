@@ -20,8 +20,9 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
+
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
@@ -41,7 +42,7 @@ import java.io.IOException;
 import java.util.*;
 
 @RunWith(Parameterized.class)
-public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
+public class DeltaUpdateRuntimeTests {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -180,7 +181,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
+        // System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         try {
             AnnotationProcessor.TestAnnotation currentAnnotation = AnnotationProcessor.readAnnotation(
                 new FileReader(this.testFile.getAbsolutePath())
@@ -189,12 +190,10 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             e.printStackTrace();
             Assert.fail();
         }
-        testAnnotations(
+        RumbleDBTestCommons.testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
+            true
         );
     }
 
