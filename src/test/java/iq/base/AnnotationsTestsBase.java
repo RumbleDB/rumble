@@ -50,7 +50,6 @@ import java.util.List;
 
 public class AnnotationsTestsBase {
     protected static int counter = 0;
-    protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
     protected static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
@@ -89,10 +88,11 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
+    protected static void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
             throws IOException {
+        AnnotationProcessor.TestAnnotation currentAnnotation = null;
         try {
-            this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
+            currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
         } catch (AnnotationParseException e) {
             e.printStackTrace();
             Assert.fail();
@@ -110,10 +110,10 @@ public class AnnotationsTestsBase {
             String errorOutput = exception.getMessage();
             checkErrorCode(
                 errorOutput,
-                this.currentAnnotation.getErrorCode(),
-                this.currentAnnotation.getErrorMetadata()
+                currentAnnotation.getErrorCode(),
+                currentAnnotation.getErrorMetadata()
             );
-            if (this.currentAnnotation.shouldParse()) {
+            if (currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
                 return;
             } else {
@@ -126,11 +126,11 @@ public class AnnotationsTestsBase {
             String errorOutput = exception.getMessage();
             checkErrorCode(
                 errorOutput,
-                this.currentAnnotation.getErrorCode(),
-                this.currentAnnotation.getErrorMetadata()
+                currentAnnotation.getErrorCode(),
+                currentAnnotation.getErrorMetadata()
             );
             try {
-                if (this.currentAnnotation.shouldCompile()) {
+                if (currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
                     return;
                 } else {
@@ -146,11 +146,11 @@ public class AnnotationsTestsBase {
             String errorOutput = exception.getMessage();
             checkErrorCode(
                 errorOutput,
-                this.currentAnnotation.getErrorCode(),
-                this.currentAnnotation.getErrorMetadata()
+                currentAnnotation.getErrorCode(),
+                currentAnnotation.getErrorMetadata()
             );
             try {
-                if (this.currentAnnotation.shouldRun()) {
+                if (currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
                     return;
                 } else {
@@ -163,26 +163,26 @@ public class AnnotationsTestsBase {
         }
 
         try {
-            if (!this.currentAnnotation.shouldCompile()) {
+            if (!currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
                 return;
             }
         } catch (Exception ex) {
         }
 
-        if (!this.currentAnnotation.shouldParse()) {
+        if (!currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
             return;
         }
 
         // PROGRAM SHOULD RUN
         if (
-            this.currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
+            currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
                 &&
-                this.currentAnnotation.shouldRun()
+                currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
+                checkExpectedOutput(currentAnnotation.getOutput(), sequence);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
                 errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
@@ -191,18 +191,18 @@ public class AnnotationsTestsBase {
         } else {
             // PROGRAM SHOULD CRASH
             if (
-                this.currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
+                currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
                     &&
-                    !this.currentAnnotation.shouldRun()
+                    !currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
+                    checkExpectedOutput(currentAnnotation.getOutput(), sequence);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(
                         errorOutput,
-                        this.currentAnnotation.getErrorCode(),
-                        this.currentAnnotation.getErrorMetadata()
+                        currentAnnotation.getErrorCode(),
+                        currentAnnotation.getErrorMetadata()
                     );
                     return;
                 }
@@ -220,7 +220,7 @@ public class AnnotationsTestsBase {
         Assert.assertTrue(true);
     }
 
-    protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
+    protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
         if (errorOutput != null && expectedErrorCode != null)
             Assert.assertTrue(
                 "Unexpected error code returned; Expected: "
