@@ -12,14 +12,10 @@ import java.io.IOException;
 
 public class YamlSerializer implements Serializer, java.io.Serializable {
 
-    private final String encoding;
-    private final boolean indent;
-    private final String itemSeparator;
+    private final org.rumbledb.context.serialization.SerializationParameters params;
 
     public YamlSerializer(SerializationParameters params) {
-        this.encoding = params.getEncoding();
-        this.indent = params.getIndent() != null && params.getIndent();
-        this.itemSeparator = params.getItemSeparator();
+        this.params = params;
     }
 
     @Override

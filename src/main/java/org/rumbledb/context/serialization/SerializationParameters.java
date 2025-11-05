@@ -55,8 +55,9 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * Serialization method.
      *
      * "method" — Serialization 3.1 Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * Note: RumbleDB supports additional methods (e.g., yaml, tyson, xml-json-hybrid).
      */
-    private String method; // xml | html | text | json | adaptive | untyped
+    private String method;
 
     /**
      * Character encoding.
@@ -78,7 +79,11 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * XHTML (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#XHTML_OMIT-XML-DECLARATION),
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_OMIT-XML-DECLARATION)
      */
-    private Boolean omitXmlDeclaration;
+    private boolean omitXmlDeclaration;
+
+    public enum Standalone {
+        YES, NO, OMIT
+    }
 
     /**
      * XML standalone declaration.
@@ -88,7 +93,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * XHTML (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#XHTML_STANDALONE),
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_STANDALONE)
      */
-    private String standalone; // yes | no | omit
+    private Standalone standalone;
 
     /**
      * DocType system identifier.
@@ -120,6 +125,10 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      */
     private String mediaType;
 
+    public enum NormalizationForm {
+        NFC, NFD, NFKC, NFKD, FULLY_NORMALIZED, NONE
+    }
+
     /**
      * Normalize characters using a Unicode normalization form.
      *
@@ -128,7 +137,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * XHTML (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#XHTML_NORMALIZATION-FORM),
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_NORMALIZATION-FORM)
      */
-    private String normalizationForm; // NFC | NFD | NFKC | NFKD | fully-normalized | none
+    private NormalizationForm normalizationForm;
 
     /**
      * Whether to declare namespace undeclarations.
@@ -138,7 +147,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * XHTML (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#XHTML_UNDECLARE-PREFIXES),
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_UNDECLARE-PREFIXES)
      */
-    private Boolean undeclarePrefixes;
+    private boolean undeclarePrefixes;
 
     /**
      * Character maps, mapping strings to strings.
@@ -170,7 +179,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * XHTML (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#XHTML_INCLUDE-CONTENT-TYPE),
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_INCLUDE-CONTENT-TYPE)
      */
-    private Boolean includeContentType;
+    private boolean includeContentType;
 
     /**
      * Escape URI attributes.
@@ -181,7 +190,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * XHTML (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#XHTML_ESCAPE-URI-ATTRIBUTES),
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_ESCAPE-URI-ATTRIBUTES)
      */
-    private Boolean escapeUriAttributes;
+    private boolean escapeUriAttributes;
 
     /**
      * HTML version (implementation-defined default).
@@ -202,7 +211,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_BYTE-ORDER-MARK),
      * JSON (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#JSON_BYTE-ORDER-MARK)
      */
-    private Boolean byteOrderMark;
+    private boolean byteOrderMark;
 
     /**
      * Indentation control.
@@ -213,7 +222,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_INDENT),
      * JSON (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#JSON_INDENT)
      */
-    private Boolean indent;
+    private boolean indent;
 
     /**
      * Number of spaces for indentation (implementation-defined default).
@@ -224,7 +233,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_INDENT),
      * JSON (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#JSON_INDENT)
      */
-    private Integer indentSpaces;
+    private int indentSpaces; // -1 means unspecified
 
     /**
      * Elements whose content should not be indented.
@@ -257,7 +266,11 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_ALLOW-DUPLICATE-NAMES),
      * JSON (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#JSON_ALLOW-DUPLICATE-NAMES)
      */
-    private Boolean allowDuplicateNames;
+    private boolean allowDuplicateNames;
+
+    public enum JsonNodeOutputMethod {
+        UNSPECIFIED, JSON, XML, HTML, TEXT
+    }
 
     /**
      * JSON node output method.
@@ -269,7 +282,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      * Text (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#TEXT_JSON-NODE-OUTPUT-METHOD),
      * JSON (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#JSON_JSON-NODE-OUTPUT-METHOD)
      */
-    private String jsonNodeOutputMethod; // json | xml | html | text
+    private JsonNodeOutputMethod jsonNodeOutputMethod;
 
     /**
      * Extension/unknown parameters preserved for forward compatibility.
@@ -283,27 +296,27 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     public static SerializationParameters defaults() {
         SerializationParameters p = new SerializationParameters();
         // Spec-aligned conservative defaults; implementation-defined noted explicitly
-        p.method = null; // let the processor choose (adaptive in many impls)
+        p.method = null; // host can choose
         p.encoding = "UTF-8";
-        p.omitXmlDeclaration = Boolean.FALSE;
-        p.standalone = "omit";
+        p.omitXmlDeclaration = false;
+        p.standalone = Standalone.OMIT;
         p.doctypeSystem = null;
         p.doctypePublic = null;
         p.mediaType = null;
-        p.normalizationForm = "none";
-        p.undeclarePrefixes = Boolean.FALSE;
+        p.normalizationForm = NormalizationForm.NONE;
+        p.undeclarePrefixes = false;
         p.characterMaps = new HashMap<>();
         p.cdataSectionElements = new HashSet<>();
-        p.includeContentType = Boolean.TRUE;
-        p.escapeUriAttributes = Boolean.TRUE;
+        p.includeContentType = true;
+        p.escapeUriAttributes = true;
         p.htmlVersion = null; // implementation-defined
-        p.byteOrderMark = Boolean.FALSE;
-        p.indent = Boolean.FALSE;
-        p.indentSpaces = null; // implementation-defined
+        p.byteOrderMark = false;
+        p.indent = false;
+        p.indentSpaces = -1; // implementation-defined/unspecified
         p.suppressIndentation = new HashSet<>();
         p.itemSeparator = null; // implementation-defined
-        p.allowDuplicateNames = Boolean.FALSE;
-        p.jsonNodeOutputMethod = null; // implementation-defined behavior if null
+        p.allowDuplicateNames = false;
+        p.jsonNodeOutputMethod = JsonNodeOutputMethod.UNSPECIFIED;
         p.extensionParameters = new HashMap<>();
         return p;
     }
@@ -358,19 +371,19 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.encoding = encoding;
     }
 
-    public Boolean getOmitXmlDeclaration() {
+    public boolean getOmitXmlDeclaration() {
         return omitXmlDeclaration;
     }
 
-    public void setOmitXmlDeclaration(Boolean omitXmlDeclaration) {
+    public void setOmitXmlDeclaration(boolean omitXmlDeclaration) {
         this.omitXmlDeclaration = omitXmlDeclaration;
     }
 
-    public String getStandalone() {
+    public Standalone getStandalone() {
         return standalone;
     }
 
-    public void setStandalone(String standalone) {
+    public void setStandalone(Standalone standalone) {
         this.standalone = standalone;
     }
 
@@ -398,19 +411,19 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.mediaType = mediaType;
     }
 
-    public String getNormalizationForm() {
+    public NormalizationForm getNormalizationForm() {
         return normalizationForm;
     }
 
-    public void setNormalizationForm(String normalizationForm) {
+    public void setNormalizationForm(NormalizationForm normalizationForm) {
         this.normalizationForm = normalizationForm;
     }
 
-    public Boolean getUndeclarePrefixes() {
+    public boolean getUndeclarePrefixes() {
         return undeclarePrefixes;
     }
 
-    public void setUndeclarePrefixes(Boolean undeclarePrefixes) {
+    public void setUndeclarePrefixes(boolean undeclarePrefixes) {
         this.undeclarePrefixes = undeclarePrefixes;
     }
 
@@ -430,19 +443,19 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.cdataSectionElements = cdataSectionElements;
     }
 
-    public Boolean getIncludeContentType() {
+    public boolean getIncludeContentType() {
         return includeContentType;
     }
 
-    public void setIncludeContentType(Boolean includeContentType) {
+    public void setIncludeContentType(boolean includeContentType) {
         this.includeContentType = includeContentType;
     }
 
-    public Boolean getEscapeUriAttributes() {
+    public boolean getEscapeUriAttributes() {
         return escapeUriAttributes;
     }
 
-    public void setEscapeUriAttributes(Boolean escapeUriAttributes) {
+    public void setEscapeUriAttributes(boolean escapeUriAttributes) {
         this.escapeUriAttributes = escapeUriAttributes;
     }
 
@@ -454,27 +467,27 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.htmlVersion = htmlVersion;
     }
 
-    public Boolean getByteOrderMark() {
+    public boolean getByteOrderMark() {
         return byteOrderMark;
     }
 
-    public void setByteOrderMark(Boolean byteOrderMark) {
+    public void setByteOrderMark(boolean byteOrderMark) {
         this.byteOrderMark = byteOrderMark;
     }
 
-    public Boolean getIndent() {
+    public boolean getIndent() {
         return indent;
     }
 
-    public void setIndent(Boolean indent) {
+    public void setIndent(boolean indent) {
         this.indent = indent;
     }
 
-    public Integer getIndentSpaces() {
+    public int getIndentSpaces() {
         return indentSpaces;
     }
 
-    public void setIndentSpaces(Integer indentSpaces) {
+    public void setIndentSpaces(int indentSpaces) {
         this.indentSpaces = indentSpaces;
     }
 
@@ -494,19 +507,19 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.itemSeparator = itemSeparator;
     }
 
-    public Boolean getAllowDuplicateNames() {
+    public boolean getAllowDuplicateNames() {
         return allowDuplicateNames;
     }
 
-    public void setAllowDuplicateNames(Boolean allowDuplicateNames) {
+    public void setAllowDuplicateNames(boolean allowDuplicateNames) {
         this.allowDuplicateNames = allowDuplicateNames;
     }
 
-    public String getJsonNodeOutputMethod() {
+    public JsonNodeOutputMethod getJsonNodeOutputMethod() {
         return jsonNodeOutputMethod;
     }
 
-    public void setJsonNodeOutputMethod(String jsonNodeOutputMethod) {
+    public void setJsonNodeOutputMethod(JsonNodeOutputMethod jsonNodeOutputMethod) {
         this.jsonNodeOutputMethod = jsonNodeOutputMethod;
     }
 
@@ -522,13 +535,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         output.writeString(this.method);
         output.writeString(this.encoding);
-        output.writeBoolean(this.omitXmlDeclaration != null && this.omitXmlDeclaration);
-        output.writeString(this.standalone);
+        output.writeBoolean(this.omitXmlDeclaration);
+        output.writeString(this.standalone != null ? this.standalone.name() : null);
         output.writeString(this.doctypeSystem);
         output.writeString(this.doctypePublic);
         output.writeString(this.mediaType);
-        output.writeString(this.normalizationForm);
-        output.writeBoolean(this.undeclarePrefixes != null && this.undeclarePrefixes);
+        output.writeString(this.normalizationForm != null ? this.normalizationForm.name() : null);
+        output.writeBoolean(this.undeclarePrefixes);
 
         // characterMaps
         int cmSize = this.characterMaps != null ? this.characterMaps.size() : 0;
@@ -549,12 +562,12 @@ public class SerializationParameters implements Serializable, KryoSerializable {
             }
         }
 
-        output.writeBoolean(this.includeContentType != null && this.includeContentType);
-        output.writeBoolean(this.escapeUriAttributes != null && this.escapeUriAttributes);
+        output.writeBoolean(this.includeContentType);
+        output.writeBoolean(this.escapeUriAttributes);
         output.writeString(this.htmlVersion);
-        output.writeBoolean(this.byteOrderMark != null && this.byteOrderMark);
-        output.writeBoolean(this.indent != null && this.indent);
-        output.writeInt(this.indentSpaces != null ? this.indentSpaces : -1);
+        output.writeBoolean(this.byteOrderMark);
+        output.writeBoolean(this.indent);
+        output.writeInt(this.indentSpaces);
 
         // suppressIndentation
         int siSize = this.suppressIndentation != null ? this.suppressIndentation.size() : 0;
@@ -566,8 +579,8 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         }
 
         output.writeString(this.itemSeparator);
-        output.writeBoolean(this.allowDuplicateNames != null && this.allowDuplicateNames);
-        output.writeString(this.jsonNodeOutputMethod);
+        output.writeBoolean(this.allowDuplicateNames);
+        output.writeString(this.jsonNodeOutputMethod != null ? this.jsonNodeOutputMethod.name() : null);
 
         // extensionParameters
         int epSize = this.extensionParameters != null ? this.extensionParameters.size() : 0;
@@ -585,11 +598,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.method = input.readString();
         this.encoding = input.readString();
         this.omitXmlDeclaration = input.readBoolean();
-        this.standalone = input.readString();
+        String standaloneName = input.readString();
+        this.standalone = standaloneName != null ? Standalone.valueOf(standaloneName) : Standalone.OMIT;
         this.doctypeSystem = input.readString();
         this.doctypePublic = input.readString();
         this.mediaType = input.readString();
-        this.normalizationForm = input.readString();
+        String nfName = input.readString();
+        this.normalizationForm = nfName != null ? NormalizationForm.valueOf(nfName) : NormalizationForm.NONE;
         this.undeclarePrefixes = input.readBoolean();
 
         int cmSize = input.readInt();
@@ -611,8 +626,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.htmlVersion = input.readString();
         this.byteOrderMark = input.readBoolean();
         this.indent = input.readBoolean();
-        int indentSpacesRead = input.readInt();
-        this.indentSpaces = indentSpacesRead >= 0 ? indentSpacesRead : null;
+        this.indentSpaces = input.readInt();
 
         int siSize = input.readInt();
         this.suppressIndentation = new HashSet<>();
@@ -622,7 +636,10 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
         this.itemSeparator = input.readString();
         this.allowDuplicateNames = input.readBoolean();
-        this.jsonNodeOutputMethod = input.readString();
+        String jnomName = input.readString();
+        this.jsonNodeOutputMethod = jnomName != null
+            ? JsonNodeOutputMethod.valueOf(jnomName)
+            : JsonNodeOutputMethod.UNSPECIFIED;
 
         int epSize = input.readInt();
         this.extensionParameters = new HashMap<>();

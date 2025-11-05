@@ -7,14 +7,10 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 
 public class JsonSerializer implements Serializer, java.io.Serializable {
 
-    private final String encoding;
-    private final boolean indent;
-    private final String itemSeparator;
+    private final org.rumbledb.context.serialization.SerializationParameters params;
 
     public JsonSerializer(SerializationParameters params) {
-        this.encoding = params.getEncoding();
-        this.indent = params.getIndent() != null && params.getIndent();
-        this.itemSeparator = params.getItemSeparator();
+        this.params = params;
     }
 
     @Override
@@ -37,7 +33,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             sb.append("[");
 
             String separator = " ";
-            if (this.indent) {
+            if (this.params.getIndent()) {
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
@@ -47,13 +43,13 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                     separator = "," + separator;
                     firstTime = false;
                 }
-                if (this.indent) {
+                if (this.params.getIndent()) {
                     serialize(member, sb, indent + "  ", false);
                 } else {
                     serialize(member, sb, "", false);
                 }
             }
-            if (this.indent) {
+            if (this.params.getIndent()) {
                 sb.append("\n" + indent);
             } else {
                 sb.append(" ");
@@ -64,7 +60,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         if (item.isObject()) {
             sb.append("{");
             String separator = " ";
-            if (this.indent) {
+            if (this.params.getIndent()) {
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
@@ -76,13 +72,13 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                 }
                 Item value = item.getItemByKey(key);
                 sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
-                if (this.indent) {
+                if (this.params.getIndent()) {
                     serialize(value, sb, indent + "  ", false);
                 } else {
                     serialize(value, sb, "", false);
                 }
             }
-            if (this.indent) {
+            if (this.params.getIndent()) {
                 sb.append("\n" + indent);
             } else {
                 sb.append(" ");
