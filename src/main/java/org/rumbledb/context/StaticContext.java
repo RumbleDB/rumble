@@ -95,7 +95,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
-        this.serializationParameters = SerializationParameters.defaults();
+        this.serializationParameters = null;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
