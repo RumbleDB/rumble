@@ -14,7 +14,9 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.context.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
 
 public class SequenceWriter {
 
@@ -427,36 +429,22 @@ public class SequenceWriter {
     }
 
     public Serializer getSerializer() {
-        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
-        if (this.source.equals("tyson")) {
-            method = Serializer.Method.TYSON;
-        }
-        if (this.source.equals("json")) {
-            method = Serializer.Method.JSON;
-        }
-        if (this.source.equals("yaml")) {
-            method = Serializer.Method.YAML;
-        }
-        boolean indent = false;
+        SerializationParameters params = SerializationParameters.defaults();
+        params.setMethod(this.source);
         if (this.outputFormatOptions.containsKey("indent")) {
-            if (this.outputFormatOptions.get("indent").equals("yes")) {
-                indent = true;
-            }
+            params.setIndent("yes".equals(this.outputFormatOptions.get("indent")));
         }
-        String itemSeparator = "\n";
         if (this.outputFormatOptions.containsKey("item-separator")) {
-            itemSeparator = this.outputFormatOptions.get("item-separator");
+            params.setItemSeparator(this.outputFormatOptions.get("item-separator"));
+        } else {
+            params.setItemSeparator("\n");
         }
-        String encoding = "UTF-8";
         if (this.outputFormatOptions.containsKey("encoding")) {
-            encoding = this.outputFormatOptions.get("encoding");
+            params.setEncoding(this.outputFormatOptions.get("encoding"));
+        } else {
+            params.setEncoding("UTF-8");
         }
-        return new Serializer(
-                encoding,
-                method,
-                indent,
-                itemSeparator
-        );
+        return Serializers.from(params);
     }
 
     public void save() {

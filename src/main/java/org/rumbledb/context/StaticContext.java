@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.context.serialization.SerializationParameters;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -52,6 +53,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    private SerializationParameters serializationParameters;
 
     /**
      * XQuery {@code declare default function namespace}; when null, unprefixed function names use
@@ -93,6 +95,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
+        this.serializationParameters = SerializationParameters.defaults();
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -106,6 +109,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
+        this.serializationParameters = SerializationParameters.defaults();
     }
 
     public StaticContext(StaticContext parent) {
@@ -117,6 +121,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.serializationParameters = null;
     }
 
     public StaticContext getParent() {
@@ -360,6 +365,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
+        kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
 
     @Override
@@ -367,6 +373,41 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
+        // Backward compatibility: older serialized artifacts may not contain this field, so it is null
+        this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
+        // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
+        if (this.serializationParameters == null && this.parent == null) {
+            this.serializationParameters = SerializationParameters.defaults();
+        }
+    }
+
+    /**
+     * Returns the default serialization parameters stored in the static context.
+     *
+     * Spec references:
+     * - XQuery 3.1 Static Context Components (link: https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
+     * - Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     */
+    public SerializationParameters getSerializationParameters() {
+        if (this.serializationParameters != null) {
+            return this.serializationParameters;
+        }
+        // Backward compatibility: if absent locally (e.g., contexts deserialized from older versions),
+        // delegate to parent to preserve inheritance instead of creating a shadow copy here.
+        if (this.parent != null) {
+            return this.parent.getSerializationParameters();
+        }
+        // Root context missing the field (e.g., deserialized from an older version): populate defaults once.
+        this.serializationParameters = SerializationParameters.defaults();
+        return this.serializationParameters;
+    }
+
+    /**
+     * Sets the default serialization parameters at this static context level.
+     */
+    public void setSerializationParameters(SerializationParameters serializationParameters) {
+        this.serializationParameters = serializationParameters;
     }
 
     public void importModuleContext(StaticContext moduleContext) {

@@ -25,7 +25,9 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
+import org.rumbledb.context.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -1264,36 +1266,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @return the serializer in use according to the output format specified.
      */
     public Serializer getSerializer() {
-        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
-        if (this.getOutputFormat().equals("tyson")) {
-            method = Serializer.Method.TYSON;
-        }
-        if (this.getOutputFormat().equals("json")) {
-            method = Serializer.Method.JSON;
-        }
-        if (this.getOutputFormat().equals("yaml")) {
-            method = Serializer.Method.YAML;
-        }
-        boolean indent = false;
+        SerializationParameters params = SerializationParameters.defaults();
+        params.setMethod(this.getOutputFormat());
         Map<String, String> options = this.getOutputFormatOptions();
         if (options.containsKey("indent")) {
-            if (options.get("indent").equals("yes")) {
-                indent = true;
-            }
+            params.setIndent("yes".equals(options.get("indent")));
         }
-        String itemSeparator = "\n";
         if (options.containsKey("item-separator")) {
-            itemSeparator = options.get("item-separator");
+            params.setItemSeparator(options.get("item-separator"));
+        } else {
+            params.setItemSeparator("\n");
         }
-        String encoding = "UTF-8";
         if (options.containsKey("encoding")) {
-            itemSeparator = options.get("encoding");
+            params.setEncoding(options.get("encoding"));
+        } else {
+            params.setEncoding("UTF-8");
         }
-        return new Serializer(
-                encoding,
-                method,
-                indent,
-                itemSeparator
-        );
+        return Serializers.from(params);
     }
 }
