@@ -352,7 +352,7 @@ public class SequenceOfItems {
             }
             result.stream()
                 .limit(maxNumberOfItems)
-                .collect(Collectors.toCollection(() -> result));
+                .collect(Collectors.toCollection(() -> resultList));
             return count;
         }
         this.iterator.open(this.dynamicContext);
