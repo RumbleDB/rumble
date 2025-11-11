@@ -14,7 +14,7 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.context.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
 

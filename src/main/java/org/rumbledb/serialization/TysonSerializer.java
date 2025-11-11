@@ -2,12 +2,11 @@ package org.rumbledb.serialization;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.serialization.SerializationParameters;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 
 public class TysonSerializer implements Serializer, java.io.Serializable {
 
-    private final org.rumbledb.context.serialization.SerializationParameters params;
+    private final org.rumbledb.serialization.SerializationParameters params;
 
     public TysonSerializer(SerializationParameters params) {
         this.params = params;

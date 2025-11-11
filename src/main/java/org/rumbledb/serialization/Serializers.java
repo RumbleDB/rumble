@@ -1,6 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.rumbledb.context.serialization.SerializationParameters;
 import org.rumbledb.exceptions.OurBadException;
 
 public final class Serializers {

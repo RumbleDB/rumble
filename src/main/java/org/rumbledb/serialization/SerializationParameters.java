@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.rumbledb.context.serialization;
+package org.rumbledb.serialization;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;

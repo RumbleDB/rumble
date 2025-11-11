@@ -3,7 +3,6 @@ package org.rumbledb.serialization;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.serialization.SerializationParameters;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 
@@ -12,7 +11,7 @@ import java.io.IOException;
 
 public class YamlSerializer implements Serializer, java.io.Serializable {
 
-    private final org.rumbledb.context.serialization.SerializationParameters params;
+    private final org.rumbledb.serialization.SerializationParameters params;
 
     public YamlSerializer(SerializationParameters params) {
         this.params = params;

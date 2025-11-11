@@ -1007,8 +1007,8 @@ public interface Item extends Serializable, KryoSerializable {
     int hashCode();
 
     default String serialize() {
-        org.rumbledb.context.serialization.SerializationParameters p =
-            org.rumbledb.context.serialization.SerializationParameters.defaults();
+        org.rumbledb.serialization.SerializationParameters p =
+            org.rumbledb.serialization.SerializationParameters.defaults();
         p.setMethod("xml-json-hybrid");
         p.setEncoding("UTF-8");
         p.setIndent(false);
@@ -1017,8 +1017,8 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default String serializeAsJSON() {
-        org.rumbledb.context.serialization.SerializationParameters p =
-            org.rumbledb.context.serialization.SerializationParameters.defaults();
+        org.rumbledb.serialization.SerializationParameters p =
+            org.rumbledb.serialization.SerializationParameters.defaults();
         p.setMethod("json");
         p.setEncoding("UTF-8");
         p.setIndent(false);
