@@ -32,8 +32,10 @@ import java.util.Set;
  * Default serialization parameters stored in the XQuery static context.
  *
  * Specification references:
- * - XQuery 3.1 Static Context Components — default serialization parameters (link: https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
- * - XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+ * - XQuery 3.1 Static Context Components — default serialization parameters (link:
+ * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
+ * - XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+ * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
  *
  */
 public class SerializationParameters implements Serializable, KryoSerializable {
@@ -42,20 +44,23 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     /**
      * Serialization method.
-     * "method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      * Note: RumbleDB supports additional methods in addition to the XQuery 3.1 specification.
      */
     private String method;
 
     /**
      * Character encoding.
-     * "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private String encoding;
 
     /**
      * Whether to omit the XML declaration.
-     * "omit-xml-declaration" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "omit-xml-declaration" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean omitXmlDeclaration;
 
@@ -65,25 +70,29 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     /**
      * XML standalone declaration.
-     * "standalone" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "standalone" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private Standalone standalone;
 
     /**
      * DocType system identifier.
-     * "doctype-system" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "doctype-system" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private String doctypeSystem;
 
     /**
      * DocType public identifier.
-     * "doctype-public" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "doctype-public" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private String doctypePublic;
 
     /**
      * Media type.
-     * "media-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "media-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private String mediaType;
 
@@ -93,79 +102,92 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     /**
      * Normalize characters using a Unicode normalization form.
-     * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private NormalizationForm normalizationForm;
 
     /**
      * Whether to declare namespace undeclarations.
-     * "undeclare-prefixes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "undeclare-prefixes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean undeclarePrefixes;
 
     /**
      * Character maps, mapping strings to strings.
-     * "use-character-maps" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "use-character-maps" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private Map<String, String> characterMaps;
 
     /**
      * Element QNames to output using CDATA sections.
-     * "cdata-section-elements" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "cdata-section-elements" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private Set<String> cdataSectionElements;
 
     /**
      * Include meta http-equiv content-type.
-     * "include-content-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "include-content-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean includeContentType;
 
     /**
      * Escape URI attributes.
-     * "escape-uri-attributes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "escape-uri-attributes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean escapeUriAttributes;
 
     /**
      * HTML version (implementation-defined default).
-     * "html-version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "html-version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private String htmlVersion;
 
     /**
      * Insert byte-order mark.
-     * "byte-order-mark" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "byte-order-mark" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean byteOrderMark;
 
     /**
      * Indentation control.
-     * "indent" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "indent" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean indent;
 
     /**
      * Number of spaces for indentation (implementation-defined default).
-     * "indent-spaces" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "indent-spaces" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private int indentSpaces; // -1 means unspecified
 
     /**
      * Elements whose content should not be indented.
-     * "suppress-indentation" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "suppress-indentation" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private Set<String> suppressIndentation;
 
     /**
      * Separator between items of the top-level sequence.
-     * "item-separator" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "item-separator" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private String itemSeparator;
 
     /**
      * JSON: allow duplicate map keys.
-     * "allow-duplicate-names" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "allow-duplicate-names" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private boolean allowDuplicateNames;
 
@@ -175,7 +197,8 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     /**
      * JSON node output method.
-     * "json-node-output-method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link: https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * "json-node-output-method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
     private JsonNodeOutputMethod jsonNodeOutputMethod;
 
