@@ -184,72 +184,88 @@ public class SerializationParameterBuilder {
     }
 
     /**
-     * Parses a boolean value from string, accepting yes/no or true/false.
+     * Parses a boolean value from string, accepting yes/no, true/false, or 1/0.
      */
     private boolean parseBoolean(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     "null",
-                    "'yes'/'no' or 'true'/'false'"
+                    "'yes'/'no', 'true'/'false', or '1'/'0'"
             );
         }
         String lower = value.toLowerCase().trim();
-        if (lower.equals("yes") || lower.equals("true")) {
+        if (lower.equals("yes") || lower.equals("true") || lower.equals("1")) {
             return true;
-        } else if (lower.equals("no") || lower.equals("false")) {
+        } else if (lower.equals("no") || lower.equals("false") || lower.equals("0")) {
             return false;
         } else {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "'yes'/'no' or 'true'/'false'"
+                    "'yes'/'no', 'true'/'false', or '1'/'0'"
             );
         }
     }
 
     /**
      * Parses a Standalone enum value from string.
+     * Accepts: yes, no, true, false, 1, 0, or omit.
      */
     private SerializationParameters.Standalone parseStandalone(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     "null",
-                    "'yes', 'no', or 'omit'"
+                    "'yes', 'no', 'true', 'false', '1', '0', or 'omit'"
             );
         }
-        String upper = value.toUpperCase().trim();
-        try {
-            return SerializationParameters.Standalone.valueOf(upper);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidSerializationParameterValueException(
-                    parameterName,
-                    value,
-                    "'yes', 'no', or 'omit'"
-            );
+        String lower = value.toLowerCase().trim();
+        // Map boolean-like values to yes/no, then to enum
+        if (lower.equals("true") || lower.equals("1")) {
+            return SerializationParameters.Standalone.YES;
+        } else if (lower.equals("false") || lower.equals("0")) {
+            return SerializationParameters.Standalone.NO;
+        } else {
+            // Try direct enum value (yes, no, omit)
+            String upper = value.toUpperCase().trim();
+            try {
+                return SerializationParameters.Standalone.valueOf(upper);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidSerializationParameterValueException(
+                        parameterName,
+                        value,
+                        "'yes', 'no', 'true', 'false', '1', '0', or 'omit'"
+                );
+            }
         }
     }
 
     /**
      * Parses a NormalizationForm enum value from string.
+     * Accepts: NFC, NFD, NFKC, NFKD, fully-normalized, or none (case-sensitive).
      */
     private SerializationParameters.NormalizationForm parseNormalizationForm(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     "null",
-                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'FULLY_NORMALIZED', or 'NONE'"
+                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'"
             );
         }
-        String upper = value.toUpperCase().trim();
+        String trimmed = value.trim();
+        // Map "fully-normalized" to "FULLY_NORMALIZED" enum value
+        if (trimmed.equals("fully-normalized")) {
+            return SerializationParameters.NormalizationForm.FULLY_NORMALIZED;
+        }
+        // Try direct enum value (case-sensitive)
         try {
-            return SerializationParameters.NormalizationForm.valueOf(upper);
+            return SerializationParameters.NormalizationForm.valueOf(trimmed);
         } catch (IllegalArgumentException e) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'FULLY_NORMALIZED', or 'NONE'"
+                    "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'"
             );
         }
     }
@@ -335,7 +351,7 @@ public class SerializationParameterBuilder {
     }
 
     /**
-     * Parses character maps from string format: key1=value1,key2=value2 or key1:value1,key2:value2
+     * Parses character maps from string format: key1=value1,key2=value2
      */
     private Map<String, String> parseCharacterMaps(String parameterName, String value) {
         Map<String, String> result = new HashMap<>();
@@ -344,13 +360,7 @@ public class SerializationParameterBuilder {
             for (String pair : pairs) {
                 String trimmed = pair.trim();
                 if (!trimmed.isEmpty()) {
-                    int separatorIndex = -1;
-                    // Try = first, then :
-                    if (trimmed.contains("=")) {
-                        separatorIndex = trimmed.indexOf('=');
-                    } else if (trimmed.contains(":")) {
-                        separatorIndex = trimmed.indexOf(':');
-                    }
+                    int separatorIndex = trimmed.indexOf('=');
                     if (separatorIndex > 0 && separatorIndex < trimmed.length() - 1) {
                         String key = trimmed.substring(0, separatorIndex).trim();
                         String val = trimmed.substring(separatorIndex + 1).trim();
@@ -360,14 +370,14 @@ public class SerializationParameterBuilder {
                             throw new InvalidSerializationParameterValueException(
                                     parameterName,
                                     trimmed,
-                                    "a key=value or key:value pair with non-empty key and value"
+                                    "a key=value pair with non-empty key and value"
                             );
                         }
                     } else {
                         throw new InvalidSerializationParameterValueException(
                                 parameterName,
                                 trimmed,
-                                "a key=value or key:value pair"
+                                "a key=value pair"
                         );
                     }
                 }
@@ -377,7 +387,7 @@ public class SerializationParameterBuilder {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
-                    "a comma-separated list of key=value or key:value pairs with at least one valid pair"
+                    "a comma-separated list of key=value pairs with at least one valid pair"
             );
         }
         return result;
