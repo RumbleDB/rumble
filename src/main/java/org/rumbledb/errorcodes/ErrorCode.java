@@ -184,7 +184,9 @@ public enum ErrorCode {
     InvalidAssignableVariableComposability("SCCP0005"),
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
-    InvalidVariableDeclaration("SCIN0001");
+    InvalidVariableDeclaration("SCIN0001"),
+
+    InvalidSerializationParameterValue("SEPM0016");
 
     private String code;
 

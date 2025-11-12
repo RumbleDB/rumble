@@ -25,7 +25,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-import org.rumbledb.context.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
 
@@ -93,11 +93,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
 
+    private Map<String, String> serializationParameters;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
+        this.serializationParameters = new HashMap<>();
         initShortcuts();
         init();
     }
@@ -124,6 +126,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
+        this.serializationParameters = new HashMap<>();
         initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
@@ -145,6 +148,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                     System.err.println("Try it out! The old parameters will continue to work, though.");
                 }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
+                // Handle --output:<option> <value> pattern
+                if (argumentName.startsWith("output:")) {
+                    String optionName = argumentName.substring(7); // Remove "output:" prefix
+                    if (
+                        i + 1 < args.length
+                            && !args[i + 1].startsWith(ARGUMENT_PREFIX)
+                            && !args[i + 1].startsWith(SHORTCUT_PREFIX)
+                    ) {
+                        String optionValue = args[i + 1];
+                        this.serializationParameters.put(optionName, optionValue);
+                        ++i;
+                        continue;
+                    } else {
+                        throw new CliException("Missing value for serialization parameter: " + optionName + ".");
+                    }
+                }
                 if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && args[i + 1].startsWith(ARGUMENT_PREFIX))) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                 }
@@ -155,6 +174,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
             if (args[i].startsWith(SHORTCUT_PREFIX)) {
                 String argumentName = args[i].trim().replace(SHORTCUT_PREFIX, "");
+                // Handle -o:<option> <value> pattern (distinct from -o output-path)
+                if (argumentName.startsWith("o:") && argumentName.length() > 2) {
+                    String optionName = argumentName.substring(2); // Remove "o:" prefix
+                    if (
+                        i + 1 < args.length
+                            && !args[i + 1].startsWith(ARGUMENT_PREFIX)
+                            && !args[i + 1].startsWith(SHORTCUT_PREFIX)
+                    ) {
+                        String optionValue = args[i + 1];
+                        this.serializationParameters.put(optionName, optionValue);
+                        ++i;
+                        continue;
+                    } else {
+                        throw new CliException("Missing value for serialization parameter: " + optionName + ".");
+                    }
+                }
                 if (!this.yesNoShortcuts.contains(argumentName)) {
                     if (
                         i + 1 >= args.length
@@ -357,6 +392,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.allowedPrefixes = Arrays.asList();
         }
         if (this.arguments.containsKey("output-format")) {
+            System.err.println(
+                "WARNING: --output-format is deprecated. Use --output:method=<value> instead. "
+                    + "This flag will continue to work for backward compatibility."
+            );
             this.outputFormat = this.arguments.get("output-format").toLowerCase();
         } else {
             this.outputFormat = "json";
@@ -374,6 +413,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.outputFormatOptions = new HashMap<>();
         for (String s : this.arguments.keySet()) {
             if (s.startsWith("output-format-option:")) {
+                System.err.println(
+                    "WARNING: --output-format-option:<key> is deprecated. Use --output:<key>=<value> instead. "
+                        + "This flag will continue to work for backward compatibility."
+                );
                 String key = s.substring(21);
                 String value = this.arguments.get(s);
                 this.outputFormatOptions.put(key, value);
@@ -1258,6 +1301,16 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     public void setXmlVersion(String v) {
         this.xmlVersion = v;
+    }
+
+    /**
+     * Builds SerializationParameters from command-line arguments.
+     * Applies values from --output:<option> flags to a default SerializationParameters instance.
+     *
+     * @return configured SerializationParameters instance
+     */
+    public SerializationParameters buildSerializationParameters() {
+        return new SerializationParameterBuilder(this.serializationParameters).build();
     }
 
     /**
