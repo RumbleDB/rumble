@@ -169,7 +169,7 @@ public interface ItemType extends Serializable, KryoSerializable {
 
         // special check for unions
         if (superType.isUnionType()) {
-            for (ItemType unionItemType : superType.getUnionContentFacet().getTypes()) {
+            for (ItemType unionItemType : superType.getTypes()) {
                 if (this.isSubtypeOf(unionItemType)) {
                     return true;
                 }
@@ -436,7 +436,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      *
      * @return content facet value for union item types
      */
-    default UnionContentDescriptor getUnionContentFacet() {
+    default List<ItemType> getTypes() {
         throw new UnsupportedOperationException("union content facet is allowed only for union item types");
     }
 

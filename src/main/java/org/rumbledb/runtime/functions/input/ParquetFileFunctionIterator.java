@@ -63,7 +63,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
-                .parquet(uri.toString());
+                .parquet(FileSystemUtil.convertURIToStringForSpark(uri));
             if (partitions != -1) {
                 dataFrame = dataFrame.repartition(partitions);
             }

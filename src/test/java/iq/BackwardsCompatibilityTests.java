@@ -22,20 +22,15 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.Item;
-import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 import scala.Function0;
-import scala.util.Properties;
 
 import java.io.File;
 import java.util.*;
@@ -106,102 +101,18 @@ public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
 
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = defaultConfiguration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     @Test(timeout = 1000000)
     public final void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), getConfiguration());
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput;
-        if (!sequence.availableAsRDD()) {
-            actualOutput = getIteratorOutput(sequence);
-        } else {
-            actualOutput = getRDDResults(sequence);
-        }
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
+        AnnotationsTestsBase.testAnnotations(
+            this.testFile.getAbsolutePath(),
+            getConfiguration(),
+            true,
+            getConfiguration().applyUpdates(),
+            getConfiguration().getResultSizeCap()
         );
-    }
-
-    protected String getIteratorOutput(SequenceOfItems sequence) {
-        sequence.open();
-        Item result = null;
-        if (sequence.hasNext()) {
-            result = sequence.next();
-        }
-        if (result == null) {
-            return "";
-        }
-        String singleOutput = result.serialize();
-        if (!sequence.hasNext()) {
-            return singleOutput;
-        } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            sb.append(result.serialize());
-            sb.append(", ");
-            while (
-                sequence.hasNext()
-                    &&
-                    ((itemCount < getConfiguration().getResultSizeCap()
-                        && getConfiguration().getResultSizeCap() > 0)
-                        ||
-                        getConfiguration().getResultSizeCap() == 0)
-            ) {
-                sb.append(sequence.next().serialize());
-                sb.append(", ");
-                itemCount++;
-            }
-            if (sequence.hasNext() && itemCount == getConfiguration().getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            String output = sb.toString();
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
-        }
-    }
-
-    private String getRDDResults(SequenceOfItems sequence) {
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = new ArrayList<String>();
-        SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
-
-        if (collectedOutput.isEmpty()) {
-            return "";
-        }
-
-        if (collectedOutput.size() == 1) {
-            return collectedOutput.get(0);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append(", ");
-        }
-
-        String result = sb.toString();
-        result = result.substring(0, result.length() - 2);
-        result += ")";
-        return result;
     }
 }

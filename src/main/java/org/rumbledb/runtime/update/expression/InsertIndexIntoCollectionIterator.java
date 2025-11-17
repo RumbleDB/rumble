@@ -136,7 +136,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         String collection = targetItem.getStringValue();
         if (!this.isTable) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, collection, getMetadata());
-            collection = uri.toString();
+            collection = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 
         Dataset<Row> contentDF = null;
