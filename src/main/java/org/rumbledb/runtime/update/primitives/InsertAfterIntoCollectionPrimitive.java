@@ -19,6 +19,7 @@ public class InsertAfterIntoCollectionPrimitive implements UpdatePrimitive {
 
     private final Item target;
     private Dataset<Row> contents;
+    private final String collection;
 
     public InsertAfterIntoCollectionPrimitive(
             Item target,
@@ -27,6 +28,7 @@ public class InsertAfterIntoCollectionPrimitive implements UpdatePrimitive {
     ) {
         this.target = target;
         this.contents = contents;
+        this.collection = target.getTableLocation().substring(7, target.getTableLocation().length() - 1);
     }
 
     @Override
@@ -36,7 +38,7 @@ public class InsertAfterIntoCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        return this.target.getTableLocation();
+        return this.collection;
     }
 
     @Override
@@ -109,19 +111,26 @@ public class InsertAfterIntoCollectionPrimitive implements UpdatePrimitive {
 
         this.contents = rowNumOrderDF;
 
-        String safeName = String.format("__insertb_tview_%s_%f_%f", collection, rowOrderBase, rowOrderMax)
-            .replaceAll("[^a-zA-Z0-9_]", "_");
-        this.contents.createOrReplaceTempView(safeName);
+        // String safeName = String.format("__insertb_tview_%s_%f_%f", collection, rowOrderBase, rowOrderMax)
+        //     .replaceAll("[^a-zA-Z0-9_]", "_");
+        // this.contents.createOrReplaceTempView(safeName);
 
-        String insertQuery = String.format(
-            "INSERT INTO %s SELECT * FROM %s",
-            collection,
-            safeName
-        );
-        session.sql(insertQuery);
+        // String insertQuery = String.format(
+        //     "INSERT INTO %s SELECT * FROM %s",
+        //     collection,
+        //     safeName
+        // );
+        // session.sql(insertQuery);
 
-        session.catalog().dropTempView(safeName);
+        // session.catalog().dropTempView(safeName);
 
+        // System.out.println("Inserted after into collection " + this.getCollectionPath());
+        // System.out.println("Inserted after into collection " + collection);
+        // System.out.println("Inserted rows: ");
+        // this.contents.show();
+        // this.contents.show();
+        
+        this.contents = InsertFirstIntoCollectionPrimitive.insertInDeltaMergeSchema(this.contents, this.collection);
     }
 
 }

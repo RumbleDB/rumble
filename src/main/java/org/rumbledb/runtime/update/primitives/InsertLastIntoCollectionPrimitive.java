@@ -111,18 +111,20 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
         this.contents = rowNumOrderDF;
 
         // insertion
-        String safeName = String.format("__insert_tview_%s_%f_%f", this.collection, rowOrderBase, rowOrderMax)
-            .replaceAll("[^a-zA-Z0-9_]", "_");
-        this.contents.createOrReplaceTempView(safeName);
+        // String safeName = String.format("__insert_tview_%s_%f_%f", this.collection, rowOrderBase, rowOrderMax)
+        //     .replaceAll("[^a-zA-Z0-9_]", "_");
+        // this.contents.createOrReplaceTempView(safeName);
 
-        String insertQuery = String.format(
-            "INSERT INTO %s SELECT * FROM %s",
-            this.getCollectionPath(),
-            safeName
-        );
-        session.sql(insertQuery);
+        // String insertQuery = String.format(
+        //     "INSERT INTO %s SELECT * FROM %s",
+        //     this.getCollectionPath(),
+        //     safeName
+        // );
+        // session.sql(insertQuery);
 
-        session.catalog().dropTempView(safeName);
+        // session.catalog().dropTempView(safeName);
+
+        this.contents = InsertFirstIntoCollectionPrimitive.insertInDeltaMergeSchema(this.contents, this.collection);
     }
 
 }

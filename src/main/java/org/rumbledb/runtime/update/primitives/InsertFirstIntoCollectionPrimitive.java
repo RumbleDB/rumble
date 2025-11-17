@@ -4,9 +4,11 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
+import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.expr;
 import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
@@ -30,6 +32,25 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         this.collection = collection;
         this.contents = contents;
         this.isTable = isTable;
+    }
+
+    public static Dataset<Row> insertInDeltaMergeSchema(Dataset<Row> contents, String collection) {
+        // Cast to DoubleType
+        contents = contents.withColumn(
+            SparkSessionManager.rowOrderColumnName,
+            col(SparkSessionManager.rowOrderColumnName).cast(DataTypes.DoubleType)
+            );
+
+        System.out.println("Inserted after into collection " + collection);
+            
+        // Insert in delta with mergeSchema enables
+        contents.write()
+            .format("delta")
+            .mode("append")
+            .option("mergeSchema", "true")
+            .save(collection);
+        
+        return contents;
     }
 
     @Override
@@ -62,30 +83,29 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-
+        
         String collectionTableName = this.collection;
         if (!isTable) {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .format("delta")
-                .load(this.collection);
+            .getOrCreateSession()
+            .read()
+            .format("delta")
+            .load(this.collection);
             collectionTableName = String.format("__query_tview_%s", this.collection)
-                .replaceAll("[^a-zA-Z0-9_]", "_");
+            .replaceAll("[^a-zA-Z0-9_]", "_");
             dataFrame.createOrReplaceTempView(collectionTableName);
         }
-
+        
         String selectQuery = String.format(
             "SELECT MAX(%s) as maxRowID FROM %s",
             SparkSessionManager.rowIdColumnName,
             collectionTableName
-        );
-        Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
-        rowIDStart = rowIDStart == null ? 0L : rowIDStart;
-
-
-        long rowCount = this.contents.count();
-
+            );
+            Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
+            rowIDStart = rowIDStart == null ? 0L : rowIDStart;
+            
+            long rowCount = this.contents.count();
+            
         double rowOrderBase = InsertFirstIntoCollectionPrimitive.DEFAULT_ROW_ORDER_BASE;
         String selectRowOrderQuery = String.format(
             "SELECT MIN(%s) as minRowOrder FROM %s",
@@ -122,19 +142,33 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
         this.contents = rowNumOrderDF;
 
+        
         // insertion
-        String safeName = String.format("__insert_tview_%s_%f_%f", this.collection, rowOrderBase, rowOrderMax)
-            .replaceAll("[^a-zA-Z0-9_]", "_");
-        this.contents.createOrReplaceTempView(safeName);
+        // String safeName = String.format("__insert_tview_%s_%f_%f", this.collection, rowOrderBase, rowOrderMax)
+        //     .replaceAll("[^a-zA-Z0-9_]", "_");
+        // this.contents.createOrReplaceTempView(safeName);
+        // String insertQuery = String.format(
+            //     "INSERT INTO %s SELECT * FROM %s",
+            //     collectionTableName,
+            //     safeName
+            // );
+            // session.sql(insertQuery);
+            // System.out.println("\n\n\n");
+            // System.out.println("\n\n\n");
+            // System.out.println(this.contents.select(col("index")));
+            // System.out.println(this.contents.select(col("__rowID")));
+            // System.out.println(this.contents.select(col("__rowOrder")));
+            // System.out.println("\n\n\n");
+            // System.out.println("\n\n\n");
+            // session.catalog().dropTempView(safeName);
+        
+        // Cast to DoubleType
+        // this.contents = this.contents.withColumn(
+        //     SparkSessionManager.rowOrderColumnName,
+        //     col(SparkSessionManager.rowOrderColumnName).cast(DataTypes.DoubleType)
+        // );
 
-        String insertQuery = String.format(
-            "INSERT INTO %s SELECT * FROM %s",
-            collectionTableName,
-            safeName
-        );
-        session.sql(insertQuery);
-
-        session.catalog().dropTempView(safeName);
+        this.contents = InsertFirstIntoCollectionPrimitive.insertInDeltaMergeSchema(this.contents, this.collection);
     }
 
 }

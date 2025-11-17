@@ -104,15 +104,15 @@ public class UpdatePrimitiveFactory {
         return new EditTuplePrimitive(target, contents, metadata);
     }
 
-    public UpdatePrimitive createInsertTuplePrimitive(
-            String collection,
-            Dataset<Row> contents,
-            double rowOrderBase,
-            double rowOrderMax,
-            ExceptionMetadata metadata
-    ) {
-        return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
-    }
+    // public UpdatePrimitive createInsertTuplePrimitive(
+    //         String collection,
+    //         Dataset<Row> contents,
+    //         double rowOrderBase,
+    //         double rowOrderMax,
+    //         ExceptionMetadata metadata
+    // ) {
+    //     return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
+    // }
 
     public UpdatePrimitive createInsertAfterIntoCollectionPrimitive(
             Item target,
