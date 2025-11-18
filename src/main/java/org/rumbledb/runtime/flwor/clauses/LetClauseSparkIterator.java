@@ -142,11 +142,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
         if (this.assignmentIterator.isDataFrame()) {
             JSoundDataFrame df = this.assignmentIterator.getDataFrame(this.tupleContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); 
+            this.tupleContext = new DynamicContext(this.currentDynamicContext);
             resultTuple.putValue(this.variableName, df);
         } else if (this.assignmentIterator.isRDDOrDataFrame()) {
             JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(this.tupleContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); 
+            this.tupleContext = new DynamicContext(this.currentDynamicContext);
             resultTuple.putValue(this.variableName, itemRDD);
         } else {
             List<Item> results = new ArrayList<>();
