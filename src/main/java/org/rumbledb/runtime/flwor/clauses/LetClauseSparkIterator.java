@@ -96,7 +96,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.tupleContext = this.currentDynamicContext;
         } else {
             this.child.open(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             setNextLocalTupleResult();
         }
     }
@@ -109,7 +109,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.tupleContext = this.currentDynamicContext;
         } else {
             this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             setNextLocalTupleResult();
         }
     }
