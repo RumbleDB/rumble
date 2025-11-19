@@ -92,8 +92,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public void open(DynamicContext context) {
         super.open(context);
         if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
             this.tupleContext = this.currentDynamicContext;
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
         } else {
             this.child.open(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
@@ -105,8 +105,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
             this.tupleContext = this.currentDynamicContext;
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
         } else {
             this.child.reset(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
