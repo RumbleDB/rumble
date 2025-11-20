@@ -57,6 +57,8 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+// import org.rumbledb.exceptions.ExceptionMetadata;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -90,7 +92,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public void open(DynamicContext context) {
         super.open(context);
         if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this.currentDynamicContext);
+            this.tupleContext = this.currentDynamicContext;
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
         } else {
             this.child.open(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
@@ -102,7 +105,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this.currentDynamicContext);
+            this.tupleContext = this.currentDynamicContext;
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
         } else {
             this.child.reset(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
@@ -123,8 +127,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
                                                                                                    // variables from new
                                                                                                    // tuple
-
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, this.tupleContext);
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple);
             this.hasNext = true;
         } else {
             this.child.close();
@@ -132,22 +135,24 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    private FlworTuple generateTupleFromExpressionWithContext(FlworTuple inputTuple, DynamicContext context) {
+    private FlworTuple generateTupleFromExpressionWithContext(FlworTuple inputTuple) {
         FlworTuple resultTuple;
         if (inputTuple == null) {
-            resultTuple = new FlworTuple();
+            resultTuple = new FlworTuple(this.getConfiguration());
         } else {
             resultTuple = new FlworTuple(inputTuple);
         }
         if (this.assignmentIterator.isDataFrame()) {
-            JSoundDataFrame df = this.assignmentIterator.getDataFrame(context);
+            JSoundDataFrame df = this.assignmentIterator.getDataFrame(this.tupleContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext);
             resultTuple.putValue(this.variableName, df);
         } else if (this.assignmentIterator.isRDDOrDataFrame()) {
-            JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(context);
+            JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(this.tupleContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext);
             resultTuple.putValue(this.variableName, itemRDD);
         } else {
             List<Item> results = new ArrayList<>();
-            this.assignmentIterator.open(context);
+            this.assignmentIterator.open(this.tupleContext);
             while (this.assignmentIterator.hasNext()) {
                 results.add(this.assignmentIterator.next());
             }

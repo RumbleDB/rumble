@@ -9,6 +9,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.Collections;
 
 public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator exprIterator;
 
     public ApplyStatementIterator(

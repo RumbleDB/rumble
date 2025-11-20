@@ -78,7 +78,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
      */
     public DynamicContext(RumbleRuntimeConfiguration conf) {
         this.parent = null;
-        this.variableValues = new VariableValues();
+        this.variableValues = new VariableValues(conf);
         this.conf = conf;
         this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();

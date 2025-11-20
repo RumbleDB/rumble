@@ -34,8 +34,6 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-import static org.apache.spark.sql.functions.*;
-
 public class JavaAPITest {
 
     public JavaAPITest() {

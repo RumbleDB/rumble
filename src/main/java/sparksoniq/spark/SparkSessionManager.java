@@ -25,7 +25,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.BooleanType;
@@ -37,8 +36,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.CannotMaterializeException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.AnyURIItem;
@@ -70,13 +67,9 @@ import org.rumbledb.types.SequenceType;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
-    public static int COLLECT_ITEM_LIMIT = 0;
     private static SparkSessionManager instance;
     private static Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
@@ -121,10 +114,6 @@ public class SparkSessionManager {
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
-    }
-
-    public static boolean LIMIT_COLLECT() {
-        return COLLECT_ITEM_LIMIT > 0;
     }
 
     public static SparkSessionManager getInstance() {
@@ -283,44 +272,6 @@ public class SparkSessionManager {
             this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return this.javaSparkContext;
-    }
-
-    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, ExceptionMetadata metadata) {
-        if (SparkSessionManager.LIMIT_COLLECT()) {
-            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
-            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
-                long count = rdd.count();
-                throw new CannotMaterializeException(
-                        "Cannot materialize a sequence of "
-                            + count
-                            + " items because the limit is set to "
-                            + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + ". This value can be configured with the --materialization-cap parameter at startup",
-                        metadata
-                );
-            }
-            return result;
-        } else {
-            return rdd.collect();
-        }
-    }
-
-    public static <T> long collectRDDwithLimitWarningOnly(JavaRDD<T> rdd, List<T> outputList) {
-        outputList.clear();
-        long count = -1;
-        if (SparkSessionManager.LIMIT_COLLECT()) {
-            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
-            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
-                count = rdd.count();
-            }
-            result.stream()
-                .limit(SparkSessionManager.COLLECT_ITEM_LIMIT)
-                .collect(Collectors.toCollection(() -> outputList));
-            return count;
-        } else {
-            outputList.addAll(rdd.collect());
-            return count;
-        }
     }
 
 }

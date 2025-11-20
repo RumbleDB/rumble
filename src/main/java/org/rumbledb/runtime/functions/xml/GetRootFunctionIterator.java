@@ -16,6 +16,8 @@ import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import java.util.List;
 
 public class GetRootFunctionIterator extends LocalFunctionCallIterator {
+    private static final long serialVersionUID = 1L;
+
     public GetRootFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
     }

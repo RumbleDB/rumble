@@ -45,7 +45,13 @@ public class ComposabilityTests extends AnnotationsTestsBase {
         initializeTests(composabilityTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            testAnnotations(testFile.getAbsolutePath(), getConfiguration());
+            testAnnotations(
+                testFile.getAbsolutePath(),
+                getConfiguration(),
+                true,
+                getConfiguration().applyUpdates(),
+                getConfiguration().getResultSizeCap()
+            );
         }
     }
 }
