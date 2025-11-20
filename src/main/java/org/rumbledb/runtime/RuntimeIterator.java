@@ -27,8 +27,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -358,17 +356,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     getConfiguration()
                 );
             } else {
-                Dataset<Row> df = ValidateTypeIterator.convertRDDToVariantDataFrame(this.getRDD(context))
-                    .getDataFrame();
-                ItemType type = ValidateTypeIterator.inferSchemaTypeOfVariantDataFrame(df, getMetadata());
-                df = ValidateTypeIterator.convertRDDToValidDataFrame(
-                    this.getRDD(context),
+                JavaRDD<Item> rdd = this.getRDD(context);
+                ItemType type = ValidateTypeIterator.inferSchemaTypeOfRDDItems(rdd, getMetadata());
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    rdd,
                     type,
                     context,
                     true,
                     getConfiguration()
-                ).getDataFrame();
-                return new JSoundDataFrame(df, type);
+                );
             }
         }
         List<Item> items = new ArrayList<>();
@@ -382,12 +378,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 getConfiguration()
             );
         } else {
-            Dataset<Row> df = ValidateTypeIterator.convertLocalItemsToVariantDataFrame(items).getDataFrame();
-            ItemType type = ValidateTypeIterator.inferSchemaTypeOfVariantDataFrame(df, getMetadata());
-
-            df = ValidateTypeIterator.convertLocalItemsToDataFrame(items, type, context, true, getConfiguration())
-                .getDataFrame();
-            return new JSoundDataFrame(df, type);
+            ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                items,
+                type,
+                context,
+                true,
+                getConfiguration()
+            );
         }
     }
 
