@@ -20,14 +20,14 @@
 
 package iq;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 @RunWith(Parameterized.class)
 public class MLTests extends RuntimeTests {
@@ -50,7 +50,11 @@ public class MLTests extends RuntimeTests {
                     "--escape-backticks",
                     "yes",
                     "--native-execution",
-                    "no"
+                    "no",
+                    "--result-size",
+                    "200",
+                    "--materialization-cap",
+                    "200"
                 }
         );
     }

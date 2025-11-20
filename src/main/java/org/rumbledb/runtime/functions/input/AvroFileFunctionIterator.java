@@ -93,13 +93,17 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     }
                 }
             }
-            Dataset<Row> dataFrame = dfr.format("avro").load(uri.toString());
+            Dataset<Row> dataFrame = dfr.format("avro").load(FileSystemUtil.convertURIToStringForSpark(uri));
             return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
-                throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                RuntimeException f = new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                f.initCause(e);
+                throw f;
             } else {
-                throw new CannotRetrieveResourceException(e.getMessage(), getMetadata());
+                RuntimeException f = new CannotRetrieveResourceException(e.getMessage(), getMetadata());
+                f.initCause(e);
+                throw f;
             }
         }
     }

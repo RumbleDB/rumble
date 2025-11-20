@@ -63,7 +63,7 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
                 .getOrCreateSession()
                 .read()
                 .option("mode", "FAILFAST")
-                .json(uri.toString());
+                .json(FileSystemUtil.convertURIToStringForSpark(uri));
             return new JSoundDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {

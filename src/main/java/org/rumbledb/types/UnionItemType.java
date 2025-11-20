@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class UnionItemType implements ItemType {
@@ -19,20 +20,20 @@ public class UnionItemType implements ItemType {
     private final Name name;
     private final ItemType baseType;
     private final int typeTreeDepth;
-    private final UnionContentDescriptor content;
+    private final List<ItemType> types;
 
-    UnionItemType(Name name, ItemType baseType, UnionContentDescriptor content) {
+    UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
         this.name = name;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-        this.content = content;
+        this.types = types;
     }
 
-    UnionItemType(Name name, UnionContentDescriptor content) {
+    UnionItemType(Name name, List<ItemType> types) {
         this.name = name;
         this.baseType = BuiltinTypesCatalogue.item;
         this.typeTreeDepth = 1;
-        this.content = content;
+        this.types = types;
     }
 
     @Override
@@ -101,8 +102,8 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public UnionContentDescriptor getUnionContentFacet() {
-        return this.content;
+    public List<ItemType> getTypes() {
+        return this.types;
     }
 
     @Override
@@ -114,10 +115,10 @@ public class UnionItemType implements ItemType {
         sb.append("#anonymous-union-base{");
         sb.append(this.baseType.getIdentifierString());
         sb.append("}");
-        if (this.content != null) {
+        if (this.types != null) {
             sb.append("-content{");
             String comma = "";
-            for (ItemType it : this.content.getTypes()) {
+            for (ItemType it : this.types) {
                 sb.append(comma);
                 sb.append(it.getIdentifierString());
                 comma = ",";
@@ -129,13 +130,53 @@ public class UnionItemType implements ItemType {
 
     @Override
     public String toString() {
-        // TODO : consider providing more info
-        return this.name.toString();
+        if ((new Name(Name.JS_NS, "js", "object")).equals(this.name)) {
+            // generic object
+            return this.name.toString();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"union\", ");
+
+            sb.append("\"baseType\": \"");
+            sb.append(this.baseType.toString());
+            sb.append("\", ");
+
+            sb.append("\"treeDepth\": ");
+            sb.append(this.typeTreeDepth);
+            sb.append(", ");
+
+            if (isResolved()) {
+                sb.append("\"content\": [ ");
+                String comma = "";
+                for (ItemType type : this.types) {
+                    sb.append(comma);
+                    comma = ", ";
+                    if (type.toString().startsWith("{")) {
+                        sb.append(type);
+                    } else {
+                        sb.append("\"");
+                        sb.append(type.toString());
+                        sb.append("\"");
+                    }
+                }
+                sb.append(" ]");
+            } else {
+                sb.append(" (content not resolved yet) ");
+            }
+            sb.append(" }");
+            return sb.toString();
+        }
     }
 
     @Override
     public boolean isResolved() {
-        for (ItemType itemType : this.content.getTypes()) {
+        for (ItemType itemType : this.types) {
             if (!itemType.isResolved())
                 return false;
         }
@@ -144,7 +185,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        for (ItemType itemType : this.content.getTypes()) {
+        for (ItemType itemType : this.types) {
             if (!itemType.isResolved()) {
                 itemType.resolve(context, metadata);
             }
@@ -153,7 +194,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
-        for (ItemType itemType : this.content.getTypes()) {
+        for (ItemType itemType : this.types) {
             if (!itemType.isResolved()) {
                 itemType.resolve(context, metadata);
             }
