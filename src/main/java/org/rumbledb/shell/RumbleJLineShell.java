@@ -126,7 +126,7 @@ public class RumbleJLineShell {
             }
             output(result);
             if (count != -1) {
-                JsoniqQueryExecutor.issueMaterializationWarning(count);
+                JsoniqQueryExecutor.issueMaterializationWarning(count, configuration.getResultSizeCap());
             }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {

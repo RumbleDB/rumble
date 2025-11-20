@@ -39,6 +39,7 @@ import java.util.Iterator;
 public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
 
     private static final long serialVersionUID = 1L;
+    @SuppressWarnings("unused")
     private final ExceptionMetadata metadata;
     private final boolean optimizeParentPointers;
 
