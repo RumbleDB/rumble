@@ -76,9 +76,9 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
             session.sql(truncateQuery);
         } else {
             URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                collectionName,
-                configuration,
-                metadata
+                this.collectionName,
+                this.configuration,
+                this.metadata
             );
             FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
         }

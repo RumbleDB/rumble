@@ -11,6 +11,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.Arrays;
 
 public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator testConditionIterator;
     private final RuntimeIterator bodyIterator;
 

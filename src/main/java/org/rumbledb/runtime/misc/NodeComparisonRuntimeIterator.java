@@ -42,6 +42,7 @@ import java.util.Arrays;
  * @see org.rumbledb.expressions.comparison.NodeComparisonExpression
  */
 public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
 
     private NodeComparisonExpression.NodeComparisonOperator operator;
     private RuntimeIterator leftIterator;

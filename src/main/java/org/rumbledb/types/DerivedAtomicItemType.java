@@ -14,7 +14,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import java.util.List;
 import java.util.Set;
 
-public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
+public class DerivedAtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 

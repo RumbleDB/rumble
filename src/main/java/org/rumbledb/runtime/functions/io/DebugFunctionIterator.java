@@ -10,6 +10,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import java.util.List;
 
 public class DebugFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
 
     public DebugFunctionIterator(
             List<RuntimeIterator> arguments,
