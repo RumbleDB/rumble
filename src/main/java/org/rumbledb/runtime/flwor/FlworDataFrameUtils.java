@@ -92,8 +92,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
-import scala.collection.immutable.ArraySeq;
-import scala.collection.Iterator;
 import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {

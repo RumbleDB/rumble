@@ -11,6 +11,7 @@ import org.rumbledb.types.ItemType;
 import java.util.List;
 
 public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private List<Item> materializedArgument;
     private ItemType itemType;
 
