@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 public class DocumentTest implements NodeTest {
+    private static final long serialVersionUID = 1L;
     // TODO: schemaElement test unsupported yet.
     private NodeTest nodeTest;
 

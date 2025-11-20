@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
 public class ElementTest implements NodeTest {
+    private static final long serialVersionUID = 1L;
     private Name elementName;
     private boolean hasWildcard;
     private Name typeName;

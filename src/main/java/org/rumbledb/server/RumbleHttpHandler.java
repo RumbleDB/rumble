@@ -27,7 +27,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 
-@SuppressWarnings("restriction")
 public class RumbleHttpHandler implements HttpHandler {
 
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;

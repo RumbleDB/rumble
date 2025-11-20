@@ -35,7 +35,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.util.List;
 
@@ -56,10 +55,10 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     // Exit statement fields
     private boolean encounteredExitStatement;
-    private PendingUpdateList pendingUpdateList;
+    // private PendingUpdateList pendingUpdateList;
     private List<Item> exitStatementLocalResult;
-    private JavaRDD<Item> rddResult;
-    private JSoundDataFrame dataFrameResult;
+    // private JavaRDD<Item> rddResult;
+    // private JSoundDataFrame dataFrameResult;
     private int nextExitStatementResult;
 
     public DynamicFunctionCallIterator(
