@@ -21,13 +21,15 @@
 package iq;
 
 
-import iq.base.AnnotationsTestsBase;
 import org.junit.Test;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
+
+import java.util.List;
 
 import java.io.File;
 
 
-public class ComposabilityTests extends AnnotationsTestsBase {
+public class ComposabilityTests {
     public static final File composabilityTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
@@ -42,15 +44,13 @@ public class ComposabilityTests extends AnnotationsTestsBase {
      */
     @Test(timeout = 1000000)
     public void testComposabilityContraints() throws Throwable {
-        initializeTests(composabilityTestsDirectory);
-        for (File testFile : this.testFiles) {
-            System.err.println(counter++ + " : " + testFile);
-            testAnnotations(
+        List<File> testFiles = RumbleDBTestCommons.extractTestFilesFromDirectory(composabilityTestsDirectory);
+        for (File testFile : testFiles) {
+            // System.err.println(counter++ + " : " + testFile);
+            RumbleDBTestCommons.testAnnotations(
                 testFile.getAbsolutePath(),
-                getConfiguration(),
-                true,
-                getConfiguration().applyUpdates(),
-                getConfiguration().getResultSizeCap()
+                RumbleDBTestCommons.getDefaultConfiguration(),
+                true
             );
         }
     }

@@ -21,7 +21,6 @@
 package iq;
 
 
-import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.compiler.VisitorHelpers;
@@ -31,6 +30,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
 import java.net.URI;
@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class FrontendTests extends AnnotationsTestsBase {
+public class FrontendTests {
 
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -64,16 +64,14 @@ public class FrontendTests extends AnnotationsTestsBase {
      */
     @Test(timeout = 1000000)
     public void testGrammarAndParser() throws Throwable {
-        initializeTests(grammarTestsDirectory);
-        for (File testFile : this.testFiles) {
-            System.err.println(counter++ + " : " + testFile);
+        List<File> testFiles = RumbleDBTestCommons.extractTestFilesFromDirectory(grammarTestsDirectory);
+        for (File testFile : testFiles) {
+            // System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(
+            RumbleDBTestCommons.testAnnotations(
                 testFile.getAbsolutePath(),
-                getConfiguration(),
-                true,
-                getConfiguration().applyUpdates(),
-                getConfiguration().getResultSizeCap()
+                RumbleDBTestCommons.getDefaultConfiguration(),
+                true
             );
         }
 
@@ -106,25 +104,23 @@ public class FrontendTests extends AnnotationsTestsBase {
      */
     @Test(timeout = 1000000)
     public void testSematicChecks() throws Throwable {
-        initializeTests(semanticTestsDirectory);
-        for (File testFile : this.testFiles) {
-            System.err.println(counter++ + " : " + testFile);
-            testAnnotations(
+        List<File> testFiles = RumbleDBTestCommons.extractTestFilesFromDirectory(semanticTestsDirectory);
+        for (File testFile : testFiles) {
+            // System.err.println(counter++ + " : " + testFile);
+            RumbleDBTestCommons.testAnnotations(
                 testFile.getAbsolutePath(),
-                getConfiguration(),
-                true,
-                getConfiguration().applyUpdates(),
-                getConfiguration().getResultSizeCap()
+                RumbleDBTestCommons.getDefaultConfiguration(),
+                true
             );
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
-                    getConfiguration(),
+                    RumbleDBTestCommons.getDefaultConfiguration(),
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
                     uri,
-                    getConfiguration()
+                    RumbleDBTestCommons.getDefaultConfiguration()
                 );
 
                 testVariableTypes(mainModule);
