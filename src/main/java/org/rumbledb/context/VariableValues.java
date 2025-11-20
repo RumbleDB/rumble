@@ -27,6 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
@@ -34,7 +35,6 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -54,6 +54,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     private Map<Name, JSoundDataFrame> dataFrameVariableValues;
     private boolean nestedQuery;
     private VariableValues parent;
+    private RumbleRuntimeConfiguration configuration;
 
     public VariableValues() {
         this.parent = null;
@@ -62,6 +63,16 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.nestedQuery = false;
+    }
+
+    public VariableValues(RumbleRuntimeConfiguration configuration) {
+        this.parent = null;
+        this.localVariableCounts = new HashMap<>();
+        this.localVariableValues = new HashMap<>();
+        this.rddVariableValues = new HashMap<>();
+        this.dataFrameVariableValues = new HashMap<>();
+        this.nestedQuery = false;
+        this.configuration = configuration;
     }
 
     public VariableValues(VariableValues parent) {
@@ -74,6 +85,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.nestedQuery = false;
+        this.configuration = parent.configuration;
     }
 
     public VariableValues(
@@ -93,6 +105,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.dataFrameVariableValues = dataFrameVariableValues;
         removeGlobalVariablesFromCopiedValues(globalVariables);
         this.nestedQuery = false;
+        this.configuration = parent.configuration;
     }
 
     private void removeGlobalVariablesFromCopiedValues(GlobalVariables globalVariables) {
@@ -202,7 +215,7 @@ public class VariableValues implements Serializable, KryoSerializable {
                 throw new JobWithinAJobException(metadata);
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
+            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
@@ -210,8 +223,9 @@ public class VariableValues implements Serializable, KryoSerializable {
                 throw new JobWithinAJobException(metadata);
             }
             JSoundDataFrame df = this.getDataFrameVariableValue(varName, metadata);
-            return SparkSessionManager.collectRDDwithLimit(
+            return HybridRuntimeIterator.collectRDDwithLimit(
                 HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata),
+                this.configuration,
                 metadata
             );
         }
@@ -334,6 +348,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, VariableValues.class);
         kryo.writeObject(output, this.localVariableValues);
+        kryo.writeObject(output, this.configuration);
     }
 
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
@@ -346,6 +361,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, VariableValues.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
+        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
         this.nestedQuery = true;
     }
 

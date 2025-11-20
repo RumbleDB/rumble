@@ -53,6 +53,8 @@ public class UpdatesForRumbleBenchmark {
                 "--show-error-info",
                 "yes",
                 "--materialization-cap",
+                "900000",
+                "--result-size",
                 "900000"
             }
     );
@@ -68,6 +70,8 @@ public class UpdatesForRumbleBenchmark {
                 "--apply-updates",
                 "yes",
                 "--materialization-cap",
+                "900000",
+                "--result-size",
                 "900000"
             }
     );
@@ -389,7 +393,6 @@ public class UpdatesForRumbleBenchmark {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
