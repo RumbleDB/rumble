@@ -55,8 +55,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private int resultsSizeCap;
     private int materializationCap;
     private String inputFormat;
-    private String outputFormat;
-    private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
@@ -108,7 +106,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.shortcutMap = new HashMap<>();
         this.shortcutMap.put("q", "query");
         this.shortcutMap.put("o", "output-path");
-        this.shortcutMap.put("f", "output-format");
         this.shortcutMap.put("O", "overwrite");
         this.shortcutMap.put("c", "materialization-cap");
         this.shortcutMap.put("I", "context-item");
@@ -277,24 +274,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Returns the output format for writing the output of the query to the output path.
-     * 
-     * @return the output format.
-     */
-    public String getOutputFormat() {
-        return this.outputFormat;
-    }
-
-    /**
-     * Sets the output format for writing the output of the query to the output path.
-     * 
-     * @param newValue the output format.
-     */
-    public void setOutputFormat(String newValue) {
-        this.outputFormat = newValue;
-    }
-
-    /**
      * Returns the input format for reading from standard input.
      * 
      * @return the input format.
@@ -328,26 +307,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     public RumbleRuntimeConfiguration setNumberOfOutputPartitions(int newValue) {
         this.numberOfOutputPartitions = newValue;
-        return this;
-    }
-
-    /**
-     * Returns the serialization options to write to the output path.
-     * 
-     * @return the serialization options.
-     */
-    public Map<String, String> getOutputFormatOptions() {
-        return this.outputFormatOptions;
-    }
-
-    /**
-     * Sets a serialization option to write to the output path.
-     * 
-     * @param key the serialization option key.
-     * @param value the serialization option value.
-     */
-    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
-        this.outputFormatOptions.put(key, value);
         return this;
     }
 
@@ -391,15 +350,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.allowedPrefixes = Arrays.asList();
         }
-        if (this.arguments.containsKey("output-format")) {
-            System.err.println(
-                "WARNING: --output-format is deprecated. Use --output:method=<value> instead. "
-                    + "This flag will continue to work for backward compatibility."
-            );
-            this.outputFormat = this.arguments.get("output-format").toLowerCase();
-        } else {
-            this.outputFormat = "json";
-        }
         if (this.arguments.containsKey("input-format")) {
             this.inputFormat = this.arguments.get("input-format").toLowerCase();
         } else {
@@ -409,18 +359,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
         } else {
             this.numberOfOutputPartitions = -1;
-        }
-        this.outputFormatOptions = new HashMap<>();
-        for (String s : this.arguments.keySet()) {
-            if (s.startsWith("output-format-option:")) {
-                System.err.println(
-                    "WARNING: --output-format-option:<key> is deprecated. Use --output:<key>=<value> instead. "
-                        + "This flag will continue to work for backward compatibility."
-                );
-                String key = s.substring(21);
-                String value = this.arguments.get(s);
-                this.outputFormatOptions.put(key, value);
-            }
         }
         if (this.arguments.containsKey("materialization-cap")) {
             this.materializationCap = Integer.parseInt(this.arguments.get("materialization-cap"));
@@ -1319,22 +1257,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @return the serializer in use according to the output format specified.
      */
     public Serializer getSerializer() {
-        SerializationParameters params = SerializationParameters.defaults();
-        params.setMethod(this.getOutputFormat());
-        Map<String, String> options = this.getOutputFormatOptions();
-        if (options.containsKey("indent")) {
-            params.setIndent("yes".equals(options.get("indent")));
-        }
-        if (options.containsKey("item-separator")) {
-            params.setItemSeparator(options.get("item-separator"));
-        } else {
-            params.setItemSeparator("\n");
-        }
-        if (options.containsKey("encoding")) {
-            params.setEncoding(options.get("encoding"));
-        } else {
-            params.setEncoding("UTF-8");
-        }
+        SerializationParameters params = buildSerializationParameters();
         return Serializers.from(params);
     }
 }
