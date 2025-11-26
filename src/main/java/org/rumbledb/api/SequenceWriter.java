@@ -2,7 +2,7 @@ package org.rumbledb.api;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
@@ -25,18 +25,19 @@ public class SequenceWriter {
     private final DataFrameWriter<Row> dataFrameWriter;
     private String source;
     private SaveMode mode;
-    private Map<String, String> outputFormatOptions;
+    private final SerializationParameters serializationParameters;
 
     public SequenceWriter(
             SequenceOfItems sequence,
             DataFrameWriter<Row> dataFrameWriter,
             String source,
             SaveMode mode,
-            Map<String, String> options,
+            SerializationParameters serializationParameters,
             RumbleRuntimeConfiguration configuration
     ) {
         this.sequence = sequence;
         this.configuration = configuration;
+        this.serializationParameters = serializationParameters;
         this.dataFrameWriter = dataFrameWriter;
         this.source = source;
         this.mode = mode;
@@ -48,9 +49,9 @@ public class SequenceWriter {
         if (dataFrameWriter == null && mode == null) {
             throw new OurBadException("Internal error: it is not possible for both the writer and the mode to be null");
         }
-        if (dataFrameWriter == null && options == null) {
+        if (dataFrameWriter == null && serializationParameters == null) {
             throw new OurBadException(
-                    "Internal error: it is not possible for both the writer and the options to be null"
+                    "Internal error: it is not possible for both the writer and the serializationParameters to be null"
             );
         }
         if (dataFrameWriter != null && source != null) {
@@ -63,33 +64,28 @@ public class SequenceWriter {
                     "Internal error: it is not possible for both the writer and the mode to be non null"
             );
         }
-        if (dataFrameWriter != null && options != null) {
+        if (dataFrameWriter != null && serializationParameters != null) {
             throw new OurBadException(
-                    "Internal error: it is not possible for both the writer and the options to be non null"
+                    "Internal error: it is not possible for both the writer and the serializationParameters to be non null"
             );
         }
-        this.outputFormatOptions = options;
     }
 
     public SequenceWriter(SequenceOfItems sequence, RumbleRuntimeConfiguration configuration) {
         this.sequence = sequence;
         this.configuration = configuration;
+        this.serializationParameters = configuration.getSerializationParameters();
         DataFrameWriter<Row> w = null;
-        if (
-            this.configuration.getOutputFormat().equals("xml-json-hybrid")
-                ||
-                this.configuration.getOutputFormat().equals("tyson")
-        ) {
-            this.source = this.configuration.getOutputFormat(); // Default source
+        String method = this.serializationParameters.getMethod();
+        if (method != null && (method.equals("xml-json-hybrid") || method.equals("tyson"))) {
+            this.source = method; // Default source
             this.mode = SaveMode.ErrorIfExists; // Default save mode
-            this.outputFormatOptions = new HashMap<>();
         } else {
             try {
                 w = sequence.getAsDataFrame().write();
             } catch (CannotInferSchemaOnNonStructuredDataException e) {
                 this.source = "xml-json-hybrid"; // Default source
                 this.mode = SaveMode.ErrorIfExists; // Default save mode
-                this.outputFormatOptions = new HashMap<>();
             }
         }
         this.dataFrameWriter = w;
@@ -136,7 +132,7 @@ public class SequenceWriter {
                     null,
                     this.source,
                     mode,
-                    this.outputFormatOptions,
+                    this.serializationParameters,
                     this.configuration
             );
         }
@@ -158,7 +154,7 @@ public class SequenceWriter {
                     null,
                     this.source,
                     saveMode,
-                    this.outputFormatOptions,
+                    this.serializationParameters,
                     this.configuration
             );
         }
@@ -175,12 +171,18 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
+            SerializationParameters params = (this.dataFrameWriter == null)
+                ? copySerializationParameters()
+                : SerializationParameters.defaults();
+            if (params.getMethod() == null) {
+                params.setMethod(source);
+            }
             return new SequenceWriter(
                     this.sequence,
                     null,
                     source,
                     (this.dataFrameWriter == null) ? this.mode : this.dataFrameWriter.curmode(),
-                    (this.dataFrameWriter == null) ? this.outputFormatOptions : new HashMap<>(),
+                    params,
                     this.configuration
             );
         }
@@ -197,14 +199,14 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
-            Map<String, String> outputMap = new HashMap<>(this.outputFormatOptions);
-            outputMap.put(key, value);
+            SerializationParameters newParams = copySerializationParameters();
+            newParams.getSparkOptions().put(key, value);
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
                     this.mode,
-                    outputMap,
+                    newParams,
                     this.configuration
             );
         }
@@ -221,14 +223,14 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
-            Map<String, String> outputMap = new HashMap<>(this.outputFormatOptions);
-            outputMap.put(key, Boolean.toString(value));
+            SerializationParameters newParams = copySerializationParameters();
+            newParams.getSparkOptions().put(key, Boolean.toString(value));
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
                     this.mode,
-                    outputMap,
+                    newParams,
                     this.configuration
             );
         }
@@ -245,14 +247,14 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
-            Map<String, String> outputMap = new HashMap<>(this.outputFormatOptions);
-            outputMap.put(key, Long.toString(value));
+            SerializationParameters newParams = copySerializationParameters();
+            newParams.getSparkOptions().put(key, Long.toString(value));
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
                     this.mode,
-                    outputMap,
+                    newParams,
                     this.configuration
             );
         }
@@ -269,14 +271,14 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
-            Map<String, String> outputMap = new HashMap<>(this.outputFormatOptions);
-            outputMap.put(key, Double.toString(value));
+            SerializationParameters newParams = copySerializationParameters();
+            newParams.getSparkOptions().put(key, Double.toString(value));
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
                     this.mode,
-                    outputMap,
+                    newParams,
                     this.configuration
             );
         }
@@ -293,14 +295,14 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
-            Map<String, String> outputMap = new HashMap<>(this.outputFormatOptions);
-            outputMap.putAll(options);
+            SerializationParameters newParams = copySerializationParameters();
+            newParams.getSparkOptions().putAll(options);
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
                     this.mode,
-                    outputMap,
+                    newParams,
                     this.configuration
             );
         }
@@ -317,14 +319,14 @@ public class SequenceWriter {
                     this.configuration
             );
         } else {
-            Map<String, String> outputMap = new HashMap<>(this.outputFormatOptions);
-            outputMap.putAll(options);
+            SerializationParameters newParams = copySerializationParameters();
+            newParams.getSparkOptions().putAll(options);
             return new SequenceWriter(
                     this.sequence,
                     null,
                     this.source,
                     this.mode,
-                    outputMap,
+                    newParams,
                     this.configuration
             );
         }
@@ -429,22 +431,54 @@ public class SequenceWriter {
     }
 
     public Serializer getSerializer() {
-        SerializationParameters params = SerializationParameters.defaults();
-        params.setMethod(this.source);
-        if (this.outputFormatOptions.containsKey("indent")) {
-            params.setIndent("yes".equals(this.outputFormatOptions.get("indent")));
+        SerializationParameters params = copySerializationParameters();
+        // Ensure method is set from source
+        if (params.getMethod() == null) {
+            params.setMethod(this.source);
         }
-        if (this.outputFormatOptions.containsKey("item-separator")) {
-            params.setItemSeparator(this.outputFormatOptions.get("item-separator"));
-        } else {
+        // Ensure defaults for serialization if not set
+        if (params.getItemSeparator() == null) {
             params.setItemSeparator("\n");
         }
-        if (this.outputFormatOptions.containsKey("encoding")) {
-            params.setEncoding(this.outputFormatOptions.get("encoding"));
-        } else {
+        if (params.getEncoding() == null) {
             params.setEncoding("UTF-8");
         }
         return Serializers.from(params);
+    }
+
+    /**
+     * Creates a deep copy of the serialization parameters.
+     * This is needed when creating new SequenceWriter instances with modified options.
+     */
+    private SerializationParameters copySerializationParameters() {
+        if (this.serializationParameters == null) {
+            return SerializationParameters.defaults();
+        }
+        SerializationParameters copy = SerializationParameters.defaults();
+        copy.setMethod(this.serializationParameters.getMethod());
+        copy.setEncoding(this.serializationParameters.getEncoding());
+        copy.setOmitXmlDeclaration(this.serializationParameters.getOmitXmlDeclaration());
+        copy.setStandalone(this.serializationParameters.getStandalone());
+        copy.setDoctypeSystem(this.serializationParameters.getDoctypeSystem());
+        copy.setDoctypePublic(this.serializationParameters.getDoctypePublic());
+        copy.setMediaType(this.serializationParameters.getMediaType());
+        copy.setNormalizationForm(this.serializationParameters.getNormalizationForm());
+        copy.setUndeclarePrefixes(this.serializationParameters.getUndeclarePrefixes());
+        copy.setCharacterMaps(new HashMap<>(this.serializationParameters.getCharacterMaps()));
+        copy.setCdataSectionElements(new HashSet<>(this.serializationParameters.getCdataSectionElements()));
+        copy.setIncludeContentType(this.serializationParameters.getIncludeContentType());
+        copy.setEscapeUriAttributes(this.serializationParameters.getEscapeUriAttributes());
+        copy.setHtmlVersion(this.serializationParameters.getHtmlVersion());
+        copy.setByteOrderMark(this.serializationParameters.getByteOrderMark());
+        copy.setIndent(this.serializationParameters.getIndent());
+        copy.setIndentSpaces(this.serializationParameters.getIndentSpaces());
+        copy.setSuppressIndentation(new HashSet<>(this.serializationParameters.getSuppressIndentation()));
+        copy.setItemSeparator(this.serializationParameters.getItemSeparator());
+        copy.setAllowDuplicateNames(this.serializationParameters.getAllowDuplicateNames());
+        copy.setJsonNodeOutputMethod(this.serializationParameters.getJsonNodeOutputMethod());
+        copy.setExtensionParameters(new HashMap<>(this.serializationParameters.getExtensionParameters()));
+        copy.setSparkOptions(new HashMap<>(this.serializationParameters.getSparkOptions()));
+        return copy;
     }
 
     public void save() {

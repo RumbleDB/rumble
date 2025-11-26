@@ -133,8 +133,8 @@ public class SerializationParameterBuilder {
                         params.setSuppressIndentation(parseStringSet(optionName, optionValue));
                         break;
                     default:
-                        // Unknown parameters go to extensionParameters
-                        params.getExtensionParameters().put(optionName, optionValue);
+                        // Unknown parameters go to sparkOptions (Spark DataFrameWriter options)
+                        params.getSparkOptions().put(optionName, optionValue);
                         break;
                 }
             } catch (IllegalArgumentException e) {

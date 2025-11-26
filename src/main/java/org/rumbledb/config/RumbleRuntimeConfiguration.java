@@ -91,13 +91,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
 
-    private Map<String, String> serializationParameters;
+    private SerializationParameters serializationParameters;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
-        this.serializationParameters = new HashMap<>();
+        this.serializationParameters = SerializationParameters.defaults();
         initShortcuts();
         init();
     }
@@ -123,7 +123,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
-        this.serializationParameters = new HashMap<>();
+        HashMap<String, String> cliOutputParameters = new HashMap<>();
         initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
@@ -154,7 +154,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                             && !args[i + 1].startsWith(SHORTCUT_PREFIX)
                     ) {
                         String optionValue = args[i + 1];
-                        this.serializationParameters.put(optionName, optionValue);
+                        cliOutputParameters.put(optionName, optionValue);
                         ++i;
                         continue;
                     } else {
@@ -180,7 +180,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                             && !args[i + 1].startsWith(SHORTCUT_PREFIX)
                     ) {
                         String optionValue = args[i + 1];
-                        this.serializationParameters.put(optionName, optionValue);
+                        cliOutputParameters.put(optionName, optionValue);
                         ++i;
                         continue;
                     } else {
@@ -1242,13 +1242,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Builds SerializationParameters from command-line arguments.
-     * Applies values from --output:<option> flags to a default SerializationParameters instance.
+     * Returns the SerializationParameters in use.
      *
-     * @return configured SerializationParameters instance
+     * @return the SerializationParameters in use.
      */
-    public SerializationParameters buildSerializationParameters() {
-        return new SerializationParameterBuilder(this.serializationParameters).build();
+    public SerializationParameters getSerializationParameters() {
+        return this.serializationParameters;
     }
 
     /**
@@ -1257,7 +1256,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @return the serializer in use according to the output format specified.
      */
     public Serializer getSerializer() {
-        SerializationParameters params = buildSerializationParameters();
-        return Serializers.from(params);
+        return Serializers.from(this.serializationParameters);
     }
 }

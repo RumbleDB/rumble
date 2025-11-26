@@ -34,6 +34,7 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.SerializationParameters;
 
 import java.io.IOException;
 import java.net.URI;
@@ -114,7 +115,9 @@ public class JsoniqQueryExecutor {
         }
 
         if (outputPath != null) {
-            if (this.configuration.getOutputFormat().equals("xml-json-hybrid")) {
+            SerializationParameters serializationParams = this.configuration.buildSerializationParameters();
+            String method = serializationParams.getMethod();
+            if (method != null && method.equals("xml-json-hybrid")) {
                 outputRDDToFile(outputPath, outputUri, sequence);
             } else {
                 try {
@@ -123,13 +126,13 @@ public class JsoniqQueryExecutor {
                         df = df.repartition(this.configuration.getNumberOfOutputPartitions());
                     }
                     DataFrameWriter<Row> writer = df.write();
-                    Map<String, String> options = this.configuration.getOutputFormatOptions();
+                    Map<String, String> options = serializationParams.getSparkOptions();
                     for (String key : options.keySet()) {
                         writer.option(key, options.get(key));
                         LogManager.getLogger("JsoniqQueryExecutor")
                             .info("Writing with option " + key + " : " + options.get(key));
                     }
-                    String format = this.configuration.getOutputFormat();
+                    String format = (method != null) ? method : "json"; // Default to json if not specified
                     LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
                     switch (format) {
                         case "json":

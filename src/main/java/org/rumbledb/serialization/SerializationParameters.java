@@ -207,6 +207,12 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      */
     private Map<String, String> extensionParameters;
 
+    /**
+     * Spark-specific options for DataFrameWriter (e.g., CSV delimiter, compression, etc.).
+     * These are passed directly to Spark's DataFrameWriter.option() method.
+     */
+    private Map<String, String> sparkOptions;
+
     public SerializationParameters() {
         // empty for Kryo/Java serialization
     }
@@ -236,6 +242,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         p.allowDuplicateNames = false;
         p.jsonNodeOutputMethod = JsonNodeOutputMethod.UNSPECIFIED;
         p.extensionParameters = new HashMap<>();
+        p.sparkOptions = new HashMap<>();
         return p;
     }
 
@@ -416,6 +423,14 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.extensionParameters = extensionParameters;
     }
 
+    public Map<String, String> getSparkOptions() {
+        return sparkOptions;
+    }
+
+    public void setSparkOptions(Map<String, String> sparkOptions) {
+        this.sparkOptions = sparkOptions;
+    }
+
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeString(this.method);
@@ -476,6 +491,16 @@ public class SerializationParameters implements Serializable, KryoSerializable {
                 output.writeString(e.getValue());
             }
         }
+
+        // sparkOptions
+        int soSize = this.sparkOptions != null ? this.sparkOptions.size() : 0;
+        output.writeInt(soSize);
+        if (soSize > 0) {
+            for (Map.Entry<String, String> e : this.sparkOptions.entrySet()) {
+                output.writeString(e.getKey());
+                output.writeString(e.getValue());
+            }
+        }
     }
 
     @Override
@@ -532,6 +557,14 @@ public class SerializationParameters implements Serializable, KryoSerializable {
             String k = input.readString();
             String v = input.readString();
             this.extensionParameters.put(k, v);
+        }
+
+        int soSize = input.readInt();
+        this.sparkOptions = new HashMap<>();
+        for (int i = 0; i < soSize; i++) {
+            String k = input.readString();
+            String v = input.readString();
+            this.sparkOptions.put(k, v);
         }
     }
 }
