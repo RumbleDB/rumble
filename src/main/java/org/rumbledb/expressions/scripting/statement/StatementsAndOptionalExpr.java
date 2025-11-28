@@ -1,6 +1,5 @@
 package org.rumbledb.expressions.scripting.statement;
 
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StatementsAndOptionalExpr extends Expression {
-    protected StaticContext staticContext;
     private final List<Statement> statements;
     private final Expression expression;
 
@@ -87,11 +85,4 @@ public class StatementsAndOptionalExpr extends Expression {
         return this.expression;
     }
 
-    public StaticContext getStaticContext() {
-        return this.staticContext;
-    }
-
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
 }
