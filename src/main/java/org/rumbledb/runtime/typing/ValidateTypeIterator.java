@@ -686,19 +686,19 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         // Neutral element for aggregation
         ItemType neutralElement = new NeutralItemType();
 
-        // Aggregate using Spark's aggregate method with findLeastCommonSuperTypeWith
+        // Aggregate using Spark's aggregate method with findLeastCommonSuperTypeLax
         ItemType result = itemRDD.aggregate(
             neutralElement,
             (ItemType acc, Item item) -> {
                 ItemType itemType = item.getDynamicType();
-                return acc.equals(neutralElement) ? itemType : acc.findLeastCommonSuperTypeWith(itemType);
+                return acc.equals(neutralElement) ? itemType : acc.findLeastCommonSuperTypeLax(itemType);
             },
             (ItemType a, ItemType b) -> {
                 if (a.equals(neutralElement))
                     return b;
                 if (b.equals(neutralElement))
                     return a;
-                return a.findLeastCommonSuperTypeWith(b);
+                return a.findLeastCommonSuperTypeLax(b);
             }
         );
 
@@ -715,7 +715,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
         ItemType result = items.get(0).getDynamicType();
         for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+            result = result.findLeastCommonSuperTypeLax(items.get(i).getDynamicType());
         }
 
         return result;
