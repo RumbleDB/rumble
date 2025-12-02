@@ -30,17 +30,14 @@ import java.util.Set;
  * Handles parsing and validation of serialization parameter values according to
  * XQuery 3.1 Serialization Parameters specification.
  */
-public class SerializationParameterBuilder {
+public final class SerializationParameterBuilder {
 
-    private final Map<String, String> parameters;
 
     /**
-     * Creates a new builder with the provided parameter map.
-     *
-     * @param parameters map of parameter names to string values from CLI arguments
+     * Private constructor to prevent instantiation.
      */
-    public SerializationParameterBuilder(Map<String, String> parameters) {
-        this.parameters = parameters != null ? parameters : new HashMap<>();
+    private SerializationParameterBuilder() {
+        // empty
     }
 
     /**
@@ -50,10 +47,23 @@ public class SerializationParameterBuilder {
      * @return configured SerializationParameters instance
      * @throws InvalidSerializationParameterValueException if any parameter value is invalid
      */
-    public SerializationParameters build() {
-        SerializationParameters params = SerializationParameters.defaults();
+    public static SerializationParameters build(Map<String, String> parameters) {
+        return build(parameters, SerializationParameters.defaults());
+    }
 
-        for (Map.Entry<String, String> entry : this.parameters.entrySet()) {
+    /**
+     * Builds a SerializationParameters instance from the provided parameters, inheriting the default parameters from the provided instance.
+     * Validates all parameter values and throws InvalidSerializationParameterValueException for invalid inputs.
+     *
+     * @param parameters the parameters to build the SerializationParameters instance from
+     * @param defaults the default parameters to inherit from
+     * @return configured SerializationParameters instance
+     * @throws InvalidSerializationParameterValueException if any parameter value is invalid
+     */
+    public static SerializationParameters build(Map<String, String> parameters, SerializationParameters defaults) {
+        SerializationParameters params = SerializationParameters.copy(defaults);
+
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
             String optionName = entry.getKey();
             String optionValue = entry.getValue();
 
@@ -154,7 +164,7 @@ public class SerializationParameterBuilder {
     /**
      * Validates the method parameter value.
      */
-    private void validateMethod(String parameterName, String value) {
+    private static void validateMethod(String parameterName, String value) {
         if (value == null || value.trim().isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -170,7 +180,7 @@ public class SerializationParameterBuilder {
     /**
      * Validates the encoding parameter value.
      */
-    private void validateEncoding(String parameterName, String value) {
+    private static void validateEncoding(String parameterName, String value) {
         if (value == null || value.trim().isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -186,7 +196,7 @@ public class SerializationParameterBuilder {
     /**
      * Parses a boolean value from string, accepting yes/no, true/false, or 1/0.
      */
-    private boolean parseBoolean(String parameterName, String value) {
+    private static boolean parseBoolean(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -212,7 +222,7 @@ public class SerializationParameterBuilder {
      * Parses a Standalone enum value from string.
      * Accepts: yes, no, true, false, 1, 0, or omit.
      */
-    private SerializationParameters.Standalone parseStandalone(String parameterName, String value) {
+    private static SerializationParameters.Standalone parseStandalone(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -245,7 +255,7 @@ public class SerializationParameterBuilder {
      * Parses a NormalizationForm enum value from string.
      * Accepts: NFC, NFD, NFKC, NFKD, fully-normalized, or none (case-sensitive).
      */
-    private SerializationParameters.NormalizationForm parseNormalizationForm(String parameterName, String value) {
+    private static SerializationParameters.NormalizationForm parseNormalizationForm(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -273,7 +283,7 @@ public class SerializationParameterBuilder {
     /**
      * Parses a JsonNodeOutputMethod enum value from string.
      */
-    private SerializationParameters.JsonNodeOutputMethod parseJsonNodeOutputMethod(
+    private static SerializationParameters.JsonNodeOutputMethod parseJsonNodeOutputMethod(
             String parameterName,
             String value
     ) {
@@ -299,7 +309,7 @@ public class SerializationParameterBuilder {
     /**
      * Parses indent-spaces as an integer.
      */
-    private int parseIndentSpaces(String parameterName, String value) {
+    private static int parseIndentSpaces(String parameterName, String value) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -329,7 +339,7 @@ public class SerializationParameterBuilder {
     /**
      * Parses a comma-separated string into a Set of strings.
      */
-    private Set<String> parseStringSet(String parameterName, String value) {
+    private static Set<String> parseStringSet(String parameterName, String value) {
         Set<String> result = new HashSet<>();
         if (value != null && !value.trim().isEmpty()) {
             String[] parts = value.split(",");
@@ -353,7 +363,7 @@ public class SerializationParameterBuilder {
     /**
      * Parses character maps from string format: key1=value1,key2=value2
      */
-    private Map<String, String> parseCharacterMaps(String parameterName, String value) {
+    private static Map<String, String> parseCharacterMaps(String parameterName, String value) {
         Map<String, String> result = new HashMap<>();
         if (value != null && !value.trim().isEmpty()) {
             String[] pairs = value.split(",");

@@ -567,6 +567,36 @@ public class SerializationParameters implements Serializable, KryoSerializable {
             this.sparkOptions.put(k, v);
         }
     }
+
+    /**
+     * Returns a copy of the SerializationParameters instance.
+     * @param parameters the SerializationParameters instance to copy
+     * @return a copy of the SerializationParameters instance
+     */
+    public static SerializationParameters copy(SerializationParameters parameters) {
+        SerializationParameters copy = new SerializationParameters();
+        copy.method = parameters.method;
+        copy.encoding = parameters.encoding;
+        copy.omitXmlDeclaration = parameters.omitXmlDeclaration;
+        copy.standalone = parameters.standalone;
+        copy.doctypeSystem = parameters.doctypeSystem;
+        copy.doctypePublic = parameters.doctypePublic;
+        copy.sparkOptions = new HashMap<>(parameters.sparkOptions);
+        copy.characterMaps = new HashMap<>(parameters.characterMaps);
+        copy.cdataSectionElements = new HashSet<>(parameters.cdataSectionElements);
+        copy.includeContentType = parameters.includeContentType;
+        copy.escapeUriAttributes = parameters.escapeUriAttributes;
+        copy.htmlVersion = parameters.htmlVersion;
+        copy.byteOrderMark = parameters.byteOrderMark;
+        copy.indent = parameters.indent;
+        copy.indentSpaces = parameters.indentSpaces;
+        copy.suppressIndentation = new HashSet<>(parameters.suppressIndentation);
+        copy.itemSeparator = parameters.itemSeparator;
+        copy.allowDuplicateNames = parameters.allowDuplicateNames;
+        copy.jsonNodeOutputMethod = parameters.jsonNodeOutputMethod;
+        copy.extensionParameters = new HashMap<>(parameters.extensionParameters);
+        return copy;
+    }
 }
 
 
