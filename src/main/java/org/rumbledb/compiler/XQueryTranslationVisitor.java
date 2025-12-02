@@ -183,6 +183,8 @@ import java.util.stream.Collectors;
  */
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
+    private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
+
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
@@ -380,6 +382,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 functionDeclarations.add(
                     new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
                 );
+            } else if (annotatedDeclaration.optionDecl() != null) {
+                this.processOptionDecl(annotatedDeclaration.optionDecl());
             }
         }
         for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
@@ -1511,9 +1515,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
-            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    processStringLiteral(ctx.lt),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1594,9 +1597,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
 
         if (child instanceof XQueryParser.StringLiteralContext) {
-            String rawValue = child.getText().substring(1, child.getText().length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    processStringLiteral((XQueryParser.StringLiteralContext) child),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1631,6 +1633,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private String unescapeStringLiteral(String raw) {
         return StringEscapeUtils.unescapeXml(raw);
+    }
+
+    private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
+        String rawValue = ctx.getText();
+        return unescapeStringLiteral(rawValue.substring(1, rawValue.length() - 1));
     }
 
     @Override
@@ -3398,8 +3405,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
-        return unescapeStringLiteral(rawValue);
+        String rawValue = ctx.getText();
+        return unescapeStringLiteral(rawValue.substring(1, rawValue.length() - 1));
+    }
+
+    private void processOptionDecl(XQueryParser.OptionDeclContext ctx) {
+        Name optionName = parseName(ctx.name, false, false, false);
+        String optionValue = processStringLiteral(ctx.value);
+        if (SERIALIZATION_NAMESPACE.equals(optionName.getNamespace())) {
+            // TODO: "Serialization option declarations use the namespace URI
+            // http://www.w3.org/2010/xslt-xquery-serialization." (XQuery 3.1 §4.19.3)
+            return;
+        }
+        throw new UnsupportedFeatureException(
+                "Only serialization option declarations are supported at the moment ("
+                    + optionName
+                    + " = "
+                    + optionValue
+                    + ").",
+                createMetadataFromContext(ctx)
+        );
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
