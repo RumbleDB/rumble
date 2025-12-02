@@ -3413,8 +3413,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Name optionName = parseName(ctx.name, false, false, false);
         String optionValue = processStringLiteral(ctx.value);
         if (SERIALIZATION_NAMESPACE.equals(optionName.getNamespace())) {
-            // TODO: "Serialization option declarations use the namespace URI
-            // http://www.w3.org/2010/xslt-xquery-serialization." (XQuery 3.1 §4.19.3)
+            // XQuery 3.1 §4.19.3: "Serialization option declarations use the namespace URI
+            // http://www.w3.org/2010/xslt-xquery-serialization."
+            String localName = optionName.getLocalName();
+            if (localName == null || localName.isEmpty()) {
+                throw new ParsingException(
+                        "Serialization option name must have a local part.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            this.moduleContext.overrideSerializationParameter(localName, optionValue);
             return;
         }
         throw new UnsupportedFeatureException(

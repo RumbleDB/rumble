@@ -26,12 +26,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Builder class for constructing SerializationParameters from command-line arguments.
- * Handles parsing and validation of serialization parameter values according to
+ * Builder class for constructing and updating SerializationParameters from string parameters.
+ * Handles parsing and validation of serialization parameter values according to the
  * XQuery 3.1 Serialization Parameters specification.
  */
 public final class SerializationParameterBuilder {
-
 
     /**
      * Private constructor to prevent instantiation.
@@ -41,10 +40,14 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Builds a SerializationParameters instance from the provided parameters.
-     * Validates all parameter values and throws InvalidSerializationParameterValueException for invalid inputs.
+     * Builds a fresh {@link SerializationParameters} instance from the provided parameters.
+     * This is equivalent to calling {@link #build(Map, SerializationParameters)} with
+     * {@link SerializationParameters#defaults()}.
+     * All parameter values are validated and an {@link InvalidSerializationParameterValueException} is thrown for
+     * invalid inputs.
      *
-     * @return configured SerializationParameters instance
+     * @param parameters the raw parameter map (name → value) to apply
+     * @return a configured {@link SerializationParameters} instance
      * @throws InvalidSerializationParameterValueException if any parameter value is invalid
      */
     public static SerializationParameters build(Map<String, String> parameters) {
@@ -52,113 +55,127 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Builds a SerializationParameters instance from the provided parameters, inheriting the default parameters from the provided instance.
-     * Validates all parameter values and throws InvalidSerializationParameterValueException for invalid inputs.
+     * Builds a {@link SerializationParameters} instance by copying an existing template and applying overrides.
+     * A defensive copy of {@code defaults} is created so that the original instance is never mutated.
+     * Each provided entry is applied via {@link #update(SerializationParameters, String, String)}, guaranteeing
+     * consistent validation.
      *
-     * @param parameters the parameters to build the SerializationParameters instance from
-     * @param defaults the default parameters to inherit from
-     * @return configured SerializationParameters instance
+     * @param parameters the override map (name → value) to apply
+     * @param defaults the template to inherit unspecified parameters from
+     * @return a configured {@link SerializationParameters} instance
      * @throws InvalidSerializationParameterValueException if any parameter value is invalid
      */
     public static SerializationParameters build(Map<String, String> parameters, SerializationParameters defaults) {
         SerializationParameters params = SerializationParameters.copy(defaults);
 
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            String optionName = entry.getKey();
-            String optionValue = entry.getValue();
+            update(params, entry.getKey(), entry.getValue());
+        }
+        return params;
+    }
 
-            if (optionValue == null || optionValue.trim().isEmpty()) {
-                throw new InvalidSerializationParameterValueException(
-                        optionName,
-                        optionValue == null ? "null" : "''",
-                        "a non-empty string"
-                );
-            }
+    /**
+     * Updates a {@link SerializationParameters} instance in place with the provided parameter name and value.
+     * Each update is validated; unknown parameter names are forwarded to {@code sparkOptions}.
+     *
+     * @param params the {@link SerializationParameters} instance to mutate (typically a local copy)
+     * @param optionName the name of the parameter to update
+     * @param optionValue the value of the parameter to update
+     * @throws InvalidSerializationParameterValueException if the parameter value is invalid
+     */
+    public static void update(SerializationParameters params, String optionName, String optionValue)
+            throws InvalidSerializationParameterValueException {
 
-            try {
-                switch (optionName) {
-                    case "method":
-                        validateMethod(optionName, optionValue);
-                        params.setMethod(optionValue);
-                        break;
-                    case "encoding":
-                        validateEncoding(optionName, optionValue);
-                        params.setEncoding(optionValue);
-                        break;
-                    case "omit-xml-declaration":
-                        params.setOmitXmlDeclaration(parseBoolean(optionName, optionValue));
-                        break;
-                    case "standalone":
-                        params.setStandalone(parseStandalone(optionName, optionValue));
-                        break;
-                    case "doctype-system":
-                        params.setDoctypeSystem(optionValue);
-                        break;
-                    case "doctype-public":
-                        params.setDoctypePublic(optionValue);
-                        break;
-                    case "media-type":
-                        params.setMediaType(optionValue);
-                        break;
-                    case "normalization-form":
-                        params.setNormalizationForm(parseNormalizationForm(optionName, optionValue));
-                        break;
-                    case "undeclare-prefixes":
-                        params.setUndeclarePrefixes(parseBoolean(optionName, optionValue));
-                        break;
-                    case "include-content-type":
-                        params.setIncludeContentType(parseBoolean(optionName, optionValue));
-                        break;
-                    case "escape-uri-attributes":
-                        params.setEscapeUriAttributes(parseBoolean(optionName, optionValue));
-                        break;
-                    case "html-version":
-                        params.setHtmlVersion(optionValue);
-                        break;
-                    case "byte-order-mark":
-                        params.setByteOrderMark(parseBoolean(optionName, optionValue));
-                        break;
-                    case "indent":
-                        params.setIndent(parseBoolean(optionName, optionValue));
-                        break;
-                    case "indent-spaces":
-                        params.setIndentSpaces(parseIndentSpaces(optionName, optionValue));
-                        break;
-                    case "item-separator":
-                        params.setItemSeparator(optionValue);
-                        break;
-                    case "allow-duplicate-names":
-                        params.setAllowDuplicateNames(parseBoolean(optionName, optionValue));
-                        break;
-                    case "json-node-output-method":
-                        params.setJsonNodeOutputMethod(parseJsonNodeOutputMethod(optionName, optionValue));
-                        break;
-                    case "use-character-maps":
-                        params.setCharacterMaps(parseCharacterMaps(optionName, optionValue));
-                        break;
-                    case "cdata-section-elements":
-                        params.setCdataSectionElements(parseStringSet(optionName, optionValue));
-                        break;
-                    case "suppress-indentation":
-                        params.setSuppressIndentation(parseStringSet(optionName, optionValue));
-                        break;
-                    default:
-                        // Unknown parameters go to sparkOptions (Spark DataFrameWriter options)
-                        params.getSparkOptions().put(optionName, optionValue);
-                        break;
-                }
-            } catch (IllegalArgumentException e) {
-                // This should not happen as parse methods now throw InvalidSerializationParameterValueException
-                // But keeping as fallback
-                throw new InvalidSerializationParameterValueException(
-                        optionName,
-                        optionValue,
-                        "a valid value (" + e.getMessage() + ")"
-                );
-            }
+        if (optionValue == null || optionValue.trim().isEmpty()) {
+            throw new InvalidSerializationParameterValueException(
+                    optionName,
+                    optionValue == null ? "null" : "''",
+                    "a non-empty string"
+            );
         }
 
-        return params;
+        try {
+            switch (optionName) {
+                case "method":
+                    validateMethod(optionName, optionValue);
+                    params.setMethod(optionValue);
+                    break;
+                case "encoding":
+                    validateEncoding(optionName, optionValue);
+                    params.setEncoding(optionValue);
+                    break;
+                case "omit-xml-declaration":
+                    params.setOmitXmlDeclaration(parseBoolean(optionName, optionValue));
+                    break;
+                case "standalone":
+                    params.setStandalone(parseStandalone(optionName, optionValue));
+                    break;
+                case "doctype-system":
+                    params.setDoctypeSystem(optionValue);
+                    break;
+                case "doctype-public":
+                    params.setDoctypePublic(optionValue);
+                    break;
+                case "media-type":
+                    params.setMediaType(optionValue);
+                    break;
+                case "normalization-form":
+                    params.setNormalizationForm(parseNormalizationForm(optionName, optionValue));
+                    break;
+                case "undeclare-prefixes":
+                    params.setUndeclarePrefixes(parseBoolean(optionName, optionValue));
+                    break;
+                case "include-content-type":
+                    params.setIncludeContentType(parseBoolean(optionName, optionValue));
+                    break;
+                case "escape-uri-attributes":
+                    params.setEscapeUriAttributes(parseBoolean(optionName, optionValue));
+                    break;
+                case "html-version":
+                    params.setHtmlVersion(optionValue);
+                    break;
+                case "byte-order-mark":
+                    params.setByteOrderMark(parseBoolean(optionName, optionValue));
+                    break;
+                case "indent":
+                    params.setIndent(parseBoolean(optionName, optionValue));
+                    break;
+                case "indent-spaces":
+                    params.setIndentSpaces(parseIndentSpaces(optionName, optionValue));
+                    break;
+                case "item-separator":
+                    params.setItemSeparator(optionValue);
+                    break;
+                case "allow-duplicate-names":
+                    params.setAllowDuplicateNames(parseBoolean(optionName, optionValue));
+                    break;
+                case "json-node-output-method":
+                    params.setJsonNodeOutputMethod(parseJsonNodeOutputMethod(optionName, optionValue));
+                    break;
+                case "use-character-maps":
+                    params.setCharacterMaps(parseCharacterMaps(optionName, optionValue));
+                    break;
+                case "cdata-section-elements":
+                    params.setCdataSectionElements(parseStringSet(optionName, optionValue));
+                    break;
+                case "suppress-indentation":
+                    params.setSuppressIndentation(parseStringSet(optionName, optionValue));
+                    break;
+                default:
+                    // Unknown parameters go to sparkOptions (Spark DataFrameWriter options)
+                    params.getSparkOptions().put(optionName, optionValue);
+                    break;
+            }
+        } catch (IllegalArgumentException e) {
+            // This should not happen as parse methods now throw
+            // InvalidSerializationParameterValueException
+            // But keeping as fallback
+            throw new InvalidSerializationParameterValueException(
+                    optionName,
+                    optionValue,
+                    "a valid value (" + e.getMessage() + ")"
+            );
+        }
     }
 
     /**
@@ -255,7 +272,10 @@ public final class SerializationParameterBuilder {
      * Parses a NormalizationForm enum value from string.
      * Accepts: NFC, NFD, NFKC, NFKD, fully-normalized, or none (case-sensitive).
      */
-    private static SerializationParameters.NormalizationForm parseNormalizationForm(String parameterName, String value) {
+    private static SerializationParameters.NormalizationForm parseNormalizationForm(
+            String parameterName,
+            String value
+    ) {
         if (value == null) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
@@ -403,4 +423,3 @@ public final class SerializationParameterBuilder {
         return result;
     }
 }
-

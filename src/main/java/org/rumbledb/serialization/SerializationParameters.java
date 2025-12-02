@@ -570,6 +570,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     /**
      * Returns a copy of the SerializationParameters instance.
+     * 
      * @param parameters the SerializationParameters instance to copy
      * @return a copy of the SerializationParameters instance
      */

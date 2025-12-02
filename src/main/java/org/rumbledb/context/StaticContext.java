@@ -26,6 +26,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -110,7 +111,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        this.serializationParameters = configuration.buildSerializationParameters();
+        this.serializationParameters = configuration.getSerializationParameters();
     }
 
     public StaticContext(StaticContext parent) {
@@ -409,6 +410,23 @@ public class StaticContext implements Serializable, KryoSerializable {
      */
     public void setSerializationParameters(SerializationParameters serializationParameters) {
         this.serializationParameters = serializationParameters;
+    }
+
+    /**
+     * Override the serialization parameters with the provided parameter name and value.
+     * Throws InvalidSerializationParameterValueException for invalid inputs.
+     *
+     * @param name the name of the parameter to update
+     * @param value the value of the parameter to update
+     * @throws InvalidSerializationParameterValueException if the parameter value is invalid
+     */
+    public void overrideSerializationParameter(String name, String value) {
+        // ensure we have a local copy of the serialization parameters
+        if (this.serializationParameters == null) {
+            this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
+        }
+        // update the local copy of theserialization parameters with the provided parameter name and value
+        SerializationParameterBuilder.update(this.serializationParameters, name, value);
     }
 
     public void importModuleContext(StaticContext moduleContext) {
