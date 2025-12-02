@@ -38,6 +38,8 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
+
 import static org.jline.reader.LineReader.HISTORY_FILE;
 
 import java.io.BufferedReader;
@@ -98,7 +100,7 @@ public class RumbleJLineShell {
         List<Item> results = new ArrayList<>();
         try {
             long count = this.jsoniqQueryExecutor.runInteractive(query, results);
-            Serializer serializer = this.configuration.getSerializer();
+            Serializer serializer = Serializers.from(this.configuration.getSerializationParameters());
             String result = String.join(
                 "\n",
                 results.stream()

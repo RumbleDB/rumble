@@ -97,7 +97,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
-        this.serializationParameters = SerializationParameters.defaults();
         initShortcuts();
         init();
     }
@@ -123,7 +122,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
-        HashMap<String, String> cliOutputParameters = new HashMap<>();
         initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
@@ -145,23 +143,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                     System.err.println("Try it out! The old parameters will continue to work, though.");
                 }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-                // Handle --output:<option> <value> pattern
-                if (argumentName.startsWith("output:")) {
-                    String optionName = argumentName.substring(7); // Remove "output:" prefix
-                    if (
-                        i + 1 < args.length
-                            && !args[i + 1].startsWith(ARGUMENT_PREFIX)
-                            && !args[i + 1].startsWith(SHORTCUT_PREFIX)
-                    ) {
-                        String optionValue = args[i + 1];
-                        cliOutputParameters.put(optionName, optionValue);
-                        ++i;
-                        continue;
-                    } else {
-                        throw new CliException("Missing value for serialization parameter: " + optionName + ".");
-                    }
-                }
-                if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && args[i + 1].startsWith(ARGUMENT_PREFIX))) {
+                if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && (args[i + 1].startsWith(ARGUMENT_PREFIX) || args[i + 1].startsWith(SHORTCUT_PREFIX)))) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                 }
                 String argumentValue = args[i + 1];
@@ -171,7 +153,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
             if (args[i].startsWith(SHORTCUT_PREFIX)) {
                 String argumentName = args[i].trim().replace(SHORTCUT_PREFIX, "");
-                // Handle -o:<option> <value> pattern (distinct from -o output-path)
+                // Handle -o:<option> <value> pattern (distinct from -o output-path) separately
+                // from the other shortcuts
                 if (argumentName.startsWith("o:") && argumentName.length() > 2) {
                     String optionName = argumentName.substring(2); // Remove "o:" prefix
                     if (
@@ -180,7 +163,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                             && !args[i + 1].startsWith(SHORTCUT_PREFIX)
                     ) {
                         String optionValue = args[i + 1];
-                        cliOutputParameters.put(optionName, optionValue);
+                        this.arguments.put("output:" + optionName, optionValue);
                         ++i;
                         continue;
                     } else {
@@ -330,6 +313,17 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void init() {
+        Map<String, String> serializationOverrides = new HashMap<>();
+        for (Map.Entry<String, String> entry : this.arguments.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("output:")) {
+                // remove the output: prefix
+                serializationOverrides.put(key.substring(7), entry.getValue());
+            }
+        }
+        // this will throw an exception if the serialization parameters are invalid
+        this.serializationParameters = SerializationParameterBuilder.build(serializationOverrides);
+
         if (this.arguments.containsKey("print-iterator-tree")) {
             this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
         } else {
@@ -1248,14 +1242,5 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     public SerializationParameters getSerializationParameters() {
         return this.serializationParameters;
-    }
-
-    /**
-     * Returns the serializer in use according to the output format specified.
-     *
-     * @return the serializer in use according to the output format specified.
-     */
-    public Serializer getSerializer() {
-        return Serializers.from(this.serializationParameters);
     }
 }

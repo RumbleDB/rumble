@@ -35,6 +35,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializers;
 
 import java.io.IOException;
 import java.net.URI;
@@ -115,7 +116,7 @@ public class JsoniqQueryExecutor {
         }
 
         if (outputPath != null) {
-            SerializationParameters serializationParams = this.configuration.buildSerializationParameters();
+            SerializationParameters serializationParams = this.configuration.getSerializationParameters();
             String method = serializationParams.getMethod();
             if (method != null && method.equals("xml-json-hybrid")) {
                 outputRDDToFile(outputPath, outputUri, sequence);
@@ -158,7 +159,7 @@ public class JsoniqQueryExecutor {
             long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
-                .map(x -> configuration.getSerializer().serialize(x))
+                .map(x -> Serializers.from(configuration.getSerializationParameters()).serialize(x))
                 .collect(Collectors.toList());
             System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
@@ -193,7 +194,7 @@ public class JsoniqQueryExecutor {
     private void outputRDDToFile(String outputPath, URI outputUri, SequenceOfItems sequence) {
         JavaRDD<Item> rdd = sequence.getAsRDD();
         RumbleRuntimeConfiguration configuration = this.configuration;
-        JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
+        JavaRDD<String> outputRDD = rdd.map(o -> Serializers.from(configuration.getSerializationParameters()).serialize(o));
         // If the user explicitly requests exactly one partition, then we collect all items
         // and write them to a single file.
         if (this.configuration.getNumberOfOutputPartitions() == 1) {
