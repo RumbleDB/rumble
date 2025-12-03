@@ -220,7 +220,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     public static SerializationParameters defaults() {
         SerializationParameters p = new SerializationParameters();
         // Spec-aligned conservative defaults; implementation-defined noted explicitly
-        p.method = null; // host can choose
+        p.method = "xml-json-hybrid"; // implementation defined default
         p.encoding = "UTF-8";
         p.omitXmlDeclaration = false;
         p.standalone = Standalone.OMIT;
