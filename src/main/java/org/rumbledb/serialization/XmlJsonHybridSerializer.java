@@ -6,6 +6,8 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 
 public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private final org.rumbledb.serialization.SerializationParameters params;
 
     public XmlJsonHybridSerializer(SerializationParameters params) {

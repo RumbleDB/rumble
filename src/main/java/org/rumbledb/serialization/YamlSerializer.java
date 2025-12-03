@@ -11,6 +11,9 @@ import java.io.IOException;
 
 public class YamlSerializer implements Serializer, java.io.Serializable {
 
+    private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("unused")
     private final org.rumbledb.serialization.SerializationParameters params;
 
     public YamlSerializer(SerializationParameters params) {

@@ -248,7 +248,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     // Getters and setters
     public String getMethod() {
-        return method;
+        return this.method;
     }
 
     public void setMethod(String method) {
@@ -256,7 +256,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public String getEncoding() {
-        return encoding;
+        return this.encoding;
     }
 
     public void setEncoding(String encoding) {
@@ -264,7 +264,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getOmitXmlDeclaration() {
-        return omitXmlDeclaration;
+        return this.omitXmlDeclaration;
     }
 
     public void setOmitXmlDeclaration(boolean omitXmlDeclaration) {
@@ -272,7 +272,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public Standalone getStandalone() {
-        return standalone;
+        return this.standalone;
     }
 
     public void setStandalone(Standalone standalone) {
@@ -280,7 +280,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public String getDoctypeSystem() {
-        return doctypeSystem;
+        return this.doctypeSystem;
     }
 
     public void setDoctypeSystem(String doctypeSystem) {
@@ -288,7 +288,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public String getDoctypePublic() {
-        return doctypePublic;
+        return this.doctypePublic;
     }
 
     public void setDoctypePublic(String doctypePublic) {
@@ -296,7 +296,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public String getMediaType() {
-        return mediaType;
+        return this.mediaType;
     }
 
     public void setMediaType(String mediaType) {
@@ -304,7 +304,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public NormalizationForm getNormalizationForm() {
-        return normalizationForm;
+        return this.normalizationForm;
     }
 
     public void setNormalizationForm(NormalizationForm normalizationForm) {
@@ -312,7 +312,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getUndeclarePrefixes() {
-        return undeclarePrefixes;
+        return this.undeclarePrefixes;
     }
 
     public void setUndeclarePrefixes(boolean undeclarePrefixes) {
@@ -320,7 +320,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public Map<String, String> getCharacterMaps() {
-        return characterMaps;
+        return this.characterMaps;
     }
 
     public void setCharacterMaps(Map<String, String> characterMaps) {
@@ -328,7 +328,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public Set<String> getCdataSectionElements() {
-        return cdataSectionElements;
+        return this.cdataSectionElements;
     }
 
     public void setCdataSectionElements(Set<String> cdataSectionElements) {
@@ -336,7 +336,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getIncludeContentType() {
-        return includeContentType;
+        return this.includeContentType;
     }
 
     public void setIncludeContentType(boolean includeContentType) {
@@ -344,7 +344,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getEscapeUriAttributes() {
-        return escapeUriAttributes;
+        return this.escapeUriAttributes;
     }
 
     public void setEscapeUriAttributes(boolean escapeUriAttributes) {
@@ -352,7 +352,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public String getHtmlVersion() {
-        return htmlVersion;
+        return this.htmlVersion;
     }
 
     public void setHtmlVersion(String htmlVersion) {
@@ -360,7 +360,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getByteOrderMark() {
-        return byteOrderMark;
+        return this.byteOrderMark;
     }
 
     public void setByteOrderMark(boolean byteOrderMark) {
@@ -368,7 +368,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getIndent() {
-        return indent;
+        return this.indent;
     }
 
     public void setIndent(boolean indent) {
@@ -376,7 +376,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public int getIndentSpaces() {
-        return indentSpaces;
+        return this.indentSpaces;
     }
 
     public void setIndentSpaces(int indentSpaces) {
@@ -384,7 +384,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public Set<String> getSuppressIndentation() {
-        return suppressIndentation;
+        return this.suppressIndentation;
     }
 
     public void setSuppressIndentation(Set<String> suppressIndentation) {
@@ -392,7 +392,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public String getItemSeparator() {
-        return itemSeparator;
+        return this.itemSeparator;
     }
 
     public void setItemSeparator(String itemSeparator) {
@@ -400,7 +400,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public boolean getAllowDuplicateNames() {
-        return allowDuplicateNames;
+        return this.allowDuplicateNames;
     }
 
     public void setAllowDuplicateNames(boolean allowDuplicateNames) {
@@ -408,7 +408,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public JsonNodeOutputMethod getJsonNodeOutputMethod() {
-        return jsonNodeOutputMethod;
+        return this.jsonNodeOutputMethod;
     }
 
     public void setJsonNodeOutputMethod(JsonNodeOutputMethod jsonNodeOutputMethod) {
@@ -416,7 +416,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public Map<String, String> getExtensionParameters() {
-        return extensionParameters;
+        return this.extensionParameters;
     }
 
     public void setExtensionParameters(Map<String, String> extensionParameters) {
@@ -424,7 +424,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public Map<String, String> getSparkOptions() {
-        return sparkOptions;
+        return this.sparkOptions;
     }
 
     public void setSparkOptions(Map<String, String> sparkOptions) {

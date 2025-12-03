@@ -418,7 +418,7 @@ public class StaticContext implements Serializable, KryoSerializable {
      *
      * @param name the name of the parameter to update
      * @param value the value of the parameter to update
-     * @throws InvalidSerializationParameterValueException if the parameter value is invalid
+     * @throws org.rumbledb.exceptions.InvalidSerializationParameterValueException if the parameter value is invalid
      */
     public void overrideSerializationParameter(String name, String value) {
         // ensure we have a local copy of the serialization parameters
