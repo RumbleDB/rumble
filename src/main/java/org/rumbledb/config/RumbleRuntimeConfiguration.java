@@ -26,8 +26,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -143,7 +141,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                     System.err.println("Try it out! The old parameters will continue to work, though.");
                 }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-                if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && (args[i + 1].startsWith(ARGUMENT_PREFIX) || args[i + 1].startsWith(SHORTCUT_PREFIX)))) {
+                if (
+                    i + 1 >= args.length
+                        || (!(args[i + 1].equals("-"))
+                            && (args[i + 1].startsWith(ARGUMENT_PREFIX) || args[i + 1].startsWith(SHORTCUT_PREFIX)))
+                ) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                 }
                 String argumentValue = args[i + 1];

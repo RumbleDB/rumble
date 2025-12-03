@@ -582,6 +582,9 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         copy.standalone = parameters.standalone;
         copy.doctypeSystem = parameters.doctypeSystem;
         copy.doctypePublic = parameters.doctypePublic;
+        copy.mediaType = parameters.mediaType;
+        copy.normalizationForm = parameters.normalizationForm;
+        copy.undeclarePrefixes = parameters.undeclarePrefixes;
         copy.sparkOptions = new HashMap<>(parameters.sparkOptions);
         copy.characterMaps = new HashMap<>(parameters.characterMaps);
         copy.cdataSectionElements = new HashSet<>(parameters.cdataSectionElements);
