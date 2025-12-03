@@ -30,8 +30,8 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializers;
 
 import java.io.IOException;
 import java.net.URI;
@@ -111,28 +111,32 @@ public class JsoniqQueryExecutor {
             sequence = rumble.runQuery(queryUri);
         }
 
+        SerializationParameters serializationParams = this.configuration.getSerializationParameters();
         if (outputPath != null) {
-            SerializationParameters serializationParams = this.configuration.getSerializationParameters();
-            SequenceWriter writer = sequence.write();
             String method = serializationParams.getMethod();
-            if (method != null) {
-                writer = writer.format(method);
-            }
+            SequenceWriter writer = sequence.write().format(method);
             Map<String, String> options = serializationParams.getSparkOptions();
             for (String key : options.keySet()) {
                 LogManager.getLogger("JsoniqQueryExecutor")
                     .info("Writing with option " + key + " : " + options.get(key));
             }
-            String format = (method != null) ? method : "json"; // Default to json if not specified
-            LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
+            LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + method);
             writer.save(outputPath);
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
-            RumbleRuntimeConfiguration configuration = this.configuration;
+            SerializationParameters effectiveParams = SerializationParameters.copy(serializationParams);
+            SequenceWriter serializerDelegate = new SequenceWriter(
+                    sequence,
+                    null,
+                    org.apache.spark.sql.SaveMode.ErrorIfExists,
+                    effectiveParams,
+                    this.configuration
+            );
+            Serializer serializer = serializerDelegate.getSerializer();
             List<String> lines = outputList.stream()
-                .map(x -> Serializers.from(configuration.getSerializationParameters()).serialize(x))
+                .map(serializer::serialize)
                 .collect(Collectors.toList());
             System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
