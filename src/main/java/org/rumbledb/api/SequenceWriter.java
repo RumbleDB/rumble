@@ -131,7 +131,7 @@ public class SequenceWriter {
             return createNewInstance(
                 this.dataFrameWriter.mode(saveMode),
                 null,
-                copySerializationParameters()
+                SerializationParameters.copy(this.serializationParameters)
             );
         } else {
             SaveMode mode = parseSaveMode(saveMode);
@@ -144,7 +144,7 @@ public class SequenceWriter {
             return createNewInstance(
                 this.dataFrameWriter.mode(saveMode),
                 null,
-                copySerializationParameters()
+                SerializationParameters.copy(this.serializationParameters)
             );
         } else {
             return createNewInstance(null, saveMode, this.serializationParameters);
@@ -152,7 +152,7 @@ public class SequenceWriter {
     }
 
     public SequenceWriter format(String source) {
-        SerializationParameters params = copySerializationParameters();
+        SerializationParameters params = SerializationParameters.copy(this.serializationParameters);
         params.setMethod(source);
         if (this.dataFrameWriter != null && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             return createNewInstance(
@@ -167,7 +167,7 @@ public class SequenceWriter {
     }
 
     public SequenceWriter option(String key, String value) {
-        SerializationParameters newParams = copySerializationParameters();
+        SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
         newParams.getSparkOptions().put(key, value);
         DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
             ? this.dataFrameWriter.option(key, value)
@@ -188,7 +188,7 @@ public class SequenceWriter {
     }
 
     public SequenceWriter options(java.util.Map<String, String> options) {
-        SerializationParameters newParams = copySerializationParameters();
+        SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
         newParams.getSparkOptions().putAll(options);
         DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
             ? this.dataFrameWriter.options(options)
@@ -197,7 +197,7 @@ public class SequenceWriter {
     }
 
     public SequenceWriter options(org.apache.spark.sql.util.CaseInsensitiveStringMap options) {
-        SerializationParameters newParams = copySerializationParameters();
+        SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
         newParams.getSparkOptions().putAll(options);
         DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
             ? this.dataFrameWriter.options(options)
@@ -318,15 +318,7 @@ public class SequenceWriter {
     }
 
     public Serializer getSerializer() {
-        SerializationParameters params = copySerializationParameters();
-        // Ensure defaults for serialization if not set
-        if (params.getItemSeparator() == null) {
-            params.setItemSeparator("\n");
-        }
-        if (params.getEncoding() == null) {
-            params.setEncoding("UTF-8");
-        }
-        return Serializers.from(params);
+        return Serializers.from(this.serializationParameters);
     }
 
     private DataFrameWriter<Row> applyStoredSparkOptions(DataFrameWriter<Row> writer) {
@@ -399,17 +391,6 @@ public class SequenceWriter {
                             + "save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists', 'default'."
                 );
         }
-    }
-
-    /**
-     * Creates a deep copy of the serialization parameters.
-     * This is needed when creating new SequenceWriter instances with modified options.
-     */
-    private SerializationParameters copySerializationParameters() {
-        if (this.serializationParameters == null) {
-            return SerializationParameters.defaults();
-        }
-        return SerializationParameters.copy(this.serializationParameters);
     }
 
     public void save() {

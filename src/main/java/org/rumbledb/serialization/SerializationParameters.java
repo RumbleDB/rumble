@@ -238,7 +238,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         p.indent = false;
         p.indentSpaces = -1; // implementation-defined/unspecified
         p.suppressIndentation = new HashSet<>();
-        p.itemSeparator = null; // implementation-defined
+        p.itemSeparator = "\n"; // implementation-defined
         p.allowDuplicateNames = false;
         p.jsonNodeOutputMethod = JsonNodeOutputMethod.UNSPECIFIED;
         p.extensionParameters = new HashMap<>();
