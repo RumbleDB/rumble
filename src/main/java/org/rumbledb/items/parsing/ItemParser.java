@@ -278,13 +278,13 @@ public class ItemParser implements Serializable {
                 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
                 && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName)
         ) {
-            ItemType resType = null;
-            if (itemType != null) {
-                resType = itemType.getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                    .getType();
-            }
-            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
+            // ItemType resType = null;
+            // if (itemType != null) {
+            //     resType = itemType.getObjectContentFacet()
+            //         .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            //         .getType();
+            // }
+            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
             // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
             for (int i = 0; i < fields.length; ++i) {
                 String fieldName = fields[i].name();
@@ -303,7 +303,6 @@ public class ItemParser implements Serializable {
                 }
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                     res.setTableLocation(row.getString(i));
-                    res.setCollection(new Collection(row.getString(i)));
                 }
                 if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
                     res.setTopLevelOrder(row.getDouble(i));
@@ -315,7 +314,7 @@ public class ItemParser implements Serializable {
 
         Map<String, FieldDescriptor> content = null;
 
-        if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
+        if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
             content = itemType.getObjectContentFacet();
             if (content == null) {
                 throw new OurBadException(
@@ -617,7 +616,7 @@ public class ItemParser implements Serializable {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
             ItemType memberType = null;
-            if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
+            if (itemType != null && itemType.isArrayItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
                 memberType = itemType.getArrayContentFacet();
             }
             List<Item> members = new ArrayList<>();

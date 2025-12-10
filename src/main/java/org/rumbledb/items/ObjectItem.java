@@ -201,7 +201,7 @@ public class ObjectItem implements Item {
         output.writeLong(this.topLevelID);
         kryo.writeObject(output, this.pathIn);
         kryo.writeObject(output, this.location);
-        kryo.writeObject(output, this.collection);
+        kryo.writeObjectOrNull(output, this.collection, Collection.class);
         output.writeDouble(this.topLevelOrder);
     }
 
@@ -214,7 +214,7 @@ public class ObjectItem implements Item {
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
-        this.collection = kryo.readObject(input, Collection.class);
+        this.collection = kryo.readObjectOrNull(input, Collection.class);
         this.topLevelOrder = input.readDouble();
     }
 
