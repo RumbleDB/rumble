@@ -20,7 +20,6 @@
 
 package org.rumbledb.cli;
 
-import org.apache.log4j.LogManager;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -38,7 +37,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -113,14 +111,7 @@ public class JsoniqQueryExecutor {
 
         SerializationParameters serializationParams = this.configuration.getSerializationParameters();
         if (outputPath != null) {
-            String method = serializationParams.getMethod();
-            SequenceWriter writer = sequence.write().format(method);
-            Map<String, String> options = serializationParams.getSparkOptions();
-            for (String key : options.keySet()) {
-                LogManager.getLogger("JsoniqQueryExecutor")
-                    .info("Writing with option " + key + " : " + options.get(key));
-            }
-            LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + method);
+            SequenceWriter writer = sequence.write();
             writer.save(outputPath);
         } else {
             // No output path specified, we serialize to the standard output.

@@ -5,6 +5,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
@@ -258,6 +260,11 @@ public class SequenceWriter {
         // DataFrame mode: delegate to Spark's DataFrameWriter, using the serialization method
         // as the Spark output format (json/csv/parquet/other).
         if (this.dataFrameWriter != null) {
+            Logger logger = LogManager.getLogger(SequenceWriter.class);
+            for (Map.Entry<String, String> option : this.serializationParameters.getSparkOptions().entrySet()) {
+                logger.info("Writing with option " + option.getKey() + " : " + option.getValue());
+            }
+            logger.info("Writing to format " + method);
             DataFrameWriter<Row> writerWithOptions = applyStoredSparkOptions(this.dataFrameWriter);
             String target = FileSystemUtil.convertURIToStringForSpark(outputUri);
             if (method.equalsIgnoreCase("json")) {
