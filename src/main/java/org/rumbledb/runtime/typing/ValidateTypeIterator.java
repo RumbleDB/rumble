@@ -669,7 +669,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         ItemType type = ItemTypeFactory.createItemType(
             DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl))
         );
-        type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+        // type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
         return type;
     }
 }

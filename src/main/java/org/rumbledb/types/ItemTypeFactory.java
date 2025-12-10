@@ -19,6 +19,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
+import sparksoniq.spark.SparkSessionManager;
+
 import java.util.*;
 
 public class ItemTypeFactory {
@@ -596,7 +598,13 @@ public class ItemTypeFactory {
             } else {
                 mappedItemType = createItemType(filedType);
             }
-            FieldDescriptor fieldDescriptor = new FieldDescriptor();
+            
+            // Handle atomic item
+            if (field.name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+                return mappedItemType;
+            }
+            
+            FieldDescriptor fieldDescriptor = new FieldDescriptor(); 
             fieldDescriptor.setName(field.name());
             fieldDescriptor.setType(mappedItemType);
             fieldDescriptor.setRequired(!field.nullable());
