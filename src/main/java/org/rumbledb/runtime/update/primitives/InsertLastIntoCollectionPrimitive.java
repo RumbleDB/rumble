@@ -16,19 +16,14 @@ import static org.apache.spark.sql.functions.row_number;
 public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
     private Dataset<Row> contents;
-    private boolean isTable;
 
     public InsertLastIntoCollectionPrimitive(
-            String collectionPath,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
         this.contents = contents;
-        this.isTable = isTable;
-        this.collection = (isTable) 
-            ? new Collection(Mode.HIVE, collectionPath)
-            : new Collection(Mode.DELTA, collectionPath);
+        this.collection = collection;
     }
 
     @Override
@@ -38,9 +33,6 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        // return this.isTable
-        //     ? this.collection
-        //     : "delta.`" + this.collection + "`";
         return this.collection.getPhysicalName();
     }
 
@@ -69,21 +61,6 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
         final String tmpRowNum = SparkSessionManager.tempRowNumColumnName;
         final String tmpRowNumSeq = SparkSessionManager.tempRowNumSeqColumnName;
         final String tmpRowNumOrder = SparkSessionManager.tempRowNumOrderColumnName;
-
-        // String selectQuery = String.format(
-        //     "SELECT MAX(%s) as maxRowID FROM %s",
-        //     SparkSessionManager.rowIdColumnName,
-        //     this.collection.getPhysicalName()
-        // );
-        // Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
-        // rowIDStart = rowIDStart == null ? 0L : rowIDStart;
-
-        // String selectRowOrderQuery = String.format(
-        //     "SELECT MAX(%s) as maxRowOrder FROM %s",
-        //     SparkSessionManager.rowOrderColumnName,
-        //     this.collection.getPhysicalName()
-        // );
-        // Double lastRowOrder = session.sql(selectRowOrderQuery).first().getAs("maxRowOrder");
 
         // Get highest current row id to seed new rows and maximum row order to calculate base
         Row aggRow = session
@@ -128,40 +105,8 @@ public class InsertLastIntoCollectionPrimitive implements UpdatePrimitive {
 
         this.contents = rowNumOrderDF;
 
-        // Double rowOrderBase = session.sql(selectRowOrderQuery).first().getAs("maxRowOrder");
-        // if (rowOrderBase == null) {
-        //     rowOrderBase = 0.0; // Table is empty
-        // }
-        // double interval = 1.0; // Or any spacing you want
-
-        // // Assign rowOrder: strictly increment for each new row
-        // Dataset<Row> rowNumDF3 = rowIdDF.withColumn(
-        //     "RowNumOrder", row_number().over(Window.orderBy(lit(1)))
-        // );
-
-        // Dataset<Row> rowNumOrderDF = rowNumDF3.withColumn(
-        //     SparkSessionManager.rowOrderColumnName,
-        //     expr(String.format("CAST(%f + (%s-1)*%f AS DOUBLE)", rowOrderBase, "RowNumOrder", interval))
-        // ).drop("RowNumOrder");
-
-        // this.contents = rowNumOrderDF;
-
-
-        // insertion
-        // String safeName = String.format("__insert_tview_%s_%f_%f", this.collection, rowOrderBase, rowOrderMax)
-        //     .replaceAll("[^a-zA-Z0-9_]", "_");
-        // this.contents.createOrReplaceTempView(safeName);
-        // String insertQuery = String.format(
-        //     "INSERT INTO %s SELECT * FROM %s",
-        //     this.getCollectionPath(),
-        //     safeName
-        // );
-        // session.sql(insertQuery);
-        // session.catalog().dropTempView(safeName);
-
-
-
-        this.contents = InsertFirstIntoCollectionPrimitive.insertInCollection(this.contents, this.collection);
+        // Insert the new rows into the collection
+        this.collection.insertUnordered(this.contents);
     }
 
 }

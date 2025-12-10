@@ -1,8 +1,9 @@
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.Window;
+
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -21,51 +22,14 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
     private final Collection collection;
     private Dataset<Row> contents;
-    private boolean isTable;
 
     public InsertFirstIntoCollectionPrimitive(
-            String collectionPath,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        // System.out.println("\n\nCollection Path: " + collectionPath + "\n\n");
         this.contents = contents;
-        this.isTable = isTable;
-        this.collection = (isTable) 
-        ? new Collection(Mode.HIVE, collectionPath) 
-        : new Collection(Mode.DELTA, collectionPath);
-    }
-
-    public static Dataset<Row> insertInCollection(Dataset<Row> contents, Collection collection) {
-        // Cast to DoubleType
-        // contents = contents.withColumn(
-        //     SparkSessionManager.rowOrderColumnName,
-        //     col(SparkSessionManager.rowOrderColumnName).cast(DataTypes.DoubleType)
-        //     );
-
-        System.out.println("Inserted after into collection " + collection.getLogicalName());
-            
-        // Insert respectively according to collection mode
-        Mode mode = collection.getMode();
-        switch (mode) {
-            case HIVE:
-                contents.write()
-                    .mode("append")
-                    .insertInto(collection.getLogicalName());
-                break;
-            case DELTA:
-                contents.write()
-                    .format("delta")
-                    .mode("append")
-                    .option("mergeSchema", "true")
-                    .save(collection.getLogicalName());
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported collection mode: " + mode);
-        }
-
-        return contents;
+        this.collection = collection;
     }
 
     @Override
@@ -75,9 +39,6 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        // return this.isTable
-        //     ? this.collection
-        //     : "delta.`" + this.collection + "`";
         return this.collection.getPhysicalName();
     }
 
@@ -108,33 +69,6 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         final String tmpRowNumOrder = SparkSessionManager.tempRowNumOrderColumnName;
 
         String collectionTableName = this.collection.getPhysicalName();
-        // if (!isTable) {
-        //     Dataset<Row> dataFrame = SparkSessionManager.getInstance()
-        //     .getOrCreateSession()
-        //     .read()
-        //     .format("delta")
-        //     .load(this.collection.getLogicalName());
-        //     collectionTableName = String.format("__query_tview_%s", this.collection.getLogicalName())
-        //     .replaceAll("[^a-zA-Z0-9_]", "_");
-        //     dataFrame.createOrReplaceTempView(collectionTableName);
-        // }
-        
-        // String selectQuery = String.format(
-        //     "SELECT MAX(%s) as maxRowID FROM %s",
-        //     SparkSessionManager.rowIdColumnName,
-        //     collectionTableName
-        //     );
-        //     Long rowIDStart = session.sql(selectQuery).first().getAs("maxRowID");
-        //     rowIDStart = rowIDStart == null ? 0L : rowIDStart;
-            
-        //     long rowCount = this.contents.count();
-            
-        // String selectRowOrderQuery = String.format(
-        //     "SELECT MIN(%s) as minRowOrder FROM %s",
-        //     SparkSessionManager.rowOrderColumnName,
-        //     collectionTableName
-        // );
-        // Double firstRowOrder = session.sql(selectRowOrderQuery).first().getAs("minRowOrder");
 
         // Get highest current row id to seed new rows and minimum row order to calculate base
         Row aggRow = session.table(collectionTableName).agg(
@@ -172,33 +106,13 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         );
         Dataset<Row> rowNumOrderDF = rowNumDF3.withColumn(
             SparkSessionManager.rowOrderColumnName,
-            expr(
-                String.format(
-                    "%f + (%s - 1) * %f",
-                    rowOrderBase,
-                    tmpRowNumOrder,
-                    interval
-                )
-            ).cast("double")
+            expr(String.format("%f + (%s - 1) * %f", rowOrderBase, tmpRowNumOrder, interval)).cast("double")
         ).drop(tmpRowNumOrder);
 
         this.contents = rowNumOrderDF;
 
-        
-        // insertion
-        // String safeName = String.format("__insert_tview_%s_%f_%f", this.collection.getLogicalName(), rowOrderBase, rowOrderMax)
-        //     .replaceAll("[^a-zA-Z0-9_]", "_");
-        // this.contents.createOrReplaceTempView(safeName);
-        // String insertQuery = String.format(
-        //         "INSERT INTO %s SELECT * FROM %s",
-        //         collectionTableName,
-        //         safeName
-        //     );
-        //     session.sql(insertQuery);
-        //     session.catalog().dropTempView(safeName);
-        
-
-        this.contents = InsertFirstIntoCollectionPrimitive.insertInCollection(this.contents, this.collection);
+        // Insert the new rows into the collection
+        this.collection.insertUnordered(this.contents);
     }
 
 }

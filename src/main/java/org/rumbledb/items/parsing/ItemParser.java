@@ -44,6 +44,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -302,6 +303,7 @@ public class ItemParser implements Serializable {
                 }
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                     res.setTableLocation(row.getString(i));
+                    res.setCollection(new Collection(row.getString(i)));
                 }
                 if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
                     res.setTopLevelOrder(row.getDouble(i));
@@ -327,6 +329,7 @@ public class ItemParser implements Serializable {
         long topLevelID = -1;
         String pathIn = "null";
         String tableLocation = "null";
+        Collection collection = null;
         double rowOrder = 0.0;
 
         for (int i = 0; i < fields.length; ++i) {
@@ -349,6 +352,7 @@ public class ItemParser implements Serializable {
             }
             if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                 tableLocation = row.getString(i);
+                collection = new Collection(row.getString(i));
                 continue;
             }
             if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
@@ -400,6 +404,7 @@ public class ItemParser implements Serializable {
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
         res.setTableLocation(tableLocation);
+        res.setCollection(collection);
         res.setTopLevelOrder(rowOrder);
 
         return res;

@@ -13,18 +13,18 @@ import org.apache.spark.sql.SparkSession;
 
 
 public class TruncateCollectionPrimitive implements UpdatePrimitive {
-    private String collectionName;
-    private boolean isTable;
+    private final Collection collection;
+    private final boolean isTable;
     private ExceptionMetadata metadata;
     private RumbleRuntimeConfiguration configuration;
 
     public TruncateCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             boolean isTable,
             ExceptionMetadata metadata,
             RumbleRuntimeConfiguration configuration
     ) {
-        this.collectionName = collectionName;
+        this.collection = collection;
         this.isTable = isTable;
         this.metadata = metadata;
         this.configuration = configuration;
@@ -37,7 +37,7 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionName() {
-        return this.collectionName;
+        return this.collection.getLogicalName();
     }
 
     @Override
@@ -62,21 +62,21 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
         if (this.isTable) {
-            if (session.catalog().tableExists(this.collectionName) == false) {
+            if (session.catalog().tableExists(this.collection.getLogicalName()) == false) {
                 throw new CannotRetrieveResourceException(
-                        "Table " + this.collectionName + " not found in hive catalogue.",
+                        "Table " + this.collection.getLogicalName() + " not found in hive catalogue.",
                         this.metadata
                 );
             }
 
             String truncateQuery = String.format(
                 "DROP TABLE %s PURGE",
-                this.collectionName
+                this.collection.getLogicalName()
             );
             session.sql(truncateQuery);
         } else {
             URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                collectionName,
+                collection.getLogicalName(),
                 configuration,
                 metadata
             );

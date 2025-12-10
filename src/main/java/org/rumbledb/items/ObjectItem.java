@@ -31,6 +31,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.update.primitives.Collection;
+
 
 import java.util.*;
 
@@ -45,6 +47,7 @@ public class ObjectItem implements Item {
     private String pathIn;
     private String location;
     private double topLevelOrder;
+    private Collection collection;
 
     public ObjectItem() {
         super();
@@ -54,6 +57,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
         this.topLevelOrder = 0.0;
     }
 
@@ -66,6 +70,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
         this.topLevelOrder = 0.0;
     }
 
@@ -133,6 +138,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
         this.topLevelOrder = 0.0;
     }
 
@@ -195,6 +201,7 @@ public class ObjectItem implements Item {
         output.writeLong(this.topLevelID);
         kryo.writeObject(output, this.pathIn);
         kryo.writeObject(output, this.location);
+        kryo.writeObject(output, this.collection);
         output.writeDouble(this.topLevelOrder);
     }
 
@@ -207,6 +214,7 @@ public class ObjectItem implements Item {
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
+        this.collection = kryo.readObject(input, Collection.class);
         this.topLevelOrder = input.readDouble();
     }
 
@@ -381,5 +389,15 @@ public class ObjectItem implements Item {
             resultMap.put(keys.get(fieldIndex), values.get(fieldIndex).getVariantValue());
         }
         return resultMap;
+    }
+
+    @Override
+    public Collection getCollection() {
+        return this.collection;
+    }
+
+    @Override
+    public void setCollection(Collection collection) {
+        this.collection = collection;
     }
 }

@@ -104,16 +104,6 @@ public class UpdatePrimitiveFactory {
         return new EditTuplePrimitive(target, contents, metadata);
     }
 
-    // public UpdatePrimitive createInsertTuplePrimitive(
-    //         String collection,
-    //         Dataset<Row> contents,
-    //         double rowOrderBase,
-    //         double rowOrderMax,
-    //         ExceptionMetadata metadata
-    // ) {
-    //     return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
-    // }
-
     public UpdatePrimitive createInsertAfterIntoCollectionPrimitive(
             Item target,
             Dataset<Row> contents,
@@ -131,30 +121,28 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createInsertFirstIntoCollectionPrimitive(
-            String collection,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertFirstIntoCollectionPrimitive(collection, contents, isTable, metadata);
+        return new InsertFirstIntoCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createInsertLastIntoCollectionPrimitive(
-            String collection,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertLastIntoCollectionPrimitive(collection, contents, isTable, metadata);
+        return new InsertLastIntoCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createTruncateCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             boolean isTable,
             ExceptionMetadata metadata,
             RumbleRuntimeConfiguration configuration
     ) {
-        return new TruncateCollectionPrimitive(collectionName, isTable, metadata, configuration);
+        return new TruncateCollectionPrimitive(collection, isTable, metadata, configuration);
     }
 
 }

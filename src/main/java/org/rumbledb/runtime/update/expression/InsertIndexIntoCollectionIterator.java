@@ -16,6 +16,8 @@ import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -133,11 +135,14 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
-        String collection = targetItem.getStringValue();
+        String logicalPath = targetItem.getStringValue();
+        Mode mode = this.isTable ? Mode.HIVE : Mode.DELTA;
         if (!this.isTable) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, collection, getMetadata());
-            collection = FileSystemUtil.convertURIToStringForSpark(uri);
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
+            logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
+
+        Collection collection = new Collection(mode, logicalPath);
 
         Dataset<Row> contentDF = null;
         try {
@@ -153,14 +158,12 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             up = factory.createInsertLastIntoCollectionPrimitive(
                 collection,
                 contentDF,
-                this.isTable,
                 this.getMetadata()
             );
         } else if (this.isFirst) {
             up = factory.createInsertFirstIntoCollectionPrimitive(
                 collection,
                 contentDF,
-                this.isTable,
                 this.getMetadata()
             );
         } else {
@@ -193,14 +196,9 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
             Item targetMetadataItem = new ObjectItem();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-            if (this.isTable) {
-                collection = targetItem.getStringValue();
-            } else {
-                collection = "delta.`" + targetItem.getStringValue() + "` ";
-            }
             String selectQuery = String.format(
                 "SELECT * FROM %s ORDER BY rowOrder ASC LIMIT 1 OFFSET %d",
-                collection,
+                collection.getPhysicalName(),
                 posInt - 1
             );
             Row res = session.sql(selectQuery).collectAsList().get(0);

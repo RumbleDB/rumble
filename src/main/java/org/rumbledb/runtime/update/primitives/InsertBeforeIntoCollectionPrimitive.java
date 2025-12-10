@@ -28,8 +28,7 @@ public class InsertBeforeIntoCollectionPrimitive implements UpdatePrimitive {
     ) {
         this.target = target;
         this.contents = contents;
-        String collectionPath = target.getTableLocation().substring(7, target.getTableLocation().length() - 1);
-        this.collection = new Collection(Mode.DELTA, collectionPath);
+        this.collection = target.getCollection();
     }
 
     @Override
@@ -60,7 +59,6 @@ public class InsertBeforeIntoCollectionPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         double targetRowOrder = this.target.getTopLevelOrder();
-        // String collection = this.target.getTableLocation();
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
@@ -87,13 +85,6 @@ public class InsertBeforeIntoCollectionPrimitive implements UpdatePrimitive {
         } else {
             rowOrderBase = res.get(1).getAs(SparkSessionManager.rowOrderColumnName);
         }
-
-        // String selectRowIDQuery = String.format(
-        //     "SELECT MAX(%s) as maxRowID FROM %s",
-        //     SparkSessionManager.rowIdColumnName,
-        //     this.collection.getPhysicalName()
-        // );
-        // long rowIDStart = session.sql(selectRowIDQuery).first().getAs("maxRowID");
 
         // Get highest current row id to seed new rows
         Row aggRow = session
@@ -126,20 +117,8 @@ public class InsertBeforeIntoCollectionPrimitive implements UpdatePrimitive {
 
         this.contents = rowNumOrderDF;
 
-        // String safeName = String.format("__insertb_tview_%s_%f_%f", collection, rowOrderBase, rowOrderMax)
-        //     .replaceAll("[^a-zA-Z0-9_]", "_");
-        // this.contents.createOrReplaceTempView(safeName);
-        // String insertQuery = String.format(
-        //     "INSERT INTO %s SELECT * FROM %s",
-        //     collection,
-        //     safeName
-        // );
-        // session.sql(insertQuery);
-        // session.catalog().dropTempView(safeName);
-
-
-
-        this.contents = InsertFirstIntoCollectionPrimitive.insertInCollection(this.contents, this.collection);
+        // Insert the new rows into the collection
+        this.collection.insertUnordered(this.contents);
     }
 
 }
