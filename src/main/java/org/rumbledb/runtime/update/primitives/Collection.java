@@ -1,12 +1,14 @@
 package org.rumbledb.runtime.update.primitives;
 
+import java.io.Serializable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import org.rumbledb.runtime.update.primitives.Mode;
 
 
-public class Collection {
+public class Collection implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Mode mode;
     private String logicalName;
     private String physicalName;
