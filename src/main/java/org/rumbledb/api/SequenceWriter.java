@@ -55,9 +55,8 @@ public class SequenceWriter {
      * Invariants:
      * - Either DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
      * - Or RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
-     * - In RDD mode, {@code serializationParameters.getMethod()} must be non-null so that
-     * serialization knows which format to use.
      * - {@code serializationParameters} is never {@code null}.
+     * - {@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined method.
      */
     public SequenceWriter(
             SequenceOfItems sequence,
@@ -71,11 +70,6 @@ public class SequenceWriter {
         this.serializationParameters = serializationParameters;
         this.dataFrameWriter = dataFrameWriter;
         this.mode = mode;
-        if (dataFrameWriter == null && serializationParameters.getMethod() == null) {
-            throw new OurBadException(
-                    "Internal error: it is not possible for both the writer and the serialization method to be null"
-            );
-        }
         if (dataFrameWriter == null && mode == null) {
             throw new OurBadException("Internal error: it is not possible for both the writer and the mode to be null");
         }
@@ -86,6 +80,9 @@ public class SequenceWriter {
         }
         if (serializationParameters == null) {
             throw new OurBadException("Internal error: serializationParameters must not be null");
+        }
+        if (serializationParameters.getMethod() == null) {
+            throw new OurBadException("Internal error: serialization method must not be null");
         }
     }
 
