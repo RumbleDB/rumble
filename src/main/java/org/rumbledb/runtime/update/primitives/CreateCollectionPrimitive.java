@@ -10,18 +10,18 @@ import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
 public class CreateCollectionPrimitive implements UpdatePrimitive {
     private Dataset<Row> contents;
-    private String collectionName;
+    private Collection collection;
     private boolean isTable;
 
     public CreateCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             Dataset<Row> contents,
             boolean isTable,
             ExceptionMetadata metadata
     ) {
         // The target should be the name of the collection if isTable is true,
         // or an absolute path to a delta file if isTable is false.
-        this.collectionName = collectionName;
+        this.collection = collection;
         this.contents = contents;
         this.isTable = isTable;
     }
@@ -33,9 +33,7 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        return this.isTable
-            ? this.collectionName
-            : "delta.`" + this.collectionName + "`";
+        return this.collection.getPhysicalName();
     }
 
     @Override
@@ -75,11 +73,14 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
         if (this.isTable) {
             this.contents.write()
                 .format("delta")
-                .saveAsTable(this.collectionName);
+                .saveAsTable(this.collection.getLogicalName());
+            // this.contents.writeTo(this.collection.getLogicalName())
+            // .using("iceberg")
+            // .createOrReplace();
         } else {
             this.contents.write()
                 .format("delta")
-                .option("path", this.collectionName)
+                .option("path", this.collection.getLogicalName())
                 .save();
         }
 

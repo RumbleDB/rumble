@@ -14,6 +14,8 @@ import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
@@ -81,7 +83,6 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
-
         Item targetItem = null;
         try {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
@@ -105,12 +106,15 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
-        String collectionName = targetItem.getStringValue();
+        String logicalPath = targetItem.getStringValue();
+        Mode mode = (this.isTable) ? Mode.HIVE : Mode.DELTA;
         // If it is a delta-file() call we need to resolve the path to an absolute path.
         if (!this.isTable) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, collectionName, getMetadata());
-            collectionName = FileSystemUtil.convertURIToStringForSpark(uri);
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
+            logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
+
+        Collection collection = new Collection(mode, logicalPath);
 
         Dataset<Row> contentDF = null;
         try {
@@ -120,11 +124,9 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             throw e;
         }
 
-
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
-
         UpdatePrimitive up = factory.createCreateCollectionPrimitive(
-            collectionName,
+            collection,
             contentDF,
             this.isTable,
             this.getMetadata()

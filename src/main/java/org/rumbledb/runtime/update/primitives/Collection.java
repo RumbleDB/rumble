@@ -3,8 +3,8 @@ package org.rumbledb.runtime.update.primitives;
 import java.io.Serializable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 
-import org.rumbledb.runtime.update.primitives.Mode;
 
 
 public class Collection implements Serializable {
@@ -18,13 +18,15 @@ public class Collection implements Serializable {
      * 
      * @param mode The storage mode of the collection (HIVE, DELTA, etc.)
      * @param collectionPath The logical path of the collection
-     */    
+     */
     public Collection(Mode mode, String collectionPath) {
         this.mode = mode;
         this.logicalName = collectionPath;
-        this.physicalName = (mode == Mode.HIVE) ? collectionPath 
-            : (mode == Mode.DELTA) ? "delta.`" + collectionPath + "`"
-            : "null";
+        this.physicalName = (mode == Mode.HIVE)
+            ? collectionPath
+            : (mode == Mode.DELTA)
+                ? "delta.`" + collectionPath + "`"
+                : "null";
     }
 
     /**
@@ -62,7 +64,7 @@ public class Collection implements Serializable {
      */
     public String getPhysicalName() {
         return this.physicalName;
-    }   
+    }
 
     /**
      * Inserts the given contents into the collection according to its mode.
@@ -71,21 +73,31 @@ public class Collection implements Serializable {
      * @param contents The dataset to insert into the collection
      */
     public void insertUnordered(Dataset<Row> contents) {
-        switch (this.mode) {
-            case HIVE:
-                contents.write()
-                    .mode("append")
-                    .insertInto(this.logicalName);
-                break;
-            case DELTA:
-                contents.write()
-                    .format("delta")
-                    .mode("append")
-                    .option("mergeSchema", "true")
-                    .save(this.logicalName);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported collection mode: " + this.mode);
+        try {
+            switch (this.mode) {
+                case HIVE:
+                    contents.write()
+                        .mode("append")
+                        .insertInto(this.logicalName);
+                    break;
+                case DELTA:
+                    contents.write()
+                        .format("delta")
+                        .mode("append")
+                        .option("mergeSchema", "true")
+                        .save(this.logicalName);
+                    break;
+                case ICEBERG:
+                    contents.writeTo(this.logicalName)
+                        .using("iceberg")
+                        .option("mergeSchema", "true")
+                        .append();
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported collection mode: " + this.mode);
+            }
+        } catch (NoSuchTableException e) {
+            throw new RuntimeException("Target collection not found: " + this.logicalName, e);
         }
     }
 }
