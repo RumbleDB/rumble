@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="(17, 36, 8, 28, 24)" :)
-let $df := parallelize(({
+let $rdd := parallelize(({
   "l_quantity": 17,
   "l_returnflag": "N"
 },
@@ -25,7 +25,7 @@ let $df := parallelize(({
 }))
 
 for $i in 1 to 5
-let $l := $df[$i]
+let $l := $rdd[$i]
 let $returnflag := $l.l_returnflag
 group by $returnflag
 return $l.l_quantity
