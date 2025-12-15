@@ -80,12 +80,12 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createCreateCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             Dataset<Row> contents,
             boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new CreateCollectionPrimitive(collectionName, contents, isTable, metadata);
+        return new CreateCollectionPrimitive(collection, contents, isTable, metadata);
     }
 
     public UpdatePrimitive createDeleteTupleFromCollectionPrimitive(

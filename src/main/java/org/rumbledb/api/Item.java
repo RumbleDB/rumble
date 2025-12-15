@@ -1111,6 +1111,7 @@ public interface Item extends Serializable, KryoSerializable {
 
     /**
      * Returns the collection to which the item belongs, if any.
+     * Only defined for top-level items.
      * 
      * @return the collection.
      */
@@ -1120,6 +1121,7 @@ public interface Item extends Serializable, KryoSerializable {
 
     /**
      * Sets the collection to which the item belongs.
+     * Only defined for top-level items.
      * 
      * @param collection the collection.
      */

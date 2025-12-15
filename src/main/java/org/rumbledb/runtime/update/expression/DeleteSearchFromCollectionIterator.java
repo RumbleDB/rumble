@@ -8,7 +8,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -30,10 +29,10 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
         this.contentIterator = contentIterator;
 
         // if (!contentIterator.isDataFrame()) {
-        //     throw new CannotResolveUpdateSelectorException(
-        //             "The given content doesn not conform to a dataframe",
-        //             this.getMetadata()
-        //     );
+        // throw new CannotResolveUpdateSelectorException(
+        // "The given content doesn not conform to a dataframe",
+        // this.getMetadata()
+        // );
         // }
 
         this.isUpdating = true;

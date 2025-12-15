@@ -204,7 +204,7 @@ public class JSoundDataFrame implements Serializable {
 
         if (!this.itemType.equals(other.itemType)) {
             // throw new OurBadException(
-            //         "Cannot union two dataframes with types " + this.itemType + " and " + other.itemType
+            // "Cannot union two dataframes with types " + this.itemType + " and " + other.itemType
             // );
         }
         return new JSoundDataFrame(this.getDataFrame().union(other.getDataFrame()), this.itemType);

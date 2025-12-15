@@ -112,6 +112,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        PendingUpdateList pul = new PendingUpdateList();
         Item targetItem = null;
         try {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
@@ -151,7 +152,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             e.setMetadata(getMetadata());
             throw e;
         }
-        PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isLast) {

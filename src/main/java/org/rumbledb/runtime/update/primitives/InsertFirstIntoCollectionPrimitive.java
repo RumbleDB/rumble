@@ -5,11 +5,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.Window;
 
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
-import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.expr;
 import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.max;
@@ -71,10 +69,12 @@ public class InsertFirstIntoCollectionPrimitive implements UpdatePrimitive {
         String collectionTableName = this.collection.getPhysicalName();
 
         // Get highest current row id to seed new rows and minimum row order to calculate base
-        Row aggRow = session.table(collectionTableName).agg(
-            max(SparkSessionManager.rowIdColumnName).alias(tmpMaxRowId),
-            min(SparkSessionManager.rowOrderColumnName).alias(tmpMinRowOrder)
-        ).first();
+        Row aggRow = session.table(collectionTableName)
+            .agg(
+                max(SparkSessionManager.rowIdColumnName).alias(tmpMaxRowId),
+                min(SparkSessionManager.rowOrderColumnName).alias(tmpMinRowOrder)
+            )
+            .first();
         Long rowIDStart = aggRow.getAs(tmpMaxRowId);
         rowIDStart = rowIDStart == null ? 0L : rowIDStart;
 

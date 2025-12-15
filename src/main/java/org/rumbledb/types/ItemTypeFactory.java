@@ -598,13 +598,13 @@ public class ItemTypeFactory {
             } else {
                 mappedItemType = createItemType(filedType);
             }
-            
+
             // Handle atomic item
             if (field.name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
                 return mappedItemType;
             }
-            
-            FieldDescriptor fieldDescriptor = new FieldDescriptor(); 
+
+            FieldDescriptor fieldDescriptor = new FieldDescriptor();
             fieldDescriptor.setName(field.name());
             fieldDescriptor.setType(mappedItemType);
             fieldDescriptor.setRequired(!field.nullable());
