@@ -151,6 +151,7 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -1407,11 +1408,11 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
         Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
-        boolean isTable = (ctx.table != null);
+        Mode mode = Mode.fromString(ctx.collectionMode.getText());
         return new CreateCollectionExpression(
                 collection,
                 contentExpression,
-                isTable,
+                mode,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1419,7 +1420,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
         Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
-        boolean isTable = (ctx.table != null);
+        Mode mode = Mode.fromString(ctx.collectionMode.getText());
         boolean isFirst = (ctx.first != null);
 
         Expression numDelete = null;
@@ -1431,7 +1432,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 collection,
                 numDelete,
                 isFirst,
-                isTable,
+                mode,
                 createMetadataFromContext(ctx)
         );
     }
@@ -1461,7 +1462,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
         Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
         Expression pos = ctx.pos != null ? (Expression) this.visitExprSingle(ctx.pos) : null;
-        boolean isTable = (ctx.table != null);
+        Mode mode = Mode.fromString(ctx.collectionMode.getText());
         boolean isLast = (ctx.last != null);
         boolean isFirst = (ctx.first != null);
 
@@ -1469,7 +1470,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 collection,
                 contentExpression,
                 pos,
-                isTable,
+                mode,
                 isFirst,
                 isLast,
                 createMetadataFromContext(ctx)
@@ -1492,10 +1493,10 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
         Expression collectionName = (Expression) this.visitExprSimple(ctx.collection_name);
-        boolean isTable = (ctx.table != null);
+        Mode mode = Mode.fromString(ctx.collectionMode.getText());
         return new TruncateCollectionExpression(
                 collectionName,
-                isTable,
+                mode,
                 createMetadataFromContext(ctx)
         );
     }

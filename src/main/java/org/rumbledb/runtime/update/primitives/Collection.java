@@ -22,11 +22,12 @@ public class Collection implements Serializable {
     public Collection(Mode mode, String collectionPath) {
         this.mode = mode;
         this.logicalName = collectionPath;
-        this.physicalName = (mode == Mode.HIVE)
-            ? collectionPath
-            : (mode == Mode.DELTA)
-                ? "delta.`" + collectionPath + "`"
-                : "null";
+        this.physicalName = collectionPath;
+        if (mode == Mode.DELTA) {
+            this.physicalName = "delta.`" + collectionPath + "`";
+        } else if (mode == Mode.ICEBERG) {
+            this.physicalName = "iceberg." + collectionPath;
+        }
     }
 
     /**
@@ -38,6 +39,9 @@ public class Collection implements Serializable {
         if (collectionPath.startsWith("delta.`") && collectionPath.endsWith("`")) {
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
+        } else if (collectionPath.startsWith("iceberg.")) {
+            this.mode = Mode.ICEBERG;
+            this.logicalName = collectionPath.substring(8);
         } else {
             this.mode = Mode.HIVE;
             this.logicalName = collectionPath;
@@ -88,8 +92,7 @@ public class Collection implements Serializable {
                         .save(this.logicalName);
                     break;
                 case ICEBERG:
-                    contents.writeTo(this.logicalName)
-                        .using("iceberg")
+                    contents.writeTo(this.physicalName)
                         .option("mergeSchema", "true")
                         .append();
                     break;

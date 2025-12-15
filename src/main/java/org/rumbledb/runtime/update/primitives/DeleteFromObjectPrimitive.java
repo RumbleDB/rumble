@@ -14,6 +14,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
     private Item target;
     private List<Item> content;
+    private Collection collection;
 
     public DeleteFromObjectPrimitive(Item targetObject, List<Item> namesToRemove, ExceptionMetadata metadata) {
 
@@ -28,6 +29,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
         this.target = targetObject;
         this.content = namesToRemove;
+        this.collection = targetObject.getCollection();
     }
 
     @Override
@@ -52,7 +54,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     public void applyDelta() {
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 

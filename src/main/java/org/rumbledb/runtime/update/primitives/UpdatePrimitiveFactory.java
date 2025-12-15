@@ -82,18 +82,17 @@ public class UpdatePrimitiveFactory {
     public UpdatePrimitive createCreateCollectionPrimitive(
             Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new CreateCollectionPrimitive(collection, contents, isTable, metadata);
+        return new CreateCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createDeleteTupleFromCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             double rowOrder,
             ExceptionMetadata metadata
     ) {
-        return new DeleteTupleFromCollectionPrimitive(collectionName, rowOrder, metadata);
+        return new DeleteTupleFromCollectionPrimitive(collection, rowOrder, metadata);
     }
 
     public UpdatePrimitive createEditTuplePrimitive(
@@ -138,11 +137,10 @@ public class UpdatePrimitiveFactory {
 
     public UpdatePrimitive createTruncateCollectionPrimitive(
             Collection collection,
-            boolean isTable,
             ExceptionMetadata metadata,
             RumbleRuntimeConfiguration configuration
     ) {
-        return new TruncateCollectionPrimitive(collection, isTable, metadata, configuration);
+        return new TruncateCollectionPrimitive(collection, metadata, configuration);
     }
 
 }

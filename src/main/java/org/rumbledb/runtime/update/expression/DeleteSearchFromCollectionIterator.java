@@ -9,6 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -27,16 +28,7 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
     ) {
         super(Arrays.asList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
-
-        // if (!contentIterator.isDataFrame()) {
-        // throw new CannotResolveUpdateSelectorException(
-        // "The given content doesn not conform to a dataframe",
-        // this.getMetadata()
-        // );
-        // }
-
         this.isUpdating = true;
-
     }
 
     public boolean hasPositionIterator() {
@@ -91,7 +83,7 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
                 return null;
             }
 
-            String collection = rows.get(0).getAs(SparkSessionManager.tableLocationColumnName);
+            Collection collection = new Collection(rows.get(0).getAs(SparkSessionManager.tableLocationColumnName));
             for (Row row : rows) {
                 UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
                     collection,
@@ -110,7 +102,7 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
                 // checks : not 0, not >1 (in try-catch) - is object/array (generated error)
                 Item item = this.contentIterator.next();
                 UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
-                    item.getTableLocation(),
+                    item.getCollection(),
                     item.getTopLevelOrder(),
                     this.getMetadata()
                 );

@@ -24,16 +24,16 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
-    private boolean isTable;
+    private Mode mode;
 
     public TruncateCollectionIterator(
             RuntimeIterator targetIterator,
-            boolean isTable,
+            Mode mode,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isUpdating = true;
     }
 
@@ -96,8 +96,8 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
             );
         }
         String logicalPath = collectionNameItem.getStringValue();
-        Mode mode = this.isTable ? Mode.HIVE : Mode.DELTA;
-        if (!this.isTable) {
+        Mode mode = this.mode;
+        if (mode == Mode.DELTA) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
             if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
@@ -109,7 +109,6 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
             collection,
-            isTable,
             this.getMetadata(),
             context.getRumbleRuntimeConfiguration()
         );

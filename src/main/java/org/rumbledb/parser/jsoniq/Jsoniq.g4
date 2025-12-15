@@ -355,17 +355,17 @@ copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
 ///////////////////////// Top Level Updating Expressions
 
-createCollectionExpr    : Kcreate Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
+createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
 
-deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
 
 deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
 
-insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+insertIndexExpr         : Kinsert content=exprSingle ( (Kat pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
 
 insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
 
-truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection (table=Ktable | deltaFile=Kdeltafile) '(' collection_name=exprSimple ')';
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
 
 editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle Kin Kcollection;
 
@@ -576,6 +576,7 @@ keyWords                : Kjsoniq
                         | Kcollection
                         | Ktable
                         | Kdeltafile
+                        | Kicebergtable
                         | Ktruncate
                         | Kfirst
                         | Klast
@@ -761,6 +762,8 @@ Kcollection             : 'collection';
 Ktable                  : 'table';
 
 Kdeltafile              : 'delta-file';
+
+Kicebergtable           : 'iceberg-table';
 
 Ktruncate               : 'truncate';
 

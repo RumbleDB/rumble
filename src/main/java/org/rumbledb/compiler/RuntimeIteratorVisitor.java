@@ -213,6 +213,7 @@ import org.rumbledb.runtime.update.expression.EditCollectionIterator;
 import org.rumbledb.runtime.update.expression.InsertIndexIntoCollectionIterator;
 import org.rumbledb.runtime.update.expression.InsertSearchIntoCollectionIterator;
 import org.rumbledb.runtime.update.expression.TruncateCollectionIterator;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
@@ -544,12 +545,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
 
         RuntimeIterator runtimeIterator = new CreateCollectionIterator(
                 targetIterator,
                 contentIterator,
-                isTable,
+                mode,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -563,7 +564,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
 
         RuntimeIterator runtimeIterator = null;
@@ -573,14 +574,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     targetIterator,
                     numDelete,
                     isFirst,
-                    isTable,
+                    mode,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else {
             runtimeIterator = new DeleteIndexFromCollectionIterator(
                     targetIterator,
                     isFirst,
-                    isTable,
+                    mode,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
@@ -627,7 +628,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
         boolean isLast = expression.isLast();
 
@@ -638,7 +639,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     targetIterator,
                     contentIterator,
                     pos,
-                    isTable,
+                    mode,
                     isFirst,
                     isLast,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -647,7 +648,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new InsertIndexIntoCollectionIterator(
                     targetIterator,
                     contentIterator,
-                    isTable,
+                    mode,
                     isFirst,
                     isLast,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -682,10 +683,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
         RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
                 targetIterator,
-                isTable,
+                mode,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

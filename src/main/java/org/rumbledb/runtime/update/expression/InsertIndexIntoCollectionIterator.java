@@ -31,7 +31,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
     private final RuntimeIterator posIterator;
-    private final boolean isTable;
+    private final Mode mode;
     private final boolean isFirst;
     private final boolean isLast;
 
@@ -39,7 +39,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
             RuntimeIterator posIterator,
-            boolean isTable,
+            Mode mode,
             boolean isFirst,
             boolean isLast,
             RuntimeStaticContext staticContext
@@ -48,7 +48,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = posIterator;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isFirst = isFirst;
         this.isLast = isLast;
 
@@ -59,7 +59,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     public InsertIndexIntoCollectionIterator(
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
-            boolean isTable,
+            Mode mode,
             boolean isFirst,
             boolean isLast,
             RuntimeStaticContext staticContext
@@ -68,7 +68,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = null;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isFirst = isFirst;
         this.isLast = isLast;
 
@@ -137,8 +137,8 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         }
 
         String logicalPath = targetItem.getStringValue();
-        Mode mode = this.isTable ? Mode.HIVE : Mode.DELTA;
-        if (!this.isTable) {
+        Mode mode = this.mode;
+        if (mode == Mode.DELTA) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }

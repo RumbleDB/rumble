@@ -632,6 +632,17 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function that parses an iceberg table
+     */
+    static final BuiltinFunction iceberg_table = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "iceberg-table"),
+        "string",
+        "item*",
+        IcebergTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
+    /**
      * function that parses a csv file
      */
     static final BuiltinFunction csv_file1 = createBuiltinFunction(
@@ -3099,6 +3110,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(mongodb_collection3.getIdentifier(), mongodb_collection3);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(delta_table.getIdentifier(), delta_table);
+        builtinFunctions.put(iceberg_table.getIdentifier(), iceberg_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);

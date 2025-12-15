@@ -1,9 +1,11 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.spark.SparkSessionManager;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.exceptions.ExceptionMetadata;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
@@ -11,19 +13,14 @@ import static org.apache.spark.sql.functions.monotonically_increasing_id;
 public class CreateCollectionPrimitive implements UpdatePrimitive {
     private Dataset<Row> contents;
     private Collection collection;
-    private boolean isTable;
 
     public CreateCollectionPrimitive(
             Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        // The target should be the name of the collection if isTable is true,
-        // or an absolute path to a delta file if isTable is false.
         this.collection = collection;
         this.contents = contents;
-        this.isTable = isTable;
     }
 
     @Override
@@ -70,18 +67,34 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
             monotonically_increasing_id().cast("double")
         );
 
-        if (this.isTable) {
-            this.contents.write()
-                .format("delta")
-                .saveAsTable(this.collection.getLogicalName());
-            // this.contents.writeTo(this.collection.getLogicalName())
-            // .using("iceberg")
-            // .createOrReplace();
-        } else {
-            this.contents.write()
-                .format("delta")
-                .option("path", this.collection.getLogicalName())
-                .save();
+        switch (this.collection.getMode()) {
+            case HIVE:
+                this.contents.write()
+                    .format("delta")
+                    .saveAsTable(this.collection.getLogicalName());
+                break;
+            case DELTA:
+                this.contents.write()
+                    .format("delta")
+                    .option("path", this.collection.getLogicalName())
+                    .save();
+                break;
+            case ICEBERG:
+                this.contents.writeTo(this.collection.getPhysicalName())
+                    .using("iceberg")
+                    .createOrReplace();
+
+                // turn on schema evolution for the table
+                SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+                session.sql(
+                    String.format(
+                        "ALTER TABLE %s SET TBLPROPERTIES ('write.spark.accept-any-schema'='true')",
+                        this.collection.getPhysicalName()
+                    )
+                );
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported collection mode: " + this.collection.getMode());
         }
 
     }

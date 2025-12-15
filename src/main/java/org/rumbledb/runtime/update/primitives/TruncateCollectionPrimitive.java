@@ -11,21 +11,17 @@ import java.net.URI;
 
 import org.apache.spark.sql.SparkSession;
 
-
 public class TruncateCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
-    private final boolean isTable;
     private ExceptionMetadata metadata;
     private RumbleRuntimeConfiguration configuration;
 
     public TruncateCollectionPrimitive(
             Collection collection,
-            boolean isTable,
             ExceptionMetadata metadata,
             RumbleRuntimeConfiguration configuration
     ) {
         this.collection = collection;
-        this.isTable = isTable;
         this.metadata = metadata;
         this.configuration = configuration;
     }
@@ -60,30 +56,40 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+        Mode mode = this.collection.getMode();
 
-        if (this.isTable) {
-            if (session.catalog().tableExists(this.collection.getLogicalName()) == false) {
-                throw new CannotRetrieveResourceException(
-                        "Table " + this.collection.getLogicalName() + " not found in hive catalogue.",
-                        this.metadata
-                );
-            }
-
-            String truncateQuery = String.format(
-                "DROP TABLE %s PURGE",
-                this.collection.getLogicalName()
-            );
-            session.sql(truncateQuery);
-        } else {
+        // Handle delta files
+        if (mode == Mode.DELTA) {
             URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 collection.getLogicalName(),
                 configuration,
                 metadata
             );
             FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
+            return;
         }
 
+        String tableName = this.collection.getLogicalName();
+        if (mode == Mode.ICEBERG) {
+            tableName = this.collection.getPhysicalName();
+        }
 
+        // Table not found
+        if (!session.catalog().tableExists(tableName)) {
+            throw new CannotRetrieveResourceException(
+                    "Table "
+                        + this.collection.getLogicalName()
+                        + " not found in "
+                        + mode.toString().toLowerCase()
+                        + " catalogue.",
+                    this.metadata
+            );
+        }
+
+        String truncateQuery = String.format(
+            "DROP TABLE %s PURGE",
+            tableName
+        );
+        session.sql(truncateQuery);
     }
-
 }

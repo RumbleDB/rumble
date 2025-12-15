@@ -28,18 +28,18 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
-    private boolean isTable;
+    private Mode mode;
 
     public CreateCollectionIterator(
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
-            boolean isTable,
+            Mode mode,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator, contentIterator), staticContext);
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isUpdating = true;
 
     }
@@ -107,9 +107,9 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         }
 
         String logicalPath = targetItem.getStringValue();
-        Mode mode = (this.isTable) ? Mode.HIVE : Mode.DELTA;
+        Mode mode = this.mode;
         // If it is a delta-file() call we need to resolve the path to an absolute path.
-        if (!this.isTable) {
+        if (mode == Mode.DELTA) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
@@ -128,7 +128,6 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up = factory.createCreateCollectionPrimitive(
             collection,
             contentDF,
-            this.isTable,
             this.getMetadata()
         );
 
