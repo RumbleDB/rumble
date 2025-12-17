@@ -449,16 +449,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 new VariableReferenceIterator(
                         this.variableName,
                         new RuntimeStaticContext(
-                                getConfiguration(),
-                                SequenceType.createSequenceType("item*"),
+                                this.getStaticContext(),
+                                SequenceType.ITEM_STAR,
                                 ExecutionMode.LOCAL,
                                 getMetadata()
                         )
                 ),
                 predicateIterator,
                 new RuntimeStaticContext(
-                        getConfiguration(),
-                        SequenceType.createSequenceType("item*"),
+                        this.getStaticContext(),
+                        SequenceType.ITEM_STAR,
                         ExecutionMode.LOCAL,
                         getMetadata()
                 )

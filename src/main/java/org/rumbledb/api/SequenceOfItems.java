@@ -10,6 +10,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
@@ -251,6 +252,16 @@ public class SequenceOfItems {
             res = res.withColumnRenamed(SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
         }
         return res;
+    }
+
+    /**
+     * Returns the runtime static context associated with this sequence.
+     *
+     * This context provides access to the default serialization parameters
+     * that should be used when serializing the results of this sequence.
+     */
+    public RuntimeStaticContext getRuntimeStaticContext() {
+        return this.iterator.getRuntimeStaticContext();
     }
 
     /**

@@ -23,14 +23,12 @@ package org.rumbledb.cli;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.api.SequenceWriter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.SerializationParameters;
 
 import java.io.IOException;
 import java.net.URI;
@@ -109,23 +107,15 @@ public class JsoniqQueryExecutor {
             sequence = rumble.runQuery(queryUri);
         }
 
-        SerializationParameters serializationParams = this.configuration.getSerializationParameters();
         if (outputPath != null) {
-            SequenceWriter writer = sequence.write();
-            writer.save(outputPath);
+            sequence.write().save(outputPath);
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
-            SerializationParameters effectiveParams = SerializationParameters.copy(serializationParams);
-            SequenceWriter serializerDelegate = new SequenceWriter(
-                    sequence,
-                    null,
-                    org.apache.spark.sql.SaveMode.ErrorIfExists,
-                    effectiveParams,
-                    this.configuration
-            );
-            Serializer serializer = serializerDelegate.getSerializer();
+
+            Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
+
             List<String> lines = outputList.stream()
                 .map(serializer::serialize)
                 .collect(Collectors.toList());

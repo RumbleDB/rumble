@@ -1,13 +1,12 @@
 package org.rumbledb.context;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Map;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
 
 public class RuntimeStaticContext implements Serializable {
@@ -17,37 +16,54 @@ public class RuntimeStaticContext implements Serializable {
     private SequenceType staticType;
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
-    private final Map<String, String> staticallyKnownNamespaces;
+    private final SerializationParameters serializationParameters;
 
+    /**
+     * Creates a new runtime static context from a static context.
+     * 
+     * @param staticContext the static context.
+     * @param staticType the static type of the runtime static context.
+     * @param executionMode the execution mode of the runtime static context.
+     * @param metadata the metadata of the runtime static context.
+     */
     public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
-            SequenceType staticType,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
+        StaticContext staticContext,
+        SequenceType staticType,
+        ExecutionMode executionMode,
+        ExceptionMetadata metadata
     ) {
-        this(configuration, staticType, executionMode, metadata, null);
+        this(staticContext.getRumbleConfiguration(), staticType, executionMode, metadata, staticContext.getSerializationParameters());
     }
 
+    /**
+     * Creates a new runtime static context from an existing runtime static context.
+     * 
+     * @param staticContext the existing runtime static context.
+     * @param staticType the static type of the runtime static context.
+     * @param executionMode the execution mode of the runtime static context.
+     * @param metadata the metadata of the runtime static context.
+     */
     public RuntimeStaticContext(
+        RuntimeStaticContext staticContext,
+        SequenceType staticType,
+        ExecutionMode executionMode,
+        ExceptionMetadata metadata
+    ) {
+        this(staticContext.configuration, staticType, executionMode, metadata, staticContext.serializationParameters);
+    }
+
+    private RuntimeStaticContext(
             RumbleRuntimeConfiguration configuration,
             SequenceType staticType,
             ExecutionMode executionMode,
             ExceptionMetadata metadata,
-            Map<String, String> staticallyKnownNamespaces
+            SerializationParameters serializationParameters
     ) {
         this.configuration = configuration;
         this.staticType = staticType;
         this.executionMode = executionMode;
         this.metadata = metadata;
-        this.staticallyKnownNamespaces = staticallyKnownNamespaces;
-    }
-
-    public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
-    ) {
-        this(configuration, null, executionMode, metadata, null);
+        this.serializationParameters = serializationParameters;
     }
 
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -73,41 +89,21 @@ public class RuntimeStaticContext implements Serializable {
         return this.metadata;
     }
 
-    public Map<String, String> getStaticallyKnownNamespaces() {
-        if (this.staticallyKnownNamespaces == null) {
-            return Collections.emptyMap();
-        }
-        return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
-    }
-
     /**
-     * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
-     * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
+     * Returns the default serialization parameters associated with this runtime static context.
      *
-     * @return the namespace URI, or {@code null} if the prefix is not bound
+     * The returned instance is immutable from the caller's perspective: any mutating
+     * operation should be performed on a defensive copy.
+     *
+     * Spec references:
+     * - XQuery 3.1 Static Context Components — default serialization parameters
+     * (https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
+     * - XSLT and XQuery Serialization 3.1 — Serialization Parameters
+     * (https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    public String resolvePrefix(String prefix) {
-        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
-            return this.staticallyKnownNamespaces.get(prefix);
-        }
-        return StaticContext.getBuiltinNamespaceBinding(prefix);
+    public SerializationParameters getSerializationParameters() {
+        return this.serializationParameters;
     }
 
-    /**
-     * Same configuration, metadata, and namespace map; replaces static type and execution mode (e.g. when building
-     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
-     */
-    public RuntimeStaticContext withStaticTypeAndExecutionMode(
-            SequenceType newStaticType,
-            ExecutionMode newExecutionMode
-    ) {
-        return new RuntimeStaticContext(
-                this.configuration,
-                newStaticType,
-                newExecutionMode,
-                this.metadata,
-                this.staticallyKnownNamespaces
-        );
-    }
 
 }

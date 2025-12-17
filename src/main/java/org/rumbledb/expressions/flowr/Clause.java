@@ -245,7 +245,8 @@ public abstract class Clause extends Node {
             VisitorConfig visitorConfig
     ) {
         return new RuntimeStaticContext(
-                this.staticContext.getRumbleConfiguration(),
+                this.staticContext,
+                null,
                 getHighestExecutionMode(visitorConfig),
                 getMetadata()
         );

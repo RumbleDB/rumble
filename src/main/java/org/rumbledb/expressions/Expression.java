@@ -77,7 +77,7 @@ public abstract class Expression extends Node {
             VisitorConfig visitorConfig
     ) {
         return new RuntimeStaticContext(
-                this.staticContext.getRumbleConfiguration(),
+                this.staticContext,
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
                 getMetadata(),

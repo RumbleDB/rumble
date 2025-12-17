@@ -60,7 +60,7 @@ public class SequenceWriter {
      * - {@code serializationParameters} is never {@code null}.
      * - {@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined method.
      */
-    public SequenceWriter(
+    private SequenceWriter(
             SequenceOfItems sequence,
             DataFrameWriter<Row> dataFrameWriter,
             SaveMode mode,
@@ -100,13 +100,10 @@ public class SequenceWriter {
     public SequenceWriter(SequenceOfItems sequence, RumbleRuntimeConfiguration configuration) {
         this.sequence = sequence;
         this.configuration = configuration;
-        SerializationParameters params = configuration.getSerializationParameters();
-        if (params == null) {
-            params = SerializationParameters.defaults();
-        } else {
-            params = SerializationParameters.copy(params);
-        }
-        this.serializationParameters = params;
+        SerializationParameters params = sequence
+            .getRuntimeStaticContext()
+            .getSerializationParameters();
+        this.serializationParameters = SerializationParameters.copy(params);
         DataFrameWriter<Row> w = null;
         String method = this.serializationParameters.getMethod();
         if (method != null && (method.equals("xml-json-hybrid") || method.equals("tyson"))) {

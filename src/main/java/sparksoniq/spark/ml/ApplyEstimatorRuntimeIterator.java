@@ -370,7 +370,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
                 new RuntimeStaticContext(
-                        getConfiguration(),
+                        getRuntimeStaticContext(),
                         new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One),
                         ExecutionMode.DATAFRAME,
                         getMetadata(),

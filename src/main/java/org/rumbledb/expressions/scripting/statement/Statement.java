@@ -45,7 +45,7 @@ public abstract class Statement extends Node {
             VisitorConfig visitorConfig
     ) {
         return new RuntimeStaticContext(
-                this.staticContext.getRumbleConfiguration(),
+                this.staticContext,
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
                 getMetadata(),

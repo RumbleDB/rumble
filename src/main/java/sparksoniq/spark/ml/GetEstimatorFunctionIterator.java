@@ -111,11 +111,10 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                     estimatorShortName,
                     estimator,
                     new RuntimeStaticContext(
-                            getConfiguration(),
-                            SequenceType.createSequenceType("function"),
+                            getRuntimeStaticContext(),
+                            SequenceType.FUNCTION,
                             ExecutionMode.LOCAL,
-                            getMetadata(),
-                            staticContext.getStaticallyKnownNamespaces()
+                            getMetadata()
                     )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
