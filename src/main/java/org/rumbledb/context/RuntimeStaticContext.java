@@ -27,12 +27,18 @@ public class RuntimeStaticContext implements Serializable {
      * @param metadata the metadata of the runtime static context.
      */
     public RuntimeStaticContext(
-        StaticContext staticContext,
-        SequenceType staticType,
-        ExecutionMode executionMode,
-        ExceptionMetadata metadata
+            StaticContext staticContext,
+            SequenceType staticType,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata
     ) {
-        this(staticContext.getRumbleConfiguration(), staticType, executionMode, metadata, staticContext.getSerializationParameters());
+        this(
+            staticContext.getRumbleConfiguration(),
+            staticType,
+            executionMode,
+            metadata,
+            staticContext.getSerializationParameters()
+        );
     }
 
     /**
@@ -44,10 +50,10 @@ public class RuntimeStaticContext implements Serializable {
      * @param metadata the metadata of the runtime static context.
      */
     public RuntimeStaticContext(
-        RuntimeStaticContext staticContext,
-        SequenceType staticType,
-        ExecutionMode executionMode,
-        ExceptionMetadata metadata
+            RuntimeStaticContext staticContext,
+            SequenceType staticType,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata
     ) {
         this(staticContext.configuration, staticType, executionMode, metadata, staticContext.serializationParameters);
     }

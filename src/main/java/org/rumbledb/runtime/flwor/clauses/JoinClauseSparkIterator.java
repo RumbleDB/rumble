@@ -209,7 +209,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                             rightTupleSideEqualityCriteria,
                             new RuntimeStaticContext(
                                     staticContext,
-                                    SequenceType.ITEM_STAR, 
+                                    SequenceType.ITEM_STAR,
                                     ExecutionMode.LOCAL,
                                     metadata
                             )

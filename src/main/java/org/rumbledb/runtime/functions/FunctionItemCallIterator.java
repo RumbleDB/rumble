@@ -245,7 +245,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                new RuntimeStaticContext(getRuntimeStaticContext(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata())
+                new RuntimeStaticContext(
+                        getRuntimeStaticContext(),
+                        SequenceType.FUNCTION,
+                        ExecutionMode.LOCAL,
+                        getMetadata()
+                )
         );
     }
 
