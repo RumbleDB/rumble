@@ -14,10 +14,12 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     private Item target;
     private Dataset<Row> contents;
     private Row targetRow;
+    private final Collection collection;
 
     public EditTuplePrimitive(Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
         this.target = target;
         this.contents = contents;
+        this.collection = target.getCollection();
     }
 
     @Override
@@ -27,7 +29,7 @@ public class EditTuplePrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        return this.target.getTableLocation();
+        return this.collection.getPhysicalName();
     }
 
     @Override
@@ -63,19 +65,13 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         String collectionPath = this.getCollectionPath();
-        int targetMutabilityLevel = this.target.getMutabilityLevel();
         long targetRowID = this.target.getTopLevelID();
-        double targetRowOrder = this.target.getTopLevelOrder();
-        String pathInColumn = this.target.getPathIn();
 
         this.contents = this.contents
             .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
-            .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder));
+            .withColumn(SparkSessionManager.rowOrderColumnName, lit(this.target.getTopLevelOrder()));
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        String safeName = collectionPath.replaceAll("[^a-zA-Z0-9_]", "_");
-        String tempViewName = String.format("__edit_tview_%s_%d", safeName, targetRowID);
-        this.contents.createOrReplaceTempView(tempViewName);
 
         String deleteQuery = String.format(
             "DELETE FROM %s WHERE %s = %d",
@@ -85,11 +81,8 @@ public class EditTuplePrimitive implements UpdatePrimitive {
         );
         session.sql(deleteQuery);
 
-        String insertQuery = String.format("INSERT INTO %s SELECT * FROM %s", collectionPath, tempViewName);
-        session.sql(insertQuery);
-
-        session.catalog().dropTempView(tempViewName);
-
+        // Insert back the edited tuple
+        this.collection.insertUnordered(this.contents);
     }
 
 }
