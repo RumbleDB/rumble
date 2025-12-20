@@ -51,8 +51,6 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
     public void applyDelta() {
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
-        System.out.println("\n\nDeleting from collection: " + this.collection.getPhysicalName());
-
         String deleteQuery = String.format(
             "DELETE FROM %s WHERE %s = %s",
             this.collection.getPhysicalName(),

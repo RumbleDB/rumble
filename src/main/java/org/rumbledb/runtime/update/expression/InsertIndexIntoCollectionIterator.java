@@ -144,7 +144,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         }
 
         Collection collection = new Collection(mode, logicalPath);
-
         Dataset<Row> contentDF = null;
         try {
             contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();

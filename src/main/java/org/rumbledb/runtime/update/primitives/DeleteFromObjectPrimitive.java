@@ -11,10 +11,9 @@ import java.util.stream.Collectors;
 import static org.apache.spark.sql.functions.*;
 
 public class DeleteFromObjectPrimitive implements UpdatePrimitive {
-
+    private final Collection collection;
     private Item target;
     private List<Item> content;
-    private Collection collection;
 
     public DeleteFromObjectPrimitive(Item targetObject, List<Item> namesToRemove, ExceptionMetadata metadata) {
 

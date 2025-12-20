@@ -11,8 +11,8 @@ import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
 
 public class CreateCollectionPrimitive implements UpdatePrimitive {
+    private final Collection collection;
     private Dataset<Row> contents;
-    private Collection collection;
 
     public CreateCollectionPrimitive(
             Collection collection,
