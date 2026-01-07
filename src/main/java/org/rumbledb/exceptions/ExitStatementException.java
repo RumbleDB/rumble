@@ -10,6 +10,7 @@ import java.util.List;
 import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class ExitStatementException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
     private final PendingUpdateList pendingUpdateList;
     private final List<Item> localResult;
     private final JavaRDD<Item> rddResult;

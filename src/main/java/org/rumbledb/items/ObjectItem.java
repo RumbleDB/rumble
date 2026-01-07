@@ -384,9 +384,9 @@ public class ObjectItem implements Item {
     @Override
     public Object getVariantValue() {
         Map<String, Object> resultMap = new HashMap<>();
-        int numColumns = keys.size();
+        int numColumns = this.keys.size();
         for (int fieldIndex = 0; fieldIndex < numColumns; fieldIndex++) {
-            resultMap.put(keys.get(fieldIndex), values.get(fieldIndex).getVariantValue());
+            resultMap.put(this.keys.get(fieldIndex), this.values.get(fieldIndex).getVariantValue());
         }
         return resultMap;
     }

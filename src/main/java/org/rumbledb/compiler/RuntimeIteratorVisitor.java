@@ -518,7 +518,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitTransformExpression(TransformExpression expression, RuntimeIterator argument) {
 
-        List<RuntimeIterator> copyDeclIterators = new ArrayList<>();
+        // List<RuntimeIterator> copyDeclIterators = new ArrayList<>();
         Map<Name, RuntimeIterator> copyDeclMap = new HashMap<>();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             copyDeclMap.put(copyDecl.getVariableName(), this.visit(copyDecl.getSourceExpression(), argument));

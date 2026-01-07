@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StepExprIterator extends LocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator axisIterator;
     private NodeTest nodeTest;
     private List<Item> results;

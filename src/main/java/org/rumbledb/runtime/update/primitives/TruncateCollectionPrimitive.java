@@ -61,9 +61,9 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         // Handle delta files
         if (mode == Mode.DELTA) {
             URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                collection.getLogicalName(),
-                configuration,
-                metadata
+                this.collection.getLogicalName(),
+                this.configuration,
+                this.metadata
             );
             FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
             return;

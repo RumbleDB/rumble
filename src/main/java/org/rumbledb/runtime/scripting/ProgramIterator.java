@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ProgramIterator extends HybridRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator statementsAndExprIterator;
     private PendingUpdateList pendingUpdateList;
     private int nextExitStatementResult;

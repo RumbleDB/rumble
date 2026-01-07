@@ -66,10 +66,11 @@ public class EditTuplePrimitive implements UpdatePrimitive {
     public void applyDelta() {
         String collectionPath = this.getCollectionPath();
         long targetRowID = this.target.getTopLevelID();
+        double targetRowOrder = this.target.getTopLevelOrder();
 
         this.contents = this.contents
             .withColumn(SparkSessionManager.rowIdColumnName, lit(targetRowID))
-            .withColumn(SparkSessionManager.rowOrderColumnName, lit(this.target.getTopLevelOrder()));
+            .withColumn(SparkSessionManager.rowOrderColumnName, lit(targetRowOrder));
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 

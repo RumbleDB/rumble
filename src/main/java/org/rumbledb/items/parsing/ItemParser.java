@@ -413,6 +413,7 @@ public class ItemParser implements Serializable {
         return convertValueToItem(null, 0, o, fieldType, metadata, itemType);
     }
 
+    @SuppressWarnings("unchecked")
     private static Item convertValueToItem(
             Row row,
             int i,
@@ -621,7 +622,6 @@ public class ItemParser implements Serializable {
                     members.add(convertValueToItem(object, dataType, metadata, memberType));
                 }
             } else {
-                @SuppressWarnings("unchecked")
                 Iterator<Object> iterator = null;
                 if (o instanceof scala.collection.mutable.ArraySeq) {
                     iterator = ((scala.collection.mutable.ArraySeq<Object>) o).iterator();

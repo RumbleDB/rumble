@@ -55,6 +55,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-name">XPath Functions 3.1: fn:name</a>
  */
 public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
+    private static final long serialVersionUID = 1L;
 
     public NodeNameFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);

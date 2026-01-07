@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    private static final long serialVersionUID = 1L;
     private final RuntimeIterator assignExpression;
     private final Name variableName;
 
