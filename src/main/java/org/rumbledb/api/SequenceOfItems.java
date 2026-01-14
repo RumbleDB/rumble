@@ -406,7 +406,7 @@ public class SequenceOfItems {
      * Returns a SequenceWriter to save the sequence in various formats.
      */
     public SequenceWriter write() {
-        return new SequenceWriter(this, this.configuration);
+        return new SequenceWriter(this);
     }
 
 }

@@ -90,16 +90,16 @@ public class SequenceWriter {
 
     /**
      * Public entry-point constructor used by {@link SequenceOfItems#write()}.
-     *
+     *TODO: update comment here
      * It determines the initial mode:
      * - If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
      * fails, the writer is created in RDD mode.
      * - Otherwise, the writer is created in DataFrame mode based on the DataFrame returned by
      * {@link SequenceOfItems#getAsDataFrame()}.
      */
-    public SequenceWriter(SequenceOfItems sequence, RumbleRuntimeConfiguration configuration) {
+    SequenceWriter(SequenceOfItems sequence) {
         this.sequence = sequence;
-        this.configuration = configuration;
+        this.configuration = sequence.getRuntimeStaticContext().getConfiguration();
         SerializationParameters params = sequence
             .getRuntimeStaticContext()
             .getSerializationParameters();
