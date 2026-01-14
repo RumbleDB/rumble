@@ -80,6 +80,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
@@ -529,6 +530,22 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             : null;
 
         DocumentNodeConstructorExpression result = new DocumentNodeConstructorExpression(
+                clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitCommentNodeConstructor(CommentNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression = contentExpression != null
+            ? (Expression) visit(contentExpression, argument)
+            : null;
+
+        CommentNodeConstructorExpression result = new CommentNodeConstructorExpression(
                 clonedContentExpression,
                 expression.getMetadata()
         );

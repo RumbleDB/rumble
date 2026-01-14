@@ -102,6 +102,7 @@ import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
@@ -260,6 +261,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCommentNodeConstructor(CommentNodeConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

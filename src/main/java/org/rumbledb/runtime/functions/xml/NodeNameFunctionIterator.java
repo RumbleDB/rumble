@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
@@ -84,11 +85,12 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
                     || node instanceof ElementItem
                     || node instanceof AttributeItem
                     || node instanceof TextItem
+                    || node instanceof CommentItem
             ) {
 
                 // If the node has no name (document, comment, text, namespace node with no name),
                 // return the zero-length string
-                if (node instanceof DocumentItem || node instanceof TextItem) {
+                if (node instanceof DocumentItem || node instanceof TextItem || node instanceof CommentItem) {
                     return new StringItem("");
                 }
 

@@ -123,6 +123,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -221,6 +222,7 @@ import org.rumbledb.runtime.xml.AttributeNodeContentRuntimeIterator;
 import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedElementConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.CommentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
@@ -1005,6 +1007,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitCommentNodeConstructor(
+            CommentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+        CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
+                new AtomizationIterator(
+                        Collections.singletonList(contentIterator),
+                        expression.getStaticContextForRuntime(this.visitorConfig)
+                ),
+                expression.getStaticContextForRuntime(this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
 
     @Override

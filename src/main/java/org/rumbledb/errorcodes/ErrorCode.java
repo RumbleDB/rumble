@@ -143,6 +143,7 @@ public enum ErrorCode {
     UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
 
     InvalidElementNameErrorCode("XQDY0074"),
+    InvalidCommentContentErrorCode("XQDY0072"),
     InvalidNodeNameErrorCode("XQDY0096"),
     DuplicateAttributeErrorCode("XQDY0025"),
     AttributeAfterNonAttributeErrorCode("XQTY0024"),
