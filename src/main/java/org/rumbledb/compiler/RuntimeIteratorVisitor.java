@@ -124,6 +124,7 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -222,6 +223,7 @@ import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedElementConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
@@ -931,6 +933,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     .stream()
                     .map(arg -> (AttributeNodeRuntimeIterator) this.visit(arg, argument))
                     .collect(Collectors.toList()),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitDirPIConstructor(DirPIConstructorExpression expression, RuntimeIterator argument) {
+        Expression contentExpression = expression.getContentExpression();
+        AtomizationIterator contentIterator = null;
+        if (contentExpression != null) {
+            RuntimeIterator contentExpressionIterator = this.visit(contentExpression, argument);
+            contentIterator = new AtomizationIterator(
+                    Collections.singletonList(contentExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+
+        RuntimeIterator runtimeIterator = new DirPIConstructorRuntimeIterator(
+                expression.getTarget(),
+                contentIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

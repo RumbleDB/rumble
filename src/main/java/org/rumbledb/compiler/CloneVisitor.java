@@ -81,6 +81,7 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
@@ -468,6 +469,21 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getNodeName(),
                 content,
                 attributes,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitDirPIConstructor(DirPIConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression() != null
+            ? (Expression) visit(expression.getContentExpression(), argument)
+            : null;
+        DirPIConstructorExpression result = new DirPIConstructorExpression(
+                expression.getTarget(),
+                contentExpression,
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());

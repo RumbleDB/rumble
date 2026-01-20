@@ -167,17 +167,7 @@ public class Serializer implements java.io.Serializable {
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                sb.append("<");
-                sb.append(child.nodeName());
-                sb.append(">");
-                sb.append("\n");
-
-                for (Item descendant : child.children()) {
-                    serialize(descendant, sb, indent + "  ", isTopLevel);
-                }
-                sb.append("</");
-                sb.append(child.nodeName());
-                sb.append(">");
+                serialize(child, sb, indent, isTopLevel);
             }
         }
         if (item.isElementNode()) {
@@ -207,6 +197,19 @@ public class Serializer implements java.io.Serializable {
             sb.append("\"");
             sb.append(item.getStringValue());
             sb.append("\"");
+        }
+
+        if (item.isProcessingInstructionNode()) {
+            sb.append(indent);
+            sb.append("<?");
+            sb.append(item.nodeName());
+            String content = item.getStringValue();
+            if (content != null && !content.isEmpty()) {
+                sb.append(" ");
+                sb.append(content);
+            }
+            sb.append("?>");
+            sb.append("\n");
         }
 
         if (item.isTextNode()) {

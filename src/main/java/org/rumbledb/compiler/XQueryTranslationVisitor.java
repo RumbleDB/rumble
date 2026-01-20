@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -73,6 +74,7 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -1539,11 +1541,44 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitDirElemConstructorOpenClose((XQueryParser.DirElemConstructorOpenCloseContext) child);
         } else if (child instanceof XQueryParser.DirElemConstructorSingleTagContext) {
             return this.visitDirElemConstructorSingleTag((XQueryParser.DirElemConstructorSingleTagContext) child);
+        } else if (ctx.PI() != null) {
+            return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
+        } else if (ctx.COMMENT() != null) {
+            throw new UnsupportedFeatureException(
+                    "Direct comment constructor not yet implemented",
+                    createMetadataFromContext(ctx)
+            );
         }
         throw new UnsupportedFeatureException(
                 "Direct constructor not yet implemented",
                 createMetadataFromContext(ctx)
         );
+    }
+
+    private Node visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
+        String tokenText = piToken.getText();
+        String inner = tokenText.substring(2, tokenText.length() - 2);
+        int whitespaceIndex = indexOfWhitespace(inner);
+        String target = whitespaceIndex == -1 ? inner : inner.substring(0, whitespaceIndex);
+        Expression contentExpression = null;
+        if (whitespaceIndex != -1) {
+            int contentStart = whitespaceIndex;
+            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
+                contentStart++;
+            }
+            String content = inner.substring(contentStart);
+            contentExpression = new StringLiteralExpression(content, metadata);
+        }
+        return new DirPIConstructorExpression(target, contentExpression, metadata);
+    }
+
+    private int indexOfWhitespace(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isWhitespace(value.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override

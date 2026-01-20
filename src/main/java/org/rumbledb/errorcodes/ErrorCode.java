@@ -105,6 +105,8 @@ public enum ErrorCode {
 
     InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
+    InvalidProcessingInstructionContentErrorCode("XQDY0026"),
+    InvalidProcessingInstructionTargetErrorCode("XQDY0064"),
 
     InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
