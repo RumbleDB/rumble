@@ -167,7 +167,12 @@ public class Serializer implements java.io.Serializable {
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                serialize(child, sb, indent, isTopLevel);
+                StringBuffer childBuffer = new StringBuffer();
+                serialize(child, childBuffer, indent, isTopLevel);
+                if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
+                    childBuffer.setLength(childBuffer.length() - 1);
+                }
+                sb.append(childBuffer);
             }
         }
         if (item.isElementNode()) {
