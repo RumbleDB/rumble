@@ -34,6 +34,7 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -43,11 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.spark.internal.Logging;
 
-public class JsoniqQueryExecutor {
+public class JsoniqQueryExecutor implements Logging {
     private RumbleRuntimeConfiguration configuration;
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
+        initializeLogIfNecessary(true, true);
         this.configuration = configuration;
     }
 
@@ -231,6 +234,18 @@ public class JsoniqQueryExecutor {
             sequence.applyPUL();
         }
         return sequence.populateList(resultList, this.configuration.getResultSizeCap());
+    }
+
+    @Override
+    public Logger org$apache$spark$internal$Logging$$log_() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void org$apache$spark$internal$Logging$$log__$eq(Logger x$1) {
+        // TODO Auto-generated method stub
+
     }
 
 }
