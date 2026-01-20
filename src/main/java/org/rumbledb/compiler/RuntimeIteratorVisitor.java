@@ -1018,9 +1018,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
                 new AtomizationIterator(
                         Collections.singletonList(contentIterator),
-                        expression.getStaticContextForRuntime(this.visitorConfig)
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 ),
-                expression.getStaticContextForRuntime(this.visitorConfig)
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         result.setStaticContext(expression.getStaticContext());
         return result;
