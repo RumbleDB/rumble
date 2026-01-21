@@ -183,11 +183,12 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
         // 7: If the two nodes are both text nodes or comment nodes, then they are deep-equal
         // if and only if their string-values are equal.
-        if (node1.isTextNode() && node2.isTextNode()) {
-            return node1.getTextValue().equals(node2.getTextValue());
+        if (
+            (node1.isTextNode() && node2.isTextNode())
+                || (node1.isCommentNode() && node2.isCommentNode())
+        ) {
+            return node1.getStringValue().equals(node2.getStringValue());
         }
-
-        // Note: Comment nodes are not yet implemented in Rumble
 
         // In all other cases the result is false.
         return false;
@@ -207,8 +208,10 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             ||
             (node1.isAttributeNode() && node2.isAttributeNode())
             ||
-            (node1.isTextNode() && node2.isTextNode());
-        // TODO: Add support for processing instruction, comment, and namespace nodes when implemented
+            (node1.isTextNode() && node2.isTextNode())
+            ||
+            (node1.isCommentNode() && node2.isCommentNode());
+        // TODO: Add support for processing instruction and namespace nodes when implemented
     }
 
     /**

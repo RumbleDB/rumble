@@ -1536,6 +1536,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
+        if (ctx.COMMENT() != null) {
+            String commentText = ctx.COMMENT().getText();
+            String commentContent = commentText.substring(4, commentText.length() - 3);
+            return new CommentNodeConstructorExpression(
+                    new StringLiteralExpression(commentContent, createMetadataFromContext(ctx)),
+                    createMetadataFromContext(ctx)
+            );
+        }
         if (child instanceof XQueryParser.DirElemConstructorOpenCloseContext) {
             return this.visitDirElemConstructorOpenClose((XQueryParser.DirElemConstructorOpenCloseContext) child);
         } else if (child instanceof XQueryParser.DirElemConstructorSingleTagContext) {
