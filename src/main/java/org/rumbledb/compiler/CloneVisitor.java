@@ -82,6 +82,7 @@ import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
@@ -547,6 +548,17 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
         CommentNodeConstructorExpression result = new CommentNodeConstructorExpression(
                 clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitDirectCommentConstructor(DirectCommentConstructorExpression expression, Node argument) {
+        DirectCommentConstructorExpression result = new DirectCommentConstructorExpression(
+                expression.getContent(),
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());

@@ -74,6 +74,7 @@ import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -1539,8 +1540,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.COMMENT() != null) {
             String commentText = ctx.COMMENT().getText();
             String commentContent = commentText.substring(4, commentText.length() - 3);
-            return new CommentNodeConstructorExpression(
-                    new StringLiteralExpression(commentContent, createMetadataFromContext(ctx)),
+            return new DirectCommentConstructorExpression(
+                    commentContent,
                     createMetadataFromContext(ctx)
             );
         }

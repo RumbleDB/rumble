@@ -125,6 +125,7 @@ import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -223,6 +224,7 @@ import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedElementConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.CommentNodeConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
@@ -1020,6 +1022,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         Collections.singletonList(contentIterator),
                         expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 ),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public RuntimeIterator visitDirectCommentConstructor(
+            DirectCommentConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        DirectCommentConstructorRuntimeIterator result = new DirectCommentConstructorRuntimeIterator(
+                expression.getContent(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         result.setStaticContext(expression.getStaticContext());
