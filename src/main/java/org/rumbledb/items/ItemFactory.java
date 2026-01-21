@@ -8,6 +8,7 @@ import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -343,5 +344,16 @@ public class ItemFactory {
      */
     public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
+    }
+
+    /**
+     * Create a processing instruction item.
+     *
+     * @param target The processing instruction target
+     * @param content The processing instruction content
+     * @return The processing instruction item
+     */
+    public Item createXmlProcessingInstructionNode(String target, String content) {
+        return new ProcessingInstructionItem(target, content);
     }
 }

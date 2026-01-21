@@ -175,7 +175,14 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
         // 5: If the two nodes are both processing instruction nodes, then they are deep-equal
         // if and only if both the following conditions are satisfied:
-        // Note: Processing instruction nodes are not yet implemented in Rumble
+        if (node1.isProcessingInstructionNode() && node2.isProcessingInstructionNode()) {
+            // 5a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
+            if (!node1.nodeName().equals(node2.nodeName())) {
+                return false;
+            }
+            // 5b: The string-values of the two nodes are equal.
+            return node1.getStringValue().equals(node2.getStringValue());
+        }
 
         // 6: If the two nodes are both namespace nodes, then they are deep-equal
         // if and only if both the following conditions are satisfied:
@@ -210,8 +217,10 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             ||
             (node1.isTextNode() && node2.isTextNode())
             ||
-            (node1.isCommentNode() && node2.isCommentNode());
-        // TODO: Add support for processing instruction and namespace nodes when implemented
+            (node1.isCommentNode() && node2.isCommentNode())
+            ||
+            (node1.isProcessingInstructionNode() && node2.isProcessingInstructionNode());
+        // TODO: Add support for namespace nodes when implemented
     }
 
     /**
