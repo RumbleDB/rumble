@@ -1767,6 +1767,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 createMetadataFromContext(ctx)
         );
     }
+
     public Node visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
         Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
         if (ctx.ncName() != null) {
