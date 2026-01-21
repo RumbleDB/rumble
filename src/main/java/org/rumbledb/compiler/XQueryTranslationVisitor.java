@@ -73,6 +73,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
@@ -1715,6 +1716,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitCompDocConstructor((XQueryParser.CompDocConstructorContext) child);
         } else if (child instanceof XQueryParser.CompElemConstructorContext) {
             return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompPIConstructorContext) {
+            return this.visitCompPIConstructor((XQueryParser.CompPIConstructorContext) child);
         } else if (child instanceof XQueryParser.CompTextConstructorContext) {
             return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
         } else if (child instanceof XQueryParser.CompAttrConstructorContext) {
@@ -1738,6 +1741,30 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         return new TextNodeConstructorExpression(
                 contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+        if (ctx.ncName() != null) {
+            return new ComputedPIConstructorExpression(
+                    ctx.ncName().getText(),
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.expr() != null) {
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedPIConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed processing instruction constructor must have either a static NCName or a dynamic name expression",
                 createMetadataFromContext(ctx)
         );
     }

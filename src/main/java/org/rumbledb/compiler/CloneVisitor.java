@@ -80,6 +80,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
@@ -504,6 +505,31 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             );
         } else {
             result = new ComputedElementConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    expression.getContentExpression() != null
+                        ? (Expression) visit(expression.getContentExpression(), argument)
+                        : null,
+                    expression.getMetadata()
+            );
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedPIConstructor(ComputedPIConstructorExpression expression, Node argument) {
+        ComputedPIConstructorExpression result;
+        if (expression.hasStaticTarget()) {
+            result = new ComputedPIConstructorExpression(
+                    expression.getTarget(),
+                    expression.getContentExpression() != null
+                        ? (Expression) visit(expression.getContentExpression(), argument)
+                        : null,
+                    expression.getMetadata()
+            );
+        } else {
+            result = new ComputedPIConstructorExpression(
                     (Expression) visit(expression.getNameExpression(), argument),
                     expression.getContentExpression() != null
                         ? (Expression) visit(expression.getContentExpression(), argument)
