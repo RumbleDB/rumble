@@ -203,7 +203,8 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             Row res = session.sql(selectQuery).collectAsList().get(0);
             targetMetadataItem.setMutabilityLevel(res.getAs(SparkSessionManager.mutabilityLevelColumnName));
             targetMetadataItem.setPathIn(res.getAs(SparkSessionManager.pathInColumnName));
-            targetMetadataItem.setTableLocation(res.getAs(SparkSessionManager.tableLocationColumnName));
+            // targetMetadataItem.setTableLocation(res.getAs(SparkSessionManager.tableLocationColumnName));
+            targetMetadataItem.setCollection(new Collection(res.getAs(SparkSessionManager.tableLocationColumnName)));
             targetMetadataItem.setTopLevelID(res.getAs(SparkSessionManager.rowIdColumnName));
             targetMetadataItem.setTopLevelOrder(res.getAs(SparkSessionManager.rowOrderColumnName));
 

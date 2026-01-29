@@ -11,10 +11,9 @@ import sparksoniq.spark.SparkSessionManager;
 
 
 public class DeleteFromArrayPrimitive implements UpdatePrimitive {
-
-
     private Item target;
     private Item selector;
+    private Collection collection;
 
     public DeleteFromArrayPrimitive(Item targetArray, Item positionInt, ExceptionMetadata metadata) {
         if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
@@ -25,11 +24,12 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
         }
         this.target = targetArray;
         this.selector = positionInt;
+        this.collection = targetArray.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -44,7 +44,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
     @Override
     public void applyDelta() {
         String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
@@ -62,10 +62,10 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                .getType();
+            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
+            // .getObjectContentFacet()
+            // .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            // .getType();
             String setClause = "SET " + pathIn + " = ";
             this.applyItem();
             setClause = setClause + this.target.getSparkSQLValue(arrayType);

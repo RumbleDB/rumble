@@ -147,7 +147,7 @@ public interface UpdatePrimitive {
         Item target = this.getTarget();
 
         String pathIn = target.getPathIn().substring(target.getPathIn().indexOf(".") + 1);
-        String location = target.getTableLocation();
+        String location = target.getCollection().getPhysicalName();
         long rowID = target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
@@ -173,15 +173,16 @@ public interface UpdatePrimitive {
 
         Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-        ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-            .getObjectContentFacet()
-            .get(SparkSessionManager.atomicJSONiqItemColumnName)
-            .getType();
+        ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
+        // .getObjectContentFacet()
+        // .get(SparkSessionManager.atomicJSONiqItemColumnName)
+        // .getType();
 
         JavaRDD<Row> rowRDD = arrayDF.javaRDD();
         JavaRDD<Item> itemRDD = rowRDD.map(new RowToItemMapper(ExceptionMetadata.EMPTY_METADATA, arrayType));
         List<Item> collectedItems = itemRDD.take(2);
         Item originalArray = collectedItems.get(0);
+
         // TODO: errors if 0 items or more than one item
 
         Item innerItem = originalArray;
@@ -209,6 +210,7 @@ public interface UpdatePrimitive {
         }
 
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
+
         String query = "UPDATE "
             + location
             + " SET "
@@ -220,6 +222,4 @@ public interface UpdatePrimitive {
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }
-
-
 }

@@ -35,6 +35,7 @@ public class JSoundDataFrame implements Serializable {
         this.itemType = itemType;
         StructType schema = this.dataFrame.schema();
         String[] fieldNames = schema.fieldNames();
+
         if (Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)) {
             int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
             StructField field = schema.fields()[i];
@@ -198,10 +199,6 @@ public class JSoundDataFrame implements Serializable {
     }
 
     public JSoundDataFrame union(JSoundDataFrame other) {
-        System.out.println("UNIONING DATAFRAMES");
-        System.out.println("THIS TYPE: " + this.itemType);
-        System.out.println("OTHER TYPE: " + other.itemType);
-
         if (!this.itemType.equals(other.itemType)) {
             throw new OurBadException(
                     "Cannot union two dataframes with types " + this.itemType + " and " + other.itemType

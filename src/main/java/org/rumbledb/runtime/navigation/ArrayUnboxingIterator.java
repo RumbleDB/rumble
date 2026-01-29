@@ -198,11 +198,25 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
+                    // String.format(
+                    // "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
+                    // SparkSessionManager.atomicJSONiqItemColumnName,
+                    // SparkSessionManager.atomicJSONiqItemColumnName,
+                    // SparkSessionManager.atomicJSONiqItemColumnName,
+                    // array
+                    // ),
                     String.format(
-                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
+                        "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
                         array
                     ),
                     elementType

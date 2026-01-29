@@ -592,14 +592,9 @@ public class ItemTypeFactory {
         Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
-            ItemType mappedItemType;
-            if (filedType instanceof StructType) {
-                mappedItemType = createItemTypeFromSparkStructType((StructType) filedType);
-            } else {
-                mappedItemType = createItemType(filedType);
-            }
+            ItemType mappedItemType = createItemType(filedType);
 
-            // Handle atomic item
+            // Handle non-object item
             if (field.name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
                 return mappedItemType;
             }

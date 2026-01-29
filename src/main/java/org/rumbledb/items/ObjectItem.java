@@ -201,8 +201,8 @@ public class ObjectItem implements Item {
         output.writeLong(this.topLevelID);
         kryo.writeObject(output, this.pathIn);
         kryo.writeObject(output, this.location);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
         output.writeDouble(this.topLevelOrder);
+        kryo.writeObjectOrNull(output, this.collection, Collection.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -214,8 +214,8 @@ public class ObjectItem implements Item {
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
         this.topLevelOrder = input.readDouble();
+        this.collection = kryo.readObjectOrNull(input, Collection.class);
     }
 
     public int hashCode() {
@@ -245,6 +245,7 @@ public class ObjectItem implements Item {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
+
         for (Item item : this.values) {
             item.setMutabilityLevel(mutabilityLevel);
         }
@@ -399,5 +400,11 @@ public class ObjectItem implements Item {
     @Override
     public void setCollection(Collection collection) {
         this.collection = collection;
+        for (Item item : this.values) {
+            if (item.isObject() || item.isArray()) {
+                item.setCollection(collection);
+            }
+        }
+
     }
 }

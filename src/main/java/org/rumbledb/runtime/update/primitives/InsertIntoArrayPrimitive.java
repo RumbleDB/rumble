@@ -17,6 +17,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
     private Item target;
     private Item selector;
     private List<Item> content;
+    private Collection collection;
 
     public InsertIntoArrayPrimitive(
             Item targetArray,
@@ -34,12 +35,12 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
         this.target = targetArray;
         this.selector = positionInt;
         this.content = sourceSequence;
-
+        this.collection = targetArray.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -59,7 +60,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
         // TODO: perhaps check for homogenous typing of array w/o relying on SQL error
 
         String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
         // DeltaTable dt = DeltaTable.forPath(SparkSessionManager.getInstance().getOrCreateSession(), location);
@@ -78,10 +79,10 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                .getType();
+            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
+            // .getObjectContentFacet()
+            // .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            // .getType();
 
             String setClause = pathIn + " = ";
             this.applyItem();
