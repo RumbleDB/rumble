@@ -199,8 +199,9 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
             List<AttributeNodeRuntimeIterator> attributes
     ) {
         List<RuntimeIterator> children = new ArrayList<>();
-        children.addAll(content);
+        // first add attributes, then content
         children.addAll(attributes);
+        children.addAll(content);
         return children;
     }
 
