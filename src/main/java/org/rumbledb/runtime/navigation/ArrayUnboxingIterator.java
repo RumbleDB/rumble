@@ -41,7 +41,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -198,27 +197,27 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
-                    // String.format(
-                    // "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // array
-                    // ),
                     String.format(
-                        "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
+                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName,
                         array
                     ),
+                    // String.format(
+                    //     "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    //     SparkSessionManager.rowIdColumnName,
+                    //     SparkSessionManager.mutabilityLevelColumnName,
+                    //     SparkSessionManager.pathInColumnName,
+                    //     SparkSessionManager.pathInColumnName,
+                    //     SparkSessionManager.tableLocationColumnName,
+                    //     SparkSessionManager.atomicJSONiqItemColumnName,
+                    //     SparkSessionManager.rowIdColumnName,
+                    //     SparkSessionManager.mutabilityLevelColumnName,
+                    //     SparkSessionManager.pathInColumnName,
+                    //     SparkSessionManager.tableLocationColumnName,
+                    //     array
+                    // ),
                     elementType
                 );
             }
@@ -282,8 +281,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
-                res = new JSoundDataFrame(df, deltaItemType);
+                res = new JSoundDataFrame(df, elementType);
             }
             return res;
         }

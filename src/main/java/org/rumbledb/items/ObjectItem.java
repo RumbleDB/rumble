@@ -401,9 +401,7 @@ public class ObjectItem implements Item {
     public void setCollection(Collection collection) {
         this.collection = collection;
         for (Item item : this.values) {
-            if (item.isObject() || item.isArray()) {
-                item.setCollection(collection);
-            }
+            item.setCollection(collection);
         }
 
     }

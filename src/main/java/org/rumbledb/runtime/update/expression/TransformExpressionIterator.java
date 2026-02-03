@@ -101,7 +101,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
                 // TODO: Currently avoids copied delta items being updated via applyDelta but perhaps should be checked
                 // with mutability level
                 // temp.setTableLocation(null);
-                temp.setCollection(null);
+                // temp.setCollection(null);
                 copy.add(temp);
             }
             context.getVariableValues().addVariableValue(copyVar, copy);

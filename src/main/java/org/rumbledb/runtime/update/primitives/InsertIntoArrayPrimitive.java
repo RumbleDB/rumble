@@ -79,10 +79,10 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
-            // .getObjectContentFacet()
-            // .get(SparkSessionManager.atomicJSONiqItemColumnName)
-            // .getType();
+            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType();
 
             String setClause = pathIn + " = ";
             this.applyItem();

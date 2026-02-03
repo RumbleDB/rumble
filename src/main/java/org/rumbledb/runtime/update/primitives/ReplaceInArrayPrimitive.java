@@ -84,10 +84,10 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
-            // .getObjectContentFacet()
-            // .get(SparkSessionManager.atomicJSONiqItemColumnName)
-            // .getType();
+            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType();
 
             String setField = pathIn + " = ";
             this.applyItem();

@@ -62,10 +62,10 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
-            // .getObjectContentFacet()
-            // .get(SparkSessionManager.atomicJSONiqItemColumnName)
-            // .getType();
+            ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
+                .getObjectContentFacet()
+                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .getType();
             String setClause = "SET " + pathIn + " = ";
             this.applyItem();
             setClause = setClause + this.target.getSparkSQLValue(arrayType);

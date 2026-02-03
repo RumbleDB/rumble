@@ -173,10 +173,10 @@ public interface UpdatePrimitive {
 
         Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
-        ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema());
-        // .getObjectContentFacet()
-        // .get(SparkSessionManager.atomicJSONiqItemColumnName)
-        // .getType();
+        ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
+            .getObjectContentFacet()
+            .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            .getType();
 
         JavaRDD<Row> rowRDD = arrayDF.javaRDD();
         JavaRDD<Item> itemRDD = rowRDD.map(new RowToItemMapper(ExceptionMetadata.EMPTY_METADATA, arrayType));

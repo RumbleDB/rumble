@@ -19,7 +19,6 @@ import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -1116,7 +1115,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the collection.
      */
     default Collection getCollection() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return null;
     }
 
     /**
@@ -1126,6 +1125,5 @@ public interface Item extends Serializable, KryoSerializable {
      * @param collection the collection.
      */
     default void setCollection(Collection collection) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }

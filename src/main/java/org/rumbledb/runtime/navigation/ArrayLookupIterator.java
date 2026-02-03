@@ -42,7 +42,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -245,41 +244,40 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             && childDataFrame.getItemType()
                 .getObjectContentFacet()
                 .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
-        childDataFrame.getDataFrame().show();
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
-                    // String.format(
-                    // "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // Integer.toString(this.lookup - 1),
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // array,
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // Integer.toString(this.lookup)
-                    // ),
                     String.format(
-                        "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                        "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         Integer.toString(this.lookup - 1),
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.rowIdColumnName,
-                        SparkSessionManager.mutabilityLevelColumnName,
-                        SparkSessionManager.pathInColumnName,
-                        Integer.toString(this.lookup - 1),
-                        SparkSessionManager.pathInColumnName,
-                        SparkSessionManager.tableLocationColumnName,
                         array,
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         Integer.toString(this.lookup)
                     ),
+                    // String.format(
+                    //     "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                    //     SparkSessionManager.atomicJSONiqItemColumnName,
+                    //     SparkSessionManager.rowIdColumnName,
+                    //     SparkSessionManager.mutabilityLevelColumnName,
+                    //     SparkSessionManager.pathInColumnName,
+                    //     SparkSessionManager.tableLocationColumnName,
+                    //     SparkSessionManager.atomicJSONiqItemColumnName,
+                    //     Integer.toString(this.lookup - 1),
+                    //     SparkSessionManager.atomicJSONiqItemColumnName,
+                    //     SparkSessionManager.rowIdColumnName,
+                    //     SparkSessionManager.mutabilityLevelColumnName,
+                    //     SparkSessionManager.pathInColumnName,
+                    //     Integer.toString(this.lookup - 1),
+                    //     SparkSessionManager.pathInColumnName,
+                    //     SparkSessionManager.tableLocationColumnName,
+                    //     array,
+                    //     SparkSessionManager.atomicJSONiqItemColumnName,
+                    //     Integer.toString(this.lookup)
+                    // ),
                     elementType
                 );
             }
@@ -353,8 +351,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     this.lookup
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
-                res = new JSoundDataFrame(df, deltaItemType);
+                res = new JSoundDataFrame(df, elementType);
             }
             return res;
         }

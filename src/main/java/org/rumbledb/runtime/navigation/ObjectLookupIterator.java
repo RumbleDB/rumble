@@ -57,7 +57,6 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
@@ -445,8 +444,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         object
                     );
                     Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                    ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
-                    result = new JSoundDataFrame(df, deltaItemType);
+                    result = new JSoundDataFrame(df, type);
                 } else {
                     sql = String.format(
                         "SELECT `%s` AS `%s` FROM %s",
