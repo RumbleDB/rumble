@@ -98,10 +98,8 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             for (Item item : toCopy) {
                 temp = SerializationUtils.clone(item);
                 temp.setMutabilityLevel(this.mutabilityLevel);
-                // TODO: Currently avoids copied delta items being updated via applyDelta but perhaps should be checked
-                // with mutability level
-                // temp.setTableLocation(null);
-                // temp.setCollection(null);
+                // Ensure transform updates apply to the copied item, not the backing collection.
+                temp.setCollection(null);
                 copy.add(temp);
             }
             context.getVariableValues().addVariableValue(copyVar, copy);

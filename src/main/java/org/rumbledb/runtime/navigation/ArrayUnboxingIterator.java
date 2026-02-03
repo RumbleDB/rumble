@@ -193,9 +193,36 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             && childDataFrame.getItemType()
                 .getObjectContentFacet()
                 .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+        String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
+        boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
+        boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
+        boolean hasPathInColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.pathInColumnName);
+        boolean hasTableLocationColumn = Arrays.asList(fieldNames)
+            .contains(
+                SparkSessionManager.tableLocationColumnName
+            );
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
+                if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                    return childDataFrame.evaluateSQL(
+                        String.format(
+                            "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            array
+                        ),
+                        elementType
+                    );
+                }
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
@@ -221,6 +248,24 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     // ),
                     elementType
                 );
+            }
+            if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                String sql = String.format(
+                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array
+                );
+                Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                return new JSoundDataFrame(df, elementType);
             }
             return childDataFrame.evaluateSQL(
                 String.format(

@@ -244,9 +244,42 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             && childDataFrame.getItemType()
                 .getObjectContentFacet()
                 .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+        String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
+        boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
+        boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
+        boolean hasPathInColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.pathInColumnName);
+        boolean hasTableLocationColumn = Arrays.asList(fieldNames)
+            .contains(
+                SparkSessionManager.tableLocationColumnName
+            );
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
+                if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                    return childDataFrame.evaluateSQL(
+                        String.format(
+                            "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            Integer.toString(this.lookup - 1),
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            Integer.toString(this.lookup - 1),
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            array,
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            Integer.toString(this.lookup)
+                        ),
+                        elementType
+                    );
+                }
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
