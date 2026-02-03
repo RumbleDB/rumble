@@ -1,6 +1,8 @@
 package org.rumbledb.context;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -15,6 +17,7 @@ public class RuntimeStaticContext implements Serializable {
     private SequenceType staticType;
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
+    private final Map<String, String> staticallyKnownNamespaces;
 
     public RuntimeStaticContext(
             RumbleRuntimeConfiguration configuration,
@@ -22,10 +25,21 @@ public class RuntimeStaticContext implements Serializable {
             ExecutionMode executionMode,
             ExceptionMetadata metadata
     ) {
+        this(configuration, staticType, executionMode, metadata, null);
+    }
+
+    public RuntimeStaticContext(
+            RumbleRuntimeConfiguration configuration,
+            SequenceType staticType,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            Map<String, String> staticallyKnownNamespaces
+    ) {
         this.configuration = configuration;
         this.staticType = staticType;
         this.executionMode = executionMode;
         this.metadata = metadata;
+        this.staticallyKnownNamespaces = staticallyKnownNamespaces;
     }
 
     public RuntimeStaticContext(
@@ -33,10 +47,7 @@ public class RuntimeStaticContext implements Serializable {
             ExecutionMode executionMode,
             ExceptionMetadata metadata
     ) {
-        this.configuration = configuration;
-        this.staticType = null;
-        this.executionMode = executionMode;
-        this.metadata = metadata;
+        this(configuration, null, executionMode, metadata, null);
     }
 
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -60,6 +71,13 @@ public class RuntimeStaticContext implements Serializable {
 
     public ExceptionMetadata getMetadata() {
         return this.metadata;
+    }
+
+    public Map<String, String> getStaticallyKnownNamespaces() {
+        if (this.staticallyKnownNamespaces == null) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
     }
 
 }
