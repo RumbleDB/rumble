@@ -205,18 +205,19 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                         array
                     ),
                     // String.format(
-                    //     "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                    //     SparkSessionManager.rowIdColumnName,
-                    //     SparkSessionManager.mutabilityLevelColumnName,
-                    //     SparkSessionManager.pathInColumnName,
-                    //     SparkSessionManager.pathInColumnName,
-                    //     SparkSessionManager.tableLocationColumnName,
-                    //     SparkSessionManager.atomicJSONiqItemColumnName,
-                    //     SparkSessionManager.rowIdColumnName,
-                    //     SparkSessionManager.mutabilityLevelColumnName,
-                    //     SparkSessionManager.pathInColumnName,
-                    //     SparkSessionManager.tableLocationColumnName,
-                    //     array
+                    // "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT
+                    // posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    // SparkSessionManager.rowIdColumnName,
+                    // SparkSessionManager.mutabilityLevelColumnName,
+                    // SparkSessionManager.pathInColumnName,
+                    // SparkSessionManager.pathInColumnName,
+                    // SparkSessionManager.tableLocationColumnName,
+                    // SparkSessionManager.atomicJSONiqItemColumnName,
+                    // SparkSessionManager.rowIdColumnName,
+                    // SparkSessionManager.mutabilityLevelColumnName,
+                    // SparkSessionManager.pathInColumnName,
+                    // SparkSessionManager.tableLocationColumnName,
+                    // array
                     // ),
                     elementType
                 );
