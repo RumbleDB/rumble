@@ -11,16 +11,19 @@ import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ElementItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
+    private Map<String, String> namespaces;
     private String nodeName;
     private String stringValue;
     private Item parent;
-    // TODO: add base-uri, schema-type, namespaces, is-id, is-idrefs
+    // TODO: add base-uri, schema-type, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
@@ -30,7 +33,7 @@ public class ElementItem implements Item {
 
     /**
      * Constructor for an element item.
-     * 
+     *
      * @param nodeName The name of the element
      * @param children The children items of the element
      * @param attributes The attributes items of the element
@@ -39,6 +42,7 @@ public class ElementItem implements Item {
         this.nodeName = nodeName;
         this.children = children;
         this.attributes = attributes;
+        this.namespaces = new HashMap<>();
         // TODO: add support for attributes and children
         this.stringValue = "<" + nodeName + "/>";
     }
@@ -48,6 +52,7 @@ public class ElementItem implements Item {
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
+        this.namespaces = new HashMap<>();
     }
 
     @Override
@@ -73,6 +78,9 @@ public class ElementItem implements Item {
     public void addParentToDescendants() {
         this.children.forEach(child -> child.setParent(this));
         this.attributes.forEach(attribute -> attribute.setParent(this));
+        this.children.stream()
+            .filter(Item::isElementNode)
+            .forEach(child -> ((ElementItem) child).inheritNamespacesFromParent());
     }
 
     @Override
@@ -81,6 +89,7 @@ public class ElementItem implements Item {
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
+        kryo.writeObject(output, this.namespaces);
         output.writeString(this.nodeName);
         output.writeString(this.stringValue);
     }
@@ -92,6 +101,7 @@ public class ElementItem implements Item {
         this.parent = (Item) kryo.readClassAndObject(input);
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
+        this.namespaces = kryo.readObject(input, HashMap.class);
         this.nodeName = input.readString();
         this.stringValue = input.readString();
     }
@@ -125,6 +135,32 @@ public class ElementItem implements Item {
         return this.children;
     }
 
+    /**
+     * In-scope namespaces spec excerpt (verbatim):
+     * "Definition : The in-scope namespaces property of an element node is a set of namespace bindings, each of which
+     * associates a namespace prefix with a URI.]"
+     * "For a given element, one namespace binding may have an empty prefix; the URI of this namespace binding is the
+     * default namespace within the scope of the element."
+     * "XQuery does not support the namespace axis and does not represent namespace bindings in the form of nodes."
+     * "However, where other specifications such as [XSLT and XQuery Serialization 3.1] refer to namespace nodes, these
+     * nodes may be synthesized from the in-scope namespaces of an element node by interpreting each namespace binding
+     * as a namespace node."
+     */
+    @Override
+    public List<Item> namespaceNodes() {
+        List<Item> namespaces = new ArrayList<>();
+        if (this.namespaces == null) {
+            return namespaces;
+        }
+        for (Map.Entry<String, String> entry : this.namespaces.entrySet()) {
+            Item namespaceItem = ItemFactory.getInstance()
+                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            namespaceItem.setParent(this);
+            namespaces.add(namespaceItem);
+        }
+        return namespaces;
+    }
+
     @Override
     public String nodeName() {
         return this.nodeName;
@@ -148,6 +184,35 @@ public class ElementItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
+    }
+
+    public void addOrReplaceNamespace(Item namespaceItem) {
+        if (!(namespaceItem instanceof NamespaceItem)) {
+            return;
+        }
+        NamespaceItem namespace = (NamespaceItem) namespaceItem;
+        if (this.namespaces == null) {
+            this.namespaces = new HashMap<>();
+        }
+        this.namespaces.put(namespace.getPrefix(), namespace.getUri());
+    }
+
+    public void inheritNamespacesFromParent() {
+        if (!(this.parent instanceof ElementItem)) {
+            return;
+        }
+        ElementItem parentElement = (ElementItem) this.parent;
+        if (parentElement.namespaces == null) {
+            return;
+        }
+        if (this.namespaces == null) {
+            this.namespaces = new HashMap<>();
+        }
+        // this implements the overriding rule: "If the same namespace prefix is bound in both the parent and the
+        // child element, the child element’s binding overrides the parent element’s binding."
+        for (Map.Entry<String, String> entry : parentElement.namespaces.entrySet()) {
+            this.namespaces.putIfAbsent(entry.getKey(), entry.getValue());
+        }
     }
 
     @Override
@@ -175,3 +240,5 @@ public class ElementItem implements Item {
         return true;
     }
 }
+
+

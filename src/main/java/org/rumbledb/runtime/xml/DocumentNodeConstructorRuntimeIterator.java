@@ -177,8 +177,12 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                         "Document node constructor content cannot contain attribute nodes [err:XPTY0004]"
                 );
             }
-            // TODO: Add namespace node validation when XML type system is implemented
             // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
+            if (item.isNamespaceNode()) {
+                throw new UnexpectedStaticTypeException(
+                        "Document node constructor content cannot contain namespace nodes [err:XPTY0004]"
+                );
+            }
         }
     }
 
