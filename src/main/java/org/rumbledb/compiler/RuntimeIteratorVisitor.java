@@ -123,6 +123,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
@@ -223,6 +224,7 @@ import org.rumbledb.runtime.xml.AttributeNodeContentRuntimeIterator;
 import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedElementConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.ComputedNamespaceConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
@@ -1025,6 +1027,40 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new ComputedPIConstructorRuntimeIterator(
                     nameIterator,
                     contentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitComputedNamespaceConstructor(
+            ComputedNamespaceConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
+        AtomizationIterator uriIterator = new AtomizationIterator(
+                Collections.singletonList(uriExpressionIterator),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
+        RuntimeIterator runtimeIterator;
+        if (expression.hasStaticPrefix()) {
+            runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
+                    expression.getPrefix(),
+                    uriIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            RuntimeIterator prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
+            AtomizationIterator prefixIterator = new AtomizationIterator(
+                    Collections.singletonList(prefixExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
+                    prefixIterator,
+                    uriIterator,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }

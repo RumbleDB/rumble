@@ -105,6 +105,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
@@ -262,6 +263,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitComputedPIConstructor(ComputedPIConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitComputedNamespaceConstructor(ComputedNamespaceConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

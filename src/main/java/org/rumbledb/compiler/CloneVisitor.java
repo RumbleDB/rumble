@@ -80,6 +80,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
@@ -555,6 +556,27 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             result = new ComputedAttributeConstructorExpression(
                     (Expression) visit(expression.getNameExpression(), argument),
                     (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata()
+            );
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedNamespaceConstructor(ComputedNamespaceConstructorExpression expression, Node argument) {
+        ComputedNamespaceConstructorExpression result;
+        if (expression.hasStaticPrefix()) {
+            result = new ComputedNamespaceConstructorExpression(
+                    expression.getPrefix(),
+                    (Expression) visit(expression.getUriExpression(), argument),
+                    expression.getMetadata()
+            );
+        } else {
+            result = new ComputedNamespaceConstructorExpression(
+                    (Expression) visit(expression.getPrefixExpression(), argument),
+                    (Expression) visit(expression.getUriExpression(), argument),
                     expression.getMetadata()
             );
         }

@@ -145,10 +145,11 @@ public enum ErrorCode {
 
     UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
 
-    InvalidElementNameErrorCode("XQDY0074"),
+    InvalidAtomizationErrorCode("XQDY0074"),
     InvalidNodeNameErrorCode("XQDY0096"),
     DuplicateAttributeErrorCode("XQDY0025"),
-    AttributeAfterNonAttributeErrorCode("XQTY0024"),
+    InvalidComputedNamespaceConstructorErrorCode("XQDY0101"),
+    AttributeOrNamespaceAfterNonAttributeErrorCode("XQTY0024"),
 
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),

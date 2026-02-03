@@ -427,6 +427,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an XML Namespace node.
+     *
+     * @return true if it is an XML Namespace node, false otherwise.
+     */
+    default boolean isNamespaceNode() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an XML Processing Instruction node.
      *
      * @return true if it is an XML Processing Instruction node, false otherwise.
@@ -1072,6 +1081,10 @@ public interface Item extends Serializable, KryoSerializable {
 
     default List<Item> children() {
         return new ArrayList<>();
+    }
+
+    default List<Item> namespaceNodes() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     default String nodeName() {
