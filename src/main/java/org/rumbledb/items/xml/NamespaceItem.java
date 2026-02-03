@@ -41,7 +41,7 @@ public class NamespaceItem implements Item {
      * Namespaces have the following properties: prefix , possibly empty uri parent , possibly empty
      * A Namespace Node must not have the name xmlns nor the string-value http://www.w3.org/2000/xmlns/ .
      */
-    
+
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
@@ -87,7 +87,8 @@ public class NamespaceItem implements Item {
 
     @Override
     public String nodeName() {
-        // Spec: "dm: node-name If the prefix is not empty, returns an xs:QName with the value of the prefix property in the
+        // Spec: "dm: node-name If the prefix is not empty, returns an xs:QName with the value of the prefix property in
+        // the
         // local-name and an empty namespace name, otherwise returns the empty sequence."
         // For practical purposes, we return the prefix (may be empty).
         return this.prefix;

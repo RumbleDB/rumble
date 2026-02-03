@@ -160,7 +160,8 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
 
     private String resolveUri(DynamicContext dynamicContext) {
         // Spec: "The content expression is evaluated, and the result is cast to xs:anyURI to create the URI property
-        // for the newly created node. An implementation may raise a dynamic error [err:XQDY0074] if the URIExpr of a computed namespace
+        // for the newly created node. An implementation may raise a dynamic error [err:XQDY0074] if the URIExpr of a
+        // computed namespace
         // constructor is not a valid instance of xs:anyURI."
         List<Item> atomizedUriItems = this.uriIterator.materialize(dynamicContext);
         if (atomizedUriItems.isEmpty()) {
