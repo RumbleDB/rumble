@@ -199,7 +199,7 @@ public interface UpdatePrimitive {
 
         // Apply the update to the inner item
         this.applyItem();
-        
+
         // Put the modified inner item back into the original array
         String finalSelector = fields.get(fields.size() - 1);
         if (innerItem.isObject()) {

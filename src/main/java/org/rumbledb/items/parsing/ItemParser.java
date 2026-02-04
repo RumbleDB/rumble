@@ -322,19 +322,19 @@ public class ItemParser implements Serializable {
                 if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                     mutabilityLevel = row.getInt(i);
                     continue;
-                } 
+                }
                 if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
                     topLevelID = row.getLong(i);
                     continue;
-                } 
+                }
                 if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
                     pathIn = row.getString(i);
                     continue;
-                } 
+                }
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
                     collection = new Collection(row.getString(i));
                     continue;
-                } 
+                }
                 if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
                     rowOrder = row.getDouble(i);
                 }

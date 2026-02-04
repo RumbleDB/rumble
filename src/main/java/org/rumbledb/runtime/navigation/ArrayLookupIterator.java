@@ -254,7 +254,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             .contains(
                 SparkSessionManager.tableLocationColumnName
             );
-        
+
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {

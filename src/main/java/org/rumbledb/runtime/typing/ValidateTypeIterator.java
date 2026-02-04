@@ -295,7 +295,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         dataFrame = dataFrame.withColumn(
             SparkSessionManager.nonObjectJSONiqItemColumnName,
-            org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
+            org.apache.spark.sql.functions.expr(
+                "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
+            )
         );
 
         return new JSoundDataFrame(
