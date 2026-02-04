@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
+import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -40,6 +41,8 @@ import java.util.List;
 public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
+    private static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
     private String tagName;
     private List<RuntimeIterator> content;
     private List<AttributeNodeRuntimeIterator> attributes;
@@ -162,7 +165,18 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
-                        attributes.add(item);
+                        String[] namespaceBinding = parseNamespaceDeclarationAttribute(item);
+                        if (namespaceBinding != null) {
+                            String prefix = namespaceBinding[0];
+                            String uri = namespaceBinding[1];
+                            validateNamespaceDeclaration(prefix, uri);
+                            namespaces.add(
+                                ItemFactory.getInstance()
+                                    .createXmlNamespaceNode(prefix, uri)
+                            );
+                        } else {
+                            attributes.add(item);
+                        }
                     }
                 }
                 iterator.close();
@@ -203,6 +217,64 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         children.addAll(attributes);
         children.addAll(content);
         return children;
+    }
+
+    private static String[] parseNamespaceDeclarationAttribute(Item attributeItem) {
+        if (!attributeItem.isAttributeNode()) {
+            return null;
+        }
+        String attributeName = attributeItem.nodeName();
+        if ("xmlns".equals(attributeName)) {
+            return new String[] { "", attributeItem.getStringValue() };
+        }
+        if (attributeName.startsWith("xmlns:")) {
+            String prefix = attributeName.substring("xmlns:".length());
+            return new String[] { prefix, attributeItem.getStringValue() };
+        }
+        return null;
+    }
+
+    private static void validateNamespaceDeclaration(String prefix, String uri) {
+        // Spec (https://www.w3.org/TR/xquery-31/#id-element-constructor):
+        // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
+        // create attribute nodes."
+        // "[Definition: A namespace declaration attribute is used inside a direct element constructor. Its purpose is
+        // to bind a namespace prefix or to set the default element/type namespace for the constructed element node,
+        // including its attributes.] Syntactically, a namespace declaration attribute has the form of an attribute
+        // with namespace prefix xmlns, or with name xmlns and no namespace prefix."
+        // "If the prefix of the attribute name is xmlns, then the local part of the attribute name is interpreted as a
+        // namespace prefix."
+        // "If the name of the namespace declaration attribute is xmlns with no prefix, then the namespace URI specifies
+        // the default element/type namespace of the constructor expression (overriding any existing default), and is
+        // added (with no prefix) to the in-scope namespaces of the constructed element (overriding any existing
+        // namespace binding with no prefix)."
+        // "It is a static error [err:XQST0070] if a namespace declaration attribute attempts to do any of the
+        // following:"
+        // Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace. 
+        if ("xml".equals(prefix) && !XML_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Namespace declaration attribute cannot bind the prefix xml to a non-XML namespace URI."
+            );
+        }
+        // Bind the prefix xmlns to any namespace URI.
+        if ("xmlns".equals(prefix)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Namespace declaration attribute cannot bind the prefix xmlns."
+            );
+        }
+        // Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace.
+        if (!"xml".equals(prefix) && XML_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Namespace declaration attribute cannot bind a non-xml prefix to the XML namespace URI."
+            );
+        }
+        // Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/.
+        if (XMLNS_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Namespace declaration attribute cannot bind any prefix to the xmlns namespace URI."
+            );
+        }
+        // TODO: handle binding a prefix to a zero-length namespace URI
     }
 
 }
