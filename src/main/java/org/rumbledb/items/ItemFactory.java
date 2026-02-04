@@ -5,6 +5,7 @@ import java.time.*;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
@@ -294,6 +295,10 @@ public class ItemFactory {
      */
     public Item createXmlTextNode(String content) {
         return new TextItem(content);
+    }
+
+    public Item createXmlCommentNode(String content) {
+        return new CommentItem(content);
     }
 
     public Item createXmlAttributeNode(Node attribute) {

@@ -102,11 +102,13 @@ import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
 import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
@@ -270,6 +272,14 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCommentNodeConstructor(CommentNodeConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDirectCommentConstructor(DirectCommentConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
