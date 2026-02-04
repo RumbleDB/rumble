@@ -182,6 +182,9 @@ public class Serializer implements java.io.Serializable {
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
             }
+            for (Item namespace : item.namespaceNodes()) {
+                serialize(namespace, sb, indent, isTopLevel);
+            }
             sb.append(">");
             sb.append("\n");
 
