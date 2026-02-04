@@ -247,6 +247,12 @@ public class ItemParser implements Serializable {
         }
     }
 
+    /**
+     * Check fields columns consistency and return the index of the atomic JSONiq item column if present.
+     * 
+     * @param fieldNames the field names of the DataFrame schema.
+     * @return the index of the atomic JSONiq item column if present, -1 otherwise.
+     */
     public static int findAtomicColumnIndexAndCheckConsistency(String[] fieldNames) {
         int result = -1;
         boolean otherColumnsFound = false;
@@ -289,379 +295,60 @@ public class ItemParser implements Serializable {
      * @return the converted item.
      */
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
-        // List<String> keys = new ArrayList<>();
-        // List<Item> values = new ArrayList<>();
-        // StructType schema = row.schema();
-        // StructField[] fields = schema.fields();
-        // String[] fieldnames = schema.fieldNames();
-
-        // int atomicColumnIndex = findAtomicColumnIndexAndCheckConsistency(fieldnames);
-        // System.out.println("ATOMIC COLUMN INDEX: " + atomicColumnIndex);
-        // System.out.println("ITEM TYPE: " + itemType);
-        // System.out.println("IS ATOMIC TYPE: " + itemType.isAtomicItemType());
-        // System.out.println("IS OBJECT TYPE: " + itemType.isObjectItemType());
-        // System.out.println("FIELD TYPE: " + fields[0].dataType() + "\n");
-        // System.out.println("FIELD IS ATOMIC: " + (fields.length == 1 &&
-        // !fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) + "\n");
-        // Atomic case
-        // if (atomicColumnIndex != -1 && itemType.isAtomicItemType()) {
-        // if (itemType.isAtomicItemType()) {
-        // if (atomicColumnIndex != -1 && itemType.isAtomicItemType()) {
-
-        // NEW CODDEDEEDEDEDEDEDE
-        // if (fields.length == 1 && !fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-        // System.out.println("ATOMIC CASE");
-        // System.out.println("CONVERTED ITEM FROM ROW: " + row + "\n");
-        // System.out.println("RETURNING ATOMIC ITEM FROM ROW.\n");
-        // System.out.println("FIELD TYPE: " + fields[0].dataType() + "\n");
-
-        // ItemType fieldItemType = itemType.getObjectContentFacet().get(fieldnames[0]).getType();
-        // System.out.println("FIELD ITEM TYPE: " + fieldItemType);
-
-        // Item atomicItem = convertValueToItem(
-        // row,
-        // 0,
-        // null,
-        // fields[0].dataType(),
-        // metadata,
-        // fieldItemType
-        // );
-        // keys.add(fieldnames[0]);
-        // values.add(atomicItem);
-        // Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
-
-        // return res;
-
-
-        // }
-
-        // OLD CODEDEEDEDEDEDEDE
-        // if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-        // return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
-        // }
-
-        // if (fields.length == 2 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-        // return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
-        // }
-        // if (fields.length == 2 && fieldnames[1].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-        // return convertValueToItem(row, 1, null, fields[1].dataType(), metadata, itemType);
-        // }
-
-        // if (
-        // fields.length == 5
-        // && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
-        // && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName)
-        // ) {
-        ItemType resType = itemType;
-        // if (itemType != null) {
-        // resType = itemType.getObjectContentFacet()
-        // .get(SparkSessionManager.atomicJSONiqItemColumnName)
-        // .getType();
-        // }
-        // Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
-        // // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
-        // for (int i = 0; i < fields.length; ++i) {
-        // String fieldName = fields[i].name();
-
-        // if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-        // res.setMutabilityLevel(row.getInt(i));
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
-        // res.setTopLevelID(row.getLong(i));
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
-        // res.setPathIn(row.getString(i));
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-        // res.setTableLocation(row.getString(i));
-        // res.setCollection(new Collection(row.getString(i)));
-        // }
-        // if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-        // res.setTopLevelOrder(row.getDouble(i));
-        // continue;
-        // }
-        // }
-        // return res;
-        // }
-
-        // CODEX CODESSSEEE
-        // if (atomicColumnIndex != -1 && itemType != null && itemType.isAtomicItemType()) {
-        // System.out.println("ATOMIC CASE");
-        // System.out.println("CONVERTED ITEM FROM ROW: " + row + "\n");
-        // System.out.println("RETURNING ATOMIC ITEM FROM ROW.\n");
-        // System.out.println("FIELD TYPE: " + fields[atomicColumnIndex].dataType() + "\n");
-
-        // Item atomicItem = convertValueToItem(
-        // row,
-        // atomicColumnIndex,
-        // null,
-        // fields[atomicColumnIndex].dataType(),
-        // metadata,
-        // itemType
-        // );
-        // int mutabilityLevel = -1;
-        // long topLevelID = -1;
-        // String pathIn = "null";
-        // String tableLocation = "null";
-        // Collection collection = null;
-        // double rowOrder = 0.0;
-        // for (int i = 0; i < fields.length; ++i) {
-        // String fieldName = fields[i].name();
-        // if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-        // mutabilityLevel = row.getInt(i);
-        // } else if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
-        // topLevelID = row.getLong(i);
-        // } else if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
-        // pathIn = row.getString(i);
-        // } else if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-        // tableLocation = row.getString(i);
-        // collection = new Collection(row.getString(i));
-        // System.out.println("ITEM PARSER: SETTING TABLE LOCATION FROM ROW.\n");
-        // System.out.println("TABLE LOCATION VALUE: " + row.getString(i) + "\n");
-        // } else if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-        // rowOrder = row.getDouble(i);
-        // }
-        // }
-        // atomicItem.setMutabilityLevel(mutabilityLevel);
-        // System.out.println("\n^^^^ MUTABILITY LEVEL SET TO: " + mutabilityLevel + " FOR ATOMIC ITEM\n\n\n");
-        // atomicItem.setTopLevelID(topLevelID);
-        // atomicItem.setPathIn(pathIn);
-        // atomicItem.setCollection(collection);
-        // atomicItem.setTopLevelOrder(rowOrder);
-        // return atomicItem;
-        // }
-
-        // Non-atomic case
-        // Map<String, FieldDescriptor> content = null;
-        // if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
-        // content = itemType.getObjectContentFacet();
-        // System.out.println("CONTENT FOR OBJECT TYPE " + itemType.getIdentifierString() + ": " + content + "\n");
-        // if (content == null) {
-        // throw new OurBadException(
-        // "Object descriptor content in type " + itemType.getIdentifierString() + " is null."
-        // );
-        // }
-        // }
-
-        // Array
-        // System.out.println("\n\nTHIS CODE SHOULD BE UNREACHABLE...\n");
-        // Item arrayItem = convertValueToItem(
-        // row,
-        // atomicColumnIndex,
-        // null,
-        // fields[atomicColumnIndex].dataType(),
-        // metadata,
-        // itemType
-        // );
-        // int mutabilityLevel = -1;
-        // long topLevelID = -1;
-        // String pathIn = "null";
-        // String tableLocation = "null";
-        // Collection collection = null;
-        // double rowOrder = 0.0;
-        // for (int i = 0; i < fields.length; ++i) {
-        // String fieldName = fields[i].name();
-        // if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-        // mutabilityLevel = row.getInt(i);
-        // } else if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
-        // topLevelID = row.getLong(i);
-        // } else if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
-        // pathIn = row.getString(i);
-        // } else if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-        // tableLocation = row.getString(i);
-        // collection = new Collection(row.getString(i));
-        // System.out.println("ITEM PARSER: SETTING TABLE LOCATION FROM ROW.\n");
-        // System.out.println("TABLE LOCATION VALUE: " + row.getString(i) + "\n");
-        // } else if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-        // rowOrder = row.getDouble(i);
-        // }
-        // }
-        // arrayItem.setMutabilityLevel(mutabilityLevel);
-        // System.out.println("\n^^^^ MUTABILITY LEVEL SET TO: " + mutabilityLevel + " FOR ATOMIC ITEM\n\n\n");
-        // arrayItem.setTopLevelID(topLevelID);
-        // arrayItem.setPathIn(pathIn);
-        // arrayItem.setCollection(collection);
-        // arrayItem.setTopLevelOrder(rowOrder);
-        // return arrayItem;
-
-        ////////////////////////////////////////////////////
-
-        // int mutabilityLevel = -1;
-        // long topLevelID = -1;
-        // String pathIn = "null";
-        // String tableLocation = "null";
-        // Collection collection = null;
-        // double rowOrder = 0.0;
-        // System.out.println("ARRAY CASE HUEFIUWJDHWBFKWUBOE\n");
-
-        // for (int i = 0; i < fields.length; ++i) {
-        // StructField field = fields[i];
-        // DataType fieldType = field.dataType();
-        // String fieldName = field.name();
-        // ItemType fieldItemType = null;
-
-        // if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-        // mutabilityLevel = row.getInt(i);
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
-        // topLevelID = row.getLong(i);
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
-        // pathIn = row.getString(i);
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-        // System.out.println("SETTING TABLE LOCATION FROM ROW.\n");
-        // System.out.println("TABLE LOCATION VALUE: " + row.getString(i) + "\n");
-        // tableLocation = row.getString(i);
-        // collection = new Collection(row.getString(i));
-        // continue;
-        // }
-        // if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-        // rowOrder = row.getDouble(i);
-        // continue;
-        // }
-
-        // if (content != null) {
-        // FieldDescriptor descriptor = content.get(fieldName);
-        // if (descriptor != null) {
-        // fieldItemType = descriptor.getType();
-        // if (fieldItemType == null) {
-        // throw new OurBadException(
-        // "Type for field "
-        // + fieldName
-        // + " in type "
-        // + itemType.getIdentifierString()
-        // + " is null."
-        // );
-        // }
-        // }
-        // }
-        // Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
-        // System.out.println("CONVERTED FIELD '" + fieldName + "' TO ITEM: " + newItem.serialize() + "\n");
-        // // NULL values in DataFrames are mapped to absent in JSONiq.
-        // if (
-        // !newItem.isNull()
-        // || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-        // && fieldType.equals(DataTypes.NullType))
-        // ) {
-        // // don't return array for single sequence item
-        // if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
-        // if (newItem.getSize() == 0) {
-        // values.add(null);
-        // } else if (newItem.getSize() == 1) {
-        // values.add(newItem.getItemAt(0));
-        // } else {
-        // values.add(newItem);
-        // }
-        // keys.add(fieldName.substring(0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
-        // } else {
-        // keys.add(fieldName);
-        // values.add(newItem);
-        // }
-        // }
-        // }
-
-        // System.out.println("CONSTRUCTED KEYS AND VALUES FROM ROW.");
-        // System.out.println("KEYS: " + keys.toString());
-        // System.out.println("VALUES: ");
-        // for (Item v : values) {
-        // if (v != null) {
-        // System.out.println(v.serialize());
-        // } else {
-        // System.out.println("null");
-        // }
-        // }
-        // System.out.println();
-
-        // // Item res = null;
-        // // if (keys.contains(SparkSessionManager.atomicJSONiqItemColumnName) && values.size() == 1 &&
-        // values.get(0).isArray()) {
-        // // res = ItemFactory.getInstance().createArrayItem(values, false);
-        // // } else {
-        // // res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
-        // // }
-        // Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
-        // // Item res = ItemFactory.getInstance().createArrayItem(values, false);
-        // System.out.println("\n^^^^ NOT MUTABLE OBJECT SET WITH FALSE\n\n\n");
-        // res.setMutabilityLevel(mutabilityLevel);
-        // System.out.println("\n^^^^ MUTABILITY LEVEL SET TO: " + mutabilityLevel + "\n\n\n");
-        // res.setTopLevelID(topLevelID);
-        // res.setPathIn(pathIn);
-        // res.setCollection(collection);
-        // res.setTopLevelOrder(rowOrder);
-
-        // System.out.println("ARRAY CASE");
-        // System.out.println("CONVERTED ITEM FROM ROW: " + res.serialize() + "\n");
-        // return res;
-
-
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         StructType schema = row.schema();
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
-        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
-        }
-
-        if (fields.length == 2 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
-        }
-        if (fields.length == 2 && fieldnames[1].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return convertValueToItem(row, 1, null, fields[1].dataType(), metadata, itemType);
-        }
-
-        if (
-            fields.length == 5
-                && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
-                && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName)
-        ) {
-            if (itemType.isObjectItemType()) {
-                resType = itemType.getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                    .getType();
-            }
-            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
-            // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
+        // Atomic case
+        int atomicColumnIndex = findAtomicColumnIndexAndCheckConsistency(fieldnames);
+        if (atomicColumnIndex != -1) {
+            Item atomicItem = convertValueToItem(
+                row,
+                atomicColumnIndex,
+                null,
+                fields[atomicColumnIndex].dataType(),
+                metadata,
+                itemType
+            );
+            int mutabilityLevel = -1;
+            long topLevelID = -1;
+            String pathIn = "null";
+            Collection collection = null;
+            double rowOrder = 0.0;
             for (int i = 0; i < fields.length; ++i) {
                 String fieldName = fields[i].name();
-
                 if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-                    res.setMutabilityLevel(row.getInt(i));
+                    mutabilityLevel = row.getInt(i);
                     continue;
-                }
+                } 
                 if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
-                    res.setTopLevelID(row.getLong(i));
+                    topLevelID = row.getLong(i);
                     continue;
-                }
+                } 
                 if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
-                    res.setPathIn(row.getString(i));
+                    pathIn = row.getString(i);
                     continue;
-                }
+                } 
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-                    // res.setTableLocation(row.getString(i));
-                    if (!res.isAtomic()) {
-                        res.setCollection(new Collection(row.getString(i)));
-                    }
+                    collection = new Collection(row.getString(i));
                     continue;
-                }
+                } 
                 if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-                    res.setTopLevelOrder(row.getDouble(i));
-                    continue;
+                    rowOrder = row.getDouble(i);
                 }
             }
-            return res;
+            atomicItem.setMutabilityLevel(mutabilityLevel);
+            atomicItem.setTopLevelID(topLevelID);
+            atomicItem.setPathIn(pathIn);
+            atomicItem.setCollection(collection);
+            atomicItem.setTopLevelOrder(rowOrder);
+            return atomicItem;
         }
 
+        // Non-atomic case
         Map<String, FieldDescriptor> content = null;
-
         if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
             content = itemType.getObjectContentFacet();
             if (content == null) {
@@ -671,11 +358,10 @@ public class ItemParser implements Serializable {
             }
         }
 
-        // Array
+        // Array case
         int mutabilityLevel = -1;
         long topLevelID = -1;
         String pathIn = "null";
-        String tableLocation = "null";
         Collection collection = null;
         double rowOrder = 0.0;
 
@@ -698,7 +384,6 @@ public class ItemParser implements Serializable {
                 continue;
             }
             if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-                // tableLocation = row.getString(i);
                 collection = new Collection(row.getString(i));
                 continue;
             }
@@ -750,7 +435,6 @@ public class ItemParser implements Serializable {
         res.setMutabilityLevel(mutabilityLevel);
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
-        // res.setTableLocation(tableLocation);
         res.setCollection(collection);
         res.setTopLevelOrder(rowOrder);
         return res;

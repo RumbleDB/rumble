@@ -193,6 +193,8 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             && childDataFrame.getItemType()
                 .getObjectContentFacet()
                 .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+
+        // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
         boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
         boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
@@ -201,9 +203,11 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             .contains(
                 SparkSessionManager.tableLocationColumnName
             );
+        
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
+                // element is an object, preserve metadata columns if they exist
                 if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
                     return childDataFrame.evaluateSQL(
                         String.format(
@@ -223,6 +227,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                         elementType
                     );
                 }
+                // Otherwise just return the object
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
@@ -231,24 +236,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         array
                     ),
-                    // String.format(
-                    // "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT
-                    // posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
-                    // SparkSessionManager.rowIdColumnName,
-                    // SparkSessionManager.mutabilityLevelColumnName,
-                    // SparkSessionManager.pathInColumnName,
-                    // SparkSessionManager.pathInColumnName,
-                    // SparkSessionManager.tableLocationColumnName,
-                    // SparkSessionManager.atomicJSONiqItemColumnName,
-                    // SparkSessionManager.rowIdColumnName,
-                    // SparkSessionManager.mutabilityLevelColumnName,
-                    // SparkSessionManager.pathInColumnName,
-                    // SparkSessionManager.tableLocationColumnName,
-                    // array
-                    // ),
                     elementType
                 );
             }
+            // Preserve metadata columns if they exist
             if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
                 String sql = String.format(
                     "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",

@@ -168,10 +168,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
 
         Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
 
+        // Column type is not an object
         ItemType colType = ItemTypeFactory.createItemType(colDF.schema());
-        // .getObjectContentFacet()
-        // .get(SparkSessionManager.atomicJSONiqItemColumnName)
-        // .getType();
 
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
         String fullNewPath = pathInSchema + this.content.getStringValue();

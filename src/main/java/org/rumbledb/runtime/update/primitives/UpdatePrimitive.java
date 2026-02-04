@@ -185,6 +185,7 @@ public interface UpdatePrimitive {
 
         // TODO: errors if 0 items or more than one item
 
+        // Navigate to the inner item
         Item innerItem = originalArray;
         for (int i = 0; i < fields.size() - 1; i++) {
             String field = fields.get(i);
@@ -196,8 +197,11 @@ public interface UpdatePrimitive {
             }
         }
 
-        String finalSelector = fields.get(fields.size() - 1);
+        // Apply the update to the inner item
         this.applyItem();
+        
+        // Put the modified inner item back into the original array
+        String finalSelector = fields.get(fields.size() - 1);
         if (innerItem.isObject()) {
             innerItem.removeItemByKey(finalSelector);
             innerItem.putItemByKey(finalSelector, this.getTarget());

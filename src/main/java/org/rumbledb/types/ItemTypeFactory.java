@@ -594,7 +594,7 @@ public class ItemTypeFactory {
             DataType filedType = field.dataType();
             ItemType mappedItemType = createItemType(filedType);
 
-            // Handle non-object item
+            // Handle atomic types: do not wrap into object
             if (
                 field.name().equals(SparkSessionManager.atomicJSONiqItemColumnName) && mappedItemType.isAtomicItemType()
             ) {
