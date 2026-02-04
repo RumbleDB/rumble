@@ -250,7 +250,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         // namespace binding with no prefix)."
         // "It is a static error [err:XQST0070] if a namespace declaration attribute attempts to do any of the
         // following:"
-        // Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace. 
+        // Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace.
         if ("xml".equals(prefix) && !XML_NAMESPACE_URI.equals(uri)) {
             throw new PredefinedPrefixInNamespaceDeclarationException(
                     "Namespace declaration attribute cannot bind the prefix xml to a non-XML namespace URI."
