@@ -158,7 +158,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             + pathIn
             + this.selector.getStringValue()
             + " AS `"
-            + SparkSessionManager.atomicJSONiqItemColumnName
+            + SparkSessionManager.nonObjectJSONiqItemColumnName
             + "` FROM "
             + location
             + " WHERE `"

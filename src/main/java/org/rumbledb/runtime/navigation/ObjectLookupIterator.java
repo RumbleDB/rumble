@@ -272,7 +272,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 }
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
-                        "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
+                        "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
                         nativeClauseContext.getResultingType()
                 );
             }
@@ -434,7 +434,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     sql = String.format(
                         "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
                         key,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         SparkSessionManager.rowIdColumnName,
                         SparkSessionManager.mutabilityLevelColumnName,
                         SparkSessionManager.pathInColumnName,
@@ -449,7 +449,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     sql = String.format(
                         "SELECT `%s` AS `%s` FROM %s",
                         key,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         object
                     );
                     result = childDataFrame.evaluateSQL(

@@ -74,7 +74,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
             String selectArrayQuery = "SELECT "
                 + pathIn
                 + " AS `"
-                + SparkSessionManager.atomicJSONiqItemColumnName
+                + SparkSessionManager.nonObjectJSONiqItemColumnName
                 + "` FROM "
                 + location
                 + " WHERE `"
@@ -86,7 +86,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
                 .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
             String setField = pathIn + " = ";

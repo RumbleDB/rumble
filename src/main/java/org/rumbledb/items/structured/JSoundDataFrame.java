@@ -36,8 +36,8 @@ public class JSoundDataFrame implements Serializable {
         StructType schema = this.dataFrame.schema();
         String[] fieldNames = schema.fieldNames();
 
-        if (Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
+        if (Arrays.asList(fieldNames).contains(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+            int i = schema.fieldIndex(SparkSessionManager.nonObjectJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof VariantType) {

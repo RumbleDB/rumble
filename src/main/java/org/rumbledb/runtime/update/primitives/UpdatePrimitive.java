@@ -163,7 +163,7 @@ public interface UpdatePrimitive {
         String selectArrayQuery = "SELECT "
             + preIndexingPathIn
             + " AS `"
-            + SparkSessionManager.atomicJSONiqItemColumnName
+            + SparkSessionManager.nonObjectJSONiqItemColumnName
             + "` FROM "
             + location
             + " WHERE `"
@@ -175,7 +175,7 @@ public interface UpdatePrimitive {
 
         ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
             .getObjectContentFacet()
-            .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
             .getType();
 
         JavaRDD<Row> rowRDD = arrayDF.javaRDD();

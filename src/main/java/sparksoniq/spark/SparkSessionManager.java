@@ -76,7 +76,7 @@ public class SparkSessionManager {
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static String atomicJSONiqItemColumnName = "atomic0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static String nonObjectJSONiqItemColumnName = "notObject0d08af5d-10bb-4a73-af84-c6aac917a830";
     public static String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
     public static String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
     public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";

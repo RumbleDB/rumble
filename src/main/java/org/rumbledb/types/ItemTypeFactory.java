@@ -596,7 +596,7 @@ public class ItemTypeFactory {
 
             // Handle atomic types: do not wrap into object
             if (
-                field.name().equals(SparkSessionManager.atomicJSONiqItemColumnName) && mappedItemType.isAtomicItemType()
+                field.name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName) && mappedItemType.isAtomicItemType()
             ) {
                 return mappedItemType;
             }

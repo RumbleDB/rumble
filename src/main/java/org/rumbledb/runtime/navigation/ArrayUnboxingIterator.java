@@ -189,10 +189,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
-        boolean hasAtomicJSONiqItem = isObject
+        boolean hasNonObjectJSONiqItem = isObject
             && childDataFrame.getItemType()
                 .getObjectContentFacet()
-                .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
 
         // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
@@ -217,7 +217,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                             SparkSessionManager.pathInColumnName,
                             SparkSessionManager.pathInColumnName,
                             SparkSessionManager.tableLocationColumnName,
-                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
                             SparkSessionManager.rowIdColumnName,
                             SparkSessionManager.mutabilityLevelColumnName,
                             SparkSessionManager.pathInColumnName,
@@ -231,9 +231,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         array
                     ),
                     elementType
@@ -248,7 +248,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     SparkSessionManager.rowIdColumnName,
                     SparkSessionManager.mutabilityLevelColumnName,
                     SparkSessionManager.pathInColumnName,
@@ -261,17 +261,17 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             return childDataFrame.evaluateSQL(
                 String.format(
                     "SELECT explode(`%s`) AS `%s` FROM %s",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     array
                 ),
                 elementType
             );
         } else if (
-            hasAtomicJSONiqItem
+            hasNonObjectJSONiqItem
                 && childDataFrame.getItemType()
                     .getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
                 && childDataFrame.getItemType()
@@ -280,7 +280,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         ) {
             ItemType elementType = childDataFrame.getItemType()
                 .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType()
                 .getArrayContentFacet();
             String sql;
@@ -294,7 +294,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     SparkSessionManager.rowIdColumnName,
                     SparkSessionManager.mutabilityLevelColumnName,
                     SparkSessionManager.pathInColumnName,
@@ -310,7 +310,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     SparkSessionManager.rowIdColumnName,
                     SparkSessionManager.mutabilityLevelColumnName,
                     SparkSessionManager.pathInColumnName,

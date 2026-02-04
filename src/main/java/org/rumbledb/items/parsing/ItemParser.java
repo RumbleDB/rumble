@@ -248,16 +248,16 @@ public class ItemParser implements Serializable {
     }
 
     /**
-     * Check fields columns consistency and return the index of the atomic JSONiq item column if present.
+     * Check fields columns consistency and return the index of the non-object JSONiq item column if present.
      * 
      * @param fieldNames the field names of the DataFrame schema.
-     * @return the index of the atomic JSONiq item column if present, -1 otherwise.
+     * @return the index of the non-object JSONiq item column if present, -1 otherwise.
      */
-    public static int findAtomicColumnIndexAndCheckConsistency(String[] fieldNames) {
+    public static int findNonObjectColumnIndexAndCheckConsistency(String[] fieldNames) {
         int result = -1;
         boolean otherColumnsFound = false;
         for (int i = 0; i < fieldNames.length; ++i) {
-            if (fieldNames[i].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            if (fieldNames[i].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
                 result = i;
                 break;
             }
@@ -279,7 +279,7 @@ public class ItemParser implements Serializable {
 
         if (otherColumnsFound && result != -1) {
             throw new OurBadException(
-                    "The presence of other columns alongside the atomic JSONiq item column is not supported."
+                    "The presence of other columns alongside the non-object JSONiq item column is not supported."
             );
         }
 
@@ -302,13 +302,13 @@ public class ItemParser implements Serializable {
         String[] fieldnames = schema.fieldNames();
 
         // Atomic case
-        int atomicColumnIndex = findAtomicColumnIndexAndCheckConsistency(fieldnames);
-        if (atomicColumnIndex != -1) {
+        int nonObjectColumnIndex = findNonObjectColumnIndexAndCheckConsistency(fieldnames);
+        if (nonObjectColumnIndex != -1) {
             Item atomicItem = convertValueToItem(
                 row,
-                atomicColumnIndex,
+                nonObjectColumnIndex,
                 null,
-                fields[atomicColumnIndex].dataType(),
+                fields[nonObjectColumnIndex].dataType(),
                 metadata,
                 itemType
             );

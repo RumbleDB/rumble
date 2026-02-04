@@ -52,7 +52,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
             String selectArrayQuery = "SELECT "
                 + pathIn
                 + " AS `"
-                + SparkSessionManager.atomicJSONiqItemColumnName
+                + SparkSessionManager.nonObjectJSONiqItemColumnName
                 + "` FROM "
                 + location
                 + " WHERE `"
@@ -64,7 +64,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
                 .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
             String setClause = "SET " + pathIn + " = ";
             this.applyItem();
