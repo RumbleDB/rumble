@@ -427,6 +427,19 @@ public interface Item extends Serializable, KryoSerializable {
         return false;
     }
 
+    default boolean isCommentNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Processing Instruction node.
+     *
+     * @return true if it is an XML Processing Instruction node, false otherwise.
+     */
+    default boolean isProcessingInstructionNode() {
+        return false;
+    }
+
     /**
      * Tests whether the item is an XML node.
      *

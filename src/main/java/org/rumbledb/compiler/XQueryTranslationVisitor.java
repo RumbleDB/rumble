@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -72,7 +73,12 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -1535,15 +1541,56 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
+        if (ctx.COMMENT() != null) {
+            String commentText = ctx.COMMENT().getText();
+            String commentContent = commentText.substring(4, commentText.length() - 3);
+            return new DirectCommentConstructorExpression(
+                    commentContent,
+                    createMetadataFromContext(ctx)
+            );
+        }
         if (child instanceof XQueryParser.DirElemConstructorOpenCloseContext) {
             return this.visitDirElemConstructorOpenClose((XQueryParser.DirElemConstructorOpenCloseContext) child);
         } else if (child instanceof XQueryParser.DirElemConstructorSingleTagContext) {
             return this.visitDirElemConstructorSingleTag((XQueryParser.DirElemConstructorSingleTagContext) child);
+        } else if (ctx.PI() != null) {
+            return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
+        } else if (ctx.COMMENT() != null) {
+            throw new UnsupportedFeatureException(
+                    "Direct comment constructor not yet implemented",
+                    createMetadataFromContext(ctx)
+            );
         }
         throw new UnsupportedFeatureException(
                 "Direct constructor not yet implemented",
                 createMetadataFromContext(ctx)
         );
+    }
+
+    private Node visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
+        String tokenText = piToken.getText();
+        String inner = tokenText.substring(2, tokenText.length() - 2);
+        int whitespaceIndex = indexOfWhitespace(inner);
+        String target = whitespaceIndex == -1 ? inner : inner.substring(0, whitespaceIndex);
+        Expression contentExpression = null;
+        if (whitespaceIndex != -1) {
+            int contentStart = whitespaceIndex;
+            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
+                contentStart++;
+            }
+            String content = inner.substring(contentStart);
+            contentExpression = new StringLiteralExpression(content, metadata);
+        }
+        return new DirPIConstructorExpression(target, contentExpression, metadata);
+    }
+
+    private int indexOfWhitespace(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isWhitespace(value.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -1680,8 +1727,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitCompDocConstructor((XQueryParser.CompDocConstructorContext) child);
         } else if (child instanceof XQueryParser.CompElemConstructorContext) {
             return this.visitCompElemConstructor((XQueryParser.CompElemConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompPIConstructorContext) {
+            return this.visitCompPIConstructor((XQueryParser.CompPIConstructorContext) child);
         } else if (child instanceof XQueryParser.CompTextConstructorContext) {
             return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompCommentConstructorContext) {
+            return this.visitCompCommentConstructor((XQueryParser.CompCommentConstructorContext) child);
         } else if (child instanceof XQueryParser.CompAttrConstructorContext) {
             return this.visitCompAttrConstructor((XQueryParser.CompAttrConstructorContext) child);
         }
@@ -1703,6 +1754,39 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         return new TextNodeConstructorExpression(
                 contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompCommentConstructor(XQueryParser.CompCommentConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new CommentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public Node visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+        if (ctx.ncName() != null) {
+            return new ComputedPIConstructorExpression(
+                    ctx.ncName().getText(),
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.expr() != null) {
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedPIConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed processing instruction constructor must have either a static NCName or a dynamic name expression",
                 createMetadataFromContext(ctx)
         );
     }
