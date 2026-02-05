@@ -648,6 +648,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
 
     public static ItemType inferSchemaTypeOfVariantDataFrame(Dataset<Row> df, ExceptionMetadata metadata) {
+        if (df.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
         df.createOrReplaceTempView("variant_table");
 
         Dataset<Row> schemaDf = SparkSessionManager.getInstance()
