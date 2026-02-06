@@ -124,6 +124,9 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
@@ -225,6 +228,8 @@ import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedElementConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedNamespaceConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.CommentNodeConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
@@ -1103,6 +1108,36 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitCommentNodeConstructor(
+            CommentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+        CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
+                new AtomizationIterator(
+                        Collections.singletonList(contentIterator),
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                ),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public RuntimeIterator visitDirectCommentConstructor(
+            DirectCommentConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        DirectCommentConstructorRuntimeIterator result = new DirectCommentConstructorRuntimeIterator(
+                expression.getContent(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
 
     @Override

@@ -143,6 +143,7 @@ import org.rumbledb.expressions.xml.node_test.ElementTest;
 import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
+import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.jsoniq.JsoniqBaseVisitor;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
@@ -1578,8 +1579,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
+            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1627,8 +1629,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             return this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
         }
         if (child instanceof JsoniqParser.StringLiteralContext) {
+            String rawValue = child.getText().substring(1, child.getText().length() - 1);
             return new StringLiteralExpression(
-                    child.getText().substring(1, child.getText().length() - 1),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1670,6 +1673,10 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
         }
         return new IntegerLiteralExpression(token, metadataFromContext);
+    }
+
+    private String unescapeStringLiteral(String raw) {
+        return StringEscapeUtils.unescapeJson(raw);
     }
 
     @Override

@@ -14,42 +14,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Matteo Agnoletto (EPMatt)
  *
  */
 
-package org.rumbledb.runtime.primary;
+package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.SequenceType;
 
-public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+import java.util.Collections;
+
+/**
+ * Runtime iterator for direct comment node constructors.
+ *
+ * @see org.rumbledb.expressions.xml.DirectCommentConstructorExpression
+ */
+public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final String content;
 
-    public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
-        super(null, staticContext);
-        // String unescaping is now handled in the translation visitor
-        this.item = ItemFactory.getInstance().createStringItem(value);
+    public DirectCommentConstructorRuntimeIterator(String content, RuntimeStaticContext staticContext) {
+        super(Collections.emptyList(), staticContext);
+        this.content = content;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        return this.item;
-    }
-
-    @Override
-    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return new NativeClauseContext(
-                nativeClauseContext,
-                '"' + this.item.getStringValue() + '"',
-                SequenceType.STRING
-        );
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        // The DirCommentContents of a comment must not contain two consecutive hyphens
+        // or end with a hyphen. These rules are syntactically enforced by the grammar.
+        this.hasNext = false;
+        return ItemFactory.getInstance().createXmlCommentNode(this.content);
     }
 }
+

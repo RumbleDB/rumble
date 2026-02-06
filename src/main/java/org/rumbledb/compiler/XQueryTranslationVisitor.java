@@ -74,6 +74,9 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
@@ -136,6 +139,7 @@ import org.rumbledb.expressions.xml.node_test.ElementTest;
 import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
+import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
@@ -1385,8 +1389,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
+            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1467,8 +1472,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
 
         if (child instanceof XQueryParser.StringLiteralContext) {
+            String rawValue = child.getText().substring(1, child.getText().length() - 1);
             return new StringLiteralExpression(
-                    child.getText().substring(1, child.getText().length() - 1),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1499,6 +1505,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
         }
         return new IntegerLiteralExpression(token, metadataFromContext);
+    }
+
+    private String unescapeStringLiteral(String raw) {
+        return StringEscapeUtils.unescapeXml(raw);
     }
 
     @Override
@@ -1539,6 +1549,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
+        if (ctx.COMMENT() != null) {
+            String commentText = ctx.COMMENT().getText();
+            String commentContent = commentText.substring(4, commentText.length() - 3);
+            return new DirectCommentConstructorExpression(
+                    commentContent,
+                    createMetadataFromContext(ctx)
+            );
+        }
         if (child instanceof XQueryParser.DirElemConstructorOpenCloseContext) {
             return this.visitDirElemConstructorOpenClose((XQueryParser.DirElemConstructorOpenCloseContext) child);
         } else if (child instanceof XQueryParser.DirElemConstructorSingleTagContext) {
@@ -1701,13 +1719,39 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
     }
 
+    /**
+     * Helper method to process text content that may contain entity/character references or escaped braces.
+     * According to XQuery 3.1 spec, PredefinedEntityRef and CharRef must be expanded.
+     * 
+     * @param content The raw text content to process
+     * @return The processed (unescaped) content
+     */
+    private String processTextContentWithEscaping(String content) {
+        if (content.startsWith("&") && content.endsWith(";")) {
+            // This is a PredefinedEntityRef or CharRef token - expand it
+            return StringEscapeUtils.unescapeXml(content);
+        }
+        // Handle escaped braces: {{ or }}
+        if (content.equals("{{")) {
+            return "{";
+        }
+        if (content.equals("}}")) {
+            return "}";
+        }
+        // Return content as-is if no escaping needed
+        return content;
+    }
+
     @Override
     public Node visitCommonContent(XQueryParser.CommonContentContext ctx) {
         if (ctx.expr() != null) {
             return (Expression) this.visitExpr(ctx.expr());
         }
-        // if there is no expression, return a text node with the content
-        return new TextNodeExpression(ctx.getText(), createMetadataFromContext(ctx));
+        // According to XQuery 3.1 spec, CommonContent can contain PredefinedEntityRef or CharRef
+        // which must be expanded. Check if the content is an entity/character reference.
+        String content = ctx.getText();
+        String processedContent = processTextContentWithEscaping(content);
+        return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1721,6 +1765,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitCompPIConstructor((XQueryParser.CompPIConstructorContext) child);
         } else if (child instanceof XQueryParser.CompTextConstructorContext) {
             return this.visitCompTextConstructor((XQueryParser.CompTextConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompCommentConstructorContext) {
+            return this.visitCompCommentConstructor((XQueryParser.CompCommentConstructorContext) child);
         } else if (child instanceof XQueryParser.CompAttrConstructorContext) {
             return this.visitCompAttrConstructor((XQueryParser.CompAttrConstructorContext) child);
         } else if (child instanceof XQueryParser.CompNamespaceConstructorContext) {
@@ -1749,6 +1795,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitCompCommentConstructor(XQueryParser.CompCommentConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new CommentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
     public Node visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
         Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
         if (ctx.ncName() != null) {
@@ -2925,7 +2980,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private String processURILiteral(UriLiteralContext ctx) {
-        return ctx.getText().substring(1, ctx.getText().length() - 1);
+        // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
+        // predefined entity references and character references
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
@@ -3060,48 +3118,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
 
-    private String processEntityOrCharacterReference(ParseTree child) {
-        String text = child.getText();
-
-        // Handle predefined entity references
-        if ("&lt;".equals(text)) {
-            return "<";
-        } else if ("&gt;".equals(text)) {
-            return ">";
-        } else if ("&amp;".equals(text)) {
-            return "&";
-        } else if ("&quot;".equals(text)) {
-            return "\"";
-        } else if ("&apos;".equals(text)) {
-            return "'";
-        }
-
-        // Handle character references
-        if (text.startsWith("&#x") && text.endsWith(";")) {
-            // Hexadecimal character reference
-            try {
-                String hexValue = text.substring(3, text.length() - 1);
-                int codePoint = Integer.parseInt(hexValue, 16);
-                return new String(Character.toChars(codePoint));
-            } catch (IllegalArgumentException e) {
-                // Invalid character reference, return as-is
-                return null;
-            }
-        } else if (text.startsWith("&#") && text.endsWith(";")) {
-            // Decimal character reference
-            try {
-                String decimalValue = text.substring(2, text.length() - 1);
-                int codePoint = Integer.parseInt(decimalValue, 10);
-                return new String(Character.toChars(codePoint));
-            } catch (IllegalArgumentException e) {
-                // Invalid character reference, return as-is
-                return null;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * Helper method to process quoted attribute values (both single and double quoted).
      * This method handles the common logic for merging adjacent text content and building expressions.
@@ -3123,9 +3139,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             List<Expression> childExpressions = new ArrayList<>();
 
             // Try to process as entity or character reference first
-            String entityValue = processEntityOrCharacterReference(child);
-            if (entityValue != null) {
-                childExpressions.add(new AttributeNodeContentExpression(entityValue, createMetadataFromContext(ctx)));
+            // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
+            String childText = child.getText();
+            if (childText.startsWith("&") && childText.endsWith(";")) {
+                // This is a PredefinedEntityRef or CharRef token - expand it
+                String unescapedValue = StringEscapeUtils.unescapeXml(childText);
+                childExpressions.add(
+                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromContext(ctx))
+                );
             } else if (child.getText().equals(escapeSequence)) {
                 // Escaped quote
                 childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
@@ -3209,15 +3230,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ) {
             // Expression in braces
             expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentAposContext) ctx).expr()));
-        } else if (child.getText().equals("{{")) {
-            // DOUBLE_LBRACE - escaped left brace
-            expressions.add(new AttributeNodeContentExpression("{", createMetadataFromContext(ctx)));
-        } else if (child.getText().equals("}}")) {
-            // DOUBLE_RBRACE - escaped right brace
-            expressions.add(new AttributeNodeContentExpression("}", createMetadataFromContext(ctx)));
-        } else if (child instanceof XQueryParser.ContentCharContext) {
-            // ContentChar+ - regular text content
-            expressions.add(new AttributeNodeContentExpression(child.getText(), createMetadataFromContext(ctx)));
+        } else {
+            // handle other cases
+            String childText = child.getText();
+            String processedContent = processTextContentWithEscaping(childText);
+            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromContext(ctx)));
         }
         return expressions;
     }

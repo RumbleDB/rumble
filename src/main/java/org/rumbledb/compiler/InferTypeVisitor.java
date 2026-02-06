@@ -119,10 +119,12 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -538,6 +540,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         // TODO: define xml node types
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCommentNodeConstructor(
+            CommentNodeConstructorExpression expression,
+            StaticContext argument
+    ) {
+        visitDescendants(expression, argument);
+        // TODO: define xml node types
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDirectCommentConstructor(
+            DirectCommentConstructorExpression expression,
+            StaticContext argument
+    ) {
+        // Direct comment constructors are literal, no descendants.
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
         return argument;
     }
 

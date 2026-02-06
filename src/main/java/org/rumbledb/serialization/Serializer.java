@@ -205,6 +205,7 @@ public class Serializer implements java.io.Serializable {
             sb.append("\"");
             sb.append(item.getStringValue());
             sb.append("\"");
+            return;
         }
 
         if (item.isProcessingInstructionNode()) {
@@ -224,6 +225,16 @@ public class Serializer implements java.io.Serializable {
             sb.append(indent);
             sb.append(item.getStringValue());
             sb.append("\n");
+            return;
+        }
+
+        if (item.isCommentNode()) {
+            sb.append(indent);
+            sb.append("<!--");
+            sb.append(item.getStringValue());
+            sb.append("-->");
+            sb.append("\n");
+            return;
         }
     }
 

@@ -426,6 +426,10 @@ public interface Item extends Serializable, KryoSerializable {
         return false;
     }
 
+    default boolean isCommentNode() {
+        return false;
+    }
+
     /**
      * Tests whether the item is an XML Namespace node.
      *

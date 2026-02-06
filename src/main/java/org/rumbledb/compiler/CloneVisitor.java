@@ -81,6 +81,9 @@ import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
@@ -594,6 +597,33 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
         DocumentNodeConstructorExpression result = new DocumentNodeConstructorExpression(
                 clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitCommentNodeConstructor(CommentNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression = contentExpression != null
+            ? (Expression) visit(contentExpression, argument)
+            : null;
+
+        CommentNodeConstructorExpression result = new CommentNodeConstructorExpression(
+                clonedContentExpression,
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitDirectCommentConstructor(DirectCommentConstructorExpression expression, Node argument) {
+        DirectCommentConstructorExpression result = new DirectCommentConstructorExpression(
+                expression.getContent(),
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
