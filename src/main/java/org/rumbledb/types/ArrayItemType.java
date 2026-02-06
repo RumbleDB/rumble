@@ -150,6 +150,38 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
+    public ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        if (!(other instanceof ArrayItemType)) {
+            if (other.isArrayItemType()) {
+                return other.findLeastCommonSuperTypeLax(this);
+            }
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        ArrayItemType otherArray = (ArrayItemType) other;
+        if (!this.isResolved() || !otherArray.isResolved()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        if (hasEnumerationFacet() || otherArray.hasEnumerationFacet()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        ItemType mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
+        Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
+        if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
+            mergedMinLength = null;
+            mergedMaxLength = null;
+        }
+        return new ArrayItemType(
+                null,
+                BuiltinTypesCatalogue.arrayItem,
+                mergedContent,
+                mergedMinLength,
+                mergedMaxLength,
+                null
+        );
+    }
+
+    @Override
     public String getIdentifierString() {
         if (this.hasName()) {
             return this.name.toString();
@@ -349,5 +381,29 @@ public class ArrayItemType implements ItemType {
                 checkSubtypeConsistency();
             }
         }
+    }
+
+    private boolean hasEnumerationFacet() {
+        return this.enumeration != null && !this.enumeration.isEmpty();
+    }
+
+    private Integer mergeMinLengthFacet(Integer first, Integer second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return Math.max(first, second);
+    }
+
+    private Integer mergeMaxLengthFacet(Integer first, Integer second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return Math.min(first, second);
     }
 }
