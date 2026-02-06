@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
     private Item target;
     private Item content;
+    private Collection collection;
 
 
     public InsertIntoObjectPrimitive(Item targetObject, Item contentObject, ExceptionMetadata metadata) {
@@ -28,11 +31,12 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         }
         this.target = targetObject;
         this.content = contentObject;
+        this.collection = targetObject.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -57,12 +61,11 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-
             List<String> columnsClauseList = new ArrayList<>();
             List<String> setClauseList = new ArrayList<>();
             List<String> keys = this.content.getKeys();
@@ -99,9 +102,11 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                     }
                 }
             }
-            manager.getOrCreateSession().sql(setFieldQuery);
+            Dataset<Row> objectDF = manager.getOrCreateSession().sql(setFieldQuery);
+            objectDF.show();
         } else {
             this.arrayIndexingApplyDelta();
+
             // TODO: Add new column for changed array and do the null trick -- do not forget the nullable etc
         }
     }
@@ -140,7 +145,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public void arrayIndexingUpdateSchemaDelta() {
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
 
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
 

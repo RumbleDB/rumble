@@ -146,7 +146,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = new StructType(
                 new StructField[] {
                     DataTypes.createStructField(
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         DataTypes.StringType,
                         false
                     )
@@ -168,9 +168,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     .getOrCreateSession()
                     .createDataFrame(rowRDD, schema)
                     .withColumn(
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         org.apache.spark.sql.functions.expr(
-                            "parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)"
+                            "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
                         )
                     ),
                 BuiltinTypesCatalogue.item
@@ -180,7 +180,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     public static StructType convertToDataFrameSchema(ItemType itemType) {
         if (itemType.isAtomicItemType()) {
             List<StructField> fields = new ArrayList<>();
-            String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
+            String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
             StructField field = createStructField(
                 columnName,
                 itemType,
@@ -191,7 +191,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         if (itemType.isArrayItemType()) {
             List<StructField> fields = new ArrayList<>();
-            String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
+            String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
             StructField field = createStructField(
                 columnName,
                 itemType,
@@ -283,7 +283,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = new StructType(
                 new StructField[] {
                     DataTypes.createStructField(
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         DataTypes.StringType,
                         false
                     )
@@ -295,8 +295,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         dataFrame = dataFrame.withColumn(
-            SparkSessionManager.atomicJSONiqItemColumnName,
-            org.apache.spark.sql.functions.expr("parse_json(`" + SparkSessionManager.atomicJSONiqItemColumnName + "`)")
+            SparkSessionManager.nonObjectJSONiqItemColumnName,
+            org.apache.spark.sql.functions.expr(
+                "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
+            )
         );
 
         return new JSoundDataFrame(
@@ -319,7 +321,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     private static Object convertColumn(Item item, StructField field, DynamicContext context) {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
-        if (fieldName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+        if (fieldName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
             return getRowColumnFromItemUsingDataType(
                 item,
                 fieldDataType,
@@ -647,6 +649,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
 
     public static ItemType inferSchemaTypeOfVariantDataFrame(Dataset<Row> df, ExceptionMetadata metadata) {
+        if (df.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
         df.createOrReplaceTempView("variant_table");
 
         Dataset<Row> schemaDf = SparkSessionManager.getInstance()
@@ -654,7 +659,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             .sql(
                 String.format(
                     "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
-                    SparkSessionManager.atomicJSONiqItemColumnName
+                    SparkSessionManager.nonObjectJSONiqItemColumnName
                 )
             );
         String ddl = schemaDf.collectAsList().get(0).getString(0);
@@ -668,9 +673,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
         ddl = ddl.replace("OBJECT<", "STRUCT<");
         ItemType type = ItemTypeFactory.createItemType(
-            DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.atomicJSONiqItemColumnName, ddl))
+            DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.nonObjectJSONiqItemColumnName, ddl))
         );
-        type = type.getObjectContentFacet().get(SparkSessionManager.atomicJSONiqItemColumnName).getType();
+        type = type.getObjectContentFacet().get(SparkSessionManager.nonObjectJSONiqItemColumnName).getType();
         return type;
     }
 

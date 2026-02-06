@@ -8,8 +8,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -28,16 +28,7 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
     ) {
         super(Arrays.asList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
-
-        if (!contentIterator.isDataFrame()) {
-            throw new CannotResolveUpdateSelectorException(
-                    "The given content doesn not conform to a dataframe",
-                    this.getMetadata()
-            );
-        }
-
         this.isUpdating = true;
-
     }
 
     public boolean hasPositionIterator() {
@@ -78,26 +69,48 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
-        List<Row> rows = contentDF.collectAsList();
-
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
 
-        if (rows.isEmpty()) {
-            // Not throwing an error for empty deletion
-            return null;
+        if (this.contentIterator.isDataFrame()) {
+            // DataFrame case
+            Dataset<Row> contentDF = this.contentIterator.getDataFrame(context).getDataFrame();
+            List<Row> rows = contentDF.collectAsList();
+
+
+            if (rows.isEmpty()) {
+                // Not throwing an error for empty deletion
+                return null;
+            }
+
+            Collection collection = new Collection(rows.get(0).getAs(SparkSessionManager.tableLocationColumnName));
+            for (Row row : rows) {
+                UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
+                    collection,
+                    row.getAs(SparkSessionManager.rowOrderColumnName),
+                    this.getMetadata()
+                );
+                pul.addUpdatePrimitive(up);
+            }
+        } else if (this.contentIterator.isRDD()) {
+            // TODO: habndle RDD case
+        } else {
+            // Local case
+            // this.contentIterator.materializeExactlyOneItem in a try-catch, throw the new error generated
+            this.contentIterator.open(context);
+            while (this.contentIterator.hasNext()) {
+                // checks : not 0, not >1 (in try-catch) - is object/array (generated error)
+                Item item = this.contentIterator.next();
+                UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
+                    item.getCollection(),
+                    item.getTopLevelOrder(),
+                    this.getMetadata()
+                );
+                pul.addUpdatePrimitive(up);
+            }
+            this.contentIterator.close();
         }
 
-        String collection = rows.get(0).getAs(SparkSessionManager.tableLocationColumnName);
-        for (Row row : rows) {
-            UpdatePrimitive up = factory.createDeleteTupleFromCollectionPrimitive(
-                collection,
-                row.getAs(SparkSessionManager.rowOrderColumnName),
-                this.getMetadata()
-            );
-            pul.addUpdatePrimitive(up);
-        }
 
         return pul;
     }

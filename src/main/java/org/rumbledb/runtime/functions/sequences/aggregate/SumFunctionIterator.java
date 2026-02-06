@@ -172,8 +172,8 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         JSoundDataFrame summedDF = df.evaluateSQL(
             String.format(
                 "SELECT SUM(`%s`) as `%s` FROM %s",
-                SparkSessionManager.atomicJSONiqItemColumnName,
-                SparkSessionManager.atomicJSONiqItemColumnName,
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
                 input
             ),
             df.getItemType()

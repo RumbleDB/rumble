@@ -12,6 +12,8 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -25,19 +27,19 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator numDeleteIterator;
     private final boolean isFirst;
-    private final boolean isTable;
+    private final Mode mode;
 
     public DeleteIndexFromCollectionIterator(
             RuntimeIterator targetIterator,
             boolean isFirst,
-            boolean isTable,
+            Mode mode,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
         this.numDeleteIterator = null;
         this.isFirst = isFirst;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isUpdating = true;
     }
 
@@ -45,14 +47,14 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator targetIterator,
             RuntimeIterator numDeleteIterator,
             boolean isFirst,
-            boolean isTable,
+            Mode mode,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator, numDeleteIterator), staticContext);
         this.targetIterator = targetIterator;
         this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isUpdating = true;
     }
 
@@ -146,19 +148,13 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
 
         }
 
-        String collection = null;
-        if (this.isTable) {
-            collection = targetItem.getStringValue();
-        } else {
-            collection = "delta.`" + targetItem.getStringValue() + "` ";
-        }
-
+        Collection collection = new Collection(this.mode, targetItem.getStringValue());
 
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
         String selectQuery = String.format(
             "SELECT %s FROM %s ORDER BY %s %s LIMIT %d",
             SparkSessionManager.rowOrderColumnName,
-            collection,
+            collection.getPhysicalName(),
             SparkSessionManager.rowOrderColumnName,
             this.isFirst ? "ASC" : "DESC",
             numDeleteInt

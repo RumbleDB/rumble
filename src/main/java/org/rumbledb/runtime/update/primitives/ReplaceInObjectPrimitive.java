@@ -11,6 +11,7 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
     private Item target;
     private Item selector;
     private Item content;
+    private Collection collection;
 
     public ReplaceInObjectPrimitive(
             Item targetObject,
@@ -29,11 +30,12 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
         this.target = targetObject;
         this.selector = targetName;
         this.content = replacementItem;
+        this.collection = targetObject.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -56,7 +58,7 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
 
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 

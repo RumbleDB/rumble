@@ -5,6 +5,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.runtime.update.primitives.Mode;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,12 +13,12 @@ import java.util.List;
 public class CreateCollectionExpression extends Expression {
     private Expression collection;
     private Expression contentExpression;
-    private boolean isTable;
+    private Mode mode;
 
     public CreateCollectionExpression(
             Expression collection,
             Expression contentExpression,
-            boolean isTable,
+            Mode mode,
             ExceptionMetadata metadata
     ) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
@@ -31,7 +32,7 @@ public class CreateCollectionExpression extends Expression {
         }
         this.collection = collection;
         this.contentExpression = contentExpression;
-        this.isTable = isTable;
+        this.mode = mode;
     }
 
     public Expression getCollection() {
@@ -42,8 +43,8 @@ public class CreateCollectionExpression extends Expression {
         return this.contentExpression;
     }
 
-    public boolean isTable() {
-        return this.isTable;
+    public Mode getMode() {
+        return this.mode;
     }
 
     @Override
@@ -60,7 +61,13 @@ public class CreateCollectionExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("create collection ");
-        sb.append(this.isTable ? "table" : "delta-file");
+        if (this.mode == Mode.HIVE) {
+            sb.append("table");
+        } else if (this.mode == Mode.DELTA) {
+            sb.append("delta-file");
+        } else if (this.mode == Mode.ICEBERG) {
+            sb.append("iceberg-table");
+        }
         sb.append("(");
         this.collection.serializeToJSONiq(sb, 0);
         sb.append(")");

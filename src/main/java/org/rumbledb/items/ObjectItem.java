@@ -31,6 +31,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.update.primitives.Collection;
+
 
 import java.util.*;
 
@@ -45,6 +47,7 @@ public class ObjectItem implements Item {
     private String pathIn;
     private String location;
     private double topLevelOrder;
+    private Collection collection;
 
     public ObjectItem() {
         super();
@@ -54,6 +57,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
         this.topLevelOrder = 0.0;
     }
 
@@ -66,6 +70,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
         this.topLevelOrder = 0.0;
     }
 
@@ -133,6 +138,7 @@ public class ObjectItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
         this.topLevelOrder = 0.0;
     }
 
@@ -196,6 +202,7 @@ public class ObjectItem implements Item {
         kryo.writeObject(output, this.pathIn);
         kryo.writeObject(output, this.location);
         output.writeDouble(this.topLevelOrder);
+        kryo.writeObjectOrNull(output, this.collection, Collection.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -208,6 +215,7 @@ public class ObjectItem implements Item {
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
         this.topLevelOrder = input.readDouble();
+        this.collection = kryo.readObjectOrNull(input, Collection.class);
     }
 
     public int hashCode() {
@@ -237,6 +245,7 @@ public class ObjectItem implements Item {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
+
         for (Item item : this.values) {
             item.setMutabilityLevel(mutabilityLevel);
         }
@@ -381,5 +390,19 @@ public class ObjectItem implements Item {
             resultMap.put(this.keys.get(fieldIndex), this.values.get(fieldIndex).getVariantValue());
         }
         return resultMap;
+    }
+
+    @Override
+    public Collection getCollection() {
+        return this.collection;
+    }
+
+    @Override
+    public void setCollection(Collection collection) {
+        this.collection = collection;
+        for (Item item : this.values) {
+            item.setCollection(collection);
+        }
+
     }
 }

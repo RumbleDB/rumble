@@ -367,7 +367,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         }
         arrayReferenceQuery.setSchema(
             ((StructType) arrayReferenceQuery.getSchema()).add(
-                SparkSessionManager.atomicJSONiqItemColumnName,
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
                 TypeMappings.getDataFrameDataTypeFromItemType(
                     arrayReferenceQuery.getResultingType().getItemType().getArrayContentFacet()
                 )
@@ -390,7 +390,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 + arrayReferenceQuery.getResultingQuery()
                 + ", "
                 + "`"
-                + SparkSessionManager.atomicJSONiqItemColumnName
+                + SparkSessionManager.nonObjectJSONiqItemColumnName
                 + "`"
                 + " -> "
                 + filterQuery.getResultingQuery()

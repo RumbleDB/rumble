@@ -220,7 +220,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 String.format(
                     "select %s as `%s` from %s",
                     nativeQuery.getResultingQuery(),
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     input
                 )
             );
