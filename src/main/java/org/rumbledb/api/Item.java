@@ -12,8 +12,9 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -1131,5 +1132,24 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default int setXmlDocumentPosition(String path, int current) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the collection to which the item belongs, if any.
+     * Only defined for top-level items.
+     * 
+     * @return the collection.
+     */
+    default Collection getCollection() {
+        return null;
+    }
+
+    /**
+     * Sets the collection to which the item belongs.
+     * Only defined for top-level items.
+     * 
+     * @param collection the collection.
+     */
+    default void setCollection(Collection collection) {
     }
 }

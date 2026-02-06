@@ -190,7 +190,7 @@ public class FlworDataFrameUtils {
     ) {
         if (variable.equals(Name.CONTEXT_ITEM)) {
             for (String columnName : inputSchema.fieldNames()) {
-                if (columnName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+                if (columnName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
                     return true;
                 }
             }
@@ -333,7 +333,7 @@ public class FlworDataFrameUtils {
     ) {
         if (variable.equals(Name.CONTEXT_ITEM)) {
             for (String columnName : inputSchema.fieldNames()) {
-                if (columnName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+                if (columnName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
                     return true;
                 }
             }

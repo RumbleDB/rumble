@@ -44,6 +44,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -247,6 +248,45 @@ public class ItemParser implements Serializable {
     }
 
     /**
+     * Check fields columns consistency and return the index of the non-object JSONiq item column if present.
+     * 
+     * @param fieldNames the field names of the DataFrame schema.
+     * @return the index of the non-object JSONiq item column if present, -1 otherwise.
+     */
+    public static int findNonObjectColumnIndexAndCheckConsistency(String[] fieldNames) {
+        int result = -1;
+        boolean otherColumnsFound = false;
+        for (int i = 0; i < fieldNames.length; ++i) {
+            if (fieldNames[i].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+                result = i;
+                break;
+            }
+            if (
+                fieldNames[i].equals(SparkSessionManager.mutabilityLevelColumnName)
+                    ||
+                    fieldNames[i].equals(SparkSessionManager.rowIdColumnName)
+                    ||
+                    fieldNames[i].equals(SparkSessionManager.pathInColumnName)
+                    ||
+                    fieldNames[i].equals(SparkSessionManager.tableLocationColumnName)
+                    ||
+                    fieldNames[i].equals(SparkSessionManager.rowOrderColumnName)
+            ) {
+                continue;
+            }
+            otherColumnsFound = true;
+        }
+
+        if (otherColumnsFound && result != -1) {
+            throw new OurBadException(
+                    "The presence of other columns alongside the non-object JSONiq item column is not supported."
+            );
+        }
+
+        return result;
+    }
+
+    /**
      * Converts a DataFrame row to an item.
      * 
      * @param row the DataFrame row.
@@ -261,59 +301,55 @@ public class ItemParser implements Serializable {
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
-        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
-        }
-
-        if (fields.length == 2 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
-        }
-        if (fields.length == 2 && fieldnames[1].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return convertValueToItem(row, 1, null, fields[1].dataType(), metadata, itemType);
-        }
-
-        if (
-            fields.length == 5
-                && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)
-                && fieldnames[4].equals(SparkSessionManager.tableLocationColumnName)
-        ) {
-            ItemType resType = null;
-            if (itemType != null) {
-                resType = itemType.getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                    .getType();
-            }
-            Item res = convertValueToItem(row, 0, null, fields[0].dataType(), metadata, resType);
-            // TODO: refactor to not need to loop and check strings -- Indexes perhaps?
+        // Atomic case
+        int nonObjectColumnIndex = findNonObjectColumnIndexAndCheckConsistency(fieldnames);
+        if (nonObjectColumnIndex != -1) {
+            Item atomicItem = convertValueToItem(
+                row,
+                nonObjectColumnIndex,
+                null,
+                fields[nonObjectColumnIndex].dataType(),
+                metadata,
+                itemType
+            );
+            int mutabilityLevel = -1;
+            long topLevelID = -1;
+            String pathIn = "null";
+            Collection collection = null;
+            double rowOrder = 0.0;
             for (int i = 0; i < fields.length; ++i) {
                 String fieldName = fields[i].name();
-
                 if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-                    res.setMutabilityLevel(row.getInt(i));
+                    mutabilityLevel = row.getInt(i);
                     continue;
                 }
                 if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
-                    res.setTopLevelID(row.getLong(i));
+                    topLevelID = row.getLong(i);
                     continue;
                 }
                 if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
-                    res.setPathIn(row.getString(i));
+                    pathIn = row.getString(i);
                     continue;
                 }
                 if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-                    res.setTableLocation(row.getString(i));
-                }
-                if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
-                    res.setTopLevelOrder(row.getDouble(i));
+                    collection = new Collection(row.getString(i));
                     continue;
                 }
+                if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                    rowOrder = row.getDouble(i);
+                }
             }
-            return res;
+            atomicItem.setMutabilityLevel(mutabilityLevel);
+            atomicItem.setTopLevelID(topLevelID);
+            atomicItem.setPathIn(pathIn);
+            atomicItem.setCollection(collection);
+            atomicItem.setTopLevelOrder(rowOrder);
+            return atomicItem;
         }
 
+        // Non-atomic case
         Map<String, FieldDescriptor> content = null;
-
-        if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
+        if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
             content = itemType.getObjectContentFacet();
             if (content == null) {
                 throw new OurBadException(
@@ -321,12 +357,12 @@ public class ItemParser implements Serializable {
                 );
             }
         }
-        // array
 
+        // Array case
         int mutabilityLevel = -1;
         long topLevelID = -1;
         String pathIn = "null";
-        String tableLocation = "null";
+        Collection collection = null;
         double rowOrder = 0.0;
 
         for (int i = 0; i < fields.length; ++i) {
@@ -348,7 +384,7 @@ public class ItemParser implements Serializable {
                 continue;
             }
             if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
-                tableLocation = row.getString(i);
+                collection = new Collection(row.getString(i));
                 continue;
             }
             if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
@@ -399,9 +435,8 @@ public class ItemParser implements Serializable {
         res.setMutabilityLevel(mutabilityLevel);
         res.setTopLevelID(topLevelID);
         res.setPathIn(pathIn);
-        res.setTableLocation(tableLocation);
+        res.setCollection(collection);
         res.setTopLevelOrder(rowOrder);
-
         return res;
     }
 
@@ -613,7 +648,7 @@ public class ItemParser implements Serializable {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
             ItemType memberType = null;
-            if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
+            if (itemType != null && itemType.isArrayItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
                 memberType = itemType.getArrayContentFacet();
             }
             List<Item> members = new ArrayList<>();
