@@ -207,6 +207,17 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
+     * Finds a lax (non-strict) common supertype that can incorporate anonymous facets when possible.
+     * The default implementation falls back to the strict least-common-supertype logic.
+     *
+     * @param other another item type
+     * @return a lax common supertype between [this] and [other]
+     */
+    default ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        return findLeastCommonSuperTypeWith(other);
+    }
+
+    /**
      *
      * @return an int representing the depth of the item type in the type tree ('item' is the root with depth 0)
      */
