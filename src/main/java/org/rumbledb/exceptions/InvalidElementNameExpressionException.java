@@ -22,23 +22,16 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-/**
- * Exception for XQDY0074: It is a dynamic error if the value of the name expression in a computed element or attribute
- * constructor cannot be converted to an expanded QName (for example, because it contains a namespace prefix not found
- * in statically known namespaces).
- *
- * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQDY0074">XQuery 3.1, F: XQDY0074</a>
- */
-public class InvalidAtomizationException extends RumbleException {
+public class InvalidElementNameExpressionException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidAtomizationException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.InvalidAtomizationErrorCode, metadata);
+    public InvalidElementNameExpressionException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.InvalidElementNameExpressionErrorCode, metadata);
     }
 
-    public InvalidAtomizationException(String message) {
-        super(message, ErrorCode.InvalidAtomizationErrorCode);
+    public InvalidElementNameExpressionException(String message) {
+        super(message, ErrorCode.InvalidElementNameExpressionErrorCode);
     }
 }
 

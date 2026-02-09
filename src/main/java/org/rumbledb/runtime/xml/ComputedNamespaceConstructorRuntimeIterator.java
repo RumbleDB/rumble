@@ -23,7 +23,7 @@ package org.rumbledb.runtime.xml;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidAtomizationException;
+import org.rumbledb.exceptions.InvalidElementNameExpressionException;
 import org.rumbledb.exceptions.InvalidComputedNamespaceConstructorException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -147,7 +147,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         // namespace node. (The local name of a namespace node represents the prefix part of the namespace binding.)"
         // Spec: "Otherwise, a dynamic error is raised [err:XQDY0074]."
         if (!isValidNCName(prefix)) {
-            throw new InvalidAtomizationException(
+            throw new InvalidElementNameExpressionException(
                     "Computed namespace constructor prefix cannot be cast to xs:NCName.",
                     getMetadata()
             );
@@ -165,13 +165,13 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
             return "";
         }
         if (atomizedUriItems.size() != 1) {
-            throw new InvalidAtomizationException(
+            throw new InvalidElementNameExpressionException(
                     "Computed namespace constructor URI must evaluate to a single atomic value"
             );
         }
         Item uriItem = atomizedUriItems.get(0);
         if (!uriItem.isAtomic()) {
-            throw new InvalidAtomizationException(
+            throw new InvalidElementNameExpressionException(
                     "Computed namespace constructor URI must evaluate to a single atomic value"
             );
         }
