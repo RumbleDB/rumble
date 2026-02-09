@@ -45,9 +45,6 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
 
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
-    private static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
-    private static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
-
     private String staticPrefix;
     private AtomizationIterator prefixIterator;
     private AtomizationIterator uriIterator;
@@ -198,32 +195,34 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
             );
         }
         // Spec: "Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace."
-        if ("xml".equals(prefix) && !XML_NAMESPACE_URI.equals(uri)) {
-            throw new InvalidComputedNamespaceConstructorException(
-                    "Computed namespace constructor cannot bind the prefix xml to a non-XML namespace URI.",
-                    getMetadata()
-            );
+        NamespaceBindingUtils.ReservedNamespaceBindingError error = NamespaceBindingUtils
+            .getReservedNamespaceBindingError(prefix, uri);
+        if (error == null) {
+            return;
         }
-        // Spec: "Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace."
-        if (!"xml".equals(prefix) && XML_NAMESPACE_URI.equals(uri)) {
-            throw new InvalidComputedNamespaceConstructorException(
-                    "Computed namespace constructor cannot bind a non-xml prefix to the XML namespace URI.",
-                    getMetadata()
-            );
-        }
-        // Spec: "Bind the prefix xmlns to any namespace URI."
-        if ("xmlns".equals(prefix)) {
-            throw new InvalidComputedNamespaceConstructorException(
-                    "Computed namespace constructor cannot bind the prefix xmlns.",
-                    getMetadata()
-            );
-        }
-        // Spec: "Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/."
-        if (XMLNS_NAMESPACE_URI.equals(uri)) {
-            throw new InvalidComputedNamespaceConstructorException(
-                    "Computed namespace constructor cannot bind any prefix to the xmlns namespace URI.",
-                    getMetadata()
-            );
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new InvalidComputedNamespaceConstructorException(
+                        "Computed namespace constructor cannot bind the prefix xml to a non-XML namespace URI.",
+                        getMetadata()
+                );
+            case XMLNS_PREFIX:
+                throw new InvalidComputedNamespaceConstructorException(
+                        "Computed namespace constructor cannot bind the prefix xmlns.",
+                        getMetadata()
+                );
+            case NON_XML_PREFIX_XML_URI:
+                throw new InvalidComputedNamespaceConstructorException(
+                        "Computed namespace constructor cannot bind a non-xml prefix to the XML namespace URI.",
+                        getMetadata()
+                );
+            case XMLNS_URI:
+                throw new InvalidComputedNamespaceConstructorException(
+                        "Computed namespace constructor cannot bind any prefix to the xmlns namespace URI.",
+                        getMetadata()
+                );
+            default:
+                return;
         }
     }
 

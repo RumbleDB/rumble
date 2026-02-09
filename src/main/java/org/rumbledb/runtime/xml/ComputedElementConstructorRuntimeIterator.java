@@ -248,9 +248,34 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         // is deleted from the content sequence.
         List<Item> mergedChildren = mergeAdjacentTextNodes(nonAttributeContent);
 
+        // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
+        // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
+        // create attribute nodes."
+        // "It is a static error [err:XQST0070] if a namespace declaration attribute attempts to do any of the
+        // following:"
+        // "Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace."
+        // "Bind the prefix xmlns to any namespace URI."
+        // "Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace."
+        // "Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/."
+        List<Item> filteredAttributes = new ArrayList<>();
+        for (Item attribute : attributes) {
+            String[] namespaceBinding = NamespaceBindingUtils.parseNamespaceDeclarationAttribute(attribute);
+            if (namespaceBinding != null) {
+                String prefix = namespaceBinding[0];
+                String uri = namespaceBinding[1];
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                namespaces.add(
+                    ItemFactory.getInstance()
+                        .createXmlNamespaceNode(prefix, uri)
+                );
+            } else {
+                filteredAttributes.add(attribute);
+            }
+        }
+
         // Validate that no duplicate attribute names exist
         // If two or more attributes have the same node-name, a dynamic error is raised [err:XQDY0025].
-        validateNoDuplicateAttributes(attributes);
+        validateNoDuplicateAttributes(filteredAttributes);
 
         // TODO: Set parent property of each attribute and child node to the newly constructed element node
         // TODO: Handle xml:space attribute validation [err:XQDY0092]
@@ -258,7 +283,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         // TODO: Set other properties (nilled, string-value, typed-value, type-name, is-id, is-idrefs) when we have a
         // stable XML type system
 
-        return new ProcessedContent(mergedChildren, attributes, namespaces);
+        return new ProcessedContent(mergedChildren, filteredAttributes, namespaces);
     }
 
     /**
