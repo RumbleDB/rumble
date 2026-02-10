@@ -9,6 +9,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -120,5 +121,15 @@ public class AttributeItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
+    }
+
+    @Override
+    public List<Item> namespaceNodes() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return new ArrayList<>();
     }
 }

@@ -182,6 +182,11 @@ public class Serializer implements java.io.Serializable {
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
             }
+            // only serialize the namespace nodes that are associated with the element
+            // this avoids repetition of namespace nodes that are already in scope, but associated with parent elements
+            for (Item namespace : item.declaredNamespaceNodes()) {
+                serialize(namespace, sb, indent, isTopLevel);
+            }
             sb.append(">");
             sb.append("\n");
 

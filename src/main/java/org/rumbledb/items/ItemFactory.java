@@ -8,6 +8,7 @@ import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.ItemType;
@@ -344,6 +345,17 @@ public class ItemFactory {
      */
     public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
+    }
+
+    /**
+     * Create a namespace item.
+     *
+     * @param prefix The namespace prefix (possibly empty)
+     * @param uri The namespace URI
+     * @return The namespace item
+     */
+    public Item createXmlNamespaceNode(String prefix, String uri) {
+        return new NamespaceItem(prefix, uri);
     }
 
     /**

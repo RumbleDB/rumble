@@ -73,6 +73,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
@@ -1768,6 +1769,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitCompCommentConstructor((XQueryParser.CompCommentConstructorContext) child);
         } else if (child instanceof XQueryParser.CompAttrConstructorContext) {
             return this.visitCompAttrConstructor((XQueryParser.CompAttrConstructorContext) child);
+        } else if (child instanceof XQueryParser.CompNamespaceConstructorContext) {
+            return this.visitCompNamespaceConstructor((XQueryParser.CompNamespaceConstructorContext) child);
         }
         throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
     }
@@ -1880,6 +1883,34 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         }
+    }
+
+    @Override
+    public Node visitCompNamespaceConstructor(XQueryParser.CompNamespaceConstructorContext ctx) {
+        Expression uriExpression = (Expression) this.visitEnclosedExpression(
+            ctx.enclosedURIExpr().enclosedExpression()
+        );
+        if (ctx.ncName() != null) {
+            return new ComputedNamespaceConstructorExpression(
+                    ctx.ncName().getText(),
+                    uriExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.enclosedPrefixExpr() != null) {
+            Expression prefixExpression = (Expression) this.visitEnclosedExpression(
+                ctx.enclosedPrefixExpr().enclosedExpression()
+            );
+            return new ComputedNamespaceConstructorExpression(
+                    prefixExpression,
+                    uriExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override

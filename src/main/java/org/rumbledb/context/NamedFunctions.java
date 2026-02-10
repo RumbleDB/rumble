@@ -218,7 +218,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         conf,
                         builtinFunction.getSignature().getReturnType(),
                         executionMode,
-                        metadata
+                        metadata,
+                        staticContext.getInScopeNamespaceBindings()
                 )
             );
         } catch (ReflectiveOperationException ex) {

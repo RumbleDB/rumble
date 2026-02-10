@@ -123,6 +123,7 @@ public enum ErrorCode {
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
     MoreThanOneEmptyOrderDeclarationErrorCode("XQST0069"),
+    PredefinedPrefixInNamespaceDeclarationErrorCode("XQST0070"),
     EmptyModuleURIErrorCode("XQST0088"),
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
@@ -145,11 +146,12 @@ public enum ErrorCode {
 
     UpdatingFunctionHasReturnTypeErrorCode("XUST0028"),
 
-    InvalidElementNameErrorCode("XQDY0074"),
+    InvalidElementNameExpressionErrorCode("XQDY0074"),
     InvalidCommentContentErrorCode("XQDY0072"),
     InvalidNodeNameErrorCode("XQDY0096"),
     DuplicateAttributeErrorCode("XQDY0025"),
-    AttributeAfterNonAttributeErrorCode("XQTY0024"),
+    InvalidComputedNamespaceConstructorErrorCode("XQDY0101"),
+    AttributeOrNamespaceAfterNonAttributeErrorCode("XQTY0024"),
 
     DuplicateObjectInsertSourceErrorCode("JNUP0005"),
     DuplicateKeyOnUpdateApplyErrorCode("JNUP0006"),
