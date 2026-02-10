@@ -48,7 +48,8 @@ import java.util.List;
  * the in-scope namespace nodes computed via parent chaining of declared
  * namespaces, and extracts the prefixes as xs:string* items.
  *
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-in-scope-prefixes">XPath and XQuery Functions and Operators 3.1 : fn:in-scope-prefixes</a>
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-in-scope-prefixes">XPath and XQuery Functions and
+ *      Operators 3.1 : fn:in-scope-prefixes</a>
  */
 public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
