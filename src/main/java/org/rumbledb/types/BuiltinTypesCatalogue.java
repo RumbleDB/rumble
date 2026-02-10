@@ -411,6 +411,30 @@ public class BuiltinTypesCatalogue {
             false
     );
 
+    // XML node types (per XPath Data Model 3.1, Section 2.7.4)
+    public static final ItemType nodeItem = new NodeItemType();
+    public static final ItemType elementNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("element")
+    );
+    public static final ItemType attributeNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("attribute")
+    );
+    public static final ItemType documentNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("document-node")
+    );
+    public static final ItemType commentNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("comment")
+    );
+    public static final ItemType textNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("text")
+    );
+    public static final ItemType namespaceNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("namespace-node")
+    );
+    public static final ItemType processingInstructionNode = new XmlNodeItemType(
+            Name.createVariableInDefaultTypeNamespace("processing-instruction")
+    );
+
     public static final ItemType JSONItem = new JsonItemType();
     public static final ItemType objectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
@@ -446,6 +470,14 @@ public class BuiltinTypesCatalogue {
     }
 
     private static final List<ItemType> builtInItemTypes = Arrays.asList(
+        nodeItem,
+        elementNode,
+        attributeNode,
+        documentNode,
+        commentNode,
+        textNode,
+        namespaceNode,
+        processingInstructionNode,
         objectItem,
         atomicItem,
         stringItem,

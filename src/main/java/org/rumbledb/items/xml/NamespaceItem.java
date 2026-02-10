@@ -127,7 +127,7 @@ public class NamespaceItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.namespaceNode;
     }
 
     @Override

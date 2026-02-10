@@ -91,7 +91,7 @@ public class AttributeItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.attributeNode;
     }
 
     @Override

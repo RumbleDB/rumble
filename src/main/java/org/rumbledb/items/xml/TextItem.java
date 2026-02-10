@@ -100,7 +100,7 @@ public class TextItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.textNode;
     }
 
     @Override

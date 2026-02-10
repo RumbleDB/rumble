@@ -73,7 +73,7 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.processingInstructionNode;
     }
 
     @Override

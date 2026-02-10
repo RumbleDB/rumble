@@ -108,7 +108,7 @@ public class DocumentItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.documentNode;
     }
 
     @Override

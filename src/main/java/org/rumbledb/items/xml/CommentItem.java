@@ -54,7 +54,7 @@ public class CommentItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.commentNode;
     }
 
     @Override
