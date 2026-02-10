@@ -106,6 +106,7 @@ import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
 import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
+import org.rumbledb.runtime.functions.xml.InScopePrefixesFunctionIterator;
 import org.rumbledb.runtime.functions.xml.NodeNameFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -523,6 +524,19 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.FN_NS, "fn", "name"),
         "string",
         NodeNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:in-scope-prefixes (F&O 3.1 Section 14.1)
+     * fn:in-scope-prefixes($element as element()) as xs:string*
+     * Returns the prefixes of the in-scope namespaces for $element.
+     */
+    static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
+        "item",
+        "string*",
+        InScopePrefixesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3316,6 +3330,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
         builtinFunctions.put(name_with_arg.getIdentifier(), name_with_arg);
         builtinFunctions.put(name_without_arg.getIdentifier(), name_without_arg);
+        builtinFunctions.put(in_scope_prefixes.getIdentifier(), in_scope_prefixes);
         builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);
     }
 

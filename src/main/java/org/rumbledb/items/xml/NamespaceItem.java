@@ -8,6 +8,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -149,5 +150,14 @@ public class NamespaceItem implements Item {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.uri));
     }
 
+    @Override
+    public List<Item> namespaceNodes() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return new ArrayList<>();
+    }
 }
 

@@ -1088,7 +1088,43 @@ public interface Item extends Serializable, KryoSerializable {
         return new ArrayList<>();
     }
 
+    /**
+     * dm:namespace-nodes accessor (XDM 3.1 Section 5.7).
+     *
+     * "dm:namespace-nodes($n as element()) as namespace-node()*"
+     *
+     * "The dm:namespace-nodes accessor returns the dynamic, unordered set of
+     * Namespace Nodes. It is defined on all seven node types."
+     *
+     * For element nodes, this returns the in-scope namespace nodes computed
+     * via parent chaining of declared namespaces. This does NOT include
+     * statically known namespaces from the query context.
+     * 
+     * For non-element nodes, the empty list is returned, according to the spec.
+     *
+     * For all other non-node item types, the default implementation throws
+     * UnsupportedOperationException.
+     *
+     * @return a list of namespace node items representing the in-scope namespace bindings
+     * @see <a href="https://www.w3.org/TR/xpath-datamodel-31/#dm-namespace-nodes">XDM 3.1: dm:namespace-nodes</a>
+     */
     default List<Item> namespaceNodes() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * For element nodes, returns namespace nodes for the namespace bindings declared directly on this item.
+     * This does NOT include inherited or statically known namespaces —
+     * only the bindings explicitly declared on this element (e.g. via xmlns attributes).
+     * 
+     * For non-element nodes, the empty list is returned.
+     *
+     * For all other non-node item types, the default implementation throws
+     * UnsupportedOperationException.
+     *
+     * @return a list of NamespaceItem objects for each declared namespace binding on this element
+     */
+    default List<Item> declaredNamespaceNodes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

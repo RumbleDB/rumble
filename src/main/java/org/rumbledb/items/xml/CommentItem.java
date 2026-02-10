@@ -9,6 +9,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -94,6 +95,16 @@ public class CommentItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.content = input.readString();
+    }
+
+    @Override
+    public List<Item> namespaceNodes() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return new ArrayList<>();
     }
 }
 
