@@ -34,7 +34,7 @@ import java.util.List;
  * Implementation of fn:in-scope-prefixes according to
  * XPath and XQuery Functions and Operators 3.1, Section 14.1.
  *
- * Spec (F&O 3.1 Section 14.1):
+ * Spec (Functions and Operators 3.1, Section 14.1):
  * "fn:in-scope-prefixes($element as element()) as xs:string*"
  *
  * "Summary: Returns the prefixes of the in-scope namespaces for $element."
@@ -48,7 +48,7 @@ import java.util.List;
  * the in-scope namespace nodes computed via parent chaining of declared
  * namespaces, and extracts the prefixes as xs:string* items.
  *
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-in-scope-prefixes">F&O 3.1: fn:in-scope-prefixes</a>
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-in-scope-prefixes">XPath and XQuery Functions and Operators 3.1 : fn:in-scope-prefixes</a>
  */
 public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
@@ -96,7 +96,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     /**
      * Computes the in-scope namespace prefixes for the given element.
      *
-     * F&O 3.1 Section 14.1 (fn:in-scope-prefixes):
+     * XPath and XQuery Functions and Operators 3.1, Section 14.1 (fn:in-scope-prefixes):
      * "Returns the prefixes of the in-scope namespaces for $element."
      * "For namespace bindings that have a prefix, the prefix is returned."
      * "For the default namespace, if it exists, the zero-length string is returned."
@@ -114,8 +114,8 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
 
         // Get namespace nodes from the element (parent chaining + declared).
         // Extract prefixes as xs:string items.
-        // F&O 3.1: "For namespace bindings that have a prefix, the prefix is returned."
-        // F&O 3.1: "For the default namespace, if it exists, the zero-length string is returned."
+        // "For namespace bindings that have a prefix, the prefix is returned."
+        // "For the default namespace, if it exists, the zero-length string is returned."
         for (Item nsNode : element.namespaceNodes()) {
             result.add(ItemFactory.getInstance().createStringItem(nsNode.nodeName()));
         }

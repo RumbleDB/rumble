@@ -528,7 +528,7 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
-     * fn:in-scope-prefixes (F&O 3.1 Section 14.1)
+     * fn:in-scope-prefixes (Functions and Operators 3.1 Section 14.1)
      * fn:in-scope-prefixes($element as element()) as xs:string*
      * Returns the prefixes of the in-scope namespaces for $element.
      */
