@@ -153,8 +153,8 @@ public class ElementItem implements Item {
      * returns null to represent the empty sequence.
      */
     @Override
-    public String baseUri() {
-        return null;
+    public List<Item> baseUri() {
+        return Collections.emptyList();
     }
 
     /**
@@ -167,8 +167,8 @@ public class ElementItem implements Item {
      * This implementation delegates to the parent, if any, otherwise returns null.
      */
     @Override
-    public String documentUri() {
-        return this.parent == null ? null : this.parent.documentUri();
+    public List<Item> documentUri() {
+        return Collections.emptyList();
     }
 
     @Override
@@ -256,12 +256,12 @@ public class ElementItem implements Item {
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * RumbleDB does not currently support XML Schema nilled elements, so this always
-     * returns Boolean.FALSE.
+     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
+     * returns the empty sequence.
      */
     @Override
-    public Boolean nilled() {
-        return Boolean.FALSE;
+    public List<Item> nilled() {
+        return Collections.emptyList();
     }
 
     @Override
@@ -299,8 +299,8 @@ public class ElementItem implements Item {
      * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
-    public String typeName() {
-        return null;
+    public List<Item> typeName() {
+        return Collections.emptyList();
     }
 
     /**

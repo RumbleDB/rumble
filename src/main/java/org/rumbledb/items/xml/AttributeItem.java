@@ -191,4 +191,57 @@ public class AttributeItem implements Item {
     public List<Item> declaredNamespaceNodes() {
         return new ArrayList<>();
     }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — base-uri.
+     *
+     * For an Attribute Node, dm:base-uri returns the base URI of the parent element or document
+     * node, if it has one; otherwise it returns the empty sequence.
+     */
+    @Override
+    public List<Item> baseUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.baseUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — document-uri.
+     *
+     * For an Attribute Node, dm:document-uri returns the document-uri of the document node that
+     * is the root of the tree containing the attribute, if it has one; otherwise it returns the
+     * empty sequence.
+     */
+    @Override
+    public List<Item> documentUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.documentUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — nilled.
+     *
+     * For an Attribute Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — type-name.
+     *
+     * For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
+     * node, or the empty sequence if the node is untyped.
+     *
+     * RumbleDB does not currently support schema-validated attribute types, so this
+     * implementation returns the empty sequence.
+     */
+    @Override
+    public List<Item> typeName() {
+        return Collections.emptyList();
+    }
 }

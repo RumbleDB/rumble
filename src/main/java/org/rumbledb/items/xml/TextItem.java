@@ -162,4 +162,73 @@ public class TextItem implements Item {
     public List<Item> declaredNamespaceNodes() {
         return new ArrayList<>();
     }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — base-uri.
+     *
+     * For a Text Node, dm:base-uri returns the base URI of the parent node, if it has one;
+     * otherwise it returns the empty sequence.
+     */
+    @Override
+    public List<Item> baseUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.baseUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — document-uri.
+     *
+     * For a Text Node, dm:document-uri returns the document-uri of the document node that is
+     * the root of the tree containing the text node, if it has one; otherwise it returns the
+     * empty sequence.
+     */
+    @Override
+    public List<Item> documentUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.documentUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — is-id.
+     *
+     * For a Text Node, dm:is-id returns false.
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — is-idrefs.
+     *
+     * For a Text Node, dm:is-idrefs returns false.
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — nilled.
+     *
+     * For a Text Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — type-name.
+     *
+     * For a Text Node, dm:type-name returns the empty sequence.
+     */
+    @Override
+    public List<Item> typeName() {
+        return Collections.emptyList();
+    }
 }

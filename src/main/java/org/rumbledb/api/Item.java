@@ -1079,10 +1079,28 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.1 attributes Accessor.
+     *
+     * dm:attributes($n as node()) as attribute()*
+     *
+     * "The dm:attributes accessor returns the dynamic, unordered set of attribute nodes that
+     * have the node as their parent. It is defined only on element and document nodes; for
+     * other node kinds it returns the empty sequence."
+     */
     default List<Item> attributes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.3 children Accessor.
+     *
+     * dm:children($n as node()) as node()*
+     *
+     * "The dm:children accessor returns the dynamic, ordered sequence of child nodes of the
+     * node. It is defined on all node kinds except attribute and namespace nodes; for those
+     * node kinds it returns the empty sequence."
+     */
     default List<Item> children() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
@@ -1138,7 +1156,7 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:base-uri accessor returns the value of the base-uri property of the node, if it
      * has one; otherwise it returns the empty sequence."
      */
-    default String baseUri() {
+    default List<Item> baseUri() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -1150,7 +1168,7 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:document-uri accessor returns the value of the document-uri property of a
      * document node, if it has one; otherwise it returns the empty sequence."
      */
-    default String documentUri() {
+    default List<Item> documentUri() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -1186,8 +1204,11 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * "The dm:nilled accessor returns true if the element node is nilled, false if the element
      * node is not nilled, or the empty sequence if the concept of nilled does not apply."
+     *
+     * In this API, the optional xs:boolean result is represented as a sequence of zero or one
+     * Items.
      */
-    default Boolean nilled() {
+    default List<Item> nilled() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -1199,7 +1220,7 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:type-name accessor returns the name of the dynamic type of the node, or the
      * empty sequence if the node is untyped."
      */
-    default String typeName() {
+    default List<Item> typeName() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -1219,7 +1240,7 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * XDM 3.15 unparsed-entity-public-id Accessor.
+     * XDM 3.1 Section 5.15 unparsed-entity-public-id Accessor.
      *
      * dm:unparsed-entity-public-id($n as document-node(), $name as xs:string)
      * as xs:string?
@@ -1228,12 +1249,12 @@ public interface Item extends Serializable, KryoSerializable {
      * unparsed entity with a given name in the document, or the empty sequence if there is
      * no such entity or if it has no public identifier."
      */
-    default String unparsedEntityPublicId(String name) {
+    default List<Item> unparsedEntityPublicId(String name) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * XDM 3.16 unparsed-entity-system-id Accessor.
+     * XDM 3.1 Section 5.16 unparsed-entity-system-id Accessor.
      *
      * dm:unparsed-entity-system-id($n as document-node(), $name as xs:string)
      * as xs:anyURI?
@@ -1242,18 +1263,45 @@ public interface Item extends Serializable, KryoSerializable {
      * unparsed entity with a given name in the document, or the empty sequence if there is
      * no such entity or if it has no system identifier."
      */
-    default String unparsedEntitySystemId(String name) {
+    default List<Item> unparsedEntitySystemId(String name) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.10 node-name Accessor.
+     *
+     * dm:node-name($n as node()) as xs:QName?
+     *
+     * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
+     * sequence if the node does not have a name."
+     */
     default String nodeName() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.11 parent Accessor.
+     *
+     * dm:parent($n as node()) as node()?
+     *
+     * "The dm:parent accessor returns the parent of the node, or the empty sequence if the
+     * node has no parent."
+     */
     default Item parent() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.12 string-value Accessor.
+     *
+     * dm:string-value($n as node()) as xs:string
+     *
+     * "The dm:string-value accessor returns the string-value of the node as defined for each
+     * node kind."
+     *
+     * In this API, node string values are exposed via getStringValue() and the default
+     * implementation of dm:typed-value delegates to atomizedValue().
+     */
     default List<Item> atomizedValue() {
         if (isAtomic())
             return Collections.singletonList(this);

@@ -172,8 +172,8 @@ public class DocumentItem implements Item {
      * returns null to represent the empty sequence.
      */
     @Override
-    public String baseUri() {
-        return null;
+    public List<Item> baseUri() {
+        return Collections.emptyList();
     }
 
     /**
@@ -186,8 +186,91 @@ public class DocumentItem implements Item {
      * to represent the empty sequence.
      */
     @Override
-    public String documentUri() {
-        return null;
+    public List<Item> documentUri() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — is-id.
+     *
+     * For a Document Node, dm:is-id returns false.
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — is-idrefs.
+     *
+     * For a Document Node, dm:is-idrefs returns false.
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — nilled.
+     *
+     * For a Document Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — type-name.
+     *
+     * For a Document Node, dm:type-name returns the empty sequence.
+     */
+    @Override
+    public List<Item> typeName() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — typed-value.
+     *
+     * For a Document Node, dm:typed-value returns the typed value of the document node as a
+     * sequence of zero or more atomic values.
+     *
+     * This implementation delegates to atomizedValue().
+     */
+    @Override
+    public List<Item> typedValue() {
+        return this.atomizedValue();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — unparsed-entity-public-id.
+     *
+     * For a Document Node, dm:unparsed-entity-public-id returns the public identifier of an
+     * unparsed entity with a given name in the document, or the empty sequence if there is
+     * no such entity or if it has no public identifier.
+     *
+     * RumbleDB does not currently support unparsed entities, so this implementation always
+     * returns the empty sequence.
+     */
+    @Override
+    public List<Item> unparsedEntityPublicId(String name) {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — unparsed-entity-system-id.
+     *
+     * For a Document Node, dm:unparsed-entity-system-id returns the system identifier of an
+     * unparsed entity with a given name in the document, or the empty sequence if there is
+     * no such entity or if it has no system identifier.
+     *
+     * RumbleDB does not currently support unparsed entities, so this implementation always
+     * returns the empty sequence.
+     */
+    @Override
+    public List<Item> unparsedEntitySystemId(String name) {
+        return Collections.emptyList();
     }
 
     @Override
