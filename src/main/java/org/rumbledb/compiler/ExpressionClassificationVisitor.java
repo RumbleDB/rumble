@@ -636,7 +636,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         }
 
         ExpressionClassification contentResult = this.visit(expression.getContentExpression(), argument);
-        if (!contentResult.isSimple()) {
+        if (!contentResult.isSimple() && !contentResult.isVacuous()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Content of new collection must be Simple",
                     expression.getMetadata()
