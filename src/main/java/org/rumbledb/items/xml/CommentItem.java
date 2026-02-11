@@ -121,12 +121,12 @@ public class CommentItem implements Item {
 
     @Override
     public List<Item> namespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     @Override
     public List<Item> declaredNamespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**
@@ -136,7 +136,7 @@ public class CommentItem implements Item {
      */
     @Override
     public List<Item> attributes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**
@@ -146,7 +146,7 @@ public class CommentItem implements Item {
      */
     @Override
     public List<Item> children() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**
@@ -158,7 +158,7 @@ public class CommentItem implements Item {
     @Override
     public List<Item> baseUri() {
         if (this.parent == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         return this.parent.baseUri();
     }
@@ -173,7 +173,7 @@ public class CommentItem implements Item {
     @Override
     public List<Item> documentUri() {
         if (this.parent == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         return this.parent.documentUri();
     }
@@ -205,7 +205,7 @@ public class CommentItem implements Item {
      */
     @Override
     public List<Item> nilled() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**
@@ -215,7 +215,7 @@ public class CommentItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 }
 

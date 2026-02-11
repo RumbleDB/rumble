@@ -159,7 +159,7 @@ public class DocumentItem implements Item {
      */
     @Override
     public List<Item> attributes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**
@@ -285,11 +285,11 @@ public class DocumentItem implements Item {
 
     @Override
     public List<Item> namespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     @Override
     public List<Item> declaredNamespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 }
