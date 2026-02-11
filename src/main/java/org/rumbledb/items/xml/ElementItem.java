@@ -176,7 +176,7 @@ public class ElementItem implements Item {
         if (this.namespaces == null || this.namespaces.isEmpty()) {
             return Collections.emptyList();
         }
-        List<Item> result = Collections.emptyList();
+        List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : this.namespaces.entrySet()) {
             Item namespaceItem = ItemFactory.getInstance()
                 .createXmlNamespaceNode(entry.getKey(), entry.getValue());
@@ -202,7 +202,7 @@ public class ElementItem implements Item {
         // Step 1: Parent chaining -- collect ancestor declared namespaces from root to direct parent.
         // Walk up the parent chain, collecting declared namespaces from each ancestor element.
         // We collect frames in child-to-root order, then replay root-to-child for correct override semantics.
-        List<Map<String, String>> ancestorFrames = Collections.emptyList();
+        List<Map<String, String>> ancestorFrames = new ArrayList<>();
         Item current = this.parent;
         // optimization: we know that no other node types apart from element nodes can have namespaces
         // so we stop the iteration when we encounter a non-element node
@@ -220,7 +220,7 @@ public class ElementItem implements Item {
         inScope.putAll(this.namespaces);
 
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
-        List<Item> result = Collections.emptyList();
+        List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : inScope.entrySet()) {
             Item namespaceItem = ItemFactory.getInstance()
                 .createXmlNamespaceNode(entry.getKey(), entry.getValue());

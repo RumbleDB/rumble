@@ -135,7 +135,7 @@ public class TextItem implements Item {
      */
     @Override
     public List<Item> attributes() {
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     /**
@@ -145,7 +145,7 @@ public class TextItem implements Item {
      */
     @Override
     public List<Item> children() {
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     @Override
@@ -155,12 +155,12 @@ public class TextItem implements Item {
 
     @Override
     public List<Item> namespaceNodes() {
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     @Override
     public List<Item> declaredNamespaceNodes() {
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     /**
