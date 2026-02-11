@@ -108,6 +108,7 @@ import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
 import org.rumbledb.runtime.functions.xml.InScopePrefixesFunctionIterator;
 import org.rumbledb.runtime.functions.xml.NodeNameFunctionIterator;
+import org.rumbledb.runtime.functions.xml.NodeQNameFunctionIterator;
 import org.rumbledb.runtime.functions.xml.NilledFunctionIterator;
 import org.rumbledb.runtime.functions.xml.BaseUriFunctionIterator;
 import org.rumbledb.runtime.functions.xml.DocumentUriFunctionIterator;
@@ -553,6 +554,32 @@ public class BuiltinFunctionCatalogue {
         "item?",
         "boolean?",
         NilledFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:node-name (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.10 dm:node-name)
+     *
+     * fn:node-name() as xs:QName?
+     * fn:node-name($arg as node()?) as xs:QName?
+     *
+     * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
+     * sequence if the node does not have a name."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-node-name}.
+     */
+    static final BuiltinFunction node_name_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "node-name"),
+        "QName?",
+        NodeQNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction node_name_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "node-name"),
+        "item?",
+        "QName?",
+        NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3420,6 +3447,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(base_uri_with_arg.getIdentifier(), base_uri_with_arg);
         builtinFunctions.put(document_uri_without_arg.getIdentifier(), document_uri_without_arg);
         builtinFunctions.put(document_uri_with_arg.getIdentifier(), document_uri_with_arg);
+        builtinFunctions.put(node_name_without_arg.getIdentifier(), node_name_without_arg);
+        builtinFunctions.put(node_name_with_arg.getIdentifier(), node_name_with_arg);
 
     }
 
