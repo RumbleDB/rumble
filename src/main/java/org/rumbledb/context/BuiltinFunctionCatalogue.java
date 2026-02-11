@@ -533,6 +533,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * fn:nilled (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.8 dm:nilled)
      *
+     * fn:nilled() as xs:boolean?
      * fn:nilled($arg as node()?) as xs:boolean?
      *
      * "The dm:nilled accessor returns true if the element node is nilled, false if the element
@@ -540,7 +541,14 @@ public class BuiltinFunctionCatalogue {
      *
      * See {@code https://www.w3.org/TR/xpath-functions-31/#func-nilled}.
      */
-    static final BuiltinFunction nilled = createBuiltinFunction(
+    static final BuiltinFunction nilled_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "nilled"),
+        "boolean?",
+        NilledFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction nilled_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "nilled"),
         "item?",
         "boolean?",
@@ -577,6 +585,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * fn:document-uri (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.4 dm:document-uri)
      *
+     * fn:document-uri() as xs:anyURI?
      * fn:document-uri($arg as node()?) as xs:anyURI?
      *
      * "The dm:document-uri accessor returns the value of the document-uri property of a
@@ -584,7 +593,14 @@ public class BuiltinFunctionCatalogue {
      *
      * See {@code https://www.w3.org/TR/xpath-functions-31/#func-document-uri}.
      */
-    static final BuiltinFunction document_uri = createBuiltinFunction(
+    static final BuiltinFunction document_uri_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "document-uri"),
+        "anyURI?",
+        DocumentUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction document_uri_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "document-uri"),
         "item?",
         "anyURI?",
@@ -1549,6 +1565,7 @@ public class BuiltinFunctionCatalogue {
         StringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+
     static final BuiltinFunction string1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
@@ -3397,6 +3414,13 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(name_without_arg.getIdentifier(), name_without_arg);
         builtinFunctions.put(in_scope_prefixes.getIdentifier(), in_scope_prefixes);
         builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);
+        builtinFunctions.put(nilled_without_arg.getIdentifier(), nilled_without_arg);
+        builtinFunctions.put(nilled_with_arg.getIdentifier(), nilled_with_arg);
+        builtinFunctions.put(base_uri_without_arg.getIdentifier(), base_uri_without_arg);
+        builtinFunctions.put(base_uri_with_arg.getIdentifier(), base_uri_with_arg);
+        builtinFunctions.put(document_uri_without_arg.getIdentifier(), document_uri_without_arg);
+        builtinFunctions.put(document_uri_with_arg.getIdentifier(), document_uri_with_arg);
+
     }
 
 
