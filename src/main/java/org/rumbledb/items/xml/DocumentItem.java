@@ -130,6 +130,66 @@ public class DocumentItem implements Item {
         return true;
     }
 
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — node-kind.
+     *
+     * "For a Document Node, dm:node-kind returns the string \"document\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "document";
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — node-name.
+     *
+     * "For a Document Node, dm:node-name returns the empty sequence."
+     *
+     * An empty string is used here to represent the empty sequence.
+     */
+    @Override
+    public String nodeName() {
+        return "";
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — attributes.
+     *
+     * "For a Document Node, dm:attributes returns the empty sequence."
+     */
+    @Override
+    public List<Item> attributes() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — base-uri.
+     *
+     * "For a Document Node, dm:base-uri returns the base URI of the document node, if it has
+     * one; otherwise it returns the empty sequence."
+     *
+     * RumbleDB does not currently track base URIs for document nodes, so this implementation
+     * returns null to represent the empty sequence.
+     */
+    @Override
+    public String baseUri() {
+        return null;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — document-uri.
+     *
+     * "For a Document Node, dm:document-uri returns the document-uri property of the document
+     * node, if it has one; otherwise it returns the empty sequence."
+     *
+     * RumbleDB does not currently track document URIs, so this implementation returns null
+     * to represent the empty sequence.
+     */
+    @Override
+    public String documentUri() {
+        return null;
+    }
+
     @Override
     public int hashCode() {
         return this.documentPos.hashCode();

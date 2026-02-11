@@ -67,6 +67,28 @@ public class CommentItem implements Item {
         return true;
     }
 
+    /**
+     * XDM 3.1 Section 6.6 Comment Node Accessors — node-kind.
+     *
+     * "For a Comment Node, dm:node-kind returns the string \"comment\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "comment";
+    }
+
+    /**
+     * XDM 3.1 Section 6.6 Comment Node Accessors — node-name.
+     *
+     * "For a Comment Node, dm:node-name returns the empty sequence."
+     *
+     * An empty string is used here to represent the empty sequence.
+     */
+    @Override
+    public String nodeName() {
+        return "";
+    }
+
     @Override
     public String getStringValue() {
         return this.content;

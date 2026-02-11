@@ -133,6 +133,44 @@ public class ElementItem implements Item {
         return this.children;
     }
 
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — node-kind.
+     *
+     * "For an Element Node, dm:node-kind returns the string \"element\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "element";
+    }
+
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — base-uri.
+     *
+     * "For an Element Node, dm:base-uri returns the base URI of the element node, if it has one;
+     * otherwise it returns the empty sequence."
+     *
+     * RumbleDB does not currently track base URIs for element nodes, so this implementation
+     * returns null to represent the empty sequence.
+     */
+    @Override
+    public String baseUri() {
+        return null;
+    }
+
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — document-uri.
+     *
+     * "For an Element Node, dm:document-uri returns the document URI of the document node
+     * that is the root of the tree containing the element, if it has one; otherwise it
+     * returns the empty sequence."
+     *
+     * This implementation delegates to the parent, if any, otherwise returns null.
+     */
+    @Override
+    public String documentUri() {
+        return this.parent == null ? null : this.parent.documentUri();
+    }
+
     @Override
     public List<Item> declaredNamespaceNodes() {
         if (this.namespaces == null || this.namespaces.isEmpty()) {
@@ -192,6 +230,40 @@ public class ElementItem implements Item {
         return result;
     }
 
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — is-id.
+     *
+     * "For an Element Node, dm:is-id returns false."
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — is-idrefs.
+     *
+     * "For an Element Node, dm:is-idrefs returns false."
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — nilled.
+     *
+     * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
+     * not nilled, or the empty sequence if the concept of nilled does not apply."
+     *
+     * RumbleDB does not currently support XML Schema nilled elements, so this always
+     * returns Boolean.FALSE.
+     */
+    @Override
+    public Boolean nilled() {
+        return Boolean.FALSE;
+    }
+
     @Override
     public String nodeName() {
         return this.nodeName;
@@ -215,6 +287,35 @@ public class ElementItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
+    }
+
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — type-name.
+     *
+     * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
+     * node, or the empty sequence if the node is untyped."
+     *
+     * RumbleDB does not currently support schema-validated element types, so the dynamic
+     * type-name is not available and this method returns null to represent the empty sequence.
+     */
+    @Override
+    public String typeName() {
+        return null;
+    }
+
+    /**
+     * XDM 3.1 Section 6.2 Element Node Accessors — typed-value.
+     *
+     * "For an Element Node, dm:typed-value returns the typed value of the element node as a
+     * sequence of zero or more atomic values."
+     *
+     * This implementation delegates to atomizedValue(), which currently computes a
+     * best-effort typed value by concatenating the atomized values of the element's
+     * children in document order.
+     */
+    @Override
+    public List<Item> typedValue() {
+        return this.atomizedValue();
     }
 
     public void addOrReplaceNamespace(Item namespaceItem) {

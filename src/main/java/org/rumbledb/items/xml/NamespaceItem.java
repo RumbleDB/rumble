@@ -130,6 +130,16 @@ public class NamespaceItem implements Item {
         return BuiltinTypesCatalogue.namespaceNode;
     }
 
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — node-kind.
+     *
+     * "For a Namespace Node, dm:node-kind returns the string \"namespace\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "namespace";
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof NamespaceItem)) {

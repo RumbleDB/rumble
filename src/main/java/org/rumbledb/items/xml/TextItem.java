@@ -118,6 +118,36 @@ public class TextItem implements Item {
         return "";
     }
 
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — node-kind.
+     *
+     * "For a Text Node, dm:node-kind returns the string \"text\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "text";
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — attributes.
+     *
+     * "For a Text Node, dm:attributes returns the empty sequence."
+     */
+    @Override
+    public List<Item> attributes() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * XDM 3.1 Section 6.7 Text Node Accessors — children.
+     *
+     * "For a Text Node, dm:children returns the empty sequence."
+     */
+    @Override
+    public List<Item> children() {
+        return new ArrayList<>();
+    }
+
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));

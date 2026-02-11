@@ -94,6 +94,65 @@ public class AttributeItem implements Item {
         return BuiltinTypesCatalogue.attributeNode;
     }
 
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — node-kind.
+     *
+     * "For an Attribute Node, dm:node-kind returns the string \"attribute\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "attribute";
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — children.
+     *
+     * "For an Attribute Node, dm:children returns the empty sequence."
+     */
+    @Override
+    public List<Item> children() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — attributes.
+     *
+     * "For an Attribute Node, dm:attributes returns the empty sequence."
+     */
+    @Override
+    public List<Item> attributes() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — is-id.
+     *
+     * "For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or
+     * is derived by restriction from xs:ID; otherwise it returns false."
+     *
+     * RumbleDB does not currently support schema type annotations on attributes, so this
+     * implementation always returns false.
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — is-idrefs.
+     *
+     * "For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
+     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
+     * it returns false."
+     *
+     * RumbleDB does not currently support schema type annotations on attributes, so this
+     * implementation always returns false.
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof AttributeItem)) {
