@@ -108,6 +108,9 @@ import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
 import org.rumbledb.runtime.functions.xml.InScopePrefixesFunctionIterator;
 import org.rumbledb.runtime.functions.xml.NodeNameFunctionIterator;
+import org.rumbledb.runtime.functions.xml.NilledFunctionIterator;
+import org.rumbledb.runtime.functions.xml.BaseUriFunctionIterator;
+import org.rumbledb.runtime.functions.xml.DocumentUriFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -524,6 +527,68 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.FN_NS, "fn", "name"),
         "string",
         NodeNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:nilled (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.8 dm:nilled)
+     *
+     * fn:nilled($arg as node()?) as xs:boolean?
+     *
+     * "The dm:nilled accessor returns true if the element node is nilled, false if the element
+     * node is not nilled, or the empty sequence if the concept of nilled does not apply."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-nilled}.
+     */
+    static final BuiltinFunction nilled = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "nilled"),
+        "item?",
+        "boolean?",
+        NilledFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:base-uri (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.2 dm:base-uri)
+     *
+     * fn:base-uri() as xs:anyURI?
+     * fn:base-uri($arg as node()?) as xs:anyURI?
+     *
+     * "The dm:base-uri accessor returns the value of the base-uri property of the node, if it
+     * has one; otherwise it returns the empty sequence."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-base-uri}.
+     */
+    static final BuiltinFunction base_uri_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "base-uri"),
+        "anyURI?",
+        BaseUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction base_uri_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "base-uri"),
+        "item?",
+        "anyURI?",
+        BaseUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:document-uri (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.4 dm:document-uri)
+     *
+     * fn:document-uri($arg as node()?) as xs:anyURI?
+     *
+     * "The dm:document-uri accessor returns the value of the document-uri property of a
+     * document node, if it has one; otherwise it returns the empty sequence."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-document-uri}.
+     */
+    static final BuiltinFunction document_uri = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "document-uri"),
+        "item?",
+        "anyURI?",
+        DocumentUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
