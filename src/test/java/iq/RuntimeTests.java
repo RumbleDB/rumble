@@ -20,7 +20,6 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
 import scala.Function0;
 import scala.util.Properties;
 
@@ -33,13 +32,15 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
+
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 import java.io.File;
 import java.util.*;
 
 @RunWith(Parameterized.class)
-public class RuntimeTests extends AnnotationsTestsBase {
+public class RuntimeTests {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -139,13 +140,11 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
+        // System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
+        RumbleDBTestCommons.testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
+            true
         );
     }
 }
