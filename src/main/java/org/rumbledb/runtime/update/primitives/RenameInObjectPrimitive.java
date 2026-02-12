@@ -17,6 +17,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     private Item target;
     private Item selector;
     private Item content;
+    private Collection collection;
 
     public RenameInObjectPrimitive(
             Item targetObject,
@@ -36,11 +37,12 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
         this.target = targetObject;
         this.selector = targetName;
         this.content = replacementName;
+        this.collection = targetObject.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -62,7 +64,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     public void applyDelta() {
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
@@ -149,14 +151,14 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     public void arrayIndexingUpdateSchemaDelta() {
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
 
         String selectColQuery = "SELECT "
             + pathIn
             + this.selector.getStringValue()
             + " AS `"
-            + SparkSessionManager.atomicJSONiqItemColumnName
+            + SparkSessionManager.nonObjectJSONiqItemColumnName
             + "` FROM "
             + location
             + " WHERE `"
@@ -166,10 +168,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
 
         Dataset<Row> colDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectColQuery);
 
-        ItemType colType = ItemTypeFactory.createItemType(colDF.schema())
-            .getObjectContentFacet()
-            .get(SparkSessionManager.atomicJSONiqItemColumnName)
-            .getType();
+        // Column type is not an object
+        ItemType colType = ItemTypeFactory.createItemType(colDF.schema());
 
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
         String fullNewPath = pathInSchema + this.content.getStringValue();

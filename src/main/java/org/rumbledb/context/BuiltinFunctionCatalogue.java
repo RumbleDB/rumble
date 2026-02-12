@@ -106,6 +106,7 @@ import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
 import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
+import org.rumbledb.runtime.functions.xml.InScopePrefixesFunctionIterator;
 import org.rumbledb.runtime.functions.xml.NodeNameFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -527,6 +528,19 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * fn:in-scope-prefixes (Functions and Operators 3.1 Section 14.1)
+     * fn:in-scope-prefixes($element as element()) as xs:string*
+     * Returns the prefixes of the in-scope namespaces for $element.
+     */
+    static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
+        "item",
+        "string*",
+        InScopePrefixesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function that parses a text file
      */
     static final BuiltinFunction unparsed_text = createBuiltinFunction(
@@ -628,6 +642,17 @@ public class BuiltinFunctionCatalogue {
         "string",
         "item*",
         DeltaTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
+    /**
+     * function that parses an iceberg table
+     */
+    static final BuiltinFunction iceberg_table = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "iceberg-table"),
+        "string",
+        "item*",
+        IcebergTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
@@ -3099,6 +3124,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(mongodb_collection3.getIdentifier(), mongodb_collection3);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(delta_table.getIdentifier(), delta_table);
+        builtinFunctions.put(iceberg_table.getIdentifier(), iceberg_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);
@@ -3304,6 +3330,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
         builtinFunctions.put(name_with_arg.getIdentifier(), name_with_arg);
         builtinFunctions.put(name_without_arg.getIdentifier(), name_without_arg);
+        builtinFunctions.put(in_scope_prefixes.getIdentifier(), in_scope_prefixes);
         builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);
     }
 

@@ -139,4 +139,14 @@ public class DocumentItem implements Item {
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
+
+    @Override
+    public List<Item> namespaceNodes() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return new ArrayList<>();
+    }
 }

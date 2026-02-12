@@ -12,8 +12,9 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -423,6 +424,28 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     default boolean isTextNode() {
+        return false;
+    }
+
+    default boolean isCommentNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Namespace node.
+     *
+     * @return true if it is an XML Namespace node, false otherwise.
+     */
+    default boolean isNamespaceNode() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an XML Processing Instruction node.
+     *
+     * @return true if it is an XML Processing Instruction node, false otherwise.
+     */
+    default boolean isProcessingInstructionNode() {
         return false;
     }
 
@@ -1065,6 +1088,46 @@ public interface Item extends Serializable, KryoSerializable {
         return new ArrayList<>();
     }
 
+    /**
+     * dm:namespace-nodes accessor (XDM 3.1 Section 5.7).
+     *
+     * "dm:namespace-nodes($n as element()) as namespace-node()*"
+     *
+     * "The dm:namespace-nodes accessor returns the dynamic, unordered set of
+     * Namespace Nodes. It is defined on all seven node types."
+     *
+     * For element nodes, this returns the in-scope namespace nodes computed
+     * via parent chaining of declared namespaces. This does NOT include
+     * statically known namespaces from the query context.
+     * 
+     * For non-element nodes, the empty list is returned, according to the spec.
+     *
+     * For all other non-node item types, the default implementation throws
+     * UnsupportedOperationException.
+     *
+     * @return a list of namespace node items representing the in-scope namespace bindings
+     * @see <a href="https://www.w3.org/TR/xpath-datamodel-31/#dm-namespace-nodes">XDM 3.1: dm:namespace-nodes</a>
+     */
+    default List<Item> namespaceNodes() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * For element nodes, returns namespace nodes for the namespace bindings declared directly on this item.
+     * This does NOT include inherited or statically known namespaces —
+     * only the bindings explicitly declared on this element (e.g. via xmlns attributes).
+     * 
+     * For non-element nodes, the empty list is returned.
+     *
+     * For all other non-node item types, the default implementation throws
+     * UnsupportedOperationException.
+     *
+     * @return a list of NamespaceItem objects for each declared namespace binding on this element
+     */
+    default List<Item> declaredNamespaceNodes() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
     default String nodeName() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
@@ -1105,5 +1168,24 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default int setXmlDocumentPosition(String path, int current) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the collection to which the item belongs, if any.
+     * Only defined for top-level items.
+     * 
+     * @return the collection.
+     */
+    default Collection getCollection() {
+        return null;
+    }
+
+    /**
+     * Sets the collection to which the item belongs.
+     * Only defined for top-level items.
+     * 
+     * @param collection the collection.
+     */
+    default void setCollection(Collection collection) {
     }
 }

@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,7 +35,8 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
         super(null, staticContext);
-        this.item = ItemFactory.getInstance().createStringItem(StringEscapeUtils.unescapeJson(value));
+        // String unescaping is now handled in the translation visitor
+        this.item = ItemFactory.getInstance().createStringItem(value);
     }
 
     @Override

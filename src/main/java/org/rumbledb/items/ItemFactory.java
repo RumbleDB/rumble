@@ -5,8 +5,11 @@ import java.time.*;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -295,6 +298,10 @@ public class ItemFactory {
         return new TextItem(content);
     }
 
+    public Item createXmlCommentNode(String content) {
+        return new CommentItem(content);
+    }
+
     public Item createXmlAttributeNode(Node attribute) {
         return new AttributeItem(attribute);
     }
@@ -338,5 +345,27 @@ public class ItemFactory {
      */
     public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
+    }
+
+    /**
+     * Create a namespace item.
+     *
+     * @param prefix The namespace prefix (possibly empty)
+     * @param uri The namespace URI
+     * @return The namespace item
+     */
+    public Item createXmlNamespaceNode(String prefix, String uri) {
+        return new NamespaceItem(prefix, uri);
+    }
+
+    /**
+     * Create a processing instruction item.
+     *
+     * @param target The processing instruction target
+     * @param content The processing instruction content
+     * @return The processing instruction item
+     */
+    public Item createXmlProcessingInstructionNode(String target, String content) {
+        return new ProcessingInstructionItem(target, content);
     }
 }

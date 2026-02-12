@@ -84,13 +84,13 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
             return NativeClauseContext.NoNativeQuery;
         }
         StructField field = structSchema.fields()[structSchema.fieldIndex(
-            SparkSessionManager.atomicJSONiqItemColumnName
+            SparkSessionManager.nonObjectJSONiqItemColumnName
         )];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
         return new NativeClauseContext(
                 nativeClauseContext,
-                "`" + SparkSessionManager.atomicJSONiqItemColumnName + "`",
+                "`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`",
                 new SequenceType(variableType, SequenceType.Arity.One)
         );
     }

@@ -216,7 +216,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         StructType type = df.schema();
         DataType dataType = type;
         StructField[] fields = type.fields();
-        if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+        if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
             dataType = fields[0].dataType();
         }
         return ItemTypeFactory.createItemType(dataType);
@@ -254,7 +254,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     public static JSoundDataFrame convertToDataFrame(JavaRDD<?> rdd, ItemType itemType) {
         List<StructField> fields = Collections.singletonList(
             DataTypes.createStructField(
-                SparkSessionManager.atomicJSONiqItemColumnName,
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
                 TypeMappings.getDataFrameDataTypeFromItemType(itemType),
                 true
             )

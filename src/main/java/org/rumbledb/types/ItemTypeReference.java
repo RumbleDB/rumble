@@ -204,6 +204,13 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.findLeastCommonSuperTypeWith(other);
     }
 
+    public ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.findLeastCommonSuperTypeLax(other);
+    }
+
     public boolean isStaticallyCastableAs(ItemType other) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);

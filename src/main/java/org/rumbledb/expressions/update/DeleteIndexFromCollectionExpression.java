@@ -5,6 +5,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.runtime.update.primitives.Mode;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,13 +14,13 @@ public class DeleteIndexFromCollectionExpression extends Expression {
     private Expression collection;
     private Expression numDelete;
     private boolean isFirst;
-    private boolean isTable;
+    private Mode mode;
 
     public DeleteIndexFromCollectionExpression(
             Expression collection,
             Expression numDelete,
             boolean isFirst,
-            boolean isTable,
+            Mode mode,
             ExceptionMetadata metadata
     ) {
         // TODO: The current implementations only accounts for two callening modes- table, and delta-file
@@ -31,7 +32,7 @@ public class DeleteIndexFromCollectionExpression extends Expression {
         this.collection = collection;
         this.numDelete = numDelete;
         this.isFirst = isFirst;
-        this.isTable = isTable;
+        this.mode = mode;
     }
 
     public Expression getCollection() {
@@ -42,8 +43,8 @@ public class DeleteIndexFromCollectionExpression extends Expression {
         return this.numDelete;
     }
 
-    public boolean isTable() {
-        return this.isTable;
+    public Mode getMode() {
+        return this.mode;
     }
 
     public boolean isFirst() {

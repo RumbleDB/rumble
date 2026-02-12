@@ -13,7 +13,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.net.URI;
 import java.util.List;
 
-
 public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
