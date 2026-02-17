@@ -50,8 +50,8 @@ import java.util.List;
  * - "If the argument is omitted, it defaults to the context item."
  * - "If the argument is supplied and is the empty sequence, the function returns the empty sequence."
  * - "Otherwise, the function returns the result of applying the dm:node-name accessor to the node
- *    identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
- *    function returns the empty sequence."
+ * identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
+ * function returns the empty sequence."
  *
  * In this implementation, the optional xs:QName result is represented via the existing Item.nodeName()
  * accessor defined on Item and implemented by XML node item classes. A non-null, non-empty lexical
@@ -97,7 +97,8 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         // by XML node item classes (see Item.nodeName()).
         String nodeName = node.nodeName();
 
-        // Spec: "If the dm:node-name accessor returns the empty sequence, then the function returns the empty sequence."
+        // Spec: "If the dm:node-name accessor returns the empty sequence, then the function returns the empty
+        // sequence."
         if (nodeName == null || nodeName.isEmpty()) {
             this.resultItem = null;
             this.hasNext = false;
