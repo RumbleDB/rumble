@@ -22,7 +22,6 @@ import org.rumbledb.types.ItemType;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -1080,62 +1079,229 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.1 attributes Accessor.
+     *
+     * dm:attributes($n as node()) as attribute()*
+     *
+     * "The dm:attributes accessor returns the dynamic, unordered set of attribute nodes that
+     * have the node as their parent. It is defined only on element and document nodes; for
+     * other node kinds it returns the empty sequence."
+     */
     default List<Item> attributes() {
-        return new ArrayList<>();
-    }
-
-    default List<Item> children() {
-        return new ArrayList<>();
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * dm:namespace-nodes accessor (XDM 3.1 Section 5.7).
+     * XDM 3.1 Section 5.3 children Accessor.
      *
-     * "dm:namespace-nodes($n as element()) as namespace-node()*"
+     * dm:children($n as node()) as node()*
      *
-     * "The dm:namespace-nodes accessor returns the dynamic, unordered set of
-     * Namespace Nodes. It is defined on all seven node types."
+     * "The dm:children accessor returns the dynamic, ordered sequence of child nodes of the
+     * node. It is defined on all node kinds except attribute and namespace nodes; for those
+     * node kinds it returns the empty sequence."
+     */
+    default List<Item> children() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.7 namespace-nodes Accessor.
      *
-     * For element nodes, this returns the in-scope namespace nodes computed
-     * via parent chaining of declared namespaces. This does NOT include
-     * statically known namespaces from the query context.
-     * 
-     * For non-element nodes, the empty list is returned, according to the spec.
+     * dm:namespace-nodes($n as node()) as namespace-node()*
      *
-     * For all other non-node item types, the default implementation throws
-     * UnsupportedOperationException.
+     * "The dm:namespace-nodes accessor returns the dynamic, unordered set of Namespace Nodes. It
+     * is defined on all seven node kinds."
      *
-     * @return a list of namespace node items representing the in-scope namespace bindings
-     * @see <a href="https://www.w3.org/TR/xpath-datamodel-31/#dm-namespace-nodes">XDM 3.1: dm:namespace-nodes</a>
+     * This default implementation is only a placeholder on the generic Item interface and must
+     * be overridden by XML node implementations that support namespaces.
      */
     default List<Item> namespaceNodes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * For element nodes, returns namespace nodes for the namespace bindings declared directly on this item.
-     * This does NOT include inherited or statically known namespaces —
-     * only the bindings explicitly declared on this element (e.g. via xmlns attributes).
-     * 
-     * For non-element nodes, the empty list is returned.
+     * Helper accessor for XML element nodes: returns namespace nodes for the namespace bindings
+     * declared directly on the element. This does not include inherited or statically known
+     * namespaces — only the bindings explicitly declared on the element (for example via
+     * xmlns attributes).
      *
-     * For all other non-node item types, the default implementation throws
-     * UnsupportedOperationException.
-     *
-     * @return a list of NamespaceItem objects for each declared namespace binding on this element
+     * Non-element nodes must override this to return the empty sequence.
      */
     default List<Item> declaredNamespaceNodes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.9 node-kind Accessor.
+     *
+     * dm:node-kind($n as node()) as xs:string
+     *
+     * "The dm:node-kind accessor returns the kind of the node. The node kind is one of the
+     * strings \"document\", \"element\", \"attribute\", \"text\", \"namespace\", \"processing-instruction\",
+     * or \"comment\"."
+     *
+     * This default implementation is only a placeholder on the generic Item interface and must
+     * be overridden by XML node implementations.
+     */
+    default String nodeKind() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.2 base-uri Accessor.
+     *
+     * dm:base-uri($n as node()) as xs:anyURI?
+     *
+     * "The dm:base-uri accessor returns the value of the base-uri property of the node, if it
+     * has one; otherwise it returns the empty sequence."
+     */
+    default List<Item> baseUri() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.4 document-uri Accessor.
+     *
+     * dm:document-uri($n as document-node()) as xs:anyURI?
+     *
+     * "The dm:document-uri accessor returns the value of the document-uri property of a
+     * document node, if it has one; otherwise it returns the empty sequence."
+     */
+    default List<Item> documentUri() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.5 is-id Accessor.
+     *
+     * dm:is-id($n as node()) as xs:boolean
+     *
+     * "The dm:is-id accessor returns true if the node is an attribute node whose type is
+     * xs:ID or is derived by restriction from xs:ID; otherwise it returns false."
+     */
+    default boolean isId() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.6 is-idrefs Accessor.
+     *
+     * dm:is-idrefs($n as node()) as xs:boolean
+     *
+     * "The dm:is-idrefs accessor returns true if the node is an attribute node whose type is
+     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
+     * it returns false."
+     */
+    default boolean isIdrefs() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.8 nilled Accessor.
+     *
+     * dm:nilled($n as node()) as xs:boolean?
+     *
+     * "The dm:nilled accessor returns true if the element node is nilled, false if the element
+     * node is not nilled, or the empty sequence if the concept of nilled does not apply."
+     *
+     * In this API, the optional xs:boolean result is represented as a sequence of zero or one
+     * Items.
+     */
+    default List<Item> nilled() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.13 type-name Accessor.
+     *
+     * dm:type-name($n as node()) as xs:QName?
+     *
+     * "The dm:type-name accessor returns the name of the dynamic type of the node, or the
+     * empty sequence if the node is untyped."
+     */
+    default List<Item> typeName() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.14 typed-value Accessor.
+     *
+     * dm:typed-value($n as node()) as xs:anyAtomicType*
+     *
+     * "The dm:typed-value accessor returns the typed value of the node as a sequence of zero
+     * or more atomic values."
+     *
+     * In this API, the typed value is exposed as a sequence of Items, which are expected to be
+     * atomic items in the XDM sense.
+     */
+    default List<Item> typedValue() {
+        return this.atomizedValue();
+    }
+
+    /**
+     * XDM 3.1 Section 5.15 unparsed-entity-public-id Accessor.
+     *
+     * dm:unparsed-entity-public-id($n as document-node(), $name as xs:string)
+     * as xs:string?
+     *
+     * "The dm:unparsed-entity-public-id accessor returns the public identifier of an
+     * unparsed entity with a given name in the document, or the empty sequence if there is
+     * no such entity or if it has no public identifier."
+     */
+    default List<Item> unparsedEntityPublicId(String name) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.16 unparsed-entity-system-id Accessor.
+     *
+     * dm:unparsed-entity-system-id($n as document-node(), $name as xs:string)
+     * as xs:anyURI?
+     *
+     * "The dm:unparsed-entity-system-id accessor returns the system identifier of an
+     * unparsed entity with a given name in the document, or the empty sequence if there is
+     * no such entity or if it has no system identifier."
+     */
+    default List<Item> unparsedEntitySystemId(String name) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * XDM 3.1 Section 5.10 node-name Accessor.
+     *
+     * dm:node-name($n as node()) as xs:QName?
+     *
+     * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
+     * sequence if the node does not have a name."
+     */
     default String nodeName() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.11 parent Accessor.
+     *
+     * dm:parent($n as node()) as node()?
+     *
+     * "The dm:parent accessor returns the parent of the node, or the empty sequence if the
+     * node has no parent."
+     */
     default Item parent() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    /**
+     * XDM 3.1 Section 5.12 string-value Accessor.
+     *
+     * dm:string-value($n as node()) as xs:string
+     *
+     * "The dm:string-value accessor returns the string-value of the node as defined for each
+     * node kind."
+     *
+     * In this API, node string values are exposed via getStringValue() and the default
+     * implementation of dm:typed-value delegates to atomizedValue().
+     */
     default List<Item> atomizedValue() {
         if (isAtomic())
             return Collections.singletonList(this);

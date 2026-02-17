@@ -26,11 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.StringItem;
-import org.rumbledb.items.xml.AttributeItem;
-import org.rumbledb.items.xml.CommentItem;
-import org.rumbledb.items.xml.DocumentItem;
-import org.rumbledb.items.xml.ElementItem;
-import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
@@ -79,52 +74,29 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
                 return new StringItem("");
             }
 
-            // Check if node is a supported XML node type
-            if (
-                node instanceof DocumentItem
-                    || node instanceof ElementItem
-                    || node instanceof AttributeItem
-                    || node instanceof TextItem
-                    || node instanceof CommentItem
-            ) {
+            // Check if the item is an XML node; otherwise, raise a type error.
+            if (!node.isNode()) {
+                throw new UnexpectedTypeException(
+                        "The argument must be a reference to an XML node",
+                        getMetadata()
+                );
+            }
 
-                // If the node has no name (document, comment, text, namespace node with no name),
-                // return the zero-length string
-                if (node instanceof DocumentItem || node instanceof TextItem || node instanceof CommentItem) {
-                    return new StringItem("");
-                }
+            // Use the generic XDM 3.1 node-name accessor defined on Item and implemented
+            // by XML node item classes (see Item.nodeName()).
+            String nodeName = node.nodeName();
 
-                // For element and attribute nodes, get the node name
-                if (node instanceof ElementItem) {
-                    ElementItem element = (ElementItem) node;
-                    String nodeName = element.nodeName();
-                    if (nodeName != null && !nodeName.isEmpty()) {
-                        // Return the string representation of the QName
-                        // This includes the namespace prefix if present
-                        return new StringItem(nodeName);
-                    } else {
-                        return new StringItem("");
-                    }
-                } else if (node instanceof AttributeItem) {
-                    AttributeItem attribute = (AttributeItem) node;
-                    String nodeName = attribute.nodeName();
-                    if (nodeName != null && !nodeName.isEmpty()) {
-                        // Return the string representation of the QName
-                        // This includes the namespace prefix if present
-                        return new StringItem(nodeName);
-                    } else {
-                        return new StringItem("");
-                    }
-                }
-
-                // Fallback for other supported node types that have no name
+            // If the node has no name (for example, document, comment, text, or a namespace node
+            // without a name), the accessor returns null or the empty string. In both cases,
+            // fn:name returns the zero-length string.
+            if (nodeName == null || nodeName.isEmpty()) {
                 return new StringItem("");
             }
 
-            throw new UnexpectedTypeException(
-                    "The argument must be a reference to a supported XML node type",
-                    getMetadata()
-            );
+            // For named nodes (elements, attributes, processing instructions, namespace nodes with
+            // a non-empty name), return the lexical form of the QName or name as provided by
+            // the node implementation.
+            return new StringItem(nodeName);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " name function", getMetadata());
     }

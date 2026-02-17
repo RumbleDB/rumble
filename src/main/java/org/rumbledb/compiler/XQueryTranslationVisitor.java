@@ -134,10 +134,13 @@ import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.CommentTest;
 import org.rumbledb.expressions.xml.node_test.DocumentTest;
 import org.rumbledb.expressions.xml.node_test.ElementTest;
 import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
@@ -2885,12 +2888,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
     }
 
+    // XQuery 3.1 Section 2.5.5 - SequenceType Matching
+    // KindTest ::= DocumentTest | ElementTest | AttributeTest | SchemaElementTest
+    // | SchemaAttributeTest | PITest | CommentTest | TextTest
+    // | NamespaceNodeTest | AnyKindTest
     private NodeTest getKindTest(ParseTree kindTest) {
         if (kindTest instanceof XQueryParser.DocumentTestContext) {
+            // XQuery 3.1 Section 2.5.5.3 - Element Test (used within DocumentTest)
+            // DocumentTest ::= "document-node" "(" (ElementTest | SchemaElementTest)? ")"
+            // document-node() matches any document node.
+            // document-node(element(...)) matches a document node containing an element matching the ElementTest.
             XQueryParser.DocumentTestContext docContext = (XQueryParser.DocumentTestContext) kindTest;
             if (docContext.schemaElementTest() != null) {
                 throw new UnsupportedFeatureException(
-                        "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                        "Schema element tests within document-node() are not supported",
                         createMetadataFromContext((ParserRuleContext) kindTest)
                 );
             }
@@ -2899,7 +2910,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             return new DocumentTest(getKindTest(docContext.elementTest()));
         } else if (kindTest instanceof XQueryParser.ElementTestContext) {
+            // XQuery 3.1 Section 2.5.5.3 - Element Test
+            // ElementTest ::= "element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
+            // element() and element(*) match any single element node.
+            // element(N) matches any element node whose name is N.
+            // element(N, T) matches an element node whose name is N and whose type annotation is T.
+            // element(*, T) matches any element node whose type annotation is T.
+            // element(N, T?) also matches nillable elements (validation-related, unsupported).
             XQueryParser.ElementTestContext elementContext = (XQueryParser.ElementTestContext) kindTest;
+            // Reject the nillable marker "?" (validation-related feature)
+            if (elementContext.optional != null) {
+                throw new UnsupportedFeatureException(
+                        "Nillable element tests (element(name, type?)) are not supported (validation feature)",
+                        createMetadataFromContext((ParserRuleContext) kindTest)
+                );
+            }
             Name elementName;
             if (elementContext.elementNameOrWildcard() != null) {
                 boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
@@ -2916,40 +2941,110 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false);
                     return new ElementTest(elementName, typeName);
                 }
+                // Wildcard case: element(*) or element(*, type)
+                if (elementContext.typeName() != null) {
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false);
+                    return new ElementTest(typeName);
+                }
                 return new ElementTest(true);
             }
             return new ElementTest();
         } else if (kindTest instanceof XQueryParser.AttributeTestContext) {
+            // XQuery 3.1 Section 2.5.5.5 - Attribute Test
+            // AttributeTest ::= "attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")"
+            // attribute() and attribute(*) match any single attribute node.
+            // attribute(N) matches any attribute node whose name is N.
+            // attribute(N, T) matches an attribute node whose name is N and whose type annotation is T.
+            // attribute(*, T) matches any attribute node whose type annotation is T.
             XQueryParser.AttributeTestContext attributeTestContext =
                 (XQueryParser.AttributeTestContext) kindTest;
-            Name elementName;
+            Name attributeName;
             if (attributeTestContext.attributeNameOrWildcard() != null) {
                 boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
                 if (!hasWildcard) {
-                    elementName = parseEqName(
+                    attributeName = parseEqName(
                         attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
                         false,
                         false,
                         false
                     );
                     if (attributeTestContext.typeName() != null) {
-                        Name typeName = parseEqName(attributeTestContext.typeName().eqName(), false, false, false);
-                        return new AttributeTest(elementName, typeName);
+                        Name typeName = parseEqName(
+                            attributeTestContext.typeName().eqName(),
+                            false,
+                            false,
+                            false
+                        );
+                        return new AttributeTest(attributeName, typeName);
                     } else {
-                        return new AttributeTest(elementName, null);
+                        return new AttributeTest(attributeName, null);
                     }
                 } else {
+                    // Wildcard case: attribute(*) or attribute(*, type)
+                    if (attributeTestContext.typeName() != null) {
+                        Name typeName = parseEqName(
+                            attributeTestContext.typeName().eqName(),
+                            false,
+                            false,
+                            false
+                        );
+                        return new AttributeTest(typeName);
+                    }
                     return new AttributeTest(true);
                 }
             }
             return new AttributeTest();
         } else if (kindTest instanceof XQueryParser.TextTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // TextTest ::= "text" "(" ")"
+            // A TextTest matches any text node.
             return new TextTest();
+        } else if (kindTest instanceof XQueryParser.CommentTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // CommentTest ::= "comment" "(" ")"
+            // A CommentTest matches any comment node.
+            return new CommentTest();
+        } else if (kindTest instanceof XQueryParser.PiTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
+            // processing-instruction() matches any processing-instruction node.
+            // processing-instruction(N) matches any processing-instruction node whose target name equals N.
+            XQueryParser.PiTestContext piContext = (XQueryParser.PiTestContext) kindTest;
+            if (piContext.ncName() != null) {
+                return new PITest(piContext.ncName().getText());
+            }
+            if (piContext.stringLiteral() != null) {
+                String rawValue = piContext.stringLiteral().getText();
+                // Strip surrounding quotes from the string literal
+                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                return new PITest(targetName);
+            }
+            return new PITest();
+        } else if (kindTest instanceof XQueryParser.NamespaceNodeTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // NamespaceNodeTest ::= "namespace-node" "(" ")"
+            // A NamespaceNodeTest matches any namespace node.
+            return new NamespaceNodeTest();
         } else if (kindTest instanceof XQueryParser.AnyKindTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // AnyKindTest ::= "node" "(" ")"
+            // node() matches any node.
             return new AnyKindTest();
+        } else if (kindTest instanceof XQueryParser.SchemaElementTestContext) {
+            // XQuery 3.1 Section 2.5.5.4 - Schema Element Test (unsupported, requires schema import)
+            throw new UnsupportedFeatureException(
+                    "Schema element tests (schema-element(...)) are not supported",
+                    createMetadataFromContext((ParserRuleContext) kindTest)
+            );
+        } else if (kindTest instanceof XQueryParser.SchemaAttributeTestContext) {
+            // XQuery 3.1 Section 2.5.5.6 - Schema Attribute Test (unsupported, requires schema import)
+            throw new UnsupportedFeatureException(
+                    "Schema attribute tests (schema-attribute(...)) are not supported",
+                    createMetadataFromContext((ParserRuleContext) kindTest)
+            );
         } else {
             throw new UnsupportedFeatureException(
-                    "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                    "Unsupported kind test: " + kindTest.getText(),
                     createMetadataFromContext((ParserRuleContext) kindTest)
             );
         }
