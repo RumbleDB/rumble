@@ -355,7 +355,7 @@ copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
 
 ///////////////////////// Top Level Updating Expressions
 
-createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')' Kwith content=exprSingle; 
+createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')' (Kwith content=exprSingle)?;
 
 deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
 

@@ -3,6 +3,7 @@ package org.rumbledb.expressions.update;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.update.primitives.Mode;
@@ -21,8 +22,7 @@ public class CreateCollectionExpression extends Expression {
             Mode mode,
             ExceptionMetadata metadata
     ) {
-        // TODO: The current implementations only accounts for two callening modes- table, and delta-file
-        // Extension to other modes can be done by increasing flags for using enum instead
+        // Currently supports HIVE/DELTA/ICEBERG
         super(metadata);
         if (collection == null) {
             throw new OurBadException("Collection must be identified for creation.");
@@ -71,9 +71,12 @@ public class CreateCollectionExpression extends Expression {
         sb.append("(");
         this.collection.serializeToJSONiq(sb, 0);
         sb.append(")");
-        sb.append(" with ");
-        this.contentExpression.serializeToJSONiq(sb, 1);
-        sb.append("\n");
+        if (!(this.contentExpression instanceof CommaExpression)) {
+            // collection is created non-empty
+            sb.append(" with ");
+            this.contentExpression.serializeToJSONiq(sb, 1);
+            sb.append("\n");
+        }
     }
 
 }

@@ -80,11 +80,12 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
                     .save();
                 break;
             case ICEBERG:
-                this.contents.writeTo(this.collection.getPhysicalName())
+                // Specify creating in 'iceberg' catalog
+                this.contents.writeTo(this.collection.getLogicalName())
                     .using("iceberg")
                     .createOrReplace();
 
-                // turn on schema evolution for the table
+                // Turn on schema evolution for the table
                 SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
                 session.sql(
                     String.format(

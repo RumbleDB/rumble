@@ -70,9 +70,6 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         }
 
         String tableName = this.collection.getLogicalName();
-        if (mode == Mode.ICEBERG) {
-            tableName = this.collection.getPhysicalName();
-        }
 
         // Table not found
         if (!session.catalog().tableExists(tableName)) {

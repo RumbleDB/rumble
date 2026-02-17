@@ -112,6 +112,28 @@ RuntimeTestsNoInlining:
     reports:
       junit: target/surefire-reports/TEST-iq.RuntimeTestsNoInlining.xml
 
+DeltaUpdateRuntimeTests:
+  stage: tests
+  script:
+    - mvn -Dtest=DeltaUpdateRuntimeTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.DeltaUpdateRuntimeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.DeltaUpdateRuntimeTests.xml
+
+IcebergUpdateRuntimeTests:
+  stage: tests
+  script:
+    - mvn -Dtest=IcebergUpdateRuntimeTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.IcebergUpdateRuntimeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.IcebergUpdateRuntimeTests.xml
+
 NativeFLWORRuntimeTests:
   stage: tests
   script:

@@ -41,12 +41,12 @@ import java.io.IOException;
 import java.util.*;
 
 @RunWith(Parameterized.class)
-public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
+public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/test/resources/test_files/runtime-delta-updates"
+                "/src/test/resources/test_files/runtime-iceberg-updates"
     );
     public static final String javaVersion =
         System.getProperty("java.version");
@@ -81,12 +81,12 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         );
     }
 
-    protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
+    protected static final RumbleRuntimeConfiguration createIcebergConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
                 "yes",
                 "--output-format",
-                "delta",
+                "iceberg",
                 "--show-error-info",
                 "yes",
                 "--apply-updates",
@@ -94,12 +94,12 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             }
     );
 
-    protected static final RumbleRuntimeConfiguration deleteDeltaConfiguration = new RumbleRuntimeConfiguration(
+    protected static final RumbleRuntimeConfiguration deleteIcebergConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
                 "yes",
                 "--output-format",
-                "delta",
+                "iceberg",
                 "--show-error-info",
                 "yes",
                 "--apply-updates",
@@ -112,7 +112,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     protected final File testFile;
 
 
-    public DeltaUpdateRuntimeTests(File testFile) {
+    public IcebergUpdateRuntimeTests(File testFile) {
         this.testFile = testFile;
     }
 
@@ -129,7 +129,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
             innerMap.put(dim2, file);
             updateDimToFileMap.put(dim1, innerMap);
         }
-        DeltaUpdateRuntimeTests._testFilesMap = updateDimToFileMap;
+        IcebergUpdateRuntimeTests._testFilesMap = updateDimToFileMap;
     }
 
     @Parameterized.Parameters(name = "{index}:{0}")
@@ -137,7 +137,7 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         List<Object[]> result = new ArrayList<>();
 
         // Base test folder
-        File baseDir = DeltaUpdateRuntimeTests.runtimeTestsDirectory;
+        File baseDir = IcebergUpdateRuntimeTests.runtimeTestsDirectory;
 
         // Optional subdirectory via -Ddir
         String subDir = System.getProperty("dir");
@@ -147,15 +147,15 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
 
         // Check existence
         if (!chosenDir.exists() || !chosenDir.isDirectory()) {
-            throw new IOException("[DeltaUpdateRuntimeTests] Subdirectory not found: " + chosenDir.getAbsolutePath());
+            throw new IOException("[IcebergUpdateRuntimeTests] Subdirectory not found: " + chosenDir.getAbsolutePath());
         }
 
-        DeltaUpdateRuntimeTests.readFileList(chosenDir);
+        IcebergUpdateRuntimeTests.readFileList(chosenDir);
 
         Map<Integer, File> innerMap;
         File curr;
-        for (int i : DeltaUpdateRuntimeTests._testFilesMap.keySet()) {
-            innerMap = DeltaUpdateRuntimeTests._testFilesMap.get(i);
+        for (int i : IcebergUpdateRuntimeTests._testFilesMap.keySet()) {
+            innerMap = IcebergUpdateRuntimeTests._testFilesMap.get(i);
             for (int j : innerMap.keySet()) {
                 curr = innerMap.get(j);
                 result.add(new Object[] { curr });
@@ -176,11 +176,17 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
-        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
-                                                                                                   // store
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
-                                                                                                                      // delta
-                                                                                                                      // store
+        // ^ the above was copied from DeltaUpdateRuntimeTests
+        // below is the same as in session.py
+        sparkConfiguration.set(
+            "spark.sql.extensions",
+            "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
+        ); // enables iceberg
+        sparkConfiguration.set("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog"); // enables iceberg
+        sparkConfiguration.set("spark.sql.catalog.iceberg.type", "hadoop");
+        sparkConfiguration.set("spark.sql.catalog.iceberg.warehouse", "./iceberg-warehouse");
+        sparkConfiguration.set("spark.sql.iceberg.check-ordering", "false");
+        sparkConfiguration.set("spark.sql.iceberg.check-nullability", "false");
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
