@@ -570,7 +570,8 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction node_name_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
-        "QName?",
+        // TODO: change to QName? after XML atomic types are implemented
+        "string?",
         NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -578,7 +579,8 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction node_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
         "item?",
-        "QName?",
+        // TODO: change to QName? after XML atomic types are implemented
+        "string?",
         NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
