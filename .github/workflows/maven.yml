@@ -70,7 +70,8 @@ jobs:
           "MLTestsNativeDeactivated",
           "XMLTests",
           "XQueryTests",
-          "DeltaUpdateRuntimeTests"
+          "DeltaUpdateRuntimeTests",
+          "IcebergUpdateRuntimeTests"
         ]
     steps:
       - uses: actions/checkout@v3

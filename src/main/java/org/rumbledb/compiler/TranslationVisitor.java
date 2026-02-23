@@ -1408,7 +1408,13 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
         Expression collection = (Expression) this.visitExprSimple(ctx.collection_name);
-        Expression contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        Expression contentExpression;
+        if (ctx.content != null) {
+            contentExpression = (Expression) this.visitExprSingle(ctx.content);
+        } else {
+            // use a CommaExpression as placeholder if the collection is created empty
+            contentExpression = new CommaExpression(createMetadataFromContext(ctx));
+        }
         Mode mode = Mode.fromString(ctx.collectionMode.getText());
         return new CreateCollectionExpression(
                 collection,
@@ -2867,5 +2873,4 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
 }
-
 
