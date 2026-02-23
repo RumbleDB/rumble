@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
@@ -102,8 +100,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                     }
                 }
             }
-            Dataset<Row> objectDF = manager.getOrCreateSession().sql(setFieldQuery);
-            objectDF.show();
+            manager.getOrCreateSession().sql(setFieldQuery);
         } else {
             this.arrayIndexingApplyDelta();
 

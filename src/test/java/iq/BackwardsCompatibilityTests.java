@@ -66,6 +66,10 @@ public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
                     "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
+                    "--result-size",
+                    "0",
+                    "--materialization-cap",
+                    "200",
                     "--apply-updates",
                     "yes" }
         );
