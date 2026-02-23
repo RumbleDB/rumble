@@ -8,7 +8,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -127,7 +126,17 @@ public class NamespaceItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.namespaceNode;
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — node-kind.
+     *
+     * "For a Namespace Node, dm:node-kind returns the string \"namespace\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "namespace";
     }
 
     @Override
@@ -152,12 +161,101 @@ public class NamespaceItem implements Item {
 
     @Override
     public List<Item> namespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     @Override
     public List<Item> declaredNamespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — attributes.
+     *
+     * For a Namespace Node, dm:attributes returns the empty sequence.
+     */
+    @Override
+    public List<Item> attributes() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — children.
+     *
+     * For a Namespace Node, dm:children returns the empty sequence.
+     */
+    @Override
+    public List<Item> children() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — base-uri.
+     *
+     * For a Namespace Node, dm:base-uri returns the base URI of the parent node, if it has one;
+     * otherwise it returns the empty sequence.
+     */
+    @Override
+    public List<Item> baseUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.baseUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — document-uri.
+     *
+     * For a Namespace Node, dm:document-uri returns the document-uri of the document node that is
+     * the root of the tree containing the namespace node, if it has one; otherwise it returns
+     * the empty sequence.
+     */
+    @Override
+    public List<Item> documentUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.documentUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — is-id.
+     *
+     * For a Namespace Node, dm:is-id returns false.
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — is-idrefs.
+     *
+     * For a Namespace Node, dm:is-idrefs returns false.
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — nilled.
+     *
+     * For a Namespace Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.4 Namespace Node Accessors — type-name.
+     *
+     * For a Namespace Node, dm:type-name returns the empty sequence.
+     */
+    @Override
+    public List<Item> typeName() {
+        return Collections.emptyList();
     }
 }
 

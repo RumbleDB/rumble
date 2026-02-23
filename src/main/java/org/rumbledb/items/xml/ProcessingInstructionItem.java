@@ -9,7 +9,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,7 +72,7 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.item;
+        return BuiltinTypesCatalogue.processingInstructionNode;
     }
 
     @Override
@@ -123,12 +122,111 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public List<Item> namespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     @Override
     public List<Item> declaredNamespaceNodes() {
-        return new ArrayList<>();
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — node-kind.
+     *
+     * For a Processing Instruction Node, dm:node-kind returns the string "processing-instruction".
+     */
+    @Override
+    public String nodeKind() {
+        return "processing-instruction";
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — attributes.
+     *
+     * For a Processing Instruction Node, dm:attributes returns the empty sequence.
+     */
+    @Override
+    public List<Item> attributes() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — children.
+     *
+     * For a Processing Instruction Node, dm:children returns the empty sequence.
+     */
+    @Override
+    public List<Item> children() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — base-uri.
+     *
+     * For a Processing Instruction Node, dm:base-uri returns the base URI of the parent node,
+     * if it has one; otherwise it returns the empty sequence.
+     */
+    @Override
+    public List<Item> baseUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.baseUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — document-uri.
+     *
+     * For a Processing Instruction Node, dm:document-uri returns the document-uri of the
+     * document node that is the root of the tree containing the processing instruction node,
+     * if it has one; otherwise it returns the empty sequence.
+     */
+    @Override
+    public List<Item> documentUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.documentUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — is-id.
+     *
+     * For a Processing Instruction Node, dm:is-id returns false.
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — is-idrefs.
+     *
+     * For a Processing Instruction Node, dm:is-idrefs returns false.
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — nilled.
+     *
+     * For a Processing Instruction Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — type-name.
+     *
+     * For a Processing Instruction Node, dm:type-name returns the empty sequence.
+     */
+    @Override
+    public List<Item> typeName() {
+        return Collections.emptyList();
     }
 }
 
