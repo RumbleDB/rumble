@@ -283,6 +283,100 @@ public class BuiltinTypesCatalogue {
             )
     );
 
+    public static final ItemType QNameItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "QName"),
+            Collections.emptySet()
+    );
+
+    public static final ItemType NOTATIONItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "NOTATION"),
+            Collections.emptySet()
+    );
+
+    // String-derived types per XDM 3.1 hierarchy:
+    // string -> normalizedString -> token -> (language, NMTOKEN, Name -> NCName -> ID, IDREF, ENTITY)
+
+    public static final ItemType normalizedStringItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "normalizedString"),
+            stringItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType tokenItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "token"),
+            normalizedStringItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType languageItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "language"),
+            tokenItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType NMTOKENItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "NMTOKEN"),
+            tokenItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType NameItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "Name"),
+            tokenItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType NCNameItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "NCName"),
+            NameItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType IDItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "ID"),
+            NCNameItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType IDREFItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "IDREF"),
+            NCNameItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
+    public static final ItemType ENTITYItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "ENTITY"),
+            NCNameItem,
+            stringItem,
+            // TODO : add facets
+            new Facets(),
+            false
+    );
+
     public static final ItemType integerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "integer"),
             decimalItem,
@@ -517,7 +611,18 @@ public class BuiltinTypesCatalogue {
         unsignedIntItem,
         unsignedLongItem,
         unsignedShortItem,
-        unsignedByteItem
+        unsignedByteItem,
+        QNameItem,
+        NOTATIONItem,
+        normalizedStringItem,
+        tokenItem,
+        languageItem,
+        NMTOKENItem,
+        NameItem,
+        NCNameItem,
+        IDItem,
+        IDREFItem,
+        ENTITYItem
     );
 
     public static ItemType getItemTypeByName(Name name) {
