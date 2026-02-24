@@ -330,6 +330,13 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getExplicitTimezoneFacet();
     }
 
+    public WhitespaceFacet getWhitespaceFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getWhitespaceFacet();
+    }
+
     public Map<String, FieldDescriptor> getObjectContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);

@@ -27,9 +27,11 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.CONSTRAINTS,
                         FacetTypes.LENGTH,
                         FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        FacetTypes.MAXLENGTH,
+                        FacetTypes.WHITESPACE
                     )
-            )
+            ),
+            WhitespaceFacet.PRESERVE
     );
 
     // numeric is a union type for xs:double, xs:float, xs:decimal
@@ -300,8 +302,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "normalizedString"),
             stringItem,
             stringItem,
-            // TODO : add facets
-            new Facets(),
+            Facets.createWhitespaceFacets(WhitespaceFacet.REPLACE),
             false
     );
 
@@ -309,8 +310,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "token"),
             normalizedStringItem,
             stringItem,
-            // TODO : add facets
-            new Facets(),
+            Facets.createWhitespaceFacets(WhitespaceFacet.COLLAPSE),
             false
     );
 
@@ -318,7 +318,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "language"),
             tokenItem,
             stringItem,
-            // TODO : add facets
+            // derived from token, so whitespace is COLLAPSE
             new Facets(),
             false
     );
@@ -327,7 +327,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "NMTOKEN"),
             tokenItem,
             stringItem,
-            // TODO : add facets
+            // derived from token, so whitespace is COLLAPSE
             new Facets(),
             false
     );
@@ -336,7 +336,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "Name"),
             tokenItem,
             stringItem,
-            // TODO : add facets
+            // derived from token, so whitespace is COLLAPSE
             new Facets(),
             false
     );
@@ -345,7 +345,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "NCName"),
             NameItem,
             stringItem,
-            // TODO : add facets
+            // derived from Name, so whitespace is COLLAPSE
             new Facets(),
             false
     );
@@ -354,7 +354,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "ID"),
             NCNameItem,
             stringItem,
-            // TODO : add facets
+            // derived from NCName, so whitespace is COLLAPSE
             new Facets(),
             false
     );
@@ -363,7 +363,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "IDREF"),
             NCNameItem,
             stringItem,
-            // TODO : add facets
+            // derived from NCName, so whitespace is COLLAPSE
             new Facets(),
             false
     );
@@ -372,7 +372,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "ENTITY"),
             NCNameItem,
             stringItem,
-            // TODO : add facets
+            // derived from NCName, so whitespace is COLLAPSE
             new Facets(),
             false
     );

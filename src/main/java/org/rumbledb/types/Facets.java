@@ -64,6 +64,7 @@ public class Facets {
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
+    private WhitespaceFacet whiteSpace;
 
     public Facets() {
 
@@ -163,6 +164,20 @@ public class Facets {
 
     public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
         this.explicitTimezone = explicitTimezone;
+    }
+
+    public WhitespaceFacet getWhiteSpace() {
+        return this.whiteSpace;
+    }
+
+    public void setWhiteSpace(WhitespaceFacet whiteSpace) {
+        this.whiteSpace = whiteSpace;
+    }
+
+    public static Facets createWhitespaceFacets(WhitespaceFacet whiteSpace) {
+        Facets facets = new Facets();
+        facets.setWhiteSpace(whiteSpace);
+        return facets;
     }
 
     public static Facets createAtomicTypeFacets(

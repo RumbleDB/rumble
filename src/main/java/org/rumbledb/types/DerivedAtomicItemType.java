@@ -28,6 +28,7 @@ public class DerivedAtomicItemType implements ItemType {
     private List<String> constraints;
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
+    private WhitespaceFacet whiteSpace;
 
     DerivedAtomicItemType() {
     }
@@ -63,6 +64,7 @@ public class DerivedAtomicItemType implements ItemType {
         this.fractionDigits = facets.getFractionDigits();
 
         this.explicitTimezone = facets.getExplicitTimezone();
+        this.whiteSpace = facets.getWhiteSpace();
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
@@ -117,6 +119,7 @@ public class DerivedAtomicItemType implements ItemType {
             output.writeInt(-1);
         }
         kryo.writeObjectOrNull(output, this.explicitTimezone, TimezoneFacet.class);
+        kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
     }
 
     @Override
@@ -154,6 +157,7 @@ public class DerivedAtomicItemType implements ItemType {
             this.enumeration = null;
         }
         this.explicitTimezone = kryo.readObjectOrNull(input, TimezoneFacet.class);
+        this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
     }
 
     @Override
@@ -350,6 +354,11 @@ public class DerivedAtomicItemType implements ItemType {
             );
         }
         return this.explicitTimezone == null ? this.baseType.getExplicitTimezoneFacet() : this.explicitTimezone;
+    }
+
+    @Override
+    public WhitespaceFacet getWhitespaceFacet() {
+        return this.whiteSpace == null ? this.baseType.getWhitespaceFacet() : this.whiteSpace;
     }
 
     @Override
@@ -679,6 +688,21 @@ public class DerivedAtomicItemType implements ItemType {
                  * );
                  * }
                  */
+            }
+
+            if (this.whiteSpace == null) {
+                this.whiteSpace = this.baseType.getWhitespaceFacet();
+            } else {
+                WhitespaceFacet baseWs = this.baseType.getWhitespaceFacet();
+                if (baseWs != null && baseWs.ordinal() > this.whiteSpace.ordinal()) {
+                    throw new InvalidSchemaException(
+                            "The whiteSpace facet cannot be relaxed: base type requires "
+                                + baseWs
+                                + " but derived type specifies "
+                                + this.whiteSpace,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
             }
 
             return;

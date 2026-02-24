@@ -15,6 +15,8 @@ public enum FacetTypes {
     CONTENT("content"),
     CLOSED("closed"),
 
+    WHITESPACE("whiteSpace"),
+
     ENUMERATION("enumeration"),
     METADATA("metadata"),
     CONSTRAINTS("constraints");

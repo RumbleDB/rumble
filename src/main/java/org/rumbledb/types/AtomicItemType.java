@@ -18,19 +18,26 @@ public class AtomicItemType implements ItemType {
 
     private Name name;
     private Set<FacetTypes> allowedFacets;
+    private WhitespaceFacet whiteSpace;
 
     public AtomicItemType() {
     }
 
     AtomicItemType(Name name, Set<FacetTypes> allowedFacets) {
+        this(name, allowedFacets, WhitespaceFacet.COLLAPSE);
+    }
+
+    AtomicItemType(Name name, Set<FacetTypes> allowedFacets, WhitespaceFacet whiteSpace) {
         this.name = name;
         this.allowedFacets = allowedFacets;
+        this.whiteSpace = whiteSpace;
     }
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
         kryo.writeObjectOrNull(output, this.name, Name.class);
         kryo.writeObjectOrNull(output, this.allowedFacets, HashSet.class);
+        kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -38,6 +45,7 @@ public class AtomicItemType implements ItemType {
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.name = kryo.readObjectOrNull(input, Name.class);
         this.allowedFacets = kryo.readObjectOrNull(input, HashSet.class);
+        this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
     }
 
     @Override
@@ -318,6 +326,11 @@ public class AtomicItemType implements ItemType {
             );
         }
         return null;
+    }
+
+    @Override
+    public WhitespaceFacet getWhitespaceFacet() {
+        return this.whiteSpace;
     }
 
     @Override

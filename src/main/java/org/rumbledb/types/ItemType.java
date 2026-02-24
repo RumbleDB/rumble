@@ -416,6 +416,16 @@ public interface ItemType extends Serializable, KryoSerializable {
 
     /**
      *
+     * @return the whiteSpace facet value for [this] item type or null if the restriction is not set
+     */
+    default WhitespaceFacet getWhitespaceFacet() {
+        throw new UnsupportedOperationException(
+                "whiteSpace facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     *
      * @return content facet value for object item types (cumulative facet)
      */
     default Map<String, FieldDescriptor> getObjectContentFacet() {
