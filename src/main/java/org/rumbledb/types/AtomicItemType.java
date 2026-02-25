@@ -334,6 +334,16 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
+    public List<String> getPatternFacet() {
+        if (!this.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+            throw new UnsupportedOperationException(
+                    this.toString() + " item type does not support the pattern facet"
+            );
+        }
+        return null;
+    }
+
+    @Override
     public String toString() {
         return this.name.toString();
     }

@@ -29,6 +29,7 @@ public class DerivedAtomicItemType implements ItemType {
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
     private WhitespaceFacet whiteSpace;
+    private List<String> pattern;
 
     DerivedAtomicItemType() {
     }
@@ -65,6 +66,7 @@ public class DerivedAtomicItemType implements ItemType {
 
         this.explicitTimezone = facets.getExplicitTimezone();
         this.whiteSpace = facets.getWhiteSpace();
+        this.pattern = facets.getPattern();
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
@@ -120,6 +122,14 @@ public class DerivedAtomicItemType implements ItemType {
         }
         kryo.writeObjectOrNull(output, this.explicitTimezone, TimezoneFacet.class);
         kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
+        if (this.pattern != null) {
+            output.writeInt(this.pattern.size());
+            for (String p : this.pattern) {
+                output.writeString(p);
+            }
+        } else {
+            output.writeInt(-1);
+        }
     }
 
     @Override
@@ -158,6 +168,15 @@ public class DerivedAtomicItemType implements ItemType {
         }
         this.explicitTimezone = kryo.readObjectOrNull(input, TimezoneFacet.class);
         this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
+        int patternSize = input.readInt();
+        if (patternSize >= 0) {
+            this.pattern = new java.util.ArrayList<>(patternSize);
+            for (int i = 0; i < patternSize; i++) {
+                this.pattern.add(input.readString());
+            }
+        } else {
+            this.pattern = null;
+        }
     }
 
     @Override
@@ -359,6 +378,16 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public WhitespaceFacet getWhitespaceFacet() {
         return this.whiteSpace == null ? this.baseType.getWhitespaceFacet() : this.whiteSpace;
+    }
+
+    @Override
+    public List<String> getPatternFacet() {
+        if (!this.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+            throw new UnsupportedOperationException(
+                    this.toString() + " item type does not support the pattern facet"
+            );
+        }
+        return this.pattern == null ? this.baseType.getPatternFacet() : this.pattern;
     }
 
     @Override
@@ -690,6 +719,7 @@ public class DerivedAtomicItemType implements ItemType {
                  */
             }
 
+            // WhiteSpace facet
             if (this.whiteSpace == null) {
                 this.whiteSpace = this.baseType.getWhitespaceFacet();
             } else {
@@ -700,6 +730,20 @@ public class DerivedAtomicItemType implements ItemType {
                                 + baseWs
                                 + " but derived type specifies "
                                 + this.whiteSpace,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+
+            // Pattern facet
+            if (this.pattern == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+                    this.pattern = this.baseType.getPatternFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+                    throw new InvalidSchemaException(
+                            "The pattern facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }

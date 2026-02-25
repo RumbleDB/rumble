@@ -425,6 +425,18 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the pattern facet for this item type.
+     *
+     * @return the list of pattern regex strings for this derivation step,
+     *         or null if no pattern restriction is set
+     */
+    default List<String> getPatternFacet() {
+        throw new UnsupportedOperationException(
+                "pattern facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
      *
      * @return content facet value for object item types (cumulative facet)
      */

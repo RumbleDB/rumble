@@ -28,7 +28,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.LENGTH,
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH,
-                        FacetTypes.WHITESPACE
+                        FacetTypes.WHITESPACE,
+                        FacetTypes.PATTERN
                     )
             ),
             WhitespaceFacet.PRESERVE
@@ -51,7 +52,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.TOTALDIGITS,
-                        FacetTypes.FRACTIONDIGITS
+                        FacetTypes.FRACTIONDIGITS,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -64,7 +66,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -77,14 +80,15 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE,
+                        FacetTypes.PATTERN
                     )
             )
     );
 
     public static final ItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS))
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.PATTERN))
     );
     public static final ItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
@@ -99,7 +103,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -112,7 +117,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -125,7 +131,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -139,7 +146,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -160,7 +168,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -174,7 +183,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -188,7 +198,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -202,7 +213,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -216,7 +228,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -230,7 +243,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -244,7 +258,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        FacetTypes.EXPLICITTIMEZONE,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -256,7 +271,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.CONSTRAINTS,
                         FacetTypes.LENGTH,
                         FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        FacetTypes.MAXLENGTH,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -268,7 +284,8 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.CONSTRAINTS,
                         FacetTypes.LENGTH,
                         FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        FacetTypes.MAXLENGTH,
+                        FacetTypes.PATTERN
                     )
             )
     );
@@ -280,19 +297,30 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.CONSTRAINTS,
                         FacetTypes.LENGTH,
                         FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        FacetTypes.MAXLENGTH,
+                        FacetTypes.PATTERN
                     )
             )
     );
 
     public static final ItemType QNameItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "QName"),
-            Collections.emptySet()
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.PATTERN
+                    )
+            )
     );
 
     public static final ItemType NOTATIONItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "NOTATION"),
-            Collections.emptySet()
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.PATTERN
+                    )
+            )
     );
 
     // String-derived types per XDM 3.1 hierarchy:
@@ -318,8 +346,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "language"),
             tokenItem,
             stringItem,
-            // derived from token, so whitespace is COLLAPSE
-            new Facets(),
+            Facets.createPatternFacets(Collections.singletonList("[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*")),
             false
     );
 
@@ -327,8 +354,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "NMTOKEN"),
             tokenItem,
             stringItem,
-            // derived from token, so whitespace is COLLAPSE
-            new Facets(),
+            Facets.createPatternFacets(Collections.singletonList("\\c+")),
             false
     );
 
@@ -336,8 +362,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "Name"),
             tokenItem,
             stringItem,
-            // derived from token, so whitespace is COLLAPSE
-            new Facets(),
+            Facets.createPatternFacets(Collections.singletonList("\\i\\c*")),
             false
     );
 
