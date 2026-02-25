@@ -23,13 +23,13 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "string"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH,
-                        FacetTypes.WHITESPACE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.WHITESPACE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             ),
             WhitespaceFacet.PRESERVE
@@ -45,15 +45,15 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.TOTALDIGITS,
-                        FacetTypes.FRACTIONDIGITS,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.TOTALDIGITS,
+                        ConstrainingFacetTypes.FRACTIONDIGITS,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -61,13 +61,13 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "double"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -75,20 +75,26 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "float"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
 
     public static final ItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.PATTERN))
+            new HashSet<>(
+                    Arrays.asList(
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.PATTERN
+                    )
+            )
     );
     public static final ItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
@@ -98,13 +104,13 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "duration"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -126,14 +132,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "dateTime"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -148,14 +154,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -163,14 +169,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "time"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -178,14 +184,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "gDay"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -193,14 +199,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "gMonth"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -208,14 +214,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "gYear"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -223,14 +229,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "gMonthDay"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -238,14 +244,14 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "gYearMonth"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -253,12 +259,12 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "hexBinary"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -266,12 +272,12 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "anyURI"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -279,12 +285,12 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "base64Binary"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -293,8 +299,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "QName"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );
@@ -303,8 +309,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "NOTATION"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.PATTERN
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.PATTERN
                     )
             )
     );

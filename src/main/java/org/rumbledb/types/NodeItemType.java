@@ -79,7 +79,7 @@ public class NodeItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("node item type does not support facets");
     }
 

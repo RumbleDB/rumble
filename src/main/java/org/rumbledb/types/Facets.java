@@ -68,6 +68,12 @@ public class Facets {
     private WhitespaceFacet whiteSpace;
     private List<String> pattern;
 
+    // Fundamental facets (XSD 1.1 §4.2)
+    private OrderedFacetValue ordered;
+    private Boolean bounded;
+    private CardinalityFacetValue cardinality;
+    private Boolean numeric;
+
     public Facets() {
 
     }
@@ -182,6 +188,38 @@ public class Facets {
 
     public void setPattern(List<String> pattern) {
         this.pattern = pattern;
+    }
+
+    public OrderedFacetValue getOrdered() {
+        return this.ordered;
+    }
+
+    public void setOrdered(OrderedFacetValue ordered) {
+        this.ordered = ordered;
+    }
+
+    public Boolean getBounded() {
+        return this.bounded;
+    }
+
+    public void setBounded(Boolean bounded) {
+        this.bounded = bounded;
+    }
+
+    public CardinalityFacetValue getCardinality() {
+        return this.cardinality;
+    }
+
+    public void setCardinality(CardinalityFacetValue cardinality) {
+        this.cardinality = cardinality;
+    }
+
+    public Boolean getNumeric() {
+        return this.numeric;
+    }
+
+    public void setNumeric(Boolean numeric) {
+        this.numeric = numeric;
     }
 
     /**

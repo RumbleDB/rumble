@@ -31,6 +31,11 @@ public class DerivedAtomicItemType implements ItemType {
     private WhitespaceFacet whiteSpace;
     private List<String> pattern;
 
+    private OrderedFacetValue ordered;
+    private Boolean bounded;
+    private CardinalityFacetValue cardinality;
+    private Boolean numeric;
+
     DerivedAtomicItemType() {
     }
 
@@ -70,6 +75,11 @@ public class DerivedAtomicItemType implements ItemType {
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
+
+        this.ordered = facets.getOrdered();
+        this.bounded = facets.getBounded();
+        this.cardinality = facets.getCardinality();
+        this.numeric = facets.getNumeric();
 
         if (this.baseType.isResolved()) {
             processBaseType();
@@ -130,6 +140,10 @@ public class DerivedAtomicItemType implements ItemType {
         } else {
             output.writeInt(-1);
         }
+        kryo.writeObjectOrNull(output, this.ordered, OrderedFacetValue.class);
+        kryo.writeObjectOrNull(output, this.bounded, Boolean.class);
+        kryo.writeObjectOrNull(output, this.cardinality, CardinalityFacetValue.class);
+        kryo.writeObjectOrNull(output, this.numeric, Boolean.class);
     }
 
     @Override
@@ -177,6 +191,10 @@ public class DerivedAtomicItemType implements ItemType {
         } else {
             this.pattern = null;
         }
+        this.ordered = kryo.readObjectOrNull(input, OrderedFacetValue.class);
+        this.bounded = kryo.readObjectOrNull(input, Boolean.class);
+        this.cardinality = kryo.readObjectOrNull(input, CardinalityFacetValue.class);
+        this.numeric = kryo.readObjectOrNull(input, Boolean.class);
     }
 
     @Override
@@ -252,13 +270,13 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return this.primitiveType.getAllowedFacets();
     }
 
     @Override
     public List<Item> getEnumerationFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the enumeration facet"
             );
@@ -269,7 +287,7 @@ public class DerivedAtomicItemType implements ItemType {
     @SuppressWarnings("unchecked")
     @Override
     public List<String> getConstraintsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.CONSTRAINTS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.CONSTRAINTS)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the constraints facet"
             );
@@ -279,7 +297,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Integer getMinLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the minimum length facet"
             );
@@ -289,7 +307,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Integer getLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
             throw new UnsupportedOperationException(this.toString() + " item type does not support the length facet");
         }
         return this.length == null ? this.baseType.getLengthFacet() : this.length;
@@ -297,7 +315,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Integer getMaxLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the maximum length facet"
             );
@@ -307,7 +325,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Item getMinExclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the minimum exclusive facet"
             );
@@ -317,7 +335,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Item getMinInclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the minimum inclusive facet"
             );
@@ -327,7 +345,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Item getMaxExclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the maximum exclusive facet"
             );
@@ -337,7 +355,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Item getMaxInclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the maximum inclusive facet"
             );
@@ -347,7 +365,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Integer getTotalDigitsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the total digits facet"
             );
@@ -357,7 +375,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public Integer getFractionDigitsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the fraction digits facet"
             );
@@ -367,7 +385,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public TimezoneFacet getExplicitTimezoneFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.EXPLICITTIMEZONE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.EXPLICITTIMEZONE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the explicit timezone facet"
             );
@@ -382,12 +400,32 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public List<String> getPatternFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the pattern facet"
             );
         }
         return this.pattern == null ? this.baseType.getPatternFacet() : this.pattern;
+    }
+
+    @Override
+    public OrderedFacetValue getOrderedFacet() {
+        return this.ordered == null ? this.baseType.getOrderedFacet() : this.ordered;
+    }
+
+    @Override
+    public Boolean getBoundedFacet() {
+        return this.bounded == null ? this.baseType.getBoundedFacet() : this.bounded;
+    }
+
+    @Override
+    public CardinalityFacetValue getCardinalityFacet() {
+        return this.cardinality == null ? this.baseType.getCardinalityFacet() : this.cardinality;
+    }
+
+    @Override
+    public Boolean getNumericFacet() {
+        return this.numeric == null ? this.baseType.getNumericFacet() : this.numeric;
     }
 
     @Override
@@ -504,11 +542,11 @@ public class DerivedAtomicItemType implements ItemType {
             this.primitiveType = this.baseType.getPrimitiveType();
 
             if (this.length == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
                     this.length = this.baseType.getLengthFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -520,11 +558,11 @@ public class DerivedAtomicItemType implements ItemType {
             }
 
             if (this.enumeration == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
                     this.enumeration = this.baseType.getEnumerationFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -541,11 +579,11 @@ public class DerivedAtomicItemType implements ItemType {
             // TODO: Check list enumeration with for loop or by hash
 
             if (this.minLength == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
                     this.minLength = this.baseType.getMinLengthFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -556,11 +594,11 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.maxLength == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
                     this.maxLength = this.baseType.getMaxLengthFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -571,11 +609,11 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.minInclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
                     this.minInclusive = this.baseType.getMinInclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -598,11 +636,11 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.maxInclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
                     this.maxInclusive = this.baseType.getMaxInclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -626,11 +664,11 @@ public class DerivedAtomicItemType implements ItemType {
 
             }
             if (this.minExclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
                     this.minExclusive = this.baseType.getMinExclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -652,11 +690,11 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.maxExclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
                     this.maxExclusive = this.baseType.getMaxExclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -678,11 +716,11 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.totalDigits == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
                     this.totalDigits = this.baseType.getTotalDigitsFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -699,11 +737,11 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.fractionDigits == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
                     this.fractionDigits = this.baseType.getFractionDigitsFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
                     throw new InvalidSchemaException(
                             "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
@@ -737,11 +775,11 @@ public class DerivedAtomicItemType implements ItemType {
 
             // Pattern facet
             if (this.pattern == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
                     this.pattern = this.baseType.getPatternFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.PATTERN)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
                     throw new InvalidSchemaException(
                             "The pattern facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
