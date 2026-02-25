@@ -108,33 +108,19 @@ public class BuiltinTypesCatalogue {
                     )
             )
     );
-    public static final ItemType yearMonthDurationItem = new AtomicItemType(
+    public static final ItemType yearMonthDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.PATTERN
-                    )
-            )
+            durationItem,
+            durationItem,
+            Facets.createPatternFacets(Collections.singletonList("[^DT]*")),
+            false
     );
-    public static final ItemType dayTimeDurationItem = new AtomicItemType(
+    public static final ItemType dayTimeDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.PATTERN
-                    )
-            )
+            durationItem,
+            durationItem,
+            Facets.createPatternFacets(Collections.singletonList("[^YM]*(T.*)?")),
+            false
     );
     public static final ItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime"),

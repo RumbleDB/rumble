@@ -9,8 +9,7 @@ import java.util.*;
 import static org.rumbledb.types.BuiltinTypesCatalogue.*;
 
 /**
- * This class describes all the primitive built-in atomic types in the JSONiq data model and the derived DayTimeDuration
- * and YearMonthDuration item types that are derived, but whose derivation cannot be expressed through JSound facets
+ * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
 public class AtomicItemType implements ItemType {
 
@@ -79,9 +78,6 @@ public class AtomicItemType implements ItemType {
             return 2;
         } else if (this.isNumeric()) {
             return 3;
-        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
-            // TODO : check once you remove derived like integer and int
-            return 3;
         } else {
             return 2;
         }
@@ -95,8 +91,6 @@ public class AtomicItemType implements ItemType {
             return atomicItem;
         } else if (this.isNumeric()) {
             return numericItem;
-        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
-            return durationItem;
         } else {
             return atomicItem;
         }
@@ -104,14 +98,11 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isPrimitive() {
-        return !(this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem));
+        return true;
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        if (this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem)) {
-            return durationItem;
-        }
         return this;
     }
 
@@ -368,12 +359,6 @@ public class AtomicItemType implements ItemType {
             return false;
         }
         if (this.getPrimitiveType().equals(durationItem)) {
-            return false;
-        }
-        if (this.getPrimitiveType().equals(dayTimeDurationItem)) {
-            return false;
-        }
-        if (this.getPrimitiveType().equals(yearMonthDurationItem)) {
             return false;
         }
         if (this.getPrimitiveType().equals(anyURIItem)) {
