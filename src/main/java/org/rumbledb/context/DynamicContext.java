@@ -286,5 +286,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void setTopLevelRuntimeIterator(RuntimeIterator topLevelRuntimeIterator) {
         this.topLevelRuntimeIterator = topLevelRuntimeIterator;
     }
+
+    public RumbleRuntimeConfiguration.XMLVersion getXmlVersion() {
+        return this.getRumbleRuntimeConfiguration().getXmlVersion();
+    }
 }
 

@@ -1229,6 +1229,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.arguments = kryo.readObject(input, HashMap.class);
     }
 
+    public enum XMLVersion { XML10, XML11 }
+    private XMLVersion xmlVersion = XMLVersion.XML10; // default fallback
+    public XMLVersion getXmlVersion() { return this.xmlVersion; }
+    public void setXmlVersion(XMLVersion v) { this.xmlVersion = v; }
+
     /**
      * Returns the serializer in use according to the output format specified.
      *
