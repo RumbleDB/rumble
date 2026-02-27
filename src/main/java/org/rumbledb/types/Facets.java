@@ -12,11 +12,12 @@ import java.util.List;
 public class Facets {
 
     /**
-     * @return Facets for the integer derived type
+     * @return Facets for the integer derived type (fractionDigits=0, pattern per XSD 1.1 §3.4.13)
      */
     public static Facets getIntegerFacets() {
         Facets facets = new Facets();
         facets.setFractionDigits(0);
+        facets.setPattern(Collections.singletonList("[\\-+]?[0-9]+"));
         return facets;
     }
 
@@ -29,6 +30,9 @@ public class Facets {
             facets.setMinExclusive(min);
             facets.setMaxExclusive(max);
         }
+        // XSD 1.1 §4.2.2.1 / §4.2.3.1: both min+max bounds → bounded=true, cardinality=finite
+        facets.setBounded(true);
+        facets.setCardinality(CardinalityFacetValue.FINITE);
         return facets;
     }
 
@@ -64,6 +68,14 @@ public class Facets {
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
+    private WhitespaceFacet whiteSpace;
+    private List<String> pattern;
+
+    // Fundamental facets (XSD 1.1 §4.2)
+    private OrderedFacetValue ordered;
+    private Boolean bounded;
+    private CardinalityFacetValue cardinality;
+    private Boolean numeric;
 
     public Facets() {
 
@@ -163,6 +175,73 @@ public class Facets {
 
     public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
         this.explicitTimezone = explicitTimezone;
+    }
+
+    public WhitespaceFacet getWhiteSpace() {
+        return this.whiteSpace;
+    }
+
+    public void setWhiteSpace(WhitespaceFacet whiteSpace) {
+        this.whiteSpace = whiteSpace;
+    }
+
+    public List<String> getPattern() {
+        return this.pattern;
+    }
+
+    public void setPattern(List<String> pattern) {
+        this.pattern = pattern;
+    }
+
+    public OrderedFacetValue getOrdered() {
+        return this.ordered;
+    }
+
+    public void setOrdered(OrderedFacetValue ordered) {
+        this.ordered = ordered;
+    }
+
+    public Boolean getBounded() {
+        return this.bounded;
+    }
+
+    public void setBounded(Boolean bounded) {
+        this.bounded = bounded;
+    }
+
+    public CardinalityFacetValue getCardinality() {
+        return this.cardinality;
+    }
+
+    public void setCardinality(CardinalityFacetValue cardinality) {
+        this.cardinality = cardinality;
+    }
+
+    public Boolean getNumeric() {
+        return this.numeric;
+    }
+
+    public void setNumeric(Boolean numeric) {
+        this.numeric = numeric;
+    }
+
+    /**
+     * Creates a Facets with the given pattern regex strings.
+     * Multiple patterns in a single derivation step are OR-ed per XSD 1.1 §4.3.4.2.
+     *
+     * @param patterns regex strings for this derivation step
+     * @return Facets containing the pattern
+     */
+    public static Facets createPatternFacets(List<String> patterns) {
+        Facets facets = new Facets();
+        facets.setPattern(patterns);
+        return facets;
+    }
+
+    public static Facets createWhitespaceFacets(WhitespaceFacet whiteSpace) {
+        Facets facets = new Facets();
+        facets.setWhiteSpace(whiteSpace);
+        return facets;
     }
 
     public static Facets createAtomicTypeFacets(

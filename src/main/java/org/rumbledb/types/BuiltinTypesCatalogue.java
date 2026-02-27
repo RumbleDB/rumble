@@ -23,13 +23,20 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "string"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.WHITESPACE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.PRESERVE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
 
     // numeric is a union type for xs:double, xs:float, xs:decimal
@@ -42,47 +49,76 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.TOTALDIGITS,
-                        FacetTypes.FRACTIONDIGITS
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.TOTALDIGITS,
+                        ConstrainingFacetTypes.FRACTIONDIGITS,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.TOTAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            true
     );
     public static final ItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            true,
+            CardinalityFacetValue.FINITE,
+            true
     );
     public static final ItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            true,
+            CardinalityFacetValue.FINITE,
+            true
     );
 
     public static final ItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS))
+            new HashSet<>(
+                    Arrays.asList(
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.PATTERN
+                    )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.FINITE,
+            false
     );
     public static final ItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
@@ -92,54 +128,54 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "duration"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
-    public static final ItemType yearMonthDurationItem = new AtomicItemType(
+    public static final ItemType yearMonthDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
+            durationItem,
+            durationItem,
+            Facets.createPatternFacets(Collections.singletonList("[^DT]*")),
+            false
     );
-    public static final ItemType dayTimeDurationItem = new AtomicItemType(
+    public static final ItemType dayTimeDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE
-                    )
-            )
+            durationItem,
+            durationItem,
+            Facets.createPatternFacets(Collections.singletonList("[^YM]*(T.*)?")),
+            false
     );
     public static final ItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
@@ -152,135 +188,304 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gDay"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonth"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gYearItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYear"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gMonthDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonthDay"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gYearMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYearMonth"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXEXCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.MININCLUSIVE,
+                        ConstrainingFacetTypes.MAXINCLUSIVE,
+                        ConstrainingFacetTypes.MINEXCLUSIVE,
+                        ConstrainingFacetTypes.MAXEXCLUSIVE,
+                        ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary"),
             new HashSet<>(
                     Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.CONSTRAINTS,
+                        ConstrainingFacetTypes.LENGTH,
+                        ConstrainingFacetTypes.MINLENGTH,
+                        ConstrainingFacetTypes.MAXLENGTH,
+                        ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
+    );
+
+    public static final ItemType QNameItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "QName"),
+            new HashSet<>(
+                    Arrays.asList(
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.PATTERN
+                    )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
+    );
+
+    public static final ItemType NOTATIONItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "NOTATION"),
+            new HashSet<>(
+                    Arrays.asList(
+                        ConstrainingFacetTypes.ENUMERATION,
+                        ConstrainingFacetTypes.PATTERN
+                    )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
+    );
+
+    // String-derived types per XDM 3.1 hierarchy:
+    // string -> normalizedString -> token -> (language, NMTOKEN, Name -> NCName -> ID, IDREF, ENTITY)
+
+    public static final ItemType normalizedStringItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "normalizedString"),
+            stringItem,
+            stringItem,
+            Facets.createWhitespaceFacets(WhitespaceFacet.REPLACE),
+            false
+    );
+
+    public static final ItemType tokenItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "token"),
+            normalizedStringItem,
+            stringItem,
+            Facets.createWhitespaceFacets(WhitespaceFacet.COLLAPSE),
+            false
+    );
+
+    public static final ItemType languageItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "language"),
+            tokenItem,
+            stringItem,
+            Facets.createPatternFacets(Collections.singletonList("[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*")),
+            false
+    );
+
+    public static final ItemType NMTOKENItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "NMTOKEN"),
+            tokenItem,
+            stringItem,
+            Facets.createPatternFacets(Collections.singletonList("\\c+")),
+            false
+    );
+
+    public static final ItemType NameItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "Name"),
+            tokenItem,
+            stringItem,
+            Facets.createPatternFacets(Collections.singletonList("\\i\\c*")),
+            false
+    );
+
+    public static final ItemType NCNameItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "NCName"),
+            NameItem,
+            stringItem,
+            // derived from Name, so whitespace is COLLAPSE
+            new Facets(),
+            false
+    );
+
+    public static final ItemType IDItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "ID"),
+            NCNameItem,
+            stringItem,
+            // derived from NCName, so whitespace is COLLAPSE
+            new Facets(),
+            false
+    );
+
+    public static final ItemType IDREFItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "IDREF"),
+            NCNameItem,
+            stringItem,
+            // derived from NCName, so whitespace is COLLAPSE
+            new Facets(),
+            false
+    );
+
+    public static final ItemType ENTITYItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "ENTITY"),
+            NCNameItem,
+            stringItem,
+            // derived from NCName, so whitespace is COLLAPSE
+            new Facets(),
+            false
     );
 
     public static final ItemType integerItem = new DerivedAtomicItemType(
@@ -517,7 +722,18 @@ public class BuiltinTypesCatalogue {
         unsignedIntItem,
         unsignedLongItem,
         unsignedShortItem,
-        unsignedByteItem
+        unsignedByteItem,
+        QNameItem,
+        NOTATIONItem,
+        normalizedStringItem,
+        tokenItem,
+        languageItem,
+        NMTOKENItem,
+        NameItem,
+        NCNameItem,
+        IDItem,
+        IDREFItem,
+        ENTITYItem
     );
 
     public static ItemType getItemTypeByName(Name name) {

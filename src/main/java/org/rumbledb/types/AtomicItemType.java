@@ -9,28 +9,61 @@ import java.util.*;
 import static org.rumbledb.types.BuiltinTypesCatalogue.*;
 
 /**
- * This class describes all the primitive built-in atomic types in the JSONiq data model and the derived DayTimeDuration
- * and YearMonthDuration item types that are derived, but whose derivation cannot be expressed through JSound facets
+ * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
 public class AtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
     private Name name;
-    private Set<FacetTypes> allowedFacets;
+    private Set<ConstrainingFacetTypes> allowedFacets;
+    private WhitespaceFacet whiteSpace;
+
+    private OrderedFacetValue ordered;
+    private Boolean bounded;
+    private CardinalityFacetValue cardinality;
+    private Boolean numeric;
 
     public AtomicItemType() {
     }
 
-    AtomicItemType(Name name, Set<FacetTypes> allowedFacets) {
+    AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets) {
+        this(name, allowedFacets, WhitespaceFacet.COLLAPSE);
+    }
+
+    AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets, WhitespaceFacet whiteSpace) {
         this.name = name;
         this.allowedFacets = allowedFacets;
+        this.whiteSpace = whiteSpace;
+    }
+
+    AtomicItemType(
+            Name name,
+            Set<ConstrainingFacetTypes> allowedFacets,
+            WhitespaceFacet whiteSpace,
+            OrderedFacetValue ordered,
+            Boolean bounded,
+            CardinalityFacetValue cardinality,
+            Boolean numeric
+    ) {
+        this.name = name;
+        this.allowedFacets = allowedFacets;
+        this.whiteSpace = whiteSpace;
+        this.ordered = ordered;
+        this.bounded = bounded;
+        this.cardinality = cardinality;
+        this.numeric = numeric;
     }
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
         kryo.writeObjectOrNull(output, this.name, Name.class);
         kryo.writeObjectOrNull(output, this.allowedFacets, HashSet.class);
+        kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
+        kryo.writeObjectOrNull(output, this.ordered, OrderedFacetValue.class);
+        kryo.writeObjectOrNull(output, this.bounded, Boolean.class);
+        kryo.writeObjectOrNull(output, this.cardinality, CardinalityFacetValue.class);
+        kryo.writeObjectOrNull(output, this.numeric, Boolean.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -38,6 +71,11 @@ public class AtomicItemType implements ItemType {
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.name = kryo.readObjectOrNull(input, Name.class);
         this.allowedFacets = kryo.readObjectOrNull(input, HashSet.class);
+        this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
+        this.ordered = kryo.readObjectOrNull(input, OrderedFacetValue.class);
+        this.bounded = kryo.readObjectOrNull(input, Boolean.class);
+        this.cardinality = kryo.readObjectOrNull(input, CardinalityFacetValue.class);
+        this.numeric = kryo.readObjectOrNull(input, Boolean.class);
     }
 
     @Override
@@ -71,9 +109,6 @@ public class AtomicItemType implements ItemType {
             return 2;
         } else if (this.isNumeric()) {
             return 3;
-        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
-            // TODO : check once you remove derived like integer and int
-            return 3;
         } else {
             return 2;
         }
@@ -87,8 +122,6 @@ public class AtomicItemType implements ItemType {
             return atomicItem;
         } else if (this.isNumeric()) {
             return numericItem;
-        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
-            return durationItem;
         } else {
             return atomicItem;
         }
@@ -96,14 +129,11 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isPrimitive() {
-        return !(this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem));
+        return true;
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        if (this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem)) {
-            return durationItem;
-        }
         return this;
     }
 
@@ -197,13 +227,13 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return this.allowedFacets;
     }
 
     @Override
     public List<Item> getEnumerationFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the enumeration facet"
             );
@@ -213,7 +243,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public List<String> getConstraintsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.CONSTRAINTS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.CONSTRAINTS)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the constraints facet"
             );
@@ -223,7 +253,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Integer getMinLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the minimum length facet"
             );
@@ -233,7 +263,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Integer getLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
             throw new UnsupportedOperationException(this.toString() + " item type does not support the length facet");
         }
         return null;
@@ -241,7 +271,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Integer getMaxLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the maximum length facet"
             );
@@ -251,7 +281,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Item getMinExclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the minimum exclusive facet"
             );
@@ -261,7 +291,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Item getMinInclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the minimum inclusive facet"
             );
@@ -271,7 +301,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Item getMaxExclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the maximum exclusive facet"
             );
@@ -282,7 +312,7 @@ public class AtomicItemType implements ItemType {
     @Override
 
     public Item getMaxInclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the maximum inclusive facet"
             );
@@ -292,7 +322,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Integer getTotalDigitsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the total digits facet"
             );
@@ -302,7 +332,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public Integer getFractionDigitsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the fraction digits facet"
             );
@@ -312,12 +342,47 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public TimezoneFacet getExplicitTimezoneFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.EXPLICITTIMEZONE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.EXPLICITTIMEZONE)) {
             throw new UnsupportedOperationException(
                     this.toString() + " item type does not support the explicit timezone facet"
             );
         }
         return null;
+    }
+
+    @Override
+    public WhitespaceFacet getWhitespaceFacet() {
+        return this.whiteSpace;
+    }
+
+    @Override
+    public List<String> getPatternFacet() {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
+            throw new UnsupportedOperationException(
+                    this.toString() + " item type does not support the pattern facet"
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public OrderedFacetValue getOrderedFacet() {
+        return this.ordered;
+    }
+
+    @Override
+    public Boolean getBoundedFacet() {
+        return this.bounded;
+    }
+
+    @Override
+    public CardinalityFacetValue getCardinalityFacet() {
+        return this.cardinality;
+    }
+
+    @Override
+    public Boolean getNumericFacet() {
+        return this.numeric;
     }
 
     @Override
@@ -345,12 +410,6 @@ public class AtomicItemType implements ItemType {
             return false;
         }
         if (this.getPrimitiveType().equals(durationItem)) {
-            return false;
-        }
-        if (this.getPrimitiveType().equals(dayTimeDurationItem)) {
-            return false;
-        }
-        if (this.getPrimitiveType().equals(yearMonthDurationItem)) {
             return false;
         }
         if (this.getPrimitiveType().equals(anyURIItem)) {

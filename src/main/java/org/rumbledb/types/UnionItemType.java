@@ -15,7 +15,9 @@ public class UnionItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    private static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(FacetTypes.CONTENT));
+    private static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
+            Arrays.asList(ConstrainingFacetTypes.CONTENT)
+    );
 
     private final Name name;
     private final ItemType baseType;
@@ -97,7 +99,7 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 

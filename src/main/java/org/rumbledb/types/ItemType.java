@@ -289,7 +289,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      *
      * @return a set containing the allowed facets for restricting the type
      */
-    public Set<FacetTypes> getAllowedFacets();
+    public Set<ConstrainingFacetTypes> getAllowedFacets();
 
     /**
      *
@@ -413,6 +413,68 @@ public interface ItemType extends Serializable, KryoSerializable {
                 "explicit timezone facet is not allowed for " + this.toString() + " item types"
         );
     }
+
+    /**
+     *
+     * @return the whiteSpace facet value for [this] item type or null if the restriction is not set
+     */
+    default WhitespaceFacet getWhitespaceFacet() {
+        throw new UnsupportedOperationException(
+                "whiteSpace facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * Returns the pattern facet for this item type.
+     *
+     * @return the list of pattern regex strings for this derivation step,
+     *         or null if no pattern restriction is set
+     */
+    default List<String> getPatternFacet() {
+        throw new UnsupportedOperationException(
+                "pattern facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    // region fundamental facets (XSD 1.1 §4.2)
+
+    /**
+     * @return the ordered fundamental facet value, or null if not set
+     */
+    default OrderedFacetValue getOrderedFacet() {
+        throw new UnsupportedOperationException(
+                "ordered facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * @return the bounded fundamental facet value, or null if not set
+     */
+    default Boolean getBoundedFacet() {
+        throw new UnsupportedOperationException(
+                "bounded facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * @return the cardinality fundamental facet value, or null if not set
+     */
+    default CardinalityFacetValue getCardinalityFacet() {
+        throw new UnsupportedOperationException(
+                "cardinality facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * @return the numeric fundamental facet value, or null if not set
+     */
+    default Boolean getNumericFacet() {
+        throw new UnsupportedOperationException(
+                "numeric facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    // endregion fundamental facets
 
     /**
      *

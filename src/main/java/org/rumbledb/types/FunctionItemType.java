@@ -102,7 +102,7 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("function item types does not support facets");
     }
 
