@@ -30,6 +30,9 @@ public class Facets {
             facets.setMinExclusive(min);
             facets.setMaxExclusive(max);
         }
+        // XSD 1.1 §4.2.2.1 / §4.2.3.1: both min+max bounds → bounded=true, cardinality=finite
+        facets.setBounded(true);
+        facets.setCardinality(CardinalityFacetValue.FINITE);
         return facets;
     }
 

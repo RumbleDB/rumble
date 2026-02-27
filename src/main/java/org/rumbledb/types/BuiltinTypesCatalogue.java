@@ -32,7 +32,11 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.PATTERN
                     )
             ),
-            WhitespaceFacet.PRESERVE
+            WhitespaceFacet.PRESERVE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
 
     // numeric is a union type for xs:double, xs:float, xs:decimal
@@ -55,7 +59,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.FRACTIONDIGITS,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.TOTAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            true
     );
     public static final ItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
@@ -69,7 +78,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.MAXEXCLUSIVE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            true,
+            CardinalityFacetValue.FINITE,
+            true
     );
     public static final ItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
@@ -83,7 +97,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.MAXEXCLUSIVE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            true,
+            CardinalityFacetValue.FINITE,
+            true
     );
 
     public static final ItemType booleanItem = new AtomicItemType(
@@ -94,7 +113,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.CONSTRAINTS,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.FINITE,
+            false
     );
     public static final ItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
@@ -112,7 +136,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.MAXEXCLUSIVE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType yearMonthDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
@@ -141,7 +170,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
@@ -163,7 +197,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
@@ -178,7 +217,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gDay"),
@@ -193,7 +237,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonth"),
@@ -208,7 +257,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gYearItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYear"),
@@ -223,7 +277,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gMonthDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonthDay"),
@@ -238,7 +297,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType gYearMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYearMonth"),
@@ -253,7 +317,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.EXPLICITTIMEZONE,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
@@ -266,7 +335,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.MAXLENGTH,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
@@ -279,7 +353,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.MAXLENGTH,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
     public static final ItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary"),
@@ -292,7 +371,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.MAXLENGTH,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
 
     public static final ItemType QNameItem = new AtomicItemType(
@@ -302,7 +386,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.ENUMERATION,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
 
     public static final ItemType NOTATIONItem = new AtomicItemType(
@@ -312,7 +401,12 @@ public class BuiltinTypesCatalogue {
                         ConstrainingFacetTypes.ENUMERATION,
                         ConstrainingFacetTypes.PATTERN
                     )
-            )
+            ),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
     );
 
     // String-derived types per XDM 3.1 hierarchy:

@@ -37,6 +37,24 @@ public class AtomicItemType implements ItemType {
         this.whiteSpace = whiteSpace;
     }
 
+    AtomicItemType(
+            Name name,
+            Set<ConstrainingFacetTypes> allowedFacets,
+            WhitespaceFacet whiteSpace,
+            OrderedFacetValue ordered,
+            Boolean bounded,
+            CardinalityFacetValue cardinality,
+            Boolean numeric
+    ) {
+        this.name = name;
+        this.allowedFacets = allowedFacets;
+        this.whiteSpace = whiteSpace;
+        this.ordered = ordered;
+        this.bounded = bounded;
+        this.cardinality = cardinality;
+        this.numeric = numeric;
+    }
+
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
         kryo.writeObjectOrNull(output, this.name, Name.class);
