@@ -18,7 +18,7 @@
  *
  */
 
-package iq.base;
+package org.rumbledb.tests.commons;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
@@ -48,9 +48,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class AnnotationsTestsBase {
+public class RumbleDBTestCommons {
     protected static int counter = 0;
-    protected List<File> testFiles = new ArrayList<>();
     protected static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
@@ -76,13 +75,15 @@ public class AnnotationsTestsBase {
             )
         );
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public static RumbleRuntimeConfiguration getDefaultConfiguration() {
         return defaultConfiguration;
     }
 
-    public void initializeTests(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));
-        this.testFiles.sort(Comparator.comparing(File::getName));
+    public static List<File> extractTestFilesFromDirectory(File dir) {
+        List<File> testFiles = new ArrayList<>();
+        FileManager.loadJiqFiles(dir).forEach(file -> testFiles.add(file));
+        testFiles.sort(Comparator.comparing(File::getName));
+        return testFiles;
     }
 
     /**
@@ -91,9 +92,7 @@ public class AnnotationsTestsBase {
     public static void testAnnotations(
             String path,
             RumbleRuntimeConfiguration configuration,
-            boolean checkOutput,
-            boolean applyUpdates,
-            int resultSizeCap
+            boolean checkOutput
     )
             throws IOException {
         AnnotationProcessor.TestAnnotation currentAnnotation = null;
@@ -188,7 +187,13 @@ public class AnnotationsTestsBase {
                 currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(currentAnnotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
+                checkExpectedOutput(
+                    currentAnnotation.getOutput(),
+                    sequence,
+                    checkOutput,
+                    configuration.applyUpdates(),
+                    configuration.getResultSizeCap()
+                );
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
                 errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
@@ -206,8 +211,8 @@ public class AnnotationsTestsBase {
                         currentAnnotation.getOutput(),
                         sequence,
                         checkOutput,
-                        applyUpdates,
-                        resultSizeCap
+                        configuration.applyUpdates(),
+                        configuration.getResultSizeCap()
                     );
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();

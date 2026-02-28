@@ -31,8 +31,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-
-import iq.base.AnnotationsTestsBase;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
 
 @RunWith(Parameterized.class)
 public class RuntimeTestsNoParallelism extends RuntimeTests {
@@ -74,13 +73,11 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
 
     @Test(timeout = 1000000)
     public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
+        // System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
+        RumbleDBTestCommons.testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
+            true
         );
     }
 }
