@@ -92,3 +92,32 @@ jobs:
           path: target
       - name: Run Test ${{ matrix.test_class }}
         run: mvn -Dtest=${{ matrix.test_class }} test
+  spark-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Java 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: adopt
+      - name: Restore Cached Maven Packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      - name: Download Compiled Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: Package
+          path: target
+      - name: Install Spark and run server tests
+        run: |
+          mkdir -p /opt
+          wget -q -O /opt/spark.tgz https://www.apache.org/dyn/closer.lua/spark/spark-3.4.4/spark-3.4.4-bin-hadoop3.tgz
+          tar -xzf /opt/spark.tgz -C /opt/
+          rm /opt/spark.tgz
+          export SPARK_HOME=/opt/spark-3.4.4-bin-hadoop3
+          export PATH=$PATH:/opt/spark-3.4.4-bin-hadoop3/bin
+          bash server-test-script.sh
