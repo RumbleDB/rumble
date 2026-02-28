@@ -305,6 +305,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.hadoop</groupId>
+             <artifactId>hadoop-azure</artifactId>
+            <version>3.4.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.13</artifactId>
             <version>4.0.1</version>
