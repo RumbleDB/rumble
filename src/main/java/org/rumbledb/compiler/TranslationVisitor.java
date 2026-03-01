@@ -1683,7 +1683,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
     private String unescapeStringLiteral(String raw) {
-        return StringEscapeUtils.unescapeJson(raw);
+        String s = StringEscapeUtils.unescapeJson(raw);
+        return StringEscapeUtils.unescapeXml(s);
     }
 
     @Override
