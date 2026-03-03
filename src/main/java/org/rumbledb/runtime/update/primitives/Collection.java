@@ -31,8 +31,8 @@ public class Collection implements Serializable {
                 this.physicalName = "delta.`" + collectionPath + "`";
                 break;
             case ICEBERG:
-                this.logicalName = "iceberg." + collectionPath;
-                this.physicalName = "iceberg." + collectionPath;
+                this.logicalName = qualifyIcebergName(collectionPath);
+                this.physicalName = this.logicalName;
                 break;
         }
     }
@@ -48,7 +48,7 @@ public class Collection implements Serializable {
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
             this.physicalName = collectionPath;
-        } else if (collectionPath.startsWith("iceberg.")) {
+        } else if (isIcebergQualified(collectionPath)) {
             // case Iceberg table
             this.mode = Mode.ICEBERG;
             this.logicalName = collectionPath;
@@ -114,5 +114,28 @@ public class Collection implements Serializable {
         } catch (NoSuchTableException e) {
             throw new RuntimeException("Target collection not found: " + this.logicalName, e);
         }
+    }
+
+    private static String qualifyIcebergName(String collectionPath) {
+        if (isIcebergQualified(collectionPath)) {
+            return collectionPath;
+        }
+        return "iceberg." + collectionPath;
+    }
+
+    private static boolean isIcebergQualified(String collectionPath) {
+        if (collectionPath.startsWith("iceberg.")) {
+            return true;
+        }
+        int dots = 0;
+        for (int i = 0; i < collectionPath.length(); i++) {
+            if (collectionPath.charAt(i) == '.') {
+                dots++;
+                if (dots >= 2) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

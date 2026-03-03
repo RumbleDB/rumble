@@ -186,7 +186,6 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.sql.catalog.iceberg.type", "hadoop");
         sparkConfiguration.set("spark.sql.catalog.iceberg.warehouse", "./iceberg-warehouse");
         sparkConfiguration.set("spark.sql.iceberg.check-ordering", "false");
-        sparkConfiguration.set("spark.sql.iceberg.check-nullability", "false");
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");

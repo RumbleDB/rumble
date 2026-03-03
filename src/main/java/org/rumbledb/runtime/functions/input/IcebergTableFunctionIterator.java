@@ -7,6 +7,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.Mode;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -27,8 +29,8 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
         RuntimeIterator collectionNameIterator = this.children.get(0);
         String userTableName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
-        // .table() will retrieve the Iceberg catalog table
-        String collectionName = "iceberg." + userTableName;
+        // Resolve to the configured Iceberg catalog (default is the first one passed to withIceberg()).
+        String collectionName = new Collection(Mode.ICEBERG, userTableName).getLogicalName();
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
         return DeltaTableFunctionIterator.postProcess(dataFrame, collectionName);
     }

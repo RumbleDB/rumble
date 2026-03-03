@@ -80,7 +80,7 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
                     .save();
                 break;
             case ICEBERG:
-                // Specify creating in 'iceberg' catalog
+                // Create using the Iceberg catalog (can be custom if configured)
                 this.contents.writeTo(this.collection.getLogicalName())
                     .using("iceberg")
                     .createOrReplace();
