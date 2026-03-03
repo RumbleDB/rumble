@@ -37,7 +37,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -51,6 +53,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     private Item left;
     private Item right;
     private final ComparisonExpression.ComparisonOperator comparisonOperator;
+    private final ComparisonExpression.ComparisonOperator originalComparisonOperator;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 
@@ -59,16 +62,22 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             ComparisonExpression.ComparisonOperator comparisonOperator,
+            ComparisonExpression.ComparisonOperator originalComparisonOperator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.comparisonOperator = comparisonOperator;
+        this.originalComparisonOperator = originalComparisonOperator;
     }
 
     public ComparisonExpression.ComparisonOperator getComparisonOperator() {
         return this.comparisonOperator;
+    }
+
+    public ComparisonExpression.ComparisonOperator getOriginalComparisonOperator() {
+        return this.originalComparisonOperator;
     }
 
     public boolean isValueEquality() {
@@ -145,6 +154,17 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
+        boolean isGeneral =
+            this.originalComparisonOperator != null
+                && !this.originalComparisonOperator.isValueComparison();
+        if (isGeneral && left.isUntypedAtomic() && right.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
+        } else {
+            left = applyUntypedAtomicCastingRules(left, right);
+            right = applyUntypedAtomicCastingRules(right, left);
+        }
+
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
@@ -184,6 +204,36 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             this.comparisonOperator,
             getMetadata()
         );
+    }
+
+    private Item applyUntypedAtomicCastingRules(Item target, Item other) {
+        if (!target.isUntypedAtomic()) {
+            return target;
+        }
+        // Value comparisons (or when original operator is not known): untypedAtomic is treated as string
+        if (this.originalComparisonOperator == null || this.originalComparisonOperator.isValueComparison()) {
+            return ItemFactory.getInstance().createStringItem(target.getStringValue());
+        }
+        // General comparison, both operands not untypedAtomic (both-untyped case handled before)
+        if (other.isUntypedAtomic()) {
+            return ItemFactory.getInstance().createStringItem(target.getStringValue());
+        }
+        ItemType otherType = other.getDynamicType();
+        ItemType primitiveOther =
+            otherType.isPrimitive()
+                ? otherType
+                : otherType.getPrimitiveType();
+        ItemType castTarget;
+        if (primitiveOther.isNumeric()) {
+            castTarget = BuiltinTypesCatalogue.doubleItem;
+        } else if (primitiveOther.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
+            castTarget = BuiltinTypesCatalogue.yearMonthDurationItem;
+        } else if (primitiveOther.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
+            castTarget = BuiltinTypesCatalogue.dayTimeDurationItem;
+        } else {
+            castTarget = primitiveOther;
+        }
+        return CastIterator.castItemToType(target, castTarget, getMetadata());
     }
 
     public static long compareItems(

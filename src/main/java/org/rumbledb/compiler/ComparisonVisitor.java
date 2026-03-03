@@ -57,6 +57,11 @@ public class ComparisonVisitor extends CloneVisitor {
                     comparisonOperator,
                     expression.getMetadata()
             );
+            // Preserve whether this comparison originated as a general comparison (=, !=, <, ...)
+            // or a value comparison (eq, ne, lt, ...). This is used at runtime to distinguish
+            // value vs general comparison semantics (e.g., for xs:untypedAtomic handling)
+            // while still mapping to the same underlying value comparison operator.
+            result.setOriginalComparisonOperator(expression.getComparisonOperator());
             result.setStaticSequenceType(expression.getStaticSequenceType());
             result.setStaticContext(expression.getStaticContext());
             return result;
@@ -108,6 +113,8 @@ public class ComparisonVisitor extends CloneVisitor {
                     comparisonOperator,
                     expression.getMetadata()
             );
+            ((ComparisonExpression) valueComparison)
+                .setOriginalComparisonOperator(expression.getComparisonOperator());
             valueComparison.setStaticContext(rightContext);
             valueComparison.setStaticSequenceType(
                 new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
@@ -149,6 +156,7 @@ public class ComparisonVisitor extends CloneVisitor {
                 comparisonOperator,
                 expression.getMetadata()
         );
+        comparisonExpression.setOriginalComparisonOperator(expression.getComparisonOperator());
         comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
         comparisonExpression.setStaticContext(expression.getStaticContext());
         BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
