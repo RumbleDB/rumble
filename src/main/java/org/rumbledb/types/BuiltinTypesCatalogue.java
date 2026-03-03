@@ -39,12 +39,6 @@ public class BuiltinTypesCatalogue {
             false
     );
 
-    // numeric is a union type for xs:double, xs:float, xs:decimal
-    public static final ItemType numericItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "numeric"),
-            Collections.emptySet()
-    );
-
     public static final ItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(
@@ -103,6 +97,14 @@ public class BuiltinTypesCatalogue {
             true,
             CardinalityFacetValue.FINITE,
             true
+    );
+
+    // xs:numeric is a union type for xs:double, xs:float, xs:decimal (XSD 1.1 §2.4.1)
+    public static final ItemType numericItem = new UnionItemType(
+            new Name(Name.XS_NS, "xs", "numeric"),
+            atomicItem,
+            Arrays.asList(doubleItem, floatItem, decimalItem),
+            false
     );
 
     public static final ItemType booleanItem = new AtomicItemType(

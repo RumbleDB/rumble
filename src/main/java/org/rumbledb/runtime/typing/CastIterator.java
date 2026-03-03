@@ -44,7 +44,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        if (!this.sequenceType.getItemType().isAtomicItemType()) {
+        ItemType targetItemType = this.sequenceType.getItemType();
+        // XPath 3.1 cast target must be a generalized atomic type: either an atomic type or
+        // a pure union type (union whose members are all atomic). See XPath F&O 3.1 §19.3.5
+        // Casting to union types; XPath 3.1 §2.5.4 SequenceType (SingleType uses SimpleTypeName).
+        boolean validCastTarget =
+            targetItemType.isAtomicItemType()
+                || (targetItemType.isUnionType()
+                    && targetItemType.getTypes().stream().allMatch(ItemType::isAtomicItemType));
+        if (!validCastTarget) {
             throw new UnknownCastTypeException(
                     "The type "
                         + this.sequenceType.getItemType().getIdentifierString()

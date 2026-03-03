@@ -105,8 +105,6 @@ public class AtomicItemType implements ItemType {
     public int getTypeTreeDepth() {
         if (this.equals(atomicItem)) {
             return 1;
-        } else if (this.equals(numericItem)) {
-            return 2;
         } else if (this.isNumeric()) {
             return 3;
         } else {
@@ -118,8 +116,6 @@ public class AtomicItemType implements ItemType {
     public ItemType getBaseType() {
         if (this.equals(atomicItem)) {
             return BuiltinTypesCatalogue.item;
-        } else if (this.equals(numericItem)) {
-            return atomicItem;
         } else if (this.isNumeric()) {
             return numericItem;
         } else {
@@ -209,10 +205,10 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(decimalItem)
-            || this.equals(floatItem)
-            || this.equals(doubleItem)
-            || this.equals(numericItem);
+        ItemType primitive = this.getPrimitiveType();
+        return primitive.equals(decimalItem)
+            || primitive.equals(floatItem)
+            || primitive.equals(doubleItem);
     }
 
     @Override
