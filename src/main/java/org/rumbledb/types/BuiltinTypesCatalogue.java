@@ -39,6 +39,16 @@ public class BuiltinTypesCatalogue {
             false
     );
 
+    public static final ItemType untypedAtomicItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "untypedAtomic"),
+            Collections.emptySet(),
+            WhitespaceFacet.PRESERVE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false
+    );
+
     public static final ItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(
@@ -688,6 +698,7 @@ public class BuiltinTypesCatalogue {
         objectItem,
         atomicItem,
         stringItem,
+        untypedAtomicItem,
         integerItem,
         intItem,
         decimalItem,

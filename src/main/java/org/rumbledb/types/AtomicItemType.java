@@ -138,8 +138,13 @@ public class AtomicItemType implements ItemType {
         // anything can be casted to itself
         if (this.equals(other))
             return true;
-        // anything can be casted from and to a string (or from one of its supertype)
-        if (this.equals(stringItem) || other.equals(stringItem))
+        // anything can be casted from and to a string or untypedAtomic (or from one of its supertypes)
+        if (
+            this.equals(stringItem)
+                || other.equals(stringItem)
+                || this.equals(untypedAtomicItem)
+                || other.equals(untypedAtomicItem)
+        )
             return true;
         // boolean and numeric can be cast between themselves
         if (
@@ -394,6 +399,9 @@ public class AtomicItemType implements ItemType {
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         if (this.getPrimitiveType().equals(atomicItem)) {
+            return false;
+        }
+        if (this.getPrimitiveType().equals(untypedAtomicItem)) {
             return false;
         }
         if (this.getPrimitiveType().equals(dateItem)) {
