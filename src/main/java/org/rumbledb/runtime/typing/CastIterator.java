@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -569,7 +570,34 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
+    /**
+     * Checks the pattern facet (if any) for the given target type against the lexical form of the item.
+     * Returns true when either no pattern facet applies or at least one pattern matches; false otherwise.
+     */
+    private static boolean checkPatternFacet(Item item, ItemType targetType) {
+        List<String> patterns;
+        try {
+            patterns = targetType.getPatternFacet();
+        } catch (UnsupportedOperationException e) {
+            // Target type does not support the pattern facet.
+            return true;
+        }
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
+        }
+        String lexical = item.serialize();
+        for (String regex : patterns) {
+            if (Pattern.matches(regex, lexical)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) < 0)
@@ -593,6 +621,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
                 ||
@@ -626,10 +657,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsBoolean(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         return true;
     }
 
     public static boolean checkFacetsDouble(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getDoubleValue() < targetType.getMinInclusiveFacet().getDoubleValue())
@@ -649,6 +686,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsFloat(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getFloatValue() < targetType.getMinInclusiveFacet().getFloatValue())
@@ -668,6 +708,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDecimal(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getDecimalValue().compareTo(targetType.getMinInclusiveFacet().getDecimalValue()) < 0)
@@ -733,6 +776,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDate(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -749,6 +795,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsTime(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -765,6 +814,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTime(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -799,6 +851,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTimeStamp(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -833,6 +888,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
             if (item.getMonth() < 0 && item.getSecond() > 0) {
                 return false;
