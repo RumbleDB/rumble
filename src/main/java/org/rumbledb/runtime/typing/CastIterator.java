@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -44,7 +45,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        if (!this.sequenceType.getItemType().isAtomicItemType()) {
+        ItemType targetItemType = this.sequenceType.getItemType();
+        // XPath 3.1 cast target must be a generalized atomic type: either an atomic type or
+        // a pure union type (union whose members are all atomic). See XPath F&O 3.1 §19.3.5
+        // Casting to union types; XPath 3.1 §2.5.4 SequenceType (SingleType uses SimpleTypeName).
+        boolean validCastTarget =
+            targetItemType.isAtomicItemType()
+                || (targetItemType.isUnionType()
+                    && targetItemType.getTypes().stream().allMatch(ItemType::isAtomicItemType));
+        if (!validCastTarget) {
             throw new UnknownCastTypeException(
                     "The type "
                         + this.sequenceType.getItemType().getIdentifierString()
@@ -89,6 +98,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+        // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
+        // TODO: add support for xs:anySimpleType
+        if (targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+            throw new CastableException("Invalid target type for cast expression: xs:NOTATION", metadata);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", metadata);
+        }
+
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
             try {
@@ -129,6 +147,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return item;
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.untypedAtomicItem)) {
+                return ItemFactory.getInstance().createUntypedAtomicItem(item.getStringValue());
+            }
+
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
                 if (item.isString() && item.getStringValue().trim().equals("null")) {
                     result = ItemFactory.getInstance().createNullItem();
@@ -156,7 +178,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     if (StringUtils.isNumeric(item.getStringValue())) {
                         result = ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
                     } else {
@@ -188,7 +210,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
                 } else if (item.isBoolean()) {
                     result = ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
@@ -206,7 +228,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
                 } else if (item.isBoolean()) {
                     result = ItemFactory.getInstance().createFloatItem(item.getBooleanValue() ? 1 : 0);
@@ -257,7 +279,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
                 } else if (item.isBoolean()) {
                     result = ItemFactory.getInstance()
@@ -283,7 +305,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
                 } else if (item.isBoolean()) {
                     result = ItemFactory.getInstance()
@@ -303,7 +325,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createAnyURIItem(item.getStringValue().trim());
                 } else {
                     return null;
@@ -318,7 +340,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.base64BinaryItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue().trim());
                 } else if (item.isHexBinary()) {
                     result = ItemFactory.getInstance()
@@ -336,7 +358,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createHexBinaryItem(item.getStringValue().trim());
                 } else if (item.isBase64Binary()) {
                     result = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(item.getBinaryValue()));
@@ -353,7 +375,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
                 } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance()
@@ -370,7 +392,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
-                if (item.isString()) {
+                if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
                 } else if (item.isTime()) {
                     result = ItemFactory.getInstance().createTimeItem(item.getTimeValue(), item.hasTimeZone());
@@ -389,7 +411,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
                 } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -405,7 +430,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
                 } else if (item.isDate() || item.isDateTime()) {
                     result = ItemFactory.getInstance()
@@ -422,7 +450,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     return ItemFactory.getInstance().createYearMonthDurationItem(item.getStringValue().trim());
                 } else if (item.isDuration() || item.isDayTimeDuration()) {
                     result = ItemFactory.getInstance().createYearMonthDurationItem(item.getPeriodValue());
@@ -438,7 +469,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createDayTimeDurationItem(item.getStringValue().trim());
                 } else if (item.isDuration() || item.isYearMonthDuration()) {
                     result = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
@@ -454,7 +488,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance()
                         .createDurationItem(
                             item.getStringValue().trim()
@@ -473,7 +510,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
                 } else if (item.isDateTime() || item.isDate()) {
                     result = ItemFactory.getInstance().createGDayItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -486,7 +526,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
                 } else if (item.isDateTime() || item.isDate()) {
                     result = ItemFactory.getInstance().createGMonthItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -499,7 +542,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
                 } else if (item.isDateTime() || item.isDate()) {
                     result = ItemFactory.getInstance().createGYearItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -512,7 +558,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
                 } else if (item.isDateTime() || item.isDate()) {
                     result = ItemFactory.getInstance().createGMonthDayItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -525,7 +574,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
             if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
-                if (item.isString()) {
+                if (
+                    item.isString()
+                        || item.getDynamicType().equals(BuiltinTypesCatalogue.untypedAtomicItem)
+                ) {
                     result = ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
                 } else if (item.isDateTime() || item.isDate()) {
                     result = ItemFactory.getInstance()
@@ -561,7 +613,34 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
+    /**
+     * Checks the pattern facet (if any) for the given target type against the lexical form of the item.
+     * Returns true when either no pattern facet applies or at least one pattern matches; false otherwise.
+     */
+    private static boolean checkPatternFacet(Item item, ItemType targetType) {
+        List<String> patterns;
+        try {
+            patterns = targetType.getPatternFacet();
+        } catch (UnsupportedOperationException e) {
+            // Target type does not support the pattern facet.
+            return true;
+        }
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
+        }
+        String lexical = item.serialize();
+        for (String regex : patterns) {
+            if (Pattern.matches(regex, lexical)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) < 0)
@@ -585,6 +664,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
                 ||
@@ -618,10 +700,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsBoolean(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         return true;
     }
 
     public static boolean checkFacetsDouble(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getDoubleValue() < targetType.getMinInclusiveFacet().getDoubleValue())
@@ -641,6 +729,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsFloat(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getFloatValue() < targetType.getMinInclusiveFacet().getFloatValue())
@@ -660,6 +751,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDecimal(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getDecimalValue().compareTo(targetType.getMinInclusiveFacet().getDecimalValue()) < 0)
@@ -725,6 +819,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDate(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -741,6 +838,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsTime(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -757,6 +857,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTime(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -791,6 +894,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTimeStamp(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (!checkDateTimeMinMaxFacets(item, targetType)) {
             return false;
         }
@@ -825,6 +931,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
+        if (!checkPatternFacet(item, targetType)) {
+            return false;
+        }
         if (targetType.equals(BuiltinTypesCatalogue.durationItem)) {
             if (item.getMonth() < 0 && item.getSecond() > 0) {
                 return false;

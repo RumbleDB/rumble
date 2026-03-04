@@ -578,8 +578,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitAttributeNodeContent(AttributeNodeContentExpression expression, StaticContext argument) {
-        // Attribute content should be typed as string
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        // Attribute content is atomized as xs:untypedAtomic
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem));
         return argument;
     }
 
@@ -921,6 +921,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expressionSequenceType
                     + " as "
                     + castedSequenceType,
+                ErrorCode.CastableErrorCode,
                 expression.getMetadata()
             );
         }
