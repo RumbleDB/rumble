@@ -136,16 +136,31 @@ public class AtomicItemType implements ItemType {
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // anything can be casted to itself
-        if (this.equals(other))
+        if (this.equals(other)) {
             return true;
-        // anything can be casted from and to a string or untypedAtomic (or from one of its supertypes)
+        }
+
+        // Work with primitive targets when [other] is a derived atomic type.
+        // This allows xs:Name, xs:NCName, etc. to inherit the castability table of xs:string.
+        ItemType otherPrimitive = other.isPrimitive() ? other : other.getPrimitiveType();
+
+        // Namespace-sensitive target types (xs:QName, xs:NOTATION) are never valid
+        // cast targets except for the identity case handled above.
+        // XPath/XQuery F&O 3.1 §19.1.1: casts to namespace-sensitive types are not supported.
+        if (otherPrimitive.equals(QNameItem) || otherPrimitive.equals(NOTATIONItem)) {
+            return false;
+        }
+
+        // anything can be casted from and to a string or untypedAtomic (or from one of its supertypes),
+        // including types derived by restriction from them (via the primitive type).
         if (
             this.equals(stringItem)
-                || other.equals(stringItem)
+                || otherPrimitive.equals(stringItem)
                 || this.equals(untypedAtomicItem)
-                || other.equals(untypedAtomicItem)
-        )
+                || otherPrimitive.equals(untypedAtomicItem)
+        ) {
             return true;
+        }
         // boolean and numeric can be cast between themselves
         if (
             this.equals(booleanItem)

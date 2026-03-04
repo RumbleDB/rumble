@@ -77,11 +77,13 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
-        if (type.equals(BuiltinTypesCatalogue.atomicItem)) {
-            throw new CastableException(
-                    "\"anyAtomicType\": invalid type for \"cast\" or \"castable\" expression",
-                    metadata
-            );
+        // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
+        // TODO: add support for xs:anySimpleType
+        if (targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+            throw new CastableException("Invalid target type for castable expression: xs:NOTATION", metadata);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            throw new CastableException("Invalid target type for castable expression: xs:anyAtomicType", metadata);
         }
         if (item.isAtomic()) {
             return;

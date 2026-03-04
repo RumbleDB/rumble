@@ -98,6 +98,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+        // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
+        // TODO: add support for xs:anySimpleType
+        if (targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+            throw new CastableException("Invalid target type for cast expression: xs:NOTATION", metadata);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", metadata);
+        }
+
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
             try {
