@@ -27,11 +27,38 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator collectionNameIterator = this.children.get(0);
-        String userTableName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
-        // Resolve to the configured Iceberg catalog (default is the first one passed to withIceberg()).
-        String collectionName = new Collection(Mode.ICEBERG, userTableName).getLogicalName();
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
-        return DeltaTableFunctionIterator.postProcess(dataFrame, collectionName);
+        String metadataName = qualifyForMetadata(collectionName);
+        return DeltaTableFunctionIterator.postProcess(dataFrame, metadataName);
+    }
+
+    /**
+     * This method qualifies the collection name for metadata retrieval. If the collection name is already
+     * qualified with a catalog and a namespace, it is returned as is.
+     * If it is qualified with only a catalog, the default namespace is added.
+     * If it is not qualified at all, both the default catalog and the default namespace are added.
+     * This is necessary because Iceberg tables are always qualified with at least a catalog and a namespace,
+     * and we need to ensure that we can retrieve the correct metadata for the table.
+     */
+    private static String qualifyForMetadata(String collectionName) {
+        int dots = 0;
+        for (int i = 0; i < collectionName.length(); i++) {
+            if (collectionName.charAt(i) == '.') {
+                dots++;
+                if (dots >= 2) {
+                    return collectionName;
+                }
+            }
+        }
+        if (dots == 1) {
+            return "spark_catalog." + collectionName;
+        }
+        String namespace = SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .catalog()
+            .currentDatabase();
+        return "spark_catalog." + namespace + "." + collectionName;
     }
 }

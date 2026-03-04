@@ -31,8 +31,8 @@ public class Collection implements Serializable {
                 this.physicalName = "delta.`" + collectionPath + "`";
                 break;
             case ICEBERG:
-                this.logicalName = qualifyIcebergName(collectionPath);
-                this.physicalName = this.logicalName;
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
                 break;
         }
     }
@@ -48,8 +48,9 @@ public class Collection implements Serializable {
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
             this.physicalName = collectionPath;
-        } else if (isIcebergQualified(collectionPath)) {
-            // case Iceberg table
+        } else if (collectionPath.indexOf('.') != collectionPath.lastIndexOf('.')) {
+            // case Iceberg table - we assume Iceberg tables are always qualified with at
+            // least a catalog and a namespace, so they contain at least two dots.
             this.mode = Mode.ICEBERG;
             this.logicalName = collectionPath;
             this.physicalName = collectionPath;
@@ -116,26 +117,4 @@ public class Collection implements Serializable {
         }
     }
 
-    private static String qualifyIcebergName(String collectionPath) {
-        if (isIcebergQualified(collectionPath)) {
-            return collectionPath;
-        }
-        return "iceberg." + collectionPath;
-    }
-
-    private static boolean isIcebergQualified(String collectionPath) {
-        if (collectionPath.startsWith("iceberg.")) {
-            return true;
-        }
-        int dots = 0;
-        for (int i = 0; i < collectionPath.length(); i++) {
-            if (collectionPath.charAt(i) == '.') {
-                dots++;
-                if (dots >= 2) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }

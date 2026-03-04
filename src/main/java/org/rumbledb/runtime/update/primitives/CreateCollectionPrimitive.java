@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -81,18 +80,11 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
                 break;
             case ICEBERG:
                 // Create using the Iceberg catalog (can be custom if configured)
+                // and enable schema evolution at creation time.
                 this.contents.writeTo(this.collection.getLogicalName())
                     .using("iceberg")
+                    .tableProperty("write.spark.accept-any-schema", "true")
                     .createOrReplace();
-
-                // Turn on schema evolution for the table
-                SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-                session.sql(
-                    String.format(
-                        "ALTER TABLE %s SET TBLPROPERTIES ('write.spark.accept-any-schema'='true')",
-                        this.collection.getPhysicalName()
-                    )
-                );
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported collection mode: " + this.collection.getMode());
