@@ -71,13 +71,16 @@ public class AtomizationIterator extends HybridRuntimeIterator {
         if (childDF.getItemType().isAtomicItemType()) {
             return childDF;
         }
+        if (childDF.isEmptySequence()) {
+            return childDF;
+        }
         if (childDF.getItemType().isObjectItemType()) {
-            throw new CannotAtomizeException("Cannot atomize objects.", getMetadata());
+            throw new CannotAtomizeException("Cannot atomize objects. Type: " + childDF.getItemType(), getMetadata());
         }
         if (childDF.getItemType().isArrayItemType()) {
-            throw new CannotAtomizeException("Cannot atomize arrays.", getMetadata());
+            throw new CannotAtomizeException("Cannot atomize arrays. Type: " + childDF.getItemType(), getMetadata());
         }
-        throw new CannotAtomizeException("Cannot atomize.", getMetadata());
+        throw new CannotAtomizeException("Cannot atomize. Type: " + childDF.getItemType(), getMetadata());
     }
 
 
