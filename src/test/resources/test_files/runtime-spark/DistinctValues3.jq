@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0013" :)
+(:JIQS: ShouldCrash; ErrorCode="FOTY0013" :)
 for $result in distinct-values(for $i in parallelize(1 to 100000, 10) return ({"foo":"bar"}))
 order by $result
 return $result
