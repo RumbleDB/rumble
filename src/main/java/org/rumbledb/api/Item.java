@@ -1306,7 +1306,7 @@ public interface Item extends Serializable, KryoSerializable {
         if (isAtomic())
             return Collections.singletonList(this);
         else
-            throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throw new UnsupportedOperationException("Operation not defined for class " + this.getClass().getName());
     }
 
     default void setParent(Item parent) {
