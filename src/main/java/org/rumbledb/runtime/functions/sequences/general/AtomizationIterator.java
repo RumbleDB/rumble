@@ -26,7 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.FunctionAtomizationException;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -91,8 +91,8 @@ public class AtomizationIterator extends HybridRuntimeIterator {
             if (this.sequenceIterator.hasNext()) {
                 try {
                     this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
-                } catch (FunctionAtomizationException e) {
-                    throw new FunctionAtomizationException("A function item cannot be atomized.", getMetadata());
+                } catch (CannotAtomizeException e) {
+                    throw new CannotAtomizeException("A function item cannot be atomized.", getMetadata());
                 }
             }
         } else if (!this.usedContext) {

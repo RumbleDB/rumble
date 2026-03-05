@@ -1303,10 +1303,11 @@ public interface Item extends Serializable, KryoSerializable {
      * implementation of dm:typed-value delegates to atomizedValue().
      */
     default List<Item> atomizedValue() {
+        System.err.println(this.serializeAsJSON());
         if (isAtomic())
             return Collections.singletonList(this);
         else
-            throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+            throw new UnsupportedOperationException("Operation not defined for class " + this.getClass().getName());
     }
 
     default void setParent(Item parent) {
