@@ -115,7 +115,7 @@ public class AtomizationIterator extends HybridRuntimeIterator {
                 try {
                     this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
                 } catch (CannotAtomizeException e) {
-                    throw new CannotAtomizeException("A function item cannot be atomized.", getMetadata());
+                    throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
                 }
             }
         } else if (!this.usedContext) {
