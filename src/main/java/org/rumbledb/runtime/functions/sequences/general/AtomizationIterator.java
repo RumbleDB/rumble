@@ -28,7 +28,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -58,6 +58,26 @@ public class AtomizationIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new AtomizationClosure();
         return childRDD.flatMap(transformation);
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame childDF = this.sequenceIterator.getDataFrame(dynamicContext);
+        if (childDF.getItemType().isAtomicItemType()) {
+            return childDF;
+        }
+        if (childDF.getItemType().isObjectItemType()) {
+            throw new CannotAtomizeException("Cannot atomize objects.", getMetadata());
+        }
+        if (childDF.getItemType().isArrayItemType()) {
+            throw new CannotAtomizeException("Cannot atomize arrays.", getMetadata());
+        }
+        throw new CannotAtomizeException("Cannot atomize.", getMetadata());
     }
 
 
