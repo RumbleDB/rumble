@@ -31,8 +31,8 @@ public class Collection implements Serializable {
                 this.physicalName = "delta.`" + collectionPath + "`";
                 break;
             case ICEBERG:
-                this.logicalName = "iceberg." + collectionPath;
-                this.physicalName = "iceberg." + collectionPath;
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
                 break;
         }
     }
@@ -48,8 +48,9 @@ public class Collection implements Serializable {
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
             this.physicalName = collectionPath;
-        } else if (collectionPath.startsWith("iceberg.")) {
-            // case Iceberg table
+        } else if (collectionPath.indexOf('.') != collectionPath.lastIndexOf('.')) {
+            // case Iceberg table - we assume Iceberg tables are always qualified with at
+            // least a catalog and a namespace, so they contain at least two dots.
             this.mode = Mode.ICEBERG;
             this.logicalName = collectionPath;
             this.physicalName = collectionPath;
@@ -109,10 +110,13 @@ public class Collection implements Serializable {
                         .append();
                     break;
                 default:
-                    throw new UnsupportedOperationException("Unsupported collection mode: " + this.mode);
+                    throw new UnsupportedOperationException(
+                            "Insert Unordered: Unsupported collection mode: " + this.mode
+                    );
             }
         } catch (NoSuchTableException e) {
             throw new RuntimeException("Target collection not found: " + this.logicalName, e);
         }
     }
+
 }
