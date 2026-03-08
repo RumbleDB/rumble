@@ -110,7 +110,9 @@ public class Collection implements Serializable {
                         .append();
                     break;
                 default:
-                    throw new UnsupportedOperationException("Unsupported collection mode: " + this.mode);
+                    throw new UnsupportedOperationException(
+                            "Insert Unordered: Unsupported collection mode: " + this.mode
+                    );
             }
         } catch (NoSuchTableException e) {
             throw new RuntimeException("Target collection not found: " + this.logicalName, e);
