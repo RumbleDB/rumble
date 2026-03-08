@@ -118,5 +118,4 @@ public class Collection implements Serializable {
             throw new RuntimeException("Target collection not found: " + this.logicalName, e);
         }
     }
-
 }
