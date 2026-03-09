@@ -159,6 +159,178 @@ public class AtomicItemType implements ItemType {
         return this;
     }
 
+    /**
+     * Primitive-type castability matrix from XPath/XQuery F&O 3.1 §19.1
+     * "Casting from primitive types to primitive types" (table rows 15281–15303
+     * in the W3C Recommendation text).
+     *
+     * The table is expressed in terms of the short codes defined by the spec:
+     *
+     * uA = xs:untypedAtomic
+     * str = xs:string
+     * flt = xs:float
+     * dbl = xs:double
+     * dec = xs:decimal
+     * int = xs:integer
+     * dur = xs:duration
+     * yMD = xs:yearMonthDuration
+     * dTD = xs:dayTimeDuration
+     * dT = xs:dateTime
+     * tim = xs:time
+     * dat = xs:date
+     * gYM = xs:gYearMonth
+     * gYr = xs:gYear
+     * gMD = xs:gMonthDay
+     * gDay = xs:gDay
+     * gMon = xs:gMonth
+     * bool = xs:boolean
+     * b64 = xs:base64Binary
+     * hxB = xs:hexBinary
+     * aURI = xs:anyURI
+     * QN = xs:QName
+     * NOT = xs:NOTATION
+     *
+     * The matrix below uses rows as targets (T) and columns as sources (S),
+     * following the spec's "S\\T" convention. Each cell contains:
+     *   'Y' — cast always supported,
+     *   'M' — cast may succeed or fail depending on the value,
+     *   'N' — cast is never supported.
+     *
+     * In this implementation we treat both 'Y' and 'M' as statically
+     * castable (returning true from isStaticallyCastableAs), and 'N' as
+     * statically non-castable.
+     *
+     * NOTE: While the spec matrix includes namespace-sensitive types
+     * xs:QName and xs:NOTATION, RumbleDB does not currently support casts
+     * to these types. We therefore override the matrix for such targets
+     * and report them as not statically castable, even when the matrix
+     * entry would otherwise be 'Y' or 'M'.
+     */
+    private static final int PRIM_UA = 0;
+    private static final int PRIM_STR = 1;
+    private static final int PRIM_FLT = 2;
+    private static final int PRIM_DBL = 3;
+    private static final int PRIM_DEC = 4;
+    private static final int PRIM_INT = 5;
+    private static final int PRIM_DUR = 6;
+    private static final int PRIM_YMD = 7;
+    private static final int PRIM_DTD = 8;
+    private static final int PRIM_DT = 9;
+    private static final int PRIM_TIM = 10;
+    private static final int PRIM_DAT = 11;
+    private static final int PRIM_GYM = 12;
+    private static final int PRIM_GYR = 13;
+    private static final int PRIM_GMD = 14;
+    private static final int PRIM_GDAY = 15;
+    private static final int PRIM_GMON = 16;
+    private static final int PRIM_BOOL = 17;
+    private static final int PRIM_B64 = 18;
+    private static final int PRIM_HXB = 19;
+    private static final int PRIM_AURI = 20;
+    private static final int PRIM_QN = 21;
+    private static final int PRIM_NOT = 22;
+
+    // PRIMITIVE_CAST_MATRIX[targetIndex][sourceIndex]
+    private static final char[][] PRIMITIVE_CAST_MATRIX = {
+        //            uA  str flt dbl dec int dur yMD dTD dT  tim dat gYM gYr gMD gDay gMon bool b64 hxB aURI QN  NOT
+        /* uA   */ { 'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y' },
+        /* str  */ { 'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y' },
+        /* flt  */ { 'M','M','Y','Y','Y','Y','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N' },
+        /* dbl  */ { 'M','M','Y','Y','Y','Y','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N' },
+        /* dec  */ { 'M','M','M','M','Y','Y','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N' },
+        /* int  */ { 'M','M','M','M','Y','Y','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N' },
+        /* dur  */ { 'M','M','N','N','N','N','Y','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N' },
+        /* yMD  */ { 'M','M','N','N','N','N','Y','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N' },
+        /* dTD  */ { 'M','M','N','N','N','N','Y','Y','Y','N','N','N','N','N','N','N','N','N','N','N','N','N','N' },
+        /* dT   */ { 'M','M','N','N','N','N','N','N','N','Y','Y','Y','Y','Y','Y','Y','Y','N','N','N','N','N','N' },
+        /* tim  */ { 'M','M','N','N','N','N','N','N','N','N','Y','N','N','N','N','N','N','N','N','N','N','N','N' },
+        /* dat  */ { 'M','M','N','N','N','N','N','N','N','Y','N','Y','Y','Y','Y','Y','Y','N','N','N','N','N','N' },
+        /* gYM  */ { 'M','M','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N','N','N','N','N','N' },
+        /* gYr  */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N','N','N','N','N' },
+        /* gMD  */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N','N','N','N' },
+        /* gDay */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N','N','N' },
+        /* gMon */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N','N' },
+        /* bool */ { 'M','M','Y','Y','Y','Y','N','N','N','N','N','N','N','N','N','N','N','Y','N','N','N','N','N' },
+        /* b64  */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','Y','N','N','N' },
+        /* hxB  */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','Y','N','N','N' },
+        /* aURI */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','N','N' },
+        /* QN   */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','M' },
+        /* NOT  */ { 'M','M','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','N','Y','M' }
+    };
+
+    private static int primitiveIndex(ItemType primitiveType) {
+        if (primitiveType.equals(untypedAtomicItem)) {
+            return PRIM_UA;
+        }
+        if (primitiveType.equals(stringItem)) {
+            return PRIM_STR;
+        }
+        if (primitiveType.equals(floatItem)) {
+            return PRIM_FLT;
+        }
+        if (primitiveType.equals(doubleItem)) {
+            return PRIM_DBL;
+        }
+        if (primitiveType.equals(decimalItem)) {
+            return PRIM_DEC;
+        }
+        if (primitiveType.equals(integerItem)) {
+            return PRIM_INT;
+        }
+        if (primitiveType.equals(durationItem)) {
+            return PRIM_DUR;
+        }
+        if (primitiveType.equals(yearMonthDurationItem)) {
+            return PRIM_YMD;
+        }
+        if (primitiveType.equals(dayTimeDurationItem)) {
+            return PRIM_DTD;
+        }
+        if (primitiveType.equals(dateTimeItem)) {
+            return PRIM_DT;
+        }
+        if (primitiveType.equals(timeItem)) {
+            return PRIM_TIM;
+        }
+        if (primitiveType.equals(dateItem)) {
+            return PRIM_DAT;
+        }
+        if (primitiveType.equals(gYearMonthItem)) {
+            return PRIM_GYM;
+        }
+        if (primitiveType.equals(gYearItem)) {
+            return PRIM_GYR;
+        }
+        if (primitiveType.equals(gMonthDayItem)) {
+            return PRIM_GMD;
+        }
+        if (primitiveType.equals(gDayItem)) {
+            return PRIM_GDAY;
+        }
+        if (primitiveType.equals(gMonthItem)) {
+            return PRIM_GMON;
+        }
+        if (primitiveType.equals(booleanItem)) {
+            return PRIM_BOOL;
+        }
+        if (primitiveType.equals(base64BinaryItem)) {
+            return PRIM_B64;
+        }
+        if (primitiveType.equals(hexBinaryItem)) {
+            return PRIM_HXB;
+        }
+        if (primitiveType.equals(anyURIItem)) {
+            return PRIM_AURI;
+        }
+        if (primitiveType.equals(QNameItem)) {
+            return PRIM_QN;
+        }
+        if (primitiveType.equals(NOTATIONItem)) {
+            return PRIM_NOT;
+        }
+        return -1;
+    }
+
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // anything can be casted to itself
@@ -166,85 +338,59 @@ public class AtomicItemType implements ItemType {
             return true;
         }
 
-        // Work with primitive targets when [other] is a derived atomic type.
-        // This allows xs:Name, xs:NCName, etc. to inherit the castability table of xs:string.
-        ItemType otherPrimitive = other.isPrimitive() ? other : other.getPrimitiveType();
+        // Normalize to primitive forms when working with derived atomic types.
+        ItemType sourcePrimitive = this.isPrimitive() ? this : this.getPrimitiveType();
+        ItemType targetPrimitive = other.isPrimitive() ? other : other.getPrimitiveType();
 
-        // Namespace-sensitive target types (xs:QName, xs:NOTATION) are never valid
-        // cast targets except for the identity case handled above.
-        // XPath/XQuery F&O 3.1 §19.1.1: casts to namespace-sensitive types are not supported.
-        if (otherPrimitive.equals(QNameItem) || otherPrimitive.equals(NOTATIONItem)) {
+        // xs:anyAtomicType (atomicItem) is abstract and must not be a cast target.
+        if (targetPrimitive.equals(atomicItem)) {
             return false;
         }
+
+        // Namespace-sensitive target types (xs:QName, xs:NOTATION) are never valid cast
+        // targets in this implementation (beyond the identity case handled above),
+        // even though the spec matrix contains entries for them.
+        if (targetPrimitive.equals(QNameItem) || targetPrimitive.equals(NOTATIONItem)) {
+            return false;
+        }
+
+        int sourceIndex = primitiveIndex(sourcePrimitive);
+        int targetIndex = primitiveIndex(targetPrimitive);
+
+        if (sourceIndex != -1 && targetIndex != -1) {
+            char entry = PRIMITIVE_CAST_MATRIX[targetIndex][sourceIndex];
+            return entry == 'Y' || entry == 'M';
+        }
+
+        // Fallback rules for item types that are outside the F&O primitive matrix
+        // (for example, js:null) while preserving sensible behavior.
 
         // anything can be casted from and to a string or untypedAtomic (or from one of its supertypes),
         // including types derived by restriction from them (via the primitive type).
         if (
-            this.equals(stringItem)
-                || otherPrimitive.equals(stringItem)
-                || this.equals(untypedAtomicItem)
-                || otherPrimitive.equals(untypedAtomicItem)
+            sourcePrimitive.equals(stringItem)
+                || targetPrimitive.equals(stringItem)
+                || sourcePrimitive.equals(untypedAtomicItem)
+                || targetPrimitive.equals(untypedAtomicItem)
         ) {
             return true;
         }
+
         // boolean and numeric can be cast between themselves
-        if (
-            this.equals(booleanItem)
-                || this.isNumeric()
-        ) {
-            if (
-                other.equals(booleanItem)
-                    ||
-                    other.isNumeric()
-            )
-                return true;
-            else
-                return false;
+        if (sourcePrimitive.equals(booleanItem) || sourcePrimitive.isNumeric()) {
+            return targetPrimitive.equals(booleanItem) || targetPrimitive.isNumeric();
         }
+
         // base64 and hex can be cast between themselves
-        if (this.equals(base64BinaryItem) || this.equals(hexBinaryItem)) {
-            if (
-                other.equals(base64BinaryItem)
-                    ||
-                    other.equals(hexBinaryItem)
-            )
-                return true;
-            else
-                return false;
+        if (sourcePrimitive.equals(base64BinaryItem) || sourcePrimitive.equals(hexBinaryItem)) {
+            return targetPrimitive.equals(base64BinaryItem) || targetPrimitive.equals(hexBinaryItem);
         }
+
         // durations can be cast between themselves
-        if (this.isSubtypeOf(durationItem)) {
-            if (other.isSubtypeOf(durationItem))
-                return true;
-            else
-                return false;
+        if (sourcePrimitive.isSubtypeOf(durationItem)) {
+            return targetPrimitive.isSubtypeOf(durationItem);
         }
-        // DateTime can be cast also to Date or Time or DateTimeStamp
-        if (this.equals(dateTimeItem)) {
-            return other.equals(dateItem)
-                || other.equals(timeItem)
-                || other.equals(dateTimeStampItem)
-                || other.equals(gYearItem)
-                || other.equals(gMonthItem)
-                || other.equals(gDayItem);
-        }
-        // DateTimeStamp can be cast also to Date or Time or DateTime
-        if (this.equals(dateTimeStampItem)) {
-            return other.equals(dateItem)
-                || other.equals(timeItem)
-                || other.equals(dateTimeItem)
-                || other.equals(gYearItem)
-                || other.equals(gMonthItem)
-                || other.equals(gDayItem);
-        }
-        // Date can be cast also to DateTime or DateTimeStamp
-        if (this.equals(dateItem)) {
-            return other.equals(dateTimeItem)
-                || other.equals(dateTimeStampItem)
-                || other.equals(gYearItem)
-                || other.equals(gMonthItem)
-                || other.equals(gDayItem);
-        }
+
         // Otherwise this cannot be casted to other
         return false;
     }
