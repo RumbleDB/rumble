@@ -278,11 +278,34 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
+     * Casting-specific primitive notion from XPath/XQuery F&O 3.1 §19:
+     * in addition to XML Schema primitive types, xs:integer, xs:yearMonthDuration,
+     * and xs:dayTimeDuration are treated as primitive for casting.
+     *
+     * @return [true] if this type is considered primitive for casting semantics.
+     */
+    default boolean isCastingPrimitive() {
+        return this.isPrimitive()
+            || this.equals(BuiltinTypesCatalogue.integerItem)
+            || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+            || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
+    }
+
+    /**
      *
      * @return the primitive type for a derived type, throw an error for primitive types
      */
     default ItemType getPrimitiveType() {
         throw new UnsupportedOperationException("getPrimitiveType operation is supported only for non-primitive types");
+    }
+
+    /**
+     * Casting-specific primitive normalization used by cast/castable logic.
+     *
+     * @return this type if it is a casting primitive; otherwise its casting primitive ancestor.
+     */
+    default ItemType getCastingPrimitiveType() {
+        return this.isCastingPrimitive() ? this : this.getPrimitiveType();
     }
 
     /**

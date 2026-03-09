@@ -158,11 +158,11 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 // TODO: handle the case for union types
                 return item;
             }
-            ItemType sourcePrimitiveType = itemType.isPrimitive() ? itemType : itemType.getPrimitiveType();
-            ItemType targetPrimitiveType = targetType.isPrimitive() ? targetType : targetType.getPrimitiveType();
+            ItemType sourcePrimitiveType = itemType.getCastingPrimitiveType();
+            ItemType targetPrimitiveType = targetType.getCastingPrimitiveType();
             // XPath and XQuery F&O 3.1 §19.3.1: Casting to derived types
             // - "When P(ST) is the same type as P(TT)" (19.3.3)
-            if (!targetType.isPrimitive() && sourcePrimitiveType.equals(targetPrimitiveType)) {
+            if (!targetType.isCastingPrimitive() && sourcePrimitiveType.equals(targetPrimitiveType)) {
                 // Keep the dedicated conversion paths for duration subtypes and ENTITY-family casts:
                 // those require special conversion rules beyond plain facet validation.
                 boolean hasSpecialWithinBranchRules =
@@ -182,7 +182,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             // Remaining successful casts are handled by the target-type conversions below and
             // correspond to §19.3.1 either:
             // - "Otherwise (P(ST) is not the same type as P(TT))" (19.3.4).
-            if (!targetType.isPrimitive() && !sourcePrimitiveType.equals(targetPrimitiveType)) {
+            if (!targetType.isCastingPrimitive() && !sourcePrimitiveType.equals(targetPrimitiveType)) {
                 // XPath and XQuery F&O 3.1 §19.3.4:
                 // 1) cast up to primitive source type
                 // 2) cast to primitive target type
@@ -192,7 +192,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return null;
                 }
 
-                Item sourcePrimitiveValue = itemType.isPrimitive()
+                Item sourcePrimitiveValue = itemType.isCastingPrimitive()
                     ? item
                     : castToPrimitiveTypes(item, sourcePrimitiveType, metadata);
                 if (sourcePrimitiveValue == null) {
@@ -220,7 +220,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.untypedAtomicItem)) {
                 return ItemFactory.getInstance().createUntypedAtomicItem(item.getStringValue());
             }
-            if (targetType.isPrimitive()) {
+            if (targetType.isCastingPrimitive()) {
                 return castToPrimitiveTypes(item, targetType, metadata);
             }
 
@@ -655,7 +655,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
      * Returns true when either no lexical patterns are modeled or at least one pattern matches; false otherwise.
      */
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
-        ItemType primitive = targetType.getPrimitiveType();
+        ItemType primitive = targetType.getCastingPrimitiveType();
         java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
         if (patterns == null || patterns.isEmpty()) {
             return true;

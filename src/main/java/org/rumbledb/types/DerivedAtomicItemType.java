@@ -233,7 +233,10 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // TODO: what about further restrictions like string without num from int?
-        return this.primitiveType.isStaticallyCastableAs(other.isPrimitive() ? other : other.getPrimitiveType());
+        return AtomicItemType.isCastableBetweenCastingPrimitives(
+            this.getCastingPrimitiveType(),
+            other.getCastingPrimitiveType()
+        );
     }
 
     @Override
@@ -262,6 +265,18 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public ItemType getPrimitiveType() {
         return this.primitiveType;
+    }
+
+    @Override
+    public boolean isCastingPrimitive() {
+        return this.equals(BuiltinTypesCatalogue.integerItem)
+            || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+            || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
+    }
+
+    @Override
+    public ItemType getCastingPrimitiveType() {
+        return this.isCastingPrimitive() ? this : this.primitiveType;
     }
 
     @Override
