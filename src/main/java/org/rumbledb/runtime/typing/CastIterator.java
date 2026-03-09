@@ -147,15 +147,49 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     || item.isString()
                     || item.getDynamicType().getPrimitiveType().equals(BuiltinTypesCatalogue.stringItem);
 
-            if (itemType.isSubtypeOf(targetType)) {
+            // XPath and XQuery F&O 3.1 §19.3.1:
+            // "When ST is the same type as TT: this case always succeeds, returning SV unchanged."
+            if (itemType.equals(targetType)) {
                 return item;
             }
+            // XPath and XQuery F&O 3.1 §19.3.1:
+            // "When itemType-subtype(ST, TT) is true: This case is described in 19.3.2
+            // Casting from derived types to parent types."
+            if (itemType.isSubtypeOf(targetType)) {
+                // TODO: handle the case for union types
+                return item;
+            }
+            ItemType sourcePrimitiveType = itemType.isPrimitive() ? itemType : itemType.getPrimitiveType();
+            ItemType targetPrimitiveType = targetType.isPrimitive() ? targetType : targetType.getPrimitiveType();
+            // XPath and XQuery F&O 3.1 §19.3.1: Casting to derived types
+            // - "When P(ST) is the same type as P(TT)" (19.3.3)
+            if (!targetType.isPrimitive() && sourcePrimitiveType.equals(targetPrimitiveType)) {
+                // Keep the dedicated conversion paths for duration subtypes and ENTITY-family casts:
+                // those require special conversion rules beyond plain facet validation.
+                boolean hasSpecialWithinBranchRules =
+                    targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+                        || targetType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
+                        || targetType.isSubtypeOf(BuiltinTypesCatalogue.ENTITYItem);
+                if (!hasSpecialWithinBranchRules) {
+                    // F&O 3.1 §19.3.3:
+                    // if ST and TT share the same primitive type, the cast succeeds iff the value
+                    // conforms to the target type's facets.
+                    if (!checkValueConformsToTargetFacets(item, targetType)) {
+                        return null;
+                    }
+                    return new AnnotatedItem(item, targetType);
+                }
+            }
+            // Remaining successful casts are handled by the target-type conversions below and
+            // correspond to §19.3.1 either:
+            // - "Otherwise (P(ST) is not the same type as P(TT))" (19.3.4).
 
             if (targetType.equals(BuiltinTypesCatalogue.untypedAtomicItem)) {
                 return ItemFactory.getInstance().createUntypedAtomicItem(item.getStringValue());
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+            // Remaining conversion branches dispatch by target primitive type.
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.nullItem)) {
                 if (item.isString() && item.getStringValue().trim().equals("null")) {
                     result = ItemFactory.getInstance().createNullItem();
                 } else {
@@ -175,7 +209,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return null;
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.stringItem)) {
                 result = ItemFactory.getInstance().createStringItem(item.getStringValue());
                 if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
                     return result;
@@ -186,26 +220,26 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 // XPath and XQuery Functions and Operators 3.1 §19.1.5 Casting to xs:boolean (verbatim):
                 // "When a value of any ·primitive type· is cast as xs:boolean, the xs:boolean value TV is derived
-                //  from ST and SV as follows:
-                //  If ST is xs:boolean, then TV is SV.
-                //  If ST is xs:float, xs:double, xs:decimal or xs:integer and SV is 0, +0, -0, 0.0, 0.0E0 or NaN,
-                //  then TV is false.
-                //  If ST is xs:float, xs:double, xs:decimal or xs:integer and SV is not one of the above values,
-                //  then TV is true.
-                //  If ST is xs:untypedAtomic or xs:string, see 19.2 Casting from xs:string and xs:untypedAtomic."
+                // from ST and SV as follows:
+                // If ST is xs:boolean, then TV is SV.
+                // If ST is xs:float, xs:double, xs:decimal or xs:integer and SV is 0, +0, -0, 0.0, 0.0E0 or NaN,
+                // then TV is false.
+                // If ST is xs:float, xs:double, xs:decimal or xs:integer and SV is not one of the above values,
+                // then TV is true.
+                // If ST is xs:untypedAtomic or xs:string, see 19.2 Casting from xs:string and xs:untypedAtomic."
                 //
                 // XPath and XQuery Functions and Operators 3.1 §19.2 Casting from xs:string and xs:untypedAtomic
                 // (verbatim excerpt):
                 // "This section applies when the supplied value SV is an instance of xs:string or xs:untypedAtomic,
-                //  including types derived from these by restriction. If the value is xs:untypedAtomic, it is treated
-                //  in exactly the same way as a string containing the same sequence of characters.
-                //  The supplied string is mapped to a typed value of the target type as defined in
-                //  [XML Schema Part 2: Datatypes Second Edition]. Whitespace normalization is applied as indicated by
-                //  the whiteSpace facet for the datatype. The resulting whitespace-normalized string must be a valid
-                //  lexical form for the datatype. The semantics of casting follow the rules of XML Schema validation."
+                // including types derived from these by restriction. If the value is xs:untypedAtomic, it is treated
+                // in exactly the same way as a string containing the same sequence of characters.
+                // The supplied string is mapped to a typed value of the target type as defined in
+                // [XML Schema Part 2: Datatypes Second Edition]. Whitespace normalization is applied as indicated by
+                // the whiteSpace facet for the datatype. The resulting whitespace-normalized string must be a valid
+                // lexical form for the datatype. The semantics of casting follow the rules of XML Schema validation."
 
                 if (item.isString() || item.isUntypedAtomic()) {
                     // For xs:boolean, XML Schema defines exactly four legal lexical forms:
@@ -247,7 +281,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.doubleItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
                 } else if (item.isBoolean()) {
@@ -265,7 +299,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 return new AnnotatedItem(result, targetType);
             }
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.floatItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
                 } else if (item.isBoolean()) {
@@ -284,6 +318,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
+            // Non-float/double targets do not accept NaN or infinities.
             if (
                 (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
                     || (item.isDouble()
@@ -295,28 +330,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             }
 
-            if (
-                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
-                    || (item.isDouble()
-                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
-            ) {
-                throw new InvalidLexicalValueException(
-                        "NaN or INF cannot be cast to another type than Float or Double",
-                        metadata
-                );
-            }
-            if (
-                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
-                    || (item.isDouble()
-                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
-            ) {
-                throw new InvalidLexicalValueException(
-                        "NaN or INF cannot be cast to another type than Float or Double",
-                        metadata
-                );
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.integerItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
                 } else if (item.isBoolean()) {
@@ -342,7 +356,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
                 } else if (item.isBoolean()) {
@@ -362,7 +376,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.anyURIItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createAnyURIItem(item.getStringValue().trim());
                 } else {
@@ -377,7 +391,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.base64BinaryItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue().trim());
                 } else if (item.isHexBinary()) {
@@ -395,7 +409,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
+            if (targetPrimitiveType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
                 if (item.isString() || item.isUntypedAtomic()) {
                     result = ItemFactory.getInstance().createHexBinaryItem(item.getStringValue().trim());
                 } else if (item.isBase64Binary()) {
@@ -651,6 +665,56 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
+    private static boolean checkValueConformsToTargetFacets(Item value, ItemType targetType) {
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+            return checkFacetsString(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
+            return checkFacetsBoolean(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
+            return checkFacetsDouble(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            return checkFacetsFloat(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+            return checkFacetsInteger(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+            return checkFacetsDecimal(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
+            return checkFacetsAnyURI(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.base64BinaryItem)) {
+            return checkFacetsBase64Binary(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
+            return checkFacetsHexBinary(value, targetType);
+        }
+        if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return checkFacetsDateTimeStamp(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)) {
+            return checkFacetsDateTime(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
+            return checkFacetsDate(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.timeItem)) {
+            return checkFacetsTime(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.durationItem)) {
+            return checkFacetsDuration(value, targetType);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+            return checkFacetsNull(value, targetType);
+        }
+        // For type families without modeled facet checks, accept by default.
+        return true;
+    }
+
     /**
      * Checks the pattern facet (if any) for the given target type against the lexical form of the item.
      * Returns true when either no pattern facet applies or at least one pattern matches; false otherwise.
@@ -669,7 +733,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (patterns == null || patterns.isEmpty()) {
             return true;
         }
-        String lexical = item.serialize();
+        // F&O 3.1 §19.3.3 requires pattern checks against the canonical lexical
+        // representation of the source value (or xs:string cast if no canonical form exists).
+        String lexical = item.getStringValue();
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
                 return true;
@@ -723,17 +789,18 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
+        BigInteger value = item.castToIntegerValue();
         if (
             (targetType.getMinInclusiveFacet() != null
-                && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) < 0)
+                && value.compareTo(targetType.getMinInclusiveFacet().castToIntegerValue()) < 0)
                 || (targetType.getMaxInclusiveFacet() != null
-                    && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) > 0)
+                    && value.compareTo(targetType.getMaxInclusiveFacet().castToIntegerValue()) > 0)
                 || (targetType.getMinExclusiveFacet() != null
                     &&
-                    item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
+                    value.compareTo(targetType.getMinExclusiveFacet().castToIntegerValue()) <= 0)
                 || (targetType.getMaxExclusiveFacet() != null
                     &&
-                    item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
+                    value.compareTo(targetType.getMaxExclusiveFacet().castToIntegerValue()) >= 0)
         ) {
             return false;
         }
