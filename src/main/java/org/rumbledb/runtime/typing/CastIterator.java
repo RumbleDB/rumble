@@ -616,6 +616,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     /**
      * Checks the pattern facet (if any) for the given target type against the lexical form of the item.
      * Returns true when either no pattern facet applies or at least one pattern matches; false otherwise.
+     *
+     * This uses only facet-based patterns (for example on derived types), not the
+     * built-in lexical-space patterns of primitive types.
      */
     private static boolean checkPatternFacet(Item item, ItemType targetType) {
         List<String> patterns;
@@ -637,7 +640,28 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         return false;
     }
 
+    /**
+     * Checks the lexical-space patterns (if any) for the given target type against the lexical form of the item.
+     * Returns true when either no lexical patterns are modeled or at least one pattern matches; false otherwise.
+     */
+    private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
+        java.util.List<String> patterns = targetType.getLexicalSpacePatterns();
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
+        }
+        String lexical = item.serialize();
+        for (String regex : patterns) {
+            if (Pattern.matches(regex, lexical)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -664,6 +688,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -700,6 +727,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsBoolean(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -707,6 +737,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDouble(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -729,6 +762,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsFloat(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -751,6 +787,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDecimal(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -819,6 +858,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDate(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -838,6 +880,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsTime(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -857,6 +902,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTime(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -894,6 +942,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTimeStamp(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -931,6 +982,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
+        if (!checkLexicalPatterns(item, targetType)) {
+            return false;
+        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }

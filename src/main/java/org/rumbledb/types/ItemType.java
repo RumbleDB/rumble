@@ -427,6 +427,10 @@ public interface ItemType extends Serializable, KryoSerializable {
     /**
      * Returns the pattern facet for this item type.
      *
+     * This reflects pattern facets applied via derivation (for example on
+     * {@link DerivedAtomicItemType}), not the full lexical space of a
+     * primitive atomic type.
+     *
      * @return the list of pattern regex strings for this derivation step,
      *         or null if no pattern restriction is set
      */
@@ -434,6 +438,25 @@ public interface ItemType extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException(
                 "pattern facet is not allowed for " + this.toString() + " item types"
         );
+    }
+
+    /**
+     * Returns the lexical-space patterns for this item type.
+     *
+     * For primitive atomic types, this describes the lexical space defined
+     * by the specification (for example, the allowed literals for xs:boolean
+     * or the lexical grammar for xs:decimal). For derived atomic types, this
+     * typically delegates to the primitive type.
+     *
+     * Implementations that do not provide additional constraints should
+     * return an empty list.
+     *
+     * @return a list of regular expressions describing the lexical space
+     *         of this type, or an empty list if no regex-based restriction
+     *         is modeled.
+     */
+    default List<String> getLexicalSpacePatterns() {
+        return java.util.Collections.emptyList();
     }
 
     // region fundamental facets (XSD 1.1 §4.2)

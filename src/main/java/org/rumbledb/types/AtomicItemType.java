@@ -4,7 +4,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.rumbledb.types.BuiltinTypesCatalogue.*;
 
@@ -23,18 +26,37 @@ public class AtomicItemType implements ItemType {
     private Boolean bounded;
     private CardinalityFacetValue cardinality;
     private Boolean numeric;
+    /**
+     * Regular expressions describing the lexical space of this primitive type.
+     * An empty list means that no additional regex-based restriction is modeled.
+     */
+    private List<String> lexicalSpacePatterns;
 
     public AtomicItemType() {
     }
 
     AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets) {
-        this(name, allowedFacets, WhitespaceFacet.COLLAPSE);
+        this(name, allowedFacets, WhitespaceFacet.COLLAPSE, null);
     }
 
-    AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets, WhitespaceFacet whiteSpace) {
+    AtomicItemType(
+            Name name,
+            Set<ConstrainingFacetTypes> allowedFacets,
+            WhitespaceFacet whiteSpace
+    ) {
+        this(name, allowedFacets, whiteSpace, null);
+    }
+
+    AtomicItemType(
+            Name name,
+            Set<ConstrainingFacetTypes> allowedFacets,
+            WhitespaceFacet whiteSpace,
+            List<String> lexicalSpacePatterns
+    ) {
         this.name = name;
         this.allowedFacets = allowedFacets;
         this.whiteSpace = whiteSpace;
+        this.lexicalSpacePatterns = lexicalSpacePatterns == null ? Collections.emptyList() : lexicalSpacePatterns;
     }
 
     AtomicItemType(
@@ -44,7 +66,8 @@ public class AtomicItemType implements ItemType {
             OrderedFacetValue ordered,
             Boolean bounded,
             CardinalityFacetValue cardinality,
-            Boolean numeric
+            Boolean numeric,
+            List<String> lexicalSpacePatterns
     ) {
         this.name = name;
         this.allowedFacets = allowedFacets;
@@ -53,6 +76,7 @@ public class AtomicItemType implements ItemType {
         this.bounded = bounded;
         this.cardinality = cardinality;
         this.numeric = numeric;
+        this.lexicalSpacePatterns = lexicalSpacePatterns == null ? Collections.emptyList() : lexicalSpacePatterns;
     }
 
     @Override
@@ -64,6 +88,7 @@ public class AtomicItemType implements ItemType {
         kryo.writeObjectOrNull(output, this.bounded, Boolean.class);
         kryo.writeObjectOrNull(output, this.cardinality, CardinalityFacetValue.class);
         kryo.writeObjectOrNull(output, this.numeric, Boolean.class);
+        kryo.writeObjectOrNull(output, this.lexicalSpacePatterns, java.util.ArrayList.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -76,6 +101,7 @@ public class AtomicItemType implements ItemType {
         this.bounded = kryo.readObjectOrNull(input, Boolean.class);
         this.cardinality = kryo.readObjectOrNull(input, CardinalityFacetValue.class);
         this.numeric = kryo.readObjectOrNull(input, Boolean.class);
+        this.lexicalSpacePatterns = kryo.readObjectOrNull(input, java.util.ArrayList.class);
     }
 
     @Override
@@ -399,6 +425,11 @@ public class AtomicItemType implements ItemType {
     @Override
     public Boolean getNumericFacet() {
         return this.numeric;
+    }
+
+    @Override
+    public List<String> getLexicalSpacePatterns() {
+        return this.lexicalSpacePatterns;
     }
 
     @Override
