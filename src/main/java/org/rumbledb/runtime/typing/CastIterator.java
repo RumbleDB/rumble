@@ -2,7 +2,6 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -15,6 +14,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.WhitespaceFacet;
 import org.rumbledb.types.SequenceType.Arity;
 
 import java.math.BigDecimal;
@@ -142,6 +142,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         try {
             Item result = null;
             ItemType itemType = item.getDynamicType();
+            boolean fromStringSource =
+                item.isUntypedAtomic()
+                    || item.isString()
+                    || item.getDynamicType().getPrimitiveType().equals(BuiltinTypesCatalogue.stringItem);
 
             if (itemType.isSubtypeOf(targetType)) {
                 return item;
@@ -166,6 +170,11 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return new AnnotatedItem(result, targetType);
             }
 
+            // check the lexical patterns if the item is a string or untyped atomic
+            if (fromStringSource && !checkLexicalPatterns(item, targetType)) {
+                return null;
+            }
+
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
                 result = ItemFactory.getInstance().createStringItem(item.getStringValue());
                 if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
@@ -178,12 +187,37 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
+                // XPath and XQuery Functions and Operators 3.1 §19.1.5 Casting to xs:boolean (verbatim):
+                // "When a value of any ·primitive type· is cast as xs:boolean, the xs:boolean value TV is derived
+                //  from ST and SV as follows:
+                //  If ST is xs:boolean, then TV is SV.
+                //  If ST is xs:float, xs:double, xs:decimal or xs:integer and SV is 0, +0, -0, 0.0, 0.0E0 or NaN,
+                //  then TV is false.
+                //  If ST is xs:float, xs:double, xs:decimal or xs:integer and SV is not one of the above values,
+                //  then TV is true.
+                //  If ST is xs:untypedAtomic or xs:string, see 19.2 Casting from xs:string and xs:untypedAtomic."
+                //
+                // XPath and XQuery Functions and Operators 3.1 §19.2 Casting from xs:string and xs:untypedAtomic
+                // (verbatim excerpt):
+                // "This section applies when the supplied value SV is an instance of xs:string or xs:untypedAtomic,
+                //  including types derived from these by restriction. If the value is xs:untypedAtomic, it is treated
+                //  in exactly the same way as a string containing the same sequence of characters.
+                //  The supplied string is mapped to a typed value of the target type as defined in
+                //  [XML Schema Part 2: Datatypes Second Edition]. Whitespace normalization is applied as indicated by
+                //  the whiteSpace facet for the datatype. The resulting whitespace-normalized string must be a valid
+                //  lexical form for the datatype. The semantics of casting follow the rules of XML Schema validation."
+
                 if (item.isString() || item.isUntypedAtomic()) {
-                    if (StringUtils.isNumeric(item.getStringValue())) {
-                        result = ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
+                    // For xs:boolean, XML Schema defines exactly four legal lexical forms:
+                    // "true", "false", "1" and "0" (after whitespace normalization with whiteSpace=collapse).
+                    String lexical = item.getStringValue().trim();
+                    if ("true".equals(lexical) || "1".equals(lexical)) {
+                        result = ItemFactory.getInstance().createBooleanItem(true);
+                    } else if ("false".equals(lexical) || "0".equals(lexical)) {
+                        result = ItemFactory.getInstance().createBooleanItem(false);
                     } else {
-                        result = ItemFactory.getInstance()
-                            .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
+                        // Invalid lexical form for xs:boolean.
+                        return null;
                     }
                 } else if (item.isInt()) {
                     result = ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
@@ -192,19 +226,23 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                         .createBooleanItem(!item.getIntegerValue().equals(BigInteger.ZERO));
                 } else if (item.isDecimal()) {
                     result = ItemFactory.getInstance()
-                        .createBooleanItem(!item.getDecimalValue().equals(BigDecimal.ZERO));
+                        .createBooleanItem(item.getDecimalValue().compareTo(BigDecimal.ZERO) != 0);
                 } else if (item.isDouble()) {
-                    result = ItemFactory.getInstance().createBooleanItem(item.getDoubleValue() != 0);
+                    double value = item.getDoubleValue();
+                    boolean booleanValue = !(Double.isNaN(value) || value == 0.0d);
+                    result = ItemFactory.getInstance().createBooleanItem(booleanValue);
                 } else if (item.isFloat()) {
-                    result = ItemFactory.getInstance().createBooleanItem(item.getFloatValue() != 0);
+                    float value = item.getFloatValue();
+                    boolean booleanValue = !(Float.isNaN(value) || value == 0.0f);
+                    result = ItemFactory.getInstance().createBooleanItem(booleanValue);
                 } else {
-                    return null;
-                }
-                if (!checkFacetsBoolean(result, targetType)) {
                     return null;
                 }
                 if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
                     return result;
+                }
+                if (!checkFacetsBoolean(result, targetType)) {
+                    return null;
                 }
                 return new AnnotatedItem(result, targetType);
             }
@@ -641,15 +679,38 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     /**
+     * Normalizes a lexical string according to the whiteSpace facet of the given primitive type.
+     */
+    private static String normalizeLexicalAccordingToWhitespace(String lexical, ItemType primitiveType) {
+        WhitespaceFacet facet = primitiveType.getWhitespaceFacet();
+        if (facet == null) {
+            return lexical;
+        }
+        switch (facet) {
+            case PRESERVE:
+                return lexical;
+            case REPLACE:
+                return lexical.replaceAll("\\s", " ");
+            case COLLAPSE:
+                String replaced = lexical.replaceAll("\\s", " ");
+                return replaced.trim().replaceAll(" +", " ");
+            default:
+                return lexical;
+        }
+    }
+
+    /**
      * Checks the lexical-space patterns (if any) for the given target type against the lexical form of the item.
+     * Whitespace normalization is applied according to the whiteSpace facet of the target primitive type.
      * Returns true when either no lexical patterns are modeled or at least one pattern matches; false otherwise.
      */
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
-        java.util.List<String> patterns = targetType.getLexicalSpacePatterns();
+        ItemType primitive = targetType.getPrimitiveType();
+        java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
         if (patterns == null || patterns.isEmpty()) {
             return true;
         }
-        String lexical = item.serialize();
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), primitive);
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
                 return true;
@@ -659,9 +720,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -688,9 +746,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -727,9 +782,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsBoolean(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -737,9 +789,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDouble(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -762,9 +811,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsFloat(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -787,9 +833,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDecimal(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -858,9 +901,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDate(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -880,9 +920,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsTime(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -902,9 +939,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTime(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -942,9 +976,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDateTimeStamp(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
@@ -982,9 +1013,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
-        if (!checkLexicalPatterns(item, targetType)) {
-            return false;
-        }
         if (!checkPatternFacet(item, targetType)) {
             return false;
         }
