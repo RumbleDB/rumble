@@ -174,7 +174,9 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
             // Simplified duration lexical pattern
-            java.util.Collections.singletonList("[-+]?P(?!$)([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?)?")
+            java.util.Collections.singletonList(
+                "[-+]?P(?!$)([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?)?"
+            )
     );
     public static final ItemType yearMonthDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),

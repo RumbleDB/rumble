@@ -209,9 +209,9 @@ public class ComparisonVisitor extends CloneVisitor {
      * at the expression level using explicit cast expressions:
      * - Both operands untypedAtomic → both cast to xs:string.
      * - One operand untypedAtomic, other atomic T:
-     *   - If T is numeric → cast untyped to xs:double.
-     *   - If T is xs:yearMonthDuration or xs:dayTimeDuration → cast untyped to that duration type.
-     *   - Otherwise → cast untyped to the primitive base type of T.
+     * - If T is numeric → cast untyped to xs:double.
+     * - If T is xs:yearMonthDuration or xs:dayTimeDuration → cast untyped to that duration type.
+     * - Otherwise → cast untyped to the primitive base type of T.
      *
      * The method is purely static-type driven; if static types are insufficiently precise or if
      * operands are not atomic, the original expressions are returned unchanged.
