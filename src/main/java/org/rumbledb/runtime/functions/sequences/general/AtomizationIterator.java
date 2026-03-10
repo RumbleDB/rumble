@@ -26,7 +26,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -58,6 +60,29 @@ public class AtomizationIterator extends HybridRuntimeIterator {
         return childRDD.flatMap(transformation);
     }
 
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame childDF = this.sequenceIterator.getDataFrame(dynamicContext);
+        if (childDF.getItemType().isAtomicItemType()) {
+            return childDF;
+        }
+        if (childDF.isEmptySequence()) {
+            return childDF;
+        }
+        if (childDF.getItemType().isObjectItemType()) {
+            throw new CannotAtomizeException("Cannot atomize objects. Type: " + childDF.getItemType(), getMetadata());
+        }
+        if (childDF.getItemType().isArrayItemType()) {
+            throw new CannotAtomizeException("Cannot atomize arrays. Type: " + childDF.getItemType(), getMetadata());
+        }
+        throw new CannotAtomizeException("Cannot atomize. Type: " + childDF.getItemType(), getMetadata());
+    }
+
 
     @Override
     public Item nextLocal() {
@@ -87,7 +112,11 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     public void setNextResult() {
         if (this.sequenceIterator != null) {
             if (this.sequenceIterator.hasNext()) {
-                this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
+                try {
+                    this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
+                } catch (CannotAtomizeException e) {
+                    throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
+                }
             }
         } else if (!this.usedContext) {
             this.usedContext = true;
