@@ -177,16 +177,17 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
         // ^ the above was copied from DeltaUpdateRuntimeTests
-        // below is the same as in session.py
+        // below is the same as in session.py (default session catalog for Iceberg).
+        // If you want to test custom multi-catalog sessions, override spark_catalog
+        // and add explicit named catalogs (e.g., spark.sql.catalog.ice_b, etc.).
         sparkConfiguration.set(
             "spark.sql.extensions",
             "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
         ); // enables iceberg
-        sparkConfiguration.set("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog"); // enables iceberg
-        sparkConfiguration.set("spark.sql.catalog.iceberg.type", "hadoop");
-        sparkConfiguration.set("spark.sql.catalog.iceberg.warehouse", "./iceberg-warehouse");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog.type", "hadoop");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog.warehouse", "./iceberg-warehouse/spark_catalog");
         sparkConfiguration.set("spark.sql.iceberg.check-ordering", "false");
-        sparkConfiguration.set("spark.sql.iceberg.check-nullability", "false");
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
