@@ -278,7 +278,7 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
-     * Casting-specific primitive notion from XPath/XQuery F&O 3.1 §19:
+     * Casting-specific primitive notion from XPath/XQuery Functions and Operators 3.1 §19:
      * in addition to XML Schema primitive types, xs:integer, xs:yearMonthDuration,
      * and xs:dayTimeDuration are treated as primitive for casting.
      *
