@@ -21,5 +21,5 @@ jsoniq version "3.1";
   "13" cast as double,
   "P2Y" cast as yearMonthDuration,
   "P1D" cast as dayTimeDuration
-) is statically item*
+) is statically xs:anyAtomicType+
 
