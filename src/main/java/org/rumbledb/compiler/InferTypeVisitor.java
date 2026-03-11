@@ -921,7 +921,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expressionSequenceType
                     + " as "
                     + castedSequenceType,
-                ErrorCode.CastableErrorCode,
+                ErrorCode.UnexpectedTypeErrorCode,
                 expression.getMetadata()
             );
         }
