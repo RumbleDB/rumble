@@ -482,7 +482,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ) {
                 maxType = df.getItemType()
                     .getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType();
             } else {
                 maxType = df.getItemType();
@@ -491,8 +491,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             JSoundDataFrame maxDF = df.evaluateSQL(
                 String.format(
                     "SELECT MAX(`%s`) as `%s` FROM %s",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     input
                 ),
                 maxType

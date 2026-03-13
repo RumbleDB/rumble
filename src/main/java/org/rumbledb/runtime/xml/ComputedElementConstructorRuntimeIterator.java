@@ -24,17 +24,18 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
-import org.rumbledb.exceptions.AttributeAfterNonAttributeException;
+import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
 import org.rumbledb.exceptions.DuplicateAttributeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -165,12 +166,17 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         // Create and return the element item
         this.hasNext = false;
-        Item elementItem = ItemFactory.getInstance()
+        ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
                 elementName,
                 processedContent.children,
                 processedContent.attributes
             );
+
+        // Only add namespaces explicitly declared on this element
+        for (Item namespace : processedContent.namespaces) {
+            elementItem.addOrReplaceNamespace(namespace);
+        }
 
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
@@ -213,15 +219,17 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         // attribute node or a namespace node, a type error is raised [err:XQTY0024].
         validateAttributeOrdering(expandedContentSequence);
 
-        // Separate attributes from other content
+        // Separate attributes and namespace nodes from other content
         List<Item> attributes = new ArrayList<>();
+        List<Item> namespaces = new ArrayList<>();
         List<Item> nonAttributeContent = new ArrayList<>();
 
         for (Item item : expandedContentSequence) {
             if (item.isAttributeNode()) {
                 attributes.add(item);
+            } else if (item.isNamespaceNode()) {
+                namespaces.add(item);
             } else if (item.isNode()) {
-                // TODO: add namespace node check when we have namespace node support
                 nonAttributeContent.add(item);
             } else {
                 // Non-node items are converted to text nodes
@@ -240,18 +248,42 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         // is deleted from the content sequence.
         List<Item> mergedChildren = mergeAdjacentTextNodes(nonAttributeContent);
 
+        // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
+        // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
+        // create attribute nodes."
+        // "It is a static error [err:XQST0070] if a namespace declaration attribute attempts to do any of the
+        // following:"
+        // "Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace."
+        // "Bind the prefix xmlns to any namespace URI."
+        // "Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace."
+        // "Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/."
+        List<Item> filteredAttributes = new ArrayList<>();
+        for (Item attribute : attributes) {
+            String[] namespaceBinding = NamespaceBindingUtils.parseNamespaceDeclarationAttribute(attribute);
+            if (namespaceBinding != null) {
+                String prefix = namespaceBinding[0];
+                String uri = namespaceBinding[1];
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                namespaces.add(
+                    ItemFactory.getInstance()
+                        .createXmlNamespaceNode(prefix, uri)
+                );
+            } else {
+                filteredAttributes.add(attribute);
+            }
+        }
+
         // Validate that no duplicate attribute names exist
         // If two or more attributes have the same node-name, a dynamic error is raised [err:XQDY0025].
-        validateNoDuplicateAttributes(attributes);
+        validateNoDuplicateAttributes(filteredAttributes);
 
         // TODO: Set parent property of each attribute and child node to the newly constructed element node
         // TODO: Handle xml:space attribute validation [err:XQDY0092]
         // TODO: Handle xml:base attribute for base-uri setting
-        // TODO: Compute in-scope-namespaces as described in 3.9.4 In-scope Namespaces of a Constructed Element
         // TODO: Set other properties (nilled, string-value, typed-value, type-name, is-id, is-idrefs) when we have a
         // stable XML type system
 
-        return new ProcessedContent(mergedChildren, attributes);
+        return new ProcessedContent(mergedChildren, filteredAttributes, namespaces);
     }
 
     /**
@@ -279,11 +311,10 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         boolean hasSeenNonAttributeNode = false;
 
         for (Item item : contentSequence) {
-            if (item.isAttributeNode()) {
-                // TODO: add namespace node check when we have namespace node support
+            if (item.isAttributeNode() || item.isNamespaceNode()) {
                 if (hasSeenNonAttributeNode) {
-                    throw new AttributeAfterNonAttributeException(
-                            "Attribute nodes must appear before all other nodes in element content"
+                    throw new AttributeOrNamespaceAfterNonAttributeException(
+                            "Attribute or namespace nodes must appear before all other nodes in element content"
                     );
                 }
             } else if (item.isNode()) {
@@ -359,15 +390,17 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
     }
 
     /**
-     * Helper class to hold processed content with separated attributes and children.
+     * Helper class to hold processed content with separated attributes, namespaces, and children.
      */
     private static class ProcessedContent {
         final List<Item> children;
         final List<Item> attributes;
+        final List<Item> namespaces;
 
-        ProcessedContent(List<Item> children, List<Item> attributes) {
+        ProcessedContent(List<Item> children, List<Item> attributes, List<Item> namespaces) {
             this.children = children;
             this.attributes = attributes;
+            this.namespaces = namespaces;
         }
     }
 }

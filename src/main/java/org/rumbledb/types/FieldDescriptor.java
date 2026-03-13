@@ -161,4 +161,16 @@ public class FieldDescriptor implements Serializable, KryoSerializable {
         this.requiredIsSet = input.readBoolean();
         this.uniqueIsSet = input.readBoolean();
     }
+
+    public static FieldDescriptor copy(FieldDescriptor descriptor) {
+        FieldDescriptor clone = new FieldDescriptor();
+        clone.setName(descriptor.name);
+        clone.setType(descriptor.type);
+        clone.setRequired(descriptor.required);
+        clone.setUnique(descriptor.unique);
+        if (descriptor.defaultValue != null) {
+            clone.setDefaultValue(descriptor.defaultValue);
+        }
+        return clone;
+    }
 }

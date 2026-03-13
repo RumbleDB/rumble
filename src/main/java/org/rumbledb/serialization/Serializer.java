@@ -167,17 +167,12 @@ public class Serializer implements java.io.Serializable {
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                sb.append("<");
-                sb.append(child.nodeName());
-                sb.append(">");
-                sb.append("\n");
-
-                for (Item descendant : child.children()) {
-                    serialize(descendant, sb, indent + "  ", isTopLevel);
+                StringBuffer childBuffer = new StringBuffer();
+                serialize(child, childBuffer, indent, isTopLevel);
+                if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
+                    childBuffer.setLength(childBuffer.length() - 1);
                 }
-                sb.append("</");
-                sb.append(child.nodeName());
-                sb.append(">");
+                sb.append(childBuffer);
             }
         }
         if (item.isElementNode()) {
@@ -186,6 +181,11 @@ public class Serializer implements java.io.Serializable {
             sb.append(item.nodeName());
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
+            }
+            // only serialize the namespace nodes that are associated with the element
+            // this avoids repetition of namespace nodes that are already in scope, but associated with parent elements
+            for (Item namespace : item.declaredNamespaceNodes()) {
+                serialize(namespace, sb, indent, isTopLevel);
             }
             sb.append(">");
             sb.append("\n");
@@ -207,12 +207,36 @@ public class Serializer implements java.io.Serializable {
             sb.append("\"");
             sb.append(item.getStringValue());
             sb.append("\"");
+            return;
+        }
+
+        if (item.isProcessingInstructionNode()) {
+            sb.append(indent);
+            sb.append("<?");
+            sb.append(item.nodeName());
+            String content = item.getStringValue();
+            if (content != null && !content.isEmpty()) {
+                sb.append(" ");
+                sb.append(content);
+            }
+            sb.append("?>");
+            sb.append("\n");
         }
 
         if (item.isTextNode()) {
             sb.append(indent);
             sb.append(item.getStringValue());
             sb.append("\n");
+            return;
+        }
+
+        if (item.isCommentNode()) {
+            sb.append(indent);
+            sb.append("<!--");
+            sb.append(item.getStringValue());
+            sb.append("-->");
+            sb.append("\n");
+            return;
         }
     }
 

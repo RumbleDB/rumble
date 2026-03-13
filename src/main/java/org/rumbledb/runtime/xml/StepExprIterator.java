@@ -7,14 +7,20 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.CommentTest;
 import org.rumbledb.expressions.xml.node_test.DocumentTest;
 import org.rumbledb.expressions.xml.node_test.ElementTest;
 import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -93,6 +99,12 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return anyKindTest(node);
         } else if (this.nodeTest instanceof TextTest) {
             return textKindTest(node);
+        } else if (this.nodeTest instanceof CommentTest) {
+            return commentKindTest(node);
+        } else if (this.nodeTest instanceof PITest) {
+            return piKindTest(node);
+        } else if (this.nodeTest instanceof NamespaceNodeTest) {
+            return namespaceNodeKindTest(node);
         } else if (this.nodeTest instanceof AttributeTest) {
             return attributeKindTest(node);
         } else if (this.nodeTest instanceof ElementTest) {
@@ -103,7 +115,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return documentKindTest(node);
         } else {
             throw new UnsupportedFeatureException(
-                    "Only node, text, attribute, element, document and name node tests are supported.",
+                    "Unsupported node test: " + this.nodeTest,
                     getMetadata()
             );
         }
@@ -115,7 +127,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (node instanceof DocumentItem) {
                 return node;
             }
-            return node;
+            return null;
         }
         this.nodeTest = documentTest.getNodeTest();
         return nodeTestItem(node);
@@ -209,6 +221,36 @@ public class StepExprIterator extends LocalRuntimeIterator {
 
     private Item anyKindTest(Item node) {
         return node;
+    }
+
+    private Item commentKindTest(Item node) {
+        if (node instanceof CommentItem) {
+            return node;
+        }
+        return null;
+    }
+
+    private Item piKindTest(Item node) {
+        PITest piTest = (PITest) this.nodeTest;
+        if (!(node instanceof ProcessingInstructionItem)) {
+            return null;
+        }
+        // processing-instruction() matches any PI node
+        if (!piTest.hasTargetName()) {
+            return node;
+        }
+        // processing-instruction(target) matches PI nodes whose target name equals the given name
+        if (node.nodeName().equals(piTest.getTargetName())) {
+            return node;
+        }
+        return null;
+    }
+
+    private Item namespaceNodeKindTest(Item node) {
+        if (node instanceof NamespaceItem) {
+            return node;
+        }
+        return null;
     }
 
     @Override

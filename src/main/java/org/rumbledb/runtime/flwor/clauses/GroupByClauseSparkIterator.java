@@ -53,6 +53,10 @@ import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.spark.SparkSessionManager;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -239,10 +243,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         return keyValuePairs;
     }
 
+    /**
+     * Iterate over all tuples to evaluate grouping
+     */
     private void linearizeTuples(List<FlworTuple> keyTuplePairs) {
         Iterator<FlworTuple> iterator = keyTuplePairs.iterator();
         FlworTuple oldFirstTuple = iterator.next();
         FlworTuple newTuple = new FlworTuple(this.getConfiguration(), oldFirstTuple.getLocalKeys().size());
+
+        // Iterate over local keys
         for (Name tupleVariable : oldFirstTuple.getLocalKeys()) {
             iterator = keyTuplePairs.iterator();
             if (
@@ -258,6 +267,51 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 newTuple.putValue(tupleVariable, allValues);
             }
         }
+
+        // Iterate over RDD keys
+        for (Name tupleVariable : oldFirstTuple.getRDDKeys()) {
+            iterator = keyTuplePairs.iterator();
+            if (
+                this.groupingExpressions.stream()
+                    .anyMatch(v -> v.getVariableName().equals(tupleVariable))
+            ) {
+                newTuple.putValue(tupleVariable, oldFirstTuple.getRDDValue(tupleVariable, getMetadata()));
+            } else {
+                JavaRDD<Item> allValues = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .emptyRDD();
+                while (iterator.hasNext()) {
+                    allValues = allValues.union(iterator.next().getRDDValue(tupleVariable, getMetadata()));
+                }
+                newTuple.putValue(tupleVariable, allValues);
+            }
+        }
+
+        // Iterate over DataFrame keys
+        for (Name tupleVariable : oldFirstTuple.getDataFrameKeys()) {
+            iterator = keyTuplePairs.iterator();
+            if (
+                this.groupingExpressions.stream()
+                    .anyMatch(v -> v.getVariableName().equals(tupleVariable))
+            ) {
+                newTuple.putValue(tupleVariable, oldFirstTuple.getDataFrameValue(tupleVariable, getMetadata()));
+            } else {
+                JSoundDataFrame allValues = null;
+                while (iterator.hasNext()) {
+                    JSoundDataFrame df = iterator.next().getDataFrameValue(tupleVariable, getMetadata());
+                    if (allValues == null) {
+                        allValues = df;
+                        continue;
+                    }
+                    allValues = allValues.union(df);
+                }
+                if (allValues == null) {
+                    allValues = JSoundDataFrame.emptyDataFrame();
+                }
+                newTuple.putValue(tupleVariable, allValues);
+            }
+        }
+
         this.localTupleResults.add(newTuple);
     }
 

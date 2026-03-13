@@ -80,20 +80,19 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createCreateCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new CreateCollectionPrimitive(collectionName, contents, isTable, metadata);
+        return new CreateCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createDeleteTupleFromCollectionPrimitive(
-            String collectionName,
+            Collection collection,
             double rowOrder,
             ExceptionMetadata metadata
     ) {
-        return new DeleteTupleFromCollectionPrimitive(collectionName, rowOrder, metadata);
+        return new DeleteTupleFromCollectionPrimitive(collection, rowOrder, metadata);
     }
 
     public UpdatePrimitive createEditTuplePrimitive(
@@ -102,16 +101,6 @@ public class UpdatePrimitiveFactory {
             ExceptionMetadata metadata
     ) {
         return new EditTuplePrimitive(target, contents, metadata);
-    }
-
-    public UpdatePrimitive createInsertTuplePrimitive(
-            String collection,
-            Dataset<Row> contents,
-            double rowOrderBase,
-            double rowOrderMax,
-            ExceptionMetadata metadata
-    ) {
-        return new InsertTuplePrimitive(collection, contents, rowOrderBase, rowOrderMax, metadata);
     }
 
     public UpdatePrimitive createInsertAfterIntoCollectionPrimitive(
@@ -131,30 +120,27 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createInsertFirstIntoCollectionPrimitive(
-            String collection,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertFirstIntoCollectionPrimitive(collection, contents, isTable, metadata);
+        return new InsertFirstIntoCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createInsertLastIntoCollectionPrimitive(
-            String collection,
+            Collection collection,
             Dataset<Row> contents,
-            boolean isTable,
             ExceptionMetadata metadata
     ) {
-        return new InsertLastIntoCollectionPrimitive(collection, contents, isTable, metadata);
+        return new InsertLastIntoCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createTruncateCollectionPrimitive(
-            String collectionName,
-            boolean isTable,
+            Collection collection,
             ExceptionMetadata metadata,
             RumbleRuntimeConfiguration configuration
     ) {
-        return new TruncateCollectionPrimitive(collectionName, isTable, metadata, configuration);
+        return new TruncateCollectionPrimitive(collection, metadata, configuration);
     }
 
 }

@@ -76,14 +76,24 @@ public class SparkSessionManager {
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static String atomicJSONiqItemColumnName = "atomic0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static String nonObjectJSONiqItemColumnName = "notObject0d08af5d-10bb-4a73-af84-c6aac917a830";
     public static String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
     public static String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
     public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
-    public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b ";
+    public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b";
     public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
     public static String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
     public static String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
+
+    // Temporary column names for insert operations
+    public static String tempMaxRowIdColumnName = "maxRowId_2d8f6a4c0b8a4dd88c782b64e1b93a77";
+    public static String tempMinRowOrderColumnName = "minRowOrder_9f7d9d6a5ee14c8b9d1074f4799c5d30";
+    public static String tempMaxRowOrderColumnName = "maxRowOrder_3e8b7a4c1d2e4f6b8c9d0a1b2c3d4e5f";
+    public static String tempRowNumColumnName = "rowNum_f0a3c5e92a214f0c8cd50d6de3c4f9d9";
+    public static String tempRowNumSeqColumnName = "rowNumSeq_d2f8b4a18e1f4fdb9c54cc5e4a3c23a6";
+    public static String tempRowNumOrderColumnName = "rowNumOrder_b7c6a1f4ff4b4d099ad01f2b76c9a8e1";
+
+    // Special private column names
     public static String mutabilityLevelColumnName = "__mutabilityLevel";
     public static String rowIdColumnName = "__rowID";
     public static String pathInColumnName = "__pathIn";

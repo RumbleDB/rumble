@@ -341,6 +341,17 @@ public class StaticContext implements Serializable, KryoSerializable {
         return null;
     }
 
+    public Map<String, String> getInScopeNamespaceBindings() {
+        Map<String, String> bindings = new HashMap<>();
+        if (this.parent != null) {
+            bindings.putAll(this.parent.getInScopeNamespaceBindings());
+        }
+        if (this.staticallyKnownNamespaces != null) {
+            bindings.putAll(this.staticallyKnownNamespaces);
+        }
+        return bindings;
+    }
+
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);

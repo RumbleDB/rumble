@@ -147,7 +147,7 @@ public interface UpdatePrimitive {
         Item target = this.getTarget();
 
         String pathIn = target.getPathIn().substring(target.getPathIn().indexOf(".") + 1);
-        String location = target.getTableLocation();
+        String location = target.getCollection().getPhysicalName();
         long rowID = target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
@@ -163,7 +163,7 @@ public interface UpdatePrimitive {
         String selectArrayQuery = "SELECT "
             + preIndexingPathIn
             + " AS `"
-            + SparkSessionManager.atomicJSONiqItemColumnName
+            + SparkSessionManager.nonObjectJSONiqItemColumnName
             + "` FROM "
             + location
             + " WHERE `"
@@ -175,15 +175,17 @@ public interface UpdatePrimitive {
 
         ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
             .getObjectContentFacet()
-            .get(SparkSessionManager.atomicJSONiqItemColumnName)
+            .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
             .getType();
 
         JavaRDD<Row> rowRDD = arrayDF.javaRDD();
         JavaRDD<Item> itemRDD = rowRDD.map(new RowToItemMapper(ExceptionMetadata.EMPTY_METADATA, arrayType));
         List<Item> collectedItems = itemRDD.take(2);
         Item originalArray = collectedItems.get(0);
+
         // TODO: errors if 0 items or more than one item
 
+        // Navigate to the inner item
         Item innerItem = originalArray;
         for (int i = 0; i < fields.size() - 1; i++) {
             String field = fields.get(i);
@@ -195,8 +197,11 @@ public interface UpdatePrimitive {
             }
         }
 
-        String finalSelector = fields.get(fields.size() - 1);
+        // Apply the update to the inner item
         this.applyItem();
+
+        // Put the modified inner item back into the original array
+        String finalSelector = fields.get(fields.size() - 1);
         if (innerItem.isObject()) {
             innerItem.removeItemByKey(finalSelector);
             innerItem.putItemByKey(finalSelector, this.getTarget());
@@ -209,6 +214,7 @@ public interface UpdatePrimitive {
         }
 
         String setClause = preIndexingPathIn + " = " + originalArray.getSparkSQLValue(arrayType);
+
         String query = "UPDATE "
             + location
             + " SET "
@@ -220,6 +226,4 @@ public interface UpdatePrimitive {
 
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }
-
-
 }

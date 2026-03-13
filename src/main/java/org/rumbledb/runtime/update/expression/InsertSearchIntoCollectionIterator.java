@@ -78,6 +78,7 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        PendingUpdateList pul = new PendingUpdateList();
         Dataset<Row> contentDF = null;
         try {
             contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
@@ -100,7 +101,6 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
-        PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isBefore) {
@@ -116,6 +116,7 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
                 this.getMetadata()
             );
         }
+
         pul.addUpdatePrimitive(up);
         return pul;
     }

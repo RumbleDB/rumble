@@ -106,7 +106,12 @@ import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
 import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.runtime.functions.typing.DynamicItemTypeIterator;
 import org.rumbledb.runtime.functions.xml.GetRootFunctionIterator;
+import org.rumbledb.runtime.functions.xml.InScopePrefixesFunctionIterator;
 import org.rumbledb.runtime.functions.xml.NodeNameFunctionIterator;
+import org.rumbledb.runtime.functions.xml.NodeQNameFunctionIterator;
+import org.rumbledb.runtime.functions.xml.NilledFunctionIterator;
+import org.rumbledb.runtime.functions.xml.BaseUriFunctionIterator;
+import org.rumbledb.runtime.functions.xml.DocumentUriFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
@@ -527,6 +532,125 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * fn:nilled (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.8 dm:nilled)
+     *
+     * fn:nilled() as xs:boolean?
+     * fn:nilled($arg as node()?) as xs:boolean?
+     *
+     * "The dm:nilled accessor returns true if the element node is nilled, false if the element
+     * node is not nilled, or the empty sequence if the concept of nilled does not apply."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-nilled}.
+     */
+    static final BuiltinFunction nilled_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "nilled"),
+        "boolean?",
+        NilledFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction nilled_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "nilled"),
+        "item?",
+        "boolean?",
+        NilledFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:node-name (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.10 dm:node-name)
+     *
+     * fn:node-name() as xs:QName?
+     * fn:node-name($arg as node()?) as xs:QName?
+     *
+     * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
+     * sequence if the node does not have a name."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-node-name}.
+     */
+    static final BuiltinFunction node_name_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "node-name"),
+        // TODO: change to QName? after XML atomic types are implemented
+        "string?",
+        NodeQNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction node_name_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "node-name"),
+        "item?",
+        // TODO: change to QName? after XML atomic types are implemented
+        "string?",
+        NodeQNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:base-uri (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.2 dm:base-uri)
+     *
+     * fn:base-uri() as xs:anyURI?
+     * fn:base-uri($arg as node()?) as xs:anyURI?
+     *
+     * "The dm:base-uri accessor returns the value of the base-uri property of the node, if it
+     * has one; otherwise it returns the empty sequence."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-base-uri}.
+     */
+    static final BuiltinFunction base_uri_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "base-uri"),
+        "anyURI?",
+        BaseUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction base_uri_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "base-uri"),
+        "item?",
+        "anyURI?",
+        BaseUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:document-uri (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.4 dm:document-uri)
+     *
+     * fn:document-uri() as xs:anyURI?
+     * fn:document-uri($arg as node()?) as xs:anyURI?
+     *
+     * "The dm:document-uri accessor returns the value of the document-uri property of a
+     * document node, if it has one; otherwise it returns the empty sequence."
+     *
+     * See {@code https://www.w3.org/TR/xpath-functions-31/#func-document-uri}.
+     */
+    static final BuiltinFunction document_uri_without_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "document-uri"),
+        "anyURI?",
+        DocumentUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction document_uri_with_arg = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "document-uri"),
+        "item?",
+        "anyURI?",
+        DocumentUriFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:in-scope-prefixes (Functions and Operators 3.1 Section 14.1)
+     * fn:in-scope-prefixes($element as element()) as xs:string*
+     * Returns the prefixes of the in-scope namespaces for $element.
+     */
+    static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
+        "item",
+        "string*",
+        InScopePrefixesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function that parses a text file
      */
     static final BuiltinFunction unparsed_text = createBuiltinFunction(
@@ -628,6 +752,17 @@ public class BuiltinFunctionCatalogue {
         "string",
         "item*",
         DeltaTableFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+    );
+
+    /**
+     * function that parses an iceberg table
+     */
+    static final BuiltinFunction iceberg_table = createBuiltinFunction(
+        new Name(Name.JN_NS, "jn", "iceberg-table"),
+        "string",
+        "item*",
+        IcebergTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
 
@@ -1459,6 +1594,7 @@ public class BuiltinFunctionCatalogue {
         StringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+
     static final BuiltinFunction string1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
@@ -3099,6 +3235,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(mongodb_collection3.getIdentifier(), mongodb_collection3);
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(delta_table.getIdentifier(), delta_table);
+        builtinFunctions.put(iceberg_table.getIdentifier(), iceberg_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);
@@ -3304,7 +3441,17 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
         builtinFunctions.put(name_with_arg.getIdentifier(), name_with_arg);
         builtinFunctions.put(name_without_arg.getIdentifier(), name_without_arg);
+        builtinFunctions.put(in_scope_prefixes.getIdentifier(), in_scope_prefixes);
         builtinFunctions.put(current_time_millis.getIdentifier(), current_time_millis);
+        builtinFunctions.put(nilled_without_arg.getIdentifier(), nilled_without_arg);
+        builtinFunctions.put(nilled_with_arg.getIdentifier(), nilled_with_arg);
+        builtinFunctions.put(base_uri_without_arg.getIdentifier(), base_uri_without_arg);
+        builtinFunctions.put(base_uri_with_arg.getIdentifier(), base_uri_with_arg);
+        builtinFunctions.put(document_uri_without_arg.getIdentifier(), document_uri_without_arg);
+        builtinFunctions.put(document_uri_with_arg.getIdentifier(), document_uri_with_arg);
+        builtinFunctions.put(node_name_without_arg.getIdentifier(), node_name_without_arg);
+        builtinFunctions.put(node_name_with_arg.getIdentifier(), node_name_with_arg);
+
     }
 
 

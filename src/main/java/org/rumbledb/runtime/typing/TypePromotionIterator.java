@@ -177,9 +177,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             df = df.evaluateSQL(
                 String.format(
                     "SELECT CAST (`"
-                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + SparkSessionManager.nonObjectJSONiqItemColumnName
                         + "` AS double) AS `"
-                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + SparkSessionManager.nonObjectJSONiqItemColumnName
                         + "` FROM %s",
                     input
                 ),

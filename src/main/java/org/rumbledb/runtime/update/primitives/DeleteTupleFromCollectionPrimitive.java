@@ -6,13 +6,13 @@ import org.apache.spark.sql.SparkSession;
 
 
 public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
-    private String collectionPath;
+    private Collection collection;
     private double rowOrder;
     @SuppressWarnings("unused")
     private ExceptionMetadata metadata;
 
-    public DeleteTupleFromCollectionPrimitive(String collectionPath, double rowOrder, ExceptionMetadata metadata) {
-        this.collectionPath = collectionPath;
+    public DeleteTupleFromCollectionPrimitive(Collection collection, double rowOrder, ExceptionMetadata metadata) {
+        this.collection = collection;
         this.rowOrder = rowOrder;
     }
 
@@ -23,7 +23,7 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
 
     @Override
     public String getCollectionPath() {
-        return this.collectionPath;
+        return this.collection.getPhysicalName();
     }
 
     @Override
@@ -54,7 +54,7 @@ public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
 
         String deleteQuery = String.format(
             "DELETE FROM %s WHERE %s = %s",
-            this.collectionPath,
+            this.collection.getPhysicalName(),
             SparkSessionManager.rowOrderColumnName,
             String.valueOf(this.rowOrder)
         );
