@@ -1,6 +1,9 @@
 package org.rumbledb.types;
 
-import org.apache.commons.collections.ListUtils;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.collections4.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -10,9 +13,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-
-import java.util.List;
-import java.util.Set;
 
 public class DerivedAtomicItemType implements ItemType {
 
