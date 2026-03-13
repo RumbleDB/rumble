@@ -83,7 +83,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             }
             if (
                 !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                    && !key.equals(SparkSessionManager.atomicJSONiqItemColumnName)
+                    && !key.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)
             ) {
                 this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
             }

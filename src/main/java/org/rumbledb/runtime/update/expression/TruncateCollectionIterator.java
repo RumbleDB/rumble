@@ -12,6 +12,8 @@ import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
@@ -22,16 +24,16 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
-    private boolean isTable;
+    private Mode mode;
 
     public TruncateCollectionIterator(
             RuntimeIterator targetIterator,
-            boolean isTable,
+            Mode mode,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isUpdating = true;
     }
 
@@ -93,19 +95,20 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
                     this.getMetadata()
             );
         }
-        String collectionName = collectionNameItem.getStringValue();
-        if (!this.isTable) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, collectionName, getMetadata());
+        String logicalPath = collectionNameItem.getStringValue();
+        Mode mode = this.mode;
+        if (mode == Mode.DELTA) {
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
             if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
-            collectionName = FileSystemUtil.convertURIToStringForSpark(uri);
+            logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
+        Collection collection = new Collection(mode, logicalPath);
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
-            collectionName,
-            this.isTable,
+            collection,
             this.getMetadata(),
             context.getRumbleRuntimeConfiguration()
         );

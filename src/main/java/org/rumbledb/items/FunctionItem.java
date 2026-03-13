@@ -37,7 +37,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.FunctionAtomizationException;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
@@ -361,6 +361,6 @@ public class FunctionItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new FunctionAtomizationException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
+        throw new CannotAtomizeException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
     }
 }

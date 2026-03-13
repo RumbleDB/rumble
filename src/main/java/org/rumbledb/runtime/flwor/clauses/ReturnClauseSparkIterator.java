@@ -133,7 +133,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
-        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumns));
+        JavaRDD<Item> resultRDD = df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumns));
+        return resultRDD;
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
@@ -211,7 +212,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                         .sql(
                             String.format(
                                 "SELECT `%s`.* FROM %s",
-                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
                                 input
                             )
                         );
@@ -382,7 +383,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
                 ? "explode(" + nativeQuery.getResultingQuery() + ")"
                 : nativeQuery.getResultingQuery(),
-            SparkSessionManager.atomicJSONiqItemColumnName,
+            SparkSessionManager.nonObjectJSONiqItemColumnName,
             nativeQuery.getView()
         );
         if (
@@ -391,9 +392,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         ) {
             queryString = String.format(
                 "select `%s` from (%s) where `%s` is not null",
-                SparkSessionManager.atomicJSONiqItemColumnName,
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
                 queryString,
-                SparkSessionManager.atomicJSONiqItemColumnName
+                SparkSessionManager.nonObjectJSONiqItemColumnName
             );
         }
         LogManager.getLogger("ReturnClauseSparkIterator")

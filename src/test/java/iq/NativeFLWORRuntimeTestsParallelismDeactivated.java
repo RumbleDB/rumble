@@ -20,11 +20,10 @@
 
 package iq;
 
-import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,7 +42,11 @@ public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests 
                     "--escape-backticks",
                     "yes",
                     "--parallel-execution",
-                    "no"
+                    "no",
+                    "--materialization-cap",
+                    "100000",
+                    "--result-size",
+                    "200"
                 }
         );
     }
@@ -65,17 +68,5 @@ public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests 
         readFileList(nativeFlworRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput = runIterators(sequence);
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
-        );
     }
 }

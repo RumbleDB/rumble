@@ -3,6 +3,7 @@ package org.rumbledb.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -246,8 +247,8 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
-        if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            res = res.withColumnRenamed(SparkSessionManager.atomicJSONiqItemColumnName, "__value");
+        if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+            res = res.withColumnRenamed(SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
         }
         return res;
     }
@@ -274,7 +275,7 @@ public class SequenceOfItems {
                     "Cannot materialize a sequence of "
                         + num
                         + " items because the limit is set to "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + this.configuration.getResultSizeCap()
                         + ". This value can be configured with the --materialization-cap parameter at startup",
                     ExceptionMetadata.EMPTY_METADATA
             );
@@ -343,8 +344,16 @@ public class SequenceOfItems {
             return -1;
         }
         if (this.iterator.isRDDOrDataFrame()) {
+            long count = -1;
             JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
-            return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+            List<Item> result = rdd.take(maxNumberOfItems + 1);
+            if (result.size() == maxNumberOfItems + 1) {
+                count = rdd.count();
+            }
+            result.stream()
+                .limit(maxNumberOfItems)
+                .collect(Collectors.toCollection(() -> resultList));
+            return count;
         }
         this.iterator.open(this.dynamicContext);
         Item result = null;

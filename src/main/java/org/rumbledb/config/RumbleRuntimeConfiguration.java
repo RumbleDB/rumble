@@ -51,6 +51,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;
+    private int materializationCap;
     private String inputFormat;
     private String outputFormat;
     private Map<String, String> outputFormatOptions;
@@ -377,14 +378,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
         }
         if (this.arguments.containsKey("materialization-cap")) {
-            this.resultsSizeCap = Integer.parseInt(this.arguments.get("materialization-cap"));
+            this.materializationCap = Integer.parseInt(this.arguments.get("materialization-cap"));
         } else {
-            if (this.arguments.containsKey("result-size")) {
-                System.err.println("[WARNING] --result-size is obsolete. Please use --materialization-cap instead.");
-                this.resultsSizeCap = Integer.parseInt(this.arguments.get("result-size"));
-            } else {
-                this.resultsSizeCap = 200;
-            }
+            this.materializationCap = 100000;
+        }
+        if (this.arguments.containsKey("result-size")) {
+            this.resultsSizeCap = Integer.parseInt(this.arguments.get("result-size"));
+        } else {
+            this.resultsSizeCap = 10;
         }
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
@@ -548,6 +549,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.optimizeParentPointers = this.arguments.get("optimize-parent-pointers").equals("yes");
         } else {
             this.optimizeParentPointers = true;
+        }
+        if (this.arguments.containsKey("xml-version")) {
+            String xmlVersion = this.arguments.get("xml-version").trim();
+            if (!(xmlVersion.equals("1.0") || xmlVersion.equals("1.1"))) {
+                throw new CliException(
+                        "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
+                );
+            }
+            this.xmlVersion = xmlVersion;
         }
     }
 
@@ -724,8 +734,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Gets the configured number of Items that should be collected in case of a forced materialization. This applies in
-     * particular to a local use of the ItemIterator.
+     * Gets the configured number of Items that should be collected as the overall result of a query.
      *
      * @return the current number of Items to collect.
      */
@@ -734,13 +743,33 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Sets the number of Items that should be collected in case of a forced materialization. This applies in particular
-     * to a local use of the ItemIterator.
+     * Sets the number of Items that should be collected as the overall result of a query.
      *
      * @param i the maximum number of Items to collect.
      */
     public RumbleRuntimeConfiguration setResultSizeCap(int i) {
         this.resultsSizeCap = i;
+        return this;
+    }
+
+    /**
+     * Gets the configured number of Items that should be collected in case of a forced materialization. This applies in
+     * particular to a local use of the ItemIterator.
+     *
+     * @return the current number of Items to collect.
+     */
+    public int getMaterializationCap() {
+        return this.materializationCap;
+    }
+
+    /**
+     * Sets the number of Items that should be collected in case of a forced materialization. This applies in particular
+     * to a local use of the ItemIterator.
+     *
+     * @param i the maximum number of Items to collect.
+     */
+    public RumbleRuntimeConfiguration setMaterializationCap(int i) {
+        this.materializationCap = i;
         return this;
     }
 
@@ -1207,6 +1236,26 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     @Override
     public void read(Kryo kryo, Input input) {
         this.arguments = kryo.readObject(input, HashMap.class);
+    }
+
+    private String xmlVersion = "1.0"; // default fallback
+
+    /**
+     * Returns the configured XML version.
+     *
+     * @return the XML version (e.g., "1.0" or "1.1")
+     */
+    public String getXmlVersion() {
+        return this.xmlVersion;
+    }
+
+    /**
+     * Sets the XML version to use.
+     *
+     * @param v the XML version (e.g., "1.0" or "1.1")
+     */
+    public void setXmlVersion(String v) {
+        this.xmlVersion = v;
     }
 
     /**

@@ -15,6 +15,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
     private Item target;
     private Item selector;
     private Item content;
+    private Collection collection;
 
     public ReplaceInArrayPrimitive(
             Item targetArray,
@@ -32,11 +33,12 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         this.target = targetArray;
         this.selector = positionInt;
         this.content = replacementItem;
+        this.collection = targetArray.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -64,7 +66,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         // PERHAPS CASE OF REPLACING ARRAY WITH 1 ITEM SHOULD CREATE NEW ARRAYCOL WITH CORRECTED TYPE IF TYPE CHANGES
 
         String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
@@ -72,7 +74,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
             String selectArrayQuery = "SELECT "
                 + pathIn
                 + " AS `"
-                + SparkSessionManager.atomicJSONiqItemColumnName
+                + SparkSessionManager.nonObjectJSONiqItemColumnName
                 + "` FROM "
                 + location
                 + " WHERE `"
@@ -84,7 +86,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
                 .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
             String setField = pathIn + " = ";
