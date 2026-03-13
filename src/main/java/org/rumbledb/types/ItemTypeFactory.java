@@ -19,6 +19,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
+import sparksoniq.spark.SparkSessionManager;
+
 import java.util.*;
 
 public class ItemTypeFactory {
@@ -590,12 +592,16 @@ public class ItemTypeFactory {
         Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
-            ItemType mappedItemType;
-            if (filedType instanceof StructType) {
-                mappedItemType = createItemTypeFromSparkStructType((StructType) filedType);
-            } else {
-                mappedItemType = createItemType(filedType);
+            ItemType mappedItemType = createItemType(filedType);
+
+            // Handle atomic types: do not wrap into object
+            if (
+                field.name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    && mappedItemType.isAtomicItemType()
+            ) {
+                return mappedItemType;
             }
+
             FieldDescriptor fieldDescriptor = new FieldDescriptor();
             fieldDescriptor.setName(field.name());
             fieldDescriptor.setType(mappedItemType);

@@ -240,6 +240,102 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
+    public ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        if (!(other instanceof ObjectItemType)) {
+            if (other.isObjectItemType()) {
+                return other.findLeastCommonSuperTypeLax(this);
+            }
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        ObjectItemType otherObject = (ObjectItemType) other;
+        if (!this.isResolved() || !otherObject.isResolved()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        Map<String, FieldDescriptor> mergedContent = mergeObjectContent(otherObject);
+        // the supertype is closed only if both of the subtypes are closed
+        boolean closed = this.getClosedFacet() && otherObject.getClosedFacet();
+        // return an inlin object item type with the merged field descriptors
+        return new ObjectItemType(
+                null,
+                BuiltinTypesCatalogue.objectItem,
+                closed,
+                mergedContent,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
+    /**
+     * Merges the object content of two object item types.
+     * The merged content is a union of the two object contents.
+     * The way descriptors for single fields are merged is defined by the mergeDescriptors method.
+     * 
+     * @param other the other object item type to merge the content from
+     * @return the merged object content
+     */
+    private Map<String, FieldDescriptor> mergeObjectContent(ObjectItemType other) {
+        Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
+        for (Map.Entry<String, FieldDescriptor> entry : this.getObjectContentFacet().entrySet()) {
+            merged.put(entry.getKey(), FieldDescriptor.copy(entry.getValue()));
+        }
+        for (Map.Entry<String, FieldDescriptor> entry : other.getObjectContentFacet().entrySet()) {
+            FieldDescriptor existing = merged.get(entry.getKey());
+            if (existing == null) {
+                merged.put(entry.getKey(), FieldDescriptor.copy(entry.getValue()));
+                continue;
+            }
+            merged.put(entry.getKey(), mergeDescriptors(existing, entry.getValue()));
+        }
+        return merged;
+    }
+
+    /**
+     * Merges two field descriptors according to the field semantics.
+     * 
+     * @param first the first field descriptor to merge
+     * @param second the second field descriptor to merge
+     * @return the merged field descriptor
+     */
+    private FieldDescriptor mergeDescriptors(FieldDescriptor first, FieldDescriptor second) {
+        FieldDescriptor merged = new FieldDescriptor();
+        merged.setName(first.getName());
+        ItemType mergedType = first.getType().findLeastCommonSuperTypeLax(second.getType());
+        merged.setType(mergedType);
+        // the merged field is required only if the field is required in both the subtypes
+        merged.setRequired(first.isRequired() && second.isRequired());
+        // the merged field is unique if the field is unique in at least one of the subtypes
+        boolean unique = Boolean.TRUE.equals(first.isUnique()) || Boolean.TRUE.equals(second.isUnique());
+        merged.setUnique(unique);
+        Item defaultValue = mergeDefaultValues(first.getDefaultValue(), second.getDefaultValue());
+        if (defaultValue != null) {
+            merged.setDefaultValue(defaultValue);
+        }
+        return merged;
+    }
+
+    /**
+     * Merges two default values according to the field semantics.
+     *
+     * @param first the first item to merge the value from
+     * @param second the second item to merge the value from
+     */
+    private Item mergeDefaultValues(Item first, Item second) {
+        if (first == null && second == null) {
+            return null;
+        }
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        if (first.equals(second)) {
+            return first;
+        }
+        return null;
+    }
+
+    @Override
     public String getIdentifierString() {
         if (this.hasName()) {
             return this.name.toString();

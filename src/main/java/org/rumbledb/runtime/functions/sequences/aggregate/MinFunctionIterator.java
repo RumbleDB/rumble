@@ -471,8 +471,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             JSoundDataFrame minDF = df.evaluateSQL(
                 String.format(
                     "SELECT MIN(`%s`) as `%s` FROM %s",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     input
                 ),
                 df.getItemType()

@@ -34,10 +34,12 @@ public class PendingUpdateList {
     public PendingUpdateList() {
         // TODO: diff comparator for delta
         this.targetComparator = (item1, item2) -> {
-            boolean itemIsDelta1 = item1.getTableLocation() != null && !item1.getTableLocation().equals("null");
-            boolean itemIsDelta2 = item2.getTableLocation() != null && !item2.getTableLocation().equals("null");
+            boolean itemIsDelta1 = item1.getCollection() != null;
+            boolean itemIsDelta2 = item2.getCollection() != null;
             if (itemIsDelta1 && itemIsDelta2) {
-                int tableComp = item1.getTableLocation().compareTo(item2.getTableLocation());
+                int tableComp = item1.getCollection()
+                    .getPhysicalName()
+                    .compareTo(item2.getCollection().getPhysicalName());
                 if (tableComp != 0) {
                     return tableComp;
                 }

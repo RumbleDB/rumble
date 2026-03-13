@@ -14,20 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Matteo Agnoletto (EPMatt)
  *
  */
-
 
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class FunctionAtomizationException extends RumbleException {
+public class InvalidProcessingInstructionTargetCastException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public FunctionAtomizationException(String message, ExceptionMetadata expressionMetadata) {
-        super(message, ErrorCode.FunctionAtomizationErrorCode, expressionMetadata);
+    public InvalidProcessingInstructionTargetCastException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.InvalidProcessingInstructionTargetCastErrorCode, metadata);
     }
 }
+

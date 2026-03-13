@@ -103,6 +103,13 @@ public interface ItemType extends Serializable, KryoSerializable {
         return this.equals(BuiltinTypesCatalogue.JSONItem) || isObjectItemType() || isArrayItemType();
     }
 
+    /**
+     * @return true if [this] is a node item type (node() or any of its 7 concrete subtypes).
+     */
+    default boolean isNodeItemType() {
+        return false;
+    }
+
     default boolean isUnionType() {
         return false;
     }
@@ -204,6 +211,17 @@ public interface ItemType extends Serializable, KryoSerializable {
             other = other.getBaseType();
         }
         return current;
+    }
+
+    /**
+     * Finds a lax (non-strict) common supertype that can incorporate anonymous facets when possible.
+     * The default implementation falls back to the strict least-common-supertype logic.
+     *
+     * @param other another item type
+     * @return a lax common supertype between [this] and [other]
+     */
+    default ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        return findLeastCommonSuperTypeWith(other);
     }
 
     /**

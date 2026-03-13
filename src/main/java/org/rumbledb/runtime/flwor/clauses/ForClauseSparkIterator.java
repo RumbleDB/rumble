@@ -808,7 +808,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sql(
                         String.format(
                             "SELECT `%s` AS `%s` FROM %s",
-                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
                             variableName,
                             assignment
                         )

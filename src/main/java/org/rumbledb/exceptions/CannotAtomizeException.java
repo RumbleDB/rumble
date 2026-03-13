@@ -14,29 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- * 
+ * Authors: Stefan Irimescu, Can Berker Cikis
+ *
  */
+
 
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-/**
- * Exception for XQTY0024: It is a type error if the content sequence in an element constructor
- * contains an attribute node following a node that is not an attribute node.
- * 
- * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQTY0024">XQuery 3.1, F: XQTY0024</a>
- */
-public class AttributeAfterNonAttributeException extends RumbleException {
+public class CannotAtomizeException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public AttributeAfterNonAttributeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.AttributeAfterNonAttributeErrorCode, metadata);
-    }
-
-    public AttributeAfterNonAttributeException(String message) {
-        super(message, ErrorCode.AttributeAfterNonAttributeErrorCode);
+    public CannotAtomizeException(String message, ExceptionMetadata expressionMetadata) {
+        super(message, ErrorCode.FunctionAtomizationErrorCode, expressionMetadata);
     }
 }

@@ -26,7 +26,9 @@ import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ public class ArrayItem implements Item {
     private long topLevelID;
     private String pathIn;
     private String location;
+    private Collection collection;
 
     public ArrayItem() {
         super();
@@ -49,6 +52,7 @@ public class ArrayItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
     }
 
     public ArrayItem(List<Item> arrayItems) {
@@ -58,6 +62,7 @@ public class ArrayItem implements Item {
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
+        this.collection = null;
     }
 
     public boolean equals(Object otherItem) {
@@ -136,6 +141,7 @@ public class ArrayItem implements Item {
         output.writeLong(this.topLevelID);
         kryo.writeObject(output, this.pathIn);
         kryo.writeObject(output, this.location);
+        kryo.writeObjectOrNull(output, this.collection, Collection.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -146,6 +152,7 @@ public class ArrayItem implements Item {
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
+        this.collection = kryo.readObjectOrNull(input, Collection.class);
     }
 
     public int hashCode() {
@@ -266,7 +273,8 @@ public class ArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return getItems();
+        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
+        // return getItems();
     }
 
     @Override
@@ -277,5 +285,15 @@ public class ArrayItem implements Item {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());
         }
         return arrayItemsForRow;
+    }
+
+    @Override
+    public void setCollection(Collection collection) {
+        this.collection = collection;
+    }
+
+    @Override
+    public Collection getCollection() {
+        return this.collection;
     }
 }

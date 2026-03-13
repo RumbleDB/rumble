@@ -16,6 +16,8 @@ import org.rumbledb.exceptions.InvalidUpdateTargetException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -29,7 +31,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
     private final RuntimeIterator posIterator;
-    private final boolean isTable;
+    private final Mode mode;
     private final boolean isFirst;
     private final boolean isLast;
 
@@ -37,7 +39,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
             RuntimeIterator posIterator,
-            boolean isTable,
+            Mode mode,
             boolean isFirst,
             boolean isLast,
             RuntimeStaticContext staticContext
@@ -46,7 +48,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = posIterator;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isFirst = isFirst;
         this.isLast = isLast;
 
@@ -57,7 +59,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
     public InsertIndexIntoCollectionIterator(
             RuntimeIterator targetIterator,
             RuntimeIterator contentIterator,
-            boolean isTable,
+            Mode mode,
             boolean isFirst,
             boolean isLast,
             RuntimeStaticContext staticContext
@@ -66,7 +68,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = null;
-        this.isTable = isTable;
+        this.mode = mode;
         this.isFirst = isFirst;
         this.isLast = isLast;
 
@@ -110,6 +112,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        PendingUpdateList pul = new PendingUpdateList();
         Item targetItem = null;
         try {
             targetItem = this.targetIterator.materializeExactlyOneItem(context);
@@ -133,12 +136,14 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             );
         }
 
-        String collection = targetItem.getStringValue();
-        if (!this.isTable) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, collection, getMetadata());
-            collection = FileSystemUtil.convertURIToStringForSpark(uri);
+        String logicalPath = targetItem.getStringValue();
+        Mode mode = this.mode;
+        if (mode == Mode.DELTA) {
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
+            logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 
+        Collection collection = new Collection(mode, logicalPath);
         Dataset<Row> contentDF = null;
         try {
             contentDF = this.contentIterator.getOrCreateDataFrame(context).getDataFrame();
@@ -146,21 +151,18 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             e.setMetadata(getMetadata());
             throw e;
         }
-        PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = null;
         if (this.isLast) {
             up = factory.createInsertLastIntoCollectionPrimitive(
                 collection,
                 contentDF,
-                this.isTable,
                 this.getMetadata()
             );
         } else if (this.isFirst) {
             up = factory.createInsertFirstIntoCollectionPrimitive(
                 collection,
                 contentDF,
-                this.isTable,
                 this.getMetadata()
             );
         } else {
@@ -193,20 +195,16 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
             Item targetMetadataItem = new ObjectItem();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-            if (this.isTable) {
-                collection = targetItem.getStringValue();
-            } else {
-                collection = "delta.`" + targetItem.getStringValue() + "` ";
-            }
             String selectQuery = String.format(
                 "SELECT * FROM %s ORDER BY rowOrder ASC LIMIT 1 OFFSET %d",
-                collection,
+                collection.getPhysicalName(),
                 posInt - 1
             );
             Row res = session.sql(selectQuery).collectAsList().get(0);
             targetMetadataItem.setMutabilityLevel(res.getAs(SparkSessionManager.mutabilityLevelColumnName));
             targetMetadataItem.setPathIn(res.getAs(SparkSessionManager.pathInColumnName));
-            targetMetadataItem.setTableLocation(res.getAs(SparkSessionManager.tableLocationColumnName));
+            // targetMetadataItem.setTableLocation(res.getAs(SparkSessionManager.tableLocationColumnName));
+            targetMetadataItem.setCollection(new Collection(res.getAs(SparkSessionManager.tableLocationColumnName)));
             targetMetadataItem.setTopLevelID(res.getAs(SparkSessionManager.rowIdColumnName));
             targetMetadataItem.setTopLevelOrder(res.getAs(SparkSessionManager.rowOrderColumnName));
 
