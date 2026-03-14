@@ -146,25 +146,29 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             // "When itemType-subtype(ST, TT) is true: This case is described in 19.3.2
             // Casting from derived types to parent types."
             if (itemType.isSubtypeOf(targetType)) {
-                // by spec, the source is defined starting from the target (parent) type, applying restrictions via facets.
+                // by spec, the source is defined starting from the target (parent) type, applying restrictions via
+                // facets.
                 // this means that all values of the source type are valid for the target type,
                 // so we can return the converted item directly.
                 return convertForCastTargetType(item, targetType, metadata);
             }
 
-            // XPath and XQuery F&O 3.1 §19.2: Casting from xs:string and xs:untypedAtomic 
+            // XPath and XQuery F&O 3.1 §19.2: Casting from xs:string and xs:untypedAtomic
             // When the target type is a derived type that is restricted by a pattern facet,
-            // the lexical form is first checked against the pattern before further casting is attempted (See 19.3.1 Casting to derived types).
+            // the lexical form is first checked against the pattern before further casting is attempted (See 19.3.1
+            // Casting to derived types).
             // If the lexical form does not conform to the pattern, a dynamic error [err:FORG0001] is raised.
-            if (item.isUntypedAtomic()
-                || item.isString()
-                || itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.stringItem)){
-                // check that the item value conforms to the lexical patterns, if converting to a primitive type    
-                if(targetType.isCastingPrimitive() && !checkLexicalPatterns(item, targetType)) {
+            if (
+                item.isUntypedAtomic()
+                    || item.isString()
+                    || itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.stringItem)
+            ) {
+                // check that the item value conforms to the lexical patterns, if converting to a primitive type
+                if (targetType.isCastingPrimitive() && !checkLexicalPatterns(item, targetType)) {
                     return null;
                 }
                 // check that the item value conforms to the pattern facet, if converting to a derived type
-                if(!checkPatternFacet(item, targetType)){
+                if (!checkPatternFacet(item, targetType)) {
                     return null;
                 }
             }
@@ -206,8 +210,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return null;
                 }
                 converted = convertForCastTargetType(targetPrimitiveValue, targetType, metadata);
-            }else {
-                // This covers both 
+            } else {
+                // This covers both
                 // F&O 3.1 §19.1 Casting from primitive types to derived types
                 // F&O 3.1 §19.3.3: Casting within a branch of the type hierarchy
                 // if ST and TT share the same primitive type, the cast succeeds iff the value
@@ -217,7 +221,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
             // If the conversion failed (returned null)
             // or if the value does not conform to the target facet types, throw a CastException
-            if(converted == null || !checkValueConformsToTargetFacets(converted, targetType)){
+            if (converted == null || !checkValueConformsToTargetFacets(converted, targetType)) {
                 String message = String.format(
                     "\"%s\": this literal is not castable to type %s.",
                     item.serialize(),
@@ -228,7 +232,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
             return converted;
 
-        } catch (DatetimeOverflowOrUnderflow | DurationOverflowOrUnderflow | InvalidLexicalValueException | CastException e) {
+        } catch (
+                DatetimeOverflowOrUnderflow
+                | DurationOverflowOrUnderflow
+                | InvalidLexicalValueException
+                | CastException e
+        ) {
             throw e;
         } catch (Exception e) {
             String message = String.format(
@@ -527,7 +536,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             return null;
         }
-        
+
         // if no branch succeeded, it means no conversion needs to be carried out, so return the item as is,
         // annotated with the target type
         return new AnnotatedItem(item, targetType);
