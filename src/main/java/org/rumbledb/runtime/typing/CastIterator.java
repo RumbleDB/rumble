@@ -95,7 +95,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (item == null) {
             return null;
         }
-        return castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        if (result == null) {
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s.",
+                item.serialize(),
+                this.sequenceType.getItemType()
+            );
+            throw new CastException(message, getMetadata());
+        }
+        return result;
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
@@ -222,12 +231,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             // If the conversion failed (returned null)
             // or if the value does not conform to the target facet types, throw a CastException
             if (converted == null || !checkValueConformsToTargetFacets(converted, targetType)) {
-                String message = String.format(
-                    "\"%s\": this literal is not castable to type %s.",
-                    item.serialize(),
-                    targetType
-                );
-                throw new CastException(message, metadata);
+                return null;
             }
 
             return converted;
