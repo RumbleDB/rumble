@@ -439,7 +439,9 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
             // Simplified base64 lexical pattern
-            java.util.Collections.singletonList("((([A-Za-z0-9+/] ?){4})*(([A-Za-z0-9+/] ?){3}[A-Za-z0-9+/]|([A-Za-z0-9+/] ?){2}[AEIMQUYcgkosw048] ?=|[A-Za-z0-9+/] ?[AQgw] ?= ?=))?")
+            java.util.Collections.singletonList(
+                "((([A-Za-z0-9+/] ?){4})*(([A-Za-z0-9+/] ?){3}[A-Za-z0-9+/]|([A-Za-z0-9+/] ?){2}[AEIMQUYcgkosw048] ?=|[A-Za-z0-9+/] ?[AQgw] ?= ?=))?"
+            )
     );
 
     public static final ItemType QNameItem = new AtomicItemType(
