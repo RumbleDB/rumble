@@ -353,8 +353,14 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-            // Keep historical materialization to IntItem for the xs:int family.
-            return ItemFactory.getInstance().createIntItem(item.castToIntValue());
+            // Keep IntItem as the concrete storage for the xs:int family, but preserve
+            // derived target typing (e.g., xs:byte) for dynamic type checks.
+            Item intValue = ItemFactory.getInstance().createIntItem(item.castToIntValue());
+            // for subtypes of xs:int, return the annotated item with the target type
+            if (!targetType.equals(BuiltinTypesCatalogue.intItem)) {
+                return ItemFactory.getInstance().createAnnotatedItem(intValue, targetType);
+            }
+            return intValue;
         }
         if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
             if (item.isString() || item.isUntypedAtomic()) {
