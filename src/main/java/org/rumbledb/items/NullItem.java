@@ -106,6 +106,6 @@ public class NullItem implements Item {
 
     @Override
     public String getSparkSQLValue(ItemType itemType) {
-        return "NULL";
+        return "CAST(NULL AS " + itemType.getSparkSQLType() + ")";
     }
 }

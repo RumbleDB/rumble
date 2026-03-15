@@ -79,15 +79,6 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                 .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
                 .collect(Collectors.toList());
 
-            String setFieldQuery = "UPDATE "
-                + location
-                + " SET "
-                + setClauses
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
             SparkSessionManager manager = SparkSessionManager.getInstance();
 
             // SKIP CREATING NEW COL FOR COL THAT ALREADY EXISTS
@@ -100,7 +91,26 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                     }
                 }
             }
-            manager.getOrCreateSession().sql(setFieldQuery);
+            if (this.collection.getMode() == Mode.ICEBERG) {
+                for (int i = 0; i < keys.size(); i++) {
+                    this.applySetFieldInCollection(
+                        location,
+                        rowID,
+                        pathIn + keys.get(i),
+                        values.get(i).getSparkSQLValue()
+                    );
+                }
+            } else {
+                String setFieldQuery = "UPDATE "
+                    + location
+                    + " SET "
+                    + setClauses
+                    + " WHERE `"
+                    + SparkSessionManager.rowIdColumnName
+                    + "` == "
+                    + rowID;
+                manager.getOrCreateSession().sql(setFieldQuery);
+            }
         } else {
             this.arrayIndexingApplyDelta();
 

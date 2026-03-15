@@ -56,21 +56,37 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-            List<String> setFieldsToNulls = this.content.stream()
-                .map(i -> pathIn + i.getStringValue() + " = NULL")
-                .collect(Collectors.toList());
-            String concatSetNulls = String.join(", ", setFieldsToNulls);
+            if (this.collection.getMode() == Mode.ICEBERG) {
+                for (Item item : this.content) {
+                    String key = item.getStringValue();
+                    String fullPath = pathIn + key;
+                    String type = SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
+                        .filter(org.apache.spark.sql.functions.col("col_name").equalTo(key))
+                        .select("data_type")
+                        .collectAsList()
+                        .get(0)
+                        .getString(0);
+                    this.applySetFieldInCollection(location, rowID, fullPath, "CAST(NULL AS " + type + ")");
+                }
+            } else {
+                List<String> setFieldsToNulls = this.content.stream()
+                    .map(i -> pathIn + i.getStringValue() + " = NULL")
+                    .collect(Collectors.toList());
+                String concatSetNulls = String.join(", ", setFieldsToNulls);
 
-            String query = "UPDATE "
-                + location
-                + " SET "
-                + concatSetNulls
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+                String query = "UPDATE "
+                    + location
+                    + " SET "
+                    + concatSetNulls
+                    + " WHERE `"
+                    + SparkSessionManager.rowIdColumnName
+                    + "` == "
+                    + rowID;
 
-            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+                SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            }
         } else {
             this.arrayIndexingApplyDelta();
         }

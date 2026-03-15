@@ -5,6 +5,8 @@ import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
+import static org.apache.spark.sql.functions.col;
+
 
 public class ReplaceInObjectPrimitive implements UpdatePrimitive {
 
@@ -63,19 +65,85 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-
-            String setField = pathIn + this.selector.getStringValue() + " = " + this.content.getSparkSQLValue();
-
-            String query = "UPDATE "
-                + location
-                + " SET "
-                + setField
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
-            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            String fullFieldPath = pathIn + this.selector.getStringValue();
+            if (this.collection.getMode() == Mode.ICEBERG || this.collection.getMode() == Mode.DELTA) {
+                if (!fullFieldPath.contains(".")) {
+                    String fieldName = this.selector.getStringValue();
+                    String[] fieldNames = SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .table(location)
+                        .schema()
+                        .fieldNames();
+                    int fieldIndex = -1;
+                    for (int i = 0; i < fieldNames.length; i++) {
+                        if (fieldNames[i].equals(fieldName)) {
+                            fieldIndex = i;
+                            break;
+                        }
+                    }
+                    String previousFieldName = fieldIndex > 0 ? fieldNames[fieldIndex - 1] : null;
+                    String currentType = SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .sql("DESC (SELECT " + fullFieldPath + " FROM " + location + ")")
+                        .filter(col("col_name").equalTo(fieldName))
+                        .select("data_type")
+                        .collectAsList()
+                        .get(0)
+                        .getString(0);
+                    String replacementType = this.content.getSparkSQLType();
+                    String normalizedCurrentType = currentType.replaceAll("\\s+", "");
+                    String normalizedReplacementType = replacementType.replaceAll("\\s+", "");
+                    String normalizedReplacementTypeUpper = normalizedReplacementType.toUpperCase();
+                    boolean isTypeChange = !normalizedCurrentType.equalsIgnoreCase(normalizedReplacementType);
+                    boolean deltaNeedsComplexEvolution = this.collection.getMode() == Mode.DELTA
+                        && (normalizedReplacementTypeUpper.startsWith("STRUCT<")
+                            || normalizedReplacementTypeUpper.startsWith("ARRAY<"));
+                    boolean needsSchemaEvolution = (this.collection.getMode() == Mode.ICEBERG && isTypeChange)
+                        || (isTypeChange && deltaNeedsComplexEvolution);
+                    if (needsSchemaEvolution) {
+                        if (this.collection.getMode() == Mode.DELTA) {
+                            SparkSessionManager.getInstance()
+                                .getOrCreateSession()
+                                .sql(
+                                    "ALTER TABLE "
+                                        + location
+                                        + " SET TBLPROPERTIES ('delta.columnMapping.mode' = 'name')"
+                                );
+                        }
+                        SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .sql("ALTER TABLE " + location + " DROP COLUMN " + fullFieldPath);
+                        SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .sql(
+                                "ALTER TABLE "
+                                    + location
+                                    + " ADD COLUMNS ("
+                                    + fullFieldPath
+                                    + " "
+                                    + replacementType
+                                    + ")"
+                            );
+                        if (fieldIndex == 0) {
+                            SparkSessionManager.getInstance()
+                                .getOrCreateSession()
+                                .sql("ALTER TABLE " + location + " ALTER COLUMN " + fullFieldPath + " FIRST");
+                        } else if (previousFieldName != null) {
+                            SparkSessionManager.getInstance()
+                                .getOrCreateSession()
+                                .sql(
+                                    "ALTER TABLE "
+                                        + location
+                                        + " ALTER COLUMN "
+                                        + fullFieldPath
+                                        + " AFTER "
+                                        + previousFieldName
+                                );
+                        }
+                    }
+                }
+            }
+            this.applySetFieldInCollection(location, rowID, fullFieldPath, this.content.getSparkSQLValue());
         } else {
             this.arrayIndexingApplyDelta();
         }
