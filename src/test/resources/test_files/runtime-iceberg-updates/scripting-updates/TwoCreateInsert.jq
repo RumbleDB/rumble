@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[10,9]; Output="({ "c" : "A", "v" : 1 }, { "c" : "B", "v" : 10 }, { "c" : "B", "v" : 20 })" :)
+(:JIQS: ShouldRun; UpdateDim=[3,9]; Output="({ "c" : "A", "v" : 1 }, { "c" : "B", "v" : 10 }, { "c" : "B", "v" : 20 })" :)
 create collection iceberg-table("icy9_1") with ();
 create collection iceberg-table("icy9_2") with { "c": "B", "v": 10 };
 
