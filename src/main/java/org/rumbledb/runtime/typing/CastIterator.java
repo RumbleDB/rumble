@@ -642,7 +642,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         // F&O 3.1 §19.3.3 requires pattern checks against the canonical lexical
         // representation of the source value (or xs:string cast if no canonical form exists).
-        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType.getCastingPrimitiveType());
+        String lexical = normalizeLexicalAccordingToWhitespace(
+            item.getStringValue(),
+            targetType.getCastingPrimitiveType()
+        );
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
                 return true;
