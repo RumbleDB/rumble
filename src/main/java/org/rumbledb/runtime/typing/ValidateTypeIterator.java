@@ -578,10 +578,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                             // In lax mode, prefer a successful cast when possible (e.g., null -> "null" for strings),
                             // and only treat null as absent if the cast fails.
                             try {
-                                keys.add(key);
-                                values.add(
-                                    validate(item.getItemByKey(key), expectedType, metadata, true, configuration)
+                                Item validatedNullValue = validate(
+                                    item.getItemByKey(key),
+                                    expectedType,
+                                    metadata,
+                                    true,
+                                    configuration
                                 );
+                                keys.add(key);
+                                values.add(validatedNullValue);
                             } catch (InvalidInstanceException ex) {
                                 // Keep lax behavior: consider JSON null as absent for optional fields.
                             }
