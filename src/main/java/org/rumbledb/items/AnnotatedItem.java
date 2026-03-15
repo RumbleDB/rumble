@@ -5,6 +5,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Duration;
 import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -99,6 +101,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isUntypedAtomic() {
+        return this.itemToAnnotate.isUntypedAtomic();
+    }
+
+    @Override
     public boolean isBoolean() {
         return this.itemToAnnotate.isBoolean();
     }
@@ -141,6 +148,11 @@ public class AnnotatedItem implements Item {
     @Override
     public boolean isDuration() {
         return this.itemToAnnotate.isDuration();
+    }
+
+    @Override
+    public boolean isPeriod() {
+        return this.itemToAnnotate.isPeriod();
     }
 
     @Override
@@ -259,8 +271,58 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public Duration getDurationValue() {
+        return this.itemToAnnotate.getDurationValue();
+    }
+
+    @Override
     public OffsetDateTime getDateTimeValue() {
         return this.itemToAnnotate.getDateTimeValue();
+    }
+
+    @Override
+    public OffsetTime getTimeValue() {
+        return this.itemToAnnotate.getTimeValue();
+    }
+
+    @Override
+    public int getYear() {
+        return this.itemToAnnotate.getYear();
+    }
+
+    @Override
+    public int getMonth() {
+        return this.itemToAnnotate.getMonth();
+    }
+
+    @Override
+    public int getDay() {
+        return this.itemToAnnotate.getDay();
+    }
+
+    @Override
+    public int getOffset() {
+        return this.itemToAnnotate.getOffset();
+    }
+
+    @Override
+    public int getHour() {
+        return this.itemToAnnotate.getHour();
+    }
+
+    @Override
+    public int getMinute() {
+        return this.itemToAnnotate.getMinute();
+    }
+
+    @Override
+    public double getSecond() {
+        return this.itemToAnnotate.getSecond();
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.itemToAnnotate.getNanosecond();
     }
 
     @Override
@@ -366,6 +428,11 @@ public class AnnotatedItem implements Item {
     @Override
     public int castToIntValue() {
         return this.itemToAnnotate.castToIntValue();
+    }
+
+    @Override
+    public boolean isNaN() {
+        return this.itemToAnnotate.isNaN();
     }
 
     @Override
