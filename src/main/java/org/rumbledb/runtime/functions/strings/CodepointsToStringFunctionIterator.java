@@ -48,18 +48,28 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
 
         StringBuilder stringBuilder = new StringBuilder();
         for (Item item : codepoints) {
-            if (!(item.isInt())) {
+            if (!item.isInteger()) {
                 throw new UnexpectedTypeException(
-                        "Int item expected",
-                        this.children.get(0).getMetadata()
-                );
-            } else if (!(isValidCodePoint(item.getIntValue()))) {
-                throw new CodepointNotValidException(
-                        "Non-XML-conformant codepoint: " + item.getIntValue(),
+                        "Integer item expected",
                         this.children.get(0).getMetadata()
                 );
             }
-            stringBuilder.appendCodePoint(item.getIntValue());
+            int codePoint;
+            try {
+                codePoint = item.getIntegerValue().intValueExact();
+            } catch (ArithmeticException e) {
+                throw new CodepointNotValidException(
+                        "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                        this.children.get(0).getMetadata()
+                );
+            }
+            if (!(isValidCodePoint(codePoint))) {
+                throw new CodepointNotValidException(
+                        "Non-XML-conformant codepoint: " + codePoint,
+                        this.children.get(0).getMetadata()
+                );
+            }
+            stringBuilder.appendCodePoint(codePoint);
         }
         return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
