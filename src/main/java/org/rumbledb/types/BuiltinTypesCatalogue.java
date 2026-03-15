@@ -123,6 +123,7 @@ public class BuiltinTypesCatalogue {
             java.util.Arrays.asList(
                 "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?",
                 "INF",
+                "\\+INF",
                 "-INF",
                 "NaN"
             )
