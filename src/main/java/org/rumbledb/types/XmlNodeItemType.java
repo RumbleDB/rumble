@@ -64,7 +64,7 @@ public class XmlNodeItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("XML node item type does not support facets");
     }
 
