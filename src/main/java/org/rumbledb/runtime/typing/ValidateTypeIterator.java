@@ -574,6 +574,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         } else if (!configuration.getLaxJSONNullValidation()) {
                             keys.add(key);
                             values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                        } else {
+                            // In lax mode, prefer a successful cast when possible (e.g., null -> "null" for strings),
+                            // and only treat null as absent if the cast fails.
+                            try {
+                                keys.add(key);
+                                values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                            } catch (InvalidInstanceException ex) {
+                                // Keep lax behavior: consider JSON null as absent for optional fields.
+                            }
                         }
                     } else {
                         keys.add(key);
@@ -625,7 +634,20 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         if (itemType.isUnionType()) {
-            for (ItemType memberType : itemType.getTypes()) {
+            List<ItemType> memberTypes = itemType.getTypes();
+            if (item.isNull()) {
+                for (ItemType memberType : memberTypes) {
+                    if (memberType.equals(BuiltinTypesCatalogue.nullItem)) {
+                        continue;
+                    }
+                    try {
+                        return validate(item, memberType, metadata, true, configuration);
+                    } catch (InvalidInstanceException ex) {
+                        // try next type
+                    }
+                }
+            }
+            for (ItemType memberType : memberTypes) {
                 try {
                     return validate(item, memberType, metadata, true, configuration);
                 } catch (InvalidInstanceException ex) {
