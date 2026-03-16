@@ -98,7 +98,13 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             if (item.isArray()) {
                 this.nextResults.add(item);
-                getDescendantArrays(item.getItems());
+                if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                    for (java.util.List<Item> member : item.getMemberSequences()) {
+                        getDescendantArrays(member);
+                    }
+                } else {
+                    getDescendantArrays(item.getItems());
+                }
             } else if (item.isObject()) {
                 getDescendantArrays(item.getValues());
             } else {

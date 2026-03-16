@@ -143,7 +143,13 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 }
             } else if (item.isArray()) {
                 if (this.wildcard) {
-                    this.nextResult.addAll(item.getItems());
+                    if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                        for (List<Item> member : item.getMemberSequences()) {
+                            this.nextResult.addAll(member);
+                        }
+                    } else {
+                        this.nextResult.addAll(item.getItems());
+                    }
                 } else {
                     for (Item key : this.lookupKeys) {
                         if (key.isString()) {
@@ -153,7 +159,12 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                             );
                         }
                         if (key.isNumeric()) {
-                            this.nextResult.add(item.getItemAt(key.castToIntValue() - 1));
+                            int idx = key.castToIntValue() - 1;
+                            if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                                this.nextResult.addAll(item.getMemberSequenceAt(idx));
+                            } else {
+                                this.nextResult.add(item.getItemAt(idx));
+                            }
                         }
                     }
                 }

@@ -769,6 +769,26 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public List<List<Item>> getMemberSequences() {
+        return this.itemToAnnotate.getMemberSequences();
+    }
+
+    @Override
+    public List<Item> getMemberSequenceAt(int position) {
+        return this.itemToAnnotate.getMemberSequenceAt(position);
+    }
+
+    @Override
+    public void appendMemberSequence(List<Item> items) {
+        this.itemToAnnotate.appendMemberSequence(items);
+    }
+
+    @Override
+    public void putMemberSequenceAt(List<Item> items, int i) {
+        this.itemToAnnotate.putMemberSequenceAt(items, i);
+    }
+
+    @Override
     public void removeItemAt(int i) {
         this.itemToAnnotate.removeItemAt(i);
     }

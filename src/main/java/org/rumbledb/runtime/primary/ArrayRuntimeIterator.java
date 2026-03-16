@@ -38,30 +38,59 @@ import java.util.List;
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private boolean isSquareConstructor;
 
+    /**
+     * Curly array constructor: single child whose items become singleton members.
+     */
     public ArrayRuntimeIterator(
             RuntimeIterator arrayItems,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
+        this.isSquareConstructor = false;
         if (arrayItems != null) {
             this.children.add(arrayItems);
+        }
+    }
+
+    /**
+     * Square array constructor: each child iterator produces one member (possibly a sequence).
+     */
+    public ArrayRuntimeIterator(
+            List<RuntimeIterator> memberIterators,
+            boolean isSquareConstructor,
+            RuntimeStaticContext staticContext
+    ) {
+        super(null, staticContext);
+        this.isSquareConstructor = isSquareConstructor;
+        if (memberIterators != null) {
+            this.children.addAll(memberIterators);
         }
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
+        if (this.isSquareConstructor) {
+            List<List<Item>> memberSequences = new ArrayList<>();
+            for (RuntimeIterator child : this.children) {
+                memberSequences.add(child.materialize(dynamicContext));
+            }
+            return ItemFactory.getInstance().createArrayFromMemberSequences(memberSequences, true);
+        }
         List<Item> result = new ArrayList<>();
         if (!this.children.isEmpty()) {
             result.addAll(this.children.get(0).materialize(dynamicContext));
         }
-        Item item = ItemFactory.getInstance().createArrayItem(result, true);
-        return item;
+        return ItemFactory.getInstance().createArrayItem(result, true);
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.isSquareConstructor) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         if (!this.children.isEmpty()) {
             NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {

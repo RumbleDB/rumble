@@ -427,12 +427,23 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     // region primary
     @Override
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
-        ArrayConstructorExpression result = new ArrayConstructorExpression(
-                (expression.getExpression() == null)
-                    ? expression.getExpression()
-                    : (Expression) visit(expression.getExpression(), argument),
-                expression.getMetadata()
-        );
+        ArrayConstructorExpression result;
+        if (expression.isSquareConstructor()) {
+            List<Expression> clonedMembers = new java.util.ArrayList<>();
+            if (expression.getMemberExpressions() != null) {
+                for (Expression memberExpr : expression.getMemberExpressions()) {
+                    clonedMembers.add((Expression) visit(memberExpr, argument));
+                }
+            }
+            result = new ArrayConstructorExpression(clonedMembers, true, expression.getMetadata());
+        } else {
+            result = new ArrayConstructorExpression(
+                    (expression.getExpression() == null)
+                        ? expression.getExpression()
+                        : (Expression) visit(expression.getExpression(), argument),
+                    expression.getMetadata()
+            );
+        }
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         return result;
