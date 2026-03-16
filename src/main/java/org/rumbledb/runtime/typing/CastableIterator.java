@@ -41,10 +41,15 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        if (!this.sequenceType.getItemType().isAtomicItemType()) {
+        ItemType targetItemType = this.sequenceType.getItemType();
+        boolean validCastTarget =
+            targetItemType.isAtomicItemType()
+                || (targetItemType.isUnionType()
+                    && targetItemType.getTypes().stream().allMatch(ItemType::isAtomicItemType));
+        if (!validCastTarget) {
             throw new UnknownCastTypeException(
                     "The type "
-                        + this.sequenceType.getItemType().getIdentifierString()
+                        + targetItemType.getIdentifierString()
                         + " is not atomic. Castable can only be used with atomic types.",
                     getMetadata()
             );

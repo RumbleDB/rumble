@@ -131,6 +131,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
 
+        // F&O 3.1 §19.3.5: union targets use dedicated member-iteration logic;
+        // must be checked before isStaticallyCastableAs which lacks union-target support.
+        if (targetType.isUnionType()) {
+            return castToUnionType(item, targetType, metadata);
+        }
+
         if (!item.getDynamicType().isStaticallyCastableAs(targetType)) {
             String message = String.format(
                 "\"%s\": a value of type %s is not castable to type %s",
@@ -252,6 +258,74 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             );
             throw new CastException(message, metadata);
         }
+    }
+
+    /**
+     * Implements casting to union types per W3C F&amp;O 3.1 §19.3.5.
+     * The three rules are evaluated in priority order; the first applicable condition
+     * determines the result. Only atomic types in the transitive membership of the
+     * union are considered.
+     *
+     * <ol>
+     *   <li><b>Rule 1</b> (xs:string / xs:untypedAtomic): try each atomic member in
+     *       declaration order and return the first successful cast.</li>
+     *   <li><b>Rule 2</b> (value already an instance of the union): the value's dynamic
+     *       type is a subtype of one of the transitive atomic members &mdash; return it
+     *       unchanged.</li>
+     *   <li><b>Rule 3</b> (value castable to a member): attempt cast to each atomic member
+     *       in declaration order and return the first successful cast.</li>
+     * </ol>
+     *
+     * @param item       the atomized source item
+     * @param targetType the union target type
+     * @param metadata   exception metadata for error reporting
+     * @return the cast result, or {@code null} if no member type accepts the value
+     */
+    private static Item castToUnionType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+        List<ItemType> memberTypes = targetType.getTypes();
+
+        // §19.3.5 Rule 1: source is xs:string or xs:untypedAtomic
+        if (item.isString() || item.isUntypedAtomic()) {
+            for (ItemType memberType : memberTypes) {
+                if (!memberType.isAtomicItemType()) {
+                    continue;
+                }
+                try {
+                    Item result = castItemToType(item, memberType, metadata);
+                    if (result != null) {
+                        return result;
+                    }
+                } catch (Exception e) {
+                    // This member does not accept the value; try next in declaration order.
+                }
+            }
+            return null;
+        }
+
+        // §19.3.5 Rule 2: value is already an instance of the union type
+        // (its dynamic type is a subtype of one of the transitive atomic members).
+        // Return the value unchanged, preserving the original dynamic type.
+        if (item.getDynamicType().isSubtypeOf(targetType)) {
+            return item;
+        }
+
+        // §19.3.5 Rule 3: value is castable to one or more atomic member types.
+        // Try each member in declaration order; return first successful cast.
+        for (ItemType memberType : memberTypes) {
+            if (!memberType.isAtomicItemType()) {
+                continue;
+            }
+            try {
+                Item result = castItemToType(item, memberType, metadata);
+                if (result != null) {
+                    return result;
+                }
+            } catch (Exception e) {
+                // This member does not accept the value; try next in declaration order.
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -547,16 +621,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 BuiltinTypesCatalogue.gYearMonthItem
             );
         }
-        if (targetType.equals(BuiltinTypesCatalogue.numericItem)) {
-            Item convertedValue = null;
-            if (item.isString() || item.isUntypedAtomic()) {
-                convertedValue = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
-            } else if (item.isBoolean()) {
-                convertedValue = ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
-            }
-            return convertedValue;
-        }
-
         // if no branch succeeded, it means no conversion needs to be carried out, so return the item as is,
         // annotated with the target type
         return new AnnotatedItem(item, targetType);
