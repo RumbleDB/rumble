@@ -514,4 +514,9 @@ public class AnnotatedItem implements Item {
     public void setTableLocation(String location) {
         this.itemToAnnotate.setTableLocation(location);
     }
+
+    @Override
+    public List<Item> atomizedValue() {
+        return this.itemToAnnotate.atomizedValue();
+    }
 }

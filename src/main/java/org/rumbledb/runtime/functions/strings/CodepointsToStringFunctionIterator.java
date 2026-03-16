@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
+import java.math.BigInteger;
 import java.util.List;
 
 public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -71,16 +71,38 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
             }
             stringBuilder.appendCodePoint(codePoint);
         }
-        return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
+
+        return ItemFactory.getInstance().createStringItem(sb.toString());
     }
 
+    private static boolean isPermittedControlCharacter(int codepoint, String xmlVersion) {
+        boolean isC0 = (codepoint >= 0 && codepoint <= 31);
+        boolean isC1 = (codepoint >= 127 && codepoint <= 159);
 
-    private static boolean isValidCodePoint(int codepoint) {
-        /* Checks if the codepoints are within the ranges allowed for in the XML 1.1 specification. */
-        return 1 <= codepoint && codepoint <= 55295
-            ||
-            57344 <= codepoint && codepoint <= 65533
-            ||
-            65536 <= codepoint && codepoint <= 1114111;
+        if (!(isC0 || isC1)) {
+            return false;
+        }
+
+        if (xmlVersion.equals("1.0")) {
+            return codepoint == 9 || codepoint == 10 || codepoint == 13;
+        } else {
+            return codepoint != 0;
+        }
+    }
+
+    private static boolean isValidCodePoint(int codepoint, String xmlVersion) {
+        if (codepoint < 0 || codepoint > 1114111)
+            return false;
+
+        boolean isC0 = (codepoint >= 0 && codepoint <= 31);
+        boolean isC1 = (codepoint >= 127 && codepoint <= 159);
+
+        if (isC0 || isC1) {
+            return isPermittedControlCharacter(codepoint, xmlVersion);
+        }
+
+        return (codepoint <= 55295)
+            || (57344 <= codepoint && codepoint <= 65533)
+            || (65536 <= codepoint);
     }
 }

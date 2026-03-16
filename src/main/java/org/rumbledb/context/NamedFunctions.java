@@ -34,6 +34,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
@@ -41,6 +42,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -182,13 +184,25 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         arguments.get(i).getHighestExecutionMode(),
                         arguments.get(i).getMetadata()
                 );
+                RuntimeIterator argumentIterator = arguments.get(i);
+                if (
+                    sequenceType.getItemType().isAtomicItemType()
+                        && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
+                ) {
+                    argumentIterator = new AtomizationIterator(
+                            Collections.singletonList(argumentIterator),
+                            runtimeStaticContext
+                    );
+
+                }
                 if (
                     sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
                         || sequenceType.getArity().equals(Arity.OneOrZero)
                 ) {
+
                     RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                            arguments.get(i),
+                            argumentIterator,
                             sequenceType,
                             "Invalid argument for function " + identifier.getName() + ". ",
                             runtimeStaticContext
@@ -197,7 +211,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     arguments.set(i, typePromotionIterator);
                 } else {
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
-                            arguments.get(i),
+                            argumentIterator,
                             sequenceType,
                             "Invalid argument for function " + identifier.getName() + ". ",
                             runtimeStaticContext

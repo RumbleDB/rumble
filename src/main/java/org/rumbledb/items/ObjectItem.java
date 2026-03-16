@@ -25,7 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.FunctionAtomizationException;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -379,7 +379,7 @@ public class ObjectItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new FunctionAtomizationException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
+        throw new CannotAtomizeException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
