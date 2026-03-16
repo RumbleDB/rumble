@@ -45,6 +45,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         List<Item> codepoints = this.children.get(0).materialize(context);
+        String xmlVersion = context.getConfiguration().getXmlVersion();
 
         StringBuilder stringBuilder = new StringBuilder();
         for (Item item : codepoints) {
@@ -63,7 +64,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
                         this.children.get(0).getMetadata()
                 );
             }
-            if (!(isValidCodePoint(codePoint))) {
+            if (!(isValidCodePoint(codePoint, xmlVersion))) {
                 throw new CodepointNotValidException(
                         "Non-XML-conformant codepoint: " + codePoint,
                         this.children.get(0).getMetadata()
