@@ -45,7 +45,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         List<Item> codepoints = this.children.get(0).materialize(context);
-        String xmlVersion = context.getConfiguration().getXmlVersion();
+        String xmlVersion = context.getRumbleRuntimeConfiguration().getXmlVersion();
 
         StringBuilder stringBuilder = new StringBuilder();
         for (Item item : codepoints) {
@@ -73,7 +73,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
             stringBuilder.appendCodePoint(codePoint);
         }
 
-        return ItemFactory.getInstance().createStringItem(sb.toString());
+        return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
 
     private static boolean isPermittedControlCharacter(int codepoint, String xmlVersion) {
