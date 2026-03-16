@@ -66,9 +66,25 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
 
         if (startOfArrayIndexing == -1) {
             String fullFieldPath = pathIn + this.selector.getStringValue();
-            if (this.collection.getMode() == Mode.ICEBERG || this.collection.getMode() == Mode.DELTA) {
-                if (!fullFieldPath.contains(".")) {
-                    String fieldName = this.selector.getStringValue();
+            if (!fullFieldPath.contains(".")) {
+                String fieldName = this.selector.getStringValue();
+                String currentType = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .sql("DESC (SELECT " + fullFieldPath + " FROM " + location + ")")
+                    .filter(col("col_name").equalTo(fieldName))
+                    .select("data_type")
+                    .collectAsList()
+                    .get(0)
+                    .getString(0);
+                String replacementType = this.content.getSparkSQLType();
+                String currentTypeUpper = currentType.replaceAll("\\s+", "").toUpperCase();
+                String replacementTypeUpper = replacementType.replaceAll("\\s+", "").toUpperCase();
+                boolean replacementIsComplex = replacementTypeUpper.startsWith("STRUCT<")
+                    || replacementTypeUpper.startsWith("ARRAY<");
+                boolean currentIsComplex = currentTypeUpper.startsWith("STRUCT<")
+                    || currentTypeUpper.startsWith("ARRAY<");
+                if (replacementIsComplex && !currentIsComplex) {
+                    // Spark cannot cast primitive -> struct/array. Drop/add the column to evolve schema.
                     String[] fieldNames = SparkSessionManager.getInstance()
                         .getOrCreateSession()
                         .table(location)
@@ -82,26 +98,12 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
                         }
                     }
                     String previousFieldName = fieldIndex > 0 ? fieldNames[fieldIndex - 1] : null;
-                    String currentType = SparkSessionManager.getInstance()
-                        .getOrCreateSession()
-                        .sql("DESC (SELECT " + fullFieldPath + " FROM " + location + ")")
-                        .filter(col("col_name").equalTo(fieldName))
-                        .select("data_type")
-                        .collectAsList()
-                        .get(0)
-                        .getString(0);
-                    String replacementType = this.content.getSparkSQLType();
-                    String normalizedCurrentType = currentType.replaceAll("\\s+", "");
-                    String normalizedReplacementType = replacementType.replaceAll("\\s+", "");
-                    String normalizedReplacementTypeUpper = normalizedReplacementType.toUpperCase();
-                    boolean isTypeChange = !normalizedCurrentType.equalsIgnoreCase(normalizedReplacementType);
-                    boolean deltaNeedsComplexEvolution = this.collection.getMode() == Mode.DELTA
-                        && (normalizedReplacementTypeUpper.startsWith("STRUCT<")
-                            || normalizedReplacementTypeUpper.startsWith("ARRAY<"));
-                    boolean needsSchemaEvolution = (this.collection.getMode() == Mode.ICEBERG && isTypeChange)
-                        || (isTypeChange && deltaNeedsComplexEvolution);
-                    if (needsSchemaEvolution) {
-                        if (this.collection.getMode() == Mode.DELTA) {
+                    try {
+                        SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .sql("ALTER TABLE " + location + " DROP COLUMN " + fullFieldPath);
+                    } catch (Exception e) {
+                        if (e.getMessage() != null && e.getMessage().contains("columnMapping")) {
                             SparkSessionManager.getInstance()
                                 .getOrCreateSession()
                                 .sql(
@@ -109,37 +111,39 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
                                         + location
                                         + " SET TBLPROPERTIES ('delta.columnMapping.mode' = 'name')"
                                 );
+                            SparkSessionManager.getInstance()
+                                .getOrCreateSession()
+                                .sql("ALTER TABLE " + location + " DROP COLUMN " + fullFieldPath);
+                        } else {
+                            throw e;
                         }
+                    }
+                    SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .sql(
+                            "ALTER TABLE "
+                                + location
+                                + " ADD COLUMNS ("
+                                + fullFieldPath
+                                + " "
+                                + replacementType
+                                + ")"
+                        );
+                    if (fieldIndex == 0) {
                         SparkSessionManager.getInstance()
                             .getOrCreateSession()
-                            .sql("ALTER TABLE " + location + " DROP COLUMN " + fullFieldPath);
+                            .sql("ALTER TABLE " + location + " ALTER COLUMN " + fullFieldPath + " FIRST");
+                    } else if (previousFieldName != null) {
                         SparkSessionManager.getInstance()
                             .getOrCreateSession()
                             .sql(
                                 "ALTER TABLE "
                                     + location
-                                    + " ADD COLUMNS ("
+                                    + " ALTER COLUMN "
                                     + fullFieldPath
-                                    + " "
-                                    + replacementType
-                                    + ")"
+                                    + " AFTER "
+                                    + previousFieldName
                             );
-                        if (fieldIndex == 0) {
-                            SparkSessionManager.getInstance()
-                                .getOrCreateSession()
-                                .sql("ALTER TABLE " + location + " ALTER COLUMN " + fullFieldPath + " FIRST");
-                        } else if (previousFieldName != null) {
-                            SparkSessionManager.getInstance()
-                                .getOrCreateSession()
-                                .sql(
-                                    "ALTER TABLE "
-                                        + location
-                                        + " ALTER COLUMN "
-                                        + fullFieldPath
-                                        + " AFTER "
-                                        + previousFieldName
-                                );
-                        }
                     }
                 }
             }

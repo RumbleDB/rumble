@@ -148,47 +148,6 @@ public interface UpdatePrimitive {
     }
 
     default void applySetFieldInCollection(String location, long rowID, String fieldPath, String fieldValueSQL) {
-        if (this.getTarget().getCollection().getMode() == Mode.ICEBERG) {
-            Dataset<Row> updatedRows = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .table(location)
-                .where(col(SparkSessionManager.rowIdColumnName).equalTo(rowID));
-            Column newValue = expr(fieldValueSQL);
-
-            if (fieldPath.contains(".")) {
-                String[] parts = fieldPath.split("\\.");
-                String root = parts[0];
-                Column updatedRoot = this.setNestedStructField(col(root), parts, 1, newValue);
-                updatedRows = updatedRows.withColumn(root, updatedRoot);
-            } else {
-                updatedRows = updatedRows.withColumn(fieldPath, newValue);
-            }
-
-            List<Row> rewrittenRows = updatedRows.collectAsList();
-            if (rewrittenRows.size() != 1) {
-                throw new IllegalStateException(
-                        "Expected exactly one row in Iceberg update rewrite for row ID "
-                            + rowID
-                            + " but found "
-                            + rewrittenRows.size()
-                );
-            }
-            Dataset<Row> frozenRows = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(rewrittenRows, updatedRows.schema());
-
-            String deleteQuery = "DELETE FROM "
-                + location
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` = "
-                + rowID;
-            SparkSessionManager.getInstance().getOrCreateSession().sql(deleteQuery);
-
-            this.getTarget().getCollection().insertUnordered(frozenRows);
-            return;
-        }
-
         String updateQuery = "UPDATE "
             + location
             + " SET "
@@ -199,7 +158,55 @@ public interface UpdatePrimitive {
             + SparkSessionManager.rowIdColumnName
             + "` == "
             + rowID;
-        SparkSessionManager.getInstance().getOrCreateSession().sql(updateQuery);
+        try {
+            // Prefer direct UPDATE; if unsupported by the backend, fall back to a row rewrite.
+            SparkSessionManager.getInstance().getOrCreateSession().sql(updateQuery);
+            return;
+        } catch (Exception e) {
+            String message = e.getMessage() == null ? "" : e.getMessage();
+            if (!message.contains("not supported temporarily")) {
+                throw e;
+            }
+            // Fallback: rewrite row when UPDATE is not supported by the backend.
+        }
+
+        Dataset<Row> updatedRows = SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .table(location)
+            .where(col(SparkSessionManager.rowIdColumnName).equalTo(rowID));
+        Column newValue = expr(fieldValueSQL);
+
+        if (fieldPath.contains(".")) {
+            String[] parts = fieldPath.split("\\.");
+            String root = parts[0];
+            Column updatedRoot = this.setNestedStructField(col(root), parts, 1, newValue);
+            updatedRows = updatedRows.withColumn(root, updatedRoot);
+        } else {
+            updatedRows = updatedRows.withColumn(fieldPath, newValue);
+        }
+
+        List<Row> rewrittenRows = updatedRows.collectAsList();
+        if (rewrittenRows.size() != 1) {
+            throw new IllegalStateException(
+                    "Expected exactly one row in update rewrite for row ID "
+                        + rowID
+                        + " but found "
+                        + rewrittenRows.size()
+            );
+        }
+        Dataset<Row> frozenRows = SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .createDataFrame(rewrittenRows, updatedRows.schema());
+
+        String deleteQuery = "DELETE FROM "
+            + location
+            + " WHERE `"
+            + SparkSessionManager.rowIdColumnName
+            + "` = "
+            + rowID;
+        SparkSessionManager.getInstance().getOrCreateSession().sql(deleteQuery);
+
+        this.getTarget().getCollection().insertUnordered(frozenRows);
     }
 
     default Column setNestedStructField(Column structColumn, String[] parts, int index, Column newValue) {
@@ -283,4 +290,5 @@ public interface UpdatePrimitive {
 
         this.applySetFieldInCollection(location, rowID, preIndexingPathIn, originalArray.getSparkSQLValue(arrayType));
     }
+
 }

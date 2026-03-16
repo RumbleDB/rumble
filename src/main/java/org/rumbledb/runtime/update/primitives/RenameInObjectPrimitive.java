@@ -75,29 +75,17 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             String fullNewPath = pathIn + this.content.getStringValue();
 
             if (!fullOldPath.contains(".") && !fullNewPath.contains(".")) {
-                if (this.collection.getMode() == Mode.ICEBERG) {
-                    String renameColumnQuery = "ALTER TABLE "
-                        + location
-                        + " RENAME COLUMN "
-                        + fullOldPath
-                        + " TO "
-                        + fullNewPath;
+                String renameColumnQuery = "ALTER TABLE "
+                    + location
+                    + " RENAME COLUMN "
+                    + fullOldPath
+                    + " TO "
+                    + fullNewPath;
+                try {
                     SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
                     return;
-                }
-                if (this.collection.getMode() == Mode.DELTA) {
-                    String renameColumnQuery = "ALTER TABLE "
-                        + location
-                        + " RENAME COLUMN "
-                        + fullOldPath
-                        + " TO "
-                        + fullNewPath;
-                    try {
-                        SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
-                    } catch (Exception e) {
-                        if (e.getMessage() == null || !e.getMessage().contains("columnMapping")) {
-                            throw e;
-                        }
+                } catch (Exception e) {
+                    if (e.getMessage() != null && e.getMessage().contains("columnMapping")) {
                         SparkSessionManager.getInstance()
                             .getOrCreateSession()
                             .sql(
@@ -106,12 +94,11 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                                     + " SET TBLPROPERTIES ('delta.columnMapping.mode' = 'name')"
                             );
                         SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
+                        return;
                     }
-                    return;
                 }
             }
 
-            String setOldFieldClause = fullOldPath + " = NULL";
             String type = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .sql("DESC (SELECT " + fullOldPath + " FROM " + location + ")")
@@ -121,7 +108,6 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                 .get(0)
                 .getString(0);
             String typedNewValue = "CAST(" + this.target.getItemByKey(oldName).getSparkSQLValue() + " AS " + type + ")";
-            String setNewFieldClause = fullNewPath + " = " + typedNewValue;
 
             String insertNewColumnQuery = "ALTER TABLE "
                 + location
@@ -139,22 +125,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                     throw e;
                 }
             }
-            if (this.collection.getMode() == Mode.ICEBERG) {
-                this.applySetFieldInCollection(location, rowID, fullOldPath, "CAST(NULL AS " + type + ")");
-                this.applySetFieldInCollection(location, rowID, fullNewPath, typedNewValue);
-            } else {
-                String setFieldsQuery = "UPDATE "
-                    + location
-                    + " SET "
-                    + setOldFieldClause
-                    + ", "
-                    + setNewFieldClause
-                    + " WHERE `"
-                    + SparkSessionManager.rowIdColumnName
-                    + "` == "
-                    + rowID;
-                SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldsQuery);
-            }
+            this.applySetFieldInCollection(location, rowID, fullOldPath, "CAST(NULL AS " + type + ")");
+            this.applySetFieldInCollection(location, rowID, fullNewPath, typedNewValue);
         } else {
             this.arrayIndexingApplyDelta();
         }
