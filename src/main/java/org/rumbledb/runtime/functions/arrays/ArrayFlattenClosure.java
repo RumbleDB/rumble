@@ -22,10 +22,21 @@ public class ArrayFlattenClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        for (Item item : arg0.getItems()) {
-            Iterator<Item> innerResult = this.call(item);
-            while (innerResult.hasNext()) {
-                results.add(innerResult.next());
+        if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
+            for (java.util.List<Item> member : arg0.getMemberSequences()) {
+                for (Item memberItem : member) {
+                    Iterator<Item> innerResult = this.call(memberItem);
+                    while (innerResult.hasNext()) {
+                        results.add(innerResult.next());
+                    }
+                }
+            }
+        } else {
+            for (Item item : arg0.getItems()) {
+                Iterator<Item> innerResult = this.call(item);
+                while (innerResult.hasNext()) {
+                    results.add(innerResult.next());
+                }
             }
         }
         return results.iterator();

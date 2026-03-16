@@ -47,9 +47,14 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        Item item = arg0.getItemAt(this.lookup - 1);
-        if (item != null) {
-            results.add(item);
+        if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
+            List<Item> memberSeq = arg0.getMemberSequenceAt(this.lookup - 1);
+            results.addAll(memberSeq);
+        } else {
+            Item item = arg0.getItemAt(this.lookup - 1);
+            if (item != null) {
+                results.add(item);
+            }
         }
         return results.iterator();
     }

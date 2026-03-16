@@ -47,7 +47,13 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
             if (arg0.isObject()) {
                 results = arg0.getValues();
             } else if (arg0.isArray()) {
-                results = arg0.getItems();
+                if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
+                    for (java.util.List<Item> member : arg0.getMemberSequences()) {
+                        results.addAll(member);
+                    }
+                } else {
+                    results = arg0.getItems();
+                }
             }
             return results.iterator();
         }
@@ -71,7 +77,12 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     );
                 }
                 if (key.isNumeric()) {
-                    results.add(arg0.getItemAt(key.castToIntValue() - 1));
+                    int idx = key.castToIntValue() - 1;
+                    if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
+                        results.addAll(arg0.getMemberSequenceAt(idx));
+                    } else {
+                        results.add(arg0.getItemAt(idx));
+                    }
                 }
             }
         }

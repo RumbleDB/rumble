@@ -392,6 +392,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (expression.isSquareConstructor()) {
+            // Conservative: type as array(*) for square constructors for now.
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+            return argument;
+        }
         Expression contentExpr = expression.getExpression();
         if (contentExpr == null) {
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));

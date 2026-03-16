@@ -103,9 +103,14 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             if (item.isArray()) {
-                // if array is not empty, set the first item as the result
                 if (0 < item.getSize()) {
-                    this.nextResults.addAll(item.getItems());
+                    if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                        for (java.util.List<Item> member : item.getMemberSequences()) {
+                            this.nextResults.addAll(member);
+                        }
+                    } else {
+                        this.nextResults.addAll(item.getItems());
+                    }
                     break;
                 }
             }

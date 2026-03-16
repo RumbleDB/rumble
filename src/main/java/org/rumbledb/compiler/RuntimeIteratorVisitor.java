@@ -886,14 +886,29 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitArrayConstructor(ArrayConstructorExpression expression, RuntimeIterator argument) {
-        RuntimeIterator result = null;
-        if (expression.getExpression() != null) {
-            result = this.visit(expression.getExpression(), argument);
+        RuntimeIterator runtimeIterator;
+        if (expression.isSquareConstructor()) {
+            List<RuntimeIterator> memberIterators = new ArrayList<>();
+            if (expression.getMemberExpressions() != null) {
+                for (org.rumbledb.expressions.Expression memberExpr : expression.getMemberExpressions()) {
+                    memberIterators.add(this.visit(memberExpr, argument));
+                }
+            }
+            runtimeIterator = new ArrayRuntimeIterator(
+                    memberIterators,
+                    true,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            RuntimeIterator result = null;
+            if (expression.getExpression() != null) {
+                result = this.visit(expression.getExpression(), argument);
+            }
+            runtimeIterator = new ArrayRuntimeIterator(
+                    result,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
         }
-        RuntimeIterator runtimeIterator = new ArrayRuntimeIterator(
-                result,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
