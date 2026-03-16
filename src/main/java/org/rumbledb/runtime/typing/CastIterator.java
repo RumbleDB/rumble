@@ -267,18 +267,18 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
      * union are considered.
      *
      * <ol>
-     *   <li><b>Rule 1</b> (xs:string / xs:untypedAtomic): try each atomic member in
-     *       declaration order and return the first successful cast.</li>
-     *   <li><b>Rule 2</b> (value already an instance of the union): the value's dynamic
-     *       type is a subtype of one of the transitive atomic members &mdash; return it
-     *       unchanged.</li>
-     *   <li><b>Rule 3</b> (value castable to a member): attempt cast to each atomic member
-     *       in declaration order and return the first successful cast.</li>
+     * <li><b>Rule 1</b> (xs:string / xs:untypedAtomic): try each atomic member in
+     * declaration order and return the first successful cast.</li>
+     * <li><b>Rule 2</b> (value already an instance of the union): the value's dynamic
+     * type is a subtype of one of the transitive atomic members &mdash; return it
+     * unchanged.</li>
+     * <li><b>Rule 3</b> (value castable to a member): attempt cast to each atomic member
+     * in declaration order and return the first successful cast.</li>
      * </ol>
      *
-     * @param item       the atomized source item
+     * @param item the atomized source item
      * @param targetType the union target type
-     * @param metadata   exception metadata for error reporting
+     * @param metadata exception metadata for error reporting
      * @return the cast result, or {@code null} if no member type accepts the value
      */
     private static Item castToUnionType(Item item, ItemType targetType, ExceptionMetadata metadata) {

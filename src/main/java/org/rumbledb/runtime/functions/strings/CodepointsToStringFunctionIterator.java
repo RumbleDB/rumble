@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import java.math.BigInteger;
 import java.util.List;
 
 public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
