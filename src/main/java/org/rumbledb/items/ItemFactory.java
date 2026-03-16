@@ -270,6 +270,47 @@ public class ItemFactory {
         return result;
     }
 
+    /**
+     * Create an array item from logical member sequences.
+     * <p>
+     * If all member sequences are singleton (size 1), an {@link ArrayItem} is created.
+     * If at least one member sequence has size != 1, a {@link SequenceArrayItem} is created.
+     *
+     * @param memberSequences logical member sequences.
+     * @param mutable whether the resulting array should be mutable.
+     * @return an {@link ArrayItem} or {@link SequenceArrayItem} depending on member shape.
+     */
+    public Item createArrayFromMemberSequences(List<List<Item>> memberSequences, boolean mutable) {
+        boolean allSingleton = true;
+        for (List<Item> member : memberSequences) {
+            if (member == null || member.isEmpty() || member.size() != 1) {
+                allSingleton = false;
+                break;
+            }
+        }
+        Item result;
+        if (allSingleton) {
+            // unwrap to a flat list of items
+            List<Item> flat = new java.util.ArrayList<>(memberSequences.size());
+            for (List<Item> member : memberSequences) {
+                if (member == null || member.isEmpty()) {
+                    flat.add(null);
+                } else {
+                    flat.add(member.get(0));
+                }
+            }
+            result = new ArrayItem(flat);
+        } else {
+            result = new SequenceArrayItem(memberSequences);
+        }
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
     public Item createObjectItem(
             List<String> keys,
             List<Item> values,

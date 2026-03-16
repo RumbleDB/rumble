@@ -33,6 +33,7 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ArrayItem implements Item {
@@ -95,6 +96,15 @@ public class ArrayItem implements Item {
     }
 
     @Override
+    public List<List<Item>> getMemberSequences() {
+        List<List<Item>> result = new ArrayList<>(this.arrayItems.size());
+        for (Item item : this.arrayItems) {
+            result.add(Collections.singletonList(item));
+        }
+        return result;
+    }
+
+    @Override
     public Item getItemAt(int i) {
         if (i >= this.arrayItems.size() || i < 0) {
             throw new ArrayIndexOutOfBoundsException(
@@ -106,13 +116,41 @@ public class ArrayItem implements Item {
     }
 
     @Override
+    public List<Item> getMemberSequenceAt(int i) {
+        Item member = this.getItemAt(i);
+        return Collections.singletonList(member);
+    }
+
+    @Override
     public void putItem(Item value) {
         this.arrayItems.add(value);
     }
 
     @Override
+    public void appendMemberSequence(List<Item> items) {
+        if (items.size() == 1) {
+            this.arrayItems.add(items.get(0));
+            return;
+        }
+        throw new UnsupportedOperationException(
+                "ArrayItem only supports singleton member sequences in this phase."
+        );
+    }
+
+    @Override
     public void putItemAt(Item value, int i) {
         this.arrayItems.add(i, value);
+    }
+
+    @Override
+    public void putMemberSequenceAt(List<Item> values, int i) {
+        if (values.size() == 1) {
+            this.arrayItems.set(i, values.get(0));
+            return;
+        }
+        throw new UnsupportedOperationException(
+                "ArrayItem only supports singleton member sequences in this phase."
+        );
     }
 
     @Override
