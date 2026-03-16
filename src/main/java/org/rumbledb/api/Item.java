@@ -476,12 +476,39 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the logical member sequences of the item if it is an array.
+     * <p>
+     * Each array member is represented as a sequence of items. For arrays whose members are
+     * all singletons, each member sequence is of length 1.
+     * <p>
+     * Implementations that only support singleton members may return a singleton sequence
+     * per member.
+     *
+     * @return the list of member sequences (one sequence per array member).
+     */
+    default List<List<Item>> getMemberSequences() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the member of the item at the specified position if it is an array.
      *
      * @param position a position.
      * @return the member at position position.
      */
     default Item getItemAt(int position) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the logical member sequence at the specified position if it is an array.
+     * <p>
+     * The position is zero-based, consistent with {@link #getItemAt(int)}.
+     *
+     * @param position a zero-based member position.
+     * @return the sequence of items corresponding to that member.
+     */
+    default List<Item> getMemberSequenceAt(int position) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -756,12 +783,37 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Appends a logical member sequence, if it is an array.
+     * <p>
+     * For arrays whose members are all singletons, this is equivalent to {@link #putItem(Item)}
+     * when the sequence contains exactly one item.
+     *
+     * @param items the member sequence to append as a single array member.
+     */
+    default void appendMemberSequence(List<Item> items) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Add an item at index i, if it is an array.
      *
      * @param item an item.
      * @param i an integer.
      */
     default void putItemAt(Item item, int i) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Replace the logical member at index i with the supplied member sequence, if it is an array.
+     * <p>
+     * For arrays whose members are all singletons, callers should prefer {@link #putItemAt(Item, int)}
+     * when possible.
+     *
+     * @param items the member sequence to store at the given position.
+     * @param i a zero-based member index.
+     */
+    default void putMemberSequenceAt(List<Item> items, int i) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
