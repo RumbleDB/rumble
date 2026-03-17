@@ -7,6 +7,7 @@ import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
@@ -3046,6 +3047,21 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:get function that returns members at a given position
+     */
+    static final BuiltinFunction array_get = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "get"
+        ),
+        "array",
+        "integer",
+        "item*",
+        ArrayGetFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3714,6 +3730,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(null_function.getIdentifier(), null_function);
         builtinFunctions.put(size.getIdentifier(), size);
         builtinFunctions.put(array_size.getIdentifier(), array_size);
+        builtinFunctions.put(array_get.getIdentifier(), array_get);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
