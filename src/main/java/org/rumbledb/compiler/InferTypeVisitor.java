@@ -2187,7 +2187,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
 
             throwStaticTypeException(
-                "the type of a dynamic function call main expression must be function, instead inferred " + mainType,
+                "the type of a dynamic function call main expression must be function or array, instead inferred "
+                    + mainType,
                 expression.getMetadata()
             );
             return argument;
