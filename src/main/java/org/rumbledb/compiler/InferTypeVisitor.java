@@ -2153,11 +2153,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         ItemType type = mainType.getItemType();
+        if (type.isArrayItemType()) {
+            expression.setStaticSequenceType(SequenceType.ITEM_STAR);
+            return argument;
+        }
         if (!type.isFunctionItemType()) {
             expression.setStaticSequenceType(SequenceType.ITEM_STAR);
 
             throwStaticTypeException(
-                "the type of a dynamic function call main expression must be function, instead inferred " + mainType,
+                "the type of a dynamic function call main expression must be function or array, instead inferred "
+                    + mainType,
                 expression.getMetadata()
             );
             return argument;
