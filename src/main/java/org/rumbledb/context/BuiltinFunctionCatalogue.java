@@ -9,6 +9,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayTailFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
@@ -3047,6 +3048,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:tail function that returns all members except the first
+     */
+    static final BuiltinFunction array_tail = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "tail"
+        ),
+        "array",
+        "array",
+        ArrayTailFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:get function that returns members at a given position
      */
     static final BuiltinFunction array_get = createBuiltinFunction(
@@ -3731,6 +3746,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(size.getIdentifier(), size);
         builtinFunctions.put(array_size.getIdentifier(), array_size);
         builtinFunctions.put(array_get.getIdentifier(), array_get);
+        builtinFunctions.put(array_tail.getIdentifier(), array_tail);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
