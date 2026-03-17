@@ -150,6 +150,7 @@ import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -2120,6 +2121,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 }
                 SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
                 return ItemTypeFactory.mapOf(keyType, valueSequenceType);
+        if (itemTypeContext.arrayTest() != null) {
+            XQueryParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
+            if (arrayTestContext.anyArrayTest() != null) {
+                return BuiltinTypesCatalogue.arrayItem;
+            }
+            XQueryParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
+            if (typedArrayTestContext != null) {
+                SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
+                return ArrayItemType.arrayOf(contentSequenceType.getItemType());
             }
         }
         if (itemTypeContext.eqName() != null) {
