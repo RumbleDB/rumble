@@ -3032,6 +3032,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:size function that returns the length of an array
+     */
+    static final BuiltinFunction array_size = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "size"
+        ),
+        "array*",
+        "integer",
+        ArraySizeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3699,6 +3713,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(map_find_2.getIdentifier(), map_find_2);
         builtinFunctions.put(null_function.getIdentifier(), null_function);
         builtinFunctions.put(size.getIdentifier(), size);
+        builtinFunctions.put(array_size.getIdentifier(), array_size);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
