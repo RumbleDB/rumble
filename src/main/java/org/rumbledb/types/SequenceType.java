@@ -517,6 +517,7 @@ public class SequenceType implements Serializable {
             new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.ZeroOrMore)
         );
 
+        sequenceTypes.put("array", new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One));
         sequenceTypes.put("array?", new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero));
         sequenceTypes.put("array*", new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore));
 
