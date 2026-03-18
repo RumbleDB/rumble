@@ -475,16 +475,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitDirElemConstructor(DirElemConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.elementNode));
         return argument;
     }
 
     @Override
     public StaticContext visitDirPIConstructor(DirPIConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.processingInstructionNode));
         return argument;
     }
 
@@ -494,8 +492,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.elementNode));
         return argument;
     }
 
@@ -505,8 +502,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.processingInstructionNode));
         return argument;
     }
 
@@ -516,8 +512,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.attributeNode));
         return argument;
     }
 
@@ -527,8 +522,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.namespaceNode));
         return argument;
     }
 
@@ -538,8 +532,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
         return argument;
     }
 
@@ -549,8 +542,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.commentNode));
         return argument;
     }
 
@@ -560,30 +552,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         // Direct comment constructors are literal, no descendants.
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.commentNode));
         return argument;
     }
 
     @Override
     public StaticContext visitTextNodeConstructor(TextNodeConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.textNode));
         return argument;
     }
 
     @Override
     public StaticContext visitTextNode(TextNodeExpression expression, StaticContext argument) {
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.textNode));
         return argument;
     }
 
     @Override
     public StaticContext visitAttributeNode(AttributeNodeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        // TODO: define xml node types
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.attributeNode));
         return argument;
     }
 

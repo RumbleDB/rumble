@@ -136,7 +136,23 @@ public class DeltaUpdateRuntimeTests {
     @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() throws IOException, AnnotationParseException {
         List<Object[]> result = new ArrayList<>();
-        DeltaUpdateRuntimeTests.readFileList(DeltaUpdateRuntimeTests.runtimeTestsDirectory);
+
+        // Base test folder
+        File baseDir = DeltaUpdateRuntimeTests.runtimeTestsDirectory;
+
+        // Optional subdirectory via -Ddir
+        String subDir = System.getProperty("dir");
+        File chosenDir = (subDir == null || subDir.trim().isEmpty())
+            ? baseDir
+            : new File(baseDir, subDir.trim());
+
+        // Check existence
+        if (!chosenDir.exists() || !chosenDir.isDirectory()) {
+            throw new IOException("[DeltaUpdateRuntimeTests] Subdirectory not found: " + chosenDir.getAbsolutePath());
+        }
+
+        DeltaUpdateRuntimeTests.readFileList(chosenDir);
+
         Map<Integer, File> innerMap;
         File curr;
         for (int i : DeltaUpdateRuntimeTests._testFilesMap.keySet()) {

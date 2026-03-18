@@ -23,11 +23,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class FunctionAtomizationException extends RumbleException {
+public class CannotAtomizeException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public FunctionAtomizationException(String message, ExceptionMetadata expressionMetadata) {
+    public CannotAtomizeException(String message, ExceptionMetadata expressionMetadata) {
         super(message, ErrorCode.FunctionAtomizationErrorCode, expressionMetadata);
     }
 }

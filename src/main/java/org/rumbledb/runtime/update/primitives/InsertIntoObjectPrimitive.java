@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
@@ -67,28 +65,15 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
         if (startOfArrayIndexing == -1) {
             List<String> columnsClauseList = new ArrayList<>();
-            List<String> setClauseList = new ArrayList<>();
             List<String> keys = this.content.getKeys();
             List<Item> values = this.content.getValues();
             for (int i = 0; i < keys.size(); i++) {
                 columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
-                setClauseList.add(pathIn + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
             }
-
-            String setClauses = String.join(", ", setClauseList);
 
             List<String> insertColumnQueries = columnsClauseList.stream()
                 .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
                 .collect(Collectors.toList());
-
-            String setFieldQuery = "UPDATE "
-                + location
-                + " SET "
-                + setClauses
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
 
             SparkSessionManager manager = SparkSessionManager.getInstance();
 
@@ -102,8 +87,14 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                     }
                 }
             }
-            Dataset<Row> objectDF = manager.getOrCreateSession().sql(setFieldQuery);
-            objectDF.show();
+            for (int i = 0; i < keys.size(); i++) {
+                this.applySetFieldInCollection(
+                    location,
+                    rowID,
+                    pathIn + keys.get(i),
+                    values.get(i).getSparkSQLValue()
+                );
+            }
         } else {
             this.arrayIndexingApplyDelta();
 

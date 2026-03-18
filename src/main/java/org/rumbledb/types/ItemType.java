@@ -103,6 +103,13 @@ public interface ItemType extends Serializable, KryoSerializable {
         return this.equals(BuiltinTypesCatalogue.JSONItem) || isObjectItemType() || isArrayItemType();
     }
 
+    /**
+     * @return true if [this] is a node item type (node() or any of its 7 concrete subtypes).
+     */
+    default boolean isNodeItemType() {
+        return false;
+    }
+
     default boolean isUnionType() {
         return false;
     }

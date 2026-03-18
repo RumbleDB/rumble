@@ -28,7 +28,7 @@ jobs:
             mvn -version
           fi
       - name: Cache Maven packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -49,6 +49,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         test_class: [
           "FrontendTests",
@@ -70,7 +71,8 @@ jobs:
           "MLTestsNativeDeactivated",
           "XMLTests",
           "XQueryTests",
-          "DeltaUpdateRuntimeTests"
+          "DeltaUpdateRuntimeTests",
+          "IcebergUpdateRuntimeTests"
         ]
     steps:
       - uses: actions/checkout@v3
@@ -80,7 +82,7 @@ jobs:
           java-version: 17
           distribution: adopt
       - name: Restore Cached Maven Packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

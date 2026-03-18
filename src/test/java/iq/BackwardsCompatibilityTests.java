@@ -67,6 +67,10 @@ public class BackwardsCompatibilityTests {
                     "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
+                    "--result-size",
+                    "0",
+                    "--materialization-cap",
+                    "200",
                     "--apply-updates",
                     "yes" }
         );

@@ -26,6 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -272,7 +273,8 @@ public class ArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return getItems();
+        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
+        // return getItems();
     }
 
     @Override

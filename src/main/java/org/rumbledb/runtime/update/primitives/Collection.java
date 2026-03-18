@@ -21,12 +21,19 @@ public class Collection implements Serializable {
      */
     public Collection(Mode mode, String collectionPath) {
         this.mode = mode;
-        this.logicalName = collectionPath;
-        this.physicalName = collectionPath;
-        if (mode == Mode.DELTA) {
-            this.physicalName = "delta.`" + collectionPath + "`";
-        } else if (mode == Mode.ICEBERG) {
-            this.physicalName = "iceberg." + collectionPath;
+        switch (mode) {
+            case HIVE:
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
+                break;
+            case DELTA:
+                this.logicalName = collectionPath;
+                this.physicalName = "delta.`" + collectionPath + "`";
+                break;
+            case ICEBERG:
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
+                break;
         }
     }
 
@@ -37,16 +44,22 @@ public class Collection implements Serializable {
      */
     public Collection(String collectionPath) {
         if (collectionPath.startsWith("delta.`") && collectionPath.endsWith("`")) {
+            // case Delta file
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
-        } else if (collectionPath.startsWith("iceberg.")) {
+            this.physicalName = collectionPath;
+        } else if (collectionPath.indexOf('.') != collectionPath.lastIndexOf('.')) {
+            // case Iceberg table - we assume Iceberg tables are always qualified with at
+            // least a catalog and a namespace, so they contain at least two dots.
             this.mode = Mode.ICEBERG;
-            this.logicalName = collectionPath.substring(8);
+            this.logicalName = collectionPath;
+            this.physicalName = collectionPath;
         } else {
+            // case Hive table
             this.mode = Mode.HIVE;
             this.logicalName = collectionPath;
+            this.physicalName = collectionPath;
         }
-        this.physicalName = collectionPath;
     }
 
     /**
@@ -92,12 +105,14 @@ public class Collection implements Serializable {
                         .save(this.logicalName);
                     break;
                 case ICEBERG:
-                    contents.writeTo(this.physicalName)
+                    contents.writeTo(this.logicalName)
                         .option("mergeSchema", "true")
                         .append();
                     break;
                 default:
-                    throw new UnsupportedOperationException("Unsupported collection mode: " + this.mode);
+                    throw new UnsupportedOperationException(
+                            "Insert Unordered: Unsupported collection mode: " + this.mode
+                    );
             }
         } catch (NoSuchTableException e) {
             throw new RuntimeException("Target collection not found: " + this.logicalName, e);
