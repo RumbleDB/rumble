@@ -2121,6 +2121,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 }
                 SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
                 return ItemTypeFactory.mapOf(keyType, valueSequenceType);
+            }
+        }
         if (itemTypeContext.arrayTest() != null) {
             XQueryParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
             if (arrayTestContext.anyArrayTest() != null) {
@@ -2151,7 +2153,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 "Unsupported itemtype encountered",
                 ExceptionMetadata.EMPTY_METADATA
         );
-
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
