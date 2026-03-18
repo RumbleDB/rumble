@@ -11,6 +11,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayHeadFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayTailFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayInsertBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
@@ -3092,6 +3093,22 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:insert-before function that inserts a member before a given position
+     */
+    static final BuiltinFunction array_insert_before = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "insert-before"
+        ),
+        "array",
+        "integer",
+        "item*",
+        "array",
+        ArrayInsertBeforeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3763,6 +3780,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_get.getIdentifier(), array_get);
         builtinFunctions.put(array_tail.getIdentifier(), array_tail);
         builtinFunctions.put(array_head.getIdentifier(), array_head);
+        builtinFunctions.put(array_insert_before.getIdentifier(), array_insert_before);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
