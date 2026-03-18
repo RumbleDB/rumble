@@ -148,27 +148,23 @@ public interface UpdatePrimitive {
     }
 
     default void applySetFieldInCollection(String location, long rowID, String fieldPath, String fieldValueSQL) {
-        String updateQuery = "UPDATE "
-            + location
-            + " SET "
-            + fieldPath
-            + " = "
-            + fieldValueSQL
-            + " WHERE `"
-            + SparkSessionManager.rowIdColumnName
-            + "` == "
-            + rowID;
-        try {
-            // Prefer direct UPDATE; if unsupported by the backend, fall back to a row rewrite.
+        if (this.getTarget().getCollection().getMode() != Mode.ICEBERG) {
+            String updateQuery = "UPDATE "
+                + location
+                + " SET "
+                + fieldPath
+                + " = "
+                + fieldValueSQL
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
+                + rowID;
             SparkSessionManager.getInstance().getOrCreateSession().sql(updateQuery);
             return;
-        } catch (Exception e) {
-            String message = e.getMessage() == null ? "" : e.getMessage();
-            if (!message.contains("not supported temporarily")) {
-                throw e;
-            }
-            // Fallback: rewrite row when UPDATE is not supported by the backend.
         }
+
+        // Iceberg UPDATE is not supported in this runtime; rewrite the target row instead
+        // Future optimization: batch row rewrites (delete all + insert all) for multi-row updates
 
         Dataset<Row> updatedRows = SparkSessionManager.getInstance()
             .getOrCreateSession()
