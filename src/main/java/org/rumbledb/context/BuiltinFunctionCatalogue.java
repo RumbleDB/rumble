@@ -8,6 +8,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayHeadFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayFoldLeftFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
@@ -3156,6 +3157,22 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:fold-left function that evaluates a function cumulatively over array members
+     */
+    static final BuiltinFunction array_fold_left = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "fold-left"
+        ),
+        "array",
+        "item*",
+        "function(item*, item*) as item*",
+        "item*",
+        ArrayFoldLeftFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3831,6 +3848,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_insert_before.getIdentifier(), array_insert_before);
         builtinFunctions.put(array_subarray_2.getIdentifier(), array_subarray_2);
         builtinFunctions.put(array_subarray_3.getIdentifier(), array_subarray_3);
+        builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
