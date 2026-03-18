@@ -84,20 +84,8 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
                 .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
-            String setClause = pathIn + " = ";
             this.applyItem();
-            setClause = setClause + this.target.getSparkSQLValue(arrayType);
-
-            String setFieldQuery = "UPDATE "
-                + location
-                + " SET "
-                + setClause
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
-            SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldQuery);
+            this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
         } else {
             this.arrayIndexingApplyDelta();
         }
