@@ -6,9 +6,10 @@ import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
-import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayHeadFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayTailFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayInsertBeforeFunctionIterator;
@@ -3093,6 +3094,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:reverse function that returns all members of an array in reverse order
+     */
+    static final BuiltinFunction array_reverse = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "reverse"
+        ),
+        "array",
+        "array",
+        ArrayReverseFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:insert-before function that inserts a member before a given position
      */
     static final BuiltinFunction array_insert_before = createBuiltinFunction(
@@ -3780,6 +3795,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_get.getIdentifier(), array_get);
         builtinFunctions.put(array_tail.getIdentifier(), array_tail);
         builtinFunctions.put(array_head.getIdentifier(), array_head);
+        builtinFunctions.put(array_reverse.getIdentifier(), array_reverse);
         builtinFunctions.put(array_insert_before.getIdentifier(), array_insert_before);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
