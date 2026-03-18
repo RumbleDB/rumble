@@ -651,6 +651,21 @@ public class SequenceType implements Serializable {
         );
 
         sequenceTypes.put(
+            "function(item*, item*) as item*",
+            new SequenceType(
+                    ItemTypeFactory.createFunctionItemType(
+                        new FunctionSignature(
+                                Arrays.asList(
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                                ),
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                        )
+                    )
+            )
+        );
+
+        sequenceTypes.put(
             "function(object*, object) as function(object*, object) as object*",
             new SequenceType(
                     ItemTypeFactory.createFunctionItemType(
