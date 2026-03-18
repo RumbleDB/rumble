@@ -26,6 +26,7 @@ public enum ErrorCode {
     NumericOverflowOrUnderflow("FOAR0002"),
 
     ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
+    ArrayInvalidSubarrayLengthErrorCode("FOAY0002"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),

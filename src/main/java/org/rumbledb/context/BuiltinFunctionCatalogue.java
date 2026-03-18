@@ -13,6 +13,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayTailFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayInsertBeforeFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArraySubarrayFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
@@ -3124,6 +3125,37 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:subarray function that extracts a subarray
+     */
+    static final BuiltinFunction array_subarray_2 = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "subarray"
+        ),
+        "array",
+        "integer",
+        "array",
+        ArraySubarrayFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C array:subarray function that extracts a subarray of a given length
+     */
+    static final BuiltinFunction array_subarray_3 = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "subarray"
+        ),
+        "array",
+        "integer",
+        "integer",
+        "array",
+        ArraySubarrayFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3797,6 +3829,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_head.getIdentifier(), array_head);
         builtinFunctions.put(array_reverse.getIdentifier(), array_reverse);
         builtinFunctions.put(array_insert_before.getIdentifier(), array_insert_before);
+        builtinFunctions.put(array_subarray_2.getIdentifier(), array_subarray_2);
+        builtinFunctions.put(array_subarray_3.getIdentifier(), array_subarray_3);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
