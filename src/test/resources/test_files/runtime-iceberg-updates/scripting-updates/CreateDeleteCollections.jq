@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[10,0]; Output="" :)
+(:JIQS: ShouldRun; UpdateDim=[3,0]; Output="" :)
 create collection iceberg-table("icy1") with ();
 create collection iceberg-table("icy2");
 create collection iceberg-table("icy3") with ();

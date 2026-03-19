@@ -5,8 +5,9 @@ import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
+import static org.apache.spark.sql.functions.col;
+
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     private Item target;
@@ -40,10 +41,8 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyItem() {
-        for (
-            String str : this.content.stream().map(Item::getStringValue).collect(Collectors.toList())
-        ) {
-            this.target.removeItemByKey(str);
+        for (Item item : this.content) {
+            this.target.removeItemByKey(item.getStringValue());
         }
     }
 
@@ -56,21 +55,19 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-            List<String> setFieldsToNulls = this.content.stream()
-                .map(i -> pathIn + i.getStringValue() + " = NULL")
-                .collect(Collectors.toList());
-            String concatSetNulls = String.join(", ", setFieldsToNulls);
-
-            String query = "UPDATE "
-                + location
-                + " SET "
-                + concatSetNulls
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
-            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            for (Item item : this.content) {
+                String key = item.getStringValue();
+                String fullPath = pathIn + key;
+                String type = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
+                    .filter(col("col_name").equalTo(key))
+                    .select("data_type")
+                    .collectAsList()
+                    .get(0)
+                    .getString(0);
+                this.applySetFieldInCollection(location, rowID, fullPath, "CAST(NULL AS " + type + ")");
+            }
         } else {
             this.arrayIndexingApplyDelta();
         }
