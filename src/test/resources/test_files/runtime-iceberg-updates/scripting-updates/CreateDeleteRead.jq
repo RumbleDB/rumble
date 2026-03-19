@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[10,6]; Output="({ "id" : 1 }, { "id" : 3 })" :)
+(:JIQS: ShouldRun; UpdateDim=[3,6]; Output="({ "id" : 1 }, { "id" : 3 })" :)
 create collection iceberg-table("icy6") with (
   { "id": 1 },
   { "id": 2 },
