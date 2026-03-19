@@ -10,9 +10,12 @@ import org.rumbledb.exceptions.RumbleException;
 
 public final class NumericPictureParser {
 
-    public enum NumericPictureKind {
-        DATE,
-        INTEGER
+    public static class NumericPictureKind {
+        private NumericPictureKind() {
+        }
+
+        public static String DATE = "DATE";
+        public static String INTEGER = "INTEGER";
     }
 
     private NumericPictureParser() {
@@ -22,7 +25,7 @@ public final class NumericPictureParser {
             String picture,
             String pictureStringForErrors,
             ExceptionMetadata metadata,
-            NumericPictureKind kind
+            String kind
     ) {
         if (picture == null || picture.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata, kind);
@@ -189,7 +192,7 @@ public final class NumericPictureParser {
     private static RepeatingGroupingInfo detectRepeatingGrouping(
             List<GroupingPos> groupings,
             List<Integer> runLengths,
-            NumericPictureKind kind
+            String kind
     ) {
         if (kind != NumericPictureKind.INTEGER) {
             return new RepeatingGroupingInfo(false, 0);
@@ -247,7 +250,7 @@ public final class NumericPictureParser {
     private static RumbleException invalidPicture(
             String pictureStringForErrors,
             ExceptionMetadata metadata,
-            NumericPictureKind kind
+            String kind
     ) {
         String message = "\"" + pictureStringForErrors + "\": invalid picture string";
 

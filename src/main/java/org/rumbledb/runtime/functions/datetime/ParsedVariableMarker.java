@@ -4,33 +4,42 @@ import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
 
 final class ParsedVariableMarker {
 
-    enum Kind {
-        DEFAULT,
-        NUMERIC,
-        ROMAN,
-        ALPHABETIC,
-        NAME,
-        WORDS,
-        TIMEZONE
+    public static final class Kind {
+        private Kind() {
+        }
+
+        public static final String DEFAULT = "DEFAULT";
+        public static final String NUMERIC = "NUMERIC";
+        public static final String ROMAN = "ROMAN";
+        public static final String ALPHABETIC = "ALPHABETIC";
+        public static final String NAME = "NAME";
+        public static final String WORDS = "WORDS";
+        public static final String TIMEZONE = "TIMEZONE";
     }
 
-    enum NameForm {
-        UPPER,
-        LOWER,
-        TITLE
+    public static final class NameForm {
+        private NameForm() {
+        }
+
+        public static final String UPPER = "UPPER";
+        public static final String LOWER = "LOWER";
+        public static final String TITLE = "TITLE";
     }
 
-    enum WordCase {
-        UPPER,
-        LOWER,
-        TITLE
+    public static final class WordCase {
+        private WordCase() {
+        }
+
+        public static final String UPPER = "UPPER";
+        public static final String LOWER = "LOWER";
+        public static final String TITLE = "TITLE";
     }
 
     final char component;
     final String presentation;
     final int minWidth;
     final int maxWidth;
-    final Kind kind;
+    final String kind;
 
     final boolean ordinal;
 
@@ -39,23 +48,23 @@ final class ParsedVariableMarker {
     final boolean lowerCaseRoman;
     final boolean lowerCaseAlphabetic;
     final ParsedTimezonePicture timezonePicture;
-    final NameForm nameForm;
-    final WordCase wordCase;
+    final String nameForm;
+    final String wordCase;
 
     private ParsedVariableMarker(
             char component,
             String presentation,
             int minWidth,
             int maxWidth,
-            Kind kind,
+            String kind,
             boolean ordinal,
             NumericPicture numericPicture,
             boolean explicitNumeric,
             boolean lowerCaseRoman,
             boolean lowerCaseAlphabetic,
             ParsedTimezonePicture timezonePicture,
-            NameForm nameForm,
-            WordCase wordCase
+            String nameForm,
+            String wordCase
     ) {
         this.component = component;
         this.presentation = presentation;
@@ -158,7 +167,7 @@ final class ParsedVariableMarker {
             int min,
             int max,
             boolean ordinal,
-            NameForm nameForm
+            String nameForm
     ) {
         return new ParsedVariableMarker(
                 c,
@@ -183,7 +192,7 @@ final class ParsedVariableMarker {
             int min,
             int max,
             boolean ordinal,
-            WordCase wordCase
+            String wordCase
     ) {
         return new ParsedVariableMarker(
                 c,

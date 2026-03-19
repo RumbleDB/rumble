@@ -1,6 +1,10 @@
 package org.rumbledb.runtime.functions.datetime;
 
-enum CalendarMode {
-    DEFAULT,
-    ISO
+final class CalendarMode {
+
+    private CalendarMode() {
+    }
+
+    public static final String DEFAULT = "DEFAULT";
+    public static final String ISO = "ISO";
 }

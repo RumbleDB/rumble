@@ -13,7 +13,6 @@ final class FormattingOptionsResolver {
     private static final Pattern EQNAME_PATTERN = Pattern.compile("^Q\\{([^}]*)\\}(.+)$");
 
     private FormattingOptionsResolver() {
-        // no instances
     }
 
     static FormattingOptions resolve(
@@ -33,7 +32,7 @@ final class FormattingOptionsResolver {
         String place = getOptionalString(placeItem);
 
         Locale locale = resolveLocale(language);
-        CalendarMode calendarMode = resolveCalendarMode(calendar, pictureStringForErrors, metadata);
+        String calendarMode = resolveCalendarMode(calendar, pictureStringForErrors, metadata);
 
         // place aktuell noch ignoriert, aber bewusst schon eingelesen
         return FormattingOptions.extended(locale, calendarMode);
@@ -52,7 +51,7 @@ final class FormattingOptionsResolver {
         return Locale.forLanguageTag(language.trim().replace('_', '-'));
     }
 
-    static CalendarMode resolveCalendarMode(
+    static String resolveCalendarMode(
             String calendar,
             String pictureStringForErrors,
             ExceptionMetadata metadata

@@ -257,7 +257,7 @@ final class TemporalPictureParser {
             || component == 's';
     }
 
-    private static ParsedVariableMarker.NameForm parseNameForm(String presentation) {
+    private static String parseNameForm(String presentation) {
         switch (presentation) {
             case "N":
                 return ParsedVariableMarker.NameForm.UPPER;
@@ -270,7 +270,7 @@ final class TemporalPictureParser {
         }
     }
 
-    private static ParsedVariableMarker.WordCase parseWordCase(String presentation) {
+    private static String parseWordCase(String presentation) {
         switch (presentation) {
             case "W":
                 return ParsedVariableMarker.WordCase.UPPER;

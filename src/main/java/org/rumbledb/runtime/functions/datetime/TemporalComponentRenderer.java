@@ -36,26 +36,26 @@ final class TemporalComponentRenderer {
         }
 
         switch (parsed.kind) {
-            case ROMAN:
+            case ParsedVariableMarker.Kind.ROMAN:
                 return formatRoman(value, parsed, formattingOptions, pictureStringForErrors, metadata);
-            case ALPHABETIC:
+            case ParsedVariableMarker.Kind.ALPHABETIC:
                 return formatAlphabetic(value, parsed, formattingOptions, pictureStringForErrors, metadata);
-            case NUMERIC:
+            case ParsedVariableMarker.Kind.NUMERIC:
                 if (parsed.component == 'f') {
                     return formatFractionalSeconds(value, parsed, formattingOptions, pictureStringForErrors, metadata);
                 }
                 return formatNumericComponent(value, parsed, formattingOptions, pictureStringForErrors, metadata);
-            case NAME:
+            case ParsedVariableMarker.Kind.NAME:
                 return formatNamedComponent(value, parsed, formattingOptions, pictureStringForErrors, metadata);
-            case WORDS:
+            case ParsedVariableMarker.Kind.WORDS:
                 return formatWordsComponent(value, parsed, formattingOptions, pictureStringForErrors, metadata);
-            case TIMEZONE:
+            case ParsedVariableMarker.Kind.TIMEZONE:
                 return TemporalFormattingSupport.formatTimezone(
                     value.getOffset(),
                     parsed.timezonePicture,
                     hasExplicitTimezone
                 );
-            case DEFAULT:
+            case ParsedVariableMarker.Kind.DEFAULT:
             default:
                 if (parsed.component == 'f') {
                     return formatFractionalSeconds(value, parsed, formattingOptions, pictureStringForErrors, metadata);
@@ -157,11 +157,11 @@ final class TemporalComponentRenderer {
     ) {
         boolean am = dt.getHour() < 12;
         switch (parsed.nameForm) {
-            case LOWER:
+            case ParsedVariableMarker.NameForm.LOWER:
                 return am ? "am" : "pm";
-            case UPPER:
+            case ParsedVariableMarker.NameForm.UPPER:
                 return am ? "AM" : "PM";
-            case TITLE:
+            case ParsedVariableMarker.NameForm.TITLE:
             default:
                 return am ? "Am" : "Pm";
         }

@@ -17,26 +17,27 @@ final class TemporalFormattingSupport {
             return value;
         }
         switch (parsed.nameForm) {
-            case UPPER:
+            case ParsedVariableMarker.NameForm.UPPER:
                 return value.toUpperCase(locale);
-            case LOWER:
+            case ParsedVariableMarker.NameForm.LOWER:
                 return value.toLowerCase(locale);
-            case TITLE:
+            case ParsedVariableMarker.NameForm.TITLE:
             default:
                 return value;
         }
     }
 
-    static String applyWordCase(String value, ParsedVariableMarker.WordCase wordCase, Locale locale) {
+    static String applyWordCase(String value, String wordCase, Locale locale) {
         if (wordCase == null) {
             return value;
         }
+
         switch (wordCase) {
-            case UPPER:
+            case ParsedVariableMarker.WordCase.UPPER:
                 return value.toUpperCase(locale);
-            case LOWER:
+            case ParsedVariableMarker.WordCase.LOWER:
                 return value.toLowerCase(locale);
-            case TITLE:
+            case ParsedVariableMarker.WordCase.TITLE:
                 return toTitleCaseWords(value, locale);
             default:
                 return value;
