@@ -345,9 +345,9 @@ public class ObjectItem implements Item {
             sb.append(", ");
 
             if (keyIndex == -1) {
-                if (!field.isRequired()) {
-                    sb.append("NULL");
-                }
+                sb.append("CAST(NULL AS ");
+                sb.append(field.getType().getSparkSQLType());
+                sb.append(")");
             } else {
                 sb.append(this.values.get(keyIndex).getSparkSQLValue(field.getType()));
             }

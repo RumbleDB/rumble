@@ -89,20 +89,8 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
                 .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
-            String setField = pathIn + " = ";
             this.applyItem();
-            setField = setField + this.target.getSparkSQLValue(arrayType);
-
-            String query = "UPDATE "
-                + location
-                + " SET "
-                + setField
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
-            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
         } else {
             this.arrayIndexingApplyDelta();
         }
