@@ -168,6 +168,11 @@ public class ArrayItem implements Item {
     }
 
     @Override
+    public boolean allowsNonSingletons() {
+        return false;
+    }
+
+    @Override
     public int getSize() {
         return this.arrayItems.size();
     }

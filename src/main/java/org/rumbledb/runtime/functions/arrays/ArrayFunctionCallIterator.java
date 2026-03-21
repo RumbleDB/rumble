@@ -84,12 +84,12 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        if (this.arrayItem instanceof org.rumbledb.items.SequenceArrayItem) {
-            java.util.List<Item> memberSeq = this.arrayItem.getMemberSequenceAt(lookup - 1);
-            this.pendingResults.addAll(memberSeq);
-        } else {
+        if (!this.arrayItem.allowsNonSingletons()) {
             Item member = this.arrayItem.getItemAt(lookup - 1);
             this.pendingResults.add(member);
+        } else {
+            java.util.List<Item> memberSeq = this.arrayItem.getMemberSequenceAt(lookup - 1);
+            this.pendingResults.addAll(memberSeq);
         }
     }
 

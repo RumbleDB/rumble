@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.SequenceArrayItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
@@ -96,9 +95,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
         }
 
         List<List<Item>> memberSequences;
-        if (arrayItem instanceof SequenceArrayItem) {
-            memberSequences = ((SequenceArrayItem) arrayItem).getMemberSequences();
-        } else {
+        if (!arrayItem.allowsNonSingletons()) {
             int size = arrayItem.getSize();
             memberSequences = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -111,6 +108,8 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
                     memberSequences.add(singleton);
                 }
             }
+        } else {
+            memberSequences = arrayItem.getMemberSequences();
         }
 
         List<Item> accumulator = this.zeroIterator.materialize(context);

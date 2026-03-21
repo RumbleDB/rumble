@@ -20,13 +20,13 @@ public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
 
         if (arg0.isArray()) {
             results.add(arg0);
-            if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
+            if (!arg0.allowsNonSingletons()) {
+                innerValues = arg0.getItems();
+            } else {
                 innerValues = new ArrayList<Item>();
                 for (java.util.List<Item> member : arg0.getMemberSequences()) {
                     innerValues.addAll(member);
                 }
-            } else {
-                innerValues = arg0.getItems();
             }
         } else if (arg0.isObject()) {
             innerValues = arg0.getValues();

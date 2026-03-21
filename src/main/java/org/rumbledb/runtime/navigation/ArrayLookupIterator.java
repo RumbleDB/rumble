@@ -143,7 +143,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isArray()) {
                 if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                    if (!item.allowsNonSingletons()) {
+                        this.nextResult = item.getItemAt(this.lookup - 1);
+                    } else {
                         java.util.List<Item> memberSeq = item.getMemberSequenceAt(this.lookup - 1);
                         if (!memberSeq.isEmpty()) {
                             this.nextResult = memberSeq.get(0);
@@ -153,8 +155,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                                 );
                             }
                         }
-                    } else {
-                        this.nextResult = item.getItemAt(this.lookup - 1);
                     }
                     if (this.nextResult != null) {
                         break;

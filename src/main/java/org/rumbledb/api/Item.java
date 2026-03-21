@@ -467,6 +467,21 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Whether this array item's runtime representation allows non-singleton member sequences.
+     * <p>
+     * For arrays: {@code false} means each member is stored as a single {@link Item} (singleton
+     * members); {@code true} means members may be arbitrary sequences.
+     * <p>
+     * Defined only for array items; other item kinds throw.
+     *
+     * @return {@code true} if non-singleton members are supported, {@code false} if members are
+     *         singleton-only in the representation
+     */
+    default boolean allowsNonSingletons() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the members of the item if it is an array.
      *
      * @return the list of the array members.
