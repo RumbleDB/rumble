@@ -74,14 +74,14 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        if (arrayItem instanceof org.rumbledb.items.SequenceArrayItem) {
-            List<Item> memberSeq = arrayItem.getMemberSequenceAt(0);
-            this.pendingResults.addAll(memberSeq);
-        } else {
+        if (!arrayItem.allowsNonSingletons()) {
             Item member = arrayItem.getItemAt(0);
             if (member != null) {
                 this.pendingResults.add(member);
             }
+        } else {
+            List<Item> memberSeq = arrayItem.getMemberSequenceAt(0);
+            this.pendingResults.addAll(memberSeq);
         }
     }
 

@@ -92,6 +92,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean allowsNonSingletons() {
+        return this.itemToAnnotate.allowsNonSingletons();
+    }
+
+    @Override
     public boolean isObject() {
         return this.itemToAnnotate.isObject();
     }

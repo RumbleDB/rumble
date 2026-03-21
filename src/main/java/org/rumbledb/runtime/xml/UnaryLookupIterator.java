@@ -106,12 +106,12 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
 
             } else if (item.isArray()) {
                 if (this.wildcard) {
-                    if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                    if (!item.allowsNonSingletons()) {
+                        this.nextResult.addAll(item.getItems());
+                    } else {
                         for (List<Item> member : item.getMemberSequences()) {
                             this.nextResult.addAll(member);
                         }
-                    } else {
-                        this.nextResult.addAll(item.getItems());
                     }
                 } else {
                     for (Item key : this.lookupKeys) {
@@ -123,10 +123,10 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            if (item instanceof org.rumbledb.items.SequenceArrayItem) {
-                                this.nextResult.addAll(item.getMemberSequenceAt(idx));
-                            } else {
+                            if (!item.allowsNonSingletons()) {
                                 this.nextResult.add(item.getItemAt(idx));
+                            } else {
+                                this.nextResult.addAll(item.getMemberSequenceAt(idx));
                             }
                         }
                     }

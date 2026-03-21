@@ -95,12 +95,12 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             if (item.isArray()) {
-                if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                if (!item.allowsNonSingletons()) {
+                    this.nextResults.addAll(item.getItems());
+                } else {
                     for (java.util.List<Item> member : item.getMemberSequences()) {
                         this.nextResults.addAll(member);
                     }
-                } else {
-                    this.nextResults.addAll(item.getItems());
                 }
             }
         }

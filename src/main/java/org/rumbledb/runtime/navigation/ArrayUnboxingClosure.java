@@ -39,14 +39,14 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
         if (!(arg0.isArray())) {
             return Collections.emptyIterator();
         }
-        if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
-            java.util.List<Item> flat = new java.util.ArrayList<>();
-            for (java.util.List<Item> member : arg0.getMemberSequences()) {
-                flat.addAll(member);
-            }
-            return flat.iterator();
+        if (!arg0.allowsNonSingletons()) {
+            List<Item> results = arg0.getItems();
+            return results.iterator();
         }
-        List<Item> results = arg0.getItems();
-        return results.iterator();
+        java.util.List<Item> flat = new java.util.ArrayList<>();
+        for (java.util.List<Item> member : arg0.getMemberSequences()) {
+            flat.addAll(member);
+        }
+        return flat.iterator();
     }
 };

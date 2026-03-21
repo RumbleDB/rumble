@@ -92,6 +92,8 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     if (key.isNumeric()) {
                         int idx = key.castToIntValue() - 1;
                         results.add(arg0.getItemAt(idx));
+                    } else {
+                        results.addAll(arg0.getMemberSequenceAt(idx));
                     }
                 }
 

@@ -76,6 +76,11 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
+    public boolean allowsNonSingletons() {
+        return true;
+    }
+
+    @Override
     public int getSize() {
         return this.memberSequences.size();
     }

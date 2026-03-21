@@ -113,12 +113,12 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
         int lookup = positionInteger.intValue();
 
-        if (arrayItem instanceof org.rumbledb.items.SequenceArrayItem) {
-            List<Item> memberSeq = arrayItem.getMemberSequenceAt(lookup - 1);
-            this.pendingResults.addAll(memberSeq);
-        } else {
+        if (!arrayItem.allowsNonSingletons()) {
             Item member = arrayItem.getItemAt(lookup - 1);
             this.pendingResults.add(member);
+        } else {
+            List<Item> memberSeq = arrayItem.getMemberSequenceAt(lookup - 1);
+            this.pendingResults.addAll(memberSeq);
         }
     }
 

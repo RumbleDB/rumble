@@ -91,12 +91,12 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     private void flatten(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                if (item instanceof org.rumbledb.items.SequenceArrayItem) {
+                if (!item.allowsNonSingletons()) {
+                    flatten(item.getItems());
+                } else {
                     for (java.util.List<Item> member : item.getMemberSequences()) {
                         flatten(member);
                     }
-                } else {
-                    flatten(item.getItems());
                 }
             } else {
                 this.nextResults.add(item);

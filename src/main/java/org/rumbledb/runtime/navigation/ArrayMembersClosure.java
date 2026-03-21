@@ -21,15 +21,15 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        if (arg0 instanceof org.rumbledb.items.SequenceArrayItem) {
-            for (java.util.List<Item> member : arg0.getMemberSequences()) {
-                results.addAll(member);
-            }
-        } else {
+        if (!arg0.allowsNonSingletons()) {
             for (Item item : arg0.getItems()) {
                 if (item != null) {
                     results.add(item);
                 }
+            }
+        } else {
+            for (java.util.List<Item> member : arg0.getMemberSequences()) {
+                results.addAll(member);
             }
         }
 
