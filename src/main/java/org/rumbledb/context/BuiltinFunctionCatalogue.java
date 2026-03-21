@@ -20,6 +20,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayAppendFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayInsertBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayJoinFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayRemoveFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArraySortFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySubarrayFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
@@ -3287,6 +3288,54 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**
+     * W3C array:sort — F&amp;O 3.1: array:sort($array as array(*)) as array(*).
+     */
+    static final BuiltinFunction array_sort_1 = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "sort"
+        ),
+        "array",
+        "array",
+        ArraySortFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C array:sort — F&amp;O 3.1: array:sort($array as array(*), $collation as xs:string?) as array(*).
+     */
+    static final BuiltinFunction array_sort_2 = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "sort"
+        ),
+        "array",
+        "string?",
+        "array",
+        ArraySortFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C array:sort — F&amp;O 3.1: array:sort($array as array(*), $collation as xs:string?,
+     * $key as function(item()*) as xs:anyAtomicType*) as array(*).
+     * Third parameter is registered as {@code item} so map/array function items reach runtime (like
+     * {@code array:filter}).
+     */
+    static final BuiltinFunction array_sort_3 = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "sort"
+        ),
+        "array",
+        "string?",
+        "item",
+        "array",
+        ArraySortFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3970,6 +4019,9 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_filter.getIdentifier(), array_filter);
         builtinFunctions.put(array_join.getIdentifier(), array_join);
         builtinFunctions.put(array_flatten.getIdentifier(), array_flatten);
+        builtinFunctions.put(array_sort_1.getIdentifier(), array_sort_1);
+        builtinFunctions.put(array_sort_2.getIdentifier(), array_sort_2);
+        builtinFunctions.put(array_sort_3.getIdentifier(), array_sort_3);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
