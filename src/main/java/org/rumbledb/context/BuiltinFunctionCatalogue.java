@@ -12,6 +12,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFoldLeftFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFoldRightFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFilterFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayForEachFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayForEachPairFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
@@ -3243,6 +3244,23 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:for-each-pair — F&amp;O 3.1: array:for-each-pair($array1 as array(*), $array2 as array(*),
+     * $function as function(item()*, item()*) as item()*) as array(*).
+     */
+    static final BuiltinFunction array_for_each_pair = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "for-each-pair"
+        ),
+        "array",
+        "array",
+        "function(item*, item*) as item*",
+        "array",
+        ArrayForEachPairFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:filter — F&amp;O 3.1: array:filter($array as array(*), $predicate as function(item()*) as xs:boolean)
      * as
      * array(*). Map-as-predicate is not supported yet.
@@ -4016,6 +4034,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
         builtinFunctions.put(array_fold_right.getIdentifier(), array_fold_right);
         builtinFunctions.put(array_for_each.getIdentifier(), array_for_each);
+        builtinFunctions.put(array_for_each_pair.getIdentifier(), array_for_each_pair);
         builtinFunctions.put(array_filter.getIdentifier(), array_filter);
         builtinFunctions.put(array_join.getIdentifier(), array_join);
         builtinFunctions.put(array_flatten.getIdentifier(), array_flatten);
