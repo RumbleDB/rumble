@@ -98,7 +98,7 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
                 if (!item.allowsNonSingletons()) {
                     this.nextResults.addAll(item.getItems());
                 } else {
-                    for (java.util.List<Item> member : item.getMemberSequences()) {
+                    for (java.util.List<Item> member : item.getSequences()) {
                         this.nextResults.addAll(member);
                     }
                 }

@@ -94,7 +94,7 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
                 if (!item.allowsNonSingletons()) {
                     flatten(item.getItems());
                 } else {
-                    for (java.util.List<Item> member : item.getMemberSequences()) {
+                    for (java.util.List<Item> member : item.getSequences()) {
                         flatten(member);
                     }
                 }

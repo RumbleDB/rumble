@@ -96,7 +96,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public List<List<Item>> getMemberSequences() {
+    public List<List<Item>> getSequences() {
         List<List<Item>> result = new ArrayList<>(this.arrayItems.size());
         for (Item item : this.arrayItems) {
             result.add(Collections.singletonList(item));
@@ -116,7 +116,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public List<Item> getMemberSequenceAt(int i) {
+    public List<Item> getSequenceAt(int i) {
         Item member = this.getItemAt(i);
         return Collections.singletonList(member);
     }
@@ -127,7 +127,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public void appendMemberSequence(List<Item> items) {
+    public void appendSequence(List<Item> items) {
         if (items.size() == 1) {
             this.arrayItems.add(items.get(0));
             return;
@@ -143,7 +143,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public void putMemberSequenceAt(List<Item> values, int i) {
+    public void putSequenceAt(List<Item> values, int i) {
         if (values.size() == 1) {
             this.arrayItems.set(i, values.get(0));
             return;

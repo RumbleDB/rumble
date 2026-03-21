@@ -102,7 +102,7 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
             return;
         }
 
-        List<List<Item>> memberSequences = arrayItem.getMemberSequences();
+        List<List<Item>> memberSequences = arrayItem.getSequences();
         List<List<Item>> tailMemberSequences = new ArrayList<>(size - 1);
         for (int i = 1; i < memberSequences.size(); i++) {
             tailMemberSequences.add(memberSequences.get(i));

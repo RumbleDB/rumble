@@ -109,7 +109,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
                 }
             }
         } else {
-            memberSequences = arrayItem.getMemberSequences();
+            memberSequences = arrayItem.getSequences();
         }
 
         List<Item> accumulator = this.zeroIterator.materialize(context);

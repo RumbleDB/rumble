@@ -109,7 +109,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                     if (!item.allowsNonSingletons()) {
                         this.nextResult.addAll(item.getItems());
                     } else {
-                        for (List<Item> member : item.getMemberSequences()) {
+                        for (List<Item> member : item.getSequences()) {
                             this.nextResult.addAll(member);
                         }
                     }
@@ -126,7 +126,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                             if (!item.allowsNonSingletons()) {
                                 this.nextResult.add(item.getItemAt(idx));
                             } else {
-                                this.nextResult.addAll(item.getMemberSequenceAt(idx));
+                                this.nextResult.addAll(item.getSequenceAt(idx));
                             }
                         }
                     }

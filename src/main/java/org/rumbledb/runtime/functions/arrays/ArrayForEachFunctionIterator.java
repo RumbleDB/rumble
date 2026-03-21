@@ -94,7 +94,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> memberSequences = arrayItem.getMemberSequences();
+        List<List<Item>> memberSequences = arrayItem.getSequences();
 
         List<Item> actionItems = this.functionIterator.materialize(context);
         if (actionItems.isEmpty()) {

@@ -53,7 +53,7 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
                 results.add(item);
             }
         } else {
-            List<Item> memberSeq = arg0.getMemberSequenceAt(this.lookup - 1);
+            List<Item> memberSeq = arg0.getSequenceAt(this.lookup - 1);
             results.addAll(memberSeq);
         }
         return results.iterator();

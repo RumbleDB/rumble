@@ -117,7 +117,7 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
             Item member = arrayItem.getItemAt(lookup - 1);
             this.pendingResults.add(member);
         } else {
-            List<Item> memberSeq = arrayItem.getMemberSequenceAt(lookup - 1);
+            List<Item> memberSeq = arrayItem.getSequenceAt(lookup - 1);
             this.pendingResults.addAll(memberSeq);
         }
     }
