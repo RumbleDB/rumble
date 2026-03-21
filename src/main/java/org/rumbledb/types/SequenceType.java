@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -657,6 +658,21 @@ public class SequenceType implements Serializable {
                         new FunctionSignature(
                                 Arrays.asList(
                                     new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                                ),
+                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                        )
+                    )
+            )
+        );
+
+        // XPath/F&O: function(item()*) as item()* — e.g. array:for-each second argument
+        sequenceTypes.put(
+            "function(item*) as item*",
+            new SequenceType(
+                    ItemTypeFactory.createFunctionItemType(
+                        new FunctionSignature(
+                                Collections.singletonList(
                                     new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
                                 ),
                                 new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
