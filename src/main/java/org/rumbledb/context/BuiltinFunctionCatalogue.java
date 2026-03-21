@@ -3224,6 +3224,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:flatten — F&amp;O 3.1: array:flatten($input as item()*) as item()*.
+     */
+    static final BuiltinFunction array_flatten = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "flatten"
+        ),
+        "item*",
+        "item*",
+        ArrayFlattenFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3903,6 +3917,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
         builtinFunctions.put(array_fold_right.getIdentifier(), array_fold_right);
         builtinFunctions.put(array_for_each.getIdentifier(), array_for_each);
+        builtinFunctions.put(array_flatten.getIdentifier(), array_flatten);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
