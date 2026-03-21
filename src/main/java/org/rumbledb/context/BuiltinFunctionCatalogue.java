@@ -18,6 +18,7 @@ import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayTailFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayAppendFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayInsertBeforeFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayJoinFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayRemoveFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySubarrayFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
@@ -3258,6 +3259,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:join — F&amp;O 3.1: array:join($arrays as array(*)*) as array(*).
+     */
+    static final BuiltinFunction array_join = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "join"
+        ),
+        "array*",
+        "array",
+        ArrayJoinFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:flatten — F&amp;O 3.1: array:flatten($input as item()*) as item()*.
      */
     static final BuiltinFunction array_flatten = createBuiltinFunction(
@@ -3953,6 +3968,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_fold_right.getIdentifier(), array_fold_right);
         builtinFunctions.put(array_for_each.getIdentifier(), array_for_each);
         builtinFunctions.put(array_filter.getIdentifier(), array_filter);
+        builtinFunctions.put(array_join.getIdentifier(), array_join);
         builtinFunctions.put(array_flatten.getIdentifier(), array_flatten);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
