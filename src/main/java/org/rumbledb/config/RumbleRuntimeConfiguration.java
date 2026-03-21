@@ -550,15 +550,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.optimizeParentPointers = true;
         }
-        if (this.arguments.containsKey("xml-version")) {
-            String xmlVersion = this.arguments.get("xml-version").trim();
-            if (!(xmlVersion.equals("1.0") || xmlVersion.equals("1.1"))) {
-                throw new CliException(
-                        "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
-                );
-            }
-            this.xmlVersion = xmlVersion;
-        }
     }
 
     /**
@@ -1236,26 +1227,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     @Override
     public void read(Kryo kryo, Input input) {
         this.arguments = kryo.readObject(input, HashMap.class);
-    }
-
-    private String xmlVersion = "1.0"; // default fallback
-
-    /**
-     * Returns the configured XML version.
-     *
-     * @return the XML version (e.g., "1.0" or "1.1")
-     */
-    public String getXmlVersion() {
-        return this.xmlVersion;
-    }
-
-    /**
-     * Sets the XML version to use.
-     *
-     * @param v the XML version (e.g., "1.0" or "1.1")
-     */
-    public void setXmlVersion(String v) {
-        this.xmlVersion = v;
     }
 
     /**
