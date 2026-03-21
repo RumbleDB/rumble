@@ -9,6 +9,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayHeadFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFoldLeftFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayFoldRightFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayForEachFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
@@ -3174,6 +3175,22 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:fold-right function that evaluates a function cumulatively over array members from right to left
+     */
+    static final BuiltinFunction array_fold_right = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "fold-right"
+        ),
+        "array",
+        "item*",
+        "function(item*, item*) as item*",
+        "item*",
+        ArrayFoldRightFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:for-each — F&amp;O 3.1: array:for-each($array as array(*), $action as function(item()*) as item()*) as
      * array(*).
      * Returns an array of the same size; each member is $action applied to the corresponding member of $array.
@@ -3867,6 +3884,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_subarray_2.getIdentifier(), array_subarray_2);
         builtinFunctions.put(array_subarray_3.getIdentifier(), array_subarray_3);
         builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
+        builtinFunctions.put(array_fold_right.getIdentifier(), array_fold_right);
         builtinFunctions.put(array_for_each.getIdentifier(), array_for_each);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
