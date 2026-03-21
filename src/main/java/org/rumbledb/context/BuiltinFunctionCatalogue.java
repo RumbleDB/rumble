@@ -9,6 +9,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayHeadFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFoldLeftFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayForEachFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
@@ -3173,6 +3174,23 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:for-each — F&amp;O 3.1: array:for-each($array as array(*), $action as function(item()*) as item()*) as
+     * array(*).
+     * Returns an array of the same size; each member is $action applied to the corresponding member of $array.
+     */
+    static final BuiltinFunction array_for_each = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "for-each"
+        ),
+        "array",
+        "function(item*) as item*",
+        "array",
+        ArrayForEachFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
@@ -3849,6 +3867,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_subarray_2.getIdentifier(), array_subarray_2);
         builtinFunctions.put(array_subarray_3.getIdentifier(), array_subarray_3);
         builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
+        builtinFunctions.put(array_for_each.getIdentifier(), array_for_each);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
         builtinFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
