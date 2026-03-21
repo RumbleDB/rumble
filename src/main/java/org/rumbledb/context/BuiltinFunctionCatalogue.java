@@ -8,6 +8,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayGetFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayHeadFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFoldLeftFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFoldRightFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayFilterFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayForEachFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayReverseFunctionIterator;
@@ -2958,6 +2959,23 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:filter — F&amp;O 3.1: array:filter($array as array(*), $predicate as function(item()*) as xs:boolean)
+     * as
+     * array(*). Map-as-predicate is not supported yet.
+     */
+    static final BuiltinFunction array_filter = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "filter"
+        ),
+        "array",
+        "item",
+        "array",
+        ArrayFilterFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:flatten — F&amp;O 3.1: array:flatten($input as item()*) as item()*.
      */
     static final BuiltinFunction array_flatten = createBuiltinFunction(
@@ -3634,6 +3652,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
         builtinFunctions.put(array_fold_right.getIdentifier(), array_fold_right);
         builtinFunctions.put(array_for_each.getIdentifier(), array_for_each);
+        builtinFunctions.put(array_filter.getIdentifier(), array_filter);
         builtinFunctions.put(array_flatten.getIdentifier(), array_flatten);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
         builtinFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
