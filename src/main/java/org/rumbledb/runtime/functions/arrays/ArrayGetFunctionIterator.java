@@ -98,8 +98,10 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
             positionInteger = java.math.BigInteger.valueOf(positionItem.castToIntValue());
         }
 
-        if (positionInteger.compareTo(java.math.BigInteger.ONE) < 0
-                || positionInteger.compareTo(java.math.BigInteger.valueOf(arrayItem.getSize())) > 0) {
+        if (
+            positionInteger.compareTo(java.math.BigInteger.ONE) < 0
+                || positionInteger.compareTo(java.math.BigInteger.valueOf(arrayItem.getSize())) > 0
+        ) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "
                         + positionInteger
