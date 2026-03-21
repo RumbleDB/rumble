@@ -44,7 +44,7 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
         java.util.List<Item> flat = new java.util.ArrayList<>();
-        for (java.util.List<Item> member : arg0.getMemberSequences()) {
+        for (java.util.List<Item> member : arg0.getSequences()) {
             flat.addAll(member);
         }
         return flat.iterator();

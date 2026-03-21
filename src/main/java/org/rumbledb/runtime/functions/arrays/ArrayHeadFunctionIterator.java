@@ -80,7 +80,7 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
                 this.pendingResults.add(member);
             }
         } else {
-            List<Item> memberSeq = arrayItem.getMemberSequenceAt(0);
+            List<Item> memberSeq = arrayItem.getSequenceAt(0);
             this.pendingResults.addAll(memberSeq);
         }
     }

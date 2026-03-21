@@ -119,7 +119,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
         int insertIndex = positionInteger.intValue() - 1;
 
-        List<List<Item>> originalMemberSequences = arrayItem.getMemberSequences();
+        List<List<Item>> originalMemberSequences = arrayItem.getSequences();
         List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
 
         for (int i = 0; i < insertIndex && i < originalMemberSequences.size(); i++) {

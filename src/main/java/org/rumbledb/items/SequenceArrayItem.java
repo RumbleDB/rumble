@@ -56,8 +56,8 @@ public class SequenceArrayItem implements Item {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
-            List<Item> thisMember = this.getMemberSequenceAt(i);
-            List<Item> otherMember = o.getMemberSequenceAt(i);
+            List<Item> thisMember = this.getSequenceAt(i);
+            List<Item> otherMember = o.getSequenceAt(i);
             if (thisMember.size() != otherMember.size()) {
                 return false;
             }
@@ -95,7 +95,7 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public List<List<Item>> getMemberSequences() {
+    public List<List<Item>> getSequences() {
         return this.memberSequences;
     }
 
@@ -116,14 +116,14 @@ public class SequenceArrayItem implements Item {
         }
         if (member.size() > 1) {
             throw new UnsupportedOperationException(
-                    "getItemAt() is not defined for multi-item member sequences; use getMemberSequenceAt(int) instead."
+                    "getItemAt() is not defined for multi-item member sequences; use getSequenceAt(int) instead."
             );
         }
         return member.get(0);
     }
 
     @Override
-    public List<Item> getMemberSequenceAt(int i) {
+    public List<Item> getSequenceAt(int i) {
         if (i < 0 || i >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: " + (i + 1) + ", of array with length: " + getSize(),
@@ -139,7 +139,7 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public void appendMemberSequence(List<Item> items) {
+    public void appendSequence(List<Item> items) {
         if (items == null) {
             this.memberSequences.add(Collections.<Item>emptyList());
         } else {
@@ -158,7 +158,7 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public void putMemberSequenceAt(List<Item> values, int i) {
+    public void putSequenceAt(List<Item> values, int i) {
         if (values == null) {
             this.memberSequences.set(i, Collections.<Item>emptyList());
         } else {

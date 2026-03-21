@@ -501,7 +501,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return the list of member sequences (one sequence per array member).
      */
-    default List<List<Item>> getMemberSequences() {
+    default List<List<Item>> getSequences() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -523,7 +523,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param position a zero-based member position.
      * @return the sequence of items corresponding to that member.
      */
-    default List<Item> getMemberSequenceAt(int position) {
+    default List<Item> getSequenceAt(int position) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -805,7 +805,7 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @param items the member sequence to append as a single array member.
      */
-    default void appendMemberSequence(List<Item> items) {
+    default void appendSequence(List<Item> items) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -828,7 +828,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param items the member sequence to store at the given position.
      * @param i a zero-based member index.
      */
-    default void putMemberSequenceAt(List<Item> items, int i) {
+    default void putSequenceAt(List<Item> items, int i) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

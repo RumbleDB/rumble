@@ -88,7 +88,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
             Item member = this.arrayItem.getItemAt(lookup - 1);
             this.pendingResults.add(member);
         } else {
-            java.util.List<Item> memberSeq = this.arrayItem.getMemberSequenceAt(lookup - 1);
+            java.util.List<Item> memberSeq = this.arrayItem.getSequenceAt(lookup - 1);
             this.pendingResults.addAll(memberSeq);
         }
     }

@@ -50,7 +50,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                 if (!arg0.allowsNonSingletons()) {
                     results = arg0.getItems();
                 } else {
-                    for (java.util.List<Item> member : arg0.getMemberSequences()) {
+                    for (java.util.List<Item> member : arg0.getSequences()) {
                         results.addAll(member);
                     }
                 }
@@ -81,7 +81,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     if (!arg0.allowsNonSingletons()) {
                         results.add(arg0.getItemAt(idx));
                     } else {
-                        results.addAll(arg0.getMemberSequenceAt(idx));
+                        results.addAll(arg0.getSequenceAt(idx));
                     }
                 }
             }
