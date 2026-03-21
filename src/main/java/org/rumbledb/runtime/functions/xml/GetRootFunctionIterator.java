@@ -7,6 +7,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
@@ -39,6 +40,7 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
                     || node instanceof ElementItem
                     || node instanceof AttributeItem
                     || node instanceof TextItem
+                    || node instanceof CommentItem
             ) {
                 if (node.parent() == null) {
                     // Node is already the root.

@@ -247,8 +247,8 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
-        if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            res = res.withColumnRenamed(SparkSessionManager.atomicJSONiqItemColumnName, "__value");
+        if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+            res = res.withColumnRenamed(SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
         }
         return res;
     }
@@ -352,7 +352,7 @@ public class SequenceOfItems {
             }
             result.stream()
                 .limit(maxNumberOfItems)
-                .collect(Collectors.toCollection(() -> result));
+                .collect(Collectors.toCollection(() -> resultList));
             return count;
         }
         this.iterator.open(this.dynamicContext);

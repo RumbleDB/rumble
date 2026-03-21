@@ -35,10 +35,9 @@ public class JSoundDataFrame implements Serializable {
         this.itemType = itemType;
         StructType schema = this.dataFrame.schema();
         String[] fieldNames = schema.fieldNames();
-        if (
-            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
-        ) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
+
+        if (Arrays.asList(fieldNames).contains(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+            int i = schema.fieldIndex(SparkSessionManager.nonObjectJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof VariantType) {
@@ -127,6 +126,11 @@ public class JSoundDataFrame implements Serializable {
 
     public Dataset<Row> getDataFrame() {
         return this.dataFrame;
+    }
+
+    public void show() {
+        System.out.println("Item type: " + this.itemType);
+        this.dataFrame.show();
     }
 
     public JavaRDD<Row> javaRDD() {

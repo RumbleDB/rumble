@@ -5,25 +5,25 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
+import org.rumbledb.runtime.update.primitives.Mode;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class TruncateCollectionExpression extends Expression {
     private Expression collectionName;
-    private boolean isTable;
+    private Mode mode;
 
     public TruncateCollectionExpression(
             Expression collectionName,
-            boolean isTable,
+            Mode mode,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         if (collectionName == null) {
             throw new OurBadException("collection must be identified for truncation.");
         }
-        this.isTable = isTable;
+        this.mode = mode;
         this.collectionName = collectionName;
     }
 
@@ -31,8 +31,8 @@ public class TruncateCollectionExpression extends Expression {
         return this.collectionName;
     }
 
-    public boolean isTable() {
-        return this.isTable;
+    public Mode getMode() {
+        return this.mode;
     }
 
     @Override

@@ -80,7 +80,8 @@ public abstract class Expression extends Node {
                 this.staticContext.getRumbleConfiguration(),
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
-                getMetadata()
+                getMetadata(),
+                staticContext.getInScopeNamespaceBindings()
         );
     }
 

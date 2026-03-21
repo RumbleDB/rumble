@@ -41,7 +41,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -190,38 +189,89 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
-        boolean hasAtomicJSONiqItem = isObject
+        boolean hasNonObjectJSONiqItem = isObject
             && childDataFrame.getItemType()
                 .getObjectContentFacet()
-                .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
+
+        // Check if metadata columns exist
+        String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
+        boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
+        boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
+        boolean hasPathInColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.pathInColumnName);
+        boolean hasTableLocationColumn = Arrays.asList(fieldNames)
+            .contains(
+                SparkSessionManager.tableLocationColumnName
+            );
+
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
+                // element is an object, preserve metadata columns if they exist
+                if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                    return childDataFrame.evaluateSQL(
+                        String.format(
+                            "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            array
+                        ),
+                        elementType
+                    );
+                }
+                // Otherwise just return the object
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
                         array
                     ),
                     elementType
                 );
             }
+            // Preserve metadata columns if they exist
+            if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                String sql = String.format(
+                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array
+                );
+                Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                return new JSoundDataFrame(df, elementType);
+            }
             return childDataFrame.evaluateSQL(
                 String.format(
                     "SELECT explode(`%s`) AS `%s` FROM %s",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     array
                 ),
                 elementType
             );
         } else if (
-            hasAtomicJSONiqItem
+            hasNonObjectJSONiqItem
                 && childDataFrame.getItemType()
                     .getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
                 && childDataFrame.getItemType()
@@ -230,7 +280,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         ) {
             ItemType elementType = childDataFrame.getItemType()
                 .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType()
                 .getArrayContentFacet();
             String sql;
@@ -244,7 +294,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     SparkSessionManager.rowIdColumnName,
                     SparkSessionManager.mutabilityLevelColumnName,
                     SparkSessionManager.pathInColumnName,
@@ -260,7 +310,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.pathInColumnName,
                     SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
                     SparkSessionManager.rowIdColumnName,
                     SparkSessionManager.mutabilityLevelColumnName,
                     SparkSessionManager.pathInColumnName,
@@ -268,8 +318,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
-                res = new JSoundDataFrame(df, deltaItemType);
+                res = new JSoundDataFrame(df, elementType);
             }
             return res;
         }

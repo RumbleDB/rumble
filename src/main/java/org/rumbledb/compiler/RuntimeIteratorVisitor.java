@@ -122,7 +122,13 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -212,6 +218,7 @@ import org.rumbledb.runtime.update.expression.EditCollectionIterator;
 import org.rumbledb.runtime.update.expression.InsertIndexIntoCollectionIterator;
 import org.rumbledb.runtime.update.expression.InsertSearchIntoCollectionIterator;
 import org.rumbledb.runtime.update.expression.TruncateCollectionIterator;
+import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
@@ -220,7 +227,12 @@ import org.rumbledb.runtime.xml.AttributeNodeContentRuntimeIterator;
 import org.rumbledb.runtime.xml.AttributeNodeRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedAttributeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedElementConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.ComputedNamespaceConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.CommentNodeConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
@@ -541,7 +553,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
 
         RuntimeIterator runtimeIterator = new CreateCollectionIterator(
                 targetIterator,
@@ -560,7 +572,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
 
         RuntimeIterator runtimeIterator = null;
@@ -624,7 +636,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     ) {
         RuntimeIterator contentIterator = this.visit(expression.getContentExpression(), argument);
         RuntimeIterator targetIterator = this.visit(expression.getCollection(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
         boolean isFirst = expression.isFirst();
         boolean isLast = expression.isLast();
 
@@ -635,7 +647,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     targetIterator,
                     contentIterator,
                     pos,
-                    isTable,
+                    mode,
                     isFirst,
                     isLast,
                     expression.getStaticContextForRuntime(this.visitorConfig)
@@ -644,7 +656,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new InsertIndexIntoCollectionIterator(
                     targetIterator,
                     contentIterator,
-                    isTable,
+                    mode,
                     isFirst,
                     isLast,
                     expression.getStaticContextForRuntime(this.visitorConfig)
@@ -679,7 +691,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator targetIterator = this.visit(expression.getCollectionName(), argument);
-        boolean isTable = expression.isTable();
+        Mode mode = expression.getMode();
         RuntimeIterator runtimeIterator = new TruncateCollectionIterator(
                 targetIterator,
                 isTable,
@@ -935,6 +947,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitDirPIConstructor(DirPIConstructorExpression expression, RuntimeIterator argument) {
+        Expression contentExpression = expression.getContentExpression();
+        AtomizationIterator contentIterator = null;
+        if (contentExpression != null) {
+            RuntimeIterator contentExpressionIterator = this.visit(contentExpression, argument);
+            contentIterator = new AtomizationIterator(
+                    Collections.singletonList(contentExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+
+        RuntimeIterator runtimeIterator = new DirPIConstructorRuntimeIterator(
+                expression.getTarget(),
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
     public RuntimeIterator visitComputedElementConstructor(
             ComputedElementConstructorExpression expression,
             RuntimeIterator argument
@@ -961,6 +994,77 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     nameIterator,
                     contentIterator,
                     expression.getStaticContextForRuntime(this.visitorConfig)
+            );
+        }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitComputedPIConstructor(
+            ComputedPIConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        AtomizationIterator contentIterator = null;
+        if (expression.getContentExpression() != null) {
+            RuntimeIterator contentExpressionIterator = this.visit(expression.getContentExpression(), argument);
+            contentIterator = new AtomizationIterator(
+                    Collections.singletonList(contentExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+
+        RuntimeIterator runtimeIterator;
+        if (expression.hasStaticTarget()) {
+            runtimeIterator = new ComputedPIConstructorRuntimeIterator(
+                    expression.getTarget(),
+                    contentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
+            AtomizationIterator nameIterator = new AtomizationIterator(
+                    Collections.singletonList(nameExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            runtimeIterator = new ComputedPIConstructorRuntimeIterator(
+                    nameIterator,
+                    contentIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitComputedNamespaceConstructor(
+            ComputedNamespaceConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
+        AtomizationIterator uriIterator = new AtomizationIterator(
+                Collections.singletonList(uriExpressionIterator),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+
+        RuntimeIterator runtimeIterator;
+        if (expression.hasStaticPrefix()) {
+            runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
+                    expression.getPrefix(),
+                    uriIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            RuntimeIterator prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
+            AtomizationIterator prefixIterator = new AtomizationIterator(
+                    Collections.singletonList(prefixExpressionIterator),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            runtimeIterator = new ComputedNamespaceConstructorRuntimeIterator(
+                    prefixIterator,
+                    uriIterator,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -1002,6 +1106,36 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitCommentNodeConstructor(
+            CommentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+        CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
+                new AtomizationIterator(
+                        Collections.singletonList(contentIterator),
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                ),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public RuntimeIterator visitDirectCommentConstructor(
+            DirectCommentConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        DirectCommentConstructorRuntimeIterator result = new DirectCommentConstructorRuntimeIterator(
+                expression.getContent(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
 
     @Override
