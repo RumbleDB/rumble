@@ -94,11 +94,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     }
 
     /**
-     * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext}, the
-     * callee's {@code executionModeForFunctionCall}, and (for builtin named refs) namespace bindings from
-     * {@link RuntimeStaticContext#getStaticallyKnownNamespaces()} on {@code callerRuntimeContext} (default prefixes
-     * when
-     * empty).
+     * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
+     * callee's {@code executionModeForFunctionCall}
      */
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
             Item functionItem,

@@ -474,6 +474,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an atomic item of type QName.
+     *
+     * @return true if it is an atomic item of type QName, false otherwise.
+     */
+    default boolean isQName() {
+        return false;
+    }
+
+    /**
      * Whether this array item's runtime representation allows non-singleton member sequences.
      * <p>
      * For arrays: {@code false} means each member is stored as a single {@link Item} (singleton

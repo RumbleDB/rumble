@@ -206,6 +206,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isQName() {
+        return this.itemToAnnotate.isQName();
+    }
+
+    @Override
     public List<Item> getItems() {
         return this.itemToAnnotate.getItems();
     }
