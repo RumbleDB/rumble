@@ -93,4 +93,21 @@ public class RuntimeStaticContext implements Serializable {
         return StaticContext.getBuiltinNamespaceBinding(prefix);
     }
 
+    /**
+     * Same configuration, metadata, and namespace map; replaces static type and execution mode (e.g. when building
+     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
+     */
+    public RuntimeStaticContext withStaticTypeAndExecutionMode(
+            SequenceType newStaticType,
+            ExecutionMode newExecutionMode
+    ) {
+        return new RuntimeStaticContext(
+                this.configuration,
+                newStaticType,
+                newExecutionMode,
+                this.metadata,
+                this.staticallyKnownNamespaces
+        );
+    }
+
 }

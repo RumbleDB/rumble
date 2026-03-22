@@ -21,11 +21,14 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.FunctionItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -44,20 +47,29 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (
-            !dynamicContext.getNamedFunctions()
-                .checkUserDefinedFunctionExists(this.functionIdentifier)
-        ) {
-            throw new UnknownFunctionCallException(
-                    this.functionIdentifier.getName(),
-                    this.functionIdentifier.getArity(),
-                    getMetadata()
-            );
+        if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(this.functionIdentifier)) {
+            FunctionItem function = dynamicContext.getNamedFunctions()
+                .getUserDefinedFunction(this.functionIdentifier);
+            FunctionItem result = function.deepCopy();
+            result.populateClosureFromDynamicContext(dynamicContext, getMetadata());
+            return result;
         }
-        FunctionItem function = dynamicContext.getNamedFunctions()
-            .getUserDefinedFunction(this.functionIdentifier);
-        FunctionItem result = ((FunctionItem) function).deepCopy();
-        result.populateClosureFromDynamicContext(dynamicContext, getMetadata());
-        return result;
+        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(this.functionIdentifier);
+        if (builtin != null) {
+            FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
+                this.functionIdentifier,
+                dynamicContext.getModuleContext(),
+                getConfiguration(),
+                getMetadata(),
+                builtin
+            );
+            result.populateClosureFromDynamicContext(dynamicContext, getMetadata());
+            return result;
+        }
+        throw new UnknownFunctionCallException(
+                this.functionIdentifier.getName(),
+                this.functionIdentifier.getArity(),
+                getMetadata()
+        );
     }
 }

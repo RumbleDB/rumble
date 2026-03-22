@@ -70,6 +70,11 @@ public class FunctionItem implements Item {
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
     private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
 
+    /**
+     * When true, this item was created for a builtin named function reference ({@code name#arity}).
+     */
+    private boolean builtinNamedFunctionReference;
+
     protected FunctionItem() {
         super();
     }
@@ -81,6 +86,17 @@ public class FunctionItem implements Item {
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
+        this(identifier, parameterNames, signature, dynamicModuleContext, bodyIterator, false);
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            boolean builtinNamedFunctionReference
+    ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -89,6 +105,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
+        this.builtinNamedFunctionReference = builtinNamedFunctionReference;
     }
 
     public FunctionItem(
@@ -101,6 +118,30 @@ public class FunctionItem implements Item {
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, JSoundDataFrame> DFVariablesInClosure
     ) {
+        this(
+            identifier,
+            parameterNames,
+            signature,
+            dynamicModuleContext,
+            bodyIterator,
+            localVariablesInClosure,
+            RDDVariablesInClosure,
+            DFVariablesInClosure,
+            false
+        );
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            Map<Name, List<Item>> localVariablesInClosure,
+            Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<Name, JSoundDataFrame> DFVariablesInClosure,
+            boolean builtinNamedFunctionReference
+    ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -109,6 +150,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
         this.dataFrameVariablesInClosure = DFVariablesInClosure;
+        this.builtinNamedFunctionReference = builtinNamedFunctionReference;
     }
 
     public FunctionItem(
@@ -118,6 +160,18 @@ public class FunctionItem implements Item {
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
             boolean isUpdating
+    ) {
+        this(name, paramNameToSequenceTypes, returnType, dynamicModuleContext, bodyIterator, isUpdating, false);
+    }
+
+    public FunctionItem(
+            Name name,
+            Map<Name, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            boolean isUpdating,
+            boolean builtinNamedFunctionReference
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -134,6 +188,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
+        this.builtinNamedFunctionReference = builtinNamedFunctionReference;
     }
 
     @Override
@@ -190,6 +245,11 @@ public class FunctionItem implements Item {
     @Override
     public boolean isFunction() {
         return true;
+    }
+
+    @Override
+    public boolean isBuiltinNamedFunctionReference() {
+        return this.builtinNamedFunctionReference;
     }
 
     @Override
@@ -255,6 +315,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
             );
         }
+        output.writeBoolean(this.builtinNamedFunctionReference);
     }
 
     @SuppressWarnings("unchecked")
@@ -282,6 +343,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
             );
         }
+        this.builtinNamedFunctionReference = input.readBoolean();
     }
 
     @Override

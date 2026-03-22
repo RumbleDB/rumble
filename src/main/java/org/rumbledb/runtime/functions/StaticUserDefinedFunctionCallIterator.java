@@ -78,8 +78,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                 this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getNamedFunctions()
                     .getUserDefinedFunctionCallIterator(
                         this.functionIdentifier,
-                        this.getHighestExecutionMode(),
-                        getMetadata(),
+                        this.staticContext,
                         this.functionArguments
                     );
             }
@@ -165,8 +164,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
-                    this.getHighestExecutionMode(),
-                    getMetadata(),
+                    this.staticContext,
                     this.functionArguments
                 );
             return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
@@ -181,8 +179,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
-                    this.getHighestExecutionMode(),
-                    getMetadata(),
+                    this.staticContext,
                     this.functionArguments
                 );
             return this.userDefinedFunctionCallIterator.getDataFrame(dynamicContext);
@@ -211,8 +208,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.userDefinedFunctionCallIterator = context.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
-                this.getHighestExecutionMode(),
-                getMetadata(),
+                this.staticContext,
                 this.functionArguments
             );
         return this.userDefinedFunctionCallIterator.getPendingUpdateList(context);
