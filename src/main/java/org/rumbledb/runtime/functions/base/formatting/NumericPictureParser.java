@@ -16,6 +16,7 @@ public final class NumericPictureParser {
 
         public static String DATE = "DATE";
         public static String INTEGER = "INTEGER";
+        public static String NUMBER = "NUMBER";
     }
 
     private NumericPictureParser() {
@@ -194,7 +195,7 @@ public final class NumericPictureParser {
             List<Integer> runLengths,
             String kind
     ) {
-        if (kind != NumericPictureKind.INTEGER) {
+        if (!kind.equals(NumericPictureKind.INTEGER)) {
             return new RepeatingGroupingInfo(false, 0);
         }
 
@@ -258,7 +259,9 @@ public final class NumericPictureParser {
             return new IncorrectSyntaxFormatDateTimeException(message, metadata);
         }
 
-        return new IncorrectSyntaxFormatNumberException(message, metadata);
+        return new IncorrectSyntaxFormatNumberException(message, metadata); // fn:format-number && fn:format-integer
+                                                                            // require the same exception to be thrown
+                                                                            // for an invalid picture string
     }
 
     private static final class RepeatingGroupingInfo {

@@ -1,13 +1,14 @@
-package org.rumbledb.runtime.functions.numerics;
+package org.rumbledb.runtime.functions.base.formatting;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.FormatIntegerPicture;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.IntegerFormatModifier;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.PrimaryFormatToken;
 
-public final class FullIntegerPictureParser {
+public final class FormatIntegerPictureParser {
 
-    public static IntegerPicture parse(String pictureString, ExceptionMetadata metadata) {
+    public static FormatIntegerPicture parse(String pictureString, ExceptionMetadata metadata) {
         if (pictureString == null || pictureString.isEmpty()) {
             throw invalidPicture(pictureString, metadata);
         }
@@ -41,7 +42,7 @@ public final class FullIntegerPictureParser {
             metadata
         );
 
-        return new IntegerPicture(
+        return new FormatIntegerPicture(
                 pictureString,
                 primaryFormatTokenString,
                 formatModifierString,

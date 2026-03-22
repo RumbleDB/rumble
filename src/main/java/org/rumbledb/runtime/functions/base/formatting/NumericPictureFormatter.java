@@ -3,10 +3,9 @@ package org.rumbledb.runtime.functions.base.formatting;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.functions.numerics.IntegerFormatModifier;
-import org.rumbledb.runtime.functions.numerics.IntegerPicture;
-import org.rumbledb.runtime.functions.numerics.FullIntegerPictureParser;
-import org.rumbledb.runtime.functions.numerics.PrimaryFormatToken;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.IntegerFormatModifier;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.FormatIntegerPicture;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.PrimaryFormatToken;
 
 import java.math.BigInteger;
 
@@ -21,7 +20,7 @@ public final class NumericPictureFormatter {
         boolean isNegative = temp.signum() < 0;
         BigInteger value = temp.abs();
 
-        IntegerPicture picture = FullIntegerPictureParser.parse(pictureString, metadata);
+        FormatIntegerPicture picture = FormatIntegerPictureParser.parse(pictureString, metadata);
         PrimaryFormatToken primary = picture.getPrimaryFormatToken();
         IntegerFormatModifier modifier = picture.getFormatModifier();
 

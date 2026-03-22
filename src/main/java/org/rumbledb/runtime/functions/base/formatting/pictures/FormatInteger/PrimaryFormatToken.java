@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.numerics;
+package org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger;
 
 import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
 

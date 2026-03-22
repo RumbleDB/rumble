@@ -1,6 +1,6 @@
-package org.rumbledb.runtime.functions.numerics;
+package org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger;
 
-public class IntegerPicture {
+public class FormatIntegerPicture {
 
     private final String rawPicture;
     private final String rawPrimaryFormatToken;
@@ -8,7 +8,7 @@ public class IntegerPicture {
     private final PrimaryFormatToken primaryFormatToken;
     private final IntegerFormatModifier formatModifier;
 
-    public IntegerPicture(
+    public FormatIntegerPicture(
             String rawPicture,
             String rawPrimaryFormatToken,
             String rawFormatModifier,
