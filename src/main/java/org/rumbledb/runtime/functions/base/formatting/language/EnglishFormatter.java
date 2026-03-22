@@ -1,109 +1,243 @@
-package org.rumbledb.runtime.functions.base.formatting;
-
-import org.rumbledb.exceptions.OurBadException;
+package org.rumbledb.runtime.functions.base.formatting.language;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.time.DayOfWeek;
+import java.time.Month;
 
-public final class IntegerFormattingSupport {
+public class EnglishFormatter implements LanguageFormatter {
 
-    private IntegerFormattingSupport() {
+    @Override
+    public String getLanguage() {
+        return "en";
     }
 
-    public static String applyGrouping(String digits, NumericPicture picture) {
-        if (picture.getGroupingPositions().isEmpty()) {
-            return digits;
-        }
-
-        String reversedDigits = new StringBuilder(digits).reverse().toString();
-
-        if (picture.isRepeatingGrouping()) {
-            int interval = picture.getRepeatingGroupingInterval();
-            String separator = picture.getGroupingPositions().get(0).separator;
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < reversedDigits.length(); i++) {
-                if (i > 0 && i % interval == 0) {
-                    sb.append(separator);
-                }
-                sb.append(reversedDigits.charAt(i));
-            }
-            return sb.reverse().toString();
-        }
-
-        List<GroupingPos> gps = new ArrayList<>(picture.getGroupingPositions());
-        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
-
-        StringBuilder sb = new StringBuilder(reversedDigits);
-
-        for (int i = gps.size() - 1; i >= 0; i--) {
-            GroupingPos gp = gps.get(i);
-            int insertPos = gp.distanceFromRight;
-            if (insertPos > 0 && insertPos < sb.length()) {
-                sb.insert(insertPos, gp.separator);
-            }
-        }
-
-        return sb.reverse().toString();
+    @Override
+    public boolean supportsOrdinalSuffix() {
+        return true;
     }
 
-    public static boolean isEnglish(Locale locale) {
-        return locale != null && "en".equalsIgnoreCase(locale.getLanguage());
-    }
-
-    public static String ordinalSuffix(int value, Locale locale) {
-        if (!isEnglish(locale)) {
-            return "";
-        }
-
-        long abs = Math.abs((long) value);
-        long mod100 = abs % 100;
-        if (mod100 >= 11 && mod100 <= 13) {
-            return "th";
-        }
-
-        switch ((int) (abs % 10)) {
-            case 1:
-                return "st";
-            case 2:
-                return "nd";
-            case 3:
-                return "rd";
-            default:
-                return "th";
-        }
-    }
-
-    public static String ordinalSuffix(BigInteger value, Locale locale) { // only supports english for now
-        if (!isEnglish(locale)) {
-            throw new OurBadException("Language is not supported", null);
-        }
-        BigInteger abs = value.abs();
-        BigInteger mod100 = abs.mod(BigInteger.valueOf(100));
+    @Override
+    public String ordinalSuffix(BigInteger value) {
+        BigInteger mod100 = value.mod(BigInteger.valueOf(100));
 
         if (
             mod100.equals(BigInteger.valueOf(11))
-                || mod100.equals(BigInteger.valueOf(12))
-                || mod100.equals(BigInteger.valueOf(13))
+                ||
+                mod100.equals(BigInteger.valueOf(12))
+                ||
+                mod100.equals(BigInteger.valueOf(13))
         ) {
             return "th";
         }
 
-        BigInteger mod10 = abs.mod(BigInteger.TEN);
-        if (mod10.equals(BigInteger.ONE)) {
+        BigInteger mod10 = value.mod(BigInteger.TEN);
+        if (mod10.equals(BigInteger.ONE))
             return "st";
-        }
-        if (mod10.equals(BigInteger.valueOf(2))) {
+        if (mod10.equals(BigInteger.valueOf(2)))
             return "nd";
-        }
-        if (mod10.equals(BigInteger.valueOf(3))) {
+        if (mod10.equals(BigInteger.valueOf(3)))
             return "rd";
-        }
         return "th";
     }
 
-    public static String ordinalSuffix(BigInteger value) { // only supports english for now
-        return ordinalSuffix(value, Locale.ENGLISH);
+    @Override
+    public String toCardinal(int value) {
+        return toEnglishCardinalWords(value);
+    }
+
+    @Override
+    public String toOrdinal(int value) {
+        return toEnglishOrdinalWords(value);
+    }
+
+    @Override
+    public String dayAbbreviation(DayOfWeek day, int maxWidth) {
+        switch (day) {
+            case MONDAY:
+                return "Mon";
+            case TUESDAY:
+                return maxWidth >= 4 ? "Tues" : "Tue";
+            case WEDNESDAY:
+                return maxWidth >= 4 ? "Weds" : "Wed";
+            case THURSDAY:
+                if (maxWidth >= 5) {
+                    return "Thurs";
+                }
+                if (maxWidth >= 4) {
+                    return "Thur";
+                }
+                return "Thu";
+            case FRIDAY:
+                return "Fri";
+            case SATURDAY:
+                return "Sat";
+            case SUNDAY:
+                return "Sun";
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public String monthAbbreviation(Month month) {
+        switch (month) {
+            case JANUARY:
+                return "Jan";
+            case FEBRUARY:
+                return "Feb";
+            case MARCH:
+                return "Mar";
+            case APRIL:
+                return "Apr";
+            case MAY:
+                return "May";
+            case JUNE:
+                return "Jun";
+            case JULY:
+                return "Jul";
+            case AUGUST:
+                return "Aug";
+            case SEPTEMBER:
+                return "Sep";
+            case OCTOBER:
+                return "Oct";
+            case NOVEMBER:
+                return "Nov";
+            case DECEMBER:
+                return "Dec";
+            default:
+                return null;
+        }
+
+    }
+
+    @Override
+    public String dayName(DayOfWeek day) {
+        switch (day) {
+            case MONDAY:
+                return "Monday";
+            case TUESDAY:
+                return "Tuesday";
+            case WEDNESDAY:
+                return "Wednesday";
+            case THURSDAY:
+                return "Thursday";
+            case FRIDAY:
+                return "Friday";
+            case SATURDAY:
+                return "Saturday";
+            case SUNDAY:
+                return "Sunday";
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public String dayName(DayOfWeek day, int minWidth, int maxWidth) {
+        String full = dayName(day);
+
+        // No explicit width => full name
+        if (maxWidth < 0) {
+            return full;
+        }
+
+        String abbr = dayAbbreviationInternal(day, maxWidth);
+        if (abbr != null && abbr.length() >= minWidth && abbr.length() <= maxWidth) {
+            return abbr;
+        }
+
+        if (full.length() <= maxWidth && full.length() >= minWidth) {
+            return full;
+        }
+
+        if (full.length() > maxWidth) {
+            return full.substring(0, maxWidth);
+        }
+
+        return full;
+    }
+
+    @Override
+    public String monthName(Month month) {
+        switch (month) {
+            case JANUARY:
+                return "January";
+            case FEBRUARY:
+                return "February";
+            case MARCH:
+                return "March";
+            case APRIL:
+                return "April";
+            case MAY:
+                return "May";
+            case JUNE:
+                return "June";
+            case JULY:
+                return "July";
+            case AUGUST:
+                return "August";
+            case SEPTEMBER:
+                return "September";
+            case OCTOBER:
+                return "October";
+            case NOVEMBER:
+                return "November";
+            case DECEMBER:
+                return "December";
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public String monthName(Month month, int minWidth, int maxWidth) {
+        String full = monthName(month);
+
+        // No explicit width => full name
+        if (maxWidth < 0) {
+            return full;
+        }
+
+        String abbr = monthAbbreviation(month);
+        if (abbr != null && abbr.length() >= minWidth && abbr.length() <= maxWidth) {
+            return abbr;
+        }
+
+        if (full.length() <= maxWidth && full.length() >= minWidth) {
+            return full;
+        }
+
+        if (full.length() > maxWidth) {
+            return full.substring(0, maxWidth);
+        }
+
+        return full;
+    }
+
+    private String dayAbbreviationInternal(DayOfWeek day, int maxWidth) {
+        switch (day) {
+            case MONDAY:
+                return "Mon";
+            case TUESDAY:
+                return maxWidth >= 4 ? "Tues" : "Tue";
+            case WEDNESDAY:
+                return maxWidth >= 4 ? "Weds" : "Wed";
+            case THURSDAY:
+                if (maxWidth >= 5)
+                    return "Thurs";
+                if (maxWidth >= 4)
+                    return "Thur";
+                return "Thu";
+            case FRIDAY:
+                return "Fri";
+            case SATURDAY:
+                return "Sat";
+            case SUNDAY:
+                return "Sun";
+            default:
+                return null;
+        }
     }
 
     public static String toEnglishCardinalWords(int value) {
@@ -184,25 +318,34 @@ public final class IntegerFormattingSupport {
         if (value == 0) {
             return "zeroth";
         }
+        return ordinalUnderOneTrillion(value);
+    }
 
+    private static String ordinalUnderOneTrillion(int value) {
         if (value >= 1_000_000_000) {
             int billions = value / 1_000_000_000;
             int rest = value % 1_000_000_000;
             if (rest == 0) {
                 return cardinalUnderOneBillion(billions) + " billionth";
             }
-            return cardinalUnderOneBillion(billions) + " billion " + toEnglishOrdinalWords(rest);
+            return cardinalUnderOneBillion(billions) + " billion " + ordinalUnderOneBillion(rest);
         }
+        return ordinalUnderOneBillion(value);
+    }
 
+    private static String ordinalUnderOneBillion(int value) {
         if (value >= 1_000_000) {
             int millions = value / 1_000_000;
             int rest = value % 1_000_000;
             if (rest == 0) {
                 return cardinalUnderOneMillion(millions) + " millionth";
             }
-            return cardinalUnderOneMillion(millions) + " million " + toEnglishOrdinalWords(rest);
+            return cardinalUnderOneMillion(millions) + " million " + ordinalUnderOneMillion(rest);
         }
+        return ordinalUnderOneMillion(value);
+    }
 
+    private static String ordinalUnderOneMillion(int value) {
         if (value >= 1_000) {
             int thousands = value / 1_000;
             int rest = value % 1_000;
@@ -211,7 +354,6 @@ public final class IntegerFormattingSupport {
             }
             return cardinalUnderOneThousand(thousands) + " thousand " + ordinalUnderOneThousand(rest);
         }
-
         return ordinalUnderOneThousand(value);
     }
 
@@ -383,38 +525,5 @@ public final class IntegerFormattingSupport {
             default:
                 throw new IllegalArgumentException("Unsupported tens: " + tens);
         }
-    }
-
-    public static String integerToRoman(int number) {
-        if (number <= 0) {
-            return "0";
-        }
-        final int[] values = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
-        final String[] romanLiterals = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
-
-        StringBuilder s = new StringBuilder();
-        for (int i = 0; i < values.length; i++) {
-            while (number >= values[i]) {
-                number -= values[i];
-                s.append(romanLiterals[i]);
-            }
-        }
-        return s.toString();
-    }
-
-    public static String integerToAlphabetic(int number, boolean lowerCase) {
-        if (number <= 0) {
-            return Integer.toString(number);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        int value = number;
-        while (value > 0) {
-            value--;
-            char ch = (char) ((lowerCase ? 'a' : 'A') + (value % 26));
-            sb.insert(0, ch);
-            value /= 26;
-        }
-        return sb.toString();
     }
 }

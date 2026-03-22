@@ -1,16 +1,16 @@
 package org.rumbledb.runtime.functions.datetime;
 
 import java.time.OffsetDateTime;
-import java.time.format.TextStyle;
 import java.time.temporal.IsoFields;
 import java.time.temporal.WeekFields;
 
 import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.runtime.functions.base.formatting.IntegerFormattingSupport;
+import org.rumbledb.runtime.functions.base.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
 import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.base.formatting.language.LanguageRegistry;
 
 final class TemporalComponentRenderer {
 
@@ -93,9 +93,9 @@ final class TemporalComponentRenderer {
 
         numericValue = adjustValueForWidthBeforePresentation(numericValue, parsed);
 
-        String roman = IntegerFormattingSupport.integerToRoman(numericValue);
+        String roman = NumericFormattingSupport.integerToRoman(numericValue);
         if (parsed.ordinal) {
-            roman = roman + IntegerFormattingSupport.ordinalSuffix(numericValue, formattingOptions.locale);
+            roman = roman + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
         }
         roman = parsed.lowerCaseRoman ? roman.toLowerCase(formattingOptions.locale) : roman;
         return padRightWithSpaces(roman, parsed.minWidth);
@@ -118,9 +118,9 @@ final class TemporalComponentRenderer {
 
         numericValue = adjustValueForWidthBeforePresentation(numericValue, parsed);
 
-        String alpha = IntegerFormattingSupport.integerToAlphabetic(numericValue, parsed.lowerCaseAlphabetic);
+        String alpha = NumericFormattingSupport.integerToAlphabetic(numericValue, parsed.lowerCaseAlphabetic);
         if (parsed.ordinal) {
-            alpha = alpha + IntegerFormattingSupport.ordinalSuffix(numericValue, formattingOptions.locale);
+            alpha = alpha + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
         }
         return padRightWithSpaces(alpha, parsed.minWidth);
     }
@@ -135,10 +135,12 @@ final class TemporalComponentRenderer {
         String value;
         switch (parsed.component) {
             case 'F':
-                value = TemporalFormattingSupport.getDayName(dt.getDayOfWeek(), parsed, formattingOptions);
+                value = LanguageRegistry.resolve(formattingOptions.language)
+                    .dayName(dt.getDayOfWeek(), parsed.minWidth, parsed.maxWidth);
                 break;
             case 'M':
-                value = TemporalFormattingSupport.getMonthName(dt.getMonth(), parsed, formattingOptions);
+                value = LanguageRegistry.resolve(formattingOptions.language)
+                    .monthName(dt.getMonth(), parsed.minWidth, parsed.maxWidth);
                 break;
             case 'P':
                 value = getAmPmName(dt, parsed, formattingOptions);
@@ -186,9 +188,9 @@ final class TemporalComponentRenderer {
 
         String words;
         if (parsed.ordinal) {
-            words = IntegerFormattingSupport.toEnglishOrdinalWords(numericValue);
+            words = NumericFormattingSupport.toOrdinal(numericValue, formattingOptions.language);
         } else {
-            words = IntegerFormattingSupport.toEnglishCardinalWords(numericValue);
+            words = NumericFormattingSupport.toCardinal(numericValue, formattingOptions.language);
         }
 
         return TemporalFormattingSupport.applyWordCase(words, parsed.wordCase, formattingOptions.locale);
@@ -227,7 +229,8 @@ final class TemporalComponentRenderer {
                     formattingOptions
                 );
             case 'F':
-                return dt.getDayOfWeek().getDisplayName(TextStyle.FULL, formattingOptions.locale);
+                return LanguageRegistry.resolve(formattingOptions.language)
+                    .dayAbbreviation(dt.getDayOfWeek(), 3);
             case 'W':
                 return maybeAppendOrdinal(
                     Integer.toString(dt.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)),
@@ -287,7 +290,7 @@ final class TemporalComponentRenderer {
             FormattingOptions formattingOptions
     ) {
         if (parsed.ordinal) {
-            return base + IntegerFormattingSupport.ordinalSuffix(numericValue, formattingOptions.locale);
+            return base + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
         }
         return base;
     }
@@ -350,7 +353,7 @@ final class TemporalComponentRenderer {
             }
 
             if (parsed.ordinal) {
-                digits = digits + IntegerFormattingSupport.ordinalSuffix(value, formattingOptions.locale);
+                digits = digits + NumericFormattingSupport.ordinalSuffix(value, formattingOptions.language);
             }
             return digits;
         }
@@ -377,11 +380,11 @@ final class TemporalComponentRenderer {
             digits = digits.substring(digits.length() - parsed.maxWidth);
         }
 
-        digits = IntegerFormattingSupport.applyGrouping(digits, pic);
+        digits = NumericFormattingSupport.applyGrouping(digits, pic);
         digits = NumericPictureParser.mapAsciiDigits(digits, pic.getZeroDigit());
 
         if (parsed.ordinal) {
-            digits = digits + IntegerFormattingSupport.ordinalSuffix(value, formattingOptions.locale);
+            digits = digits + NumericFormattingSupport.ordinalSuffix(value, formattingOptions.language);
         }
 
         return digits;
@@ -391,7 +394,7 @@ final class TemporalComponentRenderer {
         switch (component) {
             case 'm':
             case 's':
-                return 2;
+                return 2; // TODO this seams too broad and makes runtime tests fail
             default:
                 return 1;
         }
@@ -406,7 +409,7 @@ final class TemporalComponentRenderer {
     ) {
         if ("I".equals(parsed.presentation) || "i".equals(parsed.presentation)) {
             int value = fractionAsInteger(dt);
-            String roman = IntegerFormattingSupport.integerToRoman(value);
+            String roman = NumericFormattingSupport.integerToRoman(value);
             return "i".equals(parsed.presentation) ? roman.toLowerCase(formattingOptions.locale) : roman;
         }
 

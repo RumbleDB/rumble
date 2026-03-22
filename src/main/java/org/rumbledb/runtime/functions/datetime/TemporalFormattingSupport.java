@@ -2,8 +2,6 @@ package org.rumbledb.runtime.functions.datetime;
 
 import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
 
-import java.time.DayOfWeek;
-import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.Locale;
 
@@ -60,124 +58,6 @@ final class TemporalFormattingSupport {
             }
         }
         return sb.toString();
-    }
-
-    static String getMonthName(Month month, ParsedVariableMarker parsed, FormattingOptions formattingOptions) {
-        String full = month.getDisplayName(java.time.format.TextStyle.FULL, formattingOptions.locale);
-
-        if (parsed.maxWidth < 0) {
-            return full;
-        }
-
-        if (isEnglish(formattingOptions.locale)) {
-            String abbr = englishMonthAbbreviation(month);
-            return chooseWidthBoundedName(full, abbr, parsed.minWidth, parsed.maxWidth);
-        }
-
-        return truncateName(full, parsed.maxWidth);
-    }
-
-    static String getDayName(DayOfWeek day, ParsedVariableMarker parsed, FormattingOptions formattingOptions) {
-        String full = day.getDisplayName(java.time.format.TextStyle.FULL, formattingOptions.locale);
-
-        if (parsed.maxWidth < 0) {
-            return full;
-        }
-
-        if (isEnglish(formattingOptions.locale)) {
-            String abbr = englishDayAbbreviation(day, parsed.maxWidth);
-            return chooseWidthBoundedName(full, abbr, parsed.minWidth, parsed.maxWidth);
-        }
-
-        return truncateName(full, parsed.maxWidth);
-    }
-
-    static String chooseWidthBoundedName(String full, String preferredAbbreviation, int minWidth, int maxWidth) {
-        if (preferredAbbreviation != null) {
-            int len = preferredAbbreviation.length();
-            if (len >= minWidth && len <= maxWidth) {
-                return preferredAbbreviation;
-            }
-        }
-
-        if (full.length() <= maxWidth && full.length() >= minWidth) {
-            return full;
-        }
-
-        if (full.length() > maxWidth) {
-            return full.substring(0, maxWidth);
-        }
-
-        return full;
-    }
-
-    static String truncateName(String value, int maxWidth) {
-        if (maxWidth > 0 && value.length() > maxWidth) {
-            return value.substring(0, maxWidth);
-        }
-        return value;
-    }
-
-    static boolean isEnglish(Locale locale) {
-        return locale != null && "en".equalsIgnoreCase(locale.getLanguage());
-    }
-
-    static String englishMonthAbbreviation(Month month) {
-        switch (month) {
-            case JANUARY:
-                return "Jan";
-            case FEBRUARY:
-                return "Feb";
-            case MARCH:
-                return "Mar";
-            case APRIL:
-                return "Apr";
-            case MAY:
-                return "May";
-            case JUNE:
-                return "Jun";
-            case JULY:
-                return "Jul";
-            case AUGUST:
-                return "Aug";
-            case SEPTEMBER:
-                return "Sep";
-            case OCTOBER:
-                return "Oct";
-            case NOVEMBER:
-                return "Nov";
-            case DECEMBER:
-                return "Dec";
-            default:
-                return null;
-        }
-    }
-
-    static String englishDayAbbreviation(DayOfWeek day, int maxWidth) {
-        switch (day) {
-            case MONDAY:
-                return "Mon";
-            case TUESDAY:
-                return maxWidth >= 4 ? "Tues" : "Tue";
-            case WEDNESDAY:
-                return maxWidth >= 4 ? "Weds" : "Wed";
-            case THURSDAY:
-                if (maxWidth >= 5) {
-                    return "Thurs";
-                }
-                if (maxWidth >= 4) {
-                    return "Thur";
-                }
-                return "Thu";
-            case FRIDAY:
-                return "Fri";
-            case SATURDAY:
-                return "Sat";
-            case SUNDAY:
-                return "Sun";
-            default:
-                return null;
-        }
     }
 
     static String formatTimezone(ZoneOffset offset, ParsedTimezonePicture tz, boolean hasExplicitTimezone) {

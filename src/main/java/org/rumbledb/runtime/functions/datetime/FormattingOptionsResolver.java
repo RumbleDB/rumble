@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,24 +30,16 @@ final class FormattingOptionsResolver {
         String calendar = getOptionalString(calendarItem);
         String place = getOptionalString(placeItem);
 
-        Locale locale = resolveLocale(language);
         String calendarMode = resolveCalendarMode(calendar, pictureStringForErrors, metadata);
 
         // place aktuell noch ignoriert, aber bewusst schon eingelesen
-        return FormattingOptions.extended(locale, calendarMode);
+        return FormattingOptions.extended(language, calendarMode);
     }
 
     private static String getOptionalString(Item item) {
         return item != null && !item.isNull()
             ? item.getStringValue()
             : null;
-    }
-
-    static Locale resolveLocale(String language) {
-        if (language == null || language.trim().isEmpty()) {
-            return Locale.getDefault();
-        }
-        return Locale.forLanguageTag(language.trim().replace('_', '-'));
     }
 
     static String resolveCalendarMode(

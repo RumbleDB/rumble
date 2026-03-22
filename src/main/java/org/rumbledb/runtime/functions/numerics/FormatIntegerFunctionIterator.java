@@ -6,7 +6,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureFormatter;
+import org.rumbledb.runtime.functions.base.formatting.IntegerPictureFormatter;
 
 import java.util.List;
 
@@ -21,9 +21,10 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
         Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
         Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);
 
-        Item langItem = this.children.size() > 2
-            ? this.children.get(2).materializeFirstItemOrNull(context)
-            : null; // TODO IMPLEMENT
+        String language = this.children.size() > 2
+            ? this.children.get(2).materializeFirstItemOrNull(context).getStringValue()
+            : null; // Certain Languages are not yet supported -> Their W3 Tests are skipped. TODO implement unskipped
+                    // Languages
 
         if (valueItem == null)
             return ItemFactory.getInstance().createStringItem("");
@@ -32,7 +33,12 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
             return valueItem;
         }
 
-        String result = NumericPictureFormatter.formatInteger(valueItem, pictureItem.getStringValue(), getMetadata());
+        String result = IntegerPictureFormatter.format(
+            valueItem,
+            pictureItem.getStringValue(),
+            language,
+            getMetadata()
+        );
 
         return ItemFactory.getInstance().createStringItem(result);
     }

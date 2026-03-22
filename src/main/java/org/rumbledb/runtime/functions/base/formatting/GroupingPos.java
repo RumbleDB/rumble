@@ -4,7 +4,7 @@ public final class GroupingPos {
     public final int distanceFromRight;
     public final String separator;
 
-    GroupingPos(int distanceFromRight, String separator) {
+    public GroupingPos(int distanceFromRight, String separator) {
         this.distanceFromRight = distanceFromRight;
         this.separator = separator;
     }

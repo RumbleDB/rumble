@@ -3,13 +3,12 @@ package org.rumbledb.runtime.functions.numerics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.ItemFactory;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 
-import static java.lang.Float.NaN;
 
 public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public FormatNumberFunctionIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
@@ -24,14 +23,6 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
             ? this.children.get(2).materializeFirstItemOrNull(context)
             : null; // TODO IMPLEMENT
 
-        if (valueItem == null) {
-            return ItemFactory.getInstance().createFloatItem(NaN);
-        }
-        if (valueItem.isNull()) {
-            return valueItem;
-        }
-
-        String result = "";
-        return ItemFactory.getInstance().createStringItem(result);
+        throw new OurBadException("FormatNumber is currently unimplemented", getMetadata());
     }
 }
