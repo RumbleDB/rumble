@@ -12,6 +12,7 @@ import java.util.List;
 
 public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+
     public FormatIntegerFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }

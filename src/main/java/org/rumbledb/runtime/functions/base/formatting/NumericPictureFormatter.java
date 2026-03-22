@@ -13,6 +13,31 @@ public final class NumericPictureFormatter {
     private NumericPictureFormatter() {
     }
 
+    /**
+     * <p>Implementation-defined bounds and fallback behavior for fn:format-integer().</p>
+     *
+     * <p><b>Supported ranges:</b></p>
+     * <ul>
+     *   <li><b>Decimal patterns:</b> full BigInteger range.</li>
+     *   <li><b>Roman numerals (I, i):</b> 1..3999; otherwise fallback to decimal.</li>
+     *   <li><b>Alphabetic sequences (A, a):</b> 1..Integer.MAX_VALUE; otherwise fallback to decimal.</li>
+     *   <li><b>Word formats (w, W, Ww):</b> English only, up to Integer.MAX_VALUE;
+     *   otherwise fallback to decimal.</li>
+     * </ul>
+     *
+     * <p><b>Fallback behavior:</b></p>
+     * <ul>
+     *   <li>Unsupported format tokens use decimal formatting ("1"-style).</li>
+     *   <li>Unsupported but valid combinations do not raise errors.</li>
+     * </ul>
+     *
+     * <p><b>Other notes:</b></p>
+     * <ul>
+     *   <li>Language parameter is currently ignored; English is the default.</li>
+     *   <li>Ordinal modifier is supported only where explicitly implemented.</li>
+     *   <li>Additional modifier variations are ignored.</li>
+     * </ul>
+     */
     public static String formatInteger(Item valueItem, String pictureString, ExceptionMetadata metadata) {
         // Invariant: value is neither null nor empty
 
