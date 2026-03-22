@@ -1249,7 +1249,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFunctionCall(FunctionCallExpression expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
-        ExceptionMetadata iteratorMetadata = expression.getMetadata();
         for (Expression arg : expression.getArguments()) {
             if (arg == null) {
                 arguments.add(null);
@@ -1270,10 +1269,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 // Note: passing the static context of the function call expression makes
                 // all builtin functions static-context-dependent.
                 // This might be worth a more fine-grained adjustment later.
-                expression.getStaticContext(),
-                this.config,
-                expression.getHighestExecutionMode(this.visitorConfig),
-                iteratorMetadata
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else {
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(

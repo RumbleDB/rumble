@@ -155,9 +155,8 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         arguments.add(memberIterator);
         RuntimeIterator functionCall = NamedFunctions.buildUserDefinedFunctionCallIterator(
             functionItem,
-            getConfiguration(),
+            this.staticContext,
             ExecutionMode.LOCAL,
-            getMetadata(),
             arguments
         );
         List<Item> result = functionCall.materialize(context);

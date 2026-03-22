@@ -70,6 +70,13 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Whether this item is a function item representing a builtin function.
+     */
+    default boolean isBuiltinNamedFunctionReference() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item.
      *
      * @return true if it is an atomic item, false otherwise.

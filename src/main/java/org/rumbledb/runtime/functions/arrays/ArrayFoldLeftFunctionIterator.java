@@ -183,9 +183,8 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeIterator functionCall = NamedFunctions.buildUserDefinedFunctionCallIterator(
             functionItem,
-            getConfiguration(),
+            this.staticContext,
             ExecutionMode.LOCAL,
-            getMetadata(),
             arguments
         );
         return functionCall.materialize(context);
