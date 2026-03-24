@@ -197,9 +197,17 @@ public class ObjectItem implements Item {
     }
 
     @Override
+    public Item getItemByKey(Item key) {
+        if (key == null || !key.isString()) {
+            return null;
+        }
+        return getItemByKey(key.getStringValue());
+    }
+
+    @Override
     public List<Item> getSequenceByKey(Item key) {
         if (key == null || !key.isString()) {
-            throw new OurBadException("ObjectItem keys must be strings.");
+            return null;
         }
         return getSequenceByKey(key.getStringValue());
     }
@@ -255,7 +263,9 @@ public class ObjectItem implements Item {
     @Override
     public void removeItemByKey(Item key) {
         if (key == null || !key.isString()) {
-            throw new OurBadException("ObjectItem keys must be strings.");
+            // if not a string item, do nothing.
+            // if the key is not a string, then there is for sure nothing to remove.
+            return;
         }
         removeItemByKey(key.getStringValue());
     }

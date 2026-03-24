@@ -192,9 +192,17 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
+    public Item getItemByKey(Item key) {
+        if (key == null || !key.isString()) {
+            return null;
+        }
+        return getItemByKey(key.getStringValue());
+    }
+
+    @Override
     public List<Item> getSequenceByKey(Item key) {
         if (key == null || !key.isString()) {
-            throw new OurBadException("LazyObjectItem keys must be strings.");
+            return null;
         }
         return getSequenceByKey(key.getStringValue());
     }
@@ -248,17 +256,6 @@ public class LazyObjectItem implements Item {
     @Override
     public boolean isObject() {
         return true;
-    }
-
-    @Override
-    public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
-            throw new OurBadException("LazyObjectItem keys must be atomic.");
-        }
-        String s = key.getStringValue();
-        this.keys.remove(s);
-        this.values.remove(s);
-        this.lazyValues.remove(s);
     }
 
     @Override

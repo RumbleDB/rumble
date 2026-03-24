@@ -530,6 +530,16 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the value associated with a specific key, if it is an object.
+     *
+     * @param key a key item.
+     * @return the value associated with key.
+     */
+    default Item getItemByKey(Item key) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the (possibly non-string) atomic keys of the item, if it is a map-like object.
      *
      * @return the list of atomic keys as items.
