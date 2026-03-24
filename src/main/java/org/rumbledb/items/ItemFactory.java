@@ -289,7 +289,12 @@ public class ItemFactory {
         return result;
     }
 
-    public Item createMapItem(List<Item> keys, List<List<Item>> valueSequences, ExceptionMetadata itemMetadata, boolean mutable) {
+    public Item createMapItem(
+            List<Item> keys,
+            List<List<Item>> valueSequences,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
         Item result = new MapItem(keys, valueSequences, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);

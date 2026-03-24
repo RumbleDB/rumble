@@ -78,8 +78,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                     }
                 } else {
                     for (Item key : this.lookupKeys) {
-                        if(!item.allowsNonSingletons()) {
-                            if (!item.allowsNonSingletons()) {
+                        if (!item.allowsNonSingletons()) {
                             this.nextResult.add(item.getItemByKey(key));
                         } else {
                             List<Item> valueSequence = item.getSequenceByKey(key);

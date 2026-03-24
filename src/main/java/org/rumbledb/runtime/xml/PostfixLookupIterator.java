@@ -117,7 +117,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                     }
                 } else {
                     for (Item key : this.lookupKeys) {
-                        if(!item.allowsNonSingletons()) {
+                        if (!item.allowsNonSingletons()) {
                             this.nextResult.add(item.getItemByKey(key));
                         } else {
                             List<Item> valueSequence = item.getSequenceByKey(key);
