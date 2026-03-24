@@ -69,14 +69,23 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
         for (Item item : this.contextItem) {
             if (item.isObject()) {
                 if (this.wildcard) {
-                    this.nextResult.addAll(item.getValues());
+                    if (!item.allowsNonSingletons()) {
+                        this.nextResult.addAll(item.getValues());
+                    } else {
+                        for (List<Item> valueSequence : item.getSequences()) {
+                            this.nextResult.addAll(valueSequence);
+                        }
+                    }
                 } else {
                     for (Item key : this.lookupKeys) {
-                        if (key.isString()) {
-                            this.nextResult.add(item.getItemByKey(key.getStringValue()));
-                        }
-                        if (key.isNumeric()) {
-                            // TODO numeric maps
+                        if(!item.allowsNonSingletons()) {
+                            if (!item.allowsNonSingletons()) {
+                            this.nextResult.add(item.getItemByKey(key));
+                        } else {
+                            List<Item> valueSequence = item.getSequenceByKey(key);
+                            if (valueSequence != null) {
+                                this.nextResult.addAll(valueSequence);
+                            }
                         }
                     }
                 }

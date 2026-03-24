@@ -45,7 +45,13 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
 
         if (this.wildcard) {
             if (arg0.isObject()) {
-                results = arg0.getValues();
+                if (!arg0.allowsNonSingletons()) {
+                    results = arg0.getValues();
+                } else {
+                    for (java.util.List<Item> valueSequence : arg0.getSequences()) {
+                        results.addAll(valueSequence);
+                    }
+                }
             } else if (arg0.isArray()) {
                 results = arg0.getItems();
             }
@@ -53,13 +59,16 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
         }
         if (arg0.isObject()) {
             for (Item key : this.keys) {
-                if (key.isString()) {
-                    Item i = arg0.getItemByKey(key.getStringValue());
-                    if (i != null)
+                if(!arg0.allowsNonSingletons()) {
+                    Item i = arg0.getItemByKey(key);
+                    if (i != null) {
                         results.add(i);
-                }
-                if (key.isNumeric()) {
-                    // TODO numeric maps
+                    }
+                } else {
+                    List<Item> sequence = arg0.getSequenceByKey(key);
+                    if (sequence != null) {
+                        results.addAll(sequence);
+                    }
                 }
             }
         } else if (arg0.isArray()) {
