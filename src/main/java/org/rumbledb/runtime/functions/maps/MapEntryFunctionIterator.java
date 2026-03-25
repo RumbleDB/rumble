@@ -17,9 +17,9 @@ import java.util.List;
 /**
  * W3C XPath/XQuery {@code map:entry}:
  * <ul>
- *   <li>atomizes a single key into exactly one atomic value</li>
- *   <li>materializes the value into a general sequence (possibly empty)</li>
- *   <li>returns a map containing a single key/value binding</li>
+ * <li>atomizes a single key into exactly one atomic value</li>
+ * <li>materializes the value into a general sequence (possibly empty)</li>
+ * <li>returns a map containing a single key/value binding</li>
  * </ul>
  */
 public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -79,12 +79,13 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         List<Item> valueSequence = new ArrayList<>();
         this.valueIterator.materialize(dynamicContext, valueSequence);
 
-        return ItemFactory.getInstance().createMapItem(
+        return ItemFactory.getInstance()
+            .createMapItem(
                 Collections.singletonList(key),
                 Collections.singletonList(valueSequence),
                 getMetadata(),
                 false
-        );
+            );
     }
 }
 
