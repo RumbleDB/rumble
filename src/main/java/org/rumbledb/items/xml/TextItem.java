@@ -149,7 +149,7 @@ public class TextItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.content));
     }
 
     @Override
@@ -221,13 +221,20 @@ public class TextItem implements Item {
         return Collections.emptyList();
     }
 
+
     /**
-     * XDM 3.1 Section 6.7 Text Node Accessors — type-name.
+     * XDM 3.1 Section 6.7 Text Node Accessors — type-name:
      *
-     * For a Text Node, dm:type-name returns the empty sequence.
+     * For a Text Node, dm:type-name returns xs:untypedAtomic.
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        return Collections.singletonList(
+            ItemFactory.getInstance()
+                .createAnnotatedItem(
+                    ItemFactory.getInstance().createStringItem("untypedAtomic"),
+                    BuiltinTypesCatalogue.QNameItem
+                )
+        );
     }
 }

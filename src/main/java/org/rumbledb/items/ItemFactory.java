@@ -59,6 +59,10 @@ public class ItemFactory {
         return new StringItem(s);
     }
 
+    public Item createUntypedAtomicItem(String s) {
+        return new UntypedAtomicItem(s);
+    }
+
     public Item createBooleanItem(boolean b) {
         return b ? this.trueBooleanItem : this.falseBooleanItem;
     }
