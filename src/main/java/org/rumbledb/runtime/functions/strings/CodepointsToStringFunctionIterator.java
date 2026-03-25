@@ -47,14 +47,6 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
         String xmlVersion = getConfiguration().getXmlVersion();
         RuntimeIterator argIter = this.children.get(0);
 
-        /*
-         * For debugging purposes to see if the tests have correctly configured the Rumble Runtime - Prints the XML
-         * Version
-         *
-         * System.err.println("xmlVersion in context = " + context.getXmlVersion());
-         * System.err.println("conf object = " + System.identityHashCode(context.getRumbleRuntimeConfiguration()));
-         */
-
         StringBuilder sb = new StringBuilder();
         argIter.open(context);
         try {
