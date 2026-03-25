@@ -663,7 +663,10 @@ public class SequenceType implements Serializable {
                         ItemTypeFactory.createFunctionItemType(
                             new FunctionSignature(
                                     Arrays.asList(
-                                        new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                        new SequenceType(
+                                                BuiltinTypesCatalogue.objectItem,
+                                                SequenceType.Arity.ZeroOrMore
+                                        ),
                                         new SequenceType(BuiltinTypesCatalogue.objectItem)
                                     ),
                                     new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)
@@ -673,19 +676,19 @@ public class SequenceType implements Serializable {
                 break;
             case "function(item*, item*) as item*":
                 st = new SequenceType(
-                    ItemTypeFactory.createFunctionItemType(
-                        new FunctionSignature(
-                                Arrays.asList(
-                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Arrays.asList(
+                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                                    ),
                                     new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
-                                ),
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                            )
                         )
-                    )
                 );
                 break;
             case "function(item*) as item*":
-                st =  new SequenceType(
+                st = new SequenceType(
                         ItemTypeFactory.createFunctionItemType(
                             new FunctionSignature(
                                     Collections.singletonList(
@@ -698,32 +701,35 @@ public class SequenceType implements Serializable {
                 break;
             case "function(object*, object) as function(object*, object) as object*":
                 st = new SequenceType(
-                    ItemTypeFactory.createFunctionItemType(
-                        new FunctionSignature(
-                                Arrays.asList(
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                ),
-                                new SequenceType(
-                                        ItemTypeFactory.createFunctionItemType(
-                                            new FunctionSignature(
-                                                    Arrays.asList(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Arrays.asList(
+                                        new SequenceType(
+                                                BuiltinTypesCatalogue.objectItem,
+                                                SequenceType.Arity.ZeroOrMore
+                                        ),
+                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                    ),
+                                    new SequenceType(
+                                            ItemTypeFactory.createFunctionItemType(
+                                                new FunctionSignature(
+                                                        Arrays.asList(
+                                                            new SequenceType(
+                                                                    BuiltinTypesCatalogue.objectItem,
+                                                                    SequenceType.Arity.ZeroOrMore
+                                                            ),
+                                                            new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                                        ),
                                                         new SequenceType(
                                                                 BuiltinTypesCatalogue.objectItem,
                                                                 SequenceType.Arity.ZeroOrMore
-                                                        ),
-                                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                                    ),
-                                                    new SequenceType(
-                                                            BuiltinTypesCatalogue.objectItem,
-                                                            SequenceType.Arity.ZeroOrMore
-                                                    )
+                                                        )
+                                                )
                                             )
-                                        )
-                                )
+                                    )
+                            )
                         )
-                    )
-            );
+                );
                 break;
             case "int?":
                 st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.OneOrZero);
