@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[10,11]; Output="" :)
+(:JIQS: ShouldRun; UpdateDim=[10,12]; Output="" :)
 delete collection delta-file("./dfile1");
 delete collection delta-file("./dfile2");
 delete collection delta-file("./dfile3");

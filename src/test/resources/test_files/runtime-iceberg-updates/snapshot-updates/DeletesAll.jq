@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; UpdateDim=[9,8]; Output="1" :)
+(:JIQS: ShouldRun; UpdateDim=[2,8]; Output="1" :)
 (delete iceberg-table("icy")[1] from collection,
 delete iceberg-table("icy")[2] from collection,
 delete iceberg-table("icy")[3] from collection,

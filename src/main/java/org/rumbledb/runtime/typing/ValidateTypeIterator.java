@@ -32,6 +32,8 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.TypeMappings;
 
+import static org.apache.spark.sql.functions.expr;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.sql.Date;
@@ -169,9 +171,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     .createDataFrame(rowRDD, schema)
                     .withColumn(
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        org.apache.spark.sql.functions.expr(
-                            "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
-                        )
+                        expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
                     ),
                 BuiltinTypesCatalogue.item
         );
@@ -296,9 +296,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         dataFrame = dataFrame.withColumn(
             SparkSessionManager.nonObjectJSONiqItemColumnName,
-            org.apache.spark.sql.functions.expr(
-                "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
-            )
+            expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
         );
 
         return new JSoundDataFrame(
@@ -574,6 +572,22 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         } else if (!configuration.getLaxJSONNullValidation()) {
                             keys.add(key);
                             values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                        } else {
+                            // In lax mode, prefer a successful cast when possible (e.g., null -> "null" for strings),
+                            // and only treat null as absent if the cast fails.
+                            try {
+                                Item validatedNullValue = validate(
+                                    item.getItemByKey(key),
+                                    expectedType,
+                                    metadata,
+                                    true,
+                                    configuration
+                                );
+                                keys.add(key);
+                                values.add(validatedNullValue);
+                            } catch (InvalidInstanceException ex) {
+                                // Keep lax behavior: consider JSON null as absent for optional fields.
+                            }
                         }
                     } else {
                         keys.add(key);
@@ -625,7 +639,20 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         if (itemType.isUnionType()) {
-            for (ItemType memberType : itemType.getTypes()) {
+            List<ItemType> memberTypes = itemType.getTypes();
+            if (item.isNull()) {
+                for (ItemType memberType : memberTypes) {
+                    if (memberType.equals(BuiltinTypesCatalogue.nullItem)) {
+                        continue;
+                    }
+                    try {
+                        return validate(item, memberType, metadata, true, configuration);
+                    } catch (InvalidInstanceException ex) {
+                        // try next type
+                    }
+                }
+            }
+            for (ItemType memberType : memberTypes) {
                 try {
                     return validate(item, memberType, metadata, true, configuration);
                 } catch (InvalidInstanceException ex) {
