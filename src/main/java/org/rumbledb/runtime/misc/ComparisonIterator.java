@@ -145,6 +145,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+        }
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
+        }
+
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }

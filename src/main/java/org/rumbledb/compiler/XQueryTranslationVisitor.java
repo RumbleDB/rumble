@@ -2039,21 +2039,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
-
-        Name typeName = name;
-        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
-            typeName = Name.createVariableInDefaultTypeNamespace(name.getLocalName());
-        }
         if (
-            BuiltinTypesCatalogue.typeExists(typeName)
+            BuiltinTypesCatalogue.typeExists(name)
                 && children.size() == 1
                 && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
-            return new CastExpression(
-                    children.get(0),
-                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName), SequenceType.Arity.OneOrZero),
-                    metadata
-            );
+            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(name);
+            // In XQuery, no constructor function exists for xs:NOTATION or xs:anyAtomicType.
+            // Keep these as unresolved function calls to raise XPST0017 as required.
+            if (
+                !targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+                    && !targetType.equals(BuiltinTypesCatalogue.atomicItem)
+            ) {
+                return new CastExpression(
+                        children.get(0),
+                        new SequenceType(targetType, SequenceType.Arity.OneOrZero),
+                        metadata
+                );
+            }
         }
         return new FunctionCallExpression(
                 name,
