@@ -16,12 +16,12 @@ public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(
+    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
-                FacetTypes.ENUMERATION,
-                FacetTypes.CONSTRAINTS,
-                FacetTypes.CONTENT,
-                FacetTypes.CLOSED
+                ConstrainingFacetTypes.ENUMERATION,
+                ConstrainingFacetTypes.CONSTRAINTS,
+                ConstrainingFacetTypes.CONTENT,
+                ConstrainingFacetTypes.CLOSED
             )
     );
 
@@ -212,7 +212,7 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 

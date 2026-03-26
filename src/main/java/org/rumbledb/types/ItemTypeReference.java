@@ -108,7 +108,7 @@ public class ItemTypeReference implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
@@ -328,6 +328,48 @@ public class ItemTypeReference implements ItemType {
             throw new OurBadException("Unresolved type: " + this.name);
         }
         return this.resolvedItemType.getExplicitTimezoneFacet();
+    }
+
+    public WhitespaceFacet getWhitespaceFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getWhitespaceFacet();
+    }
+
+    public List<String> getPatternFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getPatternFacet();
+    }
+
+    public OrderedFacetValue getOrderedFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getOrderedFacet();
+    }
+
+    public Boolean getBoundedFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getBoundedFacet();
+    }
+
+    public CardinalityFacetValue getCardinalityFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getCardinalityFacet();
+    }
+
+    public Boolean getNumericFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getNumericFacet();
     }
 
     public Map<String, FieldDescriptor> getObjectContentFacet() {
