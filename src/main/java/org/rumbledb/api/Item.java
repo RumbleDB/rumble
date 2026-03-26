@@ -88,6 +88,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an atomic item of type xs:untypedAtomic.
+     *
+     * @return true if it is an atomic item of type xs:untypedAtomic, false otherwise.
+     */
+    default boolean isUntypedAtomic() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type default boolean.
      *
      * @return true if it is an atomic item of type default boolean, false otherwise.
