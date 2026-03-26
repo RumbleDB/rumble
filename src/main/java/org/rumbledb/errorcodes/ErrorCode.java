@@ -39,6 +39,8 @@ public enum ErrorCode {
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
 
+    IncorrectSyntaxFormatNumberErrorCode("FODF1310"),
+
     CastErrorCode("FORG0001"),
     ZeroOrOneErrorCode("FORG0003"),
     OneOrMoreErrorCode("FORG0004"),

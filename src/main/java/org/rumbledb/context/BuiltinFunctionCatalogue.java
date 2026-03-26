@@ -56,13 +56,7 @@ import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
 import org.rumbledb.runtime.functions.io.DocFunctionIterator;
 import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
 import org.rumbledb.runtime.functions.nullable.IsNullIterator;
-import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.RoundFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.RoundHalfToEvenFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.*;
 import org.rumbledb.runtime.functions.numerics.exponential.Exp10FunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.ExpFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.Log10FunctionIterator;
@@ -2314,6 +2308,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that returns a string containing a dateTime value formated for display
+     */
+    static final BuiltinFunction format_dateTime5 = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "format-dateTime"),
+        "dateTime?",
+        "string",
+        "string?",
+        "string?",
+        "string?",
+        "string?",
+        FormatDateTimeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that returns a xs:dateTime value created by combining an xs:date and an xs:time
      */
     static final BuiltinFunction dateTime = createBuiltinFunction(
@@ -2469,8 +2477,41 @@ public class BuiltinFunctionCatalogue {
         CurrentDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+
     /**
-     * function that returns a string containing a date value formated for display
+     * function that returns a string containing an integer value formatted for display
+     */
+    static final BuiltinFunction format_integer = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-integer"
+        ),
+        "integer?",
+        "string",
+        "string",
+        FormatIntegerFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a string containing an integer value formatted for display
+     */
+    static final BuiltinFunction format_integer3 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-integer"
+        ),
+        "integer?",
+        "string",
+        "string?",
+        "string",
+        FormatIntegerFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a string containing a date value formatted for display
      */
     static final BuiltinFunction format_date = createBuiltinFunction(
         new Name(
@@ -2480,6 +2521,24 @@ public class BuiltinFunctionCatalogue {
         ),
         "date?",
         "string",
+        "string?",
+        FormatDateFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a string containing a date value formatted for display
+     */
+    static final BuiltinFunction format_date5 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-date"
+        ),
+        "date?",
+        "string",
+        "string?",
+        "string?",
+        "string?",
         "string?",
         FormatDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2593,6 +2652,24 @@ public class BuiltinFunctionCatalogue {
         ),
         "time?",
         "string",
+        "string?",
+        FormatTimeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a string containing a time value formated for display
+     */
+    static final BuiltinFunction format_time5 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-time"
+        ),
+        "time?",
+        "string",
+        "string?",
+        "string?",
+        "string?",
         "string?",
         FormatTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3363,6 +3440,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
         builtinFunctions.put(format_dateTime.getIdentifier(), format_dateTime);
+        builtinFunctions.put(format_dateTime5.getIdentifier(), format_dateTime5);
         builtinFunctions.put(dateTime.getIdentifier(), dateTime);
         builtinFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
         builtinFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
@@ -3378,6 +3456,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(current_date.getIdentifier(), current_date);
         builtinFunctions.put(format_date.getIdentifier(), format_date);
+        builtinFunctions.put(format_date5.getIdentifier(), format_date5);
         builtinFunctions.put(year_from_date.getIdentifier(), year_from_date);
         builtinFunctions.put(month_from_date.getIdentifier(), month_from_date);
         builtinFunctions.put(day_from_date.getIdentifier(), day_from_date);
@@ -3385,8 +3464,13 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(adjust_date_to_timezone1.getIdentifier(), adjust_date_to_timezone1);
         builtinFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
 
+        builtinFunctions.put(format_integer.getIdentifier(), format_integer);
+        builtinFunctions.put(format_integer3.getIdentifier(), format_integer3);
+
+
         builtinFunctions.put(current_time.getIdentifier(), current_time);
         builtinFunctions.put(format_time.getIdentifier(), format_time);
+        builtinFunctions.put(format_time5.getIdentifier(), format_time5);
         builtinFunctions.put(hours_from_time.getIdentifier(), hours_from_time);
         builtinFunctions.put(minutes_from_time.getIdentifier(), minutes_from_time);
         builtinFunctions.put(seconds_from_time.getIdentifier(), seconds_from_time);
