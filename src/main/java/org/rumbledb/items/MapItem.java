@@ -31,6 +31,8 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,7 +67,7 @@ public class MapItem implements Item {
         this();
         for (int i = 0; i < keys.size(); i++) {
             validateAtomicKey(keys.get(i));
-            putSequenceByKeyInternal(keys.get(i), valueSequences.get(i), metadata);
+            internalPutSequenceByKey(keys.get(i), valueSequences.get(i), metadata);
         }
     }
 
@@ -75,8 +77,7 @@ public class MapItem implements Item {
         }
     }
 
-    private void putSequenceByKeyInternal(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
-        validateAtomicKey(key);
+    private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
         if (findKeyPosition(key) != -1) {
             throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
@@ -96,11 +97,8 @@ public class MapItem implements Item {
         }
         return -1;
     }
-
-    @Override
-    public boolean isObject() {
-        return true;
-    }
+    
+    // region maps
 
     @Override
     public boolean isMap() {
@@ -108,8 +106,40 @@ public class MapItem implements Item {
     }
 
     @Override
-    public boolean allowsNonSingletons() {
+    public boolean isObject() {
+        // test if
+        // - all keys are strings
+        // - all values are singletons
+        // TODO: store this in private fields (allKeysString, allValuesSingletons) that we can directly query for opt. purposes.
+        // the value is updated at put and remove operations.
+        for (Item key : this.keys) {
+            if (!key.isString()) {
+                return false;
+            }
+        }
+        for (List<Item> valueSequence : this.valueSequences) {
+            if (valueSequence.size() != 1) {
+                return false;
+            }
+        }
         return true;
+    }
+
+    @Override
+    public List<String> getKeys() {
+        return this.getStringKeys();
+    }
+
+    @Override
+    public List<String> getStringKeys() {
+        List<String> result = new ArrayList<>();
+        for (Item key : this.keys) {
+            if(!key.isString()) {
+                throw new OurBadException("Map contains non-string keys.");
+            }
+            result.add(key.getStringValue());
+        }
+        return result;
     }
 
     @Override
@@ -118,20 +148,43 @@ public class MapItem implements Item {
     }
 
     @Override
-    public List<List<Item>> getSequences() {
+    public List<Item> getValues() {
+        return this.getItemValues();
+    }
+
+    @Override
+    public List<Item> getItemValues() {
+        List<Item> result = new ArrayList<>();
+        for (List<Item> valueSequence : this.valueSequences) {
+            if (valueSequence.size() != 1) {
+                throw new OurBadException("Map contains non-singleton values.");
+            }
+            result.add(valueSequence.get(0));
+        }
+        return result;
+    }
+
+    @Override
+    public List<List<Item>> getSequenceValues() {
         return this.valueSequences;
     }
 
     @Override
-    public List<Item> getSequenceByKey(Item key) {
-        if (key == null || !key.isAtomic()) {
-            return null;
-        }
+    public Item getItemByKey(String key) {
+        return getItemByKey(ItemFactory.getInstance().createStringItem(key));
+    }
+
+    @Override
+    public Item getItemByKey(Item key) {
         int position = findKeyPosition(key);
         if (position == -1) {
             return null;
         }
-        return this.valueSequences.get(position);
+        List<Item> valueSequence = this.valueSequences.get(position);
+        if (valueSequence.size() != 1) {
+            throw new OurBadException("Map contains non-singleton values.");
+        }
+        return valueSequence.get(0);
     }
 
     @Override
@@ -140,24 +193,17 @@ public class MapItem implements Item {
     }
 
     @Override
-    public Item getItemByKey(String key) {
-        List<Item> sequence = getSequenceByKey(key);
-        if (sequence == null) {
+    public List<Item> getSequenceByKey(Item key) {
+        int position = findKeyPosition(key);
+        if (position == -1) {
             return null;
         }
-        if (sequence.isEmpty()) {
-            return ItemFactory.getInstance().createNullItem();
-        }
-        if (sequence.size() == 1) {
-            return sequence.get(0);
-        }
-        return ItemFactory.getInstance()
-            .createArrayFromMemberSequences(java.util.Collections.singletonList(sequence), false);
+        return this.valueSequences.get(position);
     }
 
     @Override
     public void putItemByKey(String key, Item value) {
-        putItemByKey(ItemFactory.getInstance().createStringItem(key), value);
+        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), java.util.Collections.singletonList(value));
     }
 
     @Override
@@ -166,8 +212,14 @@ public class MapItem implements Item {
     }
 
     @Override
+    public void putSequenceByKey(String key, List<Item> valueSequence) {
+        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), valueSequence);
+    }
+
+    @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        putSequenceByKeyInternal(key, valueSequence, ExceptionMetadata.EMPTY_METADATA);
+        validateAtomicKey(key);
+        internalPutSequenceByKey(key, valueSequence, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -184,6 +236,8 @@ public class MapItem implements Item {
         this.keys.remove(position);
         this.valueSequences.remove(position);
     }
+
+    // endregion maps
 
     @Override
     public void write(Kryo kryo, Output output) {

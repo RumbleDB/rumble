@@ -143,24 +143,26 @@ public class ObjectItem implements Item {
         this.topLevelOrder = 0.0;
     }
 
+    // region maps
+
+    @Override
+    public boolean isMap() {
+        return true;
+    }
+
+    @Override
+    public boolean isObject() {
+        return true;
+    }
+
     @Override
     public List<String> getKeys() {
         return this.keys;
     }
 
     @Override
-    public List<Item> getValues() {
-        return this.values;
-    }
-
-    @Override
-    public boolean isMap() {
-        return false;
-    }
-
-    @Override
-    public boolean allowsNonSingletons() {
-        return false;
+    public List<String> getStringKeys() {
+        return this.keys;
     }
 
     @Override
@@ -173,7 +175,17 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public List<List<Item>> getSequences() {
+    public List<Item> getValues() {
+        return this.values;
+    }
+
+    @Override
+    public List<Item> getItemValues() {
+        return this.values;
+    }
+
+    @Override
+    public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>(this.values.size());
         for (Item value : this.values) {
             result.add(Collections.singletonList(value));
@@ -181,21 +193,10 @@ public class ObjectItem implements Item {
         return result;
     }
 
-    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
-        HashMap<String, Integer> frequencies = new HashMap<>();
-        for (String key : keys) {
-            if (frequencies.containsKey(key)) {
-                throw new DuplicateObjectKeyException(key, metadata);
-            } else {
-                frequencies.put(key, 1);
-            }
-        }
-    }
-
     @Override
-    public Item getItemByKey(String s) {
-        if (this.keys.contains(s)) {
-            return this.values.get(this.keys.indexOf(s));
+    public Item getItemByKey(String key) {
+        if (this.keys.contains(key)) {
+            return this.values.get(this.keys.indexOf(key));
         } else {
             return null;
         }
@@ -203,18 +204,10 @@ public class ObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (!key.isString()) {
             return null;
         }
         return getItemByKey(key.getStringValue());
-    }
-
-    @Override
-    public List<Item> getSequenceByKey(Item key) {
-        if (key == null || !key.isString()) {
-            return null;
-        }
-        return getSequenceByKey(key.getStringValue());
     }
 
     @Override
@@ -227,25 +220,33 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public void putItemByKey(String s, Item value) {
-        this.keys.add(s);
+    public List<Item> getSequenceByKey(Item key) {
+        if (!key.isString()) {
+            return null;
+        }
+        return getSequenceByKey(key.getStringValue());
+    }
+
+    @Override
+    public void putItemByKey(String key, Item value) {
+        this.keys.add(key);
         this.values.add(value);
         checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public void putItemByKey(Item key, Item value) {
-        if (key == null || !key.isString()) {
+        if (!key.isString()) {
             throw new OurBadException("ObjectItem keys must be strings.");
         }
         putItemByKey(key.getStringValue(), value);
     }
 
+    
     @Override
-    public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        if (valueSequence == null || valueSequence.isEmpty()) {
-            putItemByKey(key, ItemFactory.getInstance().createNullItem());
-            return;
+    public void putSequenceByKey(String key, List<Item> valueSequence) {
+        if (valueSequence == null) {
+            throw new OurBadException("Value sequence cannot be empty.");
         }
         if (valueSequence.size() == 1) {
             putItemByKey(key, valueSequence.get(0));
@@ -257,9 +258,25 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public void removeItemByKey(String s) {
-        if (this.keys.contains(s)) {
-            int index = this.keys.indexOf(s);
+    public void putSequenceByKey(Item key, List<Item> valueSequence) {
+        if (valueSequence == null) {
+            // throw an error
+            throw new OurBadException("Value sequence cannot be empty.");
+        }
+        if (valueSequence.size() == 1) {
+            putItemByKey(key, valueSequence.get(0));
+            return;
+        }
+        // throw an error
+        throw new OurBadException(
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
+        );
+    }
+
+    @Override
+    public void removeItemByKey(String key) {
+        if (this.keys.contains(key)) {
+            int index = this.keys.indexOf(key);
             this.values.remove(index);
             this.keys.remove(index);
         }
@@ -268,16 +285,35 @@ public class ObjectItem implements Item {
     @Override
     public void removeItemByKey(Item key) {
         if (key == null || !key.isString()) {
-            // if not a string item, do nothing.
             // if the key is not a string, then there is for sure nothing to remove.
             return;
         }
         removeItemByKey(key.getStringValue());
     }
 
+    // endregion maps
+
     @Override
-    public boolean isObject() {
-        return true;
+    public boolean allowsNonSingletons() {
+        return false;
+    }
+
+    /**
+     * Checks for duplicate keys in the given list of keys.
+     *
+     * @param keys a list of keys.
+     * @param metadata the metadata of the item.
+     * @throws DuplicateObjectKeyException if the key is already present.
+     */
+    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
+        HashMap<String, Integer> frequencies = new HashMap<>();
+        for (String key : keys) {
+            if (frequencies.containsKey(key)) {
+                throw new DuplicateObjectKeyException(key, metadata);
+            } else {
+                frequencies.put(key, 1);
+            }
+        }
     }
 
     @Override
