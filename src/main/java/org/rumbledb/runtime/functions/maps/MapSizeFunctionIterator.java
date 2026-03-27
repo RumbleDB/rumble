@@ -23,6 +23,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -45,7 +46,7 @@ public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (map == null) {
             return null;
         }
-        return ItemFactory.getInstance().createIntItem(map.getItemKeys().size());
+        return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(map.getItemKeys().size()));
     }
 }
 

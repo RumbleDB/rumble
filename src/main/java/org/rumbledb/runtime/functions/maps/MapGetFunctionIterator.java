@@ -94,7 +94,7 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
 
         Item key = atomized.get(0);
         List<Item> seq = mapItem.getSequenceByKey(key);
-        if (seq != null) {
+        if (seq != null && !seq.isEmpty()) {
             this.pendingResults.addAll(seq);
         }
     }

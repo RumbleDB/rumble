@@ -16,10 +16,10 @@ import org.w3c.dom.Node;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.stream.Collectors;
 public class ItemFactory {
 
     private static ItemFactory instance;
@@ -304,35 +304,41 @@ public class ItemFactory {
         return result;
     }
 
-    public Item createObjectOrMapItem(
-            List<Item> keys,
-            List<List<Item>> valueSequences,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
-        boolean canBeObjectItem = true;
-        for (int i = 0; i < keys.size(); i++) {
-            Item key = keys.get(i);
-            List<Item> valueSequence = valueSequences.get(i);
-            if (key == null || !key.isString()) {
-                canBeObjectItem = false;
-                break;
-            }
-            if (valueSequence == null || valueSequence.size() != 1) {
-                canBeObjectItem = false;
-                break;
-            }
+    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new MapItem(keyValuePairs, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
         }
-        if (canBeObjectItem) {
-            List<String> stringKeys = new ArrayList<>(keys.size());
-            List<Item> singletonValues = new ArrayList<>(valueSequences.size());
-            for (int i = 0; i < keys.size(); i++) {
-                stringKeys.add(keys.get(i).getStringValue());
-                singletonValues.add(valueSequences.get(i).get(0));
-            }
-            return createObjectItem(stringKeys, singletonValues, itemMetadata, mutable);
+        return result;
+    }
+
+
+    public Item createObjectOrMapItem(List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
+        boolean allKeysString = keys.stream().allMatch(key -> key.isString());
+        boolean allValuesSingletons = values.stream().allMatch(value -> value.size() == 1);
+        if(allKeysString && allValuesSingletons) {
+            List<String> stringKeys = keys.stream().map(key -> key.getStringValue()).collect(Collectors.toList());
+            List<Item> valuesList = values.stream().map(value -> value.get(0)).collect(Collectors.toList());
+            return createObjectItem(stringKeys, valuesList, itemMetadata, mutable);
+        } else {
+            return createMapItem(keys, values, itemMetadata, mutable);
         }
-        return createMapItem(keys, valueSequences, itemMetadata, mutable);
+    }
+    
+    public Item createObjectOrMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+        boolean allKeysString = keyValuePairs.keySet().stream().allMatch(key -> key.isString());
+        boolean allValuesSingletons = keyValuePairs.values().stream().allMatch(list -> list.size() == 1);
+        if(allKeysString && allValuesSingletons) {
+            Map<String, List<Item>> stringKeyValuePairs = new HashMap<>();
+            for(Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
+                stringKeyValuePairs.put(entry.getKey().getStringValue(), entry.getValue());
+            }
+            return createObjectItem(stringKeyValuePairs, mutable);
+        } else {
+            return createMapItem(keyValuePairs, itemMetadata, mutable);
+        }
     }
 
     public Item createXmlTextNode(Node currentNode) {

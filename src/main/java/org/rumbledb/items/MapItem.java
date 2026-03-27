@@ -66,21 +66,34 @@ public class MapItem implements Item {
     public MapItem(List<Item> keys, List<List<Item>> valueSequences, ExceptionMetadata metadata) {
         this();
         for (int i = 0; i < keys.size(); i++) {
-            validateAtomicKey(keys.get(i));
+            validateAtomicKey(keys.get(i), metadata);
+            validateDuplicateKey(keys.get(i), metadata);
             internalPutSequenceByKey(keys.get(i), valueSequences.get(i), metadata);
         }
     }
 
-    private void validateAtomicKey(Item key) {
+    public MapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata metadata) {
+        this();
+        for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
+            validateAtomicKey(entry.getKey(), metadata);
+            // optimization: no need to validate duplicate key here, as the kv pairs are supplied as a map.
+            internalPutSequenceByKey(entry.getKey(), entry.getValue(), metadata);
+        }
+    }
+
+    private void validateAtomicKey(Item key, ExceptionMetadata metadata) {
         if (key == null || !key.isAtomic()) {
-            throw new OurBadException("Map keys must be atomic items.");
+            throw new OurBadException("Map keys must be atomic items.", metadata);
+        }
+    }
+
+    private void validateDuplicateKey(Item key, ExceptionMetadata metadata) {
+        if (findKeyPosition(key) != -1) {
+            throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
     }
 
     private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
-        if (findKeyPosition(key) != -1) {
-            throw new DuplicateObjectKeyException(key.serialize(), metadata);
-        }
         this.keys.add(key);
         this.valueSequences.add(valueSequence == null ? new ArrayList<>() : valueSequence);
     }
@@ -218,7 +231,8 @@ public class MapItem implements Item {
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        validateAtomicKey(key);
+        validateAtomicKey(key, ExceptionMetadata.EMPTY_METADATA);
+        validateDuplicateKey(key, ExceptionMetadata.EMPTY_METADATA);
         internalPutSequenceByKey(key, valueSequence, ExceptionMetadata.EMPTY_METADATA);
     }
 
