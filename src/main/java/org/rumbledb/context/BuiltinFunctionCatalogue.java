@@ -75,6 +75,7 @@ import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator
 import org.rumbledb.runtime.functions.maps.MapGetFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapContainsFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapPutFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapRemoveFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
@@ -2854,6 +2855,21 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C map:remove — F&O 3.1: map:remove($map as map(*), $keys as xs:anyAtomicType*) as map(*).
+     */
+    static final BuiltinFunction map_remove = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "remove"
+        ),
+        "map",
+        "anyAtomicType*",
+        "map",
+        MapRemoveFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*) as map(*).
      */
     static final BuiltinFunction map_merge_1 = createBuiltinFunction(
@@ -3612,6 +3628,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(map_get.getIdentifier(), map_get);
         builtinFunctions.put(map_contains.getIdentifier(), map_contains);
         builtinFunctions.put(map_put.getIdentifier(), map_put);
+        builtinFunctions.put(map_remove.getIdentifier(), map_remove);
         builtinFunctions.put(map_merge_1.getIdentifier(), map_merge_1);
         builtinFunctions.put(map_merge_2.getIdentifier(), map_merge_2);
         builtinFunctions.put(map_entry.getIdentifier(), map_entry);
