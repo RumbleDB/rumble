@@ -133,6 +133,29 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return true;
         }
 
+        if (item1.isMap() && item2.isMap()) {
+            List<Item> keys1 = item1.getItemKeys();
+            List<Item> keys2 = item2.getItemKeys();
+            if (keys1.size() != keys2.size()) {
+                return false;
+            }
+            for (Item k1 : keys1) {
+                List<Item> v1 = item1.getSequenceByKey(k1);
+                List<Item> v2 = item2.getSequenceByKey(k1);
+                if (v1 == null || v2 == null) {
+                    return false;
+                }
+                if (!checkDeepEqual(v1, v2)) {
+                    return false;
+                }
+            }
+            for (Item k2 : keys2) {
+                if (item1.getSequenceByKey(k2) == null) {
+                    return false;
+                }
+            }
+            return true;
+        }
         if (item1.isArray() && item2.isArray()) {
             if (item1.getSize() != item2.getSize()) {
                 return false;
