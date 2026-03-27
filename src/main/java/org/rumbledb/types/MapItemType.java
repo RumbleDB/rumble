@@ -124,7 +124,23 @@ public class MapItemType implements ItemType {
             return BuiltinTypesCatalogue.anyFunctionItem;
         }
         if (other.isMapItemType()) {
-            return BuiltinTypesCatalogue.mapItem;
+            MapItemType otherMap = (MapItemType) other;
+            ItemType keySuperType = this.keyType.findLeastCommonSuperTypeWith(otherMap.keyType);
+            SequenceType valueSuperType = this.valueSequenceType.leastCommonSupertypeWith(otherMap.valueSequenceType);
+            if (
+                keySuperType.equals(BuiltinTypesCatalogue.atomicItem)
+                    && valueSuperType.equals(SequenceType.createSequenceType("item*"))
+            ) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            return ItemTypeFactory.mapOf(keySuperType, valueSuperType);
+        }
+        if (other.isObjectItemType()) {
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                BuiltinTypesCatalogue.stringItem,
+                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One)
+            );
+            return this.findLeastCommonSuperTypeWith(objectAsMap);
         }
         ItemType current = this;
         ItemType o = other;
