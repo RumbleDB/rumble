@@ -309,7 +309,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getCountVariableName(),
-            SequenceType.INTEGER,
+            SequenceType.createSequenceType("integer"),
             clause.getMetadata()
         );
         this.visit(clause.getNextClause(), result);

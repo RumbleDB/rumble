@@ -2051,7 +2051,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 nodeTest,
                 new RuntimeStaticContext(
                         this.config,
-                        SequenceType.ITEM,
+                        SequenceType.createSequenceType("item"),
                         stepExpr.getHighestExecutionMode(this.visitorConfig),
                         stepExpr.getMetadata()
                 )
@@ -2063,7 +2063,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             new AxisIteratorVisitor(),
             new RuntimeStaticContext(
                     this.config,
-                    SequenceType.STRING,
+                    SequenceType.createSequenceType("string"),
                     ExecutionMode.LOCAL,
                     metadata
             )

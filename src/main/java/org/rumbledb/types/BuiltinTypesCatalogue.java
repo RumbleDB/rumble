@@ -727,11 +727,12 @@ public class BuiltinTypesCatalogue {
             null
     );
     public static final ItemType anyFunctionItem = new FunctionItemType(true);
+
     public static final ItemType mapItem = new MapItemType(
             Name.createVariableInDefaultTypeNamespace("map"),
             anyFunctionItem,
             atomicItem,
-            SequenceType.ITEM_STAR
+            SequenceType.createSequenceType("item*")
     );
 
     public static boolean typeExists(Name name) {

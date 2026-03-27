@@ -39,174 +39,6 @@ public class SequenceType implements Serializable {
     private ItemType itemType;
     private Arity arity;
 
-    public final static SequenceType ITEM_STAR = new SequenceType(
-            BuiltinTypesCatalogue.item,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType OBJECTS = new SequenceType(
-            BuiltinTypesCatalogue.objectItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType FUNCTION = new SequenceType(
-            BuiltinTypesCatalogue.anyFunctionItem,
-            Arity.One
-    );
-
-    public final static SequenceType ITEM = new SequenceType(
-            BuiltinTypesCatalogue.item,
-            Arity.One
-    );
-
-    public final static SequenceType INTEGER = new SequenceType(
-            BuiltinTypesCatalogue.integerItem,
-            Arity.One
-    );
-
-    public final static SequenceType DECIMAL = new SequenceType(
-            BuiltinTypesCatalogue.decimalItem,
-            Arity.One
-    );
-
-    public final static SequenceType DOUBLE = new SequenceType(
-            BuiltinTypesCatalogue.doubleItem,
-            Arity.One
-    );
-
-    public final static SequenceType FLOAT = new SequenceType(
-            BuiltinTypesCatalogue.floatItem,
-            Arity.One
-    );
-
-    public final static SequenceType INT = new SequenceType(
-            BuiltinTypesCatalogue.intItem,
-            Arity.One
-    );
-
-    public final static SequenceType STRING = new SequenceType(
-            BuiltinTypesCatalogue.stringItem,
-            Arity.One
-    );
-
-    public final static SequenceType ANYURI = new SequenceType(
-            BuiltinTypesCatalogue.anyURIItem,
-            Arity.One
-    );
-
-    public final static SequenceType BOOLEAN = new SequenceType(
-            BuiltinTypesCatalogue.booleanItem,
-            Arity.One
-    );
-
-    public final static SequenceType INTEGER_STAR = new SequenceType(
-            BuiltinTypesCatalogue.integerItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType DECIMAL_STAR = new SequenceType(
-            BuiltinTypesCatalogue.decimalItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType DOUBLE_STAR = new SequenceType(
-            BuiltinTypesCatalogue.doubleItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType FLOAT_STAR = new SequenceType(
-            BuiltinTypesCatalogue.floatItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType INT_STAR = new SequenceType(
-            BuiltinTypesCatalogue.intItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType STRING_STAR = new SequenceType(
-            BuiltinTypesCatalogue.stringItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType ANYURI_STAR = new SequenceType(
-            BuiltinTypesCatalogue.anyURIItem,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType INTEGER_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.integerItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType DECIMAL_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.decimalItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType DOUBLE_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.doubleItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType FLOAT_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.floatItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType INT_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.intItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType STRING_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.stringItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType ANYURI_PLUS = new SequenceType(
-            BuiltinTypesCatalogue.anyURIItem,
-            Arity.OneOrMore
-    );
-
-    public final static SequenceType INTEGER_QM = new SequenceType(
-            BuiltinTypesCatalogue.integerItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType DECIMAL_QM = new SequenceType(
-            BuiltinTypesCatalogue.decimalItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType DOUBLE_QM = new SequenceType(
-            BuiltinTypesCatalogue.doubleItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType FLOAT_QM = new SequenceType(
-            BuiltinTypesCatalogue.floatItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType INT_QM = new SequenceType(
-            BuiltinTypesCatalogue.intItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType STRING_QM = new SequenceType(
-            BuiltinTypesCatalogue.stringItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType ANYURI_QM = new SequenceType(
-            BuiltinTypesCatalogue.anyURIItem,
-            Arity.OneOrZero
-    );
-
-    public final static SequenceType EMPTY_SEQUENCE = new SequenceType();
-
-
     public SequenceType(ItemType itemType, Arity arity) {
         if (arity == Arity.Zero) {
             this.itemType = BuiltinTypesCatalogue.item;
@@ -514,6 +346,9 @@ public class SequenceType implements Serializable {
         }
         // if not found in cache, create the sequence type on the fly, cache it and return
         switch (userFriendlyName) {
+            case "()":
+                st = new SequenceType();
+                break;
             case "item":
                 st = new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One);
                 break;
@@ -565,6 +400,9 @@ public class SequenceType implements Serializable {
             case "string*":
                 st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.ZeroOrMore);
                 break;
+            case "string+":
+                st = new SequenceType(BuiltinTypesCatalogue.stringItem, Arity.OneOrMore);
+                break;
             case "integer":
                 st = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One);
                 break;
@@ -573,6 +411,9 @@ public class SequenceType implements Serializable {
                 break;
             case "integer*":
                 st = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "integer+":
+                st = new SequenceType(BuiltinTypesCatalogue.integerItem, Arity.OneOrMore);
                 break;
             case "numeric?":
                 st = new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.OneOrZero);
@@ -645,6 +486,12 @@ public class SequenceType implements Serializable {
                 break;
             case "anyURI":
                 st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.One);
+                break;
+            case "anyURI+":
+                st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, Arity.OneOrMore);
+                break;
+            case "anyURI*":
+                st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, Arity.ZeroOrMore);
                 break;
             case "anyURI?":
                 st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.OneOrZero);
@@ -779,6 +626,11 @@ public class SequenceType implements Serializable {
             case "map+":
                 st = new SequenceType(BuiltinTypesCatalogue.mapItem, Arity.OneOrMore);
                 break;
+            case "function":
+                st = new SequenceType(
+                        BuiltinTypesCatalogue.anyFunctionItem,
+                        Arity.One
+                );
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }

@@ -179,7 +179,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             RuntimeIterator indexIterator = this.functionArguments.get(0);
             // Apply basic type promotion for the index if static type is known and not item()*
             SequenceType indexType = indexIterator.getStaticType();
-            if (indexType != null && !indexType.equals(SequenceType.ITEM_STAR)) {
+            if (indexType != null && !indexType.equals(SequenceType.createSequenceType("item*"))) {
                 RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
                         getConfiguration(),
                         indexType,
@@ -195,7 +195,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             }
             RuntimeStaticContext staticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -222,7 +222,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             RuntimeIterator keyIterator = this.functionArguments.get(0);
             RuntimeStaticContext staticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );

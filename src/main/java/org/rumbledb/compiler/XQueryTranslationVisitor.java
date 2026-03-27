@@ -157,6 +157,8 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
+import static org.rumbledb.types.SequenceType.createSequenceType;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -169,9 +171,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -238,7 +237,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     new VariableDeclaration(
                             Name.CONTEXT_ITEM,
                             true,
-                            SequenceType.ITEM,
+                            SequenceType.createSequenceType("item"),
                             null,
                             null,
                             createMetadataFromContext(ctx)
@@ -533,7 +532,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false, false);
-                paramType = ITEM_STAR;
+                paramType = createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -544,7 +543,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1960,7 +1959,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
         ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
@@ -1986,7 +1985,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
 
         ItemType itemType = processItemType(ctx.item);
@@ -2167,13 +2166,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitInlineFunctionExpr(XQueryParser.InlineFunctionExprContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.ITEM_STAR;
+        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false, false);
-                paramType = SequenceType.ITEM_STAR;
+                paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -2184,7 +2183,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }

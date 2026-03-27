@@ -201,7 +201,7 @@ public class MapItemType implements ItemType {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            if (!this.valueSequenceType.equals(SequenceType.ITEM_STAR)) {
+            if (!this.valueSequenceType.equals(SequenceType.createSequenceType("item*"))) {
                 throw new InvalidSchemaException(
                         "Primitive map(*) must use item* for values, got: " + this.valueSequenceType,
                         ExceptionMetadata.EMPTY_METADATA
