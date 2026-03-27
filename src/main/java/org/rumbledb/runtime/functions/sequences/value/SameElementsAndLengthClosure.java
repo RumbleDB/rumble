@@ -38,7 +38,7 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
     public Iterator<Boolean> call(Iterator<Item> iterator1, Iterator<Item> iterator2) throws Exception {
         List<Boolean> list = new ArrayList<>();
         while (iterator1.hasNext() && iterator2.hasNext()) {
-            if (!DeepEqualComparison.deepEqualItems(iterator1.next(), iterator2.next())) {
+            if (!(iterator1.next().equals(iterator2.next()))) {
                 list.add(true);
                 return list.iterator();
             }
@@ -48,4 +48,4 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
         }
         return list.iterator();
     }
-}
+};
