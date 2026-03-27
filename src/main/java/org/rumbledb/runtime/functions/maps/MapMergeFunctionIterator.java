@@ -231,7 +231,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         }
 
         return ItemFactory.getInstance()
-            .createObjectOrMapItem(finalKeyValuePairs, metadata, false);
+            .createMapItem(finalKeyValuePairs, metadata, false);
     }
 
     /**

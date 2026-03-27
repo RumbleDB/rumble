@@ -80,7 +80,7 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         this.valueIterator.materialize(dynamicContext, valueSequence);
 
         return ItemFactory.getInstance()
-            .createObjectOrMapItem(
+            .createMapItem(
                 Collections.singletonMap(key, valueSequence),
                 getMetadata(),
                 false

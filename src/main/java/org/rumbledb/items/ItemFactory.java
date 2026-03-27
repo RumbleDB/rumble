@@ -292,32 +292,6 @@ public class ItemFactory {
 
     public Item createMapItem(
             List<Item> keys,
-            List<List<Item>> valueSequences,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
-        Item result = new MapItem(keys, valueSequences, itemMetadata);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
-    }
-
-    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
-        Item result = new MapItem(keyValuePairs, itemMetadata);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
-    }
-
-
-    public Item createObjectOrMapItem(
-            List<Item> keys,
             List<List<Item>> values,
             ExceptionMetadata itemMetadata,
             boolean mutable
@@ -325,15 +299,22 @@ public class ItemFactory {
         boolean allKeysString = keys.stream().allMatch(key -> key.isString());
         boolean allValuesSingletons = values.stream().allMatch(value -> value.size() == 1);
         if (allKeysString && allValuesSingletons) {
+            // optimization: create an object item
             List<String> stringKeys = keys.stream().map(key -> key.getStringValue()).collect(Collectors.toList());
             List<Item> valuesList = values.stream().map(value -> value.get(0)).collect(Collectors.toList());
             return createObjectItem(stringKeys, valuesList, itemMetadata, mutable);
         } else {
-            return createMapItem(keys, values, itemMetadata, mutable);
+            Item result = new MapItem(keys, values, itemMetadata);
+            if (mutable) {
+                result.setMutabilityLevel(0);
+            } else {
+                result.setMutabilityLevel(-1);
+            }
+            return result;
         }
     }
 
-    public Item createObjectOrMapItem(
+    public Item createMapItem(
             Map<Item, List<Item>> keyValuePairs,
             ExceptionMetadata itemMetadata,
             boolean mutable
@@ -341,13 +322,20 @@ public class ItemFactory {
         boolean allKeysString = keyValuePairs.keySet().stream().allMatch(key -> key.isString());
         boolean allValuesSingletons = keyValuePairs.values().stream().allMatch(list -> list.size() == 1);
         if (allKeysString && allValuesSingletons) {
+            // optimization: create an object item
             Map<String, List<Item>> stringKeyValuePairs = new HashMap<>();
             for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
                 stringKeyValuePairs.put(entry.getKey().getStringValue(), entry.getValue());
             }
             return createObjectItem(stringKeyValuePairs, mutable);
         } else {
-            return createMapItem(keyValuePairs, itemMetadata, mutable);
+            Item result = new MapItem(keyValuePairs, itemMetadata);
+            if (mutable) {
+                result.setMutabilityLevel(0);
+            } else {
+                result.setMutabilityLevel(-1);
+            }
+            return result;
         }
     }
 
