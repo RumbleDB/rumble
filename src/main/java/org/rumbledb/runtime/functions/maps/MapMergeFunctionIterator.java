@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -76,41 +77,128 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         REJECT
     }
 
-    private static class AccumulatorEntry {
+    /**
+     * Hash/equals wrapper compatible with {@code op:same-key}.
+     *
+     * <p>Requirement: if {@code MapAtomicSameKey.sameKey(a, b)} then {@code hash(a) == hash(b)}.
+     * Collisions are fine; they only affect performance, not correctness.
+     */
+    private static final class SameKeyWrapper {
         private final Item key;
-        private List<Item> valueSequence;
+        private final int hash;
 
-        private AccumulatorEntry(Item key, List<Item> valueSequence) {
+        private SameKeyWrapper(Item key) {
             this.key = key;
-            this.valueSequence = valueSequence;
+            // Must satisfy: if op:same-key(a,b) then hash(a) == hash(b), otherwise HashMap may miss duplicates.
+            // Keep hashing minimal and focused on common key families (string-like + numeric).
+            if (key == null || !key.isAtomic()) {
+                this.hash = 0;
+            } else if (key.isString() || key.isAnyURI() || key.isUntypedAtomic()) {
+                String s = key.getStringValue();
+                this.hash = s == null ? 0 : s.hashCode();
+            } else if (key.isNumeric()) {
+                this.hash = numericSameKeyHash(key);
+            } else if (
+                key.isDate()
+                    || key.isTime()
+                    || key.isDateTime()
+                    || key.isGYear()
+                    || key.isGYearMonth()
+                    || key.isGMonth()
+                    || key.isGMonthDay()
+                    || key.isGDay()
+            ) {
+                this.hash = 0x47; // 'G' (gregorian family)
+            } else if (
+                key.isBoolean()
+                    || key.isHexBinary()
+                    || key.isBase64Binary()
+                    || key.isDuration()
+                    || key.isYearMonthDuration()
+                    || key.isDayTimeDuration()
+            ) {
+                this.hash = 0x4D; // 'M' (misc deep-equal family)
+            } else {
+                this.hash = 0x4F; // 'O' (other)
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return this.hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof SameKeyWrapper)) {
+                return false;
+            }
+            SameKeyWrapper other = (SameKeyWrapper) o;
+            return MapAtomicSameKey.sameKey(this.key, other.key);
+        }
+
+        private static int numericSameKeyHash(Item k) {
+            // Mirror MapAtomicSameKey.sameNumericKey special cases and decimal compare semantics.
+            if ((k.isFloat() && Float.isNaN(k.getFloatValue()))
+                || (k.isDouble() && Double.isNaN(k.getDoubleValue()))) {
+                return 0x4E614E; // 'NaN'
+            }
+            if (k.isDouble()) {
+                double d = k.getDoubleValue();
+                if (d == Double.POSITIVE_INFINITY) {
+                    return 0x2B494E46; // '+INF'
+                }
+                if (d == Double.NEGATIVE_INFINITY) {
+                    return 0x2D494E46; // '-INF'
+                }
+            }
+            if (k.isFloat()) {
+                float f = k.getFloatValue();
+                if (f == Float.POSITIVE_INFINITY) {
+                    return 0x2B494E46; // '+INF'
+                }
+                if (f == Float.NEGATIVE_INFINITY) {
+                    return 0x2D494E46; // '-INF'
+                }
+            }
+            try {
+                BigDecimal d = toExactDecimalKeyForHash(k);
+                if (d.signum() == 0) {
+                    return 0; // all zeros
+                }
+                BigDecimal normalized = d.stripTrailingZeros();
+                return normalized.toPlainString().hashCode();
+            } catch (Exception e) {
+                return 1;
+            }
+        }
+
+        private static BigDecimal toExactDecimalKeyForHash(Item k) {
+            if (k.isDecimal()) {
+                return k.getDecimalValue();
+            }
+            if (k.isInteger()) {
+                return new BigDecimal(k.getIntegerValue());
+            }
+            if (k.isInt()) {
+                return BigDecimal.valueOf(k.getIntValue());
+            }
+            if (k.isDouble()) {
+                return BigDecimal.valueOf(k.getDoubleValue());
+            }
+            if (k.isFloat()) {
+                return new BigDecimal(Float.toString(k.getFloatValue()));
+            }
+            return k.castToDecimalValue();
         }
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         ExceptionMetadata metadata = getMetadata();
-
-        // 1. Materialize $maps as item()* and collect only map items (FO says maps(*)*).
-        List<Item> allMaps = new ArrayList<>();
-        this.mapsIterator.materialize(context, allMaps);
-        List<Item> maps = new ArrayList<>();
-        for (Item i : allMaps) {
-            if (i.isMap()) {
-                maps.add(i);
-            } else {
-                // XPTY0004 for non-map members in $maps, per map:* convention.
-                throw new UnexpectedTypeException(
-                        "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].",
-                        metadata
-                );
-            }
-        }
-
-        // Empty input -> empty map.
-        if (maps.isEmpty()) {
-            return ItemFactory.getInstance()
-                .createMapItem(new HashMap<>(), metadata, false);
-        }
 
         // 2. Resolve options and duplicates policy.
         DuplicatePolicy policy = DuplicatePolicy.USE_FIRST; // spec default
@@ -162,51 +250,50 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             }
         }
 
-        // 3. Implement fold-left over maps with a hash-map accumulator.
-        // We bucket keys by broad op:same-key families and resolve exact duplicates within each bucket
-        // using MapAtomicSameKey.sameKey(...).
-        Map<String, List<AccumulatorEntry>> accumulator = new HashMap<>();
-
-        for (Item mapItem : maps) {
-            // For each map $B: fold over its keys.
-            List<Item> bKeys = mapItem.getItemKeys();
-            for (Item bKey : bKeys) {
-                List<Item> bSeq = mapItem.getSequenceByKey(bKey);
-                if (bSeq == null) {
-                    bSeq = new ArrayList<>();
+        // 3. Implement fold-left over maps with a hashed same-key accumulator.
+        // Streaming consumption avoids materializing huge sequences of maps.
+        Map<SameKeyWrapper, List<Item>> accumulator = new HashMap<>();
+        boolean sawAnyMap = false;
+        this.mapsIterator.open(context);
+        try {
+            while (this.mapsIterator.hasNext()) {
+                Item mapItem = this.mapsIterator.next();
+                if (!mapItem.isMap()) {
+                    throw new UnexpectedTypeException(
+                            "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].",
+                            metadata
+                    );
                 }
+                sawAnyMap = true;
+                List<Item> bKeys = mapItem.getItemKeys();
+                for (Item bKey : bKeys) {
+                    List<Item> bSeq = mapItem.getSequenceByKey(bKey);
+                    if (bSeq == null) {
+                        bSeq = new ArrayList<>();
+                    }
 
-                String bucketId = getBucketId(bKey);
-                List<AccumulatorEntry> bucket = accumulator.computeIfAbsent(bucketId, k -> new ArrayList<>());
-                AccumulatorEntry existing = findExistingEntry(bucket, bKey);
+                    SameKeyWrapper lookup = new SameKeyWrapper(bKey);
+                    List<Item> existingSeq = accumulator.get(lookup);
+                    if (existingSeq == null) {
+                        accumulator.put(lookup, new ArrayList<>(bSeq));
+                        continue;
+                    }
 
-                if (existing == null) {
-                    // No duplicate -> behave like map:put ($A, $k, $B($k)).
-                    bucket.add(new AccumulatorEntry(bKey, new ArrayList<>(bSeq)));
-                } else {
-                    // Duplicate key: apply duplicates handler.
-                    List<Item> aSeq = existing.valueSequence;
                     switch (policy) {
                         case USE_FIRST:
-                            // Keep existing A(k); ignore B(k).
                             break;
                         case USE_LAST:
-                            // Replace with B(k).
-                            existing.valueSequence = new ArrayList<>(bSeq);
+                            accumulator.put(lookup, new ArrayList<>(bSeq));
                             break;
                         case USE_ANY:
-                            // Implementation choice; we simply keep the existing A(k).
                             break;
                         case COMBINE:
-                            // Concatenate in map order: A(k), then B(k).
-                            List<Item> combined = new ArrayList<>(aSeq.size() + bSeq.size());
-                            combined.addAll(aSeq);
+                            List<Item> combined = new ArrayList<>(existingSeq.size() + bSeq.size());
+                            combined.addAll(existingSeq);
                             combined.addAll(bSeq);
-                            existing.valueSequence = combined;
+                            accumulator.put(lookup, combined);
                             break;
                         case REJECT:
-                            // FOJS0003: duplicates not allowed. We re-use UnexpectedTypeException to
-                            // surface the correct FOJS0003 code through the error mapping layer.
                             throw new UnexpectedTypeException(
                                     "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
                                     metadata
@@ -216,63 +303,27 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                     }
                 }
             }
+        } finally {
+            this.mapsIterator.close();
         }
 
-        // 4. Build final MapItem from accumulator via map overload to avoid
-        // duplicate-key verification in MapItem(List, List, ...).
+        // Empty input -> empty map.
+        if (!sawAnyMap) {
+            return ItemFactory.getInstance()
+                .createMapItem(new HashMap<>(), metadata, false);
+        }
+
+        // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
         Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-        for (List<AccumulatorEntry> bucket : accumulator.values()) {
-            for (AccumulatorEntry entry : bucket) {
-                finalKeyValuePairs.put(
-                    entry.key,
-                    entry.valueSequence == null ? new ArrayList<>() : entry.valueSequence
-                );
-            }
+        for (Map.Entry<SameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
+            finalKeyValuePairs.put(
+                entry.getKey().key,
+                entry.getValue() == null ? new ArrayList<>() : entry.getValue()
+            );
         }
 
         return ItemFactory.getInstance()
             .createMapItem(finalKeyValuePairs, metadata, false);
-    }
-
-    /**
-     * Broad bucket for likely op:same-key candidates.
-     * We still always verify using MapAtomicSameKey.sameKey(...).
-     */
-    private String getBucketId(Item key) {
-        if (key.isString() || key.isAnyURI() || key.isUntypedAtomic()) {
-            return "string-like";
-        }
-        if (key.isNumeric()) {
-            return "numeric";
-        }
-        if (
-            key.isDate()
-                || key.isTime()
-                || key.isDateTime()
-                || key.isGYear()
-                || key.isGYearMonth()
-                || key.isGMonth()
-                || key.isGMonthDay()
-                || key.isGDay()
-        ) {
-            return "gregorian";
-        }
-        if (key.isBoolean() || key.isHexBinary() || key.isBase64Binary()) {
-            return "misc-deep-equal";
-        }
-        if (key.isDuration() || key.isYearMonthDuration() || key.isDayTimeDuration()) {
-            return "misc-deep-equal";
-        }
-        return "other";
-    }
-
-    private AccumulatorEntry findExistingEntry(List<AccumulatorEntry> bucket, Item lookup) {
-        for (AccumulatorEntry entry : bucket) {
-            if (MapAtomicSameKey.sameKey(entry.key, lookup)) {
-                return entry;
-            }
-        }
-        return null;
     }
 }
 
