@@ -78,18 +78,14 @@ public class MapItem implements Item {
     private void putSequenceByKeyInternal(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
         validateAtomicKey(key);
         if (findKeyPosition(key) != -1) {
-            throw new DuplicateObjectKeyException(key.getStringValue(), metadata);
+            throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
         this.keys.add(key);
         this.valueSequences.add(valueSequence == null ? new ArrayList<>() : valueSequence);
     }
 
     private boolean keysMatch(Item left, Item right) {
-        if (left == null || right == null) {
-            return false;
-        }
-        return left.getDynamicType().toString().equals(right.getDynamicType().toString())
-            && left.getStringValue().equals(right.getStringValue());
+        return MapAtomicSameKey.sameKey(left, right);
     }
 
     private int findKeyPosition(Item key) {
@@ -103,6 +99,11 @@ public class MapItem implements Item {
 
     @Override
     public boolean isObject() {
+        return true;
+    }
+
+    @Override
+    public boolean isMap() {
         return true;
     }
 

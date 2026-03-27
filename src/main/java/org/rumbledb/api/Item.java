@@ -61,6 +61,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an XDM map (not a JSON object).
+     *
+     * @return true if it is a map, false otherwise.
+     */
+    default boolean isMap() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is a function.
      *
      * @return true if it is a function, false otherwise

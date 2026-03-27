@@ -154,6 +154,11 @@ public class ObjectItem implements Item {
     }
 
     @Override
+    public boolean isMap() {
+        return false;
+    }
+
+    @Override
     public boolean allowsNonSingletons() {
         return false;
     }

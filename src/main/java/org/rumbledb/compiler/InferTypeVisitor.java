@@ -71,6 +71,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -469,6 +470,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
         }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitMapConstructor(MapConstructorExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
         return argument;
     }
 
