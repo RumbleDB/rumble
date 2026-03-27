@@ -121,7 +121,10 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator buildCallbackIteratorForKey(Item key) {
         List<Item> valueSequence = this.mapItem.getSequenceByKey(key);
         RuntimeIterator keyArgumentIterator = new ConstantRuntimeIterator(key, this.keyArgumentContext);
-        RuntimeIterator valueArgumentIterator = new ConstantSequenceRuntimeIterator(valueSequence, this.valueArgumentContext);
+        RuntimeIterator valueArgumentIterator = new ConstantSequenceRuntimeIterator(
+                valueSequence,
+                this.valueArgumentContext
+        );
         List<RuntimeIterator> callbackArguments = new ArrayList<>();
         callbackArguments.add(keyArgumentIterator);
         callbackArguments.add(valueArgumentIterator);

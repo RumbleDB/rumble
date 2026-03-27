@@ -113,7 +113,9 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
                     } else if (valueSequence.size() == 1) {
                         foundMembers.add(valueSequence.get(0));
                     } else {
-                        foundMembers.add(ItemFactory.getInstance().createArrayItem(new ArrayList<>(valueSequence), false));
+                        foundMembers.add(
+                            ItemFactory.getInstance().createArrayItem(new ArrayList<>(valueSequence), false)
+                        );
                     }
                 }
                 if (valueSequence != null && !valueSequence.isEmpty()) {
