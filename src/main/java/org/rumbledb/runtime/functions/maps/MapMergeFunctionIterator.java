@@ -7,7 +7,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.MapAtomicSameKey;
+import org.rumbledb.items.MapSameKeyWrapper;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.math.BigDecimal;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -77,128 +76,6 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         REJECT
     }
 
-    /**
-     * Hash/equals wrapper compatible with {@code op:same-key}.
-     *
-     * <p>
-     * Requirement: if {@code MapAtomicSameKey.sameKey(a, b)} then {@code hash(a) == hash(b)}.
-     * Collisions are fine; they only affect performance, not correctness.
-     */
-    private static final class SameKeyWrapper {
-        private final Item key;
-        private final int hash;
-
-        private SameKeyWrapper(Item key) {
-            this.key = key;
-            // Must satisfy: if op:same-key(a,b) then hash(a) == hash(b), otherwise HashMap may miss duplicates.
-            // Keep hashing minimal and focused on common key families (string-like + numeric).
-            if (key == null || !key.isAtomic()) {
-                this.hash = 0;
-            } else if (key.isString() || key.isAnyURI() || key.isUntypedAtomic()) {
-                String s = key.getStringValue();
-                this.hash = s == null ? 0 : s.hashCode();
-            } else if (key.isNumeric()) {
-                this.hash = numericSameKeyHash(key);
-            } else if (
-                key.isDate()
-                    || key.isTime()
-                    || key.isDateTime()
-                    || key.isGYear()
-                    || key.isGYearMonth()
-                    || key.isGMonth()
-                    || key.isGMonthDay()
-                    || key.isGDay()
-            ) {
-                this.hash = 0x47; // 'G' (gregorian family)
-            } else if (
-                key.isBoolean()
-                    || key.isHexBinary()
-                    || key.isBase64Binary()
-                    || key.isDuration()
-                    || key.isYearMonthDuration()
-                    || key.isDayTimeDuration()
-            ) {
-                this.hash = 0x4D; // 'M' (misc deep-equal family)
-            } else {
-                this.hash = 0x4F; // 'O' (other)
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return this.hash;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof SameKeyWrapper)) {
-                return false;
-            }
-            SameKeyWrapper other = (SameKeyWrapper) o;
-            return MapAtomicSameKey.sameKey(this.key, other.key);
-        }
-
-        private static int numericSameKeyHash(Item k) {
-            // Mirror MapAtomicSameKey.sameNumericKey special cases and decimal compare semantics.
-            if (
-                (k.isFloat() && Float.isNaN(k.getFloatValue()))
-                    || (k.isDouble() && Double.isNaN(k.getDoubleValue()))
-            ) {
-                return 0x4E614E; // 'NaN'
-            }
-            if (k.isDouble()) {
-                double d = k.getDoubleValue();
-                if (d == Double.POSITIVE_INFINITY) {
-                    return 0x2B494E46; // '+INF'
-                }
-                if (d == Double.NEGATIVE_INFINITY) {
-                    return 0x2D494E46; // '-INF'
-                }
-            }
-            if (k.isFloat()) {
-                float f = k.getFloatValue();
-                if (f == Float.POSITIVE_INFINITY) {
-                    return 0x2B494E46; // '+INF'
-                }
-                if (f == Float.NEGATIVE_INFINITY) {
-                    return 0x2D494E46; // '-INF'
-                }
-            }
-            try {
-                BigDecimal d = toExactDecimalKeyForHash(k);
-                if (d.signum() == 0) {
-                    return 0; // all zeros
-                }
-                BigDecimal normalized = d.stripTrailingZeros();
-                return normalized.toPlainString().hashCode();
-            } catch (Exception e) {
-                return 1;
-            }
-        }
-
-        private static BigDecimal toExactDecimalKeyForHash(Item k) {
-            if (k.isDecimal()) {
-                return k.getDecimalValue();
-            }
-            if (k.isInteger()) {
-                return new BigDecimal(k.getIntegerValue());
-            }
-            if (k.isInt()) {
-                return BigDecimal.valueOf(k.getIntValue());
-            }
-            if (k.isDouble()) {
-                return BigDecimal.valueOf(k.getDoubleValue());
-            }
-            if (k.isFloat()) {
-                return new BigDecimal(Float.toString(k.getFloatValue()));
-            }
-            return k.castToDecimalValue();
-        }
-    }
-
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         ExceptionMetadata metadata = getMetadata();
@@ -255,7 +132,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         // 3. Implement fold-left over maps with a hashed same-key accumulator.
         // Streaming consumption avoids materializing huge sequences of maps.
-        Map<SameKeyWrapper, List<Item>> accumulator = new HashMap<>();
+        Map<MapSameKeyWrapper, List<Item>> accumulator = new HashMap<>();
         boolean sawAnyMap = false;
         this.mapsIterator.open(context);
         try {
@@ -275,7 +152,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         bSeq = new ArrayList<>();
                     }
 
-                    SameKeyWrapper lookup = new SameKeyWrapper(bKey);
+                    MapSameKeyWrapper lookup = new MapSameKeyWrapper(bKey);
                     List<Item> existingSeq = accumulator.get(lookup);
                     if (existingSeq == null) {
                         accumulator.put(lookup, new ArrayList<>(bSeq));
@@ -318,9 +195,9 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
         Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-        for (Map.Entry<SameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
+        for (Map.Entry<MapSameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
             finalKeyValuePairs.put(
-                entry.getKey().key,
+                entry.getKey().getKey(),
                 entry.getValue() == null ? new ArrayList<>() : entry.getValue()
             );
         }

@@ -44,6 +44,8 @@ public class ObjectItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> values;
     private List<String> keys;
+    /** String key → index in {@link #keys} / {@link #values}; rebuilt after remove and Kryo read. */
+    private Map<String, Integer> keyStringToIndex;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -55,6 +57,7 @@ public class ObjectItem implements Item {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
+        this.keyStringToIndex = new HashMap<>();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -68,6 +71,8 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
+        this.keyStringToIndex = new HashMap<>();
+        rebuildKeyStringIndex();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -136,12 +141,25 @@ public class ObjectItem implements Item {
 
         this.keys = keyList;
         this.values = valueList;
+        this.keyStringToIndex = new HashMap<>();
+        rebuildKeyStringIndex();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
         this.location = "null";
         this.collection = null;
         this.topLevelOrder = 0.0;
+    }
+
+    private void rebuildKeyStringIndex() {
+        if (this.keyStringToIndex == null) {
+            this.keyStringToIndex = new HashMap<>();
+        } else {
+            this.keyStringToIndex.clear();
+        }
+        for (int i = 0; i < this.keys.size(); i++) {
+            this.keyStringToIndex.put(this.keys.get(i), Integer.valueOf(i));
+        }
     }
 
     // region maps
@@ -196,11 +214,14 @@ public class ObjectItem implements Item {
 
     @Override
     public Item getItemByKey(String key) {
-        if (this.keys.contains(key)) {
-            return this.values.get(this.keys.indexOf(key));
-        } else {
+        if (this.keyStringToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        Integer idx = this.keyStringToIndex.get(key);
+        if (idx == null) {
             return null;
         }
+        return this.values.get(idx.intValue());
     }
 
     @Override
@@ -230,9 +251,16 @@ public class ObjectItem implements Item {
 
     @Override
     public void putItemByKey(String key, Item value) {
+        if (this.keyStringToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        if (this.keyStringToIndex.containsKey(key)) {
+            throw new DuplicateObjectKeyException(key, ExceptionMetadata.EMPTY_METADATA);
+        }
+        int newIndex = this.keys.size();
         this.keys.add(key);
         this.values.add(value);
-        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+        this.keyStringToIndex.put(key, Integer.valueOf(newIndex));
     }
 
     @Override
@@ -276,11 +304,17 @@ public class ObjectItem implements Item {
 
     @Override
     public void removeItemByKey(String key) {
-        if (this.keys.contains(key)) {
-            int index = this.keys.indexOf(key);
-            this.values.remove(index);
-            this.keys.remove(index);
+        if (this.keyStringToIndex == null) {
+            rebuildKeyStringIndex();
         }
+        Integer idx = this.keyStringToIndex.remove(key);
+        if (idx == null) {
+            return;
+        }
+        int index = idx.intValue();
+        this.values.remove(index);
+        this.keys.remove(index);
+        rebuildKeyStringIndex();
     }
 
     @Override
@@ -335,6 +369,7 @@ public class ObjectItem implements Item {
         this.location = kryo.readObject(input, String.class);
         this.topLevelOrder = input.readDouble();
         this.collection = kryo.readObjectOrNull(input, Collection.class);
+        rebuildKeyStringIndex();
     }
 
     public int hashCode() {
@@ -456,7 +491,11 @@ public class ObjectItem implements Item {
         for (int i = 0; i < keys.length; i++) {
             String key = keys[i];
             FieldDescriptor field = content.get(key);
-            int keyIndex = this.keys.indexOf(key);
+            if (this.keyStringToIndex == null) {
+                rebuildKeyStringIndex();
+            }
+            Integer ki = this.keyStringToIndex.get(key);
+            int keyIndex = ki == null ? -1 : ki.intValue();
 
             sb.append("\"");
             sb.append(key);

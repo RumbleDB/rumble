@@ -46,6 +46,10 @@ public class MapItem implements Item {
 
     private List<Item> keys;
     private List<List<Item>> valueSequences;
+    /**
+     * op:same-key index: position in {@link #keys} / {@link #valueSequences}. Rebuilt on remove and after Kryo read.
+     */
+    private Map<MapSameKeyWrapper, Integer> sameKeyIndex;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -56,6 +60,7 @@ public class MapItem implements Item {
     public MapItem() {
         this.keys = new ArrayList<>();
         this.valueSequences = new ArrayList<>();
+        this.sameKeyIndex = new HashMap<>();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -95,21 +100,35 @@ public class MapItem implements Item {
     }
 
     private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
+        int newIndex = this.keys.size();
         this.keys.add(key);
         this.valueSequences.add(valueSequence == null ? new ArrayList<>() : valueSequence);
+        if (this.sameKeyIndex == null) {
+            this.sameKeyIndex = new HashMap<>();
+        }
+        this.sameKeyIndex.put(new MapSameKeyWrapper(key), Integer.valueOf(newIndex));
     }
 
-    private boolean keysMatch(Item left, Item right) {
-        return MapAtomicSameKey.sameKey(left, right);
+    private void rebuildSameKeyIndex() {
+        if (this.sameKeyIndex == null) {
+            this.sameKeyIndex = new HashMap<>();
+        } else {
+            this.sameKeyIndex.clear();
+        }
+        for (int i = 0; i < this.keys.size(); i++) {
+            this.sameKeyIndex.put(new MapSameKeyWrapper(this.keys.get(i)), Integer.valueOf(i));
+        }
     }
 
     private int findKeyPosition(Item key) {
-        for (int i = 0; i < this.keys.size(); i++) {
-            if (keysMatch(this.keys.get(i), key)) {
-                return i;
-            }
+        if (key == null || !key.isAtomic()) {
+            return -1;
         }
-        return -1;
+        if (this.sameKeyIndex == null) {
+            rebuildSameKeyIndex();
+        }
+        Integer idx = this.sameKeyIndex.get(new MapSameKeyWrapper(key));
+        return idx == null ? -1 : idx.intValue();
     }
 
     // region maps
@@ -251,6 +270,7 @@ public class MapItem implements Item {
         }
         this.keys.remove(position);
         this.valueSequences.remove(position);
+        rebuildSameKeyIndex();
     }
 
     // endregion maps
@@ -278,6 +298,7 @@ public class MapItem implements Item {
         this.location = kryo.readObject(input, String.class);
         this.topLevelOrder = input.readDouble();
         this.collection = kryo.readObjectOrNull(input, Collection.class);
+        rebuildSameKeyIndex();
     }
 
     @Override
