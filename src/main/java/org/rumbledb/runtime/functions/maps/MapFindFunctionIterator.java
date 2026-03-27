@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * F&O 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
+ * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
 public class MapFindFunctionIterator extends HybridRuntimeIterator {
 

@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * F&O 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
+ * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
 public class MapForEachFunctionIterator extends HybridRuntimeIterator {
