@@ -148,15 +148,6 @@ public class LazyObjectItem implements Item {
         return result;
     }
 
-    @Override
-    public List<List<Item>> getSequences() {
-        List<List<Item>> result = new ArrayList<>();
-        for (Item value : getValues()) {
-            result.add(java.util.Collections.singletonList(value));
-        }
-        return result;
-    }
-
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
