@@ -85,6 +85,9 @@ public class FunctionItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
+        if (other.isMapItemType()) {
+            return anyFunctionItem;
+        }
         if (other.isFunctionItemType()) {
             return anyFunctionItem;
         }

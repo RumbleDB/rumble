@@ -476,7 +476,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitMapConstructor(MapConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.mapItem));
         return argument;
     }
 
@@ -1974,7 +1974,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("object*")) || mainType.isEmptySequence()) {
+        boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
+        boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
+        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
             throwStaticTypeException(
                 "Inferred type is empty sequence and this is not a CommaExpression",
                 ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
@@ -1987,6 +1989,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             : SequenceType.Arity.ZeroOrMore;
 
         ItemType inferredType = BuiltinTypesCatalogue.item;
+        if (mainType.getItemType().isMapItemType()) {
+            SequenceType mapValueType = mainType.getItemType().getMapValueSequenceType();
+            inferredType = mapValueType.getItemType();
+            inferredArity = mapValueType.getArity();
+        }
         // if we have a specific object type and a string literal as key try to perform better inference
         if (
             mainType.getItemType().isObjectItemType()
@@ -2030,7 +2037,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("object*")) || mainType.isEmptySequence()) {
+        boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
+        boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
+        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
             throwStaticTypeException(
                 "Inferred type is empty sequence and this is not a CommaExpression",
                 ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
@@ -2043,6 +2052,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             : SequenceType.Arity.ZeroOrMore;
 
         ItemType inferredType = BuiltinTypesCatalogue.item;
+        if (mainType.getItemType().isMapItemType()) {
+            SequenceType mapValueType = mainType.getItemType().getMapValueSequenceType();
+            inferredType = mapValueType.getItemType();
+            inferredArity = mapValueType.getArity();
+        }
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
         return argument;

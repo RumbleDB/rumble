@@ -727,6 +727,12 @@ public class BuiltinTypesCatalogue {
             null
     );
     public static final ItemType anyFunctionItem = new FunctionItemType(true);
+    public static final ItemType mapItem = new MapItemType(
+            Name.createVariableInDefaultTypeNamespace("map"),
+            anyFunctionItem,
+            atomicItem,
+            SequenceType.ITEM_STAR
+    );
 
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
@@ -764,6 +770,7 @@ public class BuiltinTypesCatalogue {
         numericItem,
         booleanItem,
         arrayItem,
+        mapItem,
         nullItem,
         JSONItem,
         durationItem,

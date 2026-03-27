@@ -761,6 +761,18 @@ public class SequenceType implements Serializable {
             case "unsignedByte?":
                 st = new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.OneOrZero);
                 break;
+            case "map":
+                st = new SequenceType(BuiltinTypesCatalogue.mapItem, SequenceType.Arity.One);
+                break;
+            case "map?":
+                st = new SequenceType(BuiltinTypesCatalogue.mapItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "map*":
+                st = new SequenceType(BuiltinTypesCatalogue.mapItem, Arity.ZeroOrMore);
+                break;
+            case "map+":
+                st = new SequenceType(BuiltinTypesCatalogue.mapItem, Arity.OneOrMore);
+                break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }

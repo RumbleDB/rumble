@@ -212,7 +212,7 @@ public class MapItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.objectItem;
+        return BuiltinTypesCatalogue.mapItem;
     }
 
     @Override
@@ -366,7 +366,7 @@ public class MapItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
+        throw new CannotAtomizeException("tried to atomize Map", ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
