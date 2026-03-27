@@ -76,6 +76,7 @@ import org.rumbledb.runtime.functions.maps.MapGetFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapMergeFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectAccumulateFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantPairsFunctionIterator;
@@ -2820,6 +2821,35 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*) as map(*).
+     */
+    static final BuiltinFunction map_merge_1 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "merge"
+        ),
+        "map*",
+        "map",
+        MapMergeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*, $options as map(*)) as map(*).
+     */
+    static final BuiltinFunction map_merge_2 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "merge"
+        ),
+        "map*",
+        "map",
+        "map",
+        MapMergeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C map:entry — F&O 3.1: map:entry($key as xs:anyAtomicType, $value as item()*) as map(*).
      */
     static final BuiltinFunction map_entry = createBuiltinFunction(
@@ -3547,6 +3577,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(keys.getIdentifier(), keys);
         builtinFunctions.put(members.getIdentifier(), members);
         builtinFunctions.put(map_get.getIdentifier(), map_get);
+        builtinFunctions.put(map_merge_1.getIdentifier(), map_merge_1);
+        builtinFunctions.put(map_merge_2.getIdentifier(), map_merge_2);
         builtinFunctions.put(map_entry.getIdentifier(), map_entry);
         builtinFunctions.put(map_keys.getIdentifier(), map_keys);
         builtinFunctions.put(map_size.getIdentifier(), map_size);

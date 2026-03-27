@@ -56,6 +56,10 @@ public enum ErrorCode {
 
     DuplicatePairNameErrorCode("XQDY0137"),
 
+    // JSON-related errors (FOJS000x).
+    DuplicateJSONKeyErrorCode("FOJS0003"),
+    InvalidOptionErrorCode("FOJS0005"),
+
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),
 
