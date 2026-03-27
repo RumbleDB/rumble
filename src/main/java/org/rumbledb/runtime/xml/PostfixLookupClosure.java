@@ -80,13 +80,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
             }
         } else if (arg0.isArray()) {
             if (this.wildcard) {
-                if (!arg0.allowsNonSingletons()) {
-                    results = arg0.getItems();
-                } else {
-                    for (java.util.List<Item> member : arg0.getSequences()) {
-                        results.addAll(member);
-                    }
-                }
+                results = arg0.getItems();
             } else {
                 for (Item key : this.keys) {
                     if (key.isString()) {
@@ -97,11 +91,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     }
                     if (key.isNumeric()) {
                         int idx = key.castToIntValue() - 1;
-                        if (!arg0.allowsNonSingletons()) {
-                            results.add(arg0.getItemAt(idx));
-                        } else {
-                            results.addAll(arg0.getSequenceAt(idx));
-                        }
+                        results.add(arg0.getItemAt(idx));
                     }
                 }
 

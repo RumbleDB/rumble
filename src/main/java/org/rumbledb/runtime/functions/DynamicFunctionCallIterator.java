@@ -35,7 +35,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.types.SequenceType;
@@ -162,49 +161,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     "Dynamic function calls can only be performed on functions, arrays, or maps.",
                     getMetadata()
             );
-        }
-        if (this.functionItem.isArray() && !this.functionItem.isFunction()) {
-            if (this.isPartialApplication) {
-                throw new UnexpectedTypeException(
-                        "Partial application is not supported when calling arrays as functions.",
-                        getMetadata()
-                );
-            }
-            if (this.functionArguments.size() != 1 || this.functionArguments.get(0) == null) {
-                throw new UnexpectedTypeException(
-                        "Array function calls must have exactly one argument.",
-                        getMetadata()
-                );
-            }
-            RuntimeIterator indexIterator = this.functionArguments.get(0);
-            // Apply basic type promotion for the index if static type is known and not item()*
-            SequenceType indexType = indexIterator.getStaticType();
-            if (indexType != null && !indexType.equals(SequenceType.createSequenceType("item*"))) {
-                RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
-                        getConfiguration(),
-                        indexType,
-                        ExecutionMode.LOCAL,
-                        indexIterator.getMetadata()
-                );
-                indexIterator = new AtMostOneItemTypePromotionIterator(
-                        indexIterator,
-                        indexType,
-                        "Invalid argument for array function call. ",
-                        runtimeStaticContext
-                );
-            }
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
-            this.functionCallIterator = new ArrayFunctionCallIterator(
-                    this.functionItem,
-                    indexIterator,
-                    staticContext
-            );
-            return;
         }
         if (this.functionItem.isMap()) {
             if (this.isPartialApplication) {

@@ -140,11 +140,6 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public boolean allowsNonSingletons() {
-        return false;
-    }
-
-    @Override
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>(this.keys.size());
         for (String key : this.keys) {

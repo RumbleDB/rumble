@@ -293,11 +293,6 @@ public class ObjectItem implements Item {
 
     // endregion maps
 
-    @Override
-    public boolean allowsNonSingletons() {
-        return false;
-    }
-
     /**
      * Checks for duplicate keys in the given list of keys.
      *
