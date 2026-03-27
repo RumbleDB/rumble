@@ -2174,6 +2174,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
             return argument;
         }
+        if (type.isMapItemType()) {
+            expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
+            return argument;
+        }
         if (!type.isFunctionItemType()) {
             expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
 

@@ -52,6 +52,8 @@ public enum ErrorCode {
     InvalidReplacementStringErrorCode("FORX0004"),
 
     FunctionAtomizationErrorCode("FOTY0013"),
+    /** fn:string (and related) when applied to a map, array, or function item */
+    FunctionItemStringValueErrorCode("FOTY0014"),
 
 
     DuplicatePairNameErrorCode("XQDY0137"),
