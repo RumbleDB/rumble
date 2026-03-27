@@ -77,6 +77,7 @@ import org.rumbledb.runtime.functions.maps.MapContainsFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapPutFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapRemoveFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapFindFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapMergeFunctionIterator;
@@ -2944,6 +2945,21 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C map:find -- F&O 3.1: map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
+     */
+    static final BuiltinFunction map_find_2 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "find"
+        ),
+        "item*",
+        "anyAtomicType",
+        "array",
+        MapFindFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that returns the JSON null
      */
     static final BuiltinFunction null_function = createBuiltinFunction(
@@ -3634,6 +3650,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(map_entry.getIdentifier(), map_entry);
         builtinFunctions.put(map_keys.getIdentifier(), map_keys);
         builtinFunctions.put(map_size.getIdentifier(), map_size);
+        builtinFunctions.put(map_find_2.getIdentifier(), map_find_2);
         builtinFunctions.put(null_function.getIdentifier(), null_function);
         builtinFunctions.put(size.getIdentifier(), size);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
