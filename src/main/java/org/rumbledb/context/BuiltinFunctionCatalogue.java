@@ -78,6 +78,7 @@ import org.rumbledb.runtime.functions.maps.MapPutFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapRemoveFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapFindFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapForEachFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapMergeFunctionIterator;
@@ -2945,6 +2946,22 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C map:for-each — F&O 3.1:
+     * map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*) as item()*.
+     */
+    static final BuiltinFunction map_for_each = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "for-each"
+        ),
+        "map",
+        "function",
+        "item*",
+        MapForEachFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C map:find -- F&O 3.1: map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
      */
     static final BuiltinFunction map_find_2 = createBuiltinFunction(
@@ -3650,6 +3667,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(map_entry.getIdentifier(), map_entry);
         builtinFunctions.put(map_keys.getIdentifier(), map_keys);
         builtinFunctions.put(map_size.getIdentifier(), map_size);
+        builtinFunctions.put(map_for_each.getIdentifier(), map_for_each);
         builtinFunctions.put(map_find_2.getIdentifier(), map_find_2);
         builtinFunctions.put(null_function.getIdentifier(), null_function);
         builtinFunctions.put(size.getIdentifier(), size);
