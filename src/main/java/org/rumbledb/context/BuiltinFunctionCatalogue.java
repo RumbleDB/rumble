@@ -73,6 +73,7 @@ import org.rumbledb.runtime.functions.numerics.trigonometric.SinFunctionIterator
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinhFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapGetFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapContainsFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
 import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
@@ -2821,6 +2822,21 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C map:contains — F&O 3.1: map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean.
+     */
+    static final BuiltinFunction map_contains = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "contains"
+        ),
+        "map",
+        "anyAtomicType",
+        "boolean",
+        MapContainsFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*) as map(*).
      */
     static final BuiltinFunction map_merge_1 = createBuiltinFunction(
@@ -3577,6 +3593,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(keys.getIdentifier(), keys);
         builtinFunctions.put(members.getIdentifier(), members);
         builtinFunctions.put(map_get.getIdentifier(), map_get);
+        builtinFunctions.put(map_contains.getIdentifier(), map_contains);
         builtinFunctions.put(map_merge_1.getIdentifier(), map_merge_1);
         builtinFunctions.put(map_merge_2.getIdentifier(), map_merge_2);
         builtinFunctions.put(map_entry.getIdentifier(), map_entry);
