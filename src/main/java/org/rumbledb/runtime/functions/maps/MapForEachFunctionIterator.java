@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
@@ -52,6 +52,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     private int keyIndex;
     private RuntimeStaticContext keyArgumentContext;
     private RuntimeStaticContext valueArgumentContext;
+    private MutableKeyArgumentIterator mutableKeyArgumentIterator;
+    private MutableValueSequenceIterator mutableValueSequenceIterator;
 
     public MapForEachFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -115,20 +117,13 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         );
         this.mapKeys = this.mapItem.getItemKeys();
         this.keyIndex = 0;
-        this.currentCallbackIterator = null;
-    }
 
-    private RuntimeIterator buildCallbackIteratorForKey(Item key) {
-        List<Item> valueSequence = this.mapItem.getSequenceByKey(key);
-        RuntimeIterator keyArgumentIterator = new ConstantRuntimeIterator(key, this.keyArgumentContext);
-        RuntimeIterator valueArgumentIterator = new ConstantSequenceRuntimeIterator(
-                valueSequence,
-                this.valueArgumentContext
-        );
-        List<RuntimeIterator> callbackArguments = new ArrayList<>();
-        callbackArguments.add(keyArgumentIterator);
-        callbackArguments.add(valueArgumentIterator);
-        return NamedFunctions.buildUserDefinedFunctionCallIterator(
+        this.mutableKeyArgumentIterator = new MutableKeyArgumentIterator(this.keyArgumentContext);
+        this.mutableValueSequenceIterator = new MutableValueSequenceIterator(this.valueArgumentContext);
+        List<RuntimeIterator> callbackArguments = new ArrayList<>(2);
+        callbackArguments.add(this.mutableKeyArgumentIterator);
+        callbackArguments.add(this.mutableValueSequenceIterator);
+        this.currentCallbackIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
             this.actionFunction,
             getConfiguration(),
             ExecutionMode.LOCAL,
@@ -146,7 +141,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
                 this.currentCallbackIterator.close();
             }
-            this.currentCallbackIterator = null;
 
             if (this.mapKeys == null || this.keyIndex >= this.mapKeys.size()) {
                 this.hasNext = false;
@@ -154,7 +148,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             }
 
             Item key = this.mapKeys.get(this.keyIndex++);
-            this.currentCallbackIterator = buildCallbackIteratorForKey(key);
+            this.mutableKeyArgumentIterator.setCurrentKey(key);
+            this.mutableValueSequenceIterator.setCurrentValue(this.mapItem.getSequenceByKey(key));
             this.currentCallbackIterator.open(context);
         }
     }
@@ -203,6 +198,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         this.keyIndex = 0;
         this.keyArgumentContext = null;
         this.valueArgumentContext = null;
+        this.mutableKeyArgumentIterator = null;
+        this.mutableValueSequenceIterator = null;
     }
 
     @Override
@@ -220,22 +217,57 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 
-    private static class ConstantSequenceRuntimeIterator extends HybridRuntimeIterator {
+    /**
+     * Single map key supplied per callback; binding is updated before each {@code open} on the shared function call.
+     */
+    private static class MutableKeyArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
+
+        private static final long serialVersionUID = 1L;
+        private Item currentKey;
+
+        MutableKeyArgumentIterator(RuntimeStaticContext staticContext) {
+            super(null, staticContext);
+        }
+
+        void setCurrentKey(Item key) {
+            this.currentKey = key;
+        }
+
+        @Override
+        public Item materializeFirstItemOrNull(DynamicContext context) {
+            return this.currentKey;
+        }
+    }
+
+    /**
+     * Value sequence for the current map key; list content is replaced before each callback {@code open}.
+     */
+    private static class MutableValueSequenceIterator extends HybridRuntimeIterator {
 
         private static final long serialVersionUID = 1L;
 
         private final List<Item> items;
         private int position;
 
-        ConstantSequenceRuntimeIterator(List<Item> items, RuntimeStaticContext staticContext) {
+        MutableValueSequenceIterator(RuntimeStaticContext staticContext) {
             super(null, staticContext);
-            this.items = items == null ? new ArrayList<>() : new ArrayList<>(items);
-            this.position = 0;
+            this.items = new ArrayList<>();
+        }
+
+        void setCurrentValue(List<Item> valueSequence) {
+            this.items.clear();
+            if (valueSequence != null && !valueSequence.isEmpty()) {
+                this.items.addAll(valueSequence);
+            }
         }
 
         @Override
         protected void openLocal() {
             this.position = 0;
+            setHasNextFromBuffer();
+        }
+
+        private void setHasNextFromBuffer() {
             this.hasNext = !this.items.isEmpty();
         }
 
@@ -258,7 +290,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void resetLocal() {
             this.position = 0;
-            this.hasNext = !this.items.isEmpty();
+            setHasNextFromBuffer();
         }
 
         @Override
@@ -274,12 +306,12 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         public JavaRDD<Item> getRDDAux(DynamicContext context) {
-            throw new OurBadException("Constant sequence iterators are local-only.");
+            throw new OurBadException("Mutable value sequence iterators are local-only.");
         }
 
         @Override
         public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-            throw new OurBadException("Constant sequence iterators are local-only.");
+            throw new OurBadException("Mutable value sequence iterators are local-only.");
         }
     }
 }
