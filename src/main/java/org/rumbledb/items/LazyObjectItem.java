@@ -117,16 +117,36 @@ public class LazyObjectItem implements Item {
         return true;
     }
 
+
+    // region maps
+
+    @Override
+    public boolean isMap() {
+        return true;
+    }
+
+    @Override
+    public boolean isObject() {
+        return true;
+    }
+
     @Override
     public List<String> getKeys() {
         return this.keys;
     }
 
-    private void materialize() {
-        for (Map.Entry<String, LazyValue> e : this.lazyValues.entrySet()) {
-            this.values.put(e.getKey(), e.getValue().getItem());
+    @Override
+    public List<String> getStringKeys() {
+        return this.keys;
+    }
+
+    @Override
+    public List<Item> getItemKeys() {
+        List<Item> result = new ArrayList<>(this.keys.size());
+        for (String key : this.keys) {
+            result.add(ItemFactory.getInstance().createStringItem(key));
         }
-        this.lazyValues.clear();
+        return result;
     }
 
     @Override
@@ -140,38 +160,32 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public List<Item> getItemKeys() {
-        List<Item> result = new ArrayList<>(this.keys.size());
+    public List<Item> getItemValues() {
+        return getValues();
+    }
+
+    @Override
+    public List<List<Item>> getSequenceValues() {
+        List<List<Item>> result = new ArrayList<>(this.keys.size());
         for (String key : this.keys) {
-            result.add(ItemFactory.getInstance().createStringItem(key));
+            result.add(java.util.Collections.singletonList(getItemByKey(key)));
         }
         return result;
     }
 
-    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
-        HashMap<String, Integer> frequencies = new HashMap<>();
-        for (String key : keys) {
-            if (frequencies.containsKey(key)) {
-                throw new DuplicateObjectKeyException(key, metadata);
-            } else {
-                frequencies.put(key, 1);
-            }
-        }
-    }
-
     @Override
-    public Item getItemByKey(String s) {
-        if (this.keys.contains(s)) {
-            if (this.values.containsKey(s)) {
-                return this.values.get(s);
+    public Item getItemByKey(String key) {
+        if (this.keys.contains(key)) {
+            if (this.values.containsKey(key)) {
+                return this.values.get(key);
             }
-            if (this.lazyValues.containsKey(s)) {
-                Item i = this.lazyValues.get(s).getItem();
-                this.lazyValues.remove(s);
-                this.values.put(s, i);
+            if (this.lazyValues.containsKey(key)) {
+                Item i = this.lazyValues.get(key).getItem();
+                this.lazyValues.remove(key);
+                this.values.put(key, i);
                 return i;
             }
-            throw new OurBadException("Key " + s + "not found in lazy object. Inconsistent layout.");
+            throw new OurBadException("Key " + key + "not found in lazy object. Inconsistent layout.");
         } else {
             return null;
         }
@@ -186,14 +200,6 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public List<Item> getSequenceByKey(Item key) {
-        if (key == null || !key.isString()) {
-            return null;
-        }
-        return getSequenceByKey(key.getStringValue());
-    }
-
-    @Override
     public List<Item> getSequenceByKey(String key) {
         Item value = getItemByKey(key);
         if (value == null) {
@@ -203,9 +209,17 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public void putItemByKey(String s, Item value) {
-        this.keys.add(s);
-        this.values.put(s, value);
+    public List<Item> getSequenceByKey(Item key) {
+        if (key == null || !key.isString()) {
+            return null;
+        }
+        return getSequenceByKey(key.getStringValue());
+    }
+
+    @Override
+    public void putItemByKey(String key, Item value) {
+        this.keys.add(key);
+        this.values.put(key, value);
         checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
     }
 
@@ -232,16 +246,62 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public void putLazyItemByKey(String s, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
-        this.keys.add(s);
-        LazyValue lv = new LazyValue(iterator, context, isArray);
-        this.lazyValues.put(s, lv);
-        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    public void putSequenceByKey(String key, List<Item> valueSequence){
+        if (valueSequence == null) {
+            throw new OurBadException("Value sequence cannot be empty.");
+        }
+        if (valueSequence.size() == 1) {
+            putItemByKey(key, valueSequence.get(0));
+            return;
+        }
+        throw new OurBadException(
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
+        );
     }
 
     @Override
-    public boolean isObject() {
-        return true;
+    public void removeItemByKey(String key) {
+        if (this.keys.contains(key)) {
+            this.keys.remove(key);
+            this.values.remove(key);
+            this.lazyValues.remove(key);
+        }
+    }
+
+    @Override
+    public void removeItemByKey(Item key) {
+        if (key == null || !key.isString()) {
+            return;
+        }
+        removeItemByKey(key.getStringValue());
+    }
+
+    @Override
+    public void putLazyItemByKey(String key, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+        this.keys.add(key);
+        LazyValue lv = new LazyValue(iterator, context, isArray);
+        this.lazyValues.put(key, lv);
+        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    // endregion maps
+
+    private void materialize() {
+        for (Map.Entry<String, LazyValue> e : this.lazyValues.entrySet()) {
+            this.values.put(e.getKey(), e.getValue().getItem());
+        }
+        this.lazyValues.clear();
+    }
+
+    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
+        HashMap<String, Integer> frequencies = new HashMap<>();
+        for (String key : keys) {
+            if (frequencies.containsKey(key)) {
+                throw new DuplicateObjectKeyException(key, metadata);
+            } else {
+                frequencies.put(key, 1);
+            }
+        }
     }
 
     @Override
