@@ -10,6 +10,8 @@ import java.time.*;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.DuplicateObjectKeyException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -545,7 +547,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the map contains non-string keys.
      */
-    default List<String> getStringKeys() {
+    default List<String> getStringKeys() throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -555,7 +557,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the list of atomic keys as items.
      * @throws UnsupportedOperationException if the item is not a map.
      */
-    default List<Item> getItemKeys() {
+    default List<Item> getItemKeys() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -577,7 +579,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the map contains non-singleton values.
      */
-    default List<Item> getItemValues() {
+    default List<Item> getItemValues() throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -587,7 +589,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return a list containing, for each key in the map, the sequence of items associated with that key.
      * @throws UnsupportedOperationException if the item is not a map.
      */
-    default List<List<Item>> getSequenceValues() {
+    default List<List<Item>> getSequenceValues() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -599,7 +601,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the value item associated with the key is not a singleton.
      */
-    default Item getItemByKey(String key) {
+    default Item getItemByKey(String key) throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -611,7 +613,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the value item associated with the key is not a singleton.
      */
-    default Item getItemByKey(Item key) {
+    default Item getItemByKey(Item key) throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -622,7 +624,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the value sequence for the key, or null if absent.
      * @throws UnsupportedOperationException if the item is not a map.
      */
-    default List<Item> getSequenceByKey(String key) {
+    default List<Item> getSequenceByKey(String key) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -633,7 +635,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the value sequence for the key, or null if absent.
      * @throws UnsupportedOperationException if the item is not a map.
      */
-    default List<Item> getSequenceByKey(Item key) {
+    default List<Item> getSequenceByKey(Item key) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -645,7 +647,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
-    default void putItemByKey(String key, Item value) {
+    default void putItemByKey(String key, Item value) throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -659,7 +661,10 @@ public interface Item extends Serializable, KryoSerializable {
      *         support non-string keys.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
-    default void putItemByKey(Item key, Item value) {
+    default void putItemByKey(Item key, Item value)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -673,7 +678,10 @@ public interface Item extends Serializable, KryoSerializable {
      *         values.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
-    default void putSequenceByKey(String key, List<Item> valueSequence) {
+    default void putSequenceByKey(String key, List<Item> valueSequence)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -689,7 +697,10 @@ public interface Item extends Serializable, KryoSerializable {
      *         support non-string keys.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
-    default void putSequenceByKey(Item key, List<Item> valueSequence) {
+    default void putSequenceByKey(Item key, List<Item> valueSequence)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -699,7 +710,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param key a key.
      * @throws UnsupportedOperationException if the item is not a map.
      */
-    default void removeItemByKey(String key) {
+    default void removeItemByKey(String key) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -709,7 +720,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param key an atomic key.
      * @throws UnsupportedOperationException if the item is not a map.
      */
-    default void removeItemByKey(Item key) {
+    default void removeItemByKey(Item key) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -727,7 +738,8 @@ public interface Item extends Serializable, KryoSerializable {
             RuntimeIterator iterator,
             DynamicContext context,
             boolean isArray
-    ) {
+    )
+            throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
