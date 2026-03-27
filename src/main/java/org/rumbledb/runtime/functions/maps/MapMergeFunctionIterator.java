@@ -109,7 +109,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         // Empty input -> empty map.
         if (maps.isEmpty()) {
             return ItemFactory.getInstance()
-                .createObjectOrMapItem(new ArrayList<>(), new ArrayList<>(), metadata, false);
+                .createMapItem(new HashMap<>(), metadata, false);
         }
 
         // 2. Resolve options and duplicates policy.
