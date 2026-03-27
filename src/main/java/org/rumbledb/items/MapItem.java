@@ -28,11 +28,11 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.EmptyMapItemType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -281,9 +281,8 @@ public class MapItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        // An empty map is always untyped: map(*)
         if (this.keys == null || this.keys.isEmpty()) {
-            return BuiltinTypesCatalogue.mapItem;
+            return EmptyMapItemType.getInstance();
         }
 
         // Infer key type as a least-common-supertype across all stored keys
