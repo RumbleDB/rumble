@@ -28,6 +28,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -152,6 +153,29 @@ public class ObjectItem implements Item {
         return this.values;
     }
 
+    @Override
+    public boolean allowsNonSingletons() {
+        return false;
+    }
+
+    @Override
+    public List<Item> getItemKeys() {
+        List<Item> result = new ArrayList<>(this.keys.size());
+        for (String key : this.keys) {
+            result.add(ItemFactory.getInstance().createStringItem(key));
+        }
+        return result;
+    }
+
+    @Override
+    public List<List<Item>> getSequences() {
+        List<List<Item>> result = new ArrayList<>(this.values.size());
+        for (Item value : this.values) {
+            result.add(Collections.singletonList(value));
+        }
+        return result;
+    }
+
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
@@ -173,10 +197,50 @@ public class ObjectItem implements Item {
     }
 
     @Override
+    public List<Item> getSequenceByKey(Item key) {
+        if (key == null || !key.isString()) {
+            throw new OurBadException("ObjectItem keys must be strings.");
+        }
+        return getSequenceByKey(key.getStringValue());
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(String key) {
+        Item item = getItemByKey(key);
+        if (item == null) {
+            return null;
+        }
+        return Collections.singletonList(item);
+    }
+
+    @Override
     public void putItemByKey(String s, Item value) {
         this.keys.add(s);
         this.values.add(value);
         checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public void putItemByKey(Item key, Item value) {
+        if (key == null || !key.isString()) {
+            throw new OurBadException("ObjectItem keys must be strings.");
+        }
+        putItemByKey(key.getStringValue(), value);
+    }
+
+    @Override
+    public void putSequenceByKey(Item key, List<Item> valueSequence) {
+        if (valueSequence == null || valueSequence.isEmpty()) {
+            putItemByKey(key, ItemFactory.getInstance().createNullItem());
+            return;
+        }
+        if (valueSequence.size() == 1) {
+            putItemByKey(key, valueSequence.get(0));
+            return;
+        }
+        throw new OurBadException(
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
+        );
     }
 
     @Override
@@ -186,6 +250,14 @@ public class ObjectItem implements Item {
             this.values.remove(index);
             this.keys.remove(index);
         }
+    }
+
+    @Override
+    public void removeItemByKey(Item key) {
+        if (key == null || !key.isString()) {
+            throw new OurBadException("ObjectItem keys must be strings.");
+        }
+        removeItemByKey(key.getStringValue());
     }
 
     @Override

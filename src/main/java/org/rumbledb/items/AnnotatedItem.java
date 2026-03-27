@@ -226,6 +226,21 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public List<Item> getItemKeys() {
+        return this.itemToAnnotate.getItemKeys();
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(Item key) {
+        return this.itemToAnnotate.getSequenceByKey(key);
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(String key) {
+        return this.itemToAnnotate.getSequenceByKey(key);
+    }
+
+    @Override
     public int getSize() {
         return this.itemToAnnotate.getSize();
     }
@@ -406,6 +421,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public void putItemByKey(Item key, Item value) {
+        this.itemToAnnotate.putItemByKey(key, value);
+    }
+
+    @Override
+    public void putSequenceByKey(Item key, List<Item> valueSequence) {
+        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
+    }
+
+    @Override
     public double castToDoubleValue() {
         return this.itemToAnnotate.castToDoubleValue();
     }
@@ -472,6 +497,11 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void removeItemByKey(String key) {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public void removeItemByKey(Item key) {
         this.itemToAnnotate.removeItemByKey(key);
     }
 

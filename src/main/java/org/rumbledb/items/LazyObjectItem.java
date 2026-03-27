@@ -139,6 +139,29 @@ public class LazyObjectItem implements Item {
         return result;
     }
 
+    @Override
+    public boolean allowsNonSingletons() {
+        return false;
+    }
+
+    @Override
+    public List<Item> getItemKeys() {
+        List<Item> result = new ArrayList<>(this.keys.size());
+        for (String key : this.keys) {
+            result.add(ItemFactory.getInstance().createStringItem(key));
+        }
+        return result;
+    }
+
+    @Override
+    public List<List<Item>> getSequences() {
+        List<List<Item>> result = new ArrayList<>();
+        for (Item value : getValues()) {
+            result.add(java.util.Collections.singletonList(value));
+        }
+        return result;
+    }
+
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
@@ -169,10 +192,49 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
+    public List<Item> getSequenceByKey(Item key) {
+        if (key == null || !key.isString()) {
+            throw new OurBadException("LazyObjectItem keys must be strings.");
+        }
+        return getSequenceByKey(key.getStringValue());
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(String key) {
+        Item value = getItemByKey(key);
+        if (value == null) {
+            return null;
+        }
+        return java.util.Collections.singletonList(value);
+    }
+
+    @Override
     public void putItemByKey(String s, Item value) {
         this.keys.add(s);
         this.values.put(s, value);
         checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public void putItemByKey(Item key, Item value) {
+        if (key == null || !key.isString()) {
+            throw new OurBadException("LazyObjectItem keys must be strings.");
+        }
+        putItemByKey(key.getStringValue(), value);
+    }
+
+    @Override
+    public void putSequenceByKey(Item key, List<Item> valueSequence) {
+        if (valueSequence == null || valueSequence.isEmpty()) {
+            putItemByKey(key, ItemFactory.getInstance().createNullItem());
+            return;
+        }
+        if (valueSequence.size() != 1) {
+            throw new OurBadException(
+                    "LazyObjectItem only supports singleton values; use MapItem for non-singleton sequences."
+            );
+        }
+        putItemByKey(key, valueSequence.get(0));
     }
 
     @Override
@@ -186,6 +248,17 @@ public class LazyObjectItem implements Item {
     @Override
     public boolean isObject() {
         return true;
+    }
+
+    @Override
+    public void removeItemByKey(Item key) {
+        if (key == null || !key.isString()) {
+            throw new OurBadException("LazyObjectItem keys must be atomic.");
+        }
+        String s = key.getStringValue();
+        this.keys.remove(s);
+        this.values.remove(s);
+        this.lazyValues.remove(s);
     }
 
     @Override

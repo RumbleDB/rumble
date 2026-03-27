@@ -16,6 +16,7 @@ import org.w3c.dom.Node;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -286,6 +287,47 @@ public class ItemFactory {
             result.setMutabilityLevel(-1);
         }
         return result;
+    }
+
+    public Item createMapItem(List<Item> keys, List<List<Item>> valueSequences, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new MapItem(keys, valueSequences, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectOrMapItem(
+            List<Item> keys,
+            List<List<Item>> valueSequences,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
+        boolean canBeObjectItem = true;
+        for (int i = 0; i < keys.size(); i++) {
+            Item key = keys.get(i);
+            List<Item> valueSequence = valueSequences.get(i);
+            if (key == null || !key.isString()) {
+                canBeObjectItem = false;
+                break;
+            }
+            if (valueSequence == null || valueSequence.size() != 1) {
+                canBeObjectItem = false;
+                break;
+            }
+        }
+        if (canBeObjectItem) {
+            List<String> stringKeys = new ArrayList<>(keys.size());
+            List<Item> singletonValues = new ArrayList<>(valueSequences.size());
+            for (int i = 0; i < keys.size(); i++) {
+                stringKeys.add(keys.get(i).getStringValue());
+                singletonValues.add(valueSequences.get(i).get(0));
+            }
+            return createObjectItem(stringKeys, singletonValues, itemMetadata, mutable);
+        }
+        return createMapItem(keys, valueSequences, itemMetadata, mutable);
     }
 
     public Item createXmlTextNode(Node currentNode) {
