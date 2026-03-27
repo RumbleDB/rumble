@@ -242,7 +242,7 @@ public class ObjectItem implements Item {
         putItemByKey(key.getStringValue(), value);
     }
 
-    
+
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
         if (valueSequence == null) {

@@ -655,7 +655,8 @@ public interface Item extends Serializable, KryoSerializable {
      * @param key an atomic key.
      * @param value a value.
      * @throws UnsupportedOperationException if the item is not a map.
-     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not support non-string keys.
+     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not
+     *         support non-string keys.
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putItemByKey(Item key, Item value) {
@@ -684,9 +685,10 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the value sequence is not a singleton and the item does not support non-singleton
      *         values.
-     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not support non-string keys.
+     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not
+     *         support non-string keys.
      * @throws DuplicateObjectKeyException if the key is already present.
-    */
+     */
     default void putSequenceByKey(Item key, List<Item> valueSequence) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }

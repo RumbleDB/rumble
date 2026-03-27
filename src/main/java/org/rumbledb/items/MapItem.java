@@ -110,7 +110,7 @@ public class MapItem implements Item {
         }
         return -1;
     }
-    
+
     // region maps
 
     @Override
@@ -123,7 +123,8 @@ public class MapItem implements Item {
         // test if
         // - all keys are strings
         // - all values are singletons
-        // TODO: store this in private fields (allKeysString, allValuesSingletons) that we can directly query for opt. purposes.
+        // TODO: store this in private fields (allKeysString, allValuesSingletons) that we can directly query for opt.
+        // purposes.
         // the value is updated at put and remove operations.
         for (Item key : this.keys) {
             if (!key.isString()) {
@@ -147,7 +148,7 @@ public class MapItem implements Item {
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>();
         for (Item key : this.keys) {
-            if(!key.isString()) {
+            if (!key.isString()) {
                 throw new OurBadException("Map contains non-string keys.");
             }
             result.add(key.getStringValue());

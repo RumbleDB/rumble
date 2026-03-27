@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 public class ItemFactory {
 
     private static ItemFactory instance;
@@ -315,10 +316,15 @@ public class ItemFactory {
     }
 
 
-    public Item createObjectOrMapItem(List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
+    public Item createObjectOrMapItem(
+            List<Item> keys,
+            List<List<Item>> values,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
         boolean allKeysString = keys.stream().allMatch(key -> key.isString());
         boolean allValuesSingletons = values.stream().allMatch(value -> value.size() == 1);
-        if(allKeysString && allValuesSingletons) {
+        if (allKeysString && allValuesSingletons) {
             List<String> stringKeys = keys.stream().map(key -> key.getStringValue()).collect(Collectors.toList());
             List<Item> valuesList = values.stream().map(value -> value.get(0)).collect(Collectors.toList());
             return createObjectItem(stringKeys, valuesList, itemMetadata, mutable);
@@ -326,13 +332,17 @@ public class ItemFactory {
             return createMapItem(keys, values, itemMetadata, mutable);
         }
     }
-    
-    public Item createObjectOrMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+
+    public Item createObjectOrMapItem(
+            Map<Item, List<Item>> keyValuePairs,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
         boolean allKeysString = keyValuePairs.keySet().stream().allMatch(key -> key.isString());
         boolean allValuesSingletons = keyValuePairs.values().stream().allMatch(list -> list.size() == 1);
-        if(allKeysString && allValuesSingletons) {
+        if (allKeysString && allValuesSingletons) {
             Map<String, List<Item>> stringKeyValuePairs = new HashMap<>();
-            for(Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
+            for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
                 stringKeyValuePairs.put(entry.getKey().getStringValue(), entry.getValue());
             }
             return createObjectItem(stringKeyValuePairs, mutable);

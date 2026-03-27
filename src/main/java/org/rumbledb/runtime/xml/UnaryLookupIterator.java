@@ -69,15 +69,15 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
         for (Item item : this.contextItem) {
             if (item.isMap()) {
                 if (this.wildcard) {
-                    if(item.isObject()){
+                    if (item.isObject()) {
                         // fast path: one item per key
                         this.nextResult.addAll(item.getItemValues());
-                    } else{
+                    } else {
                         for (List<Item> valueSequence : item.getSequenceValues()) {
                             this.nextResult.addAll(valueSequence);
                         }
                     }
-                    
+
                 } else {
                     for (Item key : this.lookupKeys) {
                         if (item.isObject()) {

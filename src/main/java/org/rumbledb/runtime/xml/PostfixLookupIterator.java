@@ -108,10 +108,10 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isMap()) {
                 if (this.wildcard) {
-                    if(item.isObject()){
+                    if (item.isObject()) {
                         // fast path: one item per key
                         this.nextResult.addAll(item.getItemValues());
-                    } else{
+                    } else {
                         for (List<Item> valueSequence : item.getSequenceValues()) {
                             this.nextResult.addAll(valueSequence);
                         }
@@ -123,11 +123,11 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                         // fast path: one item per key
                         this.nextResult.add(item.getItemByKey(key));
                     } else {
-                            List<Item> valueSequence = item.getSequenceByKey(key);
-                            if (valueSequence != null && !valueSequence.isEmpty()) {
-                                this.nextResult.addAll(valueSequence);
-                            }
+                        List<Item> valueSequence = item.getSequenceByKey(key);
+                        if (valueSequence != null && !valueSequence.isEmpty()) {
+                            this.nextResult.addAll(valueSequence);
                         }
+                    }
                 }
             }
             if (item.isArray()) {
