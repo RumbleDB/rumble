@@ -280,7 +280,44 @@ public class MapItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.mapItem;
+        // An empty map is always untyped: map(*)
+        if (this.keys == null || this.keys.isEmpty()) {
+            return BuiltinTypesCatalogue.mapItem;
+        }
+
+        // Infer key type as a least-common-supertype across all stored keys
+        ItemType keyAtomicType = this.keys.get(0).getDynamicType();
+        for (int i = 1; i < this.keys.size(); i++) {
+            ItemType next = this.keys.get(i).getDynamicType();
+            keyAtomicType = keyAtomicType.findLeastCommonSuperTypeWith(next);
+        }
+
+        SequenceType valueSequenceType = SequenceType.createSequenceType("()");
+        if (this.valueSequences != null && !this.valueSequences.isEmpty()) {
+            valueSequenceType = sequenceTypeFromValueSequence(this.valueSequences.get(0));
+            for (int i = 1; i < this.valueSequences.size(); i++) {
+                SequenceType nextSequenceType = sequenceTypeFromValueSequence(this.valueSequences.get(i));
+                valueSequenceType = valueSequenceType.leastCommonSupertypeWith(nextSequenceType);
+            }
+        }
+
+        return ItemTypeFactory.mapOf(keyAtomicType, valueSequenceType);
+    }
+
+    private static SequenceType sequenceTypeFromValueSequence(List<Item> valueSequence) {
+        if (valueSequence == null || valueSequence.isEmpty()) {
+            return SequenceType.createSequenceType("()");
+        }
+        ItemType valueItemType = valueSequence.get(0).getDynamicType();
+        for (int i = 1; i < valueSequence.size(); i++) {
+            valueItemType = valueItemType.findLeastCommonSuperTypeWith(
+                valueSequence.get(i).getDynamicType()
+            );
+        }
+        if (valueSequence.size() == 1) {
+            return new SequenceType(valueItemType, SequenceType.Arity.One);
+        }
+        return new SequenceType(valueItemType, SequenceType.Arity.ZeroOrMore);
     }
 
     @Override
