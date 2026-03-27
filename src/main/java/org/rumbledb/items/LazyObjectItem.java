@@ -246,7 +246,7 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public void putSequenceByKey(String key, List<Item> valueSequence){
+    public void putSequenceByKey(String key, List<Item> valueSequence) {
         if (valueSequence == null) {
             throw new OurBadException("Value sequence cannot be empty.");
         }
