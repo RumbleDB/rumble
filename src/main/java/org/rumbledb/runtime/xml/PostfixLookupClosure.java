@@ -43,46 +43,70 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<>();
 
-        if (this.wildcard) {
-            if (arg0.isObject()) {
-                if (!arg0.allowsNonSingletons()) {
-                    results = arg0.getValues();
+
+        if (arg0.isMap()) {
+            if (this.wildcard) {
+                if (arg0.isObject()) {
+                    results.addAll(arg0.getItemValues());
                 } else {
-                    for (java.util.List<Item> valueSequence : arg0.getSequences()) {
+                    for (List<Item> valueSequence : arg0.getSequenceValues()) {
                         results.addAll(valueSequence);
                     }
                 }
-            } else if (arg0.isArray()) {
-                results = arg0.getItems();
-            }
-            return results.iterator();
-        }
-        if (arg0.isObject()) {
-            for (Item key : this.keys) {
-                if (!arg0.allowsNonSingletons()) {
-                    Item i = arg0.getItemByKey(key);
-                    if (i != null) {
-                        results.add(i);
+            } else {
+                for (Item rawKey : this.keys) {
+                    // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
+                    List<Item> atomized = rawKey.atomizedValue();
+                    if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
+                        throw new UnexpectedTypeException(
+                                "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
                     }
-                } else {
-                    List<Item> sequence = arg0.getSequenceByKey(key);
-                    if (sequence != null) {
-                        results.addAll(sequence);
+                    Item key = atomized.get(0);
+                    if (arg0.isObject()) {
+                        // fast path: one item per key
+                        Item value = arg0.getItemByKey(key);
+                        if (value != null) {
+                            results.add(value);
+                        }
+                    } else {
+                        List<Item> valueSequence = arg0.getSequenceByKey(key);
+                        if (valueSequence != null && !valueSequence.isEmpty()) {
+                            results.addAll(valueSequence);
+                        }
                     }
                 }
             }
         } else if (arg0.isArray()) {
-            for (Item key : this.keys) {
-                if (key.isString()) {
-                    throw new UnexpectedTypeException(
-                            "Type error; Lookup with String on Arrays is not possible",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+            if (this.wildcard) {
+                if (!arg0.allowsNonSingletons()) {
+                    results = arg0.getItems();
+                } else {
+                    for (java.util.List<Item> member : arg0.getSequences()) {
+                        results.addAll(member);
+                    }
                 }
-                if (key.isNumeric()) {
-                    results.add(arg0.getItemAt(key.castToIntValue() - 1));
+            } else {
+                for (Item key : this.keys) {
+                    if (key.isString()) {
+                        throw new UnexpectedTypeException(
+                                "Type error; Lookup with String on Arrays is not possible",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    if (key.isNumeric()) {
+                        int idx = key.castToIntValue() - 1;
+                        if (!arg0.allowsNonSingletons()) {
+                            results.add(arg0.getItemAt(idx));
+                        } else {
+                            results.addAll(arg0.getSequenceAt(idx));
+                        }
+                    }
                 }
+
             }
+
         }
         return results.iterator();
     }
