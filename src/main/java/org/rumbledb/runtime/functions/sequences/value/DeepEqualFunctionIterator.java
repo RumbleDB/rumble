@@ -161,7 +161,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 return false;
             }
             for (int i = 0; i < item1.getSize(); i++) {
-                if (!checkDeepEqual(item1.getSequenceAt(i), item2.getSequenceAt(i))) {
+                if (!AtomicDeepEqual.deepEqual(item1.getItemAt(i), item2.getItemAt(i))) {
                     return false;
                 }
             }

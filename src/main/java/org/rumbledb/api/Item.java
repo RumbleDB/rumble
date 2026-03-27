@@ -468,22 +468,6 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-
-    /**
-     * Returns the logical member sequences of the item if it is an array.
-     * <p>
-     * Each array member is represented as a sequence of items. For arrays whose members are
-     * all singletons, each member sequence is of length 1.
-     * <p>
-     * Implementations that only support singleton members may return a singleton sequence per member.
-     * <p>
-     * 
-     * @return the list of member sequences (one sequence per array member).
-     */
-    default List<List<Item>> getSequences() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
     /**
      * Returns the member of the item at the specified position if it is an array.
      *
@@ -491,18 +475,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the member at position position.
      */
     default Item getItemAt(int position) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the logical member sequence at the specified position if it is an array.
-     * <p>
-     * The position is zero-based, consistent with {@link #getItemAt(int)}.
-     *
-     * @param position a zero-based member position.
-     * @return the sequence of items corresponding to that member.
-     */
-    default List<Item> getSequenceAt(int position) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

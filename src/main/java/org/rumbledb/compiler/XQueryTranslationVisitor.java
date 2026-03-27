@@ -2021,17 +2021,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        if (itemTypeContext.arrayTest() != null) {
-            XQueryParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
-            if (arrayTestContext.anyArrayTest() != null) {
-                return BuiltinTypesCatalogue.arrayItem;
-            }
-            XQueryParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
-            if (typedArrayTestContext != null) {
-                SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
-                return ArrayItemType.arrayOf(contentSequenceType.getItemType());
-            }
-        }
         if (itemTypeContext.mapTest() != null) {
             XQueryParser.MapTestContext mapTestContext = itemTypeContext.mapTest();
             if (mapTestContext.anyMapTest() != null) {

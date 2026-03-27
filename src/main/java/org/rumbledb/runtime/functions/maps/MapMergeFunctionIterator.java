@@ -80,7 +80,8 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     /**
      * Hash/equals wrapper compatible with {@code op:same-key}.
      *
-     * <p>Requirement: if {@code MapAtomicSameKey.sameKey(a, b)} then {@code hash(a) == hash(b)}.
+     * <p>
+     * Requirement: if {@code MapAtomicSameKey.sameKey(a, b)} then {@code hash(a) == hash(b)}.
      * Collisions are fine; they only affect performance, not correctness.
      */
     private static final class SameKeyWrapper {
@@ -142,8 +143,10 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         private static int numericSameKeyHash(Item k) {
             // Mirror MapAtomicSameKey.sameNumericKey special cases and decimal compare semantics.
-            if ((k.isFloat() && Float.isNaN(k.getFloatValue()))
-                || (k.isDouble() && Double.isNaN(k.getDoubleValue()))) {
+            if (
+                (k.isFloat() && Float.isNaN(k.getFloatValue()))
+                    || (k.isDouble() && Double.isNaN(k.getDoubleValue()))
+            ) {
                 return 0x4E614E; // 'NaN'
             }
             if (k.isDouble()) {
