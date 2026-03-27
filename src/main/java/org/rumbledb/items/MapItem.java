@@ -317,7 +317,8 @@ public class MapItem implements Item {
         if (valueSequence.size() == 1) {
             return new SequenceType(valueItemType, SequenceType.Arity.One);
         }
-        return new SequenceType(valueItemType, SequenceType.Arity.ZeroOrMore);
+        // Non-empty sequence with cardinality >= 2
+        return new SequenceType(valueItemType, SequenceType.Arity.OneOrMore);
     }
 
     @Override
