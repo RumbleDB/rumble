@@ -31,6 +31,8 @@ import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
+
 import scala.Tuple2;
 
 import java.util.Iterator;
@@ -131,13 +133,24 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return true;
         }
 
+        if (item1.isArray() && item2.isArray()) {
+            if (item1.getSize() != item2.getSize()) {
+                return false;
+            }
+            for (int i = 0; i < item1.getSize(); i++) {
+                if (!checkDeepEqual(item1.getSequenceAt(i), item2.getSequenceAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // If both items are nodes, use node-specific deep-equal logic
         if (item1.isNode() && item2.isNode()) {
             return checkNodesDeepEqual(item1, item2);
         }
 
-        // For non-node items, use the default equals implementation
-        return item1.equals(item2);
+        return AtomicDeepEqual.deepEqual(item1, item2);
     }
 
     /**
