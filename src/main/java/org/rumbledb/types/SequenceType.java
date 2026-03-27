@@ -367,6 +367,9 @@ public class SequenceType implements Serializable {
             case "object+":
                 st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "object?":
+                st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.OneOrZero);
+                break;
             case "object*":
                 st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore);
                 break;
@@ -382,8 +385,14 @@ public class SequenceType implements Serializable {
             case "array*":
                 st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore);
                 break;
+            case "array+":
+                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.OneOrMore);
+                break;
             case "anyAtomicType":
                 st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One);
+                break;
+            case "anyAtomicType+":
+                st = new SequenceType(BuiltinTypesCatalogue.atomicItem, Arity.OneOrMore);
                 break;
             case "anyAtomicType?":
                 st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.OneOrZero);
@@ -427,8 +436,17 @@ public class SequenceType implements Serializable {
             case "numeric*":
                 st = new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.ZeroOrMore);
                 break;
+            case "decimal":
+                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.One);
+                break;
             case "decimal?":
                 st = new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "decimal+":
+                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, Arity.OneOrMore);
+                break;
+            case "decimal*":
+                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, Arity.ZeroOrMore);
                 break;
             case "double":
                 st = new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One);
@@ -436,11 +454,23 @@ public class SequenceType implements Serializable {
             case "double?":
                 st = new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.OneOrZero);
                 break;
+            case "double+":
+                st = new SequenceType(BuiltinTypesCatalogue.doubleItem, Arity.OneOrMore);
+                break;
+            case "double*":
+                st = new SequenceType(BuiltinTypesCatalogue.doubleItem, Arity.ZeroOrMore);
+                break;
             case "float":
                 st = new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One);
                 break;
             case "float?":
                 st = new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "float+":
+                st = new SequenceType(BuiltinTypesCatalogue.floatItem, Arity.OneOrMore);
+                break;
+            case "float*":
+                st = new SequenceType(BuiltinTypesCatalogue.floatItem, Arity.ZeroOrMore);
                 break;
             case "boolean":
                 st = new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One);
@@ -448,8 +478,23 @@ public class SequenceType implements Serializable {
             case "boolean?":
                 st = new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.OneOrZero);
                 break;
+            case "boolean+":
+                st = new SequenceType(BuiltinTypesCatalogue.booleanItem, Arity.OneOrMore);
+                break;
+            case "boolean*":
+                st = new SequenceType(BuiltinTypesCatalogue.booleanItem, Arity.ZeroOrMore);
+                break;
+            case "duration":
+                st = new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.One);
+                break;
             case "duration?":
                 st = new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "duration+":
+                st = new SequenceType(BuiltinTypesCatalogue.durationItem, Arity.OneOrMore);
+                break;
+            case "duration*":
+                st = new SequenceType(BuiltinTypesCatalogue.durationItem, Arity.ZeroOrMore);
                 break;
             case "yearMonthDuration?":
                 st = new SequenceType(BuiltinTypesCatalogue.yearMonthDurationItem, SequenceType.Arity.OneOrZero);
@@ -631,6 +676,7 @@ public class SequenceType implements Serializable {
                         BuiltinTypesCatalogue.anyFunctionItem,
                         Arity.One
                 );
+                break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }
