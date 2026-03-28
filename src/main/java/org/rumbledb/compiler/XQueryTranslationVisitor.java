@@ -288,71 +288,37 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitProlog(XQueryParser.PrologContext ctx) {
-        // bind namespaces
-        for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-            this.processNamespaceDecl(namespace);
-        }
-        List<SetterContext> setters = ctx.setter();
-        boolean emptyOrderSet = false;
-        boolean defaultCollationSet = false;
-        boolean baseURISet = false;
-        for (SetterContext setterContext : setters) {
-            if (setterContext.emptyOrderDecl() != null) {
-                if (emptyOrderSet) {
-                    throw new MoreThanOneEmptyOrderDeclarationException(
-                            "The empty order was already set.",
-                            createMetadataFromContext(setterContext.emptyOrderDecl())
-                    );
-                }
-                processEmptySequenceOrder(setterContext.emptyOrderDecl());
-                emptyOrderSet = true;
-                continue;
-            }
-            if (setterContext.defaultCollationDecl() != null) {
-                if (defaultCollationSet) {
-                    throw new DefaultCollationException(
-                            "The default collation was already set.",
-                            createMetadataFromContext(setterContext.defaultCollationDecl())
-                    );
-                }
-                processDefaultCollation(setterContext.defaultCollationDecl());
-                defaultCollationSet = true;
-                continue;
-            }
-            if (setterContext.baseURIDecl() != null) {
-                if (baseURISet) {
-                    throw new MultipleBaseURIException(
-                            "The base-uri was already set.",
-                            createMetadataFromContext(setterContext.baseURIDecl())
-                    );
-                }
-                String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-                URI uri = FileSystemUtil.resolveURI(
-                    this.moduleContext.getStaticBaseURI(),
-                    uriString,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                this.moduleContext.setStaticBaseUri(uri);
-                baseURISet = true;
-                continue;
-            }
-            throw new UnsupportedFeatureException(
-                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
-                    createMetadataFromContext(setterContext)
-            );
-        }
         List<LibraryModule> libraryModules = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
-        for (XQueryParser.ModuleImportContext namespace : ctx.moduleImport()) {
-            LibraryModule libraryModule = this.processModuleImport(namespace);
-            libraryModules.add(libraryModule);
-            if (namespaces.contains(libraryModule.getNamespace())) {
-                throw new DuplicateModuleTargetNamespaceException(
-                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
-                        createMetadataFromContext(namespace)
-                );
+        PrologPhase1Flags phase1 = new PrologPhase1Flags();
+        for (int ci = 0; ci < ctx.getChildCount(); ci++) {
+            ParseTree child = ctx.getChild(ci);
+            if (child instanceof TerminalNode) {
+                continue;
             }
-            namespaces.add(libraryModule.getNamespace());
+            if (child instanceof XQueryParser.AnnotatedDeclContext) {
+                break;
+            }
+            if (child instanceof XQueryParser.DefaultNamespaceDeclContext) {
+                processDefaultNamespaceDecl((XQueryParser.DefaultNamespaceDeclContext) child, phase1);
+            } else if (child instanceof XQueryParser.NamespaceDeclContext) {
+                processNamespaceDecl((XQueryParser.NamespaceDeclContext) child);
+            } else if (child instanceof SetterContext) {
+                processPrologPhase1Setter((SetterContext) child, phase1);
+            } else if (child instanceof XQueryParser.SchemaImportContext) {
+                // Not supported yet; previously skipped as well.
+            } else if (child instanceof XQueryParser.ModuleImportContext) {
+                XQueryParser.ModuleImportContext namespace = (XQueryParser.ModuleImportContext) child;
+                LibraryModule libraryModule = this.processModuleImport(namespace);
+                libraryModules.add(libraryModule);
+                if (namespaces.contains(libraryModule.getNamespace())) {
+                    throw new DuplicateModuleTargetNamespaceException(
+                            "Duplicate module target namespace: " + libraryModule.getNamespace(),
+                            createMetadataFromContext(namespace)
+                    );
+                }
+                namespaces.add(libraryModule.getNamespace());
+            }
         }
 
         // parse variables and function
@@ -425,6 +391,94 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return prolog;
     }
 
+    private static final class PrologPhase1Flags {
+        boolean emptyOrderSet;
+        boolean defaultCollationSet;
+        boolean baseURISet;
+        boolean defaultFunctionNamespaceDeclared;
+    }
+
+    private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.emptyOrderDecl() != null) {
+            if (flags.emptyOrderSet) {
+                throw new MoreThanOneEmptyOrderDeclarationException(
+                        "The empty order was already set.",
+                        createMetadataFromContext(setterContext.emptyOrderDecl())
+                );
+            }
+            processEmptySequenceOrder(setterContext.emptyOrderDecl());
+            flags.emptyOrderSet = true;
+            return;
+        }
+        if (setterContext.defaultCollationDecl() != null) {
+            if (flags.defaultCollationSet) {
+                throw new DefaultCollationException(
+                        "The default collation was already set.",
+                        createMetadataFromContext(setterContext.defaultCollationDecl())
+                );
+            }
+            processDefaultCollation(setterContext.defaultCollationDecl());
+            flags.defaultCollationSet = true;
+            return;
+        }
+        if (setterContext.baseURIDecl() != null) {
+            if (flags.baseURISet) {
+                throw new MultipleBaseURIException(
+                        "The base-uri was already set.",
+                        createMetadataFromContext(setterContext.baseURIDecl())
+                );
+            }
+            String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
+            URI uri = FileSystemUtil.resolveURI(
+                this.moduleContext.getStaticBaseURI(),
+                uriString,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            this.moduleContext.setStaticBaseUri(uri);
+            flags.baseURISet = true;
+            return;
+        }
+        throw new UnsupportedFeatureException(
+                "Setters are not supported yet, except for empty sequence ordering and default collations.",
+                createMetadataFromContext(setterContext)
+        );
+    }
+
+    private void processDefaultNamespaceDecl(
+            XQueryParser.DefaultNamespaceDeclContext ctx,
+            PrologPhase1Flags flags
+    ) {
+        String uri = processStringLiteral(ctx.stringLiteral());
+        int declType = ctx.type.getType();
+        if (declType == XQueryParser.KW_ELEMENT) {
+            bindNamespace("", uri, generateMetadata(ctx.getStop()));
+        } else if (declType == XQueryParser.KW_FUNCTION) {
+            if (flags.defaultFunctionNamespaceDeclared) {
+                throw new SemanticException(
+                        "The default function namespace has already been declared.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            this.moduleContext.setDefaultFunctionNamespaceUri(uri);
+            flags.defaultFunctionNamespaceDeclared = true;
+        } else {
+            throw new OurBadException("Unexpected default namespace declaration kind.");
+        }
+    }
+
+    private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
+    }
+
+    private Name nameForUnprefixedFunction(String localName) {
+        String uri = this.moduleContext.getDefaultFunctionNamespaceUri();
+        if (uri != null) {
+            return new Name(uri, "", localName);
+        }
+        return Name.createVariableInDefaultFunctionNamespace(localName);
+    }
+
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
         if (ctx.URIQualifiedName() != null) {
             return URIQualifiedNameParser.parse(
@@ -454,11 +508,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
         } else if (ctx.keywordOKForFunction() != null) {
             // if the rule matches a keyword, the prefix is not defined
-            return Name.createVariableInDefaultFunctionNamespace(ctx.keywordOKForFunction().getText());
+            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
         } else {
             // Handle NCName case
             String localName = ctx.NCName().getText();
-            return Name.createVariableInDefaultFunctionNamespace(localName);
+            return nameForUnprefixedFunction(localName);
         }
     }
 
@@ -496,7 +550,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInDefaultFunctionNamespace(localName);
+                name = nameForUnprefixedFunction(localName);
             } else if (isType) {
                 name = Name.createVariableInDefaultTypeNamespace(localName);
             } else if (isAnnotation) {

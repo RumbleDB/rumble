@@ -53,6 +53,12 @@ public class StaticContext implements Serializable, KryoSerializable {
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
 
+    /**
+     * XQuery {@code declare default function namespace}; when null, unprefixed function names use
+     * {@link Name#JSONIQ_DEFAULT_FUNCTION_NS} (Rumble's usual fn/jn/... resolution path).
+     */
+    private transient String defaultFunctionNamespaceUri;
+
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
@@ -401,6 +407,26 @@ public class StaticContext implements Serializable, KryoSerializable {
             throw new OurBadException("Empty sequence ordering can only be set in the root static context.");
         }
         this.emptySequenceOrderLeast = emptySequenceOrderLeast;
+    }
+
+    /**
+     * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
+     */
+    public void setDefaultFunctionNamespaceUri(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Default function namespace can only be set in the root static context.");
+        }
+        this.defaultFunctionNamespaceUri = uri;
+    }
+
+    /**
+     * @return the declared default function namespace URI, or null if not set (use JSONiq default function NS)
+     */
+    public String getDefaultFunctionNamespaceUri() {
+        if (this.parent != null) {
+            return this.parent.getDefaultFunctionNamespaceUri();
+        }
+        return this.defaultFunctionNamespaceUri;
     }
 
     public boolean isEmptySequenceOrderLeast() {
