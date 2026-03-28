@@ -182,7 +182,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         conf,
                         sequenceType,
                         arguments.get(i).getHighestExecutionMode(),
-                        arguments.get(i).getMetadata()
+                        arguments.get(i).getMetadata(),
+                        staticContext.getInScopeNamespaceBindings()
                 );
                 RuntimeIterator argumentIterator = arguments.get(i);
                 if (
@@ -252,7 +253,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     conf,
                     sequenceType,
                     functionCallIterator.getHighestExecutionMode(),
-                    functionCallIterator.getMetadata()
+                    functionCallIterator.getMetadata(),
+                    staticContext.getInScopeNamespaceBindings()
             );
             if (
                 sequenceType.isEmptySequence()

@@ -123,7 +123,8 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                             getConfiguration(),
                             SequenceType.OBJECTS,
                             ExecutionMode.DATAFRAME,
-                            getMetadata()
+                            getMetadata(),
+                            staticContext.getStaticallyKnownNamespaces()
                     )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(

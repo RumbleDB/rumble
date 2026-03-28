@@ -140,7 +140,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                             getConfiguration(),
                             sequenceType,
                             executionMode,
-                            this.functionArguments.get(i).getMetadata()
+                            this.functionArguments.get(i).getMetadata(),
+                            staticContext.getStaticallyKnownNamespaces()
                     );
                     if (
                         sequenceType.isEmptySequence()
@@ -245,7 +246,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                new RuntimeStaticContext(getConfiguration(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata())
+                new RuntimeStaticContext(getConfiguration(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata(), staticContext.getStaticallyKnownNamespaces())
         );
     }
 

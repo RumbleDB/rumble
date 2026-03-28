@@ -322,7 +322,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         this.config,
                         expression.getStaticSequenceType(),
                         returnClause.getHighestExecutionMode(this.visitorConfig),
-                        returnClause.getMetadata()
+                        returnClause.getMetadata(),
+                        expression.getStaticContext().getInScopeNamespaceBindings()
                 )
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -1992,7 +1993,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         this.config,
                         statement.getStaticSequenceType(),
                         returnClause.getHighestExecutionMode(this.visitorConfig),
-                        returnClause.getMetadata()
+                        returnClause.getMetadata(),
+                        statement.getStaticContext().getInScopeNamespaceBindings()
                 )
         );
         runtimeIterator.setStaticContext(statement.getStaticContext());
@@ -2032,7 +2034,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         this.config,
                         SequenceType.ITEM,
                         stepExpr.getHighestExecutionMode(this.visitorConfig),
-                        stepExpr.getMetadata()
+                        stepExpr.getMetadata(),
+                        stepExpr.getStaticContext().getInScopeNamespaceBindings()
                 )
         );
     }
@@ -2044,7 +2047,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     this.config,
                     SequenceType.STRING,
                     ExecutionMode.LOCAL,
-                    metadata
+                    metadata,
+                    stepExpr.getStaticContext().getInScopeNamespaceBindings()
             )
         );
     }
