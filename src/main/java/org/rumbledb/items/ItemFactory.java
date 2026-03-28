@@ -290,7 +290,7 @@ public class ItemFactory {
         return result;
     }
 
-    public Item createMapItem(
+    public Item createObjectOrMapItem(
             List<Item> keys,
             List<List<Item>> values,
             ExceptionMetadata itemMetadata,
@@ -304,17 +304,26 @@ public class ItemFactory {
             List<Item> valuesList = values.stream().map(value -> value.get(0)).collect(Collectors.toList());
             return createObjectItem(stringKeys, valuesList, itemMetadata, mutable);
         } else {
-            Item result = new MapItem(keys, values, itemMetadata);
-            if (mutable) {
-                result.setMutabilityLevel(0);
-            } else {
-                result.setMutabilityLevel(-1);
-            }
-            return result;
+            return createMapItem(keys, values, itemMetadata, mutable);
         }
     }
 
     public Item createMapItem(
+            List<Item> keys,
+            List<List<Item>> values,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
+        Item result = new MapItem(keys, values, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectOrMapItem(
             Map<Item, List<Item>> keyValuePairs,
             ExceptionMetadata itemMetadata,
             boolean mutable
@@ -329,14 +338,18 @@ public class ItemFactory {
             }
             return createObjectItem(stringKeyValuePairs, mutable);
         } else {
-            Item result = new MapItem(keyValuePairs, itemMetadata);
-            if (mutable) {
-                result.setMutabilityLevel(0);
-            } else {
-                result.setMutabilityLevel(-1);
-            }
-            return result;
+            return createMapItem(keyValuePairs, itemMetadata, mutable);
         }
+    }
+
+    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new MapItem(keyValuePairs, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
     public Item createXmlTextNode(Node currentNode) {

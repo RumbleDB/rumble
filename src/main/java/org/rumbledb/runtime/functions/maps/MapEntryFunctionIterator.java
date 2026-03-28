@@ -79,6 +79,14 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         List<Item> valueSequence = new ArrayList<>();
         this.valueIterator.materialize(dynamicContext, valueSequence);
 
+        if (valueSequence.size() == 1 && key.isString()) {
+            return ItemFactory.getInstance()
+                .createObjectItem(
+                    Collections.singletonMap(key.getStringValue(), valueSequence),
+                    false
+                );
+        }
+
         return ItemFactory.getInstance()
             .createMapItem(
                 Collections.singletonMap(key, valueSequence),
