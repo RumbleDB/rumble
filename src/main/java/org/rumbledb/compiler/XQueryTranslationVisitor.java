@@ -427,10 +427,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
         if (ctx.URIQualifiedName() != null) {
-            // TODO: implement URIQualifiedName support
-            throw new UnsupportedFeatureException(
-                    "URIQualifiedNames are not supported yet.",
-                    createMetadataFromContext(ctx)
+            return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                createMetadataFromContext(ctx)
             );
         } else if (ctx.FullQName() != null) {
             // Handle FullQName by parsing its text content
@@ -466,13 +465,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Name parseEqName(XQueryParser.EqNameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
         if (ctx.qname() != null) {
             return parseName(ctx.qname(), isFunction, isType, isAnnotation);
-        } else {
-            // TODO: implement URIQualifiedName support
-            throw new UnsupportedFeatureException(
-                    "URIQualifiedNames are not supported yet.",
-                    createMetadataFromContext(ctx)
-            );
         }
+        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
     }
 
     public Name parseName(XQueryParser.QnameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
