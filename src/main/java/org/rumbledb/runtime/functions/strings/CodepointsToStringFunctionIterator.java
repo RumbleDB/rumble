@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import java.math.BigInteger;
 import java.util.List;
 
 public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -44,82 +43,52 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String xmlVersion = getConfiguration().getXmlVersion();
-        RuntimeIterator argIter = this.children.get(0);
+        List<Item> codepoints = this.children.get(0).materialize(context);
+        String xmlVersion = context.getRumbleRuntimeConfiguration().getXmlVersion();
 
-        /*
-         * For debugging purposes to see if the tests have correctly configured the Rumble Runtime - Prints the XML
-         * Version
-         *
-         * System.err.println("xmlVersion in context = " + context.getXmlVersion());
-         * System.err.println("conf object = " + System.identityHashCode(context.getRumbleRuntimeConfiguration()));
-         */
-
-        StringBuilder sb = new StringBuilder();
-        argIter.open(context);
-        try {
-            while (argIter.hasNext()) {
-                Item item = argIter.next();
-
-                if (!item.isInteger()) {
-                    throw new UnexpectedTypeException("Integer item expected", argIter.getMetadata());
-                }
-
-                BigInteger bi = item.getIntegerValue();
-
-                if (bi.signum() < 0 || bi.compareTo(BigInteger.valueOf(0x10FFFFL)) > 0) {
-                    throw new CodepointNotValidException(
-                            "Non-Unicode codepoint: " + bi + " (must be 0..0x10FFFF)",
-                            argIter.getMetadata()
-                    );
-                }
-
-                int cp = bi.intValue();
-
-                if (!isValidCodePoint(cp, xmlVersion)) {
-                    throw new CodepointNotValidException(
-                            "Non-XML-conformant codepoint: "
-                                + cp
-                                + " (for XML "
-                                + (xmlVersion.equals("1.0") ? "1.0" : "1.1")
-                                + ")",
-                            argIter.getMetadata()
-                    );
-                }
-
-                sb.appendCodePoint(cp);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Item item : codepoints) {
+            if (!item.isInteger()) {
+                throw new UnexpectedTypeException(
+                        "Integer item expected",
+                        this.children.get(0).getMetadata()
+                );
             }
-        } finally {
-            argIter.close();
+            int codePoint;
+            try {
+                codePoint = item.getIntegerValue().intValueExact();
+            } catch (ArithmeticException e) {
+                throw new CodepointNotValidException(
+                        "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                        this.children.get(0).getMetadata()
+                );
+            }
+            if (!(isValidCodePoint(codePoint, xmlVersion))) {
+                throw new CodepointNotValidException(
+                        "Non-XML-conformant codepoint: " + codePoint,
+                        this.children.get(0).getMetadata()
+                );
+            }
+            stringBuilder.appendCodePoint(codePoint);
         }
 
-        return ItemFactory.getInstance().createStringItem(sb.toString());
-    }
-
-    private static boolean isPermittedControlCharacter(int codepoint, String xmlVersion) {
-        boolean isC0 = (codepoint >= 0 && codepoint <= 31);
-        boolean isC1 = (codepoint >= 127 && codepoint <= 159);
-
-        if (!(isC0 || isC1)) {
-            return false;
-        }
-
-        if (xmlVersion.equals("1.0")) {
-            return codepoint == 9 || codepoint == 10 || codepoint == 13;
-        } else {
-            return codepoint != 0;
-        }
+        return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
 
     private static boolean isValidCodePoint(int codepoint, String xmlVersion) {
-        if (codepoint < 0 || codepoint > 1114111)
+        if (codepoint < 0 || codepoint > 1114111) {
             return false;
+        }
 
         boolean isC0 = (codepoint >= 0 && codepoint <= 31);
         boolean isC1 = (codepoint >= 127 && codepoint <= 159);
 
         if (isC0 || isC1) {
-            return isPermittedControlCharacter(codepoint, xmlVersion);
+            if (xmlVersion.equals("1.0")) {
+                return codepoint == 9 || codepoint == 10 || codepoint == 13;
+            } else {
+                return codepoint != 0;
+            }
         }
 
         return (codepoint <= 55295)

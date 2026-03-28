@@ -39,7 +39,7 @@ import java.util.List;
 public class VisitorHelpers {
 
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
-        RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
+        RuntimeIterator result = new RuntimeIteratorVisitor().visit(node, null);
         if (conf.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);

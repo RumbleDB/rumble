@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -243,11 +242,10 @@ public abstract class Clause extends Node {
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
-            RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
         return new RuntimeStaticContext(
-                conf,
+                this.staticContext.getRumbleConfiguration(),
                 getHighestExecutionMode(visitorConfig),
                 getMetadata()
         );
