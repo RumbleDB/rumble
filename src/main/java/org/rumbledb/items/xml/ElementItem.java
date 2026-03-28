@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -21,7 +22,7 @@ public class ElementItem implements Item {
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
-    private String nodeName;
+    private Name dmNodeName;
     private String stringValue;
     private Item parent;
     // TODO: add base-uri, schema-type, is-id, is-idrefs
@@ -40,16 +41,16 @@ public class ElementItem implements Item {
      * @param attributes The attributes items of the element
      */
     public ElementItem(String nodeName, List<Item> children, List<Item> attributes) {
-        this.nodeName = nodeName;
+        this.dmNodeName = XmlNodeQNameHelper.nameFromLexicalQualifiedNameOnly(nodeName);
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         // TODO: add support for attributes and children
-        this.stringValue = "<" + nodeName + "/>";
+        this.stringValue = "<" + this.dmNodeName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
-        this.nodeName = elementNode.getNodeName();
+        this.dmNodeName = XmlNodeQNameHelper.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
@@ -88,7 +89,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
         kryo.writeObject(output, this.namespaces);
-        output.writeString(this.nodeName);
+        kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
     }
 
@@ -100,7 +101,7 @@ public class ElementItem implements Item {
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
         this.namespaces = kryo.readObject(input, HashMap.class);
-        this.nodeName = input.readString();
+        this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
     }
 
@@ -265,8 +266,8 @@ public class ElementItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        return this.nodeName;
+    public Item nodeName() {
+        return XmlNodeQNameHelper.toQNameItem(this.dmNodeName);
     }
 
     @Override

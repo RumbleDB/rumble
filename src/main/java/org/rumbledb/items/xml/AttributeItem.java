@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
-    private String nodeName;
+    private Name dmNodeName;
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -25,7 +26,7 @@ public class AttributeItem implements Item {
     }
 
     public AttributeItem(Node attributeNode) {
-        this.nodeName = attributeNode.getNodeName();
+        this.dmNodeName = XmlNodeQNameHelper.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
     }
 
@@ -36,7 +37,7 @@ public class AttributeItem implements Item {
      * @param stringValue The string value of the attribute
      */
     public AttributeItem(String nodeName, String stringValue) {
-        this.nodeName = nodeName;
+        this.dmNodeName = XmlNodeQNameHelper.nameFromLexicalQualifiedNameOnly(nodeName);
         this.stringValue = stringValue;
     }
 
@@ -56,7 +57,7 @@ public class AttributeItem implements Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.documentPos);
         kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.nodeName);
+        kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
     }
 
@@ -64,13 +65,13 @@ public class AttributeItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
-        this.nodeName = input.readString();
+        this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
     }
 
     @Override
-    public String nodeName() {
-        return this.nodeName;
+    public Item nodeName() {
+        return XmlNodeQNameHelper.toQNameItem(this.dmNodeName);
     }
 
     @Override

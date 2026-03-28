@@ -61,8 +61,8 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        return this.target;
+    public Item nodeName() {
+        return XmlNodeQNameHelper.toQNameItem(XmlNodeQNameHelper.nameLocalOnly(this.target));
     }
 
     @Override

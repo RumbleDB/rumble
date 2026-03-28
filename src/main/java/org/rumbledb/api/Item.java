@@ -10,6 +10,7 @@ import java.time.*;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -1308,8 +1309,11 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
      * sequence if the node does not have a name."
+     *
+     * @return the node name as an {@link Item}, or {@code null} when the accessor yields the empty sequence
+     * @throws UnsupportedOperationException if called on an item that is not a node
      */
-    default String nodeName() {
+    default Item nodeName() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
