@@ -41,6 +41,18 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private static final long serialVersionUID = 1L;
 
+    private static boolean sameExpandedNodeName(Item node1, Item node2) {
+        Item q1 = node1.nodeName();
+        Item q2 = node2.nodeName();
+        if (q1 == null && q2 == null) {
+            return true;
+        }
+        if (q1 == null || q2 == null || !q1.isQName() || !q2.isQName()) {
+            return false;
+        }
+        return q1.getQNameValue().equals(q2.getQNameValue());
+    }
+
 
     public DeepEqualFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -177,7 +189,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         // if and only if both the following conditions are satisfied:
         if (node1.isProcessingInstructionNode() && node2.isProcessingInstructionNode()) {
             // 5a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
-            if (!node1.nodeName().equals(node2.nodeName())) {
+            if (!sameExpandedNodeName(node1, node2)) {
                 return false;
             }
             // 5b: The string-values of the two nodes are equal.
@@ -248,7 +260,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      */
     private boolean checkElementNodesDeepEqual(Item element1, Item element2) {
         // 3a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
-        if (!element1.nodeName().equals(element2.nodeName())) {
+        if (!sameExpandedNodeName(element1, element2)) {
             return false;
         }
 
@@ -288,7 +300,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      */
     private boolean checkAttributeNodesDeepEqual(Item attr1, Item attr2) {
         // 4a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
-        if (!attr1.nodeName().equals(attr2.nodeName())) {
+        if (!sameExpandedNodeName(attr1, attr2)) {
             return false;
         }
 

@@ -94,6 +94,11 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return nodeTestResults;
     }
 
+    private static String nodeNameLexical(Item node) {
+        Item q = node.nodeName();
+        return q == null ? "" : q.getStringValue();
+    }
+
     private Item nodeTestItem(Item node) {
         if (this.nodeTest instanceof AnyKindTest) {
             return anyKindTest(node);
@@ -139,7 +144,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (!isPrincipalNodeKind(node)) {
                 return null;
             }
-            if (node.nodeName().equals(nameTest.getQName())) {
+            if (nameTest.getQName().equals(nodeNameLexical(node))) {
                 return node;
             }
             return null;
@@ -150,7 +155,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             }
             return node;
         }
-        if (nameTest.getWildcardQName().equals(node.nodeName())) {
+        if (nameTest.getWildcardQName().equals(nodeNameLexical(node))) {
             return node;
         }
         return null;
@@ -173,7 +178,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return null;
         }
         if (elementTest.isNameWithoutTypeCheck()) {
-            if (node instanceof ElementItem && node.nodeName().equals(elementTest.getElementName())) {
+            if (node instanceof ElementItem && nodeNameLexical(node).equals(elementTest.getElementName())) {
                 return node;
             }
             return null;
@@ -197,7 +202,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return null;
         }
         if (attributeTest.isNameWithoutTypeCheck()) {
-            if (node instanceof AttributeItem && node.nodeName().equals(attributeTest.getAttributeName())) {
+            if (node instanceof AttributeItem && nodeNameLexical(node).equals(attributeTest.getAttributeName())) {
                 return node;
             }
             return null;
@@ -240,7 +245,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return node;
         }
         // processing-instruction(target) matches PI nodes whose target name equals the given name
-        if (node.nodeName().equals(piTest.getTargetName())) {
+        if (nodeNameLexical(node).equals(piTest.getTargetName())) {
             return node;
         }
         return null;

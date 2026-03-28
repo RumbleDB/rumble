@@ -48,6 +48,13 @@ public class Serializer implements java.io.Serializable {
         return this.itemSeparator;
     }
 
+    private static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
+        Item q = item.nodeName();
+        if (q != null) {
+            sb.append(q.getStringValue());
+        }
+    }
+
     public String serialize(Item i) {
         StringBuffer sb = new StringBuffer();
         serialize(i, sb, "", true);
@@ -178,7 +185,7 @@ public class Serializer implements java.io.Serializable {
         if (item.isElementNode()) {
             sb.append(indent);
             sb.append("<");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
             }
@@ -195,14 +202,14 @@ public class Serializer implements java.io.Serializable {
             }
             sb.append(indent);
             sb.append("</");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             sb.append(">");
             sb.append("\n");
         }
 
         if (item.isAttributeNode()) {
             sb.append(" ");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             sb.append("=");
             sb.append("\"");
             sb.append(item.getStringValue());
@@ -213,7 +220,7 @@ public class Serializer implements java.io.Serializable {
         if (item.isProcessingInstructionNode()) {
             sb.append(indent);
             sb.append("<?");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             String content = item.getStringValue();
             if (content != null && !content.isEmpty()) {
                 sb.append(" ");

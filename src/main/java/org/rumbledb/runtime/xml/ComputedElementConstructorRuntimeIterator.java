@@ -22,6 +22,7 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
@@ -376,15 +377,18 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      * If two or more attributes have the same node-name, a dynamic error is raised [err:XQDY0025].
      */
     private void validateNoDuplicateAttributes(List<Item> attributes) {
-        Set<String> attributeNames = new HashSet<>();
+        Set<Name> attributeNames = new HashSet<>();
 
         for (Item attribute : attributes) {
             if (attribute.isAttributeNode()) {
-                String attributeName = attribute.nodeName();
-                if (attributeNames.contains(attributeName)) {
-                    throw new DuplicateAttributeException(attributeName);
+                Item q = attribute.nodeName();
+                if (q != null && q.isQName()) {
+                    Name expanded = q.getQNameValue();
+                    if (attributeNames.contains(expanded)) {
+                        throw new DuplicateAttributeException(q.getStringValue());
+                    }
+                    attributeNames.add(expanded);
                 }
-                attributeNames.add(attributeName);
             }
         }
     }

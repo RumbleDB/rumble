@@ -190,7 +190,11 @@ public final class NamespaceBindingUtils {
         if (!attributeItem.isAttributeNode()) {
             return null;
         }
-        String attributeName = attributeItem.nodeName();
+        Item q = attributeItem.nodeName();
+        if (q == null || !q.isQName()) {
+            return null;
+        }
+        String attributeName = q.getStringValue();
         if ("xmlns".equals(attributeName)) {
             return new String[] { "", attributeItem.getStringValue() };
         }
