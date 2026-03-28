@@ -3,6 +3,7 @@ package org.rumbledb.items;
 import java.time.*;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
@@ -231,6 +232,10 @@ public class ItemFactory {
 
     public Item createAnyURIItem(String s) {
         return new AnyURIItem(s);
+    }
+
+    public Item createQNameItem(Name name) {
+        return new QNameItem(name);
     }
 
     public Item createHexBinaryItem(String s) {

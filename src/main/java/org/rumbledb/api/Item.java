@@ -368,6 +368,31 @@ public interface Item extends Serializable, KryoSerializable {
         return false;
     }
 
+    // region qnames
+
+    /**
+     * Tests whether the item is an atomic item of type xs:QName (expanded QName, see {@link Name}).
+     *
+     * @return true if it is an xs:QName item, false otherwise.
+     */
+    default boolean isQName() {
+        return false;
+    }
+
+    /**
+     * Returns the expanded name of this item when it is an xs:QName.
+     * Value equality follows {@link Name}: same namespace URI and local name; the prefix is not significant for
+     * equality.
+     *
+     * @return the expanded name.
+     * @throws UnsupportedOperationException if the item is not an xs:QName.
+     */
+    default Name getQNameValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    // endregion qnames
+
     /**
      * Tests whether the item is an atomic item of type base64Binary or hexBinary.
      *
