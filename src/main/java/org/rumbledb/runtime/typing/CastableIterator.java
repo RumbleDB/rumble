@@ -71,7 +71,12 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
 
         checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
         try {
-            Item res = CastIterator.castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+            Item res = CastIterator.castItemToType(
+                item,
+                this.sequenceType.getItemType(),
+                getMetadata(),
+                this.staticContext
+            );
             return ItemFactory.getInstance()
                 .createBooleanItem(res != null);
         } catch (Exception e) {

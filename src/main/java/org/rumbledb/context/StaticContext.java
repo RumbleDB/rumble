@@ -463,6 +463,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
+    /**
+     * Built-in namespace bindings (fn, xs, map, ...) used when resolving QNames without a full static context.
+     */
+    public static String getBuiltinNamespaceBinding(String prefix) {
+        return defaultBindings.get(prefix);
+    }
+
     public InScopeSchemaTypes getInScopeSchemaTypes() {
         if (this.inScopeSchemaTypes != null) {
             return this.inScopeSchemaTypes;

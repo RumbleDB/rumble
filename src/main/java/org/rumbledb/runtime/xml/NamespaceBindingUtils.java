@@ -20,10 +20,26 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.util.Map;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
 public final class NamespaceBindingUtils {
+
+    /**
+     * Resolves a namespace prefix (including {@code ""} for the default element/type namespace) to a URI,
+     * or {@code null} if unbound.
+     */
+    @FunctionalInterface
+    public interface NamespaceResolver {
+        String resolvePrefix(String prefix);
+    }
 
     public enum ReservedNamespaceBindingError {
         XML_PREFIX_WRONG_URI,
@@ -36,6 +52,138 @@ public final class NamespaceBindingUtils {
     public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
     private NamespaceBindingUtils() {
+    }
+
+    /**
+     * XML 1.0 / Namespaces in XML — NCName character checks (no colon).
+     */
+    public static boolean isValidNcName(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        int cp = s.codePointAt(0);
+        if (!isXmlNameStartChar(cp) || cp == ':') {
+            return false;
+        }
+        i += Character.charCount(cp);
+        while (i < len) {
+            cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp) || cp == ':') {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    private static boolean isXmlNameStartChar(int c) {
+        return c == ':'
+            || c == '_'
+            || isAsciiLetter(c)
+            || (c >= 0xC0 && c <= 0xD6)
+            || (c >= 0xD8 && c <= 0xF6)
+            || (c >= 0xF8 && c <= 0x2FF)
+            || (c >= 0x370 && c <= 0x37D)
+            || (c == 0x37F)
+            || (c >= 0x200C && c <= 0x200D)
+            || (c >= 0x2070 && c <= 0x218F)
+            || (c >= 0x2C00 && c <= 0x2FEF)
+            || (c >= 0x3001 && c <= 0xD7FF)
+            || (c >= 0xF900 && c <= 0xFDCF)
+            || (c >= 0xFDF0 && c <= 0xFFFD)
+            || (c >= 0x10000 && c <= 0xEFFFF);
+    }
+
+    private static boolean isXmlNameChar(int c) {
+        return isXmlNameStartChar(c)
+            || c == '-'
+            || c == '.'
+            || (c >= '0' && c <= '9')
+            || c == 0xB7
+            || (c >= 0x0300 && c <= 0x036F)
+            || (c >= 0x203F && c <= 0x2040);
+    }
+
+    private static boolean isAsciiLetter(int c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    }
+
+    public static NamespaceResolver builtinNamespaceResolver() {
+        return StaticContext::getBuiltinNamespaceBinding;
+    }
+
+    public static NamespaceResolver namespaceResolver(RuntimeStaticContext runtimeStaticContext) {
+        return runtimeStaticContext != null ? runtimeStaticContext::resolvePrefix : builtinNamespaceResolver();
+    }
+
+    public static NamespaceResolver namespaceResolver(StaticContext staticContext) {
+        if (staticContext == null) {
+            return builtinNamespaceResolver();
+        }
+        Map<String, String> inScope = staticContext.getInScopeNamespaceBindings();
+        return prefix -> {
+            if (inScope.containsKey(prefix)) {
+                return inScope.get(prefix);
+            }
+            return StaticContext.getBuiltinNamespaceBinding(prefix);
+        };
+    }
+
+    /**
+     * Whitespace-collapsed lexical QName to expanded name (xs:QName cast / constructor).
+     */
+    public static Name parseLexicalQName(
+            String lexical,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
+        if (lexical.isEmpty()) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
+        }
+        int colon = lexical.indexOf(':');
+        final String prefix;
+        final String local;
+        if (colon < 0) {
+            prefix = null;
+            local = lexical;
+        } else {
+            if (colon == 0 || colon == lexical.length() - 1 || lexical.indexOf(':', colon + 1) >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid xs:QName lexical value: \"" + lexical + "\".",
+                        metadata
+                );
+            }
+            prefix = lexical.substring(0, colon);
+            local = lexical.substring(colon + 1);
+        }
+        if ("xmlns".equals(prefix)) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: prefix xmlns is not allowed.", metadata);
+        }
+        if (!isValidNcName(local) || (prefix != null && !isValidNcName(prefix))) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: name is not a valid NCName.",
+                    metadata
+            );
+        }
+        if (prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, local);
+        }
+        String uri = namespaceResolver.resolvePrefix(prefix);
+        if (uri == null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName: prefix \"" + prefix + "\" is not bound to a namespace URI.",
+                    metadata
+            );
+        }
+        if (getReservedNamespaceBindingError(prefix, uri) != null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: reserved namespace binding for prefix \"" + prefix + "\".",
+                    metadata
+            );
+        }
+        return new Name(uri, prefix, local);
     }
 
     public static String[] parseNamespaceDeclarationAttribute(Item attributeItem) {

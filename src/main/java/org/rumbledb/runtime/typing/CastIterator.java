@@ -4,13 +4,17 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -95,7 +99,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (item == null) {
             return null;
         }
-        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata(), this.staticContext);
         if (result == null) {
             String message = String.format(
                 "\"%s\": this literal is not castable to type %s.",
@@ -108,6 +112,33 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.builtinNamespaceResolver());
+    }
+
+    public static Item castItemToType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext
+    ) {
+        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+    }
+
+    public static Item castItemToType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            StaticContext staticContext
+    ) {
+        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+    }
+
+    public static Item castItemToType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver
+    ) {
         Item converted = null;
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
@@ -134,7 +165,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         // F&O 3.1 §19.3.5: union targets use dedicated member-iteration logic;
         // must be checked before isStaticallyCastableAs which lacks union-target support.
         if (targetType.isUnionType()) {
-            return castToUnionType(item, targetType, metadata);
+            return castToUnionType(item, targetType, metadata, namespaceResolver);
         }
 
         if (!item.getDynamicType().isStaticallyCastableAs(targetType)) {
@@ -165,7 +196,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 // facets.
                 // this means that all values of the source type are valid for the target type,
                 // so we can return the converted item directly.
-                return convertForCastTargetType(item, targetType, metadata);
+                return convertForCastTargetType(item, targetType, metadata, namespaceResolver);
             }
 
             // XPath and XQuery F&O 3.1 §19.2: Casting from xs:string and xs:untypedAtomic
@@ -200,7 +231,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
                 Item sourcePrimitiveValue = itemType.isCastingPrimitive()
                     ? item
-                    : convertForCastTargetType(item, sourcePrimitiveType, metadata);
+                    : convertForCastTargetType(item, sourcePrimitiveType, metadata, namespaceResolver);
                 if (sourcePrimitiveValue == null) {
                     return null;
                 }
@@ -214,7 +245,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     targetPrimitiveValue = convertForCastTargetType(
                         sourcePrimitiveValue,
                         targetPrimitiveType,
-                        metadata
+                        metadata,
+                        namespaceResolver
                     );
                     if (targetPrimitiveValue == null) {
                         return null;
@@ -224,14 +256,19 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (!checkValueConformsToTargetFacets(targetPrimitiveValue, targetType)) {
                     return null;
                 }
-                converted = convertForCastTargetType(targetPrimitiveValue, targetType, metadata);
+                converted = convertForCastTargetType(
+                    targetPrimitiveValue,
+                    targetType,
+                    metadata,
+                    namespaceResolver
+                );
             } else {
                 // This covers both
                 // F&O 3.1 §19.1 Casting from primitive types to derived types
                 // F&O 3.1 §19.3.3: Casting within a branch of the type hierarchy
                 // if ST and TT share the same primitive type, the cast succeeds iff the value
                 // conforms to the target type's facets.
-                converted = convertForCastTargetType(item, targetType, metadata);
+                converted = convertForCastTargetType(item, targetType, metadata, namespaceResolver);
             }
 
             // If the conversion failed (returned null)
@@ -281,7 +318,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
      * @param metadata exception metadata for error reporting
      * @return the cast result, or {@code null} if no member type accepts the value
      */
-    private static Item castToUnionType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+    private static Item castToUnionType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver
+    ) {
         List<ItemType> memberTypes = targetType.getTypes();
 
         // §19.3.5 Rule 1: source is xs:string or xs:untypedAtomic
@@ -291,7 +333,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     continue;
                 }
                 try {
-                    Item result = castItemToType(item, memberType, metadata);
+                    Item result = castItemToType(item, memberType, metadata, namespaceResolver);
                     if (result != null) {
                         return result;
                     }
@@ -316,7 +358,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 continue;
             }
             try {
-                Item result = castItemToType(item, memberType, metadata);
+                Item result = castItemToType(item, memberType, metadata, namespaceResolver);
                 if (result != null) {
                     return result;
                 }
@@ -336,12 +378,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
      * @param item the source atomic item.
      * @param targetType the cast target type representation to materialize.
      * @param metadata exception metadata propagated to conversion errors where applicable.
+     * @param namespaceResolver in-scope namespaces for xs:QName from string; use
+     *        {@link NamespaceBindingUtils#builtinNamespaceResolver()} when none
      * @return the converted item for {@code targetType}, or {@code null} if no conversion applies.
      */
     private static Item convertForCastTargetType(
             Item item,
             ItemType targetType,
-            ExceptionMetadata metadata
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver
     ) {
         ItemType sourceType = item.getDynamicType();
         if (sourceType.equals(targetType)) {
@@ -620,6 +665,28 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 targetType,
                 BuiltinTypesCatalogue.gYearMonthItem
             );
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)) {
+            if (item.isQName()) {
+                return finalizeAtomicBranchValue(
+                    ItemFactory.getInstance().createQNameItem(item.getQNameValue()),
+                    targetType,
+                    BuiltinTypesCatalogue.QNameItem
+                );
+            }
+            if (
+                item.isString()
+                    || item.isUntypedAtomic()
+            ) {
+                String lexical = normalizeLexicalAccordingToWhitespace(
+                    item.getStringValue(),
+                    BuiltinTypesCatalogue.QNameItem
+                );
+                Name expanded = NamespaceBindingUtils.parseLexicalQName(lexical, namespaceResolver, metadata);
+                Item q = ItemFactory.getInstance().createQNameItem(expanded);
+                return finalizeAtomicBranchValue(q, targetType, BuiltinTypesCatalogue.QNameItem);
+            }
+            return null;
         }
         // if no branch succeeded, it means no conversion needs to be carried out, so return the item as is,
         // annotated with the target type
