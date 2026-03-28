@@ -13,6 +13,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -86,25 +87,37 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         List<Item> valueSequence = new ArrayList<>();
         this.valueIterator.materialize(context, valueSequence);
 
-        // 4) Build a new map: copy all entries except those whose key is op:same-key to $key
-        List<Item> newKeys = new ArrayList<>();
-        List<List<Item>> newValueSequences = new ArrayList<>();
-
-        List<Item> keys = mapItem.getItemKeys();
-        for (Item existingKey : keys) {
-            if (MapAtomicSameKey.sameKey(existingKey, key)) {
-                continue; // replace existing entry
+        // 4) Build a new map: keep entries whose key is not op:same-key to $key. Walk keys and value
+        // sequences by index (one pass); reuse value lists for unchanged entries like map:remove.
+        if (mapItem.isObject() && key.isString() && valueSequence.size() == 1) {
+            // fast path:construct an object item
+            HashMap<String, Item> newKeyValuePairs = new HashMap<>();
+            // optimization: short circuit the op:same-key check if the key is already found
+            boolean keyFound = false;
+            for (Item existingKey : mapItem.getItemKeys()) {
+                if (!keyFound && MapAtomicSameKey.sameKey(existingKey, key)) {
+                    keyFound = true;
+                    continue;
+                }
+                newKeyValuePairs.put(existingKey.getStringValue(), mapItem.getItemByKey(existingKey));
             }
-            List<Item> existingSeq = mapItem.getSequenceByKey(existingKey);
-            newKeys.add(existingKey);
-            newValueSequences.add(existingSeq == null ? new ArrayList<>() : new ArrayList<>(existingSeq));
+            newKeyValuePairs.put(key.getStringValue(), valueSequence.get(0));
+            return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
+        } else {
+            HashMap<Item, List<Item>> newKeyValuePairs = new HashMap<>();
+            // optimization: short circuit the op:same-key check if the key is already found
+            boolean keyFound = false;
+            for (Item existingKey : mapItem.getItemKeys()) {
+                if (!keyFound && MapAtomicSameKey.sameKey(existingKey, key)) {
+                    keyFound = true;
+                    continue;
+                }
+                newKeyValuePairs.put(existingKey, mapItem.getSequenceByKey(existingKey));
+            }
+            newKeyValuePairs.put(key, valueSequence);
+
+            return ItemFactory.getInstance().createMapItem(newKeyValuePairs, getMetadata(), false);
         }
-
-        newKeys.add(key);
-        newValueSequences.add(new ArrayList<>(valueSequence));
-
-        return ItemFactory.getInstance()
-            .createMapItem(newKeys, newValueSequences, getMetadata(), false);
     }
 }
 

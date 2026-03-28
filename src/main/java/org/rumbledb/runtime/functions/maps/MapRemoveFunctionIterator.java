@@ -9,6 +9,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -16,7 +17,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -83,6 +83,7 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         }
 
         List<Item> keysToRemove = new ArrayList<>();
+        boolean allKeysToRemoveString = true;
         for (Item it : rawKeys) {
             List<Item> atomized = it.atomizedValue();
             for (Item a : atomized) {
@@ -92,6 +93,9 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
                             getMetadata()
                     );
                 }
+                if (allKeysToRemoveString && !a.isString()) {
+                    allKeysToRemoveString = false;
+                }
                 keysToRemove.add(a);
             }
         }
@@ -100,25 +104,43 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             this.resultItem = mapItem;
             return;
         }
-
-        // Use existing map API only:
-        // 1) create a copy of the map,
-        // 2) remove keys on the copy using removeItemByKey (op:same-key).
-        Map<Item, List<Item>> keyValuePairs = new HashMap<>();
         List<Item> mapKeys = mapItem.getItemKeys();
         List<List<Item>> mapValueSequences = mapItem.getSequenceValues();
+        boolean allKeysString = true;
+        boolean allValuesSingletons = true;
+        HashMap<Item, List<Item>> newKeyValuePairs = new HashMap<>();
+        HashMap<String, Item> newStringKeyValuePairs = new HashMap<>();
         for (int i = 0; i < mapKeys.size(); i++) {
+            Item mapKey = mapKeys.get(i);
+            if (keysToRemove.contains(mapKey)) {
+                continue;
+            }
             List<Item> seq = mapValueSequences.get(i);
-            keyValuePairs.put(mapKeys.get(i), seq == null ? new ArrayList<>() : seq);
+            if (allKeysString && !mapKey.isString()) {
+                allKeysString = false;
+                // optimization: free up memory by removing pointer to the string hash map
+                newStringKeyValuePairs = null;
+            }
+            if (allValuesSingletons && seq.size() != 1) {
+                allValuesSingletons = false;
+                // optimization: free up memory by removing pointer to the string hash map
+                newStringKeyValuePairs = null;
+            }
+            if (allKeysString && allValuesSingletons) {
+                if (newStringKeyValuePairs == null) {
+                    newStringKeyValuePairs = new HashMap<>();
+                }
+                newStringKeyValuePairs.put(mapKey.getStringValue(), seq.get(0));
+            }
+            newKeyValuePairs.put(mapKey, seq);
         }
-
-        org.rumbledb.items.MapItem copy = new org.rumbledb.items.MapItem(keyValuePairs, getMetadata());
-        copy.setMutabilityLevel(0);
-        for (Item k : keysToRemove) {
-            copy.removeItemByKey(k);
+        if (allKeysString && allValuesSingletons) {
+            this.resultItem = ItemFactory.getInstance()
+                .createObjectItemOptimized(newStringKeyValuePairs, false);
+        } else {
+            this.resultItem = ItemFactory.getInstance()
+                .createMapItem(newKeyValuePairs, getMetadata(), false);
         }
-        copy.setMutabilityLevel(-1);
-        this.resultItem = copy;
     }
 
     @Override

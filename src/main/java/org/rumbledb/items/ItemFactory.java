@@ -280,7 +280,26 @@ public class ItemFactory {
         return result;
     }
 
+    /**
+     * Create an object item from a map of string keys and list of items.
+     * 
+     * @deprecated Use {@link #createObjectItemOptimized(Map<String, Item>, boolean)} instead.
+     * @param keyValuePairs The map of string keys and list of items.
+     * @param mutable The mutability level of the object item.
+     * @return The object item.
+     */
+    @Deprecated
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
+        Item result = new ObjectItem(keyValuePairs);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectItemOptimized(Map<String, Item> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
         if (mutable) {
             result.setMutabilityLevel(0);

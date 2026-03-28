@@ -118,26 +118,40 @@ public class ObjectItem implements Item {
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for
      *        functionality
      */
-    public ObjectItem(Map<String, List<Item>> keyValuePairs) {
+    public ObjectItem(Map<String, ?> keyValuePairs)
+
+    {
         super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
-        for (String key : keyValuePairs.keySet()) {
-            // add all keys to the keyList
-            keyList.add(key);
-            List<Item> values = keyValuePairs.get(key);
-            // for each key, convert the lists of values into arrayItems
-            if (values.size() > 1) {
-                Item valuesArray = ItemFactory.getInstance().createArrayItem(values, false);
-                valueList.add(valuesArray);
-            } else if (values.size() == 1) {
-                Item value = values.get(0);
-                valueList.add(value);
-            } else {
-                throw new RuntimeException("Unexpected list size found.");
+
+        if (keyValuePairs.size() > 0) {
+            for (String key : keyValuePairs.keySet()) {
+                // add all keys to the keyList
+                keyList.add(key);
+                if (keyValuePairs.get(key) instanceof List<?>) {
+                    List<Item> values = (List<Item>) keyValuePairs.get(key);
+                    // for each key, convert the lists of values into arrayItems
+                    if (values.size() > 1) {
+                        Item valuesArray = ItemFactory.getInstance().createArrayItem(values, false);
+                        valueList.add(valuesArray);
+                    } else if (values.size() == 1) {
+                        Item value = values.get(0);
+                        valueList.add(value);
+                    } else {
+                        throw new RuntimeException("Unexpected list size found.");
+                    }
+                } else if (keyValuePairs.get(key) instanceof Item) {
+                    Item value = (Item) keyValuePairs.get(key);
+                    valueList.add(value);
+                } else {
+                    throw new RuntimeException("Unexpected value type found.");
+                }
+
             }
         }
+
 
         this.keys = keyList;
         this.values = valueList;
@@ -150,6 +164,8 @@ public class ObjectItem implements Item {
         this.collection = null;
         this.topLevelOrder = 0.0;
     }
+
+
 
     private void rebuildKeyStringIndex() {
         if (this.keyStringToIndex == null) {

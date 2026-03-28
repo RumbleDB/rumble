@@ -28,6 +28,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values.
@@ -80,16 +81,35 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         List<Item> mapKeys = new ArrayList<>();
         List<List<Item>> valueSequences = new ArrayList<>();
+        boolean allKeysString = true;
+        boolean allValuesSingletons = true;
         for (int i = 0; i < this.keys.size(); i++) {
             Item key = atomizeSingleMapKey(this.keys.get(i), dynamicContext, getMetadata());
             mapKeys.add(key);
             RuntimeIterator valueIterator = this.values.get(i);
             List<Item> valueSeq = new ArrayList<>();
             valueIterator.materialize(dynamicContext, valueSeq);
+            if (!key.isString()) {
+                allKeysString = false;
+            }
+            if (valueSeq.size() != 1) {
+                allValuesSingletons = false;
+            }
             valueSequences.add(valueSeq);
         }
         this.hasNext = false;
-        return ItemFactory.getInstance().createMapItem(mapKeys, valueSequences, getMetadata(), false);
+        if (allKeysString && allValuesSingletons) {
+            return ItemFactory.getInstance()
+                .createObjectItem(
+                    mapKeys.stream().map(Item::getStringValue).collect(Collectors.toList()),
+                    valueSequences.stream().map(values -> values.get(0)).collect(Collectors.toList()),
+                    getMetadata(),
+                    false
+                );
+        } else {
+            return ItemFactory.getInstance()
+                .createMapItem(mapKeys, valueSequences, getMetadata(), false);
+        }
     }
 
     @Override

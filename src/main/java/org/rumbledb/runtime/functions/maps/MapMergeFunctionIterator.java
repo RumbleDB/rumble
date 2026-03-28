@@ -134,6 +134,8 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         // Streaming consumption avoids materializing huge sequences of maps.
         Map<MapSameKeyWrapper, List<Item>> accumulator = new HashMap<>();
         boolean sawAnyMap = false;
+        boolean allKeysString = true;
+        boolean allValuesSingletons = true;
         this.mapsIterator.open(context);
         try {
             while (this.mapsIterator.hasNext()) {
@@ -156,6 +158,12 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                     List<Item> existingSeq = accumulator.get(lookup);
                     if (existingSeq == null) {
                         accumulator.put(lookup, new ArrayList<>(bSeq));
+                        if (allKeysString && !bKey.isString()) {
+                            allKeysString = false;
+                        }
+                        if (allValuesSingletons && bSeq.size() != 1) {
+                            allValuesSingletons = false;
+                        }
                         continue;
                     }
 
@@ -164,6 +172,12 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                             break;
                         case USE_LAST:
                             accumulator.put(lookup, new ArrayList<>(bSeq));
+                            if (allKeysString && !bKey.isString()) {
+                                allKeysString = false;
+                            }
+                            if (allValuesSingletons && bSeq.size() != 1) {
+                                allValuesSingletons = false;
+                            }
                             break;
                         case USE_ANY:
                             break;
@@ -172,6 +186,12 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                             combined.addAll(existingSeq);
                             combined.addAll(bSeq);
                             accumulator.put(lookup, combined);
+                            if (allKeysString && !bKey.isString()) {
+                                allKeysString = false;
+                            }
+                            if (allValuesSingletons && bSeq.size() != 1) {
+                                allValuesSingletons = false;
+                            }
                             break;
                         case REJECT:
                             throw new UnexpectedTypeException(
@@ -190,20 +210,31 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         // Empty input -> empty map.
         if (!sawAnyMap) {
             return ItemFactory.getInstance()
-                .createMapItem(new HashMap<>(), metadata, false);
+                .createObjectItemOptimized(new HashMap<>(), false);
         }
 
-        // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
-        Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-        for (Map.Entry<MapSameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
-            finalKeyValuePairs.put(
-                entry.getKey().getKey(),
-                entry.getValue() == null ? new ArrayList<>() : entry.getValue()
-            );
+        if (allKeysString && allValuesSingletons) {
+            // fast path: construct an object item
+            HashMap<String, Item> newKeyValuePairs = new HashMap<>();
+            for (Map.Entry<MapSameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
+                Item key = entry.getKey().getKey();
+                List<Item> values = entry.getValue();
+                newKeyValuePairs.put(key.getStringValue(), values.get(0));
+            }
+            return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
+        } else {
+            // construct a map item
+            // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
+            Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
+            for (Map.Entry<MapSameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
+                Item key = entry.getKey().getKey();
+                List<Item> values = entry.getValue();
+                finalKeyValuePairs.put(key, values);
+            }
+            return ItemFactory.getInstance()
+                .createMapItem(finalKeyValuePairs, metadata, false);
         }
 
-        return ItemFactory.getInstance()
-            .createMapItem(finalKeyValuePairs, metadata, false);
     }
 }
 
