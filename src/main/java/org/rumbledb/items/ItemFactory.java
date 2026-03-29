@@ -326,6 +326,10 @@ public class ItemFactory {
         return new AttributeItem(nodeName, stringValue);
     }
 
+    public Item createXmlAttributeNode(Name nodeName, String stringValue) {
+        return new AttributeItem(nodeName, stringValue);
+    }
+
     public Item createXmlDocumentNode(Node documentNode, List<Item> children) {
         return new DocumentItem(documentNode, children);
     }
@@ -353,6 +357,10 @@ public class ItemFactory {
      * @return The element item
      */
     public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
+        return new ElementItem(nodeName, children, attributes);
+    }
+
+    public Item createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }
 

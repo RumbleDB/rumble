@@ -47,19 +47,19 @@ import java.util.Set;
 public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String staticElementName;
+    private Name staticElementName;
     private AtomizationIterator nameIterator;
     private RuntimeIterator contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }
      * 
-     * @param staticElementName The static element name
+     * @param staticElementName The static element name (expanded)
      * @param contentIterator The content iterator
      * @param staticContext The runtime static context
      */
     public ComputedElementConstructorRuntimeIterator(
-            String staticElementName,
+            Name staticElementName,
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
@@ -111,11 +111,8 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         }
 
         // Determine the element name
-        String elementName;
-        if (this.staticElementName != null) {
-            // Static element name
-            elementName = this.staticElementName;
-        } else {
+        String dynamicElementNameLexical = null;
+        if (this.staticElementName == null) {
             // Dynamic element name - evaluate the name expression
             // Processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedElements
@@ -158,7 +155,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
             // TODO: implement proper validation of the element name
 
-            elementName = nameString;
+            dynamicElementNameLexical = nameString;
         }
 
         // Process content expression according to XQuery 3.1 specification
@@ -167,12 +164,22 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         // Create and return the element item
         this.hasNext = false;
-        ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
-            .createXmlElementNode(
-                elementName,
-                processedContent.children,
-                processedContent.attributes
-            );
+        ElementItem elementItem;
+        if (this.staticElementName != null) {
+            elementItem = (ElementItem) ItemFactory.getInstance()
+                .createXmlElementNode(
+                    this.staticElementName,
+                    processedContent.children,
+                    processedContent.attributes
+                );
+        } else {
+            elementItem = (ElementItem) ItemFactory.getInstance()
+                .createXmlElementNode(
+                    dynamicElementNameLexical,
+                    processedContent.children,
+                    processedContent.attributes
+                );
+        }
 
         // Only add namespaces explicitly declared on this element
         for (Item namespace : processedContent.namespaces) {

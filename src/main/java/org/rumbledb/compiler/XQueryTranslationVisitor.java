@@ -78,7 +78,6 @@ import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
@@ -145,6 +144,7 @@ import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.parser.xquery.XQueryParser;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
@@ -516,14 +516,35 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
     }
 
-    public Name parseEqName(XQueryParser.EqNameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
+    /**
+     * Parse an EQName. When {@code elementConstructor} is true, the {@code qname} branch uses
+     * {@link #parseName} with element-constructor rules (default element/type namespace for unprefixed names).
+     * URI-qualified names always use {@link URIQualifiedNameParser}.
+     */
+    public Name parseEqName(
+            XQueryParser.EqNameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
         if (ctx.qname() != null) {
-            return parseName(ctx.qname(), isFunction, isType, isAnnotation);
+            return parseName(ctx.qname(), isFunction, isType, isAnnotation, isElementConstructor);
         }
         return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
     }
 
-    public Name parseName(XQueryParser.QnameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
+    /**
+     * Resolves a QName in static context. When {@code elementConstructor} is true (direct or static computed element
+     * tag names), an unprefixed name uses the default element/type namespace if bound, otherwise no namespace.
+     */
+    public Name parseName(
+            XQueryParser.QnameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -555,6 +576,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 name = Name.createVariableInDefaultTypeNamespace(localName);
             } else if (isAnnotation) {
                 name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+            } else if (isElementConstructor) {
+                String defaultElementNs = this.moduleContext.resolveNamespace("");
+                if (defaultElementNs != null) {
+                    name = new Name(defaultElementNs, "", localName);
+                } else {
+                    name = Name.createVariableInNoNamespace(localName);
+                }
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -580,7 +608,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false);
+                paramName = parseName(param.qname(), false, false, false, false);
                 paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -1207,7 +1235,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             children.add(mainExpression);
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
             if (functionCallContext.eqName() != null) {
-                Name name = parseEqName(functionCallContext.eqName(), true, false, false);
+                Name name = parseEqName(functionCallContext.eqName(), true, false, false, false);
                 mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
                 continue;
             } else if (functionCallContext.varRef() != null) {
@@ -1728,7 +1756,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
 
         return new DirElemConstructorExpression(
-                ctx.open_tag_name.getText(),
+                parseName(ctx.open_tag_name, false, false, false, true),
                 content,
                 attributes,
                 createMetadataFromContext(ctx)
@@ -1745,7 +1773,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
 
         return new DirElemConstructorExpression(
-                ctx.open_tag_name.getText(),
+                parseName(ctx.open_tag_name, false, false, false, true),
                 new ArrayList<>(),
                 attributes,
                 createMetadataFromContext(ctx)
@@ -1885,7 +1913,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.name != null) {
             // Static attribute name: attribute attributeName { value }
-            Name attributeName = this.parseEqName(ctx.name, false, false, false);
+            Name attributeName = this.parseEqName(ctx.name, false, false, false, false);
             return new ComputedAttributeConstructorExpression(
                     attributeName,
                     valueExpression,
@@ -1914,7 +1942,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.eqName() != null) {
             // Static element name: element elementName { content }
-            Name elementName = this.parseEqName(ctx.eqName(), false, false, false);
+            Name elementName = parseEqName(ctx.eqName(), false, false, false, true);
             return new ComputedElementConstructorExpression(
                     elementName,
                     contentExpression,
@@ -1997,7 +2025,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitVarRef(XQueryParser.VarRefContext ctx) {
-        Name name = parseEqName(ctx.eqName(), false, false, false);
+        Name name = parseEqName(ctx.eqName(), false, false, false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -2065,7 +2093,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
         }
         if (itemTypeContext.eqName() != null) {
-            Name name = parseEqName(itemTypeContext.eqName(), false, true, false);
+            Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
             name = ItemTypeReference.renameAtomic(this.configuration, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
@@ -2184,7 +2212,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false);
+                paramName = parseName(param.qname(), false, false, false, false);
                 paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -2366,7 +2394,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false);
+                Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
@@ -2521,7 +2549,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitAssignStatement(XQueryParser.AssignStatementContext ctx) {
-        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false);
+        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false, false);
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
@@ -2663,7 +2691,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false);
+                Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchBlockStatements.containsKey(name.getLocalName())) {
                     catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
                 }
@@ -2931,7 +2959,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return getKindTest(nodeTestContext.kindTest().children.get(0));
         }
         if (nodeTestContext.nameTest().wildcard() == null) {
-            Name name = parseEqName(nodeTestContext.nameTest().eqName(), false, false, false);
+            Name name = parseEqName(nodeTestContext.nameTest().eqName(), false, false, false, false);
             return new NameTest(name);
         } else {
             String wildcard = nodeTestContext.nameTest().wildcard().getText();
@@ -2985,16 +3013,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         false,
                         false,
                         false
-                    );
+                    , false);
                     if (elementContext.typeName() == null) {
                         return new ElementTest(elementName, null);
                     }
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false);
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false, false);
                     return new ElementTest(elementName, typeName);
                 }
                 // Wildcard case: element(*) or element(*, type)
                 if (elementContext.typeName() != null) {
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false);
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false, false);
                     return new ElementTest(typeName);
                 }
                 return new ElementTest(true);
@@ -3018,14 +3046,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         false,
                         false,
                         false
-                    );
+                    , false);
                     if (attributeTestContext.typeName() != null) {
                         Name typeName = parseEqName(
                             attributeTestContext.typeName().eqName(),
                             false,
                             false,
                             false
-                        );
+                        , false);
                         return new AttributeTest(attributeName, typeName);
                     } else {
                         return new AttributeTest(attributeName, null);
@@ -3038,7 +3066,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             false,
                             false,
                             false
-                        );
+                        , false);
                         return new AttributeTest(typeName);
                     }
                     return new AttributeTest(true);
@@ -3213,7 +3241,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<Annotation> parsedAnnotations = new ArrayList<>();
         for (XQueryParser.AnnotationContext annotationContext : annotations.annotation()) {
             XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
-            Name name = parseEqName(eqNameContext, false, false, true);
+            Name name = parseEqName(eqNameContext, false, false, true, false);
             if (!annotationContext.literal().isEmpty()) {
                 throw new UnsupportedFeatureException(
                         "Literals are currently not supported in annotations!",
@@ -3235,15 +3263,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<XQueryParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
 
         for (int i = 0; i < attributeNames.size(); i++) {
-            // Get the attribute name
-            Name attributeName = parseName(attributeNames.get(i), false, false, false);
-            String qname = attributeName.toString();
+            XQueryParser.QnameContext qnameCtx = attributeNames.get(i);
+            String lexical = qnameCtx.getText();
+            Name attributeName;
+            if ("xmlns".equals(lexical)) {
+                attributeName = new Name(NamespaceBindingUtils.XMLNS_NAMESPACE_URI, null, "xmlns");
+            } else if (lexical.startsWith("xmlns:")) {
+                String boundPrefix = lexical.substring("xmlns:".length());
+                attributeName = new Name(NamespaceBindingUtils.XMLNS_NAMESPACE_URI, "xmlns", boundPrefix);
+            } else {
+                attributeName = parseName(qnameCtx, false, false, false, false);
+            }
 
-            // Get the attribute value
             List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i));
-            // Create AttributeNodeExpression
             AttributeNodeExpression attributeNode = new AttributeNodeExpression(
-                    qname,
+                    attributeName,
                     value,
                     createMetadataFromContext(ctx)
             );

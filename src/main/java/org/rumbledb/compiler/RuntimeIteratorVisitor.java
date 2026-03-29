@@ -982,7 +982,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (expression.hasStaticName()) {
             // Static element name: element elementName { content }
             runtimeIterator = new ComputedElementConstructorRuntimeIterator(
-                    expression.getElementName().toString(),
+                    expression.getElementName(),
                     contentIterator,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1089,7 +1089,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (expression.hasStaticName()) {
             // Static attribute name: attribute attributeName { content }
             runtimeIterator = new ComputedAttributeConstructorRuntimeIterator(
-                    expression.getAttributeName().toString(),
+                    expression.getAttributeName(),
                     atomizedContentIterator,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1182,7 +1182,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             .collect(Collectors.toList());
 
         RuntimeIterator runtimeIterator = new AttributeNodeRuntimeIterator(
-                expression.getQName(),
+                expression.getNodeName(),
                 atomizedValues,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );

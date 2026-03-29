@@ -49,6 +49,17 @@ public class ElementItem implements Item {
         this.stringValue = "<" + this.dmNodeName + "/>";
     }
 
+    /**
+     * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
+     */
+    public ElementItem(Name dmNodeName, List<Item> children, List<Item> attributes) {
+        this.dmNodeName = dmNodeName;
+        this.children = children;
+        this.attributes = attributes;
+        this.namespaces = new HashMap<>();
+        this.stringValue = "<" + this.dmNodeName + "/>";
+    }
+
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
         this.dmNodeName = XmlNodeQNameHelper.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();

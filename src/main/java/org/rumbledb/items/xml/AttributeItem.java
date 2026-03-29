@@ -41,6 +41,11 @@ public class AttributeItem implements Item {
         this.stringValue = stringValue;
     }
 
+    public AttributeItem(Name dmNodeName, String stringValue) {
+        this.dmNodeName = dmNodeName;
+        this.stringValue = stringValue;
+    }
+
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);

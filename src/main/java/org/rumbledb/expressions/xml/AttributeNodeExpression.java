@@ -23,6 +23,7 @@ package org.rumbledb.expressions.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -35,9 +36,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  */
 public class AttributeNodeExpression extends Expression {
     /**
-     * The qname of the attribute node.
+     * Resolved expanded name of the attribute (compile-time).
      */
-    private String qname;
+    private Name attributeName;
     /**
      * The value of the attribute node.
      * 
@@ -46,14 +47,14 @@ public class AttributeNodeExpression extends Expression {
      */
     private List<Expression> value;
 
-    public AttributeNodeExpression(String qname, List<Expression> value, ExceptionMetadata metadata) {
+    public AttributeNodeExpression(Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
         super(metadata);
-        this.qname = qname;
+        this.attributeName = attributeName;
         this.value = value;
     }
 
-    public String getQName() {
-        return this.qname;
+    public Name getNodeName() {
+        return this.attributeName;
     }
 
     public List<Expression> getValue() {
@@ -75,7 +76,7 @@ public class AttributeNodeExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append(this.qname);
+        sb.append(this.attributeName);
         sb.append("=");
         for (Expression child : this.value) {
             child.serializeToJSONiq(sb, indent);

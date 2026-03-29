@@ -22,6 +22,7 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -41,19 +42,19 @@ import java.util.List;
 public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String staticAttributeName;
+    private Name staticAttributeName;
     private AtomizationIterator nameIterator;
     private AtomizationIterator contentExpression;
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }
      * 
-     * @param staticAttributeName The static attribute name
+     * @param staticAttributeName The static attribute name (expanded)
      * @param contentExpression The value iterator
      * @param staticContext The runtime static context
      */
     public ComputedAttributeConstructorRuntimeIterator(
-            String staticAttributeName,
+            Name staticAttributeName,
             AtomizationIterator contentExpression,
             RuntimeStaticContext staticContext
     ) {
@@ -94,11 +95,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         // Determine the attribute name
-        String attributeName;
-        if (this.staticAttributeName != null) {
-            // Static attribute name
-            attributeName = this.staticAttributeName;
-        } else {
+        String dynamicAttributeNameLexical = null;
+        if (this.staticAttributeName == null) {
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedAttributes
@@ -135,7 +133,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
             // For now, we implement simplified processing by converting to string value
             // TODO: Implement full QName processing with namespace resolution when we have a stable xml type system
-            attributeName = atomizedNameItem.getStringValue();
+            dynamicAttributeNameLexical = atomizedNameItem.getStringValue();
         }
 
         // Process content expression according to XQuery 3.1 spec
@@ -183,9 +181,16 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
         this.hasNext = false;
+        if (this.staticAttributeName != null) {
+            return ItemFactory.getInstance()
+                .createXmlAttributeNode(
+                    this.staticAttributeName,
+                    attributeValue
+                );
+        }
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
-                attributeName,
+                dynamicAttributeNameLexical,
                 attributeValue
             );
     }

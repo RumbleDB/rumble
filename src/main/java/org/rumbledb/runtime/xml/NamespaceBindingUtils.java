@@ -194,6 +194,14 @@ public final class NamespaceBindingUtils {
         if (q == null || !q.isQName()) {
             return null;
         }
+        Name expanded = q.getQNameValue();
+        if (expanded != null && XMLNS_NAMESPACE_URI.equals(expanded.getNamespace())) {
+            String local = expanded.getLocalName();
+            if ("xmlns".equals(local)) {
+                return new String[] { "", attributeItem.getStringValue() };
+            }
+            return new String[] { local, attributeItem.getStringValue() };
+        }
         String attributeName = q.getStringValue();
         if ("xmlns".equals(attributeName)) {
             return new String[] { "", attributeItem.getStringValue() };

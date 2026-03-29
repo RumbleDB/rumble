@@ -334,12 +334,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.staticallyKnownNamespaces != null) {
-            if (this.staticallyKnownNamespaces.containsKey(prefix)) {
-                return this.staticallyKnownNamespaces.get(prefix);
-            } else {
-                return null;
-            }
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
         }
         if (this.parent != null) {
             return this.parent.resolveNamespace(prefix);
