@@ -739,6 +739,10 @@ public class SequenceType implements Serializable {
             "unsignedByte?",
             new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.OneOrZero)
         );
+        sequenceTypes.put(
+            "QName?",
+            new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrZero)
+        );
     }
 
     public static SequenceType createSequenceType(String userFriendlyName) {
