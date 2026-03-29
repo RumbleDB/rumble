@@ -2479,6 +2479,22 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function that returns a string containing a numeric value formatted for display
+     */
+    static final BuiltinFunction format_number = createBuiltinFunction(
+            new Name(
+                    Name.FN_NS,
+                    "fn",
+                    "format-number"
+            ),
+            "numeric?",
+            "string",
+            "string",
+            FormatIntegerFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function that returns a string containing an integer value formatted for display
      */
     static final BuiltinFunction format_integer = createBuiltinFunction(
@@ -3464,6 +3480,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(adjust_date_to_timezone1.getIdentifier(), adjust_date_to_timezone1);
         builtinFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
 
+        builtinFunctions.put(format_number.getIdentifier(), format_number);
         builtinFunctions.put(format_integer.getIdentifier(), format_integer);
         builtinFunctions.put(format_integer3.getIdentifier(), format_integer3);
 
