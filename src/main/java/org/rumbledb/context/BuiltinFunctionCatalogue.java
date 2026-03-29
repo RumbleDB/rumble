@@ -2482,16 +2482,16 @@ public class BuiltinFunctionCatalogue {
      * function that returns a string containing a numeric value formatted for display
      */
     static final BuiltinFunction format_number = createBuiltinFunction(
-            new Name(
-                    Name.FN_NS,
-                    "fn",
-                    "format-number"
-            ),
-            "numeric?",
-            "string",
-            "string",
-            FormatIntegerFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-number"
+        ),
+        "numeric?",
+        "string",
+        "string",
+        FormatNumberFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     /**

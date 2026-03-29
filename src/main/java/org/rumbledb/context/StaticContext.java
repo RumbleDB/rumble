@@ -56,6 +56,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private transient DecimalFormatDefinition defaultDecimalFormat;
 
     private static final Map<String, String> defaultBindings;
 
@@ -86,6 +87,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
+        this.defaultDecimalFormat = null;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -99,6 +101,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
+        this.defaultDecimalFormat = new DecimalFormatDefinition();
     }
 
     public StaticContext(StaticContext parent) {
@@ -110,6 +113,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.defaultDecimalFormat = null;
     }
 
     public StaticContext getParent() {
@@ -483,5 +487,23 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public boolean getIsAssignable(Name name) {
         return this.getInScopeVariable(name).isAssignable();
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat) {
+        if (this.parent != null) {
+            this.parent.setDefaultDecimalFormat(decimalFormat);
+            return;
+        }
+        this.defaultDecimalFormat = decimalFormat;
+    }
+
+    public DecimalFormatDefinition getDefaultDecimalFormat() {
+        if (this.defaultDecimalFormat != null) {
+            return this.defaultDecimalFormat;
+        }
+        if (this.parent != null) {
+            return this.parent.getDefaultDecimalFormat();
+        }
+        return new DecimalFormatDefinition();
     }
 }

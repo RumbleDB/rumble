@@ -1,11 +1,13 @@
 package org.rumbledb.runtime.functions.numerics;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.base.formatting.NumberPictureFormatter;
 
 import java.util.List;
 
@@ -23,6 +25,13 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
             ? this.children.get(2).materializeFirstItemOrNull(context)
             : null; // TODO IMPLEMENT
 
-        throw new OurBadException("FormatNumber is currently unimplemented", getMetadata());
+        DecimalFormatDefinition decimalFormat = new DecimalFormatDefinition();
+
+        if (valueItem == null) {
+            return ItemFactory.getInstance().createStringItem(decimalFormat.getNanSymbol());
+        }
+
+        String result = NumberPictureFormatter.format(valueItem, pictureItem, null, decimalFormat, getMetadata());
+        return ItemFactory.getInstance().createStringItem(result);
     }
 }

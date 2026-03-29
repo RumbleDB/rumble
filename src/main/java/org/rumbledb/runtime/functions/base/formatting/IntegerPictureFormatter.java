@@ -3,6 +3,7 @@ package org.rumbledb.runtime.functions.base.formatting;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.FormatIntegerPictureParser;
 import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.IntegerFormatModifier;
 import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.FormatIntegerPicture;
 import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.PrimaryFormatToken;
