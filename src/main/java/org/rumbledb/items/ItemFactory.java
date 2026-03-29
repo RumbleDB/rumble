@@ -348,18 +348,6 @@ public class ItemFactory {
         return new ElementItem(elementNode, children, attributes);
     }
 
-    /**
-     * Create an element item.
-     * 
-     * @param nodeName The name of the element
-     * @param children The children items of the element
-     * @param attributes The attributes items of the element
-     * @return The element item
-     */
-    public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
-        return new ElementItem(nodeName, children, attributes);
-    }
-
     public Item createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }

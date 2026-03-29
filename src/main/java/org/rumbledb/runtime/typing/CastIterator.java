@@ -678,10 +678,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 item.isString()
                     || item.isUntypedAtomic()
             ) {
-                String lexical = normalizeLexicalAccordingToWhitespace(
-                    item.getStringValue(),
-                    BuiltinTypesCatalogue.QNameItem
-                );
+                String lexical = NamespaceBindingUtils.collapseQNameLexical(item.getStringValue());
                 Name expanded = NamespaceBindingUtils.parseLexicalQName(lexical, namespaceResolver, metadata);
                 Item q = ItemFactory.getInstance().createQNameItem(expanded);
                 return finalizeAtomicBranchValue(q, targetType, BuiltinTypesCatalogue.QNameItem);

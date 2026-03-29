@@ -28,6 +28,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
+import org.rumbledb.exceptions.InvalidNodeNameException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
 public final class NamespaceBindingUtils {
@@ -129,6 +130,48 @@ public final class NamespaceBindingUtils {
             }
             return StaticContext.getBuiltinNamespaceBinding(prefix);
         };
+    }
+
+    /**
+     * Applies XSD whiteSpace facet COLLAPSE (as for xs:QName lexical forms).
+     */
+    public static String collapseQNameLexical(String lexical) {
+        if (lexical == null) {
+            return null;
+        }
+        String replaced = lexical.replaceAll("\\s", " ");
+        return replaced.trim().replaceAll(" +", " ");
+    }
+
+    /**
+     * XQuery 3.1 computed constructors: dynamic error [err:XQDY0096] if the node-name has a forbidden prefix/URI pair.
+     */
+    public static void validateConstructedNodeName(Name name, ExceptionMetadata metadata) {
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(name.getPrefix(), name.getNamespace());
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new InvalidNodeNameException(
+                        "The namespace prefix xml is bound to a namespace URI other than http://www.w3.org/XML/1998/namespace.",
+                        metadata
+                );
+            case XMLNS_PREFIX:
+                throw new InvalidNodeNameException("The namespace prefix of the node-name is xmlns.", metadata);
+            case NON_XML_PREFIX_XML_URI:
+                throw new InvalidNodeNameException(
+                        "The namespace URI is http://www.w3.org/XML/1998/namespace but the prefix is not xml.",
+                        metadata
+                );
+            case XMLNS_URI:
+                throw new InvalidNodeNameException(
+                        "The namespace URI of the node-name is http://www.w3.org/2000/xmlns/.",
+                        metadata
+                );
+            default:
+                return;
+        }
     }
 
     /**

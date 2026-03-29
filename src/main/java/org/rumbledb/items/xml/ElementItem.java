@@ -34,22 +34,6 @@ public class ElementItem implements Item {
     }
 
     /**
-     * Constructor for an element item.
-     *
-     * @param nodeName The name of the element
-     * @param children The children items of the element
-     * @param attributes The attributes items of the element
-     */
-    public ElementItem(String nodeName, List<Item> children, List<Item> attributes) {
-        this.dmNodeName = XmlNodeQNameHelper.nameFromLexicalQualifiedNameOnly(nodeName);
-        this.children = children;
-        this.attributes = attributes;
-        this.namespaces = new HashMap<>();
-        // TODO: add support for attributes and children
-        this.stringValue = "<" + this.dmNodeName + "/>";
-    }
-
-    /**
      * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
      */
     public ElementItem(Name dmNodeName, List<Item> children, List<Item> attributes) {
