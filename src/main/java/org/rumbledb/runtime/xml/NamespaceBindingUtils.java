@@ -31,6 +31,8 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
+import org.w3c.dom.Node;
+
 public final class NamespaceBindingUtils {
 
     /**
@@ -359,5 +361,33 @@ public final class NamespaceBindingUtils {
         }
         // TODO: handle binding a prefix to a zero-length namespace URI
     }
+
+    /**
+     * Expanded name for an element or attribute DOM node (namespace-aware when the DOM provides it).
+     */
+    public static Name nameFromElementOrAttributeDomNode(Node domNode) {
+        String namespace = domNode.getNamespaceURI();
+        String local = domNode.getLocalName();
+        String prefix = domNode.getPrefix();
+
+        Name name = null;
+        if (local == null) {
+            name = new Name(null, null, domNode.getNodeName());
+        } else if (prefix != null && !prefix.equals("")) {
+            name = new Name(namespace, prefix, local);
+        } else {
+            name = new Name(namespace, null, local);
+        }
+        return name;
+    }
+
+    /**
+     * QName with only a local name and no namespace URI or prefix (XDM processing-instruction target; namespace
+     * prefix property absent).
+     */
+    public static Name nameLocalOnly(String localName) {
+        return new Name(null, null, localName);
+    }
+
 }
 

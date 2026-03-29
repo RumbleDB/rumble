@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.QNameItem;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -45,7 +46,8 @@ public class ElementItem implements Item {
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
-        this.dmNodeName = XmlNodeQNameHelper.nameFromElementOrAttributeDomNode(elementNode);
+        this.dmNodeName = ItemFactory.getInstance()
+            .createQNameItem(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode));
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;

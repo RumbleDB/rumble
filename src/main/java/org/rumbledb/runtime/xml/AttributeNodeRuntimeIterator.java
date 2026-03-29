@@ -94,7 +94,7 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         this.hasNext = false;
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
-                this.attributeName,
+                ItemFactory.getInstance().createQNameItem(this.attributeName),
                 sb.toString()
             );
     }

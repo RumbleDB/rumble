@@ -114,9 +114,9 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         // Determine the element name (expanded QName), then validate [err:XQDY0096] before content processing.
         // https://www.w3.org/TR/xquery-31/#id-computedElements
-        Name elementName;
+        Item elementName;
         if (this.staticElementName != null) {
-            elementName = this.staticElementName;
+            elementName = ItemFactory.getInstance().createQNameItem(this.staticElementName);
         } else {
             // Dynamic element name - evaluate the name expression
             // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
@@ -141,7 +141,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
                 // 2. If the atomized value of the name expression is of type xs:QName, that expanded QName is used as
                 // the
                 // node-name property of the constructed element, retaining the prefix part of the QName.
-                elementName = atomizedNameItem.getQNameValue();
+                elementName = atomizedNameItem;
             } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
                 // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic, that value
                 // is
@@ -156,11 +156,14 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
                 // raised [err:XQDY0074].
                 String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
                 try {
-                    elementName = NamespaceBindingUtils.parseLexicalQName(
-                        collapsed,
-                        NamespaceBindingUtils.namespaceResolver(this.staticContext),
-                        getMetadata()
-                    );
+                    elementName = ItemFactory.getInstance()
+                        .createQNameItem(
+                            NamespaceBindingUtils.parseLexicalQName(
+                                collapsed,
+                                NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                getMetadata()
+                            )
+                        );
                 } catch (InvalidLexicalValueException e) {
                     throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
                 }
@@ -177,7 +180,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         // - Its namespace URI is http://www.w3.org/2000/xmlns/.
         // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
         // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
-        NamespaceBindingUtils.validateConstructedNodeName(elementName, getMetadata());
+        NamespaceBindingUtils.validateConstructedNodeName(elementName.getQNameValue(), getMetadata());
 
         // Process content expression according to XQuery 3.1 specification
         ProcessedContent processedContent = processContentExpression(contextToUse);
@@ -186,7 +189,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                ItemFactory.getInstance().createQNameItem(elementName),
+                elementName,
                 processedContent.children,
                 processedContent.attributes
             );
