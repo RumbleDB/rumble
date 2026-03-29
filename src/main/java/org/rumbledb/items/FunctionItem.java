@@ -248,7 +248,7 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public boolean isBuiltinNamedFunctionReference() {
+    public boolean isBuiltinFunction() {
         return this.builtinNamedFunctionReference;
     }
 

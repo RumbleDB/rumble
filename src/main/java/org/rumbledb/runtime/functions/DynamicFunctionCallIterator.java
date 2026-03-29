@@ -221,7 +221,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         if (this.isPartialApplication) {
             return ExecutionMode.LOCAL;
         }
-        if (this.functionItem.isBuiltinNamedFunctionReference()) {
+        if (this.functionItem.isBuiltinFunction()) {
             BuiltinFunction builtin =
                 BuiltinFunctionCatalogue.getBuiltinFunction(this.functionItem.getIdentifier());
             // assume that the passed builtin function is valid

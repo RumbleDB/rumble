@@ -115,7 +115,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             executionModeForFunctionCall
         );
         RuntimeIterator functionCallIterator;
-        if (functionItem.isBuiltinNamedFunctionReference()) {
+        if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
                 throw new UnsupportedFeatureException(
                         "Partial application of builtin named function references is not supported yet.",

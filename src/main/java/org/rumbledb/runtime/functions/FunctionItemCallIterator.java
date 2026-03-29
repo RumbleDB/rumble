@@ -174,7 +174,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues,
                 RDDArgumentValues,
                 DFArgumentValues,
-                this.functionItem.isBuiltinNamedFunctionReference()
+                this.functionItem.isBuiltinFunction()
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
