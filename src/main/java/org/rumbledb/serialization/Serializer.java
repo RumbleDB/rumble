@@ -6,6 +6,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.NamespaceItem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -207,12 +208,28 @@ public class Serializer implements java.io.Serializable {
             sb.append("\n");
         }
 
+        if (item.isNamespaceNode()) {
+            NamespaceItem ns = (NamespaceItem) item;
+            sb.append(" ");
+            String nsPrefix = ns.getPrefix();
+            if (nsPrefix == null || nsPrefix.isEmpty()) {
+                sb.append("xmlns=\"");
+            } else {
+                sb.append("xmlns:");
+                sb.append(nsPrefix);
+                sb.append("=\"");
+            }
+            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
+            sb.append("\"");
+            return;
+        }
+
         if (item.isAttributeNode()) {
             sb.append(" ");
             appendDmNodeNameLexical(sb, item);
             sb.append("=");
             sb.append("\"");
-            sb.append(item.getStringValue());
+            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
             sb.append("\"");
             return;
         }
