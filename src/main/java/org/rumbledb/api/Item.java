@@ -771,17 +771,17 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not an array.
      * @throws OurBadException if any member of the array is a non-singleton.
      */
-    default Item getItemMembers() throws UnsupportedOperationException, OurBadException {
+    default List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the members of the item, if it is an array.
+     * Returns the member sequences of the item, if it is an array.
      *
      * @return the list of the members.
      * @throws UnsupportedOperationException if the item is not an array.
      */
-    default List<Item> getSequenceMembers() throws UnsupportedOperationException {
+    default List<List<Item>> getSequenceMembers() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
