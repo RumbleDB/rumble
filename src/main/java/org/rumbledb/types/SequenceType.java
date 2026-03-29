@@ -622,6 +622,14 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("anyURI", new SequenceType(BuiltinTypesCatalogue.anyURIItem));
         sequenceTypes.put("anyURI?", new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.OneOrZero));
 
+        sequenceTypes.put("QName", new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.One));
+        sequenceTypes.put("QName?", new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put(
+            "function(*)?",
+            new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, SequenceType.Arity.OneOrZero)
+        );
+
         sequenceTypes.put(
             "hexBinary?",
             new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.OneOrZero)

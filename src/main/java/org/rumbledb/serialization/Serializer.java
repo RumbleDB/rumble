@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.xml.NamespaceItem;
@@ -51,6 +52,16 @@ public class Serializer implements java.io.Serializable {
 
     private static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
         Item q = item.nodeName();
+        if (q != null && q.isQName()) {
+            Name n = q.getQNameValue();
+            String p = n.getPrefix();
+            if (p != null && !p.isEmpty()) {
+                sb.append(p).append(':').append(n.getLocalName());
+            } else {
+                sb.append(n.getLocalName());
+            }
+            return;
+        }
         if (q != null) {
             sb.append(q.getStringValue());
         }

@@ -272,6 +272,38 @@ public final class NamespaceBindingUtils {
         return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
     }
 
+    /**
+     * XPath and XQuery Functions 3.1 {@code fn:QName}: combines an optional namespace URI with a lexical QName.
+     * Leading and trailing whitespace is stripped from both arguments (Functions and Operators 3.1, section 10 intro).
+     *
+     * @param paramUriOrNull namespace URI, or {@code null} when {@code xs:string?} was the empty sequence
+     * @param lexicalQName non-null lexical QName string (after atomization to {@code xs:string})
+     */
+    public static Name parseFnQName(
+            String paramUriOrNull,
+            String lexicalQName,
+            ExceptionMetadata metadata
+    ) {
+        if (lexicalQName == null) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: null lexical value.", metadata);
+        }
+        String uri = paramUriOrNull == null ? "" : paramUriOrNull.trim();
+        String lexical = lexicalQName.trim();
+        if (lexical.isEmpty()) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
+        }
+        boolean noNamespace = uri.isEmpty();
+        if (noNamespace && lexical.indexOf(':') >= 0) {
+            throw new InvalidLexicalValueException(
+                    "fn:QName: prefixed lexical QName requires a non-empty namespace URI.",
+                    metadata
+            );
+        }
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        String namespace = noNamespace ? null : uri;
+        return new Name(namespace, split.prefix, split.local);
+    }
+
     public static String[] parseNamespaceDeclarationAttribute(Item attributeItem) {
         if (!attributeItem.isAttributeNode()) {
             return null;
