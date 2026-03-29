@@ -24,6 +24,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidElementNameExpressionException;
+import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -94,9 +96,10 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        // Determine the attribute name
-        String dynamicAttributeNameLexical = null;
-        if (this.staticAttributeName == null) {
+        Name attributeName;
+        if (this.staticAttributeName != null) {
+            attributeName = this.staticAttributeName;
+        } else {
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
             // https://www.w3.org/TR/xquery-31/#id-computedAttributes
@@ -107,34 +110,59 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed attribute constructor name must evaluate to a single atomic value"
+                        "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata()
                 );
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
             if (!(atomizedNameItem.isAtomic())) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed attribute constructor name must evaluate to a single atomic value"
+                        "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata()
                 );
             }
 
-            // 2. If the atomized value of the name expression is of type xs:QName:
-            // a. If the expanded QName returned by the atomized name expression has a namespace URI
-            // but has no prefix, it is given an implementation-dependent prefix.
-            // b. The resulting expanded QName (including its prefix) is used as the node-name
-            // property of the constructed attribute node.
-            //
-            // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
-            // that value is converted to an expanded QName. If the string value contains a namespace
-            // prefix, that prefix is resolved to a namespace URI using the statically known namespaces.
-            // If the string value contains no namespace prefix, it is treated as a local name in no
-            // namespace. The resulting expanded QName (including its prefix) is used as the node-name
-            // property of the constructed attribute. If conversion of the atomized name expression to
-            // an expanded QName is not successful, a dynamic error is raised [err:XQDY0074].
-
-            // For now, we implement simplified processing by converting to string value
-            // TODO: Implement full QName processing with namespace resolution when we have a stable xml type system
-            dynamicAttributeNameLexical = atomizedNameItem.getStringValue();
+            if (atomizedNameItem.isQName()) {
+                // 2. If the atomized value of the name expression is of type xs:QName:
+                // a. If the expanded QName returned by the atomized name expression has a namespace URI
+                // but has no prefix, it is given an implementation-dependent prefix.
+                // b. The resulting expanded QName (including its prefix) is used as the node-name
+                // property of the constructed attribute node.
+                // TODO: add support for implementation-dependent prefix
+                attributeName = atomizedNameItem.getQNameValue();
+            } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
+                // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
+                // that value is converted to an expanded QName. If the string value contains a namespace
+                // prefix, that prefix is resolved to a namespace URI using the statically known namespaces.
+                // If the string value contains no namespace prefix, it is treated as a local name in no
+                // namespace. The resulting expanded QName (including its prefix) is used as the node-name
+                // property of the constructed attribute. If conversion of the atomized name expression to
+                // an expanded QName is not successful, a dynamic error is raised [err:XQDY0074].
+                String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
+                try {
+                    attributeName = NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
+                        collapsed,
+                        NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                        getMetadata()
+                    );
+                } catch (InvalidLexicalValueException e) {
+                    throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
+                }
+            } else {
+                throw new UnexpectedStaticTypeException(
+                        "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata()
+                );
+            }
         }
+
+        // A dynamic error is raised [err:XQDY0096] if the node-name of the constructed element node has any of the
+        // following properties:
+        // - Its namespace prefix is xmlns.
+        // - Its namespace URI is http://www.w3.org/2000/xmlns/.
+        // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
+        // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+        NamespaceBindingUtils.validateConstructedNodeName(attributeName, getMetadata());
 
         // Process content expression according to XQuery 3.1 spec
         // https://www.w3.org/TR/xquery-31/#id-computedAttributes
@@ -181,16 +209,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
         this.hasNext = false;
-        if (this.staticAttributeName != null) {
-            return ItemFactory.getInstance()
-                .createXmlAttributeNode(
-                    this.staticAttributeName,
-                    attributeValue
-                );
-        }
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
-                dynamicAttributeNameLexical,
+                ItemFactory.getInstance().createQNameItem(attributeName),
                 attributeValue
             );
     }

@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.QNameItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -15,7 +15,7 @@ import java.util.List;
 
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
-    private Name dmNodeName;
+    private Item dmNodeName;
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -30,18 +30,7 @@ public class AttributeItem implements Item {
         this.stringValue = attributeNode.getNodeValue();
     }
 
-    /**
-     * Constructor for an attribute item.
-     * 
-     * @param nodeName The name of the attribute
-     * @param stringValue The string value of the attribute
-     */
-    public AttributeItem(String nodeName, String stringValue) {
-        this.dmNodeName = XmlNodeQNameHelper.nameFromLexicalQualifiedNameOnly(nodeName);
-        this.stringValue = stringValue;
-    }
-
-    public AttributeItem(Name dmNodeName, String stringValue) {
+    public AttributeItem(Item dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
     }
@@ -70,13 +59,13 @@ public class AttributeItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
-        this.dmNodeName = kryo.readObject(input, Name.class);
+        this.dmNodeName = kryo.readObject(input, QNameItem.class);
         this.stringValue = input.readString();
     }
 
     @Override
     public Item nodeName() {
-        return XmlNodeQNameHelper.toQNameItem(this.dmNodeName);
+        return this.dmNodeName;
     }
 
     @Override

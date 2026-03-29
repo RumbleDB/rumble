@@ -15,17 +15,20 @@ public final class XmlNodeQNameHelper {
     /**
      * Expanded name for an element or attribute DOM node (namespace-aware when the DOM provides it).
      */
-    public static Name nameFromElementOrAttributeDomNode(Node domNode) {
+    public static QNameItem nameFromElementOrAttributeDomNode(Node domNode) {
         String namespace = domNode.getNamespaceURI();
         String local = domNode.getLocalName();
-        if (local == null) {
-            return nameFromLexicalQualifiedNameOnly(domNode.getNodeName());
-        }
         String prefix = domNode.getPrefix();
-        if (prefix != null && !prefix.equals("")) {
-            return new Name(namespace, prefix, local);
+
+        Name name = null;
+        if (local == null) {
+            name = new Name(null, null, domNode.getNodeName());
+        } else if (prefix != null && !prefix.equals("")) {
+            name = new Name(namespace, prefix, local);
+        } else {
+            name = new Name(namespace, null, local);
         }
-        return new Name(namespace, null, local);
+        return new QNameItem(name);
     }
 
     /**
@@ -34,14 +37,6 @@ public final class XmlNodeQNameHelper {
      */
     public static Name nameLocalOnly(String localName) {
         return new Name(null, null, localName);
-    }
-
-    /**
-     * For constructors and other paths where only a lexical QName string is available (possibly {@code prefix:local}
-     * without a resolved namespace URI). Stored as a single local-name component to satisfy {@link Name} invariants.
-     */
-    public static Name nameFromLexicalQualifiedNameOnly(String qualifiedName) {
-        return new Name(null, null, qualifiedName);
     }
 
     public static QNameItem toQNameItem(Name name) {

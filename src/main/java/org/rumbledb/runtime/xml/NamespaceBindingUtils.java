@@ -174,14 +174,17 @@ public final class NamespaceBindingUtils {
         }
     }
 
-    /**
-     * Whitespace-collapsed lexical QName to expanded name (xs:QName cast / constructor).
-     */
-    public static Name parseLexicalQName(
-            String lexical,
-            NamespaceResolver namespaceResolver,
-            ExceptionMetadata metadata
-    ) {
+    private static final class LexicalQNameSplit {
+        final String prefix;
+        final String local;
+
+        LexicalQNameSplit(String prefix, String local) {
+            this.prefix = prefix;
+            this.local = local;
+        }
+    }
+
+    private static LexicalQNameSplit splitAndValidateLexicalQName(String lexical, ExceptionMetadata metadata) {
         if (lexical.isEmpty()) {
             throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
         }
@@ -210,9 +213,15 @@ public final class NamespaceBindingUtils {
                     metadata
             );
         }
-        if (prefix == null) {
-            return new Name(namespaceResolver.resolvePrefix(""), null, local);
-        }
+        return new LexicalQNameSplit(prefix, local);
+    }
+
+    private static Name resolvePrefixedLexicalToName(
+            String prefix,
+            String local,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
         String uri = namespaceResolver.resolvePrefix(prefix);
         if (uri == null) {
             throw new InvalidLexicalValueException(
@@ -227,6 +236,38 @@ public final class NamespaceBindingUtils {
             );
         }
         return new Name(uri, prefix, local);
+    }
+
+    /**
+     * Whitespace-collapsed lexical QName to expanded name (xs:QName cast / constructor).
+     */
+    public static Name parseLexicalQName(
+            String lexical,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /**
+     * XQuery 3.1 computed attribute constructor: {@code xs:string} / {@code xs:untypedAtomic} name is converted to an
+     * expanded QName. An unprefixed lexical form is a local name in <em>no</em> namespace (not the default element/type
+     * namespace). A prefixed form resolves like {@link #parseLexicalQName}.
+     */
+    public static Name parseLexicalQNameForComputedAttribute(
+            String lexical,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(null, null, split.local);
+        }
+        return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
     }
 
     public static String[] parseNamespaceDeclarationAttribute(Item attributeItem) {

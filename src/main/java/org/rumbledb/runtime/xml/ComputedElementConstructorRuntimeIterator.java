@@ -186,7 +186,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                elementName,
+                ItemFactory.getInstance().createQNameItem(elementName),
                 processedContent.children,
                 processedContent.attributes
             );

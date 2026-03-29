@@ -315,18 +315,7 @@ public class ItemFactory {
         return new AttributeItem(attribute);
     }
 
-    /**
-     * Create an attribute item.
-     * 
-     * @param nodeName The name of the attribute
-     * @param stringValue The string value of the attribute
-     * @return The attribute item
-     */
-    public Item createXmlAttributeNode(String nodeName, String stringValue) {
-        return new AttributeItem(nodeName, stringValue);
-    }
-
-    public Item createXmlAttributeNode(Name nodeName, String stringValue) {
+    public Item createXmlAttributeNode(Item nodeName, String stringValue) {
         return new AttributeItem(nodeName, stringValue);
     }
 
@@ -348,7 +337,7 @@ public class ItemFactory {
         return new ElementItem(elementNode, children, attributes);
     }
 
-    public Item createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
+    public Item createXmlElementNode(Item nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }
 
