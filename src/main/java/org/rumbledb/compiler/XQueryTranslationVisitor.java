@@ -3012,8 +3012,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         elementContext.elementNameOrWildcard().elementName().eqName(),
                         false,
                         false,
+                        false,
                         false
-                    , false);
+                    );
                     if (elementContext.typeName() == null) {
                         return new ElementTest(elementName, null);
                     }
@@ -3045,15 +3046,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
                         false,
                         false,
+                        false,
                         false
-                    , false);
+                    );
                     if (attributeTestContext.typeName() != null) {
                         Name typeName = parseEqName(
                             attributeTestContext.typeName().eqName(),
                             false,
                             false,
+                            false,
                             false
-                        , false);
+                        );
                         return new AttributeTest(attributeName, typeName);
                     } else {
                         return new AttributeTest(attributeName, null);
@@ -3065,8 +3068,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             attributeTestContext.typeName().eqName(),
                             false,
                             false,
+                            false,
                             false
-                        , false);
+                        );
                         return new AttributeTest(typeName);
                     }
                     return new AttributeTest(true);
