@@ -813,8 +813,19 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @param item the item to append.
      * @throws UnsupportedOperationException if the item is not an array.
+     * @deprecated use {@link #appendItem(Item)} instead
      */
-    default void putItem(Item item) throws UnsupportedOperationException {
+    default void append(Item item) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Appends an item to the item, if it is an array.
+     *
+     * @param item the item to append.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default void appendItem(Item item) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -826,7 +837,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws OurBadException if the member is a non-singleton sequence and the array does not support non-singleton
      *         members.
      */
-    default void putSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
+    default void appendSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
