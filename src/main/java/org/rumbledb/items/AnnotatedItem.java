@@ -87,26 +87,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean isArray() {
-        return this.itemToAnnotate.isArray();
-    }
-
-    @Override
-    public boolean allowsNonSingletons() {
-        return this.itemToAnnotate.allowsNonSingletons();
-    }
-
-    @Override
-    public boolean isObject() {
-        return this.itemToAnnotate.isObject();
-    }
-
-    @Override
-    public boolean isMap() {
-        return this.itemToAnnotate.isMap();
-    }
-
-    @Override
     public boolean isFunction() {
         return this.itemToAnnotate.isFunction();
     }
@@ -301,14 +281,16 @@ public class AnnotatedItem implements Item {
         return this.itemToAnnotate.isNode();
     }
 
+    // region maps
+
     @Override
-    public List<Item> getItems() {
-        return this.itemToAnnotate.getItems();
+    public boolean isMap() {
+        return this.itemToAnnotate.isMap();
     }
 
     @Override
-    public Item getItemAt(int position) {
-        return this.itemToAnnotate.getItemAt(position);
+    public boolean isObject() {
+        return this.itemToAnnotate.isObject();
     }
 
     @Override
@@ -319,6 +301,11 @@ public class AnnotatedItem implements Item {
     @Override
     public List<String> getStringKeys() {
         return this.itemToAnnotate.getStringKeys();
+    }
+
+    @Override
+    public List<Item> getItemKeys() {
+        return this.itemToAnnotate.getItemKeys();
     }
 
     @Override
@@ -342,13 +329,8 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<Item> getItemKeys() {
-        return this.itemToAnnotate.getItemKeys();
-    }
-
-    @Override
-    public List<Item> getSequenceByKey(Item key) {
-        return this.itemToAnnotate.getSequenceByKey(key);
+    public Item getItemByKey(Item key) {
+        return this.itemToAnnotate.getItemByKey(key);
     }
 
     @Override
@@ -357,9 +339,147 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public int getSize() {
+    public List<Item> getSequenceByKey(Item key) {
+        return this.itemToAnnotate.getSequenceByKey(key);
+    }
+
+    @Override
+    public void putItemByKey(String key, Item value) {
+        this.itemToAnnotate.putItemByKey(key, value);
+    }
+
+    @Override
+    public void putItemByKey(Item key, Item value) {
+        this.itemToAnnotate.putItemByKey(key, value);
+    }
+
+    @Override
+    public void putSequenceByKey(String key, List<Item> valueSequence) {
+        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
+    }
+
+    @Override
+    public void putSequenceByKey(Item key, List<Item> valueSequence)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
+        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
+    }
+
+    @Override
+    public void removeItemByKey(String key) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public void removeItemByKey(Item key) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public void putLazyItemByKey(
+            String key,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            boolean isArray
+    )
+            throws UnsupportedOperationException {
+        this.itemToAnnotate.putLazyItemByKey(key, iterator, context, isArray);
+    }
+
+
+    // endregion maps
+
+    // region arrays
+
+    @Override
+    public boolean isArray() {
+        return this.itemToAnnotate.isArray();
+    }
+
+    @Override
+    public boolean isJSONArray() {
+        return this.itemToAnnotate.isJSONArray();
+    }
+
+    @Override
+    public int getSize() throws UnsupportedOperationException {
         return this.itemToAnnotate.getSize();
     }
+
+    @Override
+    public List<Item> getItems() {
+        return this.itemToAnnotate.getItems();
+    }
+
+    @Override
+    public List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
+        return this.itemToAnnotate.getItemMembers();
+    }
+
+    @Override
+    public List<List<Item>> getSequenceMembers() throws UnsupportedOperationException {
+        return this.itemToAnnotate.getSequenceMembers();
+    }
+
+    @Override
+    public Item getItemAt(int position) throws UnsupportedOperationException, OurBadException {
+        return this.itemToAnnotate.getItemAt(position);
+    }
+
+    @Override
+    public List<Item> getSequenceAt(int position) throws UnsupportedOperationException {
+        return this.itemToAnnotate.getSequenceAt(position);
+    }
+
+    @Override
+    public void append(Item item) throws UnsupportedOperationException {
+        this.itemToAnnotate.append(item);
+    }
+
+    @Override
+    public void appendItem(Item item) throws UnsupportedOperationException {
+        this.itemToAnnotate.appendItem(item);
+    }
+
+    @Override
+    public void appendSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
+        this.itemToAnnotate.appendSequence(sequence);
+    }
+
+    @Override
+    public void putItemAt(Item item, int index) throws UnsupportedOperationException {
+        this.itemToAnnotate.putItemAt(item, index);
+    }
+
+    @Override
+    public void putSequenceAt(List<Item> sequence, int index) throws UnsupportedOperationException, OurBadException {
+        this.itemToAnnotate.putSequenceAt(sequence, index);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> items, int i) throws UnsupportedOperationException {
+        this.itemToAnnotate.putItemsAt(items, i);
+    }
+
+    @Override
+    public void putSequencesAt(List<List<Item>> sequences, int index)
+            throws UnsupportedOperationException,
+                OurBadException {
+        this.itemToAnnotate.putSequencesAt(sequences, index);
+    }
+
+    @Override
+    public void removeItemAt(int index) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeItemAt(index);
+    }
+
+    @Override
+    public void removeSequenceAt(int index) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeSequenceAt(index);
+    }
+
+    // endregion arrays
 
     @Override
     public String getStringValue() {
@@ -524,45 +644,6 @@ public class AnnotatedItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return this.itemToAnnotate.getEffectiveBooleanValue();
-    }
-
-    @Override
-    public void putItem(Item item) {
-        this.itemToAnnotate.putItem(item);
-    }
-
-    @Override
-    public void append(Item value) {
-        this.itemToAnnotate.append(value);
-    }
-
-    @Override
-    public void putItemByKey(String key, Item value) {
-        this.itemToAnnotate.putItemByKey(key, value);
-    }
-
-    @Override
-    public void putItemByKey(Item key, Item value) {
-        this.itemToAnnotate.putItemByKey(key, value);
-    }
-
-    @Override
-    public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
-    }
-
-    @Override
-    public void putSequenceByKey(String key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
-        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
-    }
-
-    @Override
-    public void putLazyItemByKey(String key, RuntimeIterator iterator, DynamicContext context, boolean isArray)
-            throws UnsupportedOperationException {
-        this.itemToAnnotate.putLazyItemByKey(key, iterator, context, isArray);
     }
 
     @Override
@@ -761,51 +842,6 @@ public class AnnotatedItem implements Item {
     @Override
     public void setCollection(Collection collection) {
         this.itemToAnnotate.setCollection(collection);
-    }
-
-    @Override
-    public void putItemAt(Item item, int i) {
-        this.itemToAnnotate.putItemAt(item, i);
-    }
-
-    @Override
-    public void putItemsAt(List<Item> items, int i) {
-        this.itemToAnnotate.putItemsAt(items, i);
-    }
-
-    @Override
-    public List<List<Item>> getSequences() {
-        return this.itemToAnnotate.getSequences();
-    }
-
-    @Override
-    public List<Item> getSequenceAt(int position) {
-        return this.itemToAnnotate.getSequenceAt(position);
-    }
-
-    @Override
-    public void appendSequence(List<Item> items) {
-        this.itemToAnnotate.appendSequence(items);
-    }
-
-    @Override
-    public void putSequenceAt(List<Item> items, int i) {
-        this.itemToAnnotate.putSequenceAt(items, i);
-    }
-
-    @Override
-    public void removeItemAt(int i) {
-        this.itemToAnnotate.removeItemAt(i);
-    }
-
-    @Override
-    public void removeItemByKey(String key) {
-        this.itemToAnnotate.removeItemByKey(key);
-    }
-
-    @Override
-    public void removeItemByKey(Item key) {
-        this.itemToAnnotate.removeItemByKey(key);
     }
 
     @Override

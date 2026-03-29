@@ -792,8 +792,9 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the member.
      * @throws UnsupportedOperationException if the item is not an array.
      * @throws OurBadException if the member is a non-singleton.
+     * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
      */
-    default Item getItemAt(int position) throws UnsupportedOperationException, OurBadException {
+    default Item getItemAt(int position) throws UnsupportedOperationException, OurBadException, ArrayIndexOutOfBoundsException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -803,8 +804,9 @@ public interface Item extends Serializable, KryoSerializable {
      * @param position the position of the member.
      * @return the member.
      * @throws UnsupportedOperationException if the item is not an array.
+     * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
      */
-    default List<Item> getSequenceAt(int position) throws UnsupportedOperationException {
+    default List<Item> getSequenceAt(int position) throws UnsupportedOperationException, ArrayIndexOutOfBoundsException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

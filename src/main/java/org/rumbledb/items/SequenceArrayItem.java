@@ -7,6 +7,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -70,13 +71,20 @@ public class SequenceArrayItem implements Item {
         return true;
     }
 
+    // region arrays
+
     @Override
     public boolean isArray() {
         return true;
     }
 
     @Override
-    public boolean allowsNonSingletons() {
+    public boolean isJSONArray() {
+        for (List<Item> member : this.memberSequences) {
+            if (member.size() != 1) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -87,98 +95,115 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public List<Item> getItems() {
-        List<Item> flattened = new ArrayList<>();
-        for (List<Item> sequence : this.memberSequences) {
-            flattened.addAll(sequence);
-        }
-        return flattened;
+        return this.getItemMembers();
     }
 
     @Override
-    public List<List<Item>> getSequences() {
-        return this.memberSequences;
+    public List<Item> getItemMembers() throws OurBadException {
+        List<Item> members = new ArrayList<>(this.memberSequences.size());
+        for (List<Item> member : this.memberSequences) {
+            if (member.size() != 1) {
+                throw new OurBadException(
+                        "getItemMembers is not defined when an array member is a non-singleton sequence."
+                );
+            }
+            members.add(member.get(0));
+        }
+        return members;
     }
 
     @Override
-    public Item getItemAt(int i) {
-        if (i < 0 || i >= getSize()) {
+    public List<List<Item>> getSequenceMembers() {
+        List<List<Item>> result = new ArrayList<>(this.memberSequences.size());
+        for (List<Item> member : this.memberSequences) {
+            result.add(new ArrayList<>(member));
+        }
+        return result;
+    }
+
+    @Override
+    public Item getItemAt(int position) throws OurBadException {
+        if (position < 0 || position >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + (i + 1) + ", of array with length: " + getSize(),
+                    "Tried to access array index: " + (position + 1) + ", of array with length: " + getSize(),
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        List<Item> member = this.memberSequences.get(i);
-        if (member.isEmpty()) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access empty member sequence at position: " + (i + 1),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
-        }
-        if (member.size() > 1) {
-            throw new UnsupportedOperationException(
-                    "getItemAt() is not defined for multi-item member sequences; use getSequenceAt(int) instead."
+        List<Item> member = this.memberSequences.get(position);
+        if (member.size() != 1) {
+            throw new OurBadException(
+                    "getItemAt() is not defined for non-singleton member sequences; use getSequenceAt(int) instead."
             );
         }
         return member.get(0);
     }
 
     @Override
-    public List<Item> getSequenceAt(int i) {
-        if (i < 0 || i >= getSize()) {
+    public List<Item> getSequenceAt(int position) {
+        if (position < 0 || position >= getSize()) {
             throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + (i + 1) + ", of array with length: " + getSize(),
+                    "Tried to access array index: " + (position + 1) + ", of array with length: " + getSize(),
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        return this.memberSequences.get(i);
+        List<Item> member = this.memberSequences.get(position);
+        return member;
+    }
+    
+    @Override
+    public void append(Item item) {
+        appendItem(item);
     }
 
     @Override
-    public void append(Item value) {
-        this.memberSequences.add(Collections.singletonList(value));
+    public void appendItem(Item item) {
+        this.memberSequences.add(Collections.singletonList(item));
     }
 
     @Override
-    public void appendSequence(List<Item> items) {
-        if (items == null) {
-            this.memberSequences.add(Collections.<Item>emptyList());
-        } else {
-            this.memberSequences.add(items);
+    public void appendSequence(List<Item> sequence) {
+        this.memberSequences.add(sequence);
+    }
+
+    @Override
+    public void putItemAt(Item item, int index) {
+        this.memberSequences.add(index, Collections.singletonList(item));
+    }
+
+    @Override
+    public void putSequenceAt(List<Item> sequence, int index) {
+        this.memberSequences.set(index, sequence);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> items, int i) {
+        List<List<Item>> toInsert = new ArrayList<>(items.size());
+        for (Item item : items) {
+            this.memberSequences.add(Collections.singletonList(item));
         }
+        this.memberSequences.addAll(i, toInsert);
     }
 
     @Override
-    public void putItem(Item value) {
-        this.memberSequences.add(Collections.singletonList(value));
-    }
-
-    @Override
-    public void putItemAt(Item value, int i) {
-        this.memberSequences.add(i, Collections.singletonList(value));
-    }
-
-    @Override
-    public void putSequenceAt(List<Item> values, int i) {
-        if (values == null) {
-            this.memberSequences.set(i, Collections.<Item>emptyList());
-        } else {
-            this.memberSequences.set(i, values);
+    public void putSequencesAt(List<List<Item>> sequences, int index) {
+        List<List<Item>> toInsert = new ArrayList<>(sequences.size());
+        for (List<Item> seq : sequences) {
+                toInsert.add(seq);
         }
+        this.memberSequences.addAll(index, toInsert);
     }
 
     @Override
-    public void putItemsAt(List<Item> values, int i) {
-        if (values == null) {
-            this.memberSequences.add(i, Collections.<Item>emptyList());
-        } else {
-            this.memberSequences.add(i, values);
-        }
+    public void removeItemAt(int index) {
+        this.memberSequences.remove(index);
     }
 
     @Override
-    public void removeItemAt(int i) {
-        this.memberSequences.remove(i);
+    public void removeSequenceAt(int index) {
+        this.memberSequences.remove(index);
     }
+
+    // endregion arrays
 
     @Override
     public void write(Kryo kryo, Output output) {
@@ -374,4 +399,3 @@ public class SequenceArrayItem implements Item {
         return this.collection;
     }
 }
-
