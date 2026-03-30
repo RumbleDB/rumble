@@ -144,12 +144,10 @@ public class DocumentItem implements Item {
      * XDM 3.1 Section 6.1 Document Node Accessors — node-name.
      *
      * "For a Document Node, dm:node-name returns the empty sequence."
-     *
-     * An empty string is used here to represent the empty sequence.
      */
     @Override
-    public String nodeName() {
-        return "";
+    public Item nodeName() {
+        return null;
     }
 
     /**

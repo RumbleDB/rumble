@@ -22,10 +22,13 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
 import org.rumbledb.exceptions.DuplicateAttributeException;
+import org.rumbledb.exceptions.InvalidElementNameExpressionException;
+import org.rumbledb.exceptions.InvalidLexicalValueException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -46,19 +49,19 @@ import java.util.Set;
 public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String staticElementName;
+    private Name staticElementName;
     private AtomizationIterator nameIterator;
     private RuntimeIterator contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }
      * 
-     * @param staticElementName The static element name
+     * @param staticElementName The static element name (expanded)
      * @param contentIterator The content iterator
      * @param staticContext The runtime static context
      */
     public ComputedElementConstructorRuntimeIterator(
-            String staticElementName,
+            Name staticElementName,
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
@@ -109,59 +112,77 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             contextToUse = dynamicContext;
         }
 
-        // Determine the element name
-        String elementName;
+        // Determine the element name (expanded QName), then validate [err:XQDY0096] before content processing.
+        // https://www.w3.org/TR/xquery-31/#id-computedElements
+        Item elementName;
         if (this.staticElementName != null) {
-            // Static element name
-            elementName = this.staticElementName;
+            elementName = ItemFactory.getInstance().createQNameItem(this.staticElementName);
         } else {
             // Dynamic element name - evaluate the name expression
-            // Processing of the name expression according to
-            // https://www.w3.org/TR/xquery-31/#id-computedElements
-
             // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
             // single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised
             // [err:XPTY0004].
             List<Item> atomizedNameItems = this.nameIterator.materialize(contextToUse);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic"
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata()
                 );
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
-            if (!(atomizedNameItem.isAtomic())) {
+            if (!atomizedNameItem.isAtomic()) {
                 throw new UnexpectedStaticTypeException(
-                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic"
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata()
                 );
             }
-            // TODO: implement proper type checking when we have a stable xml type system
 
-            // 2. If the atomized value of the name expression is of type xs:QName, that expanded QName is used as the
-            // node-name property of the constructed element, retaining the prefix part of the QName.
-            // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic, that value is
-            // converted to an expanded QName. If the string value contains a namespace prefix, that prefix is resolved
-            // to a namespace URI using the statically known namespaces. If the string value contains no namespace
-            // prefix, it is treated as a local name in the default element/type namespace. The resulting expanded QName
-            // is used as the node-name property of the constructed element, retaining the prefix part of the QName. If
-            // conversion of the atomized name expression to an expanded QName is not successful, a dynamic error is
-            // raised [err:XQDY0074].
-
-            String nameString = atomizedNameItem.getStringValue();
-            // TODO: implement proper QName processing with namespace resolution when we have a stable xml type system
-
-            // A dynamic error is raised [err:XQDY0096] if the node-name of the constructed element node has any of the
-            // following properties:
-            // - Its namespace prefix is xmlns.
-            // - Its namespace URI is http://www.w3.org/2000/xmlns/.
-            // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
-            // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
-            // TODO: implement proper validation of the element name
-
-            elementName = nameString;
+            if (atomizedNameItem.isQName()) {
+                // 2. If the atomized value of the name expression is of type xs:QName, that expanded QName is used as
+                // the
+                // node-name property of the constructed element, retaining the prefix part of the QName.
+                elementName = atomizedNameItem;
+            } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
+                // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic, that value
+                // is
+                // converted to an expanded QName. If the string value contains a namespace prefix, that prefix is
+                // resolved
+                // to a namespace URI using the statically known namespaces. If the string value contains no namespace
+                // prefix, it is treated as a local name in the default element/type namespace. The resulting expanded
+                // QName
+                // is used as the node-name property of the constructed element, retaining the prefix part of the QName.
+                // If
+                // conversion of the atomized name expression to an expanded QName is not successful, a dynamic error is
+                // raised [err:XQDY0074].
+                String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
+                try {
+                    elementName = ItemFactory.getInstance()
+                        .createQNameItem(
+                            NamespaceBindingUtils.parseLexicalQName(
+                                collapsed,
+                                NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                getMetadata()
+                            )
+                        );
+                } catch (InvalidLexicalValueException e) {
+                    throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
+                }
+            } else {
+                throw new UnexpectedStaticTypeException(
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata()
+                );
+            }
         }
+        // A dynamic error is raised [err:XQDY0096] if the node-name of the constructed element node has any of the
+        // following properties:
+        // - Its namespace prefix is xmlns.
+        // - Its namespace URI is http://www.w3.org/2000/xmlns/.
+        // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
+        // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+        NamespaceBindingUtils.validateConstructedNodeName(elementName.getQNameValue(), getMetadata());
 
         // Process content expression according to XQuery 3.1 specification
-        // https://www.w3.org/TR/xquery-31/#id-computedElements
         ProcessedContent processedContent = processContentExpression(contextToUse);
 
         // Create and return the element item
@@ -376,15 +397,18 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      * If two or more attributes have the same node-name, a dynamic error is raised [err:XQDY0025].
      */
     private void validateNoDuplicateAttributes(List<Item> attributes) {
-        Set<String> attributeNames = new HashSet<>();
+        Set<Name> attributeNames = new HashSet<>();
 
         for (Item attribute : attributes) {
             if (attribute.isAttributeNode()) {
-                String attributeName = attribute.nodeName();
-                if (attributeNames.contains(attributeName)) {
-                    throw new DuplicateAttributeException(attributeName);
+                Item q = attribute.nodeName();
+                if (q != null && q.isQName()) {
+                    Name expanded = q.getQNameValue();
+                    if (attributeNames.contains(expanded)) {
+                        throw new DuplicateAttributeException(q.getStringValue());
+                    }
+                    attributeNames.add(expanded);
                 }
-                attributeNames.add(attributeName);
             }
         }
     }

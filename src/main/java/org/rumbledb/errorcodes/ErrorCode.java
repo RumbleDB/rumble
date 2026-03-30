@@ -39,6 +39,8 @@ public enum ErrorCode {
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
 
+    IncorrectSyntaxFormatNumberErrorCode("FODF1310"),
+
     CastErrorCode("FORG0001"),
     ZeroOrOneErrorCode("FORG0003"),
     OneOrMoreErrorCode("FORG0004"),
@@ -50,9 +52,15 @@ public enum ErrorCode {
     InvalidReplacementStringErrorCode("FORX0004"),
 
     FunctionAtomizationErrorCode("FOTY0013"),
+    /** fn:string (and related) when applied to a map, array, or function item */
+    FunctionItemStringValueErrorCode("FOTY0014"),
 
 
     DuplicatePairNameErrorCode("XQDY0137"),
+
+    // JSON-related errors (FOJS000x).
+    DuplicateJSONKeyErrorCode("FOJS0003"),
+    InvalidOptionErrorCode("FOJS0005"),
 
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),

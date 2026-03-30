@@ -59,7 +59,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
             }
         }
     }

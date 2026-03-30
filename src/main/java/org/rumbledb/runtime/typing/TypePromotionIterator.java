@@ -239,7 +239,12 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.nextResult = CastIterator.castItemToType(this.nextResult, this.sequenceType.getItemType(), getMetadata());
+        this.nextResult = CastIterator.castItemToType(
+            this.nextResult,
+            this.sequenceType.getItemType(),
+            getMetadata(),
+            this.staticContext
+        );
         if (this.nextResult == null) {
             throw new OurBadException(
                     "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()

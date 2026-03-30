@@ -50,7 +50,8 @@ public abstract class Statement extends Node {
                 conf,
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
-                getMetadata()
+                getMetadata(),
+                getStaticContext().getInScopeNamespaceBindings()
         );
     }
 

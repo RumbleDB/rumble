@@ -245,6 +245,21 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     }
 
     @Override
+    public Node visitMapConstructor(MapConstructorExpression expression, Node argument) {
+        List<Expression> keys = expression.getKeys()
+            .stream()
+            .map(key -> (Expression) visit(key, argument))
+            .collect(Collectors.toList());
+        List<Expression> values = expression.getValues()
+            .stream()
+            .map(key -> (Expression) visit(key, argument))
+            .collect(Collectors.toList());
+        MapConstructorExpression result = new MapConstructorExpression(keys, values, expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
     public Node visitContextExpr(ContextItemExpression expression, Node argument) {
         return new ContextItemExpression(expression.getMetadata());
     }
@@ -419,6 +434,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setOriginalComparisonOperator(expression.getOriginalComparisonOperator());
         return result;
     }
 

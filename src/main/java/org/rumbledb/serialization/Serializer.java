@@ -4,8 +4,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.NamespaceItem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,6 +48,23 @@ public class Serializer implements java.io.Serializable {
 
     String getItemSeparator() {
         return this.itemSeparator;
+    }
+
+    private static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
+        Item q = item.nodeName();
+        if (q != null && q.isQName()) {
+            Name n = q.getQNameValue();
+            String p = n.getPrefix();
+            if (p != null && !p.isEmpty()) {
+                sb.append(p).append(':').append(n.getLocalName());
+            } else {
+                sb.append(n.getLocalName());
+            }
+            return;
+        }
+        if (q != null) {
+            sb.append(q.getStringValue());
+        }
     }
 
     public String serialize(Item i) {
@@ -144,7 +163,7 @@ public class Serializer implements java.io.Serializable {
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 sb.append(separator);
                 if (firstTime) {
                     separator = "," + separator;
@@ -164,6 +183,11 @@ public class Serializer implements java.io.Serializable {
                 sb.append(" ");
             }
             sb.append("}");
+            return;
+        }
+        if (item.isMap()) {
+            serializeMapAsJsonSafeObject(item, sb, indent);
+            return;
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
@@ -178,7 +202,7 @@ public class Serializer implements java.io.Serializable {
         if (item.isElementNode()) {
             sb.append(indent);
             sb.append("<");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
             }
@@ -195,17 +219,33 @@ public class Serializer implements java.io.Serializable {
             }
             sb.append(indent);
             sb.append("</");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             sb.append(">");
             sb.append("\n");
         }
 
+        if (item.isNamespaceNode()) {
+            NamespaceItem ns = (NamespaceItem) item;
+            sb.append(" ");
+            String nsPrefix = ns.getPrefix();
+            if (nsPrefix == null || nsPrefix.isEmpty()) {
+                sb.append("xmlns=\"");
+            } else {
+                sb.append("xmlns:");
+                sb.append(nsPrefix);
+                sb.append("=\"");
+            }
+            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
+            sb.append("\"");
+            return;
+        }
+
         if (item.isAttributeNode()) {
             sb.append(" ");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             sb.append("=");
             sb.append("\"");
-            sb.append(item.getStringValue());
+            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
             sb.append("\"");
             return;
         }
@@ -213,7 +253,7 @@ public class Serializer implements java.io.Serializable {
         if (item.isProcessingInstructionNode()) {
             sb.append(indent);
             sb.append("<?");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             String content = item.getStringValue();
             if (content != null && !content.isEmpty()) {
                 sb.append(" ");
@@ -254,15 +294,110 @@ public class Serializer implements java.io.Serializable {
             }
             yamlGenerator.writeEndArray();
         }
+        if (item.isMap() && !item.isObject()) {
+            yamlGenerator.writeStartObject();
+            for (Item key : item.getItemKeys()) {
+                yamlGenerator.writeFieldName(key.getStringValue());
+                appendMapValue(item, key, yamlGenerator);
+            }
+            yamlGenerator.writeEndObject();
+        }
         if (item.isObject()) {
             yamlGenerator.writeStartObject();
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 yamlGenerator.writeFieldName(key);
                 Item value = item.getItemByKey(key);
                 generateYAML(value, yamlGenerator);
             }
             yamlGenerator.writeEndObject();
         }
+    }
+
+    private void serializeMapAsJsonSafeObject(Item item, StringBuffer sb, String indent) {
+        if (this.method.equals(Method.TYSON)) {
+            sb.append("(\"");
+            sb.append(item.getDynamicType().getIdentifierString());
+            sb.append("\") ");
+        }
+        sb.append("{");
+        String separator = " ";
+        if (this.indent) {
+            separator = "\n" + indent + "  ";
+        }
+        boolean firstTime = true;
+        for (Item key : item.getItemKeys()) {
+            sb.append(separator);
+            if (firstTime) {
+                separator = "," + separator;
+                firstTime = false;
+            }
+            sb.append("\"").append(StringEscapeUtils.escapeJson(key.getStringValue())).append("\"").append(" : ");
+            appendMapValue(item, key, sb, indent);
+        }
+        if (this.indent) {
+            sb.append("\n").append(indent);
+        } else {
+            sb.append(" ");
+        }
+        sb.append("}");
+    }
+
+    private void appendMapValue(Item mapItem, Item key, StringBuffer sb, String indent) {
+        java.util.List<Item> sequence = mapItem.getSequenceByKey(key);
+        if (sequence == null || sequence.isEmpty()) {
+            sb.append("[]");
+            return;
+        }
+        if (sequence.size() == 1) {
+            if (this.indent) {
+                serialize(sequence.get(0), sb, indent + "  ", false);
+            } else {
+                serialize(sequence.get(0), sb, "", false);
+            }
+            return;
+        }
+        sb.append("[");
+        String separator = " ";
+        if (this.indent) {
+            separator = "\n" + indent + "    ";
+        }
+        boolean firstTime = true;
+        for (Item value : sequence) {
+            sb.append(separator);
+            if (firstTime) {
+                separator = "," + separator;
+                firstTime = false;
+            }
+            if (this.indent) {
+                serialize(value, sb, indent + "    ", false);
+            } else {
+                serialize(value, sb, "", false);
+            }
+        }
+        if (this.indent) {
+            sb.append("\n").append(indent).append("  ");
+        } else {
+            sb.append(" ");
+        }
+        sb.append("]");
+    }
+
+    private void appendMapValue(Item mapItem, Item key, YAMLGenerator yamlGenerator) throws IOException {
+        java.util.List<Item> sequence = mapItem.getSequenceByKey(key);
+        if (sequence == null || sequence.isEmpty()) {
+            yamlGenerator.writeStartArray();
+            yamlGenerator.writeEndArray();
+            return;
+        }
+        if (sequence.size() == 1) {
+            generateYAML(sequence.get(0), yamlGenerator);
+            return;
+        }
+        yamlGenerator.writeStartArray();
+        for (Item value : sequence) {
+            generateYAML(value, yamlGenerator);
+        }
+        yamlGenerator.writeEndArray();
     }
 
     private void appendJSONAtomicItem(Item item, StringBuffer sb) {

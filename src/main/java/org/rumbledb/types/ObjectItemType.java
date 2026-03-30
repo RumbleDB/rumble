@@ -24,12 +24,12 @@ public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(
+    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
-                FacetTypes.ENUMERATION,
-                FacetTypes.CONSTRAINTS,
-                FacetTypes.CONTENT,
-                FacetTypes.CLOSED
+                ConstrainingFacetTypes.ENUMERATION,
+                ConstrainingFacetTypes.CONSTRAINTS,
+                ConstrainingFacetTypes.CONTENT,
+                ConstrainingFacetTypes.CLOSED
             )
     );
 
@@ -220,8 +220,41 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
+    }
+
+    private static MapItemType getLegacyObjectAsMapType() {
+        return ItemTypeFactory.mapOf(
+            BuiltinTypesCatalogue.stringItem,
+            new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One)
+        );
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isMapItemType() || superType.isFunctionItemType()) {
+            return getLegacyObjectAsMapType().isSubtypeOf(superType);
+        }
+        return ItemType.super.isSubtypeOf(superType);
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.equals(other)) {
+            return this;
+        }
+        if (other.isMapItemType() || other.isFunctionItemType()) {
+            return getLegacyObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        }
+        return ItemType.super.findLeastCommonSuperTypeWith(other);
     }
 
     @Override
