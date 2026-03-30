@@ -29,7 +29,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
@@ -1276,7 +1275,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 // Note: passing the static context of the function call expression makes
                 // all builtin functions static-context-dependent.
                 // This might be worth a more fine-grained adjustment later.
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                false
             );
         } else {
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(

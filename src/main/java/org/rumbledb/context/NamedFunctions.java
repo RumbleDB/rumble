@@ -78,7 +78,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             List<RuntimeIterator> arguments
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(
+            return buildFunctionItemCallIterator(
                 getUserDefinedFunction(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
@@ -97,7 +97,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
      * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
      * callee's {@code executionModeForFunctionCall}
      */
-    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+    public static RuntimeIterator buildFunctionItemCallIterator(
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
@@ -189,19 +189,6 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         FunctionItem copyFunctionItem = functionItem.deepCopy();
         copyFunctionItem.setModuleDynamicContext(functionItem.getModuleDynamicContext());
         return copyFunctionItem;
-    }
-
-    public static RuntimeIterator getBuiltInFunctionIterator(
-            FunctionIdentifier identifier,
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        return getBuiltInFunctionIterator(
-            identifier,
-            arguments,
-            staticContext,
-            false
-        );
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(

@@ -209,7 +209,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.functionCallIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
+        this.functionCallIterator = NamedFunctions.buildFunctionItemCallIterator(
             this.functionItem,
             this.staticContext,
             this.isPartialApplication ? ExecutionMode.LOCAL : calleeExecutionMode,
