@@ -250,6 +250,7 @@ public class FormatNumberPictureParser {
         );
 
         return new FormatNumberSubPicture(
+                pictureString,
                 prefix,
                 suffix,
                 integerPart,
@@ -270,21 +271,22 @@ public class FormatNumberPictureParser {
             DecimalFormatDefinition decimalFormat
     ) {
         String negativePrefix =
-            new String(Character.toChars(decimalFormat.getMinusSign())) + positiveSubpicture.prefix();
+            new String(Character.toChars(decimalFormat.getMinusSign())) + positiveSubpicture.getPrefix();
 
         return new FormatNumberSubPicture(
+                positiveSubpicture.getRawPictureString(),
                 negativePrefix,
-                positiveSubpicture.suffix(),
-                positiveSubpicture.integerPart(),
-                positiveSubpicture.fractionalPart(),
-                positiveSubpicture.hasPercent(),
-                positiveSubpicture.hasPerMille(),
-                positiveSubpicture.integerPartGroupingPositions(),
-                positiveSubpicture.repeatingIntegerGroupingInterval(),
-                positiveSubpicture.fractionalPartGroupingPositions(),
-                positiveSubpicture.minimumIntegerPartSize(),
-                positiveSubpicture.minimumFractionalPartSize(),
-                positiveSubpicture.maximumFractionalPartSize()
+                positiveSubpicture.getSuffix(),
+                positiveSubpicture.getIntegerPart(),
+                positiveSubpicture.getFractionalPart(),
+                positiveSubpicture.getHasPercent(),
+                positiveSubpicture.getHasPerMille(),
+                positiveSubpicture.getIntegerPartGroupingPositions(),
+                positiveSubpicture.getRepeatingIntegerGroupingInterval(),
+                positiveSubpicture.getFractionalPartGroupingPositions(),
+                positiveSubpicture.getMinimumIntegerPartSize(),
+                positiveSubpicture.getMinimumFractionalPartSize(),
+                positiveSubpicture.getMaximumFractionalPartSize()
         );
     }
 

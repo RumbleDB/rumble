@@ -4,6 +4,7 @@ import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.runtime.functions.base.formatting.GroupingPos;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class FormatNumberSubPictureSupport {
@@ -259,5 +260,107 @@ public class FormatNumberSubPictureSupport {
         }
 
         return n;
+    }
+
+    static String applyDecimalDigitFamily(String s, DecimalFormatDefinition decimalFormat) {
+        int zeroDigit = decimalFormat.getZeroDigit();
+        if (zeroDigit == '0') {
+            return s;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                int mapped = zeroDigit + (ch - '0');
+                sb.appendCodePoint(mapped);
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
+    static boolean containsDecimalSeparator(FormatNumberSubPicture picture, DecimalFormatDefinition decimalFormat) {
+        return picture.getRawPictureString()
+            .contains(new String(Character.toChars(decimalFormat.getDecimalSeparator())));
+    }
+
+
+    static String applyIntegerPartGrouping(
+            String digits,
+            FormatNumberSubPicture picture
+    ) {
+
+        // TODO liegt identisch in NumericFormattingSupport, wenn sie sich ohne changes bewährt => zusammenziehen
+        List<GroupingPos> groupingPositions = picture.getIntegerPartGroupingPositions();
+
+        if (groupingPositions == null || groupingPositions.isEmpty()) {
+            return digits;
+        }
+
+        String reversedDigits = new StringBuilder(digits).reverse().toString();
+
+        Integer repeatingInterval = picture.getRepeatingIntegerGroupingInterval();
+
+        String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
+
+        // TODO von hier
+        if (repeatingInterval != null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < reversedDigits.length(); i++) {
+                if (i > 0 && i % repeatingInterval == 0) {
+                    sb.append(separator);
+                }
+                sb.append(reversedDigits.charAt(i));
+            }
+            return sb.reverse().toString();
+        }
+
+        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
+        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
+
+        StringBuilder sb = new StringBuilder(reversedDigits);
+
+        for (int i = gps.size() - 1; i >= 0; i--) {
+            GroupingPos gp = gps.get(i);
+            int insertPos = gp.distanceFromRight;
+            if (insertPos > 0 && insertPos < sb.length()) {
+                sb.insert(insertPos, separator);
+            }
+        }
+
+        // TODO NACH HIER kann man sehr wahrscheinlich später zusammenführen
+
+        return sb.reverse().toString();
+    }
+
+    static String applyFractionalPartGrouping(
+            String digits,
+            FormatNumberSubPicture picture
+    ) { // TODO refactor pull together if necessary
+        List<GroupingPos> groupingPositions = picture.getFractionalPartGroupingPositions();
+
+        if (groupingPositions == null || groupingPositions.isEmpty()) {
+            return digits;
+        }
+
+        String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
+
+        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
+        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
+
+        StringBuilder sb = new StringBuilder(digits);
+
+        for (int i = gps.size() - 1; i >= 0; i--) {
+            GroupingPos gp = gps.get(i);
+            int insertPos = gp.getDistanceFromRight();
+
+            if (insertPos > 0 && insertPos < sb.length()) {
+                sb.insert(insertPos, separator);
+            }
+        }
+
+        return sb.toString();
     }
 }

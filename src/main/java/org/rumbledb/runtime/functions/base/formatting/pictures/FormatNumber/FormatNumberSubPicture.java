@@ -5,7 +5,7 @@ import org.rumbledb.runtime.functions.base.formatting.GroupingPos;
 import java.util.List;
 
 public final class FormatNumberSubPicture {
-
+    private final String rawPictureString;
     private final String prefix;
     private final String suffix;
     private final String integerPart;
@@ -20,6 +20,7 @@ public final class FormatNumberSubPicture {
     private final int maximumFractionalPartSize;
 
     public FormatNumberSubPicture(
+            String rawPictureString,
             String prefix,
             String suffix,
             String integerPart,
@@ -33,6 +34,7 @@ public final class FormatNumberSubPicture {
             int minimumFractionalPartSize,
             int maximumFractionalPartSize
     ) {
+        this.rawPictureString = rawPictureString;
         this.prefix = prefix;
         this.suffix = suffix;
         this.integerPart = integerPart;
@@ -47,53 +49,55 @@ public final class FormatNumberSubPicture {
         this.maximumFractionalPartSize = maximumFractionalPartSize;
     }
 
-    // Record-style accessors
+    public String getRawPictureString() {
+        return this.rawPictureString;
+    }
 
-    public String prefix() {
+    public String getPrefix() {
         return this.prefix;
     }
 
-    public String suffix() {
+    public String getSuffix() {
         return this.suffix;
     }
 
-    public String integerPart() {
+    public String getIntegerPart() {
         return this.integerPart;
     }
 
-    public String fractionalPart() {
+    public String getFractionalPart() {
         return this.fractionalPart;
     }
 
-    public boolean hasPercent() {
+    public boolean getHasPercent() {
         return this.hasPercent;
     }
 
-    public boolean hasPerMille() {
+    public boolean getHasPerMille() {
         return this.hasPerMille;
     }
 
-    public List<GroupingPos> integerPartGroupingPositions() {
+    public List<GroupingPos> getIntegerPartGroupingPositions() {
         return this.integerPartGroupingPositions;
     }
 
-    public Integer repeatingIntegerGroupingInterval() {
+    public Integer getRepeatingIntegerGroupingInterval() {
         return this.repeatingIntegerGroupingInterval;
     }
 
-    public List<GroupingPos> fractionalPartGroupingPositions() {
+    public List<GroupingPos> getFractionalPartGroupingPositions() {
         return this.fractionalPartGroupingPositions;
     }
 
-    public int minimumIntegerPartSize() {
+    public int getMinimumIntegerPartSize() {
         return this.minimumIntegerPartSize;
     }
 
-    public int minimumFractionalPartSize() {
+    public int getMinimumFractionalPartSize() {
         return this.minimumFractionalPartSize;
     }
 
-    public int maximumFractionalPartSize() {
+    public int getMaximumFractionalPartSize() {
         return this.maximumFractionalPartSize;
     }
 }

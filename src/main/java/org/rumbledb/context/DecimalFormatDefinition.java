@@ -28,7 +28,7 @@ public class DecimalFormatDefinition {
 
     public int getDecimalSeparator() {
         return this.decimalSeparator;
-    }
+    } // TODO codepoints besser machen als strings direkt zurückgeben
 
     public String getInfinity() {
         return this.infinity;
