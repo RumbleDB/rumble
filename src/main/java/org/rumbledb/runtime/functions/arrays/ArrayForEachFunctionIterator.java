@@ -120,13 +120,25 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         }
         FunctionItem functionItem = (FunctionItem) action;
 
+        boolean allSingleton = true;
         List<List<Item>> resultMemberSequences = new ArrayList<>(memberSequences.size());
         for (List<Item> memberSequence : memberSequences) {
-            resultMemberSequences.add(applyAction(functionItem, memberSequence, context));
+            List<Item> result = applyAction(functionItem, memberSequence, context);
+            if (allSingleton && result.size() != 1) {
+                allSingleton = false;   
+            }
+            resultMemberSequences.add(result);
         }
 
-        this.resultItem = ItemFactory.getInstance()
-            .createArrayFromMemberSequences(resultMemberSequences, false);
+        if (allSingleton) {
+            List<Item> items = new ArrayList<>(memberSequences.size());
+            for (List<Item> member : resultMemberSequences) {
+                items.add(member.get(0));
+            }
+            this.resultItem = ItemFactory.getInstance().createArrayItem(items, false);
+        } else {
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(resultMemberSequences, false);
+        }
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {

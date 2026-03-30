@@ -36,6 +36,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
@@ -98,17 +99,19 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
 
         if (size == 1) {
             this.resultItem = ItemFactory.getInstance()
-                .createArrayFromMemberSequences(new ArrayList<>(), false);
+                .createArrayItem(Collections.emptyList(), false);
             return;
         }
 
-        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
-        List<List<Item>> tailMemberSequences = new ArrayList<>(size - 1);
-        for (int i = 1; i < memberSequences.size(); i++) {
-            tailMemberSequences.add(memberSequences.get(i));
+        if (arrayItem.isJSONArray()) {
+            List<Item> originalMembers = arrayItem.getItemMembers();
+            List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
+            this.resultItem = ItemFactory.getInstance().createArrayItem(tailMembers, false);
+        }else{
+            List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
+            List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(tailMembers, false);
         }
-        this.resultItem = ItemFactory.getInstance()
-            .createArrayFromMemberSequences(tailMemberSequences, false);
     }
 
     @Override

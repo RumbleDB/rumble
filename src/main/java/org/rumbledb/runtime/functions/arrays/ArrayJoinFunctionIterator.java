@@ -78,7 +78,8 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
                 joined.add(new ArrayList<>(arrayItem.getSequenceAt(i)));
             }
         }
-        this.resultItem = ItemFactory.getInstance().createArrayFromMemberSequences(joined, false);
+        // when joining, we always create a sequence array for now
+        this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(joined, false);
     }
 
     @Override

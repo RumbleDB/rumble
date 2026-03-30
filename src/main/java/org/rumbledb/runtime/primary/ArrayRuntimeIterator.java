@@ -73,11 +73,24 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext dynamicContext
     ) {
         if (this.isSquareConstructor) {
+            boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
             for (RuntimeIterator child : this.children) {
-                memberSequences.add(child.materialize(dynamicContext));
+                List<Item> member = child.materialize(dynamicContext);
+                if (allSingleton && member.size() != 1) {
+                    allSingleton = false;
+                }
+                memberSequences.add(member);
             }
-            return ItemFactory.getInstance().createArrayFromMemberSequences(memberSequences, true);
+            if (allSingleton) {
+                List<Item> items = new ArrayList<>();
+                for (List<Item> member : memberSequences) {
+                    items.add(member.get(0));
+                }
+                return ItemFactory.getInstance().createArrayItem(items, true);
+            } else {
+                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, true);
+            }
         }
         List<Item> result = new ArrayList<>();
         if (!this.children.isEmpty()) {

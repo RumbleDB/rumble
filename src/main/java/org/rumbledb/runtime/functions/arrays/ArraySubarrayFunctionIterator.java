@@ -119,14 +119,22 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
         int fromIndex = start.intValue() - 1;
         int toIndex = fromIndex + length.intValue();
 
-        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
-        List<List<Item>> slicedMemberSequences = new ArrayList<>(Math.max(0, toIndex - fromIndex));
-        for (int i = fromIndex; i < toIndex; i++) {
-            slicedMemberSequences.add(memberSequences.get(i));
+        if (arrayItem.isJSONArray()) {
+            List<Item> originalMembers = arrayItem.getItemMembers();
+            List<Item> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
+            for (int i = fromIndex; i < toIndex; i++) {
+                slicedMembers.add(originalMembers.get(i));
+            }
+            // TODO: optimization: if the subarray contains only singleton members, we can create a JSON array instead.
+            this.resultItem = ItemFactory.getInstance().createArrayItem(slicedMembers, false);
+        }else{
+            List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
+            List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
+            for (int i = fromIndex; i < toIndex; i++) {
+                slicedMembers.add(originalMembers.get(i));
+            }
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(slicedMembers, false);
         }
-
-        this.resultItem = ItemFactory.getInstance()
-            .createArrayFromMemberSequences(slicedMemberSequences, false);
     }
 
     private BigInteger materializeIntegerArgument(DynamicContext context, RuntimeIterator iterator, String label) {

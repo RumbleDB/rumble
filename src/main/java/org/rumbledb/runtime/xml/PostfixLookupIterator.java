@@ -144,7 +144,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
             } else if (item.isArray()) {
                 if (this.wildcard) {
                     if (item.isJSONArray()) {
-                        this.nextResult.addAll(item.getItems());
+                        this.nextResult.addAll(item.getItemMembers());
                     } else {
                         for (List<Item> member : item.getSequenceMembers()) {
                             this.nextResult.addAll(member);

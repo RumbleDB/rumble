@@ -120,18 +120,24 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-
+        boolean allSingleton = true;
         List<List<Item>> kept = new ArrayList<>();
         if (predicate.isFunction()) {
             FunctionItem functionItem = (FunctionItem) predicate;
             for (List<Item> memberSequence : memberSequences) {
                 if (predicateHoldsForFunction(functionItem, memberSequence, context)) {
+                    if (allSingleton && memberSequence.size() != 1) {
+                        allSingleton = false;
+                    }
                     kept.add(memberSequence);
                 }
             }
         } else if (predicate.isArray()) {
             for (List<Item> memberSequence : memberSequences) {
                 if (predicateHoldsForArray(predicate, memberSequence, context)) {
+                    if (allSingleton && memberSequence.size() != 1) {
+                        allSingleton = false;
+                    }
                     kept.add(memberSequence);
                 }
             }
@@ -142,7 +148,15 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.resultItem = ItemFactory.getInstance().createArrayFromMemberSequences(kept, false);
+        if (allSingleton) {
+            List<Item> items = new ArrayList<>();
+            for (List<Item> member : kept) {
+                items.add(member.get(0));
+            }
+            this.resultItem = ItemFactory.getInstance().createArrayItem(items, false);
+        } else {
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(kept, false);
+        }
     }
 
     private boolean predicateHoldsForFunction(

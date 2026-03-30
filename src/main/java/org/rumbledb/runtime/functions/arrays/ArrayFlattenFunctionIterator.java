@@ -92,7 +92,7 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             if (item.isArray()) {
                 if (item.isJSONArray()) {
-                    flatten(item.getItems());
+                    flatten(item.getItemMembers());
                 } else {
                     for (java.util.List<Item> member : item.getSequenceMembers()) {
                         flatten(member);

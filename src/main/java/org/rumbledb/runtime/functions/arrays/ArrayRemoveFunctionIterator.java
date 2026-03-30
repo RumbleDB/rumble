@@ -124,16 +124,27 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
             positionsToRemove.add(pos);
         }
 
-        List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
-        List<List<Item>> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
-        for (int i = 0; i < size; i++) {
-            BigInteger oneBased = BigInteger.valueOf((long) i + 1);
-            if (!positionsToRemove.contains(oneBased)) {
-                keptMembers.add(originalMembers.get(i));
+        if (arrayItem.isJSONArray()) {
+            List<Item> originalMembers = arrayItem.getItemMembers();
+            List<Item> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
+            for (int i = 0; i < size; i++) {
+                BigInteger oneBased = BigInteger.valueOf((long) i + 1);
+                if (!positionsToRemove.contains(oneBased)) {
+                    keptMembers.add(originalMembers.get(i));
+                }
             }
+            this.resultItem = ItemFactory.getInstance().createArrayItem(keptMembers, false);
+        }else{
+            List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
+            List<List<Item>> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
+            for (int i = 0; i < size; i++) {
+                BigInteger oneBased = BigInteger.valueOf((long) i + 1);
+                if (!positionsToRemove.contains(oneBased)) {
+                    keptMembers.add(originalMembers.get(i));
+                }
+            }
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(keptMembers, false);
         }
-
-        this.resultItem = ItemFactory.getInstance().createArrayFromMemberSequences(keptMembers, false);
     }
 
     @Override

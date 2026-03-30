@@ -118,23 +118,35 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
         }
 
         int insertIndex = positionInteger.intValue() - 1;
-
-        List<List<Item>> originalMemberSequences = arrayItem.getSequenceMembers();
-        List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
-
-        for (int i = 0; i < insertIndex && i < originalMemberSequences.size(); i++) {
-            newMemberSequences.add(originalMemberSequences.get(i));
-        }
-
         List<Item> memberSequence = this.memberIterator.materialize(context);
-        newMemberSequences.add(memberSequence);
 
-        for (int i = insertIndex; i < originalMemberSequences.size(); i++) {
-            newMemberSequences.add(originalMemberSequences.get(i));
+        if (arrayItem.isJSONArray() && memberSequence.size() == 1) {
+            List<Item> newItems = new ArrayList<>(size + 1);
+            // add items before the insert index
+            for (int i = 0; i < insertIndex; i++) {
+                newItems.add(arrayItem.getItemAt(i));
+            }
+            // add the new item
+            newItems.add(memberSequence.get(0));
+            // add items after the insert index
+            for (int i = insertIndex; i < size; i++) {
+                newItems.add(arrayItem.getItemAt(i));
+            }
+            this.resultItem = ItemFactory.getInstance().createArrayItem(newItems, false);
+        }else{
+            List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
+            // add items before the insert index
+            for (int i = 0; i < insertIndex; i++) {
+                newMemberSequences.add(arrayItem.getSequenceAt(i));
+            }
+            // add the new item
+            newMemberSequences.add(memberSequence);
+            // add items after the insert index
+            for (int i = insertIndex; i < size; i++) {
+                newMemberSequences.add(arrayItem.getSequenceAt(i));
+            }
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(newMemberSequences, false);
         }
-
-        this.resultItem = ItemFactory.getInstance()
-            .createArrayFromMemberSequences(newMemberSequences, false);
     }
 
     @Override

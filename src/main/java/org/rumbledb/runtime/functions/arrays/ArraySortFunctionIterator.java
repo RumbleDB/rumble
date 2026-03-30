@@ -133,11 +133,23 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         };
         rows.sort(cmp);
 
+        boolean allSingleton = true;
         List<List<Item>> sortedMembers = new ArrayList<>(rows.size());
         for (SortRow row : rows) {
+            if (allSingleton && row.member.size() != 1) {
+                allSingleton = false;
+            }
             sortedMembers.add(row.member);
         }
-        this.resultItem = ItemFactory.getInstance().createArrayFromMemberSequences(sortedMembers, false);
+        if (allSingleton) {
+            List<Item> items = new ArrayList<>(rows.size());
+            for (List<Item> member : sortedMembers) {
+                items.add(member.get(0));
+            }
+            this.resultItem = ItemFactory.getInstance().createArrayItem(items, false);
+        } else {
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(sortedMembers, false);
+        }
     }
 
     private String resolveCollationUri(DynamicContext context) {

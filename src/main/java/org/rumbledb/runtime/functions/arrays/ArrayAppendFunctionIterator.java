@@ -90,16 +90,20 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-
-        List<List<Item>> originalMemberSequences = arrayItem.getSequenceMembers();
-        List<List<Item>> newMemberSequences = new ArrayList<>(originalMemberSequences.size() + 1);
-        newMemberSequences.addAll(originalMemberSequences);
-
+        
         List<Item> appendage = this.appendageIterator.materialize(context);
-        newMemberSequences.add(appendage);
 
-        this.resultItem = ItemFactory.getInstance()
-            .createArrayFromMemberSequences(newMemberSequences, false);
+        if(arrayItem.isJSONArray() && appendage.size() == 1) {
+            List<Item> newItems = new ArrayList<>(arrayItem.getSize() + 1);
+            newItems.addAll(arrayItem.getItemMembers());
+            newItems.add(appendage.get(0));
+            this.resultItem = ItemFactory.getInstance().createArrayItem(newItems, false);
+        } else {
+            List<List<Item>> newMemberSequences = new ArrayList<>(arrayItem.getSize() + 1);
+            newMemberSequences.addAll(arrayItem.getSequenceMembers());
+            newMemberSequences.add(appendage);
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(newMemberSequences, false);
+        }
     }
 
     @Override

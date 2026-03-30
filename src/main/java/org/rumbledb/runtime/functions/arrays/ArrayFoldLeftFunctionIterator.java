@@ -94,23 +94,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> memberSequences;
-        if (arrayItem.isJSONArray()) {
-            int size = arrayItem.getSize();
-            memberSequences = new ArrayList<>(size);
-            for (int i = 0; i < size; i++) {
-                Item member = arrayItem.getItemAt(i);
-                if (member == null) {
-                    memberSequences.add(Collections.emptyList());
-                } else {
-                    List<Item> singleton = new ArrayList<>(1);
-                    singleton.add(member);
-                    memberSequences.add(singleton);
-                }
-            }
-        } else {
-            memberSequences = arrayItem.getSequenceMembers();
-        }
+        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
         List<Item> accumulator = this.zeroIterator.materialize(context);
 

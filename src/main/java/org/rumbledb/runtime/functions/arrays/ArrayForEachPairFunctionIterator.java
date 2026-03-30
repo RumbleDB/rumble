@@ -78,27 +78,6 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         this.hasProducedResult = false;
     }
 
-    private static List<List<Item>> memberSequencesFromArray(Item arrayItem) {
-        List<List<Item>> memberSequences;
-        if (arrayItem.isJSONArray()) {
-            int size = arrayItem.getSize();
-            memberSequences = new ArrayList<>(size);
-            for (int i = 0; i < size; i++) {
-                Item member = arrayItem.getItemAt(i);
-                if (member == null) {
-                    memberSequences.add(Collections.emptyList());
-                } else {
-                    List<Item> singleton = new ArrayList<>(1);
-                    singleton.add(member);
-                    memberSequences.add(singleton);
-                }
-            }
-        } else {
-            memberSequences = arrayItem.getSequenceMembers();
-        }
-        return memberSequences;
-    }
-
     private void initializeResult(DynamicContext context) {
         Item arrayItem1;
         try {
@@ -140,8 +119,8 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> members1 = memberSequencesFromArray(arrayItem1);
-        List<List<Item>> members2 = memberSequencesFromArray(arrayItem2);
+        List<List<Item>> members1 = arrayItem1.getSequenceMembers();
+        List<List<Item>> members2 = arrayItem2.getSequenceMembers();
 
         int n = Math.min(members1.size(), members2.size());
 
@@ -161,15 +140,25 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         FunctionItem functionItem = (FunctionItem) functionItems.get(0);
 
+        boolean allSingleton = true;
         List<List<Item>> resultMemberSequences = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            resultMemberSequences.add(
-                applyFunction(functionItem, members1.get(i), members2.get(i), context)
-            );
+            List<Item> result = applyFunction(functionItem, members1.get(i), members2.get(i), context);
+            if (allSingleton && result.size() != 1) {
+                allSingleton = false;
+            }
+            resultMemberSequences.add(result);
         }
 
-        this.resultItem = ItemFactory.getInstance()
-            .createArrayFromMemberSequences(resultMemberSequences, false);
+        if (allSingleton) {
+            List<Item> items = new ArrayList<>(n);
+            for (List<Item> member : resultMemberSequences) {
+                items.add(member.get(0));
+            }
+            this.resultItem = ItemFactory.getInstance().createArrayItem(items, false);
+        } else {
+            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(resultMemberSequences, false);
+        }
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
