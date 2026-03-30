@@ -133,7 +133,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
                 newItems.add(arrayItem.getItemAt(i));
             }
             this.resultItem = ItemFactory.getInstance().createArrayItem(newItems, false);
-        }else{
+        } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
             // add items before the insert index
             for (int i = 0; i < insertIndex; i++) {

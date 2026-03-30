@@ -90,7 +90,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             List<Item> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
             this.resultItem = ItemFactory.getInstance().createArrayItem(reversedMembers, false);
-        }else{
+        } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);

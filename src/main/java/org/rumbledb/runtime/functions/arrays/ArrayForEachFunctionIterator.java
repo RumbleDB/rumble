@@ -125,7 +125,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         for (List<Item> memberSequence : memberSequences) {
             List<Item> result = applyAction(functionItem, memberSequence, context);
             if (allSingleton && result.size() != 1) {
-                allSingleton = false;   
+                allSingleton = false;
             }
             resultMemberSequences.add(result);
         }

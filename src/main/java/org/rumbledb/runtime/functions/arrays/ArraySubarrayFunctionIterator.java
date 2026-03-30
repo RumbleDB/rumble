@@ -127,7 +127,7 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             }
             // TODO: optimization: if the subarray contains only singleton members, we can create a JSON array instead.
             this.resultItem = ItemFactory.getInstance().createArrayItem(slicedMembers, false);
-        }else{
+        } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
             for (int i = fromIndex; i < toIndex; i++) {

@@ -200,7 +200,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public void removeSequenceAt(int index)   {
+    public void removeSequenceAt(int index) {
         this.arrayItems.remove(index);
     }
 

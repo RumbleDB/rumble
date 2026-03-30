@@ -149,7 +149,7 @@ public class SequenceArrayItem implements Item {
         List<Item> member = this.memberSequences.get(position);
         return member;
     }
-    
+
     @Override
     public void append(Item item) {
         appendItem(item);
@@ -188,7 +188,7 @@ public class SequenceArrayItem implements Item {
     public void putSequencesAt(List<List<Item>> sequences, int index) {
         List<List<Item>> toInsert = new ArrayList<>(sequences.size());
         for (List<Item> seq : sequences) {
-                toInsert.add(seq);
+            toInsert.add(seq);
         }
         this.memberSequences.addAll(index, toInsert);
     }

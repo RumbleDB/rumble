@@ -107,7 +107,7 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
             this.resultItem = ItemFactory.getInstance().createArrayItem(tailMembers, false);
-        }else{
+        } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
             this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(tailMembers, false);

@@ -90,10 +90,10 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        
+
         List<Item> appendage = this.appendageIterator.materialize(context);
 
-        if(arrayItem.isJSONArray() && appendage.size() == 1) {
+        if (arrayItem.isJSONArray() && appendage.size() == 1) {
             List<Item> newItems = new ArrayList<>(arrayItem.getSize() + 1);
             newItems.addAll(arrayItem.getItemMembers());
             newItems.add(appendage.get(0));
