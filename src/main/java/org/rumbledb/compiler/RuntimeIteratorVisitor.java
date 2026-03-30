@@ -1296,12 +1296,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         FunctionIdentifier identifier = expression.getIdentifier();
-        if (BuiltinFunctionCatalogue.exists(identifier)) {
-            throw new UnsupportedFeatureException(
-                    "Higher order functions using builtin functions are not supported.",
-                    expression.getMetadata()
-            );
-        }
         RuntimeIterator runtimeIterator = new NamedFunctionRefRuntimeIterator(
                 identifier,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
