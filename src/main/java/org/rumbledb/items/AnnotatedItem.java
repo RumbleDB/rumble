@@ -724,7 +724,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public String nodeName() {
+    public Item nodeName() {
         return this.itemToAnnotate.nodeName();
     }
 

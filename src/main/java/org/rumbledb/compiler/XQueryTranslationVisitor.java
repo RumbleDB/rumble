@@ -2104,7 +2104,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             XQueryParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
             if (typedMapTestContext != null) {
-                Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false);
+                Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
                 keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
                 ItemType keyType;
                 if (!BuiltinTypesCatalogue.typeExists(keyName)) {
