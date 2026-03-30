@@ -756,7 +756,7 @@ public class SequenceType implements Serializable {
                                     )
                             )
                         )
-                    );
+                );
                 break;
             case "int":
                 st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.One);
