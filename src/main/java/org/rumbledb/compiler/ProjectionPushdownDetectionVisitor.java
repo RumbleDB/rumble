@@ -246,6 +246,11 @@ public class ProjectionPushdownDetectionVisitor
     }
 
     @Override
+    public ReferenceMap visitMapConstructor(MapConstructorExpression expression, ReferenceMap argument) {
+        return defaultAction(expression, argument);
+    }
+
+    @Override
     public ReferenceMap visitFilterExpression(FilterExpression expression, ReferenceMap argument) {
         ReferenceMap result = new ReferenceMap();
         if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {

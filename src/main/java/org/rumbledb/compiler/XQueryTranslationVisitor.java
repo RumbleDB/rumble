@@ -92,7 +92,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
-import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -157,6 +157,8 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
+import static org.rumbledb.types.SequenceType.createSequenceType;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -169,9 +171,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -238,7 +237,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     new VariableDeclaration(
                             Name.CONTEXT_ITEM,
                             true,
-                            SequenceType.ITEM,
+                            SequenceType.createSequenceType("item"),
                             null,
                             null,
                             createMetadataFromContext(ctx)
@@ -533,7 +532,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false, false);
-                paramType = ITEM_STAR;
+                paramType = createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -544,7 +543,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1530,7 +1529,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             values.add((Expression) this.visitExprSingle(currentPair.rhs));
         }
-        return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+        return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
     }
 
 
@@ -1960,7 +1959,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
         ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
@@ -1986,7 +1985,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
 
         ItemType itemType = processItemType(ctx.item);
@@ -2000,6 +1999,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.parenthesizedItemTest() != null) {
+            return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
+        }
+        if (itemTypeContext.KW_ITEM() != null) {
+            return BuiltinTypesCatalogue.item;
+        }
         if (itemTypeContext.functionTest() != null) {
             // we have a function item type
             XQueryParser.TypedFunctionTestContext typedFnCtx = itemTypeContext.functionTest().typedFunctionTest();
@@ -2014,6 +2019,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
             } else {
                 return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+        }
+        if (itemTypeContext.mapTest() != null) {
+            XQueryParser.MapTestContext mapTestContext = itemTypeContext.mapTest();
+            if (mapTestContext.anyMapTest() != null) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            XQueryParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
+            if (typedMapTestContext != null) {
+                Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false);
+                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                ItemType keyType;
+                if (!BuiltinTypesCatalogue.typeExists(keyName)) {
+                    keyType = new ItemTypeReference(keyName);
+                } else {
+                    keyType = BuiltinTypesCatalogue.getItemTypeByName(keyName);
+                }
+                SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
+                return ItemTypeFactory.mapOf(keyType, valueSequenceType);
             }
         }
         if (itemTypeContext.eqName() != null) {
@@ -2131,13 +2155,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitInlineFunctionExpr(XQueryParser.InlineFunctionExprContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.ITEM_STAR;
+        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false, false);
-                paramType = SequenceType.ITEM_STAR;
+                paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -2148,7 +2172,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }

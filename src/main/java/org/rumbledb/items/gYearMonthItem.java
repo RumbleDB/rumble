@@ -105,6 +105,11 @@ public class gYearMonthItem implements Item {
     }
 
     @Override
+    public boolean hasTimeZone() {
+        return this.hasTimeZone;
+    }
+
+    @Override
     public void write(Kryo kryo, Output output) {
         output.writeString(this.getStringValue());
         output.writeBoolean(this.hasTimeZone);

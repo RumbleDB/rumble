@@ -192,7 +192,7 @@ public class ComparisonVisitor extends CloneVisitor {
         commaExpression.setStaticContext(expression.getStaticContext());
 
         Expression integerLiteralExpression = new IntegerLiteralExpression("1", expression.getMetadata());
-        integerLiteralExpression.setStaticSequenceType(SequenceType.INTEGER);
+        integerLiteralExpression.setStaticSequenceType(SequenceType.createSequenceType("integer"));
         integerLiteralExpression.setStaticContext(expression.getStaticContext());
         FilterExpression result = new FilterExpression(
                 commaExpression,
