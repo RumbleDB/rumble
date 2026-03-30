@@ -56,11 +56,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     // static analysis phase
     // but functions items are fully known at runtimeIterator generation
     private HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
-    private RumbleRuntimeConfiguration conf;
 
-    public NamedFunctions(RumbleRuntimeConfiguration conf) {
+    public NamedFunctions() {
         this.userDefinedFunctions = new HashMap<>();
-        this.conf = conf;
     }
 
     public void clearUserDefinedFunctions() {
