@@ -13,48 +13,40 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
-
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.RuntimeIterator;
 
-public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+/**
+ * Placeholder body iterator for {@link org.rumbledb.items.FunctionItem}s that represent
+ * a builtin named function reference ({@code fn:abs#1}). The real call path uses
+ * {@link org.rumbledb.context.NamedFunctions#getBuiltInFunctionIterator}; this iterator
+ * must not be evaluated as a normal function body.
+ */
+public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private FunctionIdentifier functionIdentifier;
-
-    public NamedFunctionRefRuntimeIterator(
-            FunctionIdentifier functionIdentifier,
-            RuntimeStaticContext staticContext
-    ) {
+    public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);
-        this.functionIdentifier = functionIdentifier;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item resolved = NamedFunctionLookup.lookupOrNull(
-            this.functionIdentifier,
-            dynamicContext,
-            getConfiguration(),
-            getMetadata()
-        );
-        if (resolved != null) {
-            return resolved;
-        }
-        throw new UnknownFunctionCallException(
-                this.functionIdentifier.getName(),
-                this.functionIdentifier.getArity(),
+    public void open(DynamicContext context) {
+        super.open(context);
+        this.hasNext = false;
+    }
+
+    @Override
+    public Item next() {
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
+                    + "builtin named function reference marker must not be evaluated",
                 getMetadata()
         );
     }
