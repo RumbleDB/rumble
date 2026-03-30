@@ -62,7 +62,8 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                         getConfiguration(),
                         SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
         objectItem.putLazyItemByKey("pr", it, context, true);
@@ -73,7 +74,8 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                         getConfiguration(),
                         SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
         objectItem.putLazyItemByKey("fMeasureByThreshold", it, context, true);
@@ -84,7 +86,8 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                         getConfiguration(),
                         SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
         objectItem.putLazyItemByKey("precisionByThreshold", it, context, true);
@@ -95,7 +98,8 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                         getConfiguration(),
                         SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
         objectItem.putLazyItemByKey("recallByThreshold", it, context, true);
@@ -106,7 +110,8 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                         getConfiguration(),
                         SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
         objectItem.putLazyItemByKey("roc", it, context, true);

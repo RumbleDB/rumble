@@ -22,6 +22,7 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
 import org.rumbledb.items.ItemFactory;
@@ -40,12 +41,12 @@ import java.util.List;
 public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String tagName;
+    private Name elementName;
     private List<RuntimeIterator> content;
     private List<AttributeNodeRuntimeIterator> attributes;
 
     public DirElemConstructorRuntimeIterator(
-            String tagName,
+            Name elementName,
             List<RuntimeIterator> content,
             List<AttributeNodeRuntimeIterator> attributes,
             RuntimeStaticContext staticContext
@@ -53,7 +54,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         super(createChildList(content, attributes), staticContext);
         this.content = content;
         this.attributes = attributes;
-        this.tagName = tagName;
+        this.elementName = elementName;
     }
 
     @Override
@@ -183,7 +184,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                this.tagName,
+                ItemFactory.getInstance().createQNameItem(this.elementName),
                 content,
                 attributes
             );

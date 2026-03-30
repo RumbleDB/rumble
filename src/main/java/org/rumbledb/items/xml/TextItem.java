@@ -113,8 +113,8 @@ public class TextItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        return "";
+    public Item nodeName() {
+        return null;
     }
 
     /**

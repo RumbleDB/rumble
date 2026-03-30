@@ -227,6 +227,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isQName() {
+        return this.itemToAnnotate.isQName();
+    }
+
+    @Override
+    public Name getQNameValue() {
+        return this.itemToAnnotate.getQNameValue();
+    }
+
+    @Override
     public boolean isBinary() {
         return this.itemToAnnotate.isBinary();
     }
@@ -714,7 +724,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public String nodeName() {
+    public Item nodeName() {
         return this.itemToAnnotate.nodeName();
     }
 

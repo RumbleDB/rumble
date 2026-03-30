@@ -80,4 +80,17 @@ public class RuntimeStaticContext implements Serializable {
         return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
     }
 
+    /**
+     * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
+     * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
+     *
+     * @return the namespace URI, or {@code null} if the prefix is not bound
+     */
+    public String resolvePrefix(String prefix) {
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
+        }
+        return StaticContext.getBuiltinNamespaceBinding(prefix);
+    }
+
 }

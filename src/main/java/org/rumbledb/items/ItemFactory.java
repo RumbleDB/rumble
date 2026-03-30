@@ -3,6 +3,7 @@ package org.rumbledb.items;
 import java.time.*;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
@@ -235,6 +236,10 @@ public class ItemFactory {
         return new AnyURIItem(s);
     }
 
+    public Item createQNameItem(Name name) {
+        return new QNameItem(name);
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
@@ -393,14 +398,7 @@ public class ItemFactory {
         return new AttributeItem(attribute);
     }
 
-    /**
-     * Create an attribute item.
-     * 
-     * @param nodeName The name of the attribute
-     * @param stringValue The string value of the attribute
-     * @return The attribute item
-     */
-    public Item createXmlAttributeNode(String nodeName, String stringValue) {
+    public Item createXmlAttributeNode(Item nodeName, String stringValue) {
         return new AttributeItem(nodeName, stringValue);
     }
 
@@ -422,15 +420,7 @@ public class ItemFactory {
         return new ElementItem(elementNode, children, attributes);
     }
 
-    /**
-     * Create an element item.
-     * 
-     * @param nodeName The name of the element
-     * @param children The children items of the element
-     * @param attributes The attributes items of the element
-     * @return The element item
-     */
-    public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
+    public Item createXmlElementNode(Item nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }
 

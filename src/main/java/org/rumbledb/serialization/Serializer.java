@@ -4,8 +4,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.NamespaceItem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,6 +48,23 @@ public class Serializer implements java.io.Serializable {
 
     String getItemSeparator() {
         return this.itemSeparator;
+    }
+
+    private static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
+        Item q = item.nodeName();
+        if (q != null && q.isQName()) {
+            Name n = q.getQNameValue();
+            String p = n.getPrefix();
+            if (p != null && !p.isEmpty()) {
+                sb.append(p).append(':').append(n.getLocalName());
+            } else {
+                sb.append(n.getLocalName());
+            }
+            return;
+        }
+        if (q != null) {
+            sb.append(q.getStringValue());
+        }
     }
 
     public String serialize(Item i) {
@@ -183,7 +202,7 @@ public class Serializer implements java.io.Serializable {
         if (item.isElementNode()) {
             sb.append(indent);
             sb.append("<");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
             }
@@ -200,17 +219,33 @@ public class Serializer implements java.io.Serializable {
             }
             sb.append(indent);
             sb.append("</");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             sb.append(">");
             sb.append("\n");
         }
 
+        if (item.isNamespaceNode()) {
+            NamespaceItem ns = (NamespaceItem) item;
+            sb.append(" ");
+            String nsPrefix = ns.getPrefix();
+            if (nsPrefix == null || nsPrefix.isEmpty()) {
+                sb.append("xmlns=\"");
+            } else {
+                sb.append("xmlns:");
+                sb.append(nsPrefix);
+                sb.append("=\"");
+            }
+            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
+            sb.append("\"");
+            return;
+        }
+
         if (item.isAttributeNode()) {
             sb.append(" ");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             sb.append("=");
             sb.append("\"");
-            sb.append(item.getStringValue());
+            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
             sb.append("\"");
             return;
         }
@@ -218,7 +253,7 @@ public class Serializer implements java.io.Serializable {
         if (item.isProcessingInstructionNode()) {
             sb.append(indent);
             sb.append("<?");
-            sb.append(item.nodeName());
+            appendDmNodeNameLexical(sb, item);
             String content = item.getStringValue();
             if (content != null && !content.isEmpty()) {
                 sb.append(" ");

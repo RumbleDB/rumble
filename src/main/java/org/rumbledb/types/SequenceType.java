@@ -929,6 +929,18 @@ public class SequenceType implements Serializable {
             case "function+":
                 st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrMore);
                 break;
+            case "QName":
+                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.One);
+                break;
+            case "QName?":
+                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "QName*":
+                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "QName+":
+                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrMore);
+                break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }

@@ -1,6 +1,7 @@
 package org.rumbledb.context;
 
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.QNameFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
@@ -574,8 +575,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction node_name_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
-        // TODO: change to QName? after XML atomic types are implemented
-        "string?",
+        "QName?",
         NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -583,9 +583,22 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction node_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
         "item?",
-        // TODO: change to QName? after XML atomic types are implemented
-        "string?",
+        "QName?",
         NodeQNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:QName (Functions and Operators 3.1)
+     *
+     * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-QName">func-QName</a>
+     */
+    static final BuiltinFunction qname = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "QName"),
+        "string?",
+        "string",
+        "QName",
+        QNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -3723,6 +3736,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(document_uri_with_arg.getIdentifier(), document_uri_with_arg);
         builtinFunctions.put(node_name_without_arg.getIdentifier(), node_name_without_arg);
         builtinFunctions.put(node_name_with_arg.getIdentifier(), node_name_with_arg);
+        builtinFunctions.put(qname.getIdentifier(), qname);
 
     }
 

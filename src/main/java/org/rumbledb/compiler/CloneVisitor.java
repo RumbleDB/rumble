@@ -684,7 +684,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .map(child -> (Expression) visit(child, argument))
             .collect(Collectors.toList());
         AttributeNodeExpression result = new AttributeNodeExpression(
-                expression.getQName(),
+                expression.getNodeName(),
                 value,
                 expression.getMetadata()
         );

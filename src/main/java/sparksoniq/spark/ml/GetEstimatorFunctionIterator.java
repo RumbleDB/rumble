@@ -114,7 +114,8 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                             getConfiguration(),
                             SequenceType.createSequenceType("function"),
                             ExecutionMode.LOCAL,
-                            getMetadata()
+                            getMetadata(),
+                            staticContext.getStaticallyKnownNamespaces()
                     )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(

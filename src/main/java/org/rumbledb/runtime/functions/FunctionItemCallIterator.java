@@ -138,7 +138,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                             getConfiguration(),
                             sequenceType,
                             executionMode,
-                            this.functionArguments.get(i).getMetadata()
+                            this.functionArguments.get(i).getMetadata(),
+                            staticContext.getStaticallyKnownNamespaces()
                     );
                     if (
                         sequenceType.isEmptySequence()
@@ -247,7 +248,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         getConfiguration(),
                         SequenceType.createSequenceType("function"),
                         ExecutionMode.LOCAL,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
     }
