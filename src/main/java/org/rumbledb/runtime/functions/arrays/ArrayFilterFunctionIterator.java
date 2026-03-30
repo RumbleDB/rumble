@@ -97,7 +97,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> memberSequences = arrayItem.getSequences();
+        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
         List<Item> predicateItems = this.predicateIterator.materialize(context);
         if (predicateItems.isEmpty()) {
@@ -194,14 +194,14 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeStaticContext indexStaticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );
         RuntimeIterator indexIterator = new ConstantRuntimeIterator(indexItem, indexStaticContext);
         RuntimeStaticContext callStaticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );
@@ -243,7 +243,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -257,7 +257,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -271,7 +271,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeStaticContext staticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );

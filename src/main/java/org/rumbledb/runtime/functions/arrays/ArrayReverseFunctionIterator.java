@@ -85,7 +85,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> memberSequences = arrayItem.getSequences();
+        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
         List<List<Item>> reversedMemberSequences = new ArrayList<>(memberSequences);
         Collections.reverse(reversedMemberSequences);
 

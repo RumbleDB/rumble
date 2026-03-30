@@ -109,7 +109,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         String collationUri = resolveCollationUri(context);
         SortKeyComparison.checkCollationSupported(collationUri, getMetadata());
 
-        List<List<Item>> memberSequences = arrayItem.getSequences();
+        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
         KeyComputer keyComputer = buildKeyComputer(context);
 
         List<SortRow> rows = new ArrayList<>(memberSequences.size());
@@ -120,7 +120,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeStaticContext sortStaticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );
@@ -304,7 +304,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     private RuntimeStaticContext localStaticContext() {
         return new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );

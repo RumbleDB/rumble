@@ -95,7 +95,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
         }
 
         List<List<Item>> memberSequences;
-        if (!arrayItem.allowsNonSingletons()) {
+        if (arrayItem.isJSONArray()) {
             int size = arrayItem.getSize();
             memberSequences = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -109,7 +109,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
                 }
             }
         } else {
-            memberSequences = arrayItem.getSequences();
+            memberSequences = arrayItem.getSequenceMembers();
         }
 
         List<Item> accumulator = this.zeroIterator.materialize(context);
@@ -141,7 +141,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -152,7 +152,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -161,7 +161,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeStaticContext staticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );

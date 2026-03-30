@@ -80,7 +80,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
     private static List<List<Item>> memberSequencesFromArray(Item arrayItem) {
         List<List<Item>> memberSequences;
-        if (!arrayItem.allowsNonSingletons()) {
+        if (arrayItem.isJSONArray()) {
             int size = arrayItem.getSize();
             memberSequences = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -94,7 +94,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
                 }
             }
         } else {
-            memberSequences = arrayItem.getSequences();
+            memberSequences = arrayItem.getSequenceMembers();
         }
         return memberSequences;
     }
@@ -176,7 +176,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -187,7 +187,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    SequenceType.ITEM_STAR,
+                    SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -196,7 +196,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeStaticContext staticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                SequenceType.ITEM_STAR,
+                SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );

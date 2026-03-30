@@ -20,11 +20,11 @@ public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
 
         if (arg0.isArray()) {
             results.add(arg0);
-            if (!arg0.allowsNonSingletons()) {
+            if (arg0.isJSONArray()) {
                 innerValues = arg0.getItems();
             } else {
                 innerValues = new ArrayList<Item>();
-                for (java.util.List<Item> member : arg0.getSequences()) {
+                for (java.util.List<Item> member : arg0.getSequenceMembers()) {
                     innerValues.addAll(member);
                 }
             }

@@ -143,7 +143,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isArray()) {
                 if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    if (!item.allowsNonSingletons()) {
+                    if (item.isJSONArray()) {
                         this.nextResult = item.getItemAt(this.lookup - 1);
                     } else {
                         java.util.List<Item> memberSeq = item.getSequenceAt(this.lookup - 1);

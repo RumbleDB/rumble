@@ -94,7 +94,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> memberSequences = arrayItem.getSequences();
+        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
         List<Item> actionItems = this.functionIterator.materialize(context);
         if (actionItems.isEmpty()) {
@@ -133,7 +133,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    org.rumbledb.types.SequenceType.ITEM_STAR,
+                    org.rumbledb.types.SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -147,7 +147,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = new RuntimeStaticContext(
                     getConfiguration(),
-                    org.rumbledb.types.SequenceType.ITEM_STAR,
+                    org.rumbledb.types.SequenceType.createSequenceType("item*"),
                     ExecutionMode.LOCAL,
                     getMetadata()
             );
@@ -161,7 +161,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeStaticContext staticContext = new RuntimeStaticContext(
                 getConfiguration(),
-                org.rumbledb.types.SequenceType.ITEM_STAR,
+                org.rumbledb.types.SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );

@@ -124,7 +124,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
             positionsToRemove.add(pos);
         }
 
-        List<List<Item>> originalMembers = arrayItem.getSequences();
+        List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
         List<List<Item>> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
         for (int i = 0; i < size; i++) {
             BigInteger oneBased = BigInteger.valueOf((long) i + 1);

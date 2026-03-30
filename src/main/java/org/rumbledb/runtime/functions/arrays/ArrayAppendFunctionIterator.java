@@ -91,7 +91,7 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<List<Item>> originalMemberSequences = arrayItem.getSequences();
+        List<List<Item>> originalMemberSequences = arrayItem.getSequenceMembers();
         List<List<Item>> newMemberSequences = new ArrayList<>(originalMemberSequences.size() + 1);
         newMemberSequences.addAll(originalMemberSequences);
 
