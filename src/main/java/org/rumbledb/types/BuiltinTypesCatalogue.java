@@ -728,6 +728,13 @@ public class BuiltinTypesCatalogue {
     );
     public static final ItemType anyFunctionItem = new FunctionItemType(true);
 
+    public static final ItemType mapItem = new MapItemType(
+            Name.createVariableInDefaultTypeNamespace("map"),
+            anyFunctionItem,
+            atomicItem,
+            SequenceType.createSequenceType("item*")
+    );
+
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
             if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
@@ -764,6 +771,7 @@ public class BuiltinTypesCatalogue {
         numericItem,
         booleanItem,
         arrayItem,
+        mapItem,
         nullItem,
         JSONItem,
         durationItem,

@@ -121,7 +121,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     transformer,
                     new RuntimeStaticContext(
                             getConfiguration(),
-                            SequenceType.OBJECTS,
+                            SequenceType.createSequenceType("object*"),
                             ExecutionMode.DATAFRAME,
                             getMetadata(),
                             staticContext.getStaticallyKnownNamespaces()

@@ -59,6 +59,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -461,6 +462,22 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             result.setStaticSequenceType(expression.getStaticSequenceType());
             return result;
         }
+    }
+
+    @Override
+    public Node visitMapConstructor(MapConstructorExpression expression, Node argument) {
+        List<Expression> keys = expression.getKeys()
+            .stream()
+            .map(key -> (Expression) visit(key, argument))
+            .collect(Collectors.toList());
+        List<Expression> values = expression.getValues()
+            .stream()
+            .map(value -> (Expression) visit(value, argument))
+            .collect(Collectors.toList());
+        Expression result = new MapConstructorExpression(keys, values, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     @Override

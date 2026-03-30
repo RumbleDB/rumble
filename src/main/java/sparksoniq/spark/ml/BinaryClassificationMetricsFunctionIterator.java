@@ -60,7 +60,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getConfiguration(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata(),
                         staticContext.getStaticallyKnownNamespaces()
@@ -72,7 +72,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getConfiguration(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata(),
                         staticContext.getStaticallyKnownNamespaces()
@@ -84,7 +84,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getConfiguration(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata(),
                         staticContext.getStaticallyKnownNamespaces()
@@ -96,7 +96,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getConfiguration(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata(),
                         staticContext.getStaticallyKnownNamespaces()
@@ -108,7 +108,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getConfiguration(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata(),
                         staticContext.getStaticallyKnownNamespaces()

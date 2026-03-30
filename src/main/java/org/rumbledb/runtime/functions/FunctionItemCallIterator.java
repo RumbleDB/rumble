@@ -47,8 +47,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
@@ -125,7 +123,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         && !this.functionItem.getSignature()
                             .getParameterTypes()
                             .get(i)
-                            .equals(ITEM_STAR)
+                            .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
                     ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
@@ -248,7 +246,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 partiallyAppliedFunction,
                 new RuntimeStaticContext(
                         getConfiguration(),
-                        SequenceType.FUNCTION,
+                        SequenceType.createSequenceType("function"),
                         ExecutionMode.LOCAL,
                         getMetadata(),
                         staticContext.getStaticallyKnownNamespaces()
@@ -299,7 +297,17 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
-        this.functionBodyIterator.reset(this.currentDynamicContextForLocalExecution);
+        if (this.isPartialApplication) {
+            if (this.functionBodyIterator != null) {
+                this.functionBodyIterator.reset(this.currentDynamicContextForLocalExecution);
+            }
+            setNextResult();
+            return;
+        }
+        this.populateDynamicContextWithArguments(this.currentDynamicContextForLocalExecution);
+        if (this.functionBodyIterator != null) {
+            this.functionBodyIterator.reset(this.dynamicContextForCalls);
+        }
         setNextResult();
     }
 

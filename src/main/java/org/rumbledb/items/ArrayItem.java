@@ -28,6 +28,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -275,6 +276,14 @@ public class ArrayItem implements Item {
     public List<Item> atomizedValue() {
         throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
         // return getItems();
+    }
+
+    @Override
+    public String getStringValue() {
+        throw new FunctionItemStringValueException(
+                FunctionItemStringValueException.DEFAULT_MESSAGE,
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     @Override

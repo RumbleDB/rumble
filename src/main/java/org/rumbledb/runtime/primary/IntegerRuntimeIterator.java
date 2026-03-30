@@ -52,7 +52,7 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "" + this.item.getIntValue(),
-                SequenceType.INTEGER
+                SequenceType.createSequenceType("integer")
         );
     }
 }

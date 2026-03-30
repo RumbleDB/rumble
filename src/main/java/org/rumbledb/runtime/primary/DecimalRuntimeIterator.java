@@ -51,7 +51,7 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "" + this.item.getDecimalValue(),
-                SequenceType.DECIMAL
+                SequenceType.createSequenceType("decimal")
         );
     }
 }

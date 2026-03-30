@@ -10,6 +10,8 @@ import java.time.*;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.DuplicateObjectKeyException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -48,15 +50,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if it is an array, false otherwise.
      */
     default boolean isArray() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an object.
-     *
-     * @return true if it is an object, false otherwise.
-     */
-    default boolean isObject() {
         return false;
     }
 
@@ -510,33 +503,245 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    // region maps
+
     /**
-     * Returns the keys of the item, if it is an object.
+     * Tests whether the item is a map.
+     *
+     * @return true if it is a map, false otherwise.
+     */
+    default boolean isMap() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an object.
+     * Object items are legacy JSONiq objects, that allow only for
+     * - string keys
+     * - singleton values
+     *
+     * @return true if it is an object, false otherwise.
+     */
+    default boolean isObject() {
+        return false;
+    }
+
+    /**
+     * Returns the string keys of the item, if it is a map.
      *
      * @return the list of the keys.
+     * @deprecated use {@link #getStringKeys()} instead
      */
+    @Deprecated
     default List<String> getKeys() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the values of the item, if it is an object.
+     * Returns the string keys of the item, if it is a map.
+     *
+     * @return a list of strings, corresponding to the keys of the map.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the map contains non-string keys.
+     */
+    default List<String> getStringKeys() throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the (possibly non-string) atomic keys of the item, if it is a map-like object.
+     *
+     * @return the list of atomic keys as items.
+     * @throws UnsupportedOperationException if the item is not a map.
+     */
+    default List<Item> getItemKeys() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the values of the item, if it is a map.
      *
      * @return the list of the value items.
+     * @deprecated use {@link #getItemValues()} instead
      */
+    @Deprecated
     default List<Item> getValues() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Returns the value associated with a specific key, if it is an object.
+     * Returns the values of the item, if it is a map.
      *
-     * @param key a key.
-     * @return the value associated with key.
+     * @return a list containing, for each key in the map, the item associated with that key.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the map contains non-singleton values.
      */
-    default Item getItemByKey(String key) {
+    default List<Item> getItemValues() throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
+
+    /**
+     * Returns the value sequences of the item, if it is a map.
+     *
+     * @return a list containing, for each key in the map, the sequence of items associated with that key.
+     * @throws UnsupportedOperationException if the item is not a map.
+     */
+    default List<List<Item>> getSequenceValues() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the value item associated with a specific key, if it is a map.
+     *
+     * @param key a string key.
+     * @return the item associated with the key, or null if absent.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the value item associated with the key is not a singleton.
+     */
+    default Item getItemByKey(String key) throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the value item associated with a specific key, if it is an object.
+     *
+     * @param key a key item.
+     * @return the item associated with the key, or null if absent.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the value item associated with the key is not a singleton.
+     */
+    default Item getItemByKey(Item key) throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the value sequence associated with a string key, if it is a map.
+     *
+     * @param key a string key.
+     * @return the value sequence for the key, or null if absent.
+     * @throws UnsupportedOperationException if the item is not a map.
+     */
+    default List<Item> getSequenceByKey(String key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the value sequence associated with a key, if it is a map-like object.
+     *
+     * @param key an atomic key item.
+     * @return the value sequence for the key, or null if absent.
+     * @throws UnsupportedOperationException if the item is not a map.
+     */
+    default List<Item> getSequenceByKey(Item key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-value pair, if it is a map.
+     *
+     * @param key a key.
+     * @param value a value.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws DuplicateObjectKeyException if the key is already present.
+     */
+    default void putItemByKey(String key, Item value) throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-value pair, if it is a map.
+     *
+     * @param key an atomic key.
+     * @param value a value.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not
+     *         support non-string keys.
+     * @throws DuplicateObjectKeyException if the key is already present.
+     */
+    default void putItemByKey(Item key, Item value)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-sequence pair, if it is a map.
+     *
+     * @param key an atomic key.
+     * @param valueSequence a value sequence.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the value sequence is not a singleton and the item does not support non-singleton
+     *         values.
+     * @throws DuplicateObjectKeyException if the key is already present.
+     */
+    default void putSequenceByKey(String key, List<Item> valueSequence)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-sequence pair, if it is a map.
+     *
+     * @param key an atomic key.
+     * @param valueSequence a value sequence.
+     * @throws UnsupportedOperationException if the item is not a map.
+     * @throws OurBadException if the value sequence is not a singleton and the item does not support non-singleton
+     *         values.
+     * @throws OurBadException if the key is not atomic, or if the key is not a string item and the item does not
+     *         support non-string keys.
+     * @throws DuplicateObjectKeyException if the key is already present.
+     */
+    default void putSequenceByKey(Item key, List<Item> valueSequence)
+            throws UnsupportedOperationException,
+                OurBadException,
+                DuplicateObjectKeyException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Removes a key-value pair, if it is a map.
+     *
+     * @param key a key.
+     * @throws UnsupportedOperationException if the item is not a map.
+     */
+    default void removeItemByKey(String key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Removes a key-value pair, if it is a map.
+     *
+     * @param key an atomic key.
+     * @throws UnsupportedOperationException if the item is not a map.
+     */
+    default void removeItemByKey(Item key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Adds a key-value pair, if it is a lazy object item. The value is lazily computed.
+     *
+     * @param key a key.
+     * @param iterator a runtime iterator.
+     * @param context a dynamic context.
+     * @param isArray whether to always wrap the result in an array.
+     * @throws UnsupportedOperationException if the item is not a lazy object.
+     */
+    default void putLazyItemByKey(
+            String key,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            boolean isArray
+    )
+            throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+
+    // endregion maps
 
     /**
      * Returns the size of the item, if it is an array.
@@ -815,42 +1020,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @param value a value.
      */
     default void append(Item value) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Adds a key-value pair, if it is an object item.
-     *
-     * @param key a key.
-     * @param value a value.
-     */
-    default void putItemByKey(String key, Item value) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Removes a key-value pair, if it is an object item.
-     *
-     * @param key a key.
-     */
-    default void removeItemByKey(String key) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Adds a key-value pair, if it is an object item. The value is lazily computed.
-     *
-     * @param key a key.
-     * @param iterator a runtime iterator.
-     * @param context a dynamic context.
-     * @param isArray whether to always wrap the result in an array.
-     */
-    default void putLazyItemByKey(
-            String key,
-            RuntimeIterator iterator,
-            DynamicContext context,
-            boolean isArray
-    ) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

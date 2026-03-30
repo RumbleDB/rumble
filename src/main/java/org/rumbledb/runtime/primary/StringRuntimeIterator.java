@@ -49,7 +49,7 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 '"' + this.item.getStringValue() + '"',
-                SequenceType.STRING
+                SequenceType.createSequenceType("string")
         );
     }
 }

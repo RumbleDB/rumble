@@ -76,6 +76,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -181,6 +182,7 @@ import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
 import org.rumbledb.runtime.primary.DoubleRuntimeIterator;
 import org.rumbledb.runtime.primary.IntegerRuntimeIterator;
 import org.rumbledb.runtime.primary.NullRuntimeIterator;
+import org.rumbledb.runtime.primary.MapConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -929,6 +931,25 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
         }
+    }
+
+    @Override
+    public RuntimeIterator visitMapConstructor(MapConstructorExpression expression, RuntimeIterator argument) {
+        List<RuntimeIterator> keys = expression.getKeys()
+            .stream()
+            .map(arg -> this.visit(arg, argument))
+            .collect(Collectors.toList());
+        List<RuntimeIterator> values = expression.getValues()
+            .stream()
+            .map(arg -> this.visit(arg, argument))
+            .collect(Collectors.toList());
+        RuntimeIterator runtimeIterator = new MapConstructorRuntimeIterator(
+                keys,
+                values,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
     }
 
     @Override
@@ -2032,7 +2053,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 nodeTest,
                 new RuntimeStaticContext(
                         this.config,
-                        SequenceType.ITEM,
+                        SequenceType.createSequenceType("item"),
                         stepExpr.getHighestExecutionMode(this.visitorConfig),
                         stepExpr.getMetadata(),
                         stepExpr.getStaticContext().getInScopeNamespaceBindings()
@@ -2045,7 +2066,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             new AxisIteratorVisitor(),
             new RuntimeStaticContext(
                     this.config,
-                    SequenceType.STRING,
+                    SequenceType.createSequenceType("string"),
                     ExecutionMode.LOCAL,
                     metadata,
                     stepExpr.getStaticContext().getInScopeNamespaceBindings()

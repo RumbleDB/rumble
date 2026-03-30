@@ -73,6 +73,16 @@ import org.rumbledb.runtime.functions.numerics.trigonometric.CoshFunctionIterato
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinhFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapGetFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapContainsFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapPutFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapRemoveFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapFindFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapForEachFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapMergeFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectAccumulateFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantPairsFunctionIterator;
@@ -2812,6 +2822,173 @@ public class BuiltinFunctionCatalogue {
         ArrayMembersFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
+
+    /**
+     * W3C map:get — F&O 3.1: map:get($map as map(*), $key as xs:anyAtomicType) as item()*.
+     */
+    static final BuiltinFunction map_get = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "get"
+        ),
+        "map",
+        "anyAtomicType",
+        "item*",
+        MapGetFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:contains — F&O 3.1: map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean.
+     */
+    static final BuiltinFunction map_contains = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "contains"
+        ),
+        "map",
+        "anyAtomicType",
+        "boolean",
+        MapContainsFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:put — F&O 3.1: map:put($map as map(*), $key as xs:anyAtomicType, $value as item()*) as map(*).
+     */
+    static final BuiltinFunction map_put = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "put"
+        ),
+        "map",
+        "anyAtomicType",
+        "item*",
+        "map",
+        MapPutFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:remove — F&O 3.1: map:remove($map as map(*), $keys as xs:anyAtomicType*) as map(*).
+     */
+    static final BuiltinFunction map_remove = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "remove"
+        ),
+        "map",
+        "anyAtomicType*",
+        "map",
+        MapRemoveFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*) as map(*).
+     */
+    static final BuiltinFunction map_merge_1 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "merge"
+        ),
+        "map*",
+        "map",
+        MapMergeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*, $options as map(*)) as map(*).
+     */
+    static final BuiltinFunction map_merge_2 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "merge"
+        ),
+        "map*",
+        "map",
+        "map",
+        MapMergeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:entry — F&O 3.1: map:entry($key as xs:anyAtomicType, $value as item()*) as map(*).
+     */
+    static final BuiltinFunction map_entry = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "entry"
+        ),
+        "anyAtomicType",
+        "item*",
+        "map",
+        MapEntryFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * W3C map:keys — F&O 3.1: map:keys($map as map(*)) as xs:anyAtomicType*.
+     */
+    static final BuiltinFunction map_keys = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "keys"
+        ),
+        "map",
+        "anyAtomicType*",
+        MapKeysFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * W3C map:size — F&O 3.1: map:size($map as map(*)) as xs:integer.
+     */
+    static final BuiltinFunction map_size = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "size"
+        ),
+        "map",
+        "integer",
+        MapSizeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:for-each — F&O 3.1:
+     * map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*) as item()*.
+     */
+    static final BuiltinFunction map_for_each = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "for-each"
+        ),
+        "map",
+        "function",
+        "item*",
+        MapForEachFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:find -- F&O 3.1: map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
+     */
+    static final BuiltinFunction map_find_2 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "find"
+        ),
+        "item*",
+        "anyAtomicType",
+        "array",
+        MapFindFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
     /**
      * function that returns the JSON null
      */
@@ -3494,6 +3671,17 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(data1.getIdentifier(), data1);
         builtinFunctions.put(keys.getIdentifier(), keys);
         builtinFunctions.put(members.getIdentifier(), members);
+        builtinFunctions.put(map_get.getIdentifier(), map_get);
+        builtinFunctions.put(map_contains.getIdentifier(), map_contains);
+        builtinFunctions.put(map_put.getIdentifier(), map_put);
+        builtinFunctions.put(map_remove.getIdentifier(), map_remove);
+        builtinFunctions.put(map_merge_1.getIdentifier(), map_merge_1);
+        builtinFunctions.put(map_merge_2.getIdentifier(), map_merge_2);
+        builtinFunctions.put(map_entry.getIdentifier(), map_entry);
+        builtinFunctions.put(map_keys.getIdentifier(), map_keys);
+        builtinFunctions.put(map_size.getIdentifier(), map_size);
+        builtinFunctions.put(map_for_each.getIdentifier(), map_for_each);
+        builtinFunctions.put(map_find_2.getIdentifier(), map_find_2);
         builtinFunctions.put(null_function.getIdentifier(), null_function);
         builtinFunctions.put(size.getIdentifier(), size);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
