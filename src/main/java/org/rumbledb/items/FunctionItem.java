@@ -73,7 +73,7 @@ public class FunctionItem implements Item {
     /**
      * When true, this item was created for a builtin named function reference ({@code name#arity}).
      */
-    private boolean builtinNamedFunctionReference;
+    private boolean isBuiltin;
 
     protected FunctionItem() {
         super();
@@ -95,7 +95,7 @@ public class FunctionItem implements Item {
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
-            boolean builtinNamedFunctionReference
+            boolean isBuiltin
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -105,7 +105,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
-        this.builtinNamedFunctionReference = builtinNamedFunctionReference;
+        this.isBuiltin = isBuiltin;
     }
 
     public FunctionItem(
@@ -140,7 +140,7 @@ public class FunctionItem implements Item {
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, JSoundDataFrame> DFVariablesInClosure,
-            boolean builtinNamedFunctionReference
+            boolean isBuiltin
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -150,7 +150,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
         this.dataFrameVariablesInClosure = DFVariablesInClosure;
-        this.builtinNamedFunctionReference = builtinNamedFunctionReference;
+        this.isBuiltin = isBuiltin;
     }
 
     public FunctionItem(
@@ -171,7 +171,7 @@ public class FunctionItem implements Item {
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
             boolean isUpdating,
-            boolean builtinNamedFunctionReference
+            boolean isBuiltin
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -188,7 +188,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
-        this.builtinNamedFunctionReference = builtinNamedFunctionReference;
+        this.isBuiltin = isBuiltin;
     }
 
     @Override
@@ -249,7 +249,7 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isBuiltinFunction() {
-        return this.builtinNamedFunctionReference;
+        return this.isBuiltin;
     }
 
     @Override
@@ -315,7 +315,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
             );
         }
-        output.writeBoolean(this.builtinNamedFunctionReference);
+        output.writeBoolean(this.isBuiltin);
     }
 
     @SuppressWarnings("unchecked")
@@ -343,7 +343,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
             );
         }
-        this.builtinNamedFunctionReference = input.readBoolean();
+        this.isBuiltin = input.readBoolean();
     }
 
     @Override
