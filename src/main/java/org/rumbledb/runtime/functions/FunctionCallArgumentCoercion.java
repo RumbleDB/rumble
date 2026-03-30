@@ -29,8 +29,6 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import java.util.List;
 
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 /**
  * Shared argument arity checks and type-promotion wrapping for dynamic calls on
  * {@link org.rumbledb.items.FunctionItem}s.
@@ -69,7 +67,10 @@ public final class FunctionCallArgumentCoercion {
         for (int i = 0; i < functionArguments.size(); i++) {
             if (
                 functionArguments.get(i) != null
-                    && !functionItem.getSignature().getParameterTypes().get(i).equals(ITEM_STAR)
+                    && !functionItem.getSignature()
+                        .getParameterTypes()
+                        .get(i)
+                        .equals(SequenceType.createSequenceType("item*"))
             ) {
                 SequenceType sequenceType = functionItem.getSignature().getParameterTypes().get(i);
                 ExecutionMode executionMode = functionArguments.get(i).getHighestExecutionMode();

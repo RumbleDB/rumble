@@ -204,7 +204,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
         if (!argumentsAlreadyCoerced) {
             for (int i = 0; i < arguments.size(); i++) {
-                if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(SequenceType.createSequenceType("item*"))) {
+                if (
+                    !builtinFunction.getSignature()
+                        .getParameterTypes()
+                        .get(i)
+                        .equals(SequenceType.createSequenceType("item*"))
+                ) {
                     SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
                     RuntimeStaticContext argStaticContext = new RuntimeStaticContext(
                             conf,
