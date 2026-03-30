@@ -381,45 +381,45 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
                 && rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
+            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
                 && leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
                 && rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
+            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
                 && leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
         ) {
             resultType = BuiltinTypesCatalogue.integerItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
+            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
         ) {
             resultType = BuiltinTypesCatalogue.decimalItem;
         } else {

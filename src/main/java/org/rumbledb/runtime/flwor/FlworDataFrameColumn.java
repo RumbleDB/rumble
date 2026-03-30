@@ -120,24 +120,24 @@ public class FlworDataFrameColumn implements Serializable {
         if (pos == -1) {
             int index = inputSchema.fieldIndex(columnName);
             if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
-                return SequenceType.ITEM_STAR;
+                return SequenceType.createSequenceType("item*");
             }
             ItemType itemType = TypeMappings.getItemTypeFromDataFrameDataType(inputSchema.fields()[index].dataType());
             return new SequenceType(itemType, Arity.ZeroOrMore);
         } else {
             switch (columnName.substring(pos)) {
                 case ".count":
-                    return SequenceType.ITEM_STAR;
+                    return SequenceType.createSequenceType("item*");
                 case ".sequence":
-                    return SequenceType.ITEM_STAR;
+                    return SequenceType.createSequenceType("item*");
                 case ".sum":
-                    return SequenceType.ITEM_STAR;
+                    return SequenceType.createSequenceType("item*");
                 case ".max":
-                    return SequenceType.ITEM_STAR;
+                    return SequenceType.createSequenceType("item*");
                 case ".min":
-                    return SequenceType.ITEM_STAR;
+                    return SequenceType.createSequenceType("item*");
                 case ".average":
-                    return SequenceType.ITEM_STAR;
+                    return SequenceType.createSequenceType("item*");
                 default:
                     throw new OurBadException("Unrecognized column name: " + columnName);
             }

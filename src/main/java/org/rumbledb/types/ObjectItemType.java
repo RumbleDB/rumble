@@ -216,6 +216,39 @@ public class ObjectItemType implements ItemType {
         return allowedFacets;
     }
 
+    private static MapItemType getLegacyObjectAsMapType() {
+        return ItemTypeFactory.mapOf(
+            BuiltinTypesCatalogue.stringItem,
+            new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One)
+        );
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isMapItemType() || superType.isFunctionItemType()) {
+            return getLegacyObjectAsMapType().isSubtypeOf(superType);
+        }
+        return ItemType.super.isSubtypeOf(superType);
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.equals(other)) {
+            return this;
+        }
+        if (other.isMapItemType() || other.isFunctionItemType()) {
+            return getLegacyObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        }
+        return ItemType.super.findLeastCommonSuperTypeWith(other);
+    }
+
     @Override
     public List<Item> getEnumerationFacet() {
         return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();

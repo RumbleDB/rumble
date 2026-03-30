@@ -105,7 +105,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 arguments,
                 innerStaticContext
         );
-        if (sequenceType.equals(SequenceType.ITEM_STAR)) {
+        if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
             return functionCallIterator;
         }
         if (
@@ -176,7 +176,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
         }
         for (int i = 0; i < arguments.size(); i++) {
-            if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(SequenceType.ITEM_STAR)) {
+            if (
+                !builtinFunction.getSignature()
+                    .getParameterTypes()
+                    .get(i)
+                    .equals(SequenceType.createSequenceType("item*"))
+            ) {
                 SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
                 RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
                         conf,
@@ -242,7 +247,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             throw e;
         }
 
-        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.ITEM_STAR)) {
+        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.createSequenceType("item*"))) {
             if (!checkReturnTypesOfBuiltinFunctions) {
                 return functionCallIterator;
             }

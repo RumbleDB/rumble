@@ -173,8 +173,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -248,7 +246,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     new VariableDeclaration(
                             Name.CONTEXT_ITEM,
                             true,
-                            SequenceType.ITEM,
+                            SequenceType.createSequenceType("item"),
                             null,
                             null,
                             createMetadataFromContext(ctx)
@@ -298,7 +296,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 new VariableDeclaration(
                         externalVariable,
                         true,
-                        SequenceType.ITEM_STAR,
+                        SequenceType.createSequenceType("item*"),
                         null,
                         null,
                         createMetadataFromContext(ctx)
@@ -552,7 +550,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false, false);
-                paramType = ITEM_STAR;
+                paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -563,7 +561,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1759,7 +1757,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
         ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
@@ -1785,7 +1783,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     public SequenceType processSingleType(JsoniqParser.SingleTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
 
         ItemType itemType = processItemType(ctx.item);
@@ -1917,13 +1915,13 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.ITEM_STAR;
+        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false, false);
-                paramType = SequenceType.ITEM_STAR;
+                paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -1934,7 +1932,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }

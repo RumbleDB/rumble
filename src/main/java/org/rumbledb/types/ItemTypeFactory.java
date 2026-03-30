@@ -581,6 +581,16 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Typed XQuery map type map(K, V) as a restriction of map(*).
+     *
+     * @param keyAtomicType must be an atomic type (typically from xs: namespace)
+     * @param valueSequenceType sequence type of map values
+     */
+    public static MapItemType mapOf(ItemType keyAtomicType, SequenceType valueSequenceType) {
+        return new MapItemType(null, BuiltinTypesCatalogue.mapItem, keyAtomicType, valueSequenceType);
+    }
+
+    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object
