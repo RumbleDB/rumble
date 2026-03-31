@@ -166,11 +166,10 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
         arguments.add(memberIterator);
         arguments.add(accIterator);
 
-        RuntimeIterator functionCall = NamedFunctions.buildUserDefinedFunctionCallIterator(
+        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
             functionItem,
-            getConfiguration(),
+            staticContext,
             ExecutionMode.LOCAL,
-            getMetadata(),
             arguments
         );
         return functionCall.materialize(context);

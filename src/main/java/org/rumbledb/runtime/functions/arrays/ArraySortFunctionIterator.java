@@ -245,11 +245,10 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimeIterator call = NamedFunctions.buildUserDefinedFunctionCallIterator(
+        RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
             functionItem,
-            getConfiguration(),
+            staticContext,
             ExecutionMode.LOCAL,
-            getMetadata(),
             arguments
         );
         return materializeIterator(call, context);

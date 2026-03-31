@@ -205,11 +205,10 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         arguments.add(firstArg);
         arguments.add(secondArg);
 
-        RuntimeIterator functionCall = NamedFunctions.buildUserDefinedFunctionCallIterator(
+        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
             functionItem,
-            getConfiguration(),
+            staticContext,
             ExecutionMode.LOCAL,
-            getMetadata(),
             arguments
         );
         return functionCall.materialize(context);
