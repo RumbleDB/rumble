@@ -13,6 +13,7 @@ import org.rumbledb.types.EmptyXQueryArrayItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.ArrayList;
 import java.util.Collections;
