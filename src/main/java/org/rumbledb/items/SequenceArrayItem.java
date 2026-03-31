@@ -25,6 +25,8 @@ public class SequenceArrayItem implements Item {
     private String pathIn;
     private String location;
     private Collection collection;
+    private boolean allSingletons;
+    private boolean allSingletonsCached;
 
     public SequenceArrayItem() {
         this.memberSequences = new ArrayList<>();
@@ -33,6 +35,8 @@ public class SequenceArrayItem implements Item {
         this.pathIn = "null";
         this.location = "null";
         this.collection = null;
+        this.allSingletons = true;
+        this.allSingletonsCached = true;
     }
 
     public SequenceArrayItem(List<List<Item>> memberSequences) {
@@ -42,6 +46,7 @@ public class SequenceArrayItem implements Item {
         this.pathIn = "null";
         this.location = "null";
         this.collection = null;
+        this.allSingletonsCached = false;
     }
 
     @Override
@@ -80,12 +85,17 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public boolean isArrayOfItems() {
-        for (List<Item> member : this.memberSequences) {
-            if (member.size() != 1) {
-                return false;
+        if(!this.allSingletonsCached) {
+            this.allSingletons = true;
+            for (List<Item> member : this.memberSequences) {
+                if (member.size() != 1) {
+                    this.allSingletons = false;
+                    break;
+                }
             }
+            this.allSingletonsCached = true;
         }
-        return true;
+        return this.allSingletons;
     }
 
     @Override
@@ -163,6 +173,9 @@ public class SequenceArrayItem implements Item {
     @Override
     public void appendSequence(List<Item> sequence) {
         this.memberSequences.add(sequence);
+        if(this.allSingletons && sequence.size() != 1) {
+            this.allSingletons = false;
+        }
     }
 
     @Override
@@ -173,6 +186,9 @@ public class SequenceArrayItem implements Item {
     @Override
     public void putSequenceAt(List<Item> sequence, int index) {
         this.memberSequences.set(index, sequence);
+        if(this.allSingletons && sequence.size() != 1) {
+            this.allSingletons = false;
+        }
     }
 
     @Override
@@ -189,6 +205,9 @@ public class SequenceArrayItem implements Item {
         List<List<Item>> toInsert = new ArrayList<>(sequences.size());
         for (List<Item> seq : sequences) {
             toInsert.add(seq);
+            if(this.allSingletons && seq.size() != 1) {
+                this.allSingletons = false;
+            }
         }
         this.memberSequences.addAll(index, toInsert);
     }
@@ -196,11 +215,15 @@ public class SequenceArrayItem implements Item {
     @Override
     public void removeItemAt(int index) {
         this.memberSequences.remove(index);
+        // invalidate the allSingletonsCached flag  
+        this.allSingletonsCached = false;
     }
 
     @Override
     public void removeSequenceAt(int index) {
         this.memberSequences.remove(index);
+        // invalidate the allSingletonsCached flag  
+        this.allSingletonsCached = false;
     }
 
     // endregion arrays
