@@ -74,7 +74,7 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        if (arrayItem.isJSONArray()) {
+        if (arrayItem.isArrayOfItems()) {
             this.pendingResults.add(arrayItem.getItemAt(0));
         } else {
             this.pendingResults.addAll(arrayItem.getSequenceAt(0));

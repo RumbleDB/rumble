@@ -398,8 +398,8 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean isJSONArray() {
-        return this.itemToAnnotate.isJSONArray();
+    public boolean isArrayOfItems() {
+        return this.itemToAnnotate.isArrayOfItems();
     }
 
     @Override

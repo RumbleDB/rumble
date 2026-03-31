@@ -120,7 +120,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
         int insertIndex = positionInteger.intValue() - 1;
         List<Item> memberSequence = this.memberIterator.materialize(context);
 
-        if (arrayItem.isJSONArray() && memberSequence.size() == 1) {
+        if (arrayItem.isArrayOfItems() && memberSequence.size() == 1) {
             List<Item> newItems = new ArrayList<>(size + 1);
             // add items before the insert index
             for (int i = 0; i < insertIndex; i++) {

@@ -95,7 +95,7 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public boolean isJSONArray() {
+    public boolean isArrayOfItems() {
         return true;
     }
 

@@ -113,7 +113,7 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
         int lookup = positionInteger.intValue();
 
-        if (arrayItem.isJSONArray()) {
+        if (arrayItem.isArrayOfItems()) {
             Item member = arrayItem.getItemAt(lookup - 1);
             this.pendingResults.add(member);
         } else {

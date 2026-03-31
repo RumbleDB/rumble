@@ -79,7 +79,7 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public boolean isJSONArray() {
+    public boolean isArrayOfItems() {
         for (List<Item> member : this.memberSequences) {
             if (member.size() != 1) {
                 return false;

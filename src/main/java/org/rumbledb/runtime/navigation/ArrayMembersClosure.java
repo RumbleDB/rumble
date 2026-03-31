@@ -21,7 +21,7 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        if (arg0.isJSONArray()) {
+        if (arg0.isArrayOfItems()) {
             for (Item item : arg0.getItems()) {
                 if (item != null) {
                     results.add(item);

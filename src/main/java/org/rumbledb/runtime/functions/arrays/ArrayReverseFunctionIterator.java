@@ -85,7 +85,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        if (arrayItem.isJSONArray()) {
+        if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);

@@ -119,13 +119,13 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
         int fromIndex = start.intValue() - 1;
         int toIndex = fromIndex + length.intValue();
 
-        if (arrayItem.isJSONArray()) {
+        if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
             for (int i = fromIndex; i < toIndex; i++) {
                 slicedMembers.add(originalMembers.get(i));
             }
-            // TODO: optimization: if the subarray contains only singleton members, we can create a JSON array instead.
+            // TODO: optimization: if the subarray contains only singleton members, we can create an array of items instead.
             this.resultItem = ItemFactory.getInstance().createArrayItem(slicedMembers, false);
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();

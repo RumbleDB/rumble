@@ -124,7 +124,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
             positionsToRemove.add(pos);
         }
 
-        if (arrayItem.isJSONArray()) {
+        if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
             for (int i = 0; i < size; i++) {

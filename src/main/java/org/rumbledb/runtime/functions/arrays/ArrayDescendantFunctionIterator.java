@@ -98,7 +98,7 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
         for (Item item : items) {
             if (item.isArray()) {
                 this.nextResults.add(item);
-                if (item.isJSONArray()) {
+                if (item.isArrayOfItems()) {
                     getDescendantArrays(item.getItemMembers());
                 } else {
                     for (java.util.List<Item> member : item.getSequenceMembers()) {

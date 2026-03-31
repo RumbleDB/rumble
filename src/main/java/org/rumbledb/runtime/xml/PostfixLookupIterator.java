@@ -143,7 +143,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 }
             } else if (item.isArray()) {
                 if (this.wildcard) {
-                    if (item.isJSONArray()) {
+                    if (item.isArrayOfItems()) {
                         this.nextResult.addAll(item.getItemMembers());
                     } else {
                         for (List<Item> member : item.getSequenceMembers()) {
@@ -160,7 +160,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            if (item.isJSONArray()) {
+                            if (item.isArrayOfItems()) {
                                 this.nextResult.add(item.getItemAt(idx));
                             } else {
                                 this.nextResult.addAll(item.getSequenceAt(idx));

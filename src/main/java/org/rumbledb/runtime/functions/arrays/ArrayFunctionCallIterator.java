@@ -84,7 +84,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        if (this.arrayItem.isJSONArray()) {
+        if (this.arrayItem.isArrayOfItems()) {
             Item member = this.arrayItem.getItemAt(lookup - 1);
             this.pendingResults.add(member);
         } else {

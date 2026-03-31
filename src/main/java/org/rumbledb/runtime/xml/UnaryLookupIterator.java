@@ -106,7 +106,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
 
             } else if (item.isArray()) {
                 if (this.wildcard) {
-                    if (item.isJSONArray()) {
+                    if (item.isArrayOfItems()) {
                         this.nextResult.addAll(item.getItems());
                     } else {
                         for (List<Item> member : item.getSequenceMembers()) {
@@ -123,7 +123,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            if (item.isJSONArray()) {
+                            if (item.isArrayOfItems()) {
                                 this.nextResult.add(item.getItemAt(idx));
                             } else {
                                 this.nextResult.addAll(item.getSequenceAt(idx));

@@ -80,7 +80,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
             }
         } else if (arg0.isArray()) {
             if (this.wildcard) {
-                if (arg0.isJSONArray()) {
+                if (arg0.isArrayOfItems()) {
                     results = arg0.getItemMembers();
                 } else {
                     for (List<Item> member : arg0.getSequenceMembers()) {
@@ -97,7 +97,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     }
                     if (key.isNumeric()) {
                         int idx = key.castToIntValue() - 1;
-                        if (arg0.isJSONArray()) {
+                        if (arg0.isArrayOfItems()) {
                             results.add(arg0.getItemAt(idx));
                         } else {
                             results.addAll(arg0.getSequenceAt(idx));

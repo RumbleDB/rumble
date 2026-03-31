@@ -734,12 +734,12 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Tests whether the item is a JSON array.
-     * JSON arrays are arrays whose members are singletons.
+     * Tests whether the item is an array of items.
+     * Arrays of items are arrays whose members are singletons.
      *
-     * @return true if it is a JSON array, false otherwise.
+     * @return true if it is an array of items, false otherwise.
      */
-    default boolean isJSONArray() {
+    default boolean isArrayOfItems() {
         return false;
     }
 

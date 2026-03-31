@@ -22,7 +22,7 @@ public class ArrayFlattenClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        if (arg0.isJSONArray()) {
+        if (arg0.isArrayOfItems()) {
             for (Item item : arg0.getItemMembers()) {
                 Iterator<Item> innerResult = this.call(item);
                 while (innerResult.hasNext()) {
