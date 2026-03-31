@@ -591,6 +591,21 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Typed XQuery array type array(T) as a restriction of array(*).
+     *
+     * @param memberSequenceType sequence type of array members
+     */
+    public static ItemType xqueryArrayOf(SequenceType memberSequenceType) {
+        if (memberSequenceType == null) {
+            throw new OurBadException("Array member sequence type cannot be null.");
+        }
+        if (memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+            return BuiltinTypesCatalogue.xqueryArrayItem;
+        }
+        return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSequenceType);
+    }
+
+    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object

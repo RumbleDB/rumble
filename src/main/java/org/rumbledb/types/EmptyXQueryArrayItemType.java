@@ -18,7 +18,7 @@ import java.util.Set;
  * Semantics:
  * - It is considered an array item type.
  * - It is a subtype of every concrete array(T) type and of array(*)
- *   (via {@link BuiltinTypesCatalogue#xqueryArrayItem}).
+ * (via {@link BuiltinTypesCatalogue#xqueryArrayItem}).
  * - It is also a subtype of function(*) through the usual array(*) -> function(*) chain.
  *
  * This type is internal and is not exposed as a user-facing XQuery type.

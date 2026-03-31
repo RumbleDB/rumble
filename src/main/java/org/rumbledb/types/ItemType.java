@@ -610,7 +610,8 @@ public interface ItemType extends Serializable, KryoSerializable {
                 "member sequence type is allowed only for array item types, but "
                     + getIdentifierString()
                     + " is not one (class "
-                    + this.getClass().getCanonicalName() + ")"
+                    + this.getClass().getCanonicalName()
+                    + ")"
         );
     }
 

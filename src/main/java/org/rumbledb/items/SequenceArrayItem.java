@@ -9,8 +9,10 @@ import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.EmptyXQueryArrayItemType;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,7 +87,7 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public boolean isArrayOfItems() {
-        if(!this.allSingletonsCached) {
+        if (!this.allSingletonsCached) {
             this.allSingletons = true;
             for (List<Item> member : this.memberSequences) {
                 if (member.size() != 1) {
@@ -173,7 +175,7 @@ public class SequenceArrayItem implements Item {
     @Override
     public void appendSequence(List<Item> sequence) {
         this.memberSequences.add(sequence);
-        if(this.allSingletons && sequence.size() != 1) {
+        if (this.allSingletons && sequence.size() != 1) {
             this.allSingletons = false;
         }
     }
@@ -186,7 +188,7 @@ public class SequenceArrayItem implements Item {
     @Override
     public void putSequenceAt(List<Item> sequence, int index) {
         this.memberSequences.set(index, sequence);
-        if(this.allSingletons && sequence.size() != 1) {
+        if (this.allSingletons && sequence.size() != 1) {
             this.allSingletons = false;
         }
     }
@@ -205,7 +207,7 @@ public class SequenceArrayItem implements Item {
         List<List<Item>> toInsert = new ArrayList<>(sequences.size());
         for (List<Item> seq : sequences) {
             toInsert.add(seq);
-            if(this.allSingletons && seq.size() != 1) {
+            if (this.allSingletons && seq.size() != 1) {
                 this.allSingletons = false;
             }
         }
@@ -215,14 +217,14 @@ public class SequenceArrayItem implements Item {
     @Override
     public void removeItemAt(int index) {
         this.memberSequences.remove(index);
-        // invalidate the allSingletonsCached flag  
+        // invalidate the allSingletonsCached flag
         this.allSingletonsCached = false;
     }
 
     @Override
     public void removeSequenceAt(int index) {
         this.memberSequences.remove(index);
-        // invalidate the allSingletonsCached flag  
+        // invalidate the allSingletonsCached flag
         this.allSingletonsCached = false;
     }
 

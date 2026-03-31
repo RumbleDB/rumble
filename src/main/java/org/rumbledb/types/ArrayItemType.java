@@ -87,7 +87,7 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
-    public boolean isXQueryArrayItemType(){
+    public boolean isXQueryArrayItemType() {
         return true;
     }
 

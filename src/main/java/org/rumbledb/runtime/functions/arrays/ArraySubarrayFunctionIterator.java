@@ -125,7 +125,8 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             for (int i = fromIndex; i < toIndex; i++) {
                 slicedMembers.add(originalMembers.get(i));
             }
-            // TODO: optimization: if the subarray contains only singleton members, we can create an array of items instead.
+            // TODO: optimization: if the subarray contains only singleton members, we can create an array of items
+            // instead.
             this.resultItem = ItemFactory.getInstance().createArrayItem(slicedMembers, false);
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
