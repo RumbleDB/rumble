@@ -39,6 +39,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -69,6 +70,11 @@ public class FunctionItem implements Item {
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
     private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
 
+    /**
+     * When true, this item was created for a builtin named function reference ({@code name#arity}).
+     */
+    private boolean isBuiltin;
+
     protected FunctionItem() {
         super();
     }
@@ -80,6 +86,17 @@ public class FunctionItem implements Item {
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
+        this(identifier, parameterNames, signature, dynamicModuleContext, bodyIterator, false);
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            boolean isBuiltin
+    ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -88,6 +105,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
+        this.isBuiltin = isBuiltin;
     }
 
     public FunctionItem(
@@ -100,6 +118,30 @@ public class FunctionItem implements Item {
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, JSoundDataFrame> DFVariablesInClosure
     ) {
+        this(
+            identifier,
+            parameterNames,
+            signature,
+            dynamicModuleContext,
+            bodyIterator,
+            localVariablesInClosure,
+            RDDVariablesInClosure,
+            DFVariablesInClosure,
+            false
+        );
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            Map<Name, List<Item>> localVariablesInClosure,
+            Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<Name, JSoundDataFrame> DFVariablesInClosure,
+            boolean isBuiltin
+    ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -108,6 +150,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
         this.dataFrameVariablesInClosure = DFVariablesInClosure;
+        this.isBuiltin = isBuiltin;
     }
 
     public FunctionItem(
@@ -117,6 +160,18 @@ public class FunctionItem implements Item {
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
             boolean isUpdating
+    ) {
+        this(name, paramNameToSequenceTypes, returnType, dynamicModuleContext, bodyIterator, isUpdating, false);
+    }
+
+    public FunctionItem(
+            Name name,
+            Map<Name, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            boolean isUpdating,
+            boolean isBuiltin
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -133,6 +188,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
+        this.isBuiltin = isBuiltin;
     }
 
     @Override
@@ -189,6 +245,11 @@ public class FunctionItem implements Item {
     @Override
     public boolean isFunction() {
         return true;
+    }
+
+    @Override
+    public boolean isBuiltinFunction() {
+        return this.isBuiltin;
     }
 
     @Override
@@ -254,6 +315,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
             );
         }
+        output.writeBoolean(this.isBuiltin);
     }
 
     @SuppressWarnings("unchecked")
@@ -281,6 +343,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
             );
         }
+        this.isBuiltin = input.readBoolean();
     }
 
     @Override
@@ -362,5 +425,13 @@ public class FunctionItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         throw new CannotAtomizeException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public String getStringValue() {
+        throw new FunctionItemStringValueException(
+                FunctionItemStringValueException.DEFAULT_MESSAGE,
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 }

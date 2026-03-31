@@ -1,6 +1,8 @@
 package org.rumbledb.context;
 
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.QNameFunctionIterator;
+import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
@@ -56,13 +58,7 @@ import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
 import org.rumbledb.runtime.functions.io.DocFunctionIterator;
 import org.rumbledb.runtime.functions.io.YamlDocFunctionIterator;
 import org.rumbledb.runtime.functions.nullable.IsNullIterator;
-import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.RoundFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.RoundHalfToEvenFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.*;
 import org.rumbledb.runtime.functions.numerics.exponential.Exp10FunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.ExpFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.Log10FunctionIterator;
@@ -78,6 +74,16 @@ import org.rumbledb.runtime.functions.numerics.trigonometric.CoshFunctionIterato
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.SinhFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.trigonometric.TanFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapGetFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapContainsFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapPutFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapRemoveFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapEntryFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapFindFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapForEachFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapKeysFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapSizeFunctionIterator;
+import org.rumbledb.runtime.functions.maps.MapMergeFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectAccumulateFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectDescendantPairsFunctionIterator;
@@ -570,8 +576,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction node_name_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
-        // TODO: change to QName? after XML atomic types are implemented
-        "string?",
+        "QName?",
         NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -579,9 +584,36 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction node_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
         "item?",
-        // TODO: change to QName? after XML atomic types are implemented
-        "string?",
+        "QName?",
         NodeQNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:QName (Functions and Operators 3.1)
+     *
+     * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-QName">func-QName</a>
+     */
+    static final BuiltinFunction qname = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "QName"),
+        "string?",
+        "string",
+        "QName",
+        QNameFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * fn:function-lookup (Functions and Operators 3.1)
+     *
+     * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-function-lookup">func-function-lookup</a>
+     */
+    static final BuiltinFunction function_lookup = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "function-lookup"),
+        "QName",
+        "integer",
+        "function(*)?",
+        FunctionLookupFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2314,6 +2346,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that returns a string containing a dateTime value formated for display
+     */
+    static final BuiltinFunction format_dateTime5 = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "format-dateTime"),
+        "dateTime?",
+        "string",
+        "string?",
+        "string?",
+        "string?",
+        "string?",
+        FormatDateTimeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that returns a xs:dateTime value created by combining an xs:date and an xs:time
      */
     static final BuiltinFunction dateTime = createBuiltinFunction(
@@ -2469,8 +2515,41 @@ public class BuiltinFunctionCatalogue {
         CurrentDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+
     /**
-     * function that returns a string containing a date value formated for display
+     * function that returns a string containing an integer value formatted for display
+     */
+    static final BuiltinFunction format_integer = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-integer"
+        ),
+        "integer?",
+        "string",
+        "string",
+        FormatIntegerFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a string containing an integer value formatted for display
+     */
+    static final BuiltinFunction format_integer3 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-integer"
+        ),
+        "integer?",
+        "string",
+        "string?",
+        "string",
+        FormatIntegerFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a string containing a date value formatted for display
      */
     static final BuiltinFunction format_date = createBuiltinFunction(
         new Name(
@@ -2480,6 +2559,24 @@ public class BuiltinFunctionCatalogue {
         ),
         "date?",
         "string",
+        "string?",
+        FormatDateFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a string containing a date value formatted for display
+     */
+    static final BuiltinFunction format_date5 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-date"
+        ),
+        "date?",
+        "string",
+        "string?",
+        "string?",
+        "string?",
         "string?",
         FormatDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2593,6 +2690,24 @@ public class BuiltinFunctionCatalogue {
         ),
         "time?",
         "string",
+        "string?",
+        FormatTimeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a string containing a time value formated for display
+     */
+    static final BuiltinFunction format_time5 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-time"
+        ),
+        "time?",
+        "string",
+        "string?",
+        "string?",
+        "string?",
         "string?",
         FormatTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2721,6 +2836,173 @@ public class BuiltinFunctionCatalogue {
         "item*",
         ArrayMembersFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
+
+    /**
+     * W3C map:get — F&O 3.1: map:get($map as map(*), $key as xs:anyAtomicType) as item()*.
+     */
+    static final BuiltinFunction map_get = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "get"
+        ),
+        "map",
+        "anyAtomicType",
+        "item*",
+        MapGetFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:contains — F&O 3.1: map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean.
+     */
+    static final BuiltinFunction map_contains = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "contains"
+        ),
+        "map",
+        "anyAtomicType",
+        "boolean",
+        MapContainsFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:put — F&O 3.1: map:put($map as map(*), $key as xs:anyAtomicType, $value as item()*) as map(*).
+     */
+    static final BuiltinFunction map_put = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "put"
+        ),
+        "map",
+        "anyAtomicType",
+        "item*",
+        "map",
+        MapPutFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:remove — F&O 3.1: map:remove($map as map(*), $keys as xs:anyAtomicType*) as map(*).
+     */
+    static final BuiltinFunction map_remove = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "remove"
+        ),
+        "map",
+        "anyAtomicType*",
+        "map",
+        MapRemoveFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*) as map(*).
+     */
+    static final BuiltinFunction map_merge_1 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "merge"
+        ),
+        "map*",
+        "map",
+        MapMergeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*, $options as map(*)) as map(*).
+     */
+    static final BuiltinFunction map_merge_2 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "merge"
+        ),
+        "map*",
+        "map",
+        "map",
+        MapMergeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:entry — F&O 3.1: map:entry($key as xs:anyAtomicType, $value as item()*) as map(*).
+     */
+    static final BuiltinFunction map_entry = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "entry"
+        ),
+        "anyAtomicType",
+        "item*",
+        "map",
+        MapEntryFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * W3C map:keys — F&O 3.1: map:keys($map as map(*)) as xs:anyAtomicType*.
+     */
+    static final BuiltinFunction map_keys = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "keys"
+        ),
+        "map",
+        "anyAtomicType*",
+        MapKeysFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * W3C map:size — F&O 3.1: map:size($map as map(*)) as xs:integer.
+     */
+    static final BuiltinFunction map_size = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "size"
+        ),
+        "map",
+        "integer",
+        MapSizeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:for-each — F&O 3.1:
+     * map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*) as item()*.
+     */
+    static final BuiltinFunction map_for_each = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "for-each"
+        ),
+        "map",
+        "function",
+        "item*",
+        MapForEachFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * W3C map:find -- F&O 3.1: map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
+     */
+    static final BuiltinFunction map_find_2 = createBuiltinFunction(
+        new Name(
+                Name.MAP_NS,
+                "map",
+                "find"
+        ),
+        "item*",
+        "anyAtomicType",
+        "array",
+        MapFindFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
      * function that returns the JSON null
@@ -3363,6 +3645,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
         builtinFunctions.put(format_dateTime.getIdentifier(), format_dateTime);
+        builtinFunctions.put(format_dateTime5.getIdentifier(), format_dateTime5);
         builtinFunctions.put(dateTime.getIdentifier(), dateTime);
         builtinFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
         builtinFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
@@ -3378,6 +3661,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(current_date.getIdentifier(), current_date);
         builtinFunctions.put(format_date.getIdentifier(), format_date);
+        builtinFunctions.put(format_date5.getIdentifier(), format_date5);
         builtinFunctions.put(year_from_date.getIdentifier(), year_from_date);
         builtinFunctions.put(month_from_date.getIdentifier(), month_from_date);
         builtinFunctions.put(day_from_date.getIdentifier(), day_from_date);
@@ -3385,8 +3669,13 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(adjust_date_to_timezone1.getIdentifier(), adjust_date_to_timezone1);
         builtinFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
 
+        builtinFunctions.put(format_integer.getIdentifier(), format_integer);
+        builtinFunctions.put(format_integer3.getIdentifier(), format_integer3);
+
+
         builtinFunctions.put(current_time.getIdentifier(), current_time);
         builtinFunctions.put(format_time.getIdentifier(), format_time);
+        builtinFunctions.put(format_time5.getIdentifier(), format_time5);
         builtinFunctions.put(hours_from_time.getIdentifier(), hours_from_time);
         builtinFunctions.put(minutes_from_time.getIdentifier(), minutes_from_time);
         builtinFunctions.put(seconds_from_time.getIdentifier(), seconds_from_time);
@@ -3397,6 +3686,17 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(data1.getIdentifier(), data1);
         builtinFunctions.put(keys.getIdentifier(), keys);
         builtinFunctions.put(members.getIdentifier(), members);
+        builtinFunctions.put(map_get.getIdentifier(), map_get);
+        builtinFunctions.put(map_contains.getIdentifier(), map_contains);
+        builtinFunctions.put(map_put.getIdentifier(), map_put);
+        builtinFunctions.put(map_remove.getIdentifier(), map_remove);
+        builtinFunctions.put(map_merge_1.getIdentifier(), map_merge_1);
+        builtinFunctions.put(map_merge_2.getIdentifier(), map_merge_2);
+        builtinFunctions.put(map_entry.getIdentifier(), map_entry);
+        builtinFunctions.put(map_keys.getIdentifier(), map_keys);
+        builtinFunctions.put(map_size.getIdentifier(), map_size);
+        builtinFunctions.put(map_for_each.getIdentifier(), map_for_each);
+        builtinFunctions.put(map_find_2.getIdentifier(), map_find_2);
         builtinFunctions.put(null_function.getIdentifier(), null_function);
         builtinFunctions.put(size.getIdentifier(), size);
         builtinFunctions.put(accumulate.getIdentifier(), accumulate);
@@ -3451,6 +3751,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(document_uri_with_arg.getIdentifier(), document_uri_with_arg);
         builtinFunctions.put(node_name_without_arg.getIdentifier(), node_name_without_arg);
         builtinFunctions.put(node_name_with_arg.getIdentifier(), node_name_with_arg);
+        builtinFunctions.put(qname.getIdentifier(), qname);
+        builtinFunctions.put(function_lookup.getIdentifier(), function_lookup);
 
     }
 

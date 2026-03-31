@@ -76,7 +76,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean hasName() {
-        return true;
+        return this.name != null;
     }
 
     @Override

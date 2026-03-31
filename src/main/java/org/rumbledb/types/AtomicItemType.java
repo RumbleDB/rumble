@@ -210,11 +210,9 @@ public class AtomicItemType implements ItemType {
      * castable (returning true from isStaticallyCastableAs), and 'N' as
      * statically non-castable.
      *
-     * NOTE: While the spec matrix includes namespace-sensitive types
-     * xs:QName and xs:NOTATION, RumbleDB does not currently support casts
-     * to these types. We therefore override the matrix for such targets
-     * and report them as not statically castable, even when the matrix
-     * entry would otherwise be 'Y' or 'M'.
+     * NOTE: Casts to xs:NOTATION are not supported; we override the matrix for
+     * that target only. Casts to xs:QName follow the matrix (string/untypedAtomic
+     * and QName sources are statically castable; numeric sources are not).
      */
     private static final int PRIM_UA = 0;
     private static final int PRIM_STR = 1;
@@ -881,10 +879,8 @@ public class AtomicItemType implements ItemType {
             return false;
         }
 
-        // Namespace-sensitive target types (xs:QName, xs:NOTATION) are never valid cast
-        // targets in this implementation (beyond the identity case handled above),
-        // even though the spec matrix contains entries for them.
-        if (targetPrimitive.equals(QNameItem) || targetPrimitive.equals(NOTATIONItem)) {
+        // xs:NOTATION is not a supported cast target (beyond identity handled above).
+        if (targetPrimitive.equals(NOTATIONItem)) {
             return false;
         }
 

@@ -25,7 +25,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
@@ -53,9 +52,8 @@ import java.util.List;
  * identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
  * function returns the empty sequence."
  *
- * In this implementation, the optional xs:QName result is represented via the existing Item.nodeName()
- * accessor defined on Item and implemented by XML node item classes. A non-null, non-empty lexical
- * QName is exposed as a string item, and the empty sequence is used when the node has no name.
+ * The optional {@code xs:QName} result is the value of {@link Item#nodeName()} when non-null
+ * (a {@link org.rumbledb.items.QNameItem}); otherwise the function returns the empty sequence.
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-node-name">XPath and XQuery Functions and
  *      Operators 3.1: fn:node-name</a>
@@ -95,16 +93,15 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         //
         // Here we use the generic XDM 3.1 node-name accessor defined on Item and implemented
         // by XML node item classes (see Item.nodeName()).
-        String nodeName = node.nodeName();
+        Item nodeName = node.nodeName();
 
         // Spec: "If the dm:node-name accessor returns the empty sequence, then the function returns the empty
         // sequence."
-        if (nodeName == null || nodeName.isEmpty()) {
+        if (nodeName == null) {
             this.resultItem = null;
             this.hasNext = false;
         } else {
-            // For named nodes, we expose the lexical QName as a string item.
-            this.resultItem = ItemFactory.getInstance().createStringItem(nodeName);
+            this.resultItem = nodeName;
             this.hasNext = true;
         }
     }

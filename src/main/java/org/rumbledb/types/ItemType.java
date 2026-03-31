@@ -55,13 +55,16 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
+        if (this instanceof MapItemType && otherType instanceof MapItemType) {
+            return ((MapItemType) this).structurallyEqual((MapItemType) otherType);
+        }
         if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
             if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
                 return false;
             }
             return this.toString().equals(otherType.toString());
         }
-        if (this.getName() == null || otherType.getName() == null) {
+        if (!this.hasName() || !otherType.hasName()) {
             return this == otherType;
         }
         return this.getName().equals(otherType.getName());
@@ -93,6 +96,13 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it [this] is an array item type.
      */
     default boolean isArrayItemType() {
+        return false;
+    }
+
+    /**
+     * @return true if [this] is an XQuery map item type (map(*) or map(K, V)).
+     */
+    default boolean isMapItemType() {
         return false;
     }
 
@@ -551,6 +561,32 @@ public interface ItemType extends Serializable, KryoSerializable {
     default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
                 "array content facet is allowed only for array item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     * @return atomic key type for map item types (map(K, V)).
+     */
+    default ItemType getMapKeyItemType() {
+        throw new UnsupportedOperationException(
+                "map key facet is allowed only for map item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     * @return value sequence type for map item types (map(K, V)).
+     */
+    default SequenceType getMapValueSequenceType() {
+        throw new UnsupportedOperationException(
+                "map value sequence type is allowed only for map item types, but "
                     + getIdentifierString()
                     + " is not one (class "
                     + this.getClass().getCanonicalName()

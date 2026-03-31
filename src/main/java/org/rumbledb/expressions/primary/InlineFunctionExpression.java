@@ -125,7 +125,7 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public SequenceType getReturnType() {
-        return this.returnType == null ? SequenceType.ITEM_STAR : this.returnType;
+        return this.returnType == null ? SequenceType.createSequenceType("item*") : this.returnType;
     }
 
     public SequenceType getActualReturnType() {

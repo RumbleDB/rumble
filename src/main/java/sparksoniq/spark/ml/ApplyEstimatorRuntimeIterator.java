@@ -373,7 +373,8 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                         getConfiguration(),
                         new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One),
                         ExecutionMode.DATAFRAME,
-                        getMetadata()
+                        getMetadata(),
+                        staticContext.getStaticallyKnownNamespaces()
                 )
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(

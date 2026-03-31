@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -39,16 +40,16 @@ import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String qname;
+    private Name attributeName;
     private List<AtomizationIterator> atomizedValues;
 
     public AttributeNodeRuntimeIterator(
-            String qname,
+            Name attributeName,
             List<AtomizationIterator> atomizedValues,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(atomizedValues), staticContext);
-        this.qname = qname;
+        this.attributeName = attributeName;
         this.atomizedValues = atomizedValues;
     }
 
@@ -93,7 +94,7 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         this.hasNext = false;
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
-                this.qname,
+                ItemFactory.getInstance().createQNameItem(this.attributeName),
                 sb.toString()
             );
     }

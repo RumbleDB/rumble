@@ -52,7 +52,7 @@ public class GroupByVariableDeclaration {
     }
 
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.ITEM_STAR : this.sequenceType;
+        return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {
