@@ -3041,7 +3041,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "size"
         ),
-        "array?",
+        "item-array?",
         "integer?",
         ArraySizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
