@@ -734,6 +734,11 @@ public class BuiltinTypesCatalogue {
             atomicItem,
             SequenceType.createSequenceType("item*")
     );
+    public static final ItemType xqueryArrayItem = new XQueryArrayItemType(
+            new Name(Name.XS_NS, "xs", "array"),
+            anyFunctionItem,
+            SequenceType.createSequenceType("item*")
+    );
 
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
@@ -772,6 +777,7 @@ public class BuiltinTypesCatalogue {
         booleanItem,
         arrayItem,
         mapItem,
+        xqueryArrayItem,
         nullItem,
         JSONItem,
         durationItem,

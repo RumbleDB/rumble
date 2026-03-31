@@ -87,6 +87,34 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
+    public boolean isXQueryArrayItemType(){
+        return true;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isXQueryArrayItemType()) {
+            return this.getMemberSequenceType().isSubtypeOf(superType.getMemberSequenceType());
+        }
+        if (superType.isFunctionItemType()) {
+            return superType.equals(BuiltinTypesCatalogue.anyFunctionItem);
+        }
+        return ItemType.super.isSubtypeOf(superType);
+    }
+
+    @Override
+    public SequenceType getMemberSequenceType() {
+        return new SequenceType(this.content, SequenceType.Arity.One);
+    }
+
+    @Override
     public boolean hasName() {
         return this.name != null;
     }

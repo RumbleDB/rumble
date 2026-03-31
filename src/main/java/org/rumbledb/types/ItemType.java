@@ -100,6 +100,13 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
+     * @return true it [this] is an XQuery array item type.
+     */
+    default boolean isXQueryArrayItemType() {
+        return false;
+    }
+
+    /**
      * @return true if [this] is an XQuery map item type (map(*) or map(K, V)).
      */
     default boolean isMapItemType() {
@@ -591,6 +598,19 @@ public interface ItemType extends Serializable, KryoSerializable {
                     + " is not one (class "
                     + this.getClass().getCanonicalName()
                     + ")"
+        );
+    }
+
+    /**
+     * @return the sequence type for the members of the array item type
+     * @throws UnsupportedOperationException if the item type is not an xquery array item type
+     */
+    default SequenceType getMemberSequenceType() {
+        throw new UnsupportedOperationException(
+                "member sequence type is allowed only for array item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName() + ")"
         );
     }
 
