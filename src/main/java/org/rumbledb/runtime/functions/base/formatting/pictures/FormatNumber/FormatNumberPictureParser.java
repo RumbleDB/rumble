@@ -24,7 +24,7 @@ public class FormatNumberPictureParser {
         int separatorPos = -1;
         for (int i = 0; i < pictureString.length();) {
             int cp = pictureString.codePointAt(i);
-            if (FormatNumberSubPictureSupport.isPatternSeparator(cp, decimalFormat)) {
+            if (FormatNumberPictureSupport.isPatternSeparator(cp, decimalFormat)) {
                 if (separatorPos != -1) {
                     throw invalidPicture(pictureString, metadata, "must not have more than one separator");
                 }
@@ -74,11 +74,11 @@ public class FormatNumberPictureParser {
         // Determine the active region:
         // prefix = passive characters before the first active character
         // suffix = passive characters after the last active character
-        int leftmostActiveCharIndex = FormatNumberSubPictureSupport.findLeftmostActiveCharIndex(
+        int leftmostActiveCharIndex = FormatNumberPictureSupport.findLeftmostActiveCharIndex(
             subPictureString,
             decimalFormat
         );
-        int rightmostActiveCharIndex = FormatNumberSubPictureSupport.findRightmostActiveCharIndex(
+        int rightmostActiveCharIndex = FormatNumberPictureSupport.findRightmostActiveCharIndex(
             subPictureString,
             decimalFormat
         );
@@ -99,9 +99,50 @@ public class FormatNumberPictureParser {
         // This excludes prefix/suffix passive characters from the structural analysis.
         String activeRegion = subPictureString.substring(leftmostActiveCharIndex, suffixStart);
 
-        // Find the decimal separator inside the active region only.
-        int decimalSeparatorIndex = FormatNumberSubPictureSupport.findDecimalSeparatorIndex(
-            activeRegion,
+        int exponentSeparatorIndex = FormatNumberPictureSupport.findExponentSeparatorIndex(activeRegion, decimalFormat);
+
+        // Rule: A sub-picture must not contain more than one exponent-separator-sign.
+        if (exponentSeparatorIndex == -2) {
+            throw invalidPicture(pictureString, metadata, "exponent separator must not occur more than once");
+        }
+
+        if (exponentSeparatorIndex == -3) {
+            throw invalidPicture(
+                pictureString,
+                metadata,
+                "exponent separator must be preceded and followed by an active character"
+            );
+        }
+
+        // Split the active region into mantissa and exponent part.
+        // If no exponent separator exists, the whole active region is the mantissa.
+        String mantissaPart;
+        String exponentPart = "";
+
+        if (exponentSeparatorIndex == -1) {
+            mantissaPart = activeRegion;
+        } else {
+            int exponentSeparatorLength = Character.charCount(decimalFormat.getExponentSeparator());
+            mantissaPart = activeRegion.substring(0, exponentSeparatorIndex);
+            exponentPart = activeRegion.substring(exponentSeparatorIndex + exponentSeparatorLength);
+        }
+
+        boolean hasExponent = !exponentPart.isEmpty();
+
+        if (
+            hasExponent
+                && !FormatNumberPictureSupport.containsOnlyMandatoryDigits(exponentPart, decimalFormat)
+        ) {
+            throw invalidPicture(
+                pictureString,
+                metadata,
+                "exponent part must contain only decimal digit family characters"
+            );
+        }
+
+        // Find the decimal separator in the mantissa only.
+        int decimalSeparatorIndex = FormatNumberPictureSupport.findDecimalSeparatorIndex(
+            mantissaPart,
             decimalFormat
         );
 
@@ -110,32 +151,32 @@ public class FormatNumberPictureParser {
             throw invalidPicture(pictureString, metadata, "decimal separator must not occur more than once");
         }
 
-        // Split the active region into integer part and fractional part.
-        // If no decimal separator exists, the entire active region is the integer part.
+        // Split the mantissa into integer part and fractional part.
+        // If no decimal separator exists, the entire mantissa is the integer part.
         String integerPart;
         String fractionalPart = "";
 
         if (decimalSeparatorIndex == -1) {
-            integerPart = activeRegion;
+            integerPart = mantissaPart;
         } else {
-            integerPart = activeRegion.substring(0, decimalSeparatorIndex);
+            integerPart = mantissaPart.substring(0, decimalSeparatorIndex);
 
             int decimalSeparatorLength = Character.charCount(decimalFormat.getDecimalSeparator());
-            fractionalPart = activeRegion.substring(decimalSeparatorIndex + decimalSeparatorLength);
+            fractionalPart = mantissaPart.substring(decimalSeparatorIndex + decimalSeparatorLength);
         }
 
         // Rule: A sub-picture must contain at least one optional-digit-sign
         // or at least one member of the decimal-digit-family.
         if (
-            FormatNumberSubPictureSupport.countActiveDigitSigns(integerPart, decimalFormat)
-                + FormatNumberSubPictureSupport.countActiveDigitSigns(fractionalPart, decimalFormat) == 0
+            FormatNumberPictureSupport.countActiveDigitSigns(integerPart, decimalFormat)
+                + FormatNumberPictureSupport.countActiveDigitSigns(fractionalPart, decimalFormat) == 0
         ) {
             throw invalidPicture(pictureString, metadata, "subpicture must contain at least one digit sign");
         }
 
         // Rule: A sub-picture must not contain a grouping-separator-sign
         // adjacent to a decimal-separator-sign.
-        if (FormatNumberSubPictureSupport.hasAdjacentGroupingAndDecimalSeparator(activeRegion, decimalFormat)) {
+        if (FormatNumberPictureSupport.hasAdjacentGroupingAndDecimalSeparator(activeRegion, decimalFormat)) {
             throw invalidPicture(
                 pictureString,
                 metadata,
@@ -145,7 +186,7 @@ public class FormatNumberPictureParser {
 
         // Rule: The integer part must not contain a mandatory digit
         // followed by an optional digit.
-        if (FormatNumberSubPictureSupport.hasMandatoryDigitFollowedByOptionalDigit(integerPart, decimalFormat)) {
+        if (FormatNumberPictureSupport.hasMandatoryDigitFollowedByOptionalDigit(integerPart, decimalFormat)) {
             throw invalidPicture(
                 pictureString,
                 metadata,
@@ -155,7 +196,7 @@ public class FormatNumberPictureParser {
 
         // Rule: The fractional part must not contain an optional digit
         // followed by a mandatory digit.
-        if (FormatNumberSubPictureSupport.hasOptionalDigitFollowedByMandatoryDigit(fractionalPart, decimalFormat)) {
+        if (FormatNumberPictureSupport.hasOptionalDigitFollowedByMandatoryDigit(fractionalPart, decimalFormat)) {
             throw invalidPicture(
                 pictureString,
                 metadata,
@@ -167,7 +208,7 @@ public class FormatNumberPictureParser {
         // preceded by an active character and followed by another active character.
         // Since prefix and suffix were removed, this becomes:
         // the active region itself must contain only active characters.
-        if (FormatNumberSubPictureSupport.hasPassiveCharacterWithinActiveRegion(activeRegion, decimalFormat)) {
+        if (FormatNumberPictureSupport.hasPassiveCharacterWithinActiveRegion(activeRegion, decimalFormat)) {
             throw invalidPicture(
                 pictureString,
                 metadata,
@@ -177,11 +218,11 @@ public class FormatNumberPictureParser {
 
         // Rule: A sub-picture must not contain more than one percent-sign
         // or more than one per-mille-sign.
-        int percentOccurrences = FormatNumberSubPictureSupport.countOccurrences(
+        int percentOccurrences = FormatNumberPictureSupport.countOccurrences(
             subPictureString,
             decimalFormat.getPercent()
         );
-        int perMilleOccurrences = FormatNumberSubPictureSupport.countOccurrences(
+        int perMilleOccurrences = FormatNumberPictureSupport.countOccurrences(
             subPictureString,
             decimalFormat.getPerMille()
         );
@@ -208,53 +249,101 @@ public class FormatNumberPictureParser {
 
         // Analysis phase:
         // integer-part-grouping-positions
-        List<GroupingPos> integerPartGroupingPositions = FormatNumberSubPictureSupport.findIntegerGroupingPositions(
+        List<GroupingPos> integerPartGroupingPositions = FormatNumberPictureSupport.findIntegerGroupingPositions(
             integerPart,
             decimalFormat
         );
 
         Integer repeatingIntegerGroupingInterval =
-            FormatNumberSubPictureSupport.findRepeatingIntegerGroupingInterval(integerPartGroupingPositions);
+            FormatNumberPictureSupport.findRepeatingIntegerGroupingInterval(integerPartGroupingPositions);
+
+
 
         // Analysis phase:
         // fractional-part-grouping-positions
-        List<GroupingPos> fractionalPartGroupingPositions = FormatNumberSubPictureSupport
+        List<GroupingPos> fractionalPartGroupingPositions = FormatNumberPictureSupport
             .findFractionalGroupingPositions(
                 fractionalPart,
                 decimalFormat
             );
 
-        // Analysis phase:
-        // minimum-integer-part-size = number of mandatory digits in the integer part
-        int minimumIntegerPartSize = FormatNumberSubPictureSupport.countMandatoryDigits(integerPart, decimalFormat);
+        // Rule: A sub-picture must not contain grouping separators adjacent to the decimal separator
+        if (FormatNumberPictureSupport.hasInvalidIntegerGroupingPosition(integerPartGroupingPositions)) {
+            throw invalidPicture(
+                pictureString,
+                metadata,
+                "grouping separator must not appear at the end of the integer part"
+            );
+        }
 
-        // Special rule:
-        // If there is no mandatory digit in the integer part and no decimal separator,
-        // minimum-integer-part-size is 1.
-        if (minimumIntegerPartSize == 0 && decimalSeparatorIndex == -1) {
+        if (
+            FormatNumberPictureSupport.hasGroupingSeparatorAtEndOfFractionalPart(
+                fractionalPart,
+                fractionalPartGroupingPositions,
+                decimalFormat
+            )
+        ) {
+            throw invalidPicture(
+                pictureString,
+                metadata,
+                "grouping separator must not appear at the end of the fractional part"
+            );
+        }
+
+        int minimumIntegerPartSize =
+            FormatNumberPictureSupport.countMandatoryDigits(integerPart, decimalFormat);
+
+        int scalingFactor =
+            FormatNumberPictureSupport.countMandatoryDigits(integerPart, decimalFormat);
+
+        int minimumFractionalPartSize =
+            FormatNumberPictureSupport.countMandatoryDigits(fractionalPart, decimalFormat);
+
+        int maximumFractionalPartSize =
+            FormatNumberPictureSupport.countActiveDigitSigns(fractionalPart, decimalFormat);
+
+        int minimumExponentSize =
+            exponentPart.isEmpty()
+                ? 0
+                : FormatNumberPictureSupport.countMandatoryDigits(exponentPart, decimalFormat);
+
+        // If minimum-integer-part-size and maximum-fractional-part-size are both zero,
+        // then adjust depending on whether an exponent separator is present.
+        if (minimumIntegerPartSize == 0 && maximumFractionalPartSize == 0) {
+            if (hasExponent) {
+                minimumFractionalPartSize = 1;
+                maximumFractionalPartSize = 1;
+            } else {
+                minimumIntegerPartSize = 1;
+            }
+        }
+
+        // If an exponent separator is present, minimum-integer-part-size is zero,
+        // and the integer part contains at least one optional digit,
+        // then minimum-integer-part-size becomes 1.
+        if (
+            hasExponent
+                && minimumIntegerPartSize == 0
+                && FormatNumberPictureSupport.containsOptionalDigit(integerPart, decimalFormat)
+        ) {
             minimumIntegerPartSize = 1;
         }
 
-        // Analysis phase:
-        // minimum-fractional-part-size = number of mandatory digits in the fractional part
-        int minimumFractionalPartSize = FormatNumberSubPictureSupport.countMandatoryDigits(
-            fractionalPart,
-            decimalFormat
-        );
 
-        // Analysis phase:
-        // maximum-fractional-part-size = total number of digit signs in the fractional part
-        int maximumFractionalPartSize = FormatNumberSubPictureSupport.countActiveDigitSigns(
-            fractionalPart,
-            decimalFormat
-        );
+        // After the above adjustments, if both minimum sizes are zero,
+        // then minimum-fractional-part-size becomes 1.
+        if (minimumIntegerPartSize == 0 && minimumFractionalPartSize == 0) {
+            minimumFractionalPartSize = 1;
+        }
 
         return new FormatNumberSubPicture(
-                pictureString,
+                subPictureString,
                 prefix,
                 suffix,
                 integerPart,
                 fractionalPart,
+                exponentPart,
+                hasExponent,
                 hasPercent,
                 hasPerMille,
                 integerPartGroupingPositions,
@@ -262,7 +351,9 @@ public class FormatNumberPictureParser {
                 fractionalPartGroupingPositions,
                 minimumIntegerPartSize,
                 minimumFractionalPartSize,
-                maximumFractionalPartSize
+                maximumFractionalPartSize,
+                minimumExponentSize,
+                scalingFactor
         );
     }
 
@@ -279,6 +370,8 @@ public class FormatNumberPictureParser {
                 positiveSubpicture.getSuffix(),
                 positiveSubpicture.getIntegerPart(),
                 positiveSubpicture.getFractionalPart(),
+                positiveSubpicture.getExponentPart(),
+                positiveSubpicture.hasExponent(),
                 positiveSubpicture.getHasPercent(),
                 positiveSubpicture.getHasPerMille(),
                 positiveSubpicture.getIntegerPartGroupingPositions(),
@@ -286,7 +379,9 @@ public class FormatNumberPictureParser {
                 positiveSubpicture.getFractionalPartGroupingPositions(),
                 positiveSubpicture.getMinimumIntegerPartSize(),
                 positiveSubpicture.getMinimumFractionalPartSize(),
-                positiveSubpicture.getMaximumFractionalPartSize()
+                positiveSubpicture.getMaximumFractionalPartSize(),
+                positiveSubpicture.getMinimumExponentPartSize(),
+                positiveSubpicture.getScalingFactor()
         );
     }
 

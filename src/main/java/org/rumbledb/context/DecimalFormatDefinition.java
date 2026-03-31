@@ -12,6 +12,7 @@ public class DecimalFormatDefinition {
     private final int zeroDigit;
     private final int optionalDigit;
     private final int patternSeparator;
+    private final int exponentSeparator;
 
     public DecimalFormatDefinition() {
         this.decimalSeparator = '.';
@@ -24,6 +25,7 @@ public class DecimalFormatDefinition {
         this.zeroDigit = '0';
         this.optionalDigit = '#';
         this.patternSeparator = ';';
+        this.exponentSeparator = 'e';
     }
 
     public int getDecimalSeparator() {
@@ -64,6 +66,10 @@ public class DecimalFormatDefinition {
 
     public int getMinusSign() {
         return this.minusSign;
+    }
+
+    public int getExponentSeparator() {
+        return exponentSeparator;
     }
 
     @Override

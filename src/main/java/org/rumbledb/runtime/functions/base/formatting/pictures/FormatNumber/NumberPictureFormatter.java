@@ -31,8 +31,8 @@ public class NumberPictureFormatter {
         FormatNumberPicture picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
 
 
-        System.err.println("\n\n\n" + debugValueItem(valueItem));
-        System.err.println(debugFormatNumberPicture(pictureString, picture));
+        System.err.println("\n\n" + debugValueItem(valueItem));
+        System.err.println(debugFormatNumberPicture(pictureString, picture) + "\n\n");
 
         // Handling Special Cases for Double and Float
 
@@ -161,23 +161,26 @@ public class NumberPictureFormatter {
         String paddedFractionalPart = fractionalPart + trailing;
 
         // Insert grouping separators in the integer part according to the integer-part-grouping-positions.
-        paddedIntegerPart = FormatNumberSubPictureSupport.applyIntegerPartGrouping(paddedIntegerPart, picture);
+        paddedIntegerPart = FormatNumberPictureSupport.applyIntegerPartGrouping(paddedIntegerPart, picture);
 
         // Insert grouping separators in the fractional part according to the fractional-part-grouping-positions.
-        paddedFractionalPart = FormatNumberSubPictureSupport.applyFractionalPartGrouping(paddedFractionalPart, picture);
+        paddedFractionalPart = FormatNumberPictureSupport.applyFractionalPartGrouping(paddedFractionalPart, picture);
 
 
         // Remove the decimal separator if the sub-picture does not contain one, or if no fractional digits remain.
         String formattedNumber = paddedIntegerPart;
         if (
             !paddedFractionalPart.isEmpty()
-                && FormatNumberSubPictureSupport.containsDecimalSeparator(picture, decimalFormat)
+                && FormatNumberPictureSupport.findDecimalSeparatorIndex(
+                    picture.getRawPictureString(),
+                    decimalFormat
+                ) > 0
         ) {
             formattedNumber += new String(Character.toChars(decimalFormat.getDecimalSeparator()))
                 + paddedFractionalPart;
         }
 
-        formattedNumber = FormatNumberSubPictureSupport.applyDecimalDigitFamily(formattedNumber, decimalFormat);
+        formattedNumber = FormatNumberPictureSupport.applyDecimalDigitFamily(formattedNumber, decimalFormat);
 
         return picture.getPrefix() + formattedNumber + picture.getSuffix();
     }
@@ -254,6 +257,12 @@ public class NumberPictureFormatter {
             + subpicture.getFractionalPart()
             + " ,suffix="
             + subpicture.getSuffix()
+            + " , hasExponent="
+            + subpicture.hasExponent()
+            + " , exponentPart="
+            + subpicture.getExponentPart()
+            + " , scalingFactor="
+            + subpicture.getScalingFactor()
             + " ,percent="
             + subpicture.getHasPercent()
             + " ,permille="

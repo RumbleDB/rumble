@@ -10,6 +10,8 @@ public final class FormatNumberSubPicture {
     private final String suffix;
     private final String integerPart;
     private final String fractionalPart;
+    private final String exponentPart;
+    private final boolean hasExponent;
     private final boolean hasPercent;
     private final boolean hasPerMille;
     private final List<GroupingPos> integerPartGroupingPositions;
@@ -18,6 +20,8 @@ public final class FormatNumberSubPicture {
     private final int minimumIntegerPartSize;
     private final int minimumFractionalPartSize;
     private final int maximumFractionalPartSize;
+    private final int minimumExponentPartSize;
+    private final int scalingFactor;
 
     public FormatNumberSubPicture(
             String rawPictureString,
@@ -25,6 +29,8 @@ public final class FormatNumberSubPicture {
             String suffix,
             String integerPart,
             String fractionalPart,
+            String exponentPart,
+            boolean hasExponent,
             boolean hasPercent,
             boolean hasPerMille,
             List<GroupingPos> integerPartGroupingPositions,
@@ -32,13 +38,17 @@ public final class FormatNumberSubPicture {
             List<GroupingPos> fractionalPartGroupingPositions,
             int minimumIntegerPartSize,
             int minimumFractionalPartSize,
-            int maximumFractionalPartSize
+            int maximumFractionalPartSize,
+            int minimumExponentPartSize,
+            int scalingFactor
     ) {
         this.rawPictureString = rawPictureString;
         this.prefix = prefix;
         this.suffix = suffix;
         this.integerPart = integerPart;
         this.fractionalPart = fractionalPart;
+        this.exponentPart = exponentPart;
+        this.hasExponent = hasExponent;
         this.hasPercent = hasPercent;
         this.hasPerMille = hasPerMille;
         this.integerPartGroupingPositions = integerPartGroupingPositions;
@@ -47,6 +57,8 @@ public final class FormatNumberSubPicture {
         this.minimumIntegerPartSize = minimumIntegerPartSize;
         this.minimumFractionalPartSize = minimumFractionalPartSize;
         this.maximumFractionalPartSize = maximumFractionalPartSize;
+        this.minimumExponentPartSize = minimumExponentPartSize;
+        this.scalingFactor = scalingFactor;
     }
 
     public String getRawPictureString() {
@@ -67,6 +79,14 @@ public final class FormatNumberSubPicture {
 
     public String getFractionalPart() {
         return this.fractionalPart;
+    }
+
+    public String getExponentPart() {
+        return this.exponentPart;
+    }
+
+    public boolean hasExponent() {
+        return this.hasExponent;
     }
 
     public boolean getHasPercent() {
@@ -99,5 +119,13 @@ public final class FormatNumberSubPicture {
 
     public int getMaximumFractionalPartSize() {
         return this.maximumFractionalPartSize;
+    }
+
+    public int getMinimumExponentPartSize() {
+        return this.minimumExponentPartSize;
+    }
+
+    public int getScalingFactor() {
+        return this.scalingFactor;
     }
 }

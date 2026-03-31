@@ -6,9 +6,10 @@ import org.rumbledb.runtime.functions.base.formatting.GroupingPos;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.IntPredicate;
 
-public class FormatNumberSubPictureSupport {
-    private FormatNumberSubPictureSupport() {
+public class FormatNumberPictureSupport {
+    private FormatNumberPictureSupport() {
     }
 
     static boolean isMandatoryDigit(int cp, DecimalFormatDefinition decimalFormat) {
@@ -28,6 +29,10 @@ public class FormatNumberSubPictureSupport {
         return cp == decimalFormat.getGroupingSeparator();
     }
 
+    static boolean isExponentSeparator(int cp, DecimalFormatDefinition decimalFormat) {
+        return cp == decimalFormat.getExponentSeparator();
+    }
+
     static boolean isPatternSeparator(int cp, DecimalFormatDefinition decimalFormat) {
         return cp == decimalFormat.getPatternSeparator();
     }
@@ -44,7 +49,8 @@ public class FormatNumberSubPictureSupport {
         return isDecimalSeparator(cp, decimalFormat)
             || isGroupingSeparator(cp, decimalFormat)
             || isOptionalDigit(cp, decimalFormat)
-            || isMandatoryDigit(cp, decimalFormat);
+            || isMandatoryDigit(cp, decimalFormat)
+            || isExponentSeparator(cp, decimalFormat);
     }
 
     static boolean isPassiveCharacter(int cp, DecimalFormatDefinition decimalFormat) {
@@ -113,11 +119,11 @@ public class FormatNumberSubPictureSupport {
         return count;
     }
 
-    static int findDecimalSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {
+    static int findSeparatorIndex(String s, IntPredicate isSeparator) {
         int found = -1;
         for (int i = 0; i < s.length();) {
             int cp = s.codePointAt(i);
-            if (isDecimalSeparator(cp, decimalFormat)) {
+            if (isSeparator.test(cp)) {
                 if (found != -1) {
                     return -2;
                 }
@@ -184,6 +190,40 @@ public class FormatNumberSubPictureSupport {
 
             i = nextIndex;
         }
+        return false;
+    }
+
+    static boolean hasInvalidIntegerGroupingPosition(List<GroupingPos> groupingPositions) {
+        if (groupingPositions == null || groupingPositions.isEmpty()) {
+            return false;
+        }
+
+        for (GroupingPos gp : groupingPositions) {
+            if (gp.getDistanceFromRight() <= 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static boolean hasGroupingSeparatorAtEndOfFractionalPart(
+            String fractionalPart,
+            List<GroupingPos> groupingPositions,
+            DecimalFormatDefinition decimalFormat
+    ) {
+        if (groupingPositions == null || groupingPositions.isEmpty()) {
+            return false;
+        }
+
+        int totalDigitSigns = countActiveDigitSigns(fractionalPart, decimalFormat);
+
+        for (GroupingPos gp : groupingPositions) {
+            if (gp.getDistanceFromRight() >= totalDigitSigns) {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -281,9 +321,29 @@ public class FormatNumberSubPictureSupport {
         return sb.toString();
     }
 
-    static boolean containsDecimalSeparator(FormatNumberSubPicture picture, DecimalFormatDefinition decimalFormat) {
-        return picture.getRawPictureString()
-            .contains(new String(Character.toChars(decimalFormat.getDecimalSeparator())));
+    static boolean containsOptionalDigit(String s, DecimalFormatDefinition decimalFormat) {
+        for (int i = 0; i < s.length();) {
+            int cp = s.codePointAt(i);
+            if (isOptionalDigit(cp, decimalFormat)) {
+                return true;
+            }
+            i += Character.charCount(cp);
+        }
+        return false;
+    }
+
+    static boolean containsOnlyMandatoryDigits(String s, DecimalFormatDefinition decimalFormat) {
+        if (s.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < s.length();) {
+            int cp = s.codePointAt(i);
+            if (!isMandatoryDigit(cp, decimalFormat)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
     }
 
 
@@ -362,5 +422,25 @@ public class FormatNumberSubPictureSupport {
         }
 
         return sb.toString();
+    }
+
+    static int findDecimalSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {
+        return findSeparatorIndex(s, cp -> isDecimalSeparator(cp, decimalFormat));
+    }
+
+    static int findExponentSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {
+        int index = findSeparatorIndex(s, cp -> isExponentSeparator(cp, decimalFormat));
+        if (index < 0) {
+            return index;
+        }
+
+        int cp = s.codePointAt(index);
+        int endIndex = index + Character.charCount(cp);
+
+        if (index == 0 || endIndex == s.length()) {
+            return -3; // TODO maybe add constants for readability like INVALID_EDGE_EXPONENT?
+        }
+
+        return index;
     }
 }
