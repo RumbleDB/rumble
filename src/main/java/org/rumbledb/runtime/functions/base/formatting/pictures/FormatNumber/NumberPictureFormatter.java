@@ -18,7 +18,7 @@ public class NumberPictureFormatter {
             DecimalFormatDefinition defaultDecimalFormat,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDefinition decimalFormat = defaultDecimalFormat;;
+        DecimalFormatDefinition decimalFormat = defaultDecimalFormat;
 
         // TODO
         if (decimalFormatNameItem == null) {
@@ -29,12 +29,6 @@ public class NumberPictureFormatter {
         String pictureString = pictureItem.getStringValue();
 
         FormatNumberPicture picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
-
-
-        System.err.println("\n\n" + debugValueItem(valueItem));
-        System.err.println(debugFormatNumberPicture(pictureString, picture) + "\n\n");
-
-        // Handling Special Cases for Double and Float
 
         if (valueItem.isDouble()) {
             double value = valueItem.getDoubleValue();
@@ -59,6 +53,12 @@ public class NumberPictureFormatter {
             }
         }
 
+        // Handling Special Cases for Double and Float
+
+        System.err.println("\n\n" + debugValueItem(valueItem));
+        System.err.println(debugFormatNumberPicture(pictureString, picture) + "\n\n");
+
+
         ResolvedNumber resolvedNumber = FormatNumberTypeResolver.getValue(valueItem);
         if (resolvedNumber.isNegative) {
             return applySubPictureFormatting(resolvedNumber, picture.getNegativeSubPicture(), decimalFormat);
@@ -71,7 +71,7 @@ public class NumberPictureFormatter {
      * Formats a number according to the second phase of fn:format-number.
      *
      * <p>
-     * The following will have already happened and can be safely ignored:
+     * The following should have already happened and will therefore be ignored:
      * </p>
      *
      * <ol>
@@ -90,49 +90,70 @@ public class NumberPictureFormatter {
         // 1. If the sub-picture contains a percent sign, multiply the number by 100. If it contains a per-mille sign,
         // multiply the number by 1000.
         // 2. Convert the adjusted number to an arbitrary-precision decimal representation.
-        BigDecimal number = resolvedNumber.decimalValue;
-        if (ResolvedNumber.DOUBLE.equals(resolvedNumber.type)) {
-            if (picture.getHasPercent()) {
-                double doubleNumber = resolvedNumber.doubleValue;
-                doubleNumber *= 100;
-                number = BigDecimal.valueOf(doubleNumber);
-            } else if (picture.getHasPerMille()) {
-                double doubleNumber = resolvedNumber.doubleValue;
-                doubleNumber *= 1000;
-                number = BigDecimal.valueOf(doubleNumber);
-            }
-        } else if (ResolvedNumber.FLOAT.equals(resolvedNumber.type)) {
-            if (picture.getHasPercent()) {
-                float doubleNumber = resolvedNumber.floatValue;
-                doubleNumber *= 100;
-                number = BigDecimal.valueOf(doubleNumber);
-            } else if (picture.getHasPerMille()) {
-                float floatNumber = resolvedNumber.floatValue;
-                floatNumber *= 1000;
-                number = BigDecimal.valueOf(floatNumber);
-            }
-        } else {
-            if (picture.getHasPercent())
-                number = resolvedNumber.decimalValue.multiply(new BigDecimal(100));
-            else if (picture.getHasPerMille())
-                number = resolvedNumber.decimalValue.multiply(new BigDecimal(1000));
+        AdjustedNumber adjusted = computeAdjustedNumber(resolvedNumber, picture);
+
+        // If the operation results in numeric overflow, adjusted number is infinity.
+        if (adjusted.infinite) {
+            return infinityRepresentation(picture, decimalFormat);
         }
 
-        // 3. Round the adjusted number with round-half-to-even to maximum-fractional-part-size digits.
+        BigDecimal mantissa = adjusted.value;
+        Integer exponent = null;
+
+        // 3. If the minimum exponent size is non-zero, then the adjusted number is scaled to establish a mantissa and
+        // an integer exponent. The mantissa and exponent are chosen such that:
+        // - the mantissa multiplied by ten to the power of the exponent is equal to the adjusted number, and
+        // - the mantissa is less than 10^N and at least 10^(N-1), where N is the scaling factor.
+        if (picture.getMinimumExponentPartSize() != 0) {
+            MantissaExponentPair mantissaExponentPair = computeMantissaExponent(
+                adjusted.value,
+                picture.getScalingFactor()
+            );
+            mantissa = mantissaExponentPair.mantissa;
+            exponent = mantissaExponentPair.exponent;
+        }
+
+        // 4. Convert the mantissa to xs:decimal and round with round-half-to-even to
+        // maximum-fractional-part-size digits.
         int maxFrac = picture.getMaximumFractionalPartSize();
-        number = number.setScale(maxFrac, RoundingMode.HALF_EVEN);
+        mantissa = mantissa.setScale(maxFrac, RoundingMode.HALF_EVEN);
 
-        // 4. Convert the absolute rounded number to decimal notation using the decimal digit family and decimal
-        // separator, with no insignificant leading or trailing zeroes.
-        number = number.abs();
-        BigDecimal stripped = number.stripTrailingZeros();
-        String numberString = stripped.toPlainString();
-
-        if (stripped.compareTo(BigDecimal.ZERO) == 0) {
-            numberString = ".";
-        } else if (numberString.startsWith("0.")) {
-            numberString = numberString.substring(1);
+        // If rounding causes the mantissa to overflow its allowed range, normalize it and adjust the exponent.
+        if (exponent != null) {
+            MantissaExponentPair normalized = normalizeMantissaAfterRounding(
+                mantissa,
+                exponent,
+                picture.getScalingFactor()
+            );
+            mantissa = normalized.mantissa;
+            exponent = normalized.exponent;
         }
+
+        String formattedNumber = formatMantissa(mantissa, picture, decimalFormat);
+
+        // If an exponent exists, append exponent-separator, optional minus-sign, and the exponent digits padded
+        // to the minimum exponent size.
+        if (exponent != null) {
+            formattedNumber += formatExponent(
+                exponent,
+                picture.getMinimumExponentPartSize(),
+                decimalFormat
+            );
+        }
+
+        return picture.getPrefix() + formattedNumber + picture.getSuffix();
+    }
+
+    private static String formatMantissa(
+            BigDecimal number,
+            FormatNumberSubPicture picture,
+            DecimalFormatDefinition decimalFormat
+    ) {
+        // 5. Convert the absolute rounded number to decimal notation using the decimal digit family and decimal
+        // separator, with no insignificant leading or trailing zeroes. At this stage the string must always contain
+        // a decimal separator; zero is represented by the decimal separator on its own.
+        number = number.abs();
+        String numberString = toCanonicalDecimalString(number);
 
         // If the integer part has fewer than minimum-integer-part-size digits, pad it with leading zeroes.
         // If the fractional part has fewer than minimum-fractional-part-size digits, pad it with trailing zeroes.
@@ -144,20 +165,14 @@ public class NumberPictureFormatter {
             fractionalPart = "";
         } else {
             int dot = numberString.indexOf('.');
-            if (dot >= 0) {
-                integerPart = numberString.substring(0, dot);
-                fractionalPart = numberString.substring(dot + 1);
-            } else {
-                integerPart = numberString;
-                fractionalPart = "";
-            }
+            integerPart = numberString.substring(0, dot);
+            fractionalPart = numberString.substring(dot + 1);
         }
 
         String leading = getZeroPadding(integerPart, picture, false);
         String trailing = getZeroPadding(fractionalPart, picture, true);
 
         String paddedIntegerPart = leading + integerPart;
-
         String paddedFractionalPart = fractionalPart + trailing;
 
         // Insert grouping separators in the integer part according to the integer-part-grouping-positions.
@@ -166,23 +181,63 @@ public class NumberPictureFormatter {
         // Insert grouping separators in the fractional part according to the fractional-part-grouping-positions.
         paddedFractionalPart = FormatNumberPictureSupport.applyFractionalPartGrouping(paddedFractionalPart, picture);
 
-
         // Remove the decimal separator if the sub-picture does not contain one, or if no fractional digits remain.
         String formattedNumber = paddedIntegerPart;
-        if (
-            !paddedFractionalPart.isEmpty()
-                && FormatNumberPictureSupport.findDecimalSeparatorIndex(
-                    picture.getRawPictureString(),
-                    decimalFormat
-                ) > 0
-        ) {
+        boolean subPictureHasDecimalSeparator =
+            FormatNumberPictureSupport.findDecimalSeparatorIndex(picture.getRawPictureString(), decimalFormat) >= 0;
+
+        if (subPictureHasDecimalSeparator && !paddedFractionalPart.isEmpty()) {
             formattedNumber += new String(Character.toChars(decimalFormat.getDecimalSeparator()))
                 + paddedFractionalPart;
         }
 
         formattedNumber = FormatNumberPictureSupport.applyDecimalDigitFamily(formattedNumber, decimalFormat);
 
-        return picture.getPrefix() + formattedNumber + picture.getSuffix();
+        return formattedNumber;
+    }
+
+    private static String toCanonicalDecimalString(BigDecimal number) {
+        BigDecimal stripped = number.stripTrailingZeros();
+
+        if (stripped.compareTo(BigDecimal.ZERO) == 0) {
+            return ".";
+        }
+
+        String numberString = stripped.toPlainString();
+
+        if (!numberString.contains(".")) {
+            numberString += ".";
+        }
+
+        if (numberString.startsWith("0.")) {
+            numberString = numberString.substring(1);
+        }
+
+        return numberString;
+    }
+
+    private static String formatExponent(
+            int exponent,
+            int minimumExponentSize,
+            DecimalFormatDefinition decimalFormat
+    ) {
+        StringBuilder result = new StringBuilder();
+
+        result.appendCodePoint(decimalFormat.getExponentSeparator());
+
+        if (exponent < 0) {
+            result.appendCodePoint(decimalFormat.getMinusSign());
+        }
+
+        String digits = Integer.toString(Math.abs(exponent));
+        if (digits.length() < minimumExponentSize) {
+            digits = "0".repeat(minimumExponentSize - digits.length()) + digits;
+        }
+
+        digits = FormatNumberPictureSupport.applyDecimalDigitFamily(digits, decimalFormat);
+        result.append(digits);
+
+        return result.toString();
     }
 
     private static String infinityRepresentation(
@@ -204,6 +259,118 @@ public class NumberPictureFormatter {
         return "";
     }
 
+    private static AdjustedNumber computeAdjustedNumber(
+            ResolvedNumber resolvedNumber,
+            FormatNumberSubPicture picture
+    ) {
+        if (ResolvedNumber.DOUBLE.equals(resolvedNumber.type)) {
+            double value = resolvedNumber.doubleValue;
+            if (picture.getHasPercent()) {
+                value *= 100;
+            } else if (picture.getHasPerMille()) {
+                value *= 1000;
+            }
+
+            if (Double.isInfinite(value)) {
+                return new AdjustedNumber(resolvedNumber.type, null, true);
+            }
+
+            return new AdjustedNumber(resolvedNumber.type, BigDecimal.valueOf(value), false);
+        }
+
+        if (ResolvedNumber.FLOAT.equals(resolvedNumber.type)) {
+            float value = resolvedNumber.floatValue;
+            if (picture.getHasPercent()) {
+                value *= 100;
+            } else if (picture.getHasPerMille()) {
+                value *= 1000;
+            }
+
+            if (Float.isInfinite(value)) {
+                return new AdjustedNumber(resolvedNumber.type, null, true);
+            }
+
+            return new AdjustedNumber(resolvedNumber.type, BigDecimal.valueOf(floatToBigDecimal(value)), false);
+        }
+
+        BigDecimal value = resolvedNumber.decimalValue;
+        if (picture.getHasPercent()) {
+            value = value.multiply(BigDecimal.valueOf(100));
+        } else if (picture.getHasPerMille()) {
+            value = value.multiply(BigDecimal.valueOf(1000));
+        }
+
+        return new AdjustedNumber(resolvedNumber.type, value, false);
+    }
+
+    private static MantissaExponentPair computeMantissaExponent(
+            BigDecimal adjustedValue,
+            int scalingFactor
+    ) {
+        if (adjustedValue.compareTo(BigDecimal.ZERO) == 0) {
+            return new MantissaExponentPair(BigDecimal.ZERO, 0);
+        }
+
+        BigDecimal abs = adjustedValue.abs();
+        int exponent = abs.precision() - abs.scale() - scalingFactor;
+        BigDecimal mantissa = adjustedValue.movePointLeft(exponent);
+
+        return new MantissaExponentPair(mantissa, exponent);
+    }
+
+    private static double floatToBigDecimal(float value) {
+        return Double.parseDouble(Float.toString(value));
+    }
+
+    private static MantissaExponentPair normalizeMantissaAfterRounding(
+            BigDecimal mantissa,
+            int exponent,
+            int scalingFactor
+    ) {
+        if (mantissa.compareTo(BigDecimal.ZERO) == 0) {
+            return new MantissaExponentPair(BigDecimal.ZERO, 0);
+        }
+
+        BigDecimal abs = mantissa.abs();
+        BigDecimal upperBound = BigDecimal.ONE.scaleByPowerOfTen(scalingFactor);
+        BigDecimal lowerBound = BigDecimal.ONE.scaleByPowerOfTen(scalingFactor - 1);
+
+        while (abs.compareTo(upperBound) >= 0) {
+            mantissa = mantissa.movePointLeft(1);
+            exponent += 1;
+            abs = mantissa.abs();
+        }
+
+        while (abs.compareTo(lowerBound) < 0) {
+            mantissa = mantissa.movePointRight(1);
+            exponent -= 1;
+            abs = mantissa.abs();
+        }
+
+        return new MantissaExponentPair(mantissa, exponent);
+    }
+
+    private static final class AdjustedNumber {
+        final String type;
+        final BigDecimal value;
+        final boolean infinite;
+
+        AdjustedNumber(String type, BigDecimal value, boolean infinite) {
+            this.type = type;
+            this.value = value;
+            this.infinite = infinite;
+        }
+    }
+
+    private static final class MantissaExponentPair {
+        final BigDecimal mantissa;
+        final int exponent;
+
+        MantissaExponentPair(BigDecimal mantissa, int exponent) {
+            this.mantissa = mantissa;
+            this.exponent = exponent;
+        }
+    }
 
     // DEBUGGING METHODS
 
