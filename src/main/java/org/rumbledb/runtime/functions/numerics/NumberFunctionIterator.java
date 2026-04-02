@@ -46,7 +46,12 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return CastIterator.castItemToType(items.get(0), BuiltinTypesCatalogue.doubleItem, getMetadata());
+            return CastIterator.castItemToType(
+                items.get(0),
+                BuiltinTypesCatalogue.doubleItem,
+                getMetadata(),
+                staticContext
+            );
         }
 
         Item anyItem = this.children.get(0).materializeFirstItemOrNull(context);
@@ -54,7 +59,12 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         try {
-            Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
+            Item result = CastIterator.castItemToType(
+                anyItem,
+                BuiltinTypesCatalogue.doubleItem,
+                getMetadata(),
+                staticContext
+            );
             if (result != null) {
                 return result;
             }

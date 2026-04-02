@@ -209,7 +209,7 @@ public class RumbleMLUtils {
             case "int":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    BuiltinTypesCatalogue.integerItem,
+                    BuiltinTypesCatalogue.intItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {

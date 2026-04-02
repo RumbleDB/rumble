@@ -55,13 +55,16 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
+        if (this instanceof MapItemType && otherType instanceof MapItemType) {
+            return ((MapItemType) this).structurallyEqual((MapItemType) otherType);
+        }
         if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
             if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
                 return false;
             }
             return this.toString().equals(otherType.toString());
         }
-        if (this.getName() == null || otherType.getName() == null) {
+        if (!this.hasName() || !otherType.hasName()) {
             return this == otherType;
         }
         return this.getName().equals(otherType.getName());
@@ -93,6 +96,13 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it [this] is an array item type.
      */
     default boolean isArrayItemType() {
+        return false;
+    }
+
+    /**
+     * @return true if [this] is an XQuery map item type (map(*) or map(K, V)).
+     */
+    default boolean isMapItemType() {
         return false;
     }
 
@@ -278,6 +288,20 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
+     * Casting-specific primitive notion from XPath/XQuery Functions and Operators 3.1 §19:
+     * in addition to XML Schema primitive types, xs:integer, xs:yearMonthDuration,
+     * and xs:dayTimeDuration are treated as primitive for casting.
+     *
+     * @return [true] if this type is considered primitive for casting semantics.
+     */
+    default boolean isCastingPrimitive() {
+        return this.isPrimitive()
+            || this.equals(BuiltinTypesCatalogue.integerItem)
+            || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+            || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
+    }
+
+    /**
      *
      * @return the primitive type for a derived type, throw an error for primitive types
      */
@@ -286,10 +310,19 @@ public interface ItemType extends Serializable, KryoSerializable {
     }
 
     /**
+     * Casting-specific primitive normalization used by cast/castable logic.
+     *
+     * @return this type if it is a casting primitive; otherwise its casting primitive ancestor.
+     */
+    default ItemType getCastingPrimitiveType() {
+        return this.isCastingPrimitive() ? this : this.getPrimitiveType();
+    }
+
+    /**
      *
      * @return a set containing the allowed facets for restricting the type
      */
-    public Set<FacetTypes> getAllowedFacets();
+    public Set<ConstrainingFacetTypes> getAllowedFacets();
 
     /**
      *
@@ -416,6 +449,91 @@ public interface ItemType extends Serializable, KryoSerializable {
 
     /**
      *
+     * @return the whiteSpace facet value for [this] item type or null if the restriction is not set
+     */
+    default WhitespaceFacet getWhitespaceFacet() {
+        throw new UnsupportedOperationException(
+                "whiteSpace facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * Returns the pattern facet for this item type.
+     *
+     * This reflects pattern facets applied via derivation (for example on
+     * {@link DerivedAtomicItemType}), not the full lexical space of a
+     * primitive atomic type.
+     *
+     * @return the list of pattern regex strings for this derivation step,
+     *         or null if no pattern restriction is set
+     */
+    default List<String> getPatternFacet() {
+        throw new UnsupportedOperationException(
+                "pattern facet is not allowed for " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * Returns the lexical-space patterns for this item type.
+     *
+     * For primitive atomic types, this describes the lexical space defined
+     * by the specification (for example, the allowed literals for xs:boolean
+     * or the lexical grammar for xs:decimal). For derived atomic types, this
+     * typically delegates to the primitive type.
+     *
+     * Implementations that do not provide additional constraints should
+     * return an empty list.
+     *
+     * @return a list of regular expressions describing the lexical space
+     *         of this type, or an empty list if no regex-based restriction
+     *         is modeled.
+     */
+    default List<String> getLexicalSpacePatterns() {
+        return java.util.Collections.emptyList();
+    }
+
+    // region fundamental facets (XSD 1.1 §4.2)
+
+    /**
+     * @return the ordered fundamental facet value, or null if not set
+     */
+    default OrderedFacetValue getOrderedFacet() {
+        throw new UnsupportedOperationException(
+                "ordered facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * @return the bounded fundamental facet value, or null if not set
+     */
+    default Boolean getBoundedFacet() {
+        throw new UnsupportedOperationException(
+                "bounded facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * @return the cardinality fundamental facet value, or null if not set
+     */
+    default CardinalityFacetValue getCardinalityFacet() {
+        throw new UnsupportedOperationException(
+                "cardinality facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    /**
+     * @return the numeric fundamental facet value, or null if not set
+     */
+    default Boolean getNumericFacet() {
+        throw new UnsupportedOperationException(
+                "numeric facet is not applicable to " + this.toString() + " item types"
+        );
+    }
+
+    // endregion fundamental facets
+
+    /**
+     *
      * @return content facet value for object item types (cumulative facet)
      */
     default Map<String, FieldDescriptor> getObjectContentFacet() {
@@ -443,6 +561,32 @@ public interface ItemType extends Serializable, KryoSerializable {
     default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
                 "array content facet is allowed only for array item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     * @return atomic key type for map item types (map(K, V)).
+     */
+    default ItemType getMapKeyItemType() {
+        throw new UnsupportedOperationException(
+                "map key facet is allowed only for map item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     * @return value sequence type for map item types (map(K, V)).
+     */
+    default SequenceType getMapValueSequenceType() {
+        throw new UnsupportedOperationException(
+                "map value sequence type is allowed only for map item types, but "
                     + getIdentifierString()
                     + " is not one (class "
                     + this.getClass().getCanonicalName()

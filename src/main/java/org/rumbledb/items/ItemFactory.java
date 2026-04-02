@@ -3,6 +3,7 @@ package org.rumbledb.items;
 import java.time.*;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
@@ -16,8 +17,10 @@ import org.w3c.dom.Node;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ItemFactory {
 
@@ -57,6 +60,10 @@ public class ItemFactory {
             return this.emptyStringItem;
         }
         return new StringItem(s);
+    }
+
+    public Item createUntypedAtomicItem(String s) {
+        return new UntypedAtomicItem(s);
     }
 
     public Item createBooleanItem(boolean b) {
@@ -229,6 +236,10 @@ public class ItemFactory {
         return new AnyURIItem(s);
     }
 
+    public Item createQNameItem(Name name) {
+        return new QNameItem(name);
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
@@ -274,8 +285,89 @@ public class ItemFactory {
         return result;
     }
 
+    /**
+     * Create an object item from a map of string keys and list of items.
+     * 
+     * @deprecated Use {@link #createObjectItemOptimized(Map<String, Item>, boolean)} instead.
+     * @param keyValuePairs The map of string keys and list of items.
+     * @param mutable The mutability level of the object item.
+     * @return The object item.
+     */
+    @Deprecated
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectItemOptimized(Map<String, Item> keyValuePairs, boolean mutable) {
+        Item result = new ObjectItem(keyValuePairs);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectOrMapItem(
+            List<Item> keys,
+            List<List<Item>> values,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
+        boolean allKeysString = keys.stream().allMatch(key -> key.isString());
+        boolean allValuesSingletons = values.stream().allMatch(value -> value.size() == 1);
+        if (allKeysString && allValuesSingletons) {
+            // optimization: create an object item
+            List<String> stringKeys = keys.stream().map(key -> key.getStringValue()).collect(Collectors.toList());
+            List<Item> valuesList = values.stream().map(value -> value.get(0)).collect(Collectors.toList());
+            return createObjectItem(stringKeys, valuesList, itemMetadata, mutable);
+        } else {
+            return createMapItem(keys, values, itemMetadata, mutable);
+        }
+    }
+
+    public Item createMapItem(
+            List<Item> keys,
+            List<List<Item>> values,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
+        Item result = new MapItem(keys, values, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectOrMapItem(
+            Map<Item, List<Item>> keyValuePairs,
+            ExceptionMetadata itemMetadata,
+            boolean mutable
+    ) {
+        boolean allKeysString = keyValuePairs.keySet().stream().allMatch(key -> key.isString());
+        boolean allValuesSingletons = keyValuePairs.values().stream().allMatch(list -> list.size() == 1);
+        if (allKeysString && allValuesSingletons) {
+            // optimization: create an object item
+            Map<String, List<Item>> stringKeyValuePairs = new HashMap<>();
+            for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
+                stringKeyValuePairs.put(entry.getKey().getStringValue(), entry.getValue());
+            }
+            return createObjectItem(stringKeyValuePairs, mutable);
+        } else {
+            return createMapItem(keyValuePairs, itemMetadata, mutable);
+        }
+    }
+
+    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new MapItem(keyValuePairs, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
         } else {
@@ -306,14 +398,7 @@ public class ItemFactory {
         return new AttributeItem(attribute);
     }
 
-    /**
-     * Create an attribute item.
-     * 
-     * @param nodeName The name of the attribute
-     * @param stringValue The string value of the attribute
-     * @return The attribute item
-     */
-    public Item createXmlAttributeNode(String nodeName, String stringValue) {
+    public Item createXmlAttributeNode(Item nodeName, String stringValue) {
         return new AttributeItem(nodeName, stringValue);
     }
 
@@ -335,15 +420,7 @@ public class ItemFactory {
         return new ElementItem(elementNode, children, attributes);
     }
 
-    /**
-     * Create an element item.
-     * 
-     * @param nodeName The name of the element
-     * @param children The children items of the element
-     * @param attributes The attributes items of the element
-     * @return The element item
-     */
-    public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
+    public Item createXmlElementNode(Item nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }
 

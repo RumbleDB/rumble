@@ -4,7 +4,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.QNameItem;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
@@ -21,7 +24,7 @@ public class ElementItem implements Item {
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
-    private String nodeName;
+    private Item dmNodeName;
     private String stringValue;
     private Item parent;
     // TODO: add base-uri, schema-type, is-id, is-idrefs
@@ -33,27 +36,45 @@ public class ElementItem implements Item {
     }
 
     /**
-     * Constructor for an element item.
-     *
-     * @param nodeName The name of the element
-     * @param children The children items of the element
-     * @param attributes The attributes items of the element
+     * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
      */
-    public ElementItem(String nodeName, List<Item> children, List<Item> attributes) {
-        this.nodeName = nodeName;
+    public ElementItem(Item dmNodeName, List<Item> children, List<Item> attributes) {
+        this.dmNodeName = dmNodeName;
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        // TODO: add support for attributes and children
-        this.stringValue = "<" + nodeName + "/>";
+        seedNamespaceBindingForNodeName();
+        this.stringValue = "<" + this.dmNodeName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
-        this.nodeName = elementNode.getNodeName();
+        this.dmNodeName = ItemFactory.getInstance()
+            .createQNameItem(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode));
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
+        seedNamespaceBindingForNodeName();
+    }
+
+    /**
+     * Declares the namespace binding implied by the element's node-name so XML serialization can emit a valid
+     * lexical QName ({@code xmlns} / {@code xmlns:prefix}).
+     */
+    private void seedNamespaceBindingForNodeName() {
+        if (this.dmNodeName == null || !this.dmNodeName.isQName()) {
+            return;
+        }
+        Name n = this.dmNodeName.getQNameValue();
+        if (n.getNamespace() == null) {
+            return;
+        }
+        String prefix = n.getPrefix();
+        if (prefix == null || prefix.isEmpty()) {
+            this.namespaces.put("", n.getNamespace());
+        } else {
+            this.namespaces.put(prefix, n.getNamespace());
+        }
     }
 
     @Override
@@ -88,7 +109,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.children);
         kryo.writeObject(output, this.attributes);
         kryo.writeObject(output, this.namespaces);
-        output.writeString(this.nodeName);
+        kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
     }
 
@@ -100,7 +121,7 @@ public class ElementItem implements Item {
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
         this.namespaces = kryo.readObject(input, HashMap.class);
-        this.nodeName = input.readString();
+        this.dmNodeName = kryo.readObject(input, QNameItem.class);
         this.stringValue = input.readString();
     }
 
@@ -265,8 +286,8 @@ public class ElementItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        return this.nodeName;
+    public Item nodeName() {
+        return this.dmNodeName;
     }
 
     @Override

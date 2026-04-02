@@ -209,7 +209,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         "aggregate(%s, decimal(0), (x, y) -> decimal(x + y))",
                         childContext.getResultingQuery()
                     ),
-                    SequenceType.INTEGER
+                    SequenceType.createSequenceType("integer")
             );
         }
         // each row contains a single value
