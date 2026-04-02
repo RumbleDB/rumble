@@ -123,11 +123,10 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         List<RuntimeIterator> callbackArguments = new ArrayList<>(2);
         callbackArguments.add(this.mutableKeyArgumentIterator);
         callbackArguments.add(this.mutableValueSequenceIterator);
-        this.currentCallbackIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
+        this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
             this.actionFunction,
-            getConfiguration(),
+            staticContext,
             ExecutionMode.LOCAL,
-            getMetadata(),
             callbackArguments
         );
     }

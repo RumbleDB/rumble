@@ -920,13 +920,28 @@ public class SequenceType implements Serializable {
                         Arity.One
                 );
                 break;
+            case "function(*)":
+                st = new SequenceType(
+                        BuiltinTypesCatalogue.anyFunctionItem,
+                        Arity.One
+                );
+                break;
             case "function?":
+                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrZero);
+                break;
+            case "function(*)?":
                 st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrZero);
                 break;
             case "function*":
                 st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.ZeroOrMore);
                 break;
+            case "function(*)*":
+                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.ZeroOrMore);
+                break;
             case "function+":
+                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrMore);
+                break;
+            case "function(*)+":
                 st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrMore);
                 break;
             case "QName":

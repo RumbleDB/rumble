@@ -23,13 +23,12 @@ package org.rumbledb.compiler;
 import org.apache.log4j.LogManager;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
-import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.BuiltinFunctionExecutionModes;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -272,11 +271,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getFunctionIdentifier()
             );
             expression.setHighestExecutionMode(
-                getBuiltInFunctionExecutionMode(
+                BuiltinFunctionExecutionModes.resolve(
                     builtinFunction,
                     expression.getArguments().size() > 0
                         ? expression.getArguments().get(0).getHighestExecutionMode(this.visitorConfig)
-                        : null
+                        : null,
+                    this.configuration
                 )
             );
         } else {
@@ -306,47 +306,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         return argument;
-    }
-
-    private ExecutionMode getBuiltInFunctionExecutionMode(
-            BuiltinFunction builtinFunction,
-            ExecutionMode firstMode
-    ) {
-        BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
-            return ExecutionMode.LOCAL;
-        }
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.RDD) {
-            return ExecutionMode.RDD;
-        }
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.DATAFRAME) {
-            return DATAFRAMEifConfigurationAllows();
-        }
-        if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            ExecutionMode firstArgumentExecutionMode = firstMode;
-            if (firstArgumentExecutionMode.isDataFrame()) {
-                return DATAFRAMEifConfigurationAllows();
-            }
-            if (firstArgumentExecutionMode.isRDDOrDataFrame()) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
-        }
-        if (
-            functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
-        ) {
-            ExecutionMode firstArgumentExecutionMode = firstMode;
-            if (
-                firstArgumentExecutionMode.isRDDOrDataFrame()
-                    && !firstArgumentExecutionMode.isDataFrame()
-            ) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
-        }
-        throw new OurBadException(
-                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
-        );
     }
 
     // endregion
