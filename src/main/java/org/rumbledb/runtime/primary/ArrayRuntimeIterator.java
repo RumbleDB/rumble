@@ -72,7 +72,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        if (this.isSquareConstructor) {
+        if (isEffectiveSquareConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
             for (RuntimeIterator child : this.children) {
@@ -93,18 +93,18 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         List<Item> result = new ArrayList<>();
-        if (!this.children.isEmpty()) {
-            result.addAll(this.children.get(0).materialize(dynamicContext));
+        for (RuntimeIterator child : this.children) {
+            result.addAll(child.materialize(dynamicContext));
         }
         return ItemFactory.getInstance().createArrayItem(result, true);
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (this.isSquareConstructor) {
+        if (isEffectiveSquareConstructor()) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (!this.children.isEmpty()) {
+        if (this.children.size() == 1) {
             NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
@@ -132,5 +132,13 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                     new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
             );
         }
+    }
+
+    private boolean isEffectiveSquareConstructor() {
+        if (!this.isSquareConstructor) {
+            return false;
+        }
+        String queryLanguage = getConfiguration().getQueryLanguage();
+        return queryLanguage.equals("xquery30") || queryLanguage.equals("xquery31");
     }
 }

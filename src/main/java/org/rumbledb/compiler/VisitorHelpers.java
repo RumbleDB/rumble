@@ -163,6 +163,7 @@ public class VisitorHelpers {
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
         if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+            setXQueryLanguageFromProlog(query, configuration);
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -334,6 +335,7 @@ public class VisitorHelpers {
             RumbleRuntimeConfiguration configuration
     ) {
         if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+            setXQueryLanguageFromProlog(query, configuration);
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -575,5 +577,20 @@ public class VisitorHelpers {
                     "Unexpected program state reached while setting local execution for unset user defined functions."
             );
         }
+    }
+
+    private static void setXQueryLanguageFromProlog(String query, RumbleRuntimeConfiguration configuration) {
+        if (query.startsWith("xquery version \"3.0\"")) {
+            configuration.setQueryLanguage("xquery30");
+            return;
+        }
+        if (query.startsWith("xquery version \"3.1\"")) {
+            configuration.setQueryLanguage("xquery31");
+            return;
+        }
+        if (configuration.getQueryLanguage().equals("xquery30")) {
+            return;
+        }
+        configuration.setQueryLanguage("xquery31");
     }
 }
