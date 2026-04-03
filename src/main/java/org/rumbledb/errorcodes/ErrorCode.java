@@ -119,6 +119,8 @@ public enum ErrorCode {
     InvalidProcessingInstructionTargetErrorCode("XQDY0064"),
 
     InvalidSchemaErrorCode("XQST0012"),
+    /** Namespace declaration attribute value contains an enclosed expression (direct element constructor). */
+    NamespaceDeclarationAttributeEnclosedExpressionErrorCode("XQST0022"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     MultipleBaseURIExceptionCode("XQST0032"),

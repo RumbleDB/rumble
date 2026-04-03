@@ -98,6 +98,7 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
@@ -502,11 +503,16 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(child -> (Expression) visit(child, argument))
             .collect(Collectors.toList());
+        List<NamespaceDeclaration> namespaceDeclarations = expression.getNamespaceDeclarations()
+            .stream()
+            .map(ns -> new NamespaceDeclaration(ns.getPrefix(), ns.getUri(), ns.getMetadata()))
+            .collect(Collectors.toList());
 
         DirElemConstructorExpression result = new DirElemConstructorExpression(
                 expression.getNodeName(),
                 content,
                 attributes,
+                namespaceDeclarations,
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
