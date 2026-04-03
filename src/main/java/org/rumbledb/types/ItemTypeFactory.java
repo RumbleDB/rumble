@@ -672,6 +672,25 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Wildcard XQuery processing-instruction node type processing-instruction().
+     *
+     * @return wildcard processing-instruction node type
+     */
+    public static ItemType processingInstructionNodeItemType() {
+        return BuiltinTypesCatalogue.processingInstructionNode;
+    }
+
+    /**
+     * Restricted XQuery processing-instruction node type processing-instruction(N).
+     *
+     * @param targetName raw target-name restriction, normalized with fn:normalize-space
+     * @return restricted processing-instruction node type
+     */
+    public static ItemType processingInstructionNodeItemType(String targetName) {
+        return new PINodeItemType(targetName);
+    }
+
+    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object

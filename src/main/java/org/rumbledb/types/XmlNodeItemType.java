@@ -8,8 +8,8 @@ import java.util.Set;
 /**
  * Class representing a concrete XML node item type at depth 2 in the type hierarchy.
  * This class now covers the remaining concrete XML node kinds after dedicated implementations
- * for element(), attribute(), and document-node():
- * comment(), text(), namespace-node(), processing-instruction().
+ * for element(), attribute(), document-node(), and processing-instruction():
+ * comment(), text(), namespace-node().
  *
  * All concrete node types share node() as their base type at depth 1.
  */

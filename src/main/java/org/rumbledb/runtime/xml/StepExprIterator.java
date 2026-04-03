@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.xml;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -271,7 +272,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return node;
         }
         // processing-instruction(target) matches PI nodes whose target name equals the given name
-        if (nodeNameLexical(node).equals(piTest.getTargetName())) {
+        if (StringUtils.normalizeSpace(nodeNameLexical(node)).equals(piTest.getTargetName())) {
             return node;
         }
         return null;

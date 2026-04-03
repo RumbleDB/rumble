@@ -699,9 +699,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType namespaceNode = new XmlNodeItemType(
             Name.createVariableInDefaultTypeNamespace("namespace-node")
     );
-    public static final ItemType processingInstructionNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("processing-instruction")
-    );
+    public static final ItemType processingInstructionNode = new PINodeItemType();
 
     public static final ItemType JSONItem = new JsonItemType();
     public static final ItemType objectItem = new ObjectItemType(

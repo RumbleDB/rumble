@@ -2206,6 +2206,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return BuiltinTypesCatalogue.namespaceNode;
         }
         if (kindTestContext.piTest() != null) {
+            XQueryParser.PiTestContext piTestContext = kindTestContext.piTest();
+            if (piTestContext.ncName() != null) {
+                return ItemTypeFactory.processingInstructionNodeItemType(piTestContext.ncName().getText());
+            }
+            if (piTestContext.stringLiteral() != null) {
+                String rawValue = piTestContext.stringLiteral().getText();
+                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                return ItemTypeFactory.processingInstructionNodeItemType(targetName);
+            }
             return BuiltinTypesCatalogue.processingInstructionNode;
         }
         throw new UnsupportedFeatureException(
@@ -3214,7 +3223,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // XQuery 3.1 Section 2.5.5
             // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
             // processing-instruction() matches any processing-instruction node.
-            // processing-instruction(N) matches any processing-instruction node whose target name equals N.
+            // processing-instruction(N) matches any processing-instruction node whose target
+            // name equals fn:normalize-space(N).
             XQueryParser.PiTestContext piContext = (XQueryParser.PiTestContext) kindTest;
             if (piContext.ncName() != null) {
                 return new PITest(piContext.ncName().getText());
