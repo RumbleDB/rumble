@@ -81,7 +81,7 @@ public class XQueryArrayItemType implements ItemType {
         }
         if (((ItemType) other).isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
             // js:array() = array(item)
-            ArrayItemType arrayItemType = (ArrayItemType) ItemTypeFactory.xqueryArrayOf(
+            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
                 SequenceType.createSequenceType("item")
             );
             return this.equals(arrayItemType);
