@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -188,12 +189,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private boolean isMainModule;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
+    private final CommonTokenStream xQueryTokenStream;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
             RumbleRuntimeConfiguration configuration,
-            String code
+            String code,
+            CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
@@ -201,6 +204,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
+        this.xQueryTokenStream = xQueryTokenStream;
     }
 
     // endregion expr
@@ -1720,6 +1724,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return -1;
     }
 
+    /**
+     * Whitespace in direct element content is lexed on the HIDDEN channel. Recover hidden tokens that appear
+     * between two adjacent {@code dirElemContent} parse nodes (each node’s own text uses
+     * {@link CommonTokenStream#getText(Interval)} in {@link #visitDirElemContent}).
+     */
+    private static void appendHiddenTokensAfter(
+            CommonTokenStream tokenStream,
+            int previousTokenIndex,
+            StringBuilder destination
+    ) {
+        List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
+        if (hidden == null) {
+            return;
+        }
+        for (Token t : hidden) {
+            destination.append(t.getText());
+        }
+    }
+
     @Override
     public Node visitDirElemConstructorOpenClose(XQueryParser.DirElemConstructorOpenCloseContext ctx) {
         // check that the start and end tags are the same
@@ -1744,6 +1767,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             List<Expression> content = new ArrayList<>();
             StringBuilder textAccumulator = null;
             ExceptionMetadata firstTextMetadata = null;
+            Token previousToken = ctx.endOpen;
 
             for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
                 Expression childExpression = (Expression) this.visitDirElemContent(child);
@@ -1756,21 +1780,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
                     // skip empty text nodes
                     if (textNode.getContent().isEmpty()) {
+                        previousToken = child.getStop();
                         continue;
                     }
 
                     if (textAccumulator == null) {
-                        // start accumulating text nodes
                         textAccumulator = new StringBuilder();
-                        // keep metadata of the first node
                         firstTextMetadata = textNode.getMetadata();
                     }
-
-                    // accumulate the text content
+                    appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
                     textAccumulator.append(textNode.getContent());
                 } else {
                     // non-text node encountered
                     if (textAccumulator != null) {
+                        appendHiddenTokensAfter(
+                            this.xQueryTokenStream,
+                            previousToken.getTokenIndex(),
+                            textAccumulator
+                        );
                         // finalize any accumulated text nodes
                         content.add(
                             new TextNodeExpression(
@@ -1785,10 +1812,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     // add the non-text node
                     content.add(childExpression);
                 }
+                previousToken = child.getStop();
             }
 
             // handle any remaining accumulated text at the end
             if (textAccumulator != null) {
+                appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
                 content.add(
                     new TextNodeExpression(
                             textAccumulator.toString(),
@@ -1839,8 +1868,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         } else if (child instanceof XQueryParser.CommonContentContext) {
             return this.visitCommonContent((XQueryParser.CommonContentContext) child);
         } else {
-            // create a new text node
-            String text = child.getText();
+            // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
+            String text = this.xQueryTokenStream.getText(ctx.getSourceInterval());
             if (ctx.CDATA() != null) {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));

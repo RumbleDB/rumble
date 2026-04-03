@@ -291,11 +291,18 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
+        XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                moduleContext,
+                true,
+                configuration,
+                query,
+                xQueryTokens
+        );
         try {
             // TODO Handle module extras
             XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -395,13 +402,20 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
+        XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration, query);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                moduleContext,
+                false,
+                configuration,
+                query,
+                xQueryTokens
+        );
         try {
             // TODO Handle module extras
             XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
