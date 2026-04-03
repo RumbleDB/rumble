@@ -149,11 +149,13 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             ItemType keyType = getLeastCommonSuperItemType(keys, BuiltinTypesCatalogue.atomicItem);
             SequenceType valueSequenceType = getLeastCommonSuperSequenceType(
-                itemToMatch.getSequenceValues(),
-                SequenceType.createSequenceType("item*")
+                itemToMatch.getSequenceValues()
             );
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
-            return runtimeMapType.isSubtypeOf(itemType);
+            // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named object
+            // schema type, but the validated item's dynamic type is (e.g. local:x).
+            return runtimeMapType.isSubtypeOf(itemType)
+                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         } else if (itemToMatch.isArray()) {
             List<List<Item>> members = itemToMatch.getSequenceMembers();
             if (members.isEmpty()) {
@@ -169,11 +171,13 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
             SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
-                members,
-                SequenceType.createSequenceType("item*")
+                members
             );
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
-            return runtimeArrayType.isSubtypeOf(itemType);
+            // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
+            // schema type, but the validated item's dynamic type is (e.g. local:x).
+            return runtimeArrayType.isSubtypeOf(itemType)
+                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
@@ -187,9 +191,11 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static SequenceType getLeastCommonSuperSequenceType(
-            List<List<Item>> sequences,
-            SequenceType defaultType
+            List<List<Item>> sequences
     ) {
+        if (sequences.isEmpty()) {
+            return SequenceType.createSequenceType("item*");
+        }
         SequenceType result = sequenceTypeFromRuntimeItems(sequences.get(0));
         for (int i = 1; i < sequences.size(); i++) {
             result = result.leastCommonSupertypeWith(sequenceTypeFromRuntimeItems(sequences.get(i)));
