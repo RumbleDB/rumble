@@ -267,7 +267,7 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.arrayItem;
+        return BuiltinTypesCatalogue.xqueryArrayItem;
     }
 
     @Override
