@@ -77,8 +77,19 @@ public class MapItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return isEqualTo((ItemType) other);
-    }
+        if(((ItemType) other).isMapItemType()) {
+            return this.structurallyEqual((MapItemType) other);
+        }
+        if(((ItemType) other).isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
+            // a js:object = map(xs:string, item)
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                BuiltinTypesCatalogue.stringItem,
+                SequenceType.createSequenceType("item")
+            );
+            return this.equals(objectAsMap);
+        }
+            return isEqualTo((ItemType) other);
+        }
 
     @Override
     public int hashCode() {
@@ -104,6 +115,15 @@ public class MapItemType implements ItemType {
         if (equals(superType) || superType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         }
+        if (superType.isObjectItemType()) {
+            // js:object = map(xs:string, item)
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                BuiltinTypesCatalogue.stringItem,
+                SequenceType.createSequenceType("item")
+            );
+            // an object type (js:object) WITHOUT a JSound schema attached is a subtype of a map(*)
+            return superType.equals(BuiltinTypesCatalogue.objectItem) && this.isSubtypeOf(objectAsMap);
+        }
         if (superType.isMapItemType()) {
             MapItemType sup = (MapItemType) superType;
             return this.keyType.isSubtypeOf(sup.keyType)
@@ -120,6 +140,14 @@ public class MapItemType implements ItemType {
         if (equals(other)) {
             return this;
         }
+        if (other.isObjectItemType()) {
+            // js:object = map(xs:string, item)
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                BuiltinTypesCatalogue.stringItem,
+                SequenceType.createSequenceType("item")
+            );
+            return this.findLeastCommonSuperTypeWith(objectAsMap);
+        }
         if (other.isFunctionItemType()) {
             return BuiltinTypesCatalogue.anyFunctionItem;
         }
@@ -134,13 +162,6 @@ public class MapItemType implements ItemType {
                 return BuiltinTypesCatalogue.mapItem;
             }
             return ItemTypeFactory.mapOf(keySuperType, valueSuperType);
-        }
-        if (other.isObjectItemType()) {
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One)
-            );
-            return this.findLeastCommonSuperTypeWith(objectAsMap);
         }
         ItemType current = this;
         ItemType o = other;

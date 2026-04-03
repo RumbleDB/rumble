@@ -168,6 +168,10 @@ public class ObjectItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
+        if(((ItemType) other).isMapItemType()) {
+            // delegate to the map item type equality check
+            return other.equals(this);
+        }
         return isEqualTo((ItemType) other);
     }
 
@@ -216,12 +220,6 @@ public class ObjectItemType implements ItemType {
         return allowedFacets;
     }
 
-    private static MapItemType getLegacyObjectAsMapType() {
-        return ItemTypeFactory.mapOf(
-            BuiltinTypesCatalogue.stringItem,
-            new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One)
-        );
-    }
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
@@ -233,7 +231,11 @@ public class ObjectItemType implements ItemType {
             }
         }
         if (superType.isMapItemType() || superType.isFunctionItemType()) {
-            return getLegacyObjectAsMapType().isSubtypeOf(superType);
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                BuiltinTypesCatalogue.stringItem,
+                SequenceType.createSequenceType("item")
+            );
+            return objectAsMap.isSubtypeOf(superType);
         }
         return ItemType.super.isSubtypeOf(superType);
     }
@@ -244,7 +246,11 @@ public class ObjectItemType implements ItemType {
             return this;
         }
         if (other.isMapItemType() || other.isFunctionItemType()) {
-            return getLegacyObjectAsMapType().findLeastCommonSuperTypeWith(other);
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                BuiltinTypesCatalogue.stringItem,
+                SequenceType.createSequenceType("item")
+            );
+            return objectAsMap.findLeastCommonSuperTypeWith(other);
         }
         return ItemType.super.findLeastCommonSuperTypeWith(other);
     }

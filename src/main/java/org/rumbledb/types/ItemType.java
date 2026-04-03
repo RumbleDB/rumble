@@ -55,9 +55,6 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
-        if (this instanceof MapItemType && otherType instanceof MapItemType) {
-            return ((MapItemType) this).structurallyEqual((MapItemType) otherType);
-        }
         if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
             if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
                 return false;
