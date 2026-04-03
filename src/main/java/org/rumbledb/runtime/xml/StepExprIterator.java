@@ -148,13 +148,18 @@ public class StepExprIterator extends LocalRuntimeIterator {
 
     private Item getDocumentElement(Item documentNode) {
         List<Item> children = documentNode.children();
+        List<Item> elements = new ArrayList<>();
         if (children == null) {
             return null;
         }
         for (Item child : children) {
             if (child.isElementNode()) {
-                return child;
+                elements.add(child);
             }
+        }
+        if(elements.size() == 1) {
+            // document-node(N) matches a document node with exactly one element child
+            return elements.get(0);
         }
         return null;
     }

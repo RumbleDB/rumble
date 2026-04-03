@@ -17,14 +17,14 @@ public class DocumentNodeItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
-    private ElementNodeItemType elementTestType;
+    private ItemType elementTestType;
 
     public DocumentNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("document-node");
         this.elementTestType = null;
     }
 
-    public DocumentNodeItemType(ElementNodeItemType elementTestType) {
+    public DocumentNodeItemType(ItemType elementTestType) {
         if (elementTestType == null) {
             throw new IllegalArgumentException("Document element-test type cannot be null.");
         }
@@ -36,7 +36,7 @@ public class DocumentNodeItemType implements ItemType {
         return this.elementTestType == null;
     }
 
-    public ElementNodeItemType getElementTestType() {
+    public ItemType getElementTestType() {
         return this.elementTestType;
     }
 

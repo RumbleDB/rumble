@@ -664,7 +664,7 @@ public class ItemTypeFactory {
      * @param elementTestType element-test type restriction
      * @return restricted document node type
      */
-    public static ItemType documentNodeItemType(ElementNodeItemType elementTestType) {
+    public static ItemType documentNodeItemType(ItemType elementTestType) {
         if (elementTestType == null) {
             throw new OurBadException("Document node element-test type cannot be null.");
         }
