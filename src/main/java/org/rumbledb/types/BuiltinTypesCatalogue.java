@@ -689,9 +689,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType nodeItem = new NodeItemType();
     public static final ItemType elementNode = new ElementNodeItemType();
     public static final ItemType attributeNode = new AttributeNodeItemType();
-    public static final ItemType documentNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("document-node")
-    );
+    public static final ItemType documentNode = new DocumentNodeItemType();
     public static final ItemType commentNode = new XmlNodeItemType(
             Name.createVariableInDefaultTypeNamespace("comment")
     );

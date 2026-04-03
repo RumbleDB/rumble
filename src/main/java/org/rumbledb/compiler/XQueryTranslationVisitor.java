@@ -152,6 +152,7 @@ import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -2164,35 +2165,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
             if (documentTestContext.elementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "document-node(element(...)) item types are not supported yet",
-                        createMetadataFromContext(documentTestContext)
-                );
+                ElementNodeItemType elementTestType = getElementTestAsItemType(documentTestContext.elementTest());
+                return ItemTypeFactory.documentNodeItemType(elementTestType);
             }
             return BuiltinTypesCatalogue.documentNode;
         }
         if (kindTestContext.elementTest() != null) {
-            XQueryParser.ElementTestContext elementTestContext = kindTestContext.elementTest();
-            if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
-                throw new UnsupportedFeatureException(
-                        "Typed or nillable element item tests are not supported yet",
-                        createMetadataFromContext(elementTestContext)
-                );
-            }
-            if (elementTestContext.elementNameOrWildcard() == null) {
-                return BuiltinTypesCatalogue.elementNode;
-            }
-            if (elementTestContext.elementNameOrWildcard().elementName() == null) {
-                return BuiltinTypesCatalogue.elementNode;
-            }
-            Name elementName = parseEqName(
-                elementTestContext.elementNameOrWildcard().elementName().eqName(),
-                false,
-                false,
-                false,
-                false
-            );
-            return ItemTypeFactory.elementNodeItemType(elementName);
+            return getElementTestAsItemType(kindTestContext.elementTest());
         }
         if (kindTestContext.attributeTest() != null) {
             XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
@@ -2233,6 +2212,29 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 "Unsupported kind test in item type: " + kindTestContext.getText(),
                 createMetadataFromContext(kindTestContext)
         );
+    }
+
+    private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
+        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
+            throw new UnsupportedFeatureException(
+                    "Typed or nillable element item tests are not supported yet",
+                    createMetadataFromContext(elementTestContext)
+            );
+        }
+        if (elementTestContext.elementNameOrWildcard() == null) {
+            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+        }
+        if (elementTestContext.elementNameOrWildcard().elementName() == null) {
+            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+        }
+        Name elementName = parseEqName(
+            elementTestContext.elementNameOrWildcard().elementName().eqName(),
+            false,
+            false,
+            false,
+            false
+        );
+        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {

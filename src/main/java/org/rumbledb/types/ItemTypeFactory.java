@@ -650,6 +650,28 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Wildcard XQuery document node type document-node().
+     *
+     * @return wildcard document node type
+     */
+    public static ItemType documentNodeItemType() {
+        return BuiltinTypesCatalogue.documentNode;
+    }
+
+    /**
+     * Restricted XQuery document node type document-node(element(...)).
+     *
+     * @param elementTestType element-test type restriction
+     * @return restricted document node type
+     */
+    public static ItemType documentNodeItemType(ElementNodeItemType elementTestType) {
+        if (elementTestType == null) {
+            throw new OurBadException("Document node element-test type cannot be null.");
+        }
+        return new DocumentNodeItemType(elementTestType);
+    }
+
+    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object

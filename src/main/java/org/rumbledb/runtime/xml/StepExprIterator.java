@@ -119,16 +119,43 @@ public class StepExprIterator extends LocalRuntimeIterator {
         }
     }
 
+    private Item nodeTestItem(Item node, NodeTest testToApply) {
+        NodeTest previousNodeTest = this.nodeTest;
+        this.nodeTest = testToApply;
+        try {
+            return nodeTestItem(node);
+        } finally {
+            this.nodeTest = previousNodeTest;
+        }
+    }
+
     private Item documentKindTest(Item node) {
         DocumentTest documentTest = (DocumentTest) this.nodeTest;
-        if (documentTest.isEmptyCheck()) {
-            if (node.isDocumentNode()) {
-                return node;
-            }
+        if (!node.isDocumentNode()) {
             return null;
         }
-        this.nodeTest = documentTest.getNodeTest();
-        return nodeTestItem(node);
+        if (documentTest.isEmptyCheck()) {
+            return node;
+        }
+        Item documentElement = getDocumentElement(node);
+        if (documentElement == null) {
+            return null;
+        }
+        Item innerMatch = nodeTestItem(documentElement, documentTest.getNodeTest());
+        return innerMatch == null ? null : node;
+    }
+
+    private Item getDocumentElement(Item documentNode) {
+        List<Item> children = documentNode.children();
+        if (children == null) {
+            return null;
+        }
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                return child;
+            }
+        }
+        return null;
     }
 
     private Item nameKindTest(Item node) {
