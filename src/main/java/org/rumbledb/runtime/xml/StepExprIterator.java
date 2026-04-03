@@ -157,7 +157,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
                 elements.add(child);
             }
         }
-        if(elements.size() == 1) {
+        if (elements.size() == 1) {
             // document-node(N) matches a document node with exactly one element child
             return elements.get(0);
         }
