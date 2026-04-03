@@ -75,13 +75,15 @@ public class XQueryArrayItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        if(((ItemType) other).isXQueryArrayItemType()) {
+        if (((ItemType) other).isXQueryArrayItemType()) {
             // structural equality check
             return this.structurallyEqual((XQueryArrayItemType) other);
         }
-        if(((ItemType) other).isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
+        if (((ItemType) other).isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
             // js:array() = array(item)
-            ArrayItemType arrayItemType = (ArrayItemType) ItemTypeFactory.xqueryArrayOf(SequenceType.createSequenceType("item"));
+            ArrayItemType arrayItemType = (ArrayItemType) ItemTypeFactory.xqueryArrayOf(
+                SequenceType.createSequenceType("item")
+            );
             return this.equals(arrayItemType);
         }
         return isEqualTo((ItemType) other);
@@ -110,9 +112,11 @@ public class XQueryArrayItemType implements ItemType {
         if (equals(superType) || superType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         }
-        if(superType.isArrayItemType()) {
-            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(new SequenceType(superType.getArrayContentFacet(), SequenceType.Arity.One));
-            // a js:array() with a base type of T and no other restrictions = xs:array(T)
+        if (superType.isArrayItemType()) {
+            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
+                new SequenceType(superType.getArrayContentFacet(), SequenceType.Arity.One)
+            );
+            // a js:array() with a base type of T and no other restrictions <: xs:array(T)
             return superType.equals(BuiltinTypesCatalogue.arrayItem) && this.isSubtypeOf(arrayItemType);
         }
         if (superType.isXQueryArrayItemType()) {
@@ -133,8 +137,10 @@ public class XQueryArrayItemType implements ItemType {
             return BuiltinTypesCatalogue.anyFunctionItem;
         }
         if (other.isArrayItemType()) {
-            // an array(T) is a supertype of a js:array() with a base type of T and no other restrictions = xs:array(T)
-            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(new SequenceType(other.getArrayContentFacet(), SequenceType.Arity.One));
+            // an array(T) is a supertype of a js:array() with a base type of T and no other restrictions <: xs:array(T)
+            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
+                new SequenceType(other.getArrayContentFacet(), SequenceType.Arity.One)
+            );
             return this.findLeastCommonSuperTypeWith(arrayItemType);
         }
         if (other.isXQueryArrayItemType()) {

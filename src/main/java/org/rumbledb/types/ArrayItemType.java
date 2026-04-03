@@ -78,7 +78,7 @@ public class ArrayItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        if(((ItemType) other).isXQueryArrayItemType()) {
+        if (((ItemType) other).isXQueryArrayItemType()) {
             // delegate to the XQuery array item type equality check
             return other.equals(this);
         }
@@ -100,8 +100,10 @@ public class ArrayItemType implements ItemType {
             }
         }
         if (superType.isXQueryArrayItemType()) {
-            // an ArrayItem (js:array()) with a base type of T = array(T)
-            return new SequenceType(this.content, SequenceType.Arity.One).isSubtypeOf(superType.getMemberSequenceType());
+            // an ArrayItemType (js:array()) with a base type of T <: array(T)
+            return new SequenceType(this.content, SequenceType.Arity.One).isSubtypeOf(
+                superType.getMemberSequenceType()
+            );
         }
         if (superType.isFunctionItemType()) {
             return superType.equals(BuiltinTypesCatalogue.anyFunctionItem);

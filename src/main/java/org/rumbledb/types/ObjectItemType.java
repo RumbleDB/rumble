@@ -168,7 +168,7 @@ public class ObjectItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        if(((ItemType) other).isMapItemType()) {
+        if (((ItemType) other).isMapItemType()) {
             // delegate to the map item type equality check
             return other.equals(this);
         }

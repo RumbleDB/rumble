@@ -132,14 +132,17 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
      * @param itemToMatch the item to match against the type.
      * @return true if itemToMatch matches itemType.
      */
-public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+    public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
         if (itemToMatch.isMap()) {
             List<Item> keys = itemToMatch.getItemKeys();
             if (keys.isEmpty()) {
                 // empty map: matches
                 // - all map types
                 // - object types (js:object) WITHOUT a JSound schema attached
-                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem) && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem)))
+                if (
+                    itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
+                        && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
+                )
                     return true;
                 // default behavior for object types (js:object) WITH a JSound schema attached
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
@@ -157,7 +160,10 @@ public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch)
                 // empty array: matches
                 // - all array types
                 // - js:array()
-                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem) && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem)))
+                if (
+                    itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
+                        && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem))
+                )
                     return true;
                 // default behavior for array types (js:array()) WITH restrictions
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);

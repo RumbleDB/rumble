@@ -77,10 +77,10 @@ public class MapItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        if(((ItemType) other).isMapItemType()) {
+        if (((ItemType) other).isMapItemType()) {
             return this.structurallyEqual((MapItemType) other);
         }
-        if(((ItemType) other).isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
+        if (((ItemType) other).isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
             // a js:object = map(xs:string, item)
             ItemType objectAsMap = ItemTypeFactory.mapOf(
                 BuiltinTypesCatalogue.stringItem,
@@ -88,8 +88,8 @@ public class MapItemType implements ItemType {
             );
             return this.equals(objectAsMap);
         }
-            return isEqualTo((ItemType) other);
-        }
+        return isEqualTo((ItemType) other);
+    }
 
     @Override
     public int hashCode() {
