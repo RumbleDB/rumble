@@ -687,12 +687,8 @@ public class BuiltinTypesCatalogue {
 
     // XML node types (per XPath Data Model 3.1, Section 2.7.4)
     public static final ItemType nodeItem = new NodeItemType();
-    public static final ItemType elementNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("element")
-    );
-    public static final ItemType attributeNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("attribute")
-    );
+    public static final ItemType elementNode = new ElementNodeItemType();
+    public static final ItemType attributeNode = new AttributeNodeItemType();
     public static final ItemType documentNode = new XmlNodeItemType(
             Name.createVariableInDefaultTypeNamespace("document-node")
     );

@@ -2143,15 +2143,95 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return BuiltinTypesCatalogue.getItemTypeByName(name);
         }
         if (itemTypeContext.kindTest() != null) {
-            // TODO need to implement Node types
-            throw new UnsupportedFeatureException(
-                    "Kindtest not yet supported",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            return processKindTestAsItemType(itemTypeContext.kindTest());
         }
         throw new UnsupportedFeatureException(
                 "Unsupported itemtype encountered",
                 ExceptionMetadata.EMPTY_METADATA
+        );
+    }
+
+    private ItemType processKindTestAsItemType(XQueryParser.KindTestContext kindTestContext) {
+        if (kindTestContext.anyKindTest() != null) {
+            return BuiltinTypesCatalogue.nodeItem;
+        }
+        if (kindTestContext.documentTest() != null) {
+            XQueryParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
+            if (documentTestContext.schemaElementTest() != null) {
+                throw new UnsupportedFeatureException(
+                        "Schema element tests (schema-element(...)) are not supported",
+                        createMetadataFromContext(documentTestContext)
+                );
+            }
+            if (documentTestContext.elementTest() != null) {
+                throw new UnsupportedFeatureException(
+                        "document-node(element(...)) item types are not supported yet",
+                        createMetadataFromContext(documentTestContext)
+                );
+            }
+            return BuiltinTypesCatalogue.documentNode;
+        }
+        if (kindTestContext.elementTest() != null) {
+            XQueryParser.ElementTestContext elementTestContext = kindTestContext.elementTest();
+            if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
+                throw new UnsupportedFeatureException(
+                        "Typed or nillable element item tests are not supported yet",
+                        createMetadataFromContext(elementTestContext)
+                );
+            }
+            if (elementTestContext.elementNameOrWildcard() == null) {
+                return BuiltinTypesCatalogue.elementNode;
+            }
+            if (elementTestContext.elementNameOrWildcard().elementName() == null) {
+                return BuiltinTypesCatalogue.elementNode;
+            }
+            Name elementName = parseEqName(
+                elementTestContext.elementNameOrWildcard().elementName().eqName(),
+                false,
+                false,
+                false,
+                false
+            );
+            return ItemTypeFactory.elementNodeItemType(elementName);
+        }
+        if (kindTestContext.attributeTest() != null) {
+            XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
+            if (attributeTestContext.typeName() != null) {
+                throw new UnsupportedFeatureException(
+                        "Typed attribute item tests are not supported yet",
+                        createMetadataFromContext(attributeTestContext)
+                );
+            }
+            if (attributeTestContext.attributeNameOrWildcard() == null) {
+                return BuiltinTypesCatalogue.attributeNode;
+            }
+            if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
+                return BuiltinTypesCatalogue.attributeNode;
+            }
+            Name attributeName = parseEqName(
+                attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
+                false,
+                false,
+                false,
+                false
+            );
+            return ItemTypeFactory.attributeNodeItemType(attributeName);
+        }
+        if (kindTestContext.commentTest() != null) {
+            return BuiltinTypesCatalogue.commentNode;
+        }
+        if (kindTestContext.textTest() != null) {
+            return BuiltinTypesCatalogue.textNode;
+        }
+        if (kindTestContext.namespaceNodeTest() != null) {
+            return BuiltinTypesCatalogue.namespaceNode;
+        }
+        if (kindTestContext.piTest() != null) {
+            return BuiltinTypesCatalogue.processingInstructionNode;
+        }
+        throw new UnsupportedFeatureException(
+                "Unsupported kind test in item type: " + kindTestContext.getText(),
+                createMetadataFromContext(kindTestContext)
         );
     }
 

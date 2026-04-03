@@ -8,8 +8,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
@@ -302,7 +302,7 @@ public class ElementItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.elementNode;
+        return ItemTypeFactory.elementNodeItemType(this.dmNodeName.getQNameValue());
     }
 
     @Override

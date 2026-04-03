@@ -606,6 +606,50 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Wildcard XQuery element node type element().
+     *
+     * @return wildcard element node type
+     */
+    public static ItemType elementNodeItemType() {
+        return BuiltinTypesCatalogue.elementNode;
+    }
+
+    /**
+     * Named XQuery element node type element(N).
+     *
+     * @param nodeName node QName restriction
+     * @return named element node type
+     */
+    public static ItemType elementNodeItemType(Name nodeName) {
+        if (nodeName == null) {
+            throw new OurBadException("Element node name cannot be null.");
+        }
+        return new ElementNodeItemType(nodeName);
+    }
+
+    /**
+     * Wildcard XQuery attribute node type attribute().
+     *
+     * @return wildcard attribute node type
+     */
+    public static ItemType attributeNodeItemType() {
+        return BuiltinTypesCatalogue.attributeNode;
+    }
+
+    /**
+     * Named XQuery attribute node type attribute(N).
+     *
+     * @param nodeName node QName restriction
+     * @return named attribute node type
+     */
+    public static ItemType attributeNodeItemType(Name nodeName) {
+        if (nodeName == null) {
+            throw new OurBadException("Attribute node name cannot be null.");
+        }
+        return new AttributeNodeItemType(nodeName);
+    }
+
+    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object
