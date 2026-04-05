@@ -2206,12 +2206,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (itemTypeContext.arrayTest() != null) {
             XQueryParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
             if (arrayTestContext.anyArrayTest() != null) {
-                return BuiltinTypesCatalogue.arrayItem;
+                // XQuery 3.1 array(*) is the XDM array type (members are sequences), not js:array().
+                return BuiltinTypesCatalogue.xqueryArrayItem;
             }
             XQueryParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
             if (typedArrayTestContext != null) {
                 SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
-                return ArrayItemType.arrayOf(contentSequenceType.getItemType());
+                return ItemTypeFactory.xqueryArrayOf(contentSequenceType);
             }
         }
         if (itemTypeContext.eqName() != null) {

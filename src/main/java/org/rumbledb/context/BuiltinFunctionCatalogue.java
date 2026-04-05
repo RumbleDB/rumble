@@ -20,6 +20,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayTailFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayAppendFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayInsertBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayJoinFunctionIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayPutFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayRemoveFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySortFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySubarrayFunctionIterator;
@@ -3164,6 +3165,22 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * W3C array:put — returns a new array with the member at a 1-based position replaced (F&amp;O 3.1).
+     */
+    static final BuiltinFunction array_put = createBuiltinFunction(
+        new Name(
+                Name.ARRAY_NS,
+                "array",
+                "put"
+        ),
+        "array",
+        "integer",
+        "item*",
+        "array",
+        ArrayPutFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * W3C array:subarray function that extracts a subarray
      */
     static final BuiltinFunction array_subarray_2 = createBuiltinFunction(
@@ -4029,6 +4046,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(array_insert_before.getIdentifier(), array_insert_before);
         builtinFunctions.put(array_append.getIdentifier(), array_append);
         builtinFunctions.put(array_remove.getIdentifier(), array_remove);
+        builtinFunctions.put(array_put.getIdentifier(), array_put);
         builtinFunctions.put(array_subarray_2.getIdentifier(), array_subarray_2);
         builtinFunctions.put(array_subarray_3.getIdentifier(), array_subarray_3);
         builtinFunctions.put(array_fold_left.getIdentifier(), array_fold_left);
