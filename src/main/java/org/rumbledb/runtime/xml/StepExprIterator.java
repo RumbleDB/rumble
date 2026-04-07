@@ -170,7 +170,13 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (!isPrincipalNodeKind(node)) {
                 return null;
             }
-            if (nameTest.getQName().equals(nodeNameLexical(node))) {
+            Item qItem = node.nodeName();
+            if (qItem == null || !qItem.isQName()) {
+                return null;
+            }
+            // Compare expanded names, not lexical strings: e.g. default element NS uses prefix "" in the name test
+            // while DOM nodes often have prefix null, so Name.toString() differs for the same expanded QName.
+            if (nameTest.getExpandedName().equals(qItem.getQNameValue())) {
                 return node;
             }
             return null;
