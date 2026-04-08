@@ -130,7 +130,20 @@ public class MapItemType implements ItemType {
                 && this.valueSequenceType.isSubtypeOf(sup.valueSequenceType);
         }
         if (superType.isFunctionItemType()) {
-            return superType.equals(BuiltinTypesCatalogue.anyFunctionItem);
+            if (superType.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
+                return true;
+            }
+            FunctionSignature superSignature = superType.getSignature();
+            if (superSignature == null) {
+                return false;
+            }
+            FunctionSignature mapAsFunctionSignature = new FunctionSignature(
+                    Collections.singletonList(
+                        new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)
+                    ),
+                    this.valueSequenceType
+            );
+            return mapAsFunctionSignature.isSubtypeOf(superSignature);
         }
         return false;
     }
@@ -149,6 +162,25 @@ public class MapItemType implements ItemType {
             return this.findLeastCommonSuperTypeWith(objectAsMap);
         }
         if (other.isFunctionItemType()) {
+            if (other.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+            FunctionSignature otherSignature = other.getSignature();
+            if (otherSignature == null) {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+            FunctionSignature mapAsFunctionSignature = new FunctionSignature(
+                    Collections.singletonList(
+                        new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)
+                    ),
+                    this.valueSequenceType
+            );
+            if (mapAsFunctionSignature.isSubtypeOf(otherSignature)) {
+                return other;
+            }
+            if (otherSignature.isSubtypeOf(mapAsFunctionSignature)) {
+                return ItemTypeFactory.createFunctionItemType(mapAsFunctionSignature);
+            }
             return BuiltinTypesCatalogue.anyFunctionItem;
         }
         if (other.isMapItemType()) {
