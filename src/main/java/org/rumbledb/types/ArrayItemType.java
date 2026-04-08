@@ -106,7 +106,10 @@ public class ArrayItemType implements ItemType {
             );
         }
         if (superType.isFunctionItemType()) {
-            return superType.equals(BuiltinTypesCatalogue.anyFunctionItem);
+            ItemType xqueryArrayType = ItemTypeFactory.xqueryArrayOf(
+                new SequenceType(this.content, SequenceType.Arity.One)
+            );
+            return xqueryArrayType.isSubtypeOf(superType);
         }
         return ItemType.super.isSubtypeOf(superType);
     }

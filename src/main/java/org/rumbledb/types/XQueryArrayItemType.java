@@ -123,7 +123,20 @@ public class XQueryArrayItemType implements ItemType {
             return this.memberSequenceType.isSubtypeOf(superType.getMemberSequenceType());
         }
         if (superType.isFunctionItemType()) {
-            return superType.equals(BuiltinTypesCatalogue.anyFunctionItem);
+            if (superType.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
+                return true;
+            }
+            FunctionSignature superSignature = superType.getSignature();
+            if (superSignature == null) {
+                return false;
+            }
+            FunctionSignature arrayAsFunctionSignature = new FunctionSignature(
+                    Collections.singletonList(
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                    ),
+                    this.memberSequenceType
+            );
+            return arrayAsFunctionSignature.isSubtypeOf(superSignature);
         }
         return false;
     }
@@ -134,6 +147,25 @@ public class XQueryArrayItemType implements ItemType {
             return this;
         }
         if (other.isFunctionItemType()) {
+            if (other.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+            FunctionSignature otherSignature = other.getSignature();
+            if (otherSignature == null) {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+            FunctionSignature arrayAsFunctionSignature = new FunctionSignature(
+                    Collections.singletonList(
+                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
+                    ),
+                    this.memberSequenceType
+            );
+            if (arrayAsFunctionSignature.isSubtypeOf(otherSignature)) {
+                return other;
+            }
+            if (otherSignature.isSubtypeOf(arrayAsFunctionSignature)) {
+                return ItemTypeFactory.createFunctionItemType(arrayAsFunctionSignature);
+            }
             return BuiltinTypesCatalogue.anyFunctionItem;
         }
         if (other.isArrayItemType()) {
