@@ -230,12 +230,13 @@ public class ObjectItemType implements ItemType {
                 }
             }
         }
-        if (superType.isMapItemType() || superType.isFunctionItemType()) {
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                SequenceType.createSequenceType("item")
-            );
-            return objectAsMap.isSubtypeOf(superType);
+        if (superType.isMapItemType()) {
+            return this.getObjectAsMapType().isSubtypeOf(superType);
+        }
+        if (superType.isFunctionItemType()) {
+            // Delegate object/function relationships to map semantics:
+            // js:object = map(xs:string, item)
+            return this.getObjectAsMapType().isSubtypeOf(superType);
         }
         return ItemType.super.isSubtypeOf(superType);
     }
@@ -245,14 +246,22 @@ public class ObjectItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
-        if (other.isMapItemType() || other.isFunctionItemType()) {
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                SequenceType.createSequenceType("item")
-            );
-            return objectAsMap.findLeastCommonSuperTypeWith(other);
+        if (other.isMapItemType()) {
+            return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        }
+        if (other.isFunctionItemType()) {
+            // Delegate object/function LCS to map semantics:
+            // js:object = map(xs:string, item)
+            return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
         }
         return ItemType.super.findLeastCommonSuperTypeWith(other);
+    }
+
+    private ItemType getObjectAsMapType() {
+        return ItemTypeFactory.mapOf(
+            BuiltinTypesCatalogue.stringItem,
+            SequenceType.createSequenceType("item")
+        );
     }
 
     @Override
