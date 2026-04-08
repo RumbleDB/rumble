@@ -387,8 +387,13 @@ public class ItemFactory {
         return new DocumentItem(children);
     }
 
-    public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
-        return new ElementItem(elementNode, children, attributes);
+    public Item createXmlElementNode(
+            Node elementNode,
+            List<Item> children,
+            List<Item> attributes,
+            Map<String, String> namespaceBindings
+    ) {
+        return new ElementItem(elementNode, children, attributes, namespaceBindings);
     }
 
     public Item createXmlElementNode(Item nodeName, List<Item> children, List<Item> attributes) {

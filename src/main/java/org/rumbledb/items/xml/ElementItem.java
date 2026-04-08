@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -43,37 +42,31 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        seedNamespaceBindingForNodeName();
         this.stringValue = "<" + this.dmNodeName + "/>";
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
+        this(elementNode, children, attributes, Collections.emptyMap());
+    }
+
+    public ElementItem(
+            Node elementNode,
+            List<Item> children,
+            List<Item> attributes,
+            Map<String, String> namespaceBindings
+    ) {
         this.dmNodeName = ItemFactory.getInstance()
             .createQNameItem(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode));
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        seedNamespaceBindingForNodeName();
-    }
-
-    /**
-     * Declares the namespace binding implied by the element's node-name so XML serialization can emit a valid
-     * lexical QName ({@code xmlns} / {@code xmlns:prefix}).
-     */
-    private void seedNamespaceBindingForNodeName() {
-        if (this.dmNodeName == null || !this.dmNodeName.isQName()) {
-            return;
-        }
-        Name n = this.dmNodeName.getQNameValue();
-        if (n.getNamespace() == null) {
-            return;
-        }
-        String prefix = n.getPrefix();
-        if (prefix == null || prefix.isEmpty()) {
-            this.namespaces.put("", n.getNamespace());
-        } else {
-            this.namespaces.put(prefix, n.getNamespace());
+        if (namespaceBindings != null) {
+            for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
+                addOrReplaceNamespace(
+                    ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue())
+                );
+            }
         }
     }
 
