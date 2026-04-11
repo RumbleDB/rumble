@@ -106,14 +106,6 @@ public class FormatNumberPictureParser {
             throw invalidPicture(pictureString, metadata, "exponent separator must not occur more than once");
         }
 
-        if (exponentSeparatorIndex == -3) {
-            throw invalidPicture(
-                pictureString,
-                metadata,
-                "exponent separator must be preceded and followed by an active character"
-            );
-        }
-
         // Split the active region into mantissa and exponent part.
         // If no exponent separator exists, the whole active region is the mantissa.
         String mantissaPart;
@@ -184,6 +176,15 @@ public class FormatNumberPictureParser {
             );
         }
 
+        // Rule: A sub-picture must not contain adjacent grouping-separator-signs
+        if (FormatNumberPictureSupport.hasAdjacentGroupingSeparators(activeRegion, decimalFormat)) {
+            throw invalidPicture(
+                pictureString,
+                metadata,
+                "subpicture must not contain adjacent grouping separators"
+            );
+        }
+
         // Rule: The integer part must not contain a mandatory digit
         // followed by an optional digit.
         if (FormatNumberPictureSupport.hasMandatoryDigitFollowedByOptionalDigit(integerPart, decimalFormat)) {
@@ -247,6 +248,16 @@ public class FormatNumberPictureParser {
             );
         }
 
+        // Rule: A sub-picture that contains a percent-sign or per-mille-sign
+        // must not contain a character treated as an exponent-separator-sign.
+        if (hasExponent && (hasPercent || hasPerMille)) {
+            throw invalidPicture(
+                pictureString,
+                metadata,
+                "subpicture must not contain a percent sign or per-mille sign together with an exponent separator"
+            );
+        }
+
         // Analysis phase:
         // integer-part-grouping-positions
         List<GroupingPos> integerPartGroupingPositions = FormatNumberPictureSupport.findIntegerGroupingPositions(
@@ -254,10 +265,11 @@ public class FormatNumberPictureParser {
             decimalFormat
         );
 
-        Integer repeatingIntegerGroupingInterval =
-            FormatNumberPictureSupport.findRepeatingIntegerGroupingInterval(integerPartGroupingPositions);
-
-
+        Integer repeatingIntegerGroupingInterval = FormatNumberPictureSupport.findRepeatingIntegerGroupingInterval(
+            integerPart,
+            integerPartGroupingPositions,
+            decimalFormat
+        );
 
         // Analysis phase:
         // fractional-part-grouping-positions

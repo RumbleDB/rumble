@@ -2,10 +2,14 @@ package org.rumbledb.runtime.functions.base.formatting.pictures.FormatNumber;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DecimalFormatDefinition;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidDecimalFormatName;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 
 public class NumberPictureFormatter {
     private NumberPictureFormatter() {
@@ -15,17 +19,15 @@ public class NumberPictureFormatter {
             Item valueItem,
             Item pictureItem,
             Item decimalFormatNameItem,
-            DecimalFormatDefinition defaultDecimalFormat,
+            RuntimeStaticContext staticContext,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDefinition decimalFormat = defaultDecimalFormat;
+        DecimalFormatDefinition decimalFormat = staticContext.getDefaultDecimalFormat();
 
-        // TODO
-        if (decimalFormatNameItem == null) {
-            decimalFormat = defaultDecimalFormat;
-        } else {
-            // TODO resolve decimalFormatName and handle accordingly
+        if (decimalFormatNameItem != null) {
+            decimalFormat = resolveDecimalFormat(decimalFormatNameItem, staticContext, metadata);
         }
+
         String pictureString = pictureItem.getStringValue();
 
         FormatNumberPicture picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
@@ -53,18 +55,94 @@ public class NumberPictureFormatter {
             }
         }
 
-        // Handling Special Cases for Double and Float
-
-        System.err.println("\n\n" + debugValueItem(valueItem));
-        System.err.println(debugFormatNumberPicture(pictureString, picture) + "\n\n");
-
-
         ResolvedNumber resolvedNumber = FormatNumberTypeResolver.getValue(valueItem);
         if (resolvedNumber.isNegative) {
             return applySubPictureFormatting(resolvedNumber, picture.getNegativeSubPicture(), decimalFormat);
         } else {
             return applySubPictureFormatting(resolvedNumber, picture.getPositiveSubPicture(), decimalFormat);
         }
+    }
+
+    private static DecimalFormatDefinition resolveDecimalFormat(
+            Item decimalFormatNameItem,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata
+    ) {
+        String lexicalName = decimalFormatNameItem.getStringValue();
+        String trimmedName = lexicalName == null ? "" : lexicalName.trim();
+
+        if (trimmedName.isEmpty()) {
+            return staticContext.getDefaultDecimalFormat();
+        }
+
+        Name resolvedName = resolveDecimalFormatName(
+            trimmedName,
+            staticContext.getStaticallyKnownNamespaces(),
+            metadata
+        );
+
+        if (!staticContext.hasDecimalFormat(resolvedName)) {
+            throw new InvalidDecimalFormatName(
+                    "Decimal format not found: " + trimmedName,
+                    metadata
+            );
+        }
+
+        return staticContext.getDecimalFormat(resolvedName);
+    }
+
+    private static Name resolveDecimalFormatName(
+            String text,
+            Map<String, String> staticallyKnownNamespaces,
+            ExceptionMetadata metadata
+    ) {
+        if (text.startsWith("Q{")) {
+            int closingBrace = text.indexOf('}');
+            if (closingBrace < 0 || closingBrace == text.length() - 1) {
+                throw new InvalidDecimalFormatName(
+                        "Invalid URIQualifiedName: " + text,
+                        metadata
+                );
+            }
+
+            String namespace = text.substring(2, closingBrace);
+            String localName = text.substring(closingBrace + 1);
+
+            if (localName.isEmpty()) {
+                throw new InvalidDecimalFormatName(
+                        "Invalid URIQualifiedName, missing local name: " + text,
+                        metadata
+                );
+            }
+
+            return new Name(namespace, null, localName);
+        }
+
+        int colon = text.indexOf(':');
+
+        if (colon < 0) {
+            return Name.createVariableInNoNamespace(text);
+        }
+
+        String prefix = text.substring(0, colon);
+        String localName = text.substring(colon + 1);
+
+        if (prefix.isEmpty() || localName.isEmpty()) {
+            throw new InvalidDecimalFormatName(
+                    "Invalid QName: " + text,
+                    metadata
+            );
+        }
+
+        String namespace = staticallyKnownNamespaces.get(prefix);
+        if (namespace == null) {
+            throw new InvalidDecimalFormatName(
+                    "Prefix " + prefix + " could not be resolved against a namespace in scope.",
+                    metadata
+            );
+        }
+
+        return new Name(namespace, prefix, localName);
     }
 
     /**
@@ -183,10 +261,8 @@ public class NumberPictureFormatter {
 
         // Remove the decimal separator if the sub-picture does not contain one, or if no fractional digits remain.
         String formattedNumber = paddedIntegerPart;
-        boolean subPictureHasDecimalSeparator =
-            FormatNumberPictureSupport.findDecimalSeparatorIndex(picture.getRawPictureString(), decimalFormat) >= 0;
 
-        if (subPictureHasDecimalSeparator && !paddedFractionalPart.isEmpty()) {
+        if (!paddedFractionalPart.isEmpty()) {
             formattedNumber += new String(Character.toChars(decimalFormat.getDecimalSeparator()))
                 + paddedFractionalPart;
         }
@@ -335,7 +411,7 @@ public class NumberPictureFormatter {
         BigDecimal upperBound = BigDecimal.ONE.scaleByPowerOfTen(scalingFactor);
         BigDecimal lowerBound = BigDecimal.ONE.scaleByPowerOfTen(scalingFactor - 1);
 
-        while (abs.compareTo(upperBound) >= 0) {
+        while (abs.compareTo(upperBound) > 0) {
             mantissa = mantissa.movePointLeft(1);
             exponent += 1;
             abs = mantissa.abs();

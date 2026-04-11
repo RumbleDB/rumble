@@ -23,15 +23,21 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
         Item decimalFormatNameItem = this.children.size() > 2
             ? this.children.get(2).materializeFirstItemOrNull(context)
-            : null; // TODO IMPLEMENT
+            : null;
 
-        DecimalFormatDefinition decimalFormat = new DecimalFormatDefinition();
+        DecimalFormatDefinition defaultDecimalFormat = staticContext.getDefaultDecimalFormat();
 
         if (valueItem == null) {
-            return ItemFactory.getInstance().createStringItem(decimalFormat.getNanSymbol());
+            return ItemFactory.getInstance().createStringItem(defaultDecimalFormat.getNanSymbol());
         }
 
-        String result = NumberPictureFormatter.format(valueItem, pictureItem, null, decimalFormat, getMetadata());
+        String result = NumberPictureFormatter.format(
+            valueItem,
+            pictureItem,
+            decimalFormatNameItem,
+            staticContext,
+            getMetadata()
+        );
         return ItemFactory.getInstance().createStringItem(result);
     }
 }

@@ -57,6 +57,35 @@ public class FormatNumberPictureSupport {
         return !isActiveCharacter(cp, decimalFormat);
     }
 
+    /**
+     * Context-sensitive activity test:
+     * a character matching exponent-separator is only treated as active
+     * if it is actually treated as an exponent-separator-sign in this subpicture,
+     * i.e. if it is preceded and followed by an active character.
+     */
+    static boolean isActiveCharacterAt(String s, int index, DecimalFormatDefinition decimalFormat) {
+        int cp = s.codePointAt(index);
+
+        if (!isExponentSeparator(cp, decimalFormat)) {
+            return isActiveCharacter(cp, decimalFormat);
+        }
+
+        if (index == 0) {
+            return false;
+        }
+
+        int nextIndex = index + Character.charCount(cp);
+        if (nextIndex >= s.length()) {
+            return false;
+        }
+
+        int prevCp = s.codePointBefore(index);
+        int nextCp = s.codePointAt(nextIndex);
+
+        return isActiveCharacter(prevCp, decimalFormat)
+            && isActiveCharacter(nextCp, decimalFormat);
+    }
+
     static int countActiveDigitSigns(String s, DecimalFormatDefinition decimalFormat) {
         int count = 0;
         for (int i = 0; i < s.length();) {
@@ -83,10 +112,10 @@ public class FormatNumberPictureSupport {
 
     static int findLeftmostActiveCharIndex(String s, DecimalFormatDefinition decimalFormat) {
         for (int i = 0; i < s.length();) {
-            int cp = s.codePointAt(i);
-            if (isActiveCharacter(cp, decimalFormat)) {
+            if (isActiveCharacterAt(s, i, decimalFormat)) {
                 return i;
             }
+            int cp = s.codePointAt(i);
             i += Character.charCount(cp);
         }
         return -1;
@@ -95,10 +124,10 @@ public class FormatNumberPictureSupport {
     static int findRightmostActiveCharIndex(String s, DecimalFormatDefinition decimalFormat) {
         int last = -1;
         for (int i = 0; i < s.length();) {
-            int cp = s.codePointAt(i);
-            if (isActiveCharacter(cp, decimalFormat)) {
+            if (isActiveCharacterAt(s, i, decimalFormat)) {
                 last = i;
             }
+            int cp = s.codePointAt(i);
             i += Character.charCount(cp);
         }
         return last;
@@ -193,6 +222,23 @@ public class FormatNumberPictureSupport {
         return false;
     }
 
+    static boolean hasAdjacentGroupingSeparators(String s, DecimalFormatDefinition decimalFormat) {
+        for (int i = 0; i < s.length();) {
+            int cp = s.codePointAt(i);
+            int nextIndex = i + Character.charCount(cp);
+
+            if (nextIndex < s.length()) {
+                int nextCp = s.codePointAt(nextIndex);
+                if (isGroupingSeparator(cp, decimalFormat) && isGroupingSeparator(nextCp, decimalFormat)) {
+                    return true;
+                }
+            }
+
+            i = nextIndex;
+        }
+        return false;
+    }
+
     static boolean hasInvalidIntegerGroupingPosition(List<GroupingPos> groupingPositions) {
         if (groupingPositions == null || groupingPositions.isEmpty()) {
             return false;
@@ -265,41 +311,68 @@ public class FormatNumberPictureSupport {
 
     static boolean hasPassiveCharacterWithinActiveRegion(String activeRegion, DecimalFormatDefinition decimalFormat) {
         for (int i = 0; i < activeRegion.length();) {
-            int cp = activeRegion.codePointAt(i);
-            if (isPassiveCharacter(cp, decimalFormat)) {
+            if (!isActiveCharacterAt(activeRegion, i, decimalFormat)) {
                 return true;
             }
+            int cp = activeRegion.codePointAt(i);
             i += Character.charCount(cp);
         }
         return false;
     }
 
-    static Integer findRepeatingIntegerGroupingInterval(List<GroupingPos> groupingPositions) {
+    static Integer findRepeatingIntegerGroupingInterval(
+            String integerPart,
+            List<GroupingPos> groupingPositions,
+            DecimalFormatDefinition decimalFormat
+    ) {
         if (groupingPositions == null || groupingPositions.isEmpty()) {
             return null;
         }
 
         List<Integer> positions = new ArrayList<>();
         for (GroupingPos groupingPos : groupingPositions) {
-            positions.add(groupingPos.distanceFromRight);
+            positions.add(groupingPos.getDistanceFromRight());
         }
 
         positions.sort(Integer::compareTo);
 
-        int n = positions.get(0);
-
-        if (n <= 0) {
+        int groupingSize = positions.get(0);
+        if (groupingSize <= 0) {
             return null;
         }
 
+        int totalDigitSigns = countActiveDigitSigns(integerPart, decimalFormat);
+
+        boolean hasLeftEdgeSeparator = positions.get(positions.size() - 1) == totalDigitSigns;
+
+        int expectedCount = (totalDigitSigns - 1) / groupingSize;
+        if (hasLeftEdgeSeparator) {
+            expectedCount += 1;
+        }
+
+        if (positions.size() != expectedCount) {
+            return null;
+        }
+
+        int expected = groupingSize;
+        int limit = hasLeftEdgeSeparator ? totalDigitSigns - groupingSize : totalDigitSigns - 1;
+
         for (int i = 0; i < positions.size(); i++) {
-            int expected = n * (i + 1);
-            if (positions.get(i) != expected) {
-                return null;
+            int actual = positions.get(i);
+
+            if (hasLeftEdgeSeparator && i == positions.size() - 1) {
+                if (actual != totalDigitSigns) {
+                    return null;
+                }
+            } else {
+                if (actual != expected || actual > limit) {
+                    return null;
+                }
+                expected += groupingSize;
             }
         }
 
-        return n;
+        return groupingSize;
     }
 
     static String applyDecimalDigitFamily(String s, DecimalFormatDefinition decimalFormat) {
@@ -346,13 +419,11 @@ public class FormatNumberPictureSupport {
         return true;
     }
 
-
     static String applyIntegerPartGrouping(
             String digits,
             FormatNumberSubPicture picture
     ) {
 
-        // TODO liegt identisch in NumericFormattingSupport, wenn sie sich ohne changes bewährt => zusammenziehen
         List<GroupingPos> groupingPositions = picture.getIntegerPartGroupingPositions();
 
         if (groupingPositions == null || groupingPositions.isEmpty()) {
@@ -365,7 +436,6 @@ public class FormatNumberPictureSupport {
 
         String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
 
-        // TODO von hier
         if (repeatingInterval != null) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < reversedDigits.length(); i++) {
@@ -390,15 +460,13 @@ public class FormatNumberPictureSupport {
             }
         }
 
-        // TODO NACH HIER kann man sehr wahrscheinlich später zusammenführen
-
         return sb.reverse().toString();
     }
 
     static String applyFractionalPartGrouping(
             String digits,
             FormatNumberSubPicture picture
-    ) { // TODO refactor pull together if necessary
+    ) {
         List<GroupingPos> groupingPositions = picture.getFractionalPartGroupingPositions();
 
         if (groupingPositions == null || groupingPositions.isEmpty()) {
@@ -429,18 +497,21 @@ public class FormatNumberPictureSupport {
     }
 
     static int findExponentSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {
-        int index = findSeparatorIndex(s, cp -> isExponentSeparator(cp, decimalFormat));
-        if (index < 0) {
-            return index;
+        int found = -1;
+
+        for (int i = 0; i < s.length();) {
+            int cp = s.codePointAt(i);
+
+            if (isExponentSeparator(cp, decimalFormat) && isActiveCharacterAt(s, i, decimalFormat)) {
+                if (found != -1) {
+                    return -2;
+                }
+                found = i;
+            }
+
+            i += Character.charCount(cp);
         }
 
-        int cp = s.codePointAt(index);
-        int endIndex = index + Character.charCount(cp);
-
-        if (index == 0 || endIndex == s.length()) {
-            return -3; // TODO maybe add constants for readability like INVALID_EDGE_EXPONENT?
-        }
-
-        return index;
+        return found;
     }
 }
