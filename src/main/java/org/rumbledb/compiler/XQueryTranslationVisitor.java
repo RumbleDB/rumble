@@ -78,7 +78,6 @@ import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
@@ -297,6 +296,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         boolean defaultCollationSet = false;
         boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
+            System.err.println("[PrologDebug] setter text: " + setterContext.getText());
+            System.err.println("[PrologDebug] emptyOrderDecl? " + (setterContext.emptyOrderDecl() != null));
+            System.err.println("[PrologDebug] decimalFormatDecl? " + (setterContext.decimalFormatDecl() != null));
+            System.err.println("[PrologDebug] defaultCollationDecl? " + (setterContext.defaultCollationDecl() != null));
+            System.err.println("[PrologDebug] baseURIDecl? " + (setterContext.baseURIDecl() != null));
             if (setterContext.emptyOrderDecl() != null) {
                 if (emptyOrderSet) {
                     throw new MoreThanOneEmptyOrderDeclarationException(
@@ -306,6 +310,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 }
                 processEmptySequenceOrder(setterContext.emptyOrderDecl());
                 emptyOrderSet = true;
+                continue;
+            }
+            XQueryParser.DecimalFormatDeclContext decimalFormatDeclarationContext = setterContext.decimalFormatDecl();
+            if (decimalFormatDeclarationContext != null) {
+                processDecimalFormatDeclaration(
+                    decimalFormatDeclarationContext,
+                    createMetadataFromContext(decimalFormatDeclarationContext)
+                );
                 continue;
             }
             if (setterContext.defaultCollationDecl() != null) {
@@ -3345,7 +3357,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     /**
-     * Process dirAttributeValueQuot and return a list of expressions.
+     * Process dirAttributeValueQuot and return a list ofr expressions.
      * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
      * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
      * This method deviates from the strict visitor pattern to return multiple expressions.
@@ -3355,4 +3367,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
 
+    @Override
+    public Node visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    private void processDecimalFormatDeclaration(
+            XQueryParser.DecimalFormatDeclContext ctx,
+            ExceptionMetadata metadata
+    ) {
+        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
+            ctx,
+            ctx.KW_DEFAULT() != null,
+            ctx.eqName(),
+            ctx.DFPropertyName(),
+            ctx.stringLiteral(),
+            this.moduleContext,
+            metadata
+        );
+    }
 }

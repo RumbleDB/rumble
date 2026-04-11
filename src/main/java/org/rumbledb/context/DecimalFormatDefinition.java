@@ -2,6 +2,18 @@ package org.rumbledb.context;
 
 public class DecimalFormatDefinition {
 
+    public static final int DEFAULT_DECIMAL_SEPARATOR = '.';
+    public static final int DEFAULT_GROUPING_SEPARATOR = ',';
+    public static final String DEFAULT_INFINITY = "Infinity";
+    public static final int DEFAULT_MINUS_SIGN = '-';
+    public static final String DEFAULT_NAN_SYMBOL = "NaN";
+    public static final int DEFAULT_PERCENT = '%';
+    public static final int DEFAULT_PER_MILLE = '‰';
+    public static final int DEFAULT_ZERO_DIGIT = '0';
+    public static final int DEFAULT_OPTIONAL_DIGIT = '#';
+    public static final int DEFAULT_PATTERN_SEPARATOR = ';';
+    public static final int DEFAULT_EXPONENT_SEPARATOR = 'e';
+
     private final int decimalSeparator;
     private final int groupingSeparator;
     private final String infinity;
@@ -14,23 +26,55 @@ public class DecimalFormatDefinition {
     private final int patternSeparator;
     private final int exponentSeparator;
 
-    public DecimalFormatDefinition() {
-        this.decimalSeparator = '.';
-        this.groupingSeparator = ',';
-        this.infinity = "Infinity";
-        this.minusSign = '-';
-        this.nanSymbol = "NaN";
-        this.percent = '%';
-        this.perMille = '‰';
-        this.zeroDigit = '0';
-        this.optionalDigit = '#';
-        this.patternSeparator = ';';
-        this.exponentSeparator = 'e';
+    private DecimalFormatDefinition() {
+        this(
+            DEFAULT_DECIMAL_SEPARATOR,
+            DEFAULT_GROUPING_SEPARATOR,
+            DEFAULT_INFINITY,
+            DEFAULT_MINUS_SIGN,
+            DEFAULT_NAN_SYMBOL,
+            DEFAULT_PERCENT,
+            DEFAULT_PER_MILLE,
+            DEFAULT_ZERO_DIGIT,
+            DEFAULT_OPTIONAL_DIGIT,
+            DEFAULT_PATTERN_SEPARATOR,
+            DEFAULT_EXPONENT_SEPARATOR
+        );
+    }
+
+    public static DecimalFormatDefinition defaultInstance() {
+        return new DecimalFormatDefinition();
+    }
+
+    public DecimalFormatDefinition(
+            int decimalSeparator,
+            int groupingSeparator,
+            String infinity,
+            int minusSign,
+            String nanSymbol,
+            int percent,
+            int perMille,
+            int zeroDigit,
+            int optionalDigit,
+            int patternSeparator,
+            int exponentSeparator
+    ) {
+        this.decimalSeparator = decimalSeparator;
+        this.groupingSeparator = groupingSeparator;
+        this.infinity = infinity;
+        this.minusSign = minusSign;
+        this.nanSymbol = nanSymbol;
+        this.percent = percent;
+        this.perMille = perMille;
+        this.zeroDigit = zeroDigit;
+        this.optionalDigit = optionalDigit;
+        this.patternSeparator = patternSeparator;
+        this.exponentSeparator = exponentSeparator;
     }
 
     public int getDecimalSeparator() {
         return this.decimalSeparator;
-    } // TODO codepoints besser machen als strings direkt zurückgeben
+    }
 
     public String getInfinity() {
         return this.infinity;
@@ -69,7 +113,7 @@ public class DecimalFormatDefinition {
     }
 
     public int getExponentSeparator() {
-        return exponentSeparator;
+        return this.exponentSeparator;
     }
 
     @Override
@@ -104,6 +148,9 @@ public class DecimalFormatDefinition {
             + '\''
             + ", patternSeparator='"
             + new String(Character.toChars(this.patternSeparator))
+            + '\''
+            + ", exponentSeparator='"
+            + new String(Character.toChars(this.exponentSeparator))
             + '\''
             + '}';
     }
