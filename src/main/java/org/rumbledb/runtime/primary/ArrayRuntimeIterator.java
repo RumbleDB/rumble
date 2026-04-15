@@ -38,7 +38,7 @@ import java.util.List;
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private boolean isSquareConstructor;
+    private boolean isFixedSlotsArrayConstructor;
 
     /**
      * Curly array constructor: single child whose items become singleton members.
@@ -48,7 +48,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
-        this.isSquareConstructor = false;
+        this.isFixedSlotsArrayConstructor = false;
         if (arrayItems != null) {
             this.children.add(arrayItems);
         }
@@ -59,11 +59,11 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
      */
     public ArrayRuntimeIterator(
             List<RuntimeIterator> memberIterators,
-            boolean isSquareConstructor,
+            boolean isFixedSlotsArrayConstructor,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
-        this.isSquareConstructor = isSquareConstructor;
+        this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
         if (memberIterators != null) {
             this.children.addAll(memberIterators);
         }
@@ -72,7 +72,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        if (isEffectiveSquareConstructor()) {
+        if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
             for (RuntimeIterator child : this.children) {
@@ -101,7 +101,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (isEffectiveSquareConstructor()) {
+        if (isEffectiveFixedSlotsArrayConstructor()) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (this.children.size() == 1) {
@@ -134,11 +134,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    private boolean isEffectiveSquareConstructor() {
-        if (!this.isSquareConstructor) {
-            return false;
-        }
-        String queryLanguage = getConfiguration().getQueryLanguage();
-        return queryLanguage.equals("xquery30") || queryLanguage.equals("xquery31");
+    private boolean isEffectiveFixedSlotsArrayConstructor() {
+        return this.isFixedSlotsArrayConstructor;
     }
 }

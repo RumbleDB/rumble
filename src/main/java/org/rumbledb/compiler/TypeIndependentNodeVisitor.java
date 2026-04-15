@@ -215,7 +215,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     // region primary
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
         ArrayConstructorExpression result;
-        if (expression.isSquareConstructor()) {
+        if (expression.isFixedSlotsArrayConstructor()) {
             List<Expression> visitedMembers = new java.util.ArrayList<>();
             if (expression.getMemberExpressions() != null) {
                 for (Expression memberExpr : expression.getMemberExpressions()) {

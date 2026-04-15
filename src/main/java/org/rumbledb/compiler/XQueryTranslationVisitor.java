@@ -2083,13 +2083,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.SquareArrayConstructorContext sqCtx = (XQueryParser.SquareArrayConstructorContext) child;
             List<XQueryParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
             if (memberCtxs == null || memberCtxs.isEmpty()) {
-                return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+                return new ArrayConstructorExpression(
+                        new ArrayList<>(),
+                        true,
+                        createMetadataFromContext(ctx)
+                );
             }
             List<Expression> memberExpressions = new ArrayList<>();
             for (XQueryParser.ExprSingleContext memberCtx : memberCtxs) {
                 memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
             }
-            return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(ctx));
+            return new ArrayConstructorExpression(
+                    memberExpressions,
+                    true,
+                    createMetadataFromContext(ctx)
+            );
         }
         // else curlyArrayConstructor
         XQueryParser.CurlyArrayConstructorContext childCtx = (XQueryParser.CurlyArrayConstructorContext) child;

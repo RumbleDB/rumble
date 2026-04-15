@@ -889,7 +889,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitArrayConstructor(ArrayConstructorExpression expression, RuntimeIterator argument) {
         RuntimeIterator runtimeIterator;
-        if (expression.isSquareConstructor()) {
+        if (expression.isFixedSlotsArrayConstructor()) {
             List<RuntimeIterator> memberIterators = new ArrayList<>();
             if (expression.getMemberExpressions() != null) {
                 for (org.rumbledb.expressions.Expression memberExpr : expression.getMemberExpressions()) {

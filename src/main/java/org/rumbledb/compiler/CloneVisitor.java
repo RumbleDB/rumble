@@ -429,7 +429,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
         ArrayConstructorExpression result;
-        if (expression.isSquareConstructor()) {
+        if (expression.isFixedSlotsArrayConstructor()) {
             List<Expression> clonedMembers = new java.util.ArrayList<>();
             if (expression.getMemberExpressions() != null) {
                 for (Expression memberExpr : expression.getMemberExpressions()) {

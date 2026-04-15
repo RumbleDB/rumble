@@ -33,7 +33,7 @@ public class ArrayConstructorExpression extends Expression {
 
     private Expression expression;
     private List<Expression> memberExpressions;
-    private boolean isSquareConstructor;
+    private boolean isFixedSlotsArrayConstructor;
 
     /**
      * Curly array constructor: {@code array { expr }}.
@@ -43,7 +43,7 @@ public class ArrayConstructorExpression extends Expression {
         super(metadata);
         this.expression = expression;
         this.memberExpressions = null;
-        this.isSquareConstructor = false;
+        this.isFixedSlotsArrayConstructor = false;
     }
 
     /**
@@ -53,7 +53,7 @@ public class ArrayConstructorExpression extends Expression {
         super(metadata);
         this.expression = null;
         this.memberExpressions = null;
-        this.isSquareConstructor = false;
+        this.isFixedSlotsArrayConstructor = false;
     }
 
     /**
@@ -62,13 +62,13 @@ public class ArrayConstructorExpression extends Expression {
      */
     public ArrayConstructorExpression(
             List<Expression> memberExpressions,
-            boolean isSquareConstructor,
+            boolean isFixedSlotsArrayConstructor,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         this.expression = null;
         this.memberExpressions = memberExpressions;
-        this.isSquareConstructor = isSquareConstructor;
+        this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
     }
 
     public Expression getExpression() {
@@ -79,14 +79,14 @@ public class ArrayConstructorExpression extends Expression {
         return this.memberExpressions;
     }
 
-    public boolean isSquareConstructor() {
-        return this.isSquareConstructor;
+    public boolean isFixedSlotsArrayConstructor() {
+        return this.isFixedSlotsArrayConstructor;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.isSquareConstructor && this.memberExpressions != null) {
+        if (this.isFixedSlotsArrayConstructor && this.memberExpressions != null) {
             result.addAll(this.memberExpressions);
         } else if (this.expression != null) {
             result.add(this.expression);
@@ -97,7 +97,7 @@ public class ArrayConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        if (this.isSquareConstructor) {
+        if (this.isFixedSlotsArrayConstructor) {
             sb.append("[");
             if (this.memberExpressions != null) {
                 for (int i = 0; i < this.memberExpressions.size(); i++) {
