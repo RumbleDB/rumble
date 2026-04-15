@@ -296,11 +296,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         boolean defaultCollationSet = false;
         boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
-            System.err.println("[PrologDebug] setter text: " + setterContext.getText());
-            System.err.println("[PrologDebug] emptyOrderDecl? " + (setterContext.emptyOrderDecl() != null));
-            System.err.println("[PrologDebug] decimalFormatDecl? " + (setterContext.decimalFormatDecl() != null));
-            System.err.println("[PrologDebug] defaultCollationDecl? " + (setterContext.defaultCollationDecl() != null));
-            System.err.println("[PrologDebug] baseURIDecl? " + (setterContext.baseURIDecl() != null));
             if (setterContext.emptyOrderDecl() != null) {
                 if (emptyOrderSet) {
                     throw new MoreThanOneEmptyOrderDeclarationException(
@@ -3357,7 +3352,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     /**
-     * Process dirAttributeValueQuot and return a list ofr expressions.
+     * Process dirAttributeValueQuot and return a list of expressions.
      * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
      * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
      * This method deviates from the strict visitor pattern to return multiple expressions.
