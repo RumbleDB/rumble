@@ -20,33 +20,32 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class NamedFunctions implements Serializable, KryoSerializable {
 
@@ -219,7 +218,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                             callerStaticContext.getStaticallyKnownNamespaces()
                     );
                     RuntimeIterator argumentIterator = arguments.get(i);
-                    if (
+                    /*if (
                         sequenceType.getItemType().isAtomicItemType()
                             && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
                     ) {
@@ -227,7 +226,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                                 Collections.singletonList(argumentIterator),
                                 argStaticContext
                         );
-                    }
+                    }*/
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
