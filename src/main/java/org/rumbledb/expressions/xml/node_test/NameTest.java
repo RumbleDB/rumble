@@ -37,6 +37,14 @@ public class NameTest implements NodeTest {
         return this.qname.toString();
     }
 
+    /**
+     * Expanded name (namespace URI + local name). Prefer {@link Name#equals} over string forms for node matching:
+     * the same expanded name can stringify differently when the prefix is empty vs absent.
+     */
+    public Name getExpandedName() {
+        return this.qname;
+    }
+
     public boolean hasWildcardOnly() {
         return this.wildcardWithNCName != null && this.wildcardWithNCName.equals("*");
     }

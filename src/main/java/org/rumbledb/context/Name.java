@@ -57,6 +57,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final String MAP_NS = "http://www.w3.org/2005/xpath-functions/map";
     public static final String ARRAY_NS = "http://www.w3.org/2005/xpath-functions/array";
     public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
+    public static final String XML_NS = "http://www.w3.org/XML/1998/namespace";
     public static final String JS_NS = "http://jsoniq.org/types";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
     public static final String AN_NS = "http://www.w3.org/2012/xquery";

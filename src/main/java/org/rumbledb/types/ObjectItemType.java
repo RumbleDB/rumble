@@ -176,6 +176,10 @@ public class ObjectItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
+        if (((ItemType) other).isMapItemType()) {
+            // delegate to the map item type equality check
+            return other.equals(this);
+        }
         return isEqualTo((ItemType) other);
     }
 
@@ -224,12 +228,6 @@ public class ObjectItemType implements ItemType {
         return allowedFacets;
     }
 
-    private static MapItemType getLegacyObjectAsMapType() {
-        return ItemTypeFactory.mapOf(
-            BuiltinTypesCatalogue.stringItem,
-            new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One)
-        );
-    }
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
@@ -240,8 +238,13 @@ public class ObjectItemType implements ItemType {
                 }
             }
         }
-        if (superType.isMapItemType() || superType.isFunctionItemType()) {
-            return getLegacyObjectAsMapType().isSubtypeOf(superType);
+        if (superType.isMapItemType()) {
+            return this.getObjectAsMapType().isSubtypeOf(superType);
+        }
+        if (superType.isFunctionItemType()) {
+            // Delegate object/function relationships to map semantics:
+            // js:object = map(xs:string, item)
+            return this.getObjectAsMapType().isSubtypeOf(superType);
         }
         return ItemType.super.isSubtypeOf(superType);
     }
@@ -251,10 +254,22 @@ public class ObjectItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
-        if (other.isMapItemType() || other.isFunctionItemType()) {
-            return getLegacyObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        if (other.isMapItemType()) {
+            return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        }
+        if (other.isFunctionItemType()) {
+            // Delegate object/function LCS to map semantics:
+            // js:object = map(xs:string, item)
+            return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
         }
         return ItemType.super.findLeastCommonSuperTypeWith(other);
+    }
+
+    private ItemType getObjectAsMapType() {
+        return ItemTypeFactory.mapOf(
+            BuiltinTypesCatalogue.stringItem,
+            SequenceType.createSequenceType("item")
+        );
     }
 
     @Override

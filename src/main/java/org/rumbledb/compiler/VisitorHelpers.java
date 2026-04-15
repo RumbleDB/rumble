@@ -163,6 +163,7 @@ public class VisitorHelpers {
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
         if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+            setXQueryLanguageFromProlog(query, configuration);
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -290,11 +291,18 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
+        XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                moduleContext,
+                true,
+                configuration,
+                query,
+                xQueryTokens
+        );
         try {
             // TODO Handle module extras
             XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -334,6 +342,7 @@ public class VisitorHelpers {
             RumbleRuntimeConfiguration configuration
     ) {
         if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+            setXQueryLanguageFromProlog(query, configuration);
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             // overwrite default version if query specifies jsoniq version
@@ -393,13 +402,20 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
+        XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration, query);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                moduleContext,
+                false,
+                configuration,
+                query,
+                xQueryTokens
+        );
         try {
             // TODO Handle module extras
             XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
@@ -575,5 +591,20 @@ public class VisitorHelpers {
                     "Unexpected program state reached while setting local execution for unset user defined functions."
             );
         }
+    }
+
+    private static void setXQueryLanguageFromProlog(String query, RumbleRuntimeConfiguration configuration) {
+        if (query.startsWith("xquery version \"3.0\"")) {
+            configuration.setQueryLanguage("xquery30");
+            return;
+        }
+        if (query.startsWith("xquery version \"3.1\"")) {
+            configuration.setQueryLanguage("xquery31");
+            return;
+        }
+        if (configuration.getQueryLanguage().equals("xquery30")) {
+            return;
+        }
+        configuration.setQueryLanguage("xquery31");
     }
 }
