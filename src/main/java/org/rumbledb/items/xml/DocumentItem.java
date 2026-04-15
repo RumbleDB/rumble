@@ -5,8 +5,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ public class DocumentItem implements Item {
     private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
+    private Item documentElement;
     // TODO: add base-uri, document-uri, typed-value
 
     // needed for kryo
@@ -27,6 +28,7 @@ public class DocumentItem implements Item {
     public DocumentItem(Node documentNode, List<Item> children) {
         this.stringValue = documentNode.getTextContent();
         this.children = children;
+        this.documentElement = getDocumentElement();
     }
 
     /**
@@ -41,6 +43,7 @@ public class DocumentItem implements Item {
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
         this.stringValue = sb.toString();
+        this.documentElement = getDocumentElement();
     }
 
     /**
@@ -54,6 +57,20 @@ public class DocumentItem implements Item {
                 computeStringValue(item.children(), sb);
             }
         }
+    }
+
+    private Item getDocumentElement() {
+        List<Item> children = this.children();
+        List<Item> elements = new ArrayList<>();
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                elements.add(child);
+            }
+        }
+        if (elements.size() == 1) {
+            return elements.get(0);
+        }
+        return null;
     }
 
     @Override
@@ -108,7 +125,7 @@ public class DocumentItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.documentNode;
+        return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
     }
 
     @Override

@@ -687,15 +687,9 @@ public class BuiltinTypesCatalogue {
 
     // XML node types (per XPath Data Model 3.1, Section 2.7.4)
     public static final ItemType nodeItem = new NodeItemType();
-    public static final ItemType elementNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("element")
-    );
-    public static final ItemType attributeNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("attribute")
-    );
-    public static final ItemType documentNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("document-node")
-    );
+    public static final ItemType elementNode = new ElementNodeItemType();
+    public static final ItemType attributeNode = new AttributeNodeItemType();
+    public static final ItemType documentNode = new DocumentNodeItemType();
     public static final ItemType commentNode = new XmlNodeItemType(
             Name.createVariableInDefaultTypeNamespace("comment")
     );
@@ -705,9 +699,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType namespaceNode = new XmlNodeItemType(
             Name.createVariableInDefaultTypeNamespace("namespace-node")
     );
-    public static final ItemType processingInstructionNode = new XmlNodeItemType(
-            Name.createVariableInDefaultTypeNamespace("processing-instruction")
-    );
+    public static final ItemType processingInstructionNode = new PINodeItemType();
 
     public static final ItemType JSONItem = new JsonItemType();
     public static final ItemType objectItem = new ObjectItemType(
@@ -732,6 +724,11 @@ public class BuiltinTypesCatalogue {
             Name.createVariableInDefaultTypeNamespace("map"),
             anyFunctionItem,
             atomicItem,
+            SequenceType.createSequenceType("item*")
+    );
+    public static final ItemType xqueryArrayItem = new XQueryArrayItemType(
+            new Name(Name.XS_NS, "xs", "array"),
+            anyFunctionItem,
             SequenceType.createSequenceType("item*")
     );
 
@@ -772,6 +769,7 @@ public class BuiltinTypesCatalogue {
         booleanItem,
         arrayItem,
         mapItem,
+        xqueryArrayItem,
         nullItem,
         JSONItem,
         durationItem,

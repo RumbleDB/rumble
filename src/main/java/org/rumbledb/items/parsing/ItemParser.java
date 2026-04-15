@@ -43,6 +43,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -64,6 +65,7 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -747,9 +749,9 @@ public class ItemParser implements Serializable {
 
     private static Item getElementNodeItem(Node currentNode, String path, boolean removeParentPointers) {
         List<Item> children = getChildren(currentNode, path, removeParentPointers);
-        List<Item> attributes = getAttributes(currentNode);
+        ParsedDomAttributes parsedAttributes = getAttributesAndNamespaces(currentNode);
         Item elementItem = ItemFactory.getInstance()
-            .createXmlElementNode(currentNode, children, attributes);
+            .createXmlElementNode(currentNode, children, parsedAttributes.attributes, parsedAttributes.namespaces);
         if (!removeParentPointers)
             addParentToChildrenAndAttributes(elementItem);
         elementItem.setXmlDocumentPosition(path, 0);
@@ -779,15 +781,48 @@ public class ItemParser implements Serializable {
         return children;
     }
 
-    private static List<Item> getAttributes(Node currentNode) {
+    private static ParsedDomAttributes getAttributesAndNamespaces(Node currentNode) {
         List<Item> attributes = new ArrayList<>();
+        Map<String, String> namespaceBindings = new LinkedHashMap<>();
         NamedNodeMap attributesMap = currentNode.getAttributes();
 
         for (int i = 0; i < attributesMap.getLength(); ++i) {
             Node attribute = attributesMap.item(i);
+            String namespaceUri = attribute.getNamespaceURI();
+            String nodeName = attribute.getNodeName();
+            String localName = attribute.getLocalName();
+
+            boolean isNamespaceDeclaration =
+                NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri)
+                    || "xmlns".equals(nodeName)
+                    || (nodeName != null && nodeName.startsWith("xmlns:"));
+            if (isNamespaceDeclaration) {
+                String prefix = "";
+                if (!"xmlns".equals(nodeName)) {
+                    if (NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri) && localName != null) {
+                        prefix = localName;
+                    } else if (nodeName != null && nodeName.startsWith("xmlns:")) {
+                        prefix = nodeName.substring("xmlns:".length());
+                    }
+                }
+                String uri = attribute.getNodeValue();
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                namespaceBindings.put(prefix, uri);
+                continue;
+            }
             attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
         }
-        return attributes;
+        return new ParsedDomAttributes(attributes, namespaceBindings);
+    }
+
+    private static class ParsedDomAttributes {
+        final List<Item> attributes;
+        final Map<String, String> namespaces;
+
+        ParsedDomAttributes(List<Item> attributes, Map<String, String> namespaces) {
+            this.attributes = attributes;
+            this.namespaces = namespaces;
+        }
     }
 
     private static void addParentToChildrenAndAttributes(Item nodeItem) {

@@ -45,15 +45,6 @@ import java.util.Map;
 public interface Item extends Serializable, KryoSerializable {
 
     /**
-     * Tests whether the item is an array.
-     *
-     * @return true if it is an array, false otherwise.
-     */
-    default boolean isArray() {
-        return false;
-    }
-
-    /**
      * Tests whether the item is a function.
      *
      * @return true if it is a function, false otherwise
@@ -491,25 +482,6 @@ public interface Item extends Serializable, KryoSerializable {
         return false;
     }
 
-    /**
-     * Returns the members of the item if it is an array.
-     *
-     * @return the list of the array members.
-     */
-    default List<Item> getItems() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the member of the item at the specified position if it is an array.
-     *
-     * @param position a position.
-     * @return the member at position position.
-     */
-    default Item getItemAt(int position) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
     // region maps
 
     /**
@@ -750,14 +722,203 @@ public interface Item extends Serializable, KryoSerializable {
 
     // endregion maps
 
+    // region arrays
+
+    /**
+     * Tests whether the item is an array.
+     *
+     * @return true if it is an array, false otherwise.
+     */
+    default boolean isArray() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an array of items.
+     * Arrays of items are arrays whose members are singletons.
+     *
+     * @return true if it is an array of items, false otherwise.
+     */
+    default boolean isArrayOfItems() {
+        return false;
+    }
+
     /**
      * Returns the size of the item, if it is an array.
      *
      * @return the size as an int.
+     * @throws UnsupportedOperationException if the item is not an array.
      */
-    default int getSize() {
+    default int getSize() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
+
+    /**
+     * Returns the members of the item if it is an array.
+     *
+     * @return the list of the array members.
+     * @deprecated use {@link #getItemMembers()} instead
+     */
+    @Deprecated
+    default List<Item> getItems() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the members of the item, if it is an array.
+     *
+     * @return the list of the members.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws OurBadException if any member of the array is a non-singleton.
+     */
+    default List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the member sequences of the item, if it is an array.
+     *
+     * @return the list of the members.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default List<List<Item>> getSequenceMembers() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the member of the item at the specified position if it is an array.
+     *
+     * @param position the position of the member.
+     * @return the member.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws OurBadException if the member is a non-singleton.
+     * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
+     */
+    default Item getItemAt(int position)
+            throws UnsupportedOperationException,
+                OurBadException,
+                ArrayIndexOutOfBoundsException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the member of the item at the specified position if it is an array.
+     *
+     * @param position the position of the member.
+     * @return the member.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
+     */
+    default List<Item> getSequenceAt(int position)
+            throws UnsupportedOperationException,
+                ArrayIndexOutOfBoundsException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Appends an item to the item, if it is an array.
+     *
+     * @param item the item to append.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @deprecated use {@link #appendItem(Item)} instead
+     */
+    default void append(Item item) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Appends an item to the item, if it is an array.
+     *
+     * @param item the item to append.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default void appendItem(Item item) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Appends a sequence to the item, if it is an array.
+     *
+     * @param sequence the sequence to append.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws OurBadException if the member is a non-singleton sequence and the array does not support non-singleton
+     *         members.
+     */
+    default void appendSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Puts an item at the given index, if it is an array.
+     *
+     * @param item the item to put.
+     * @param index the index to put the item at.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default void putItemAt(Item item, int index) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Puts a sequence at the given index, if it is an array.
+     *
+     * @param sequence the sequence to put.
+     * @param index the index to put the sequence at.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws OurBadException if the member is a non-singleton sequence and the array does not support non-singleton
+     *         members.
+     */
+    default void putSequenceAt(List<Item> sequence, int index) throws UnsupportedOperationException, OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Add all items in items at index i, if it is an array.
+     *
+     * @param items a list of items.
+     * @param i an integer.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default void putItemsAt(List<Item> items, int i) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Puts sequences at the given index, if it is an array.
+     *
+     * @param sequences the sequences to put.
+     * @param index the index to put the sequence at.
+     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws OurBadException if any member is a non-singleton sequence and the array does not support non-singleton
+     *         members.
+     */
+    default void putSequencesAt(List<List<Item>> sequences, int index)
+            throws UnsupportedOperationException,
+                OurBadException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Removes the item at the given index, if it is an array.
+     *
+     * @param index the index to remove the item at.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default void removeItemAt(int index) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Removes the sequence at the given index, if it is an array.
+     *
+     * @param index the index to remove the sequence at.
+     * @throws UnsupportedOperationException if the item is not an array.
+     */
+    default void removeSequenceAt(int index) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    // endregion arrays
 
     /**
      * Returns the string value of the item, if it is an atomic item.
@@ -980,53 +1141,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the effective boolean value.
      */
     default boolean getEffectiveBooleanValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Appends an item, if it is an array.
-     *
-     * @param item an item.
-     */
-    default void putItem(Item item) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Add an item at index i, if it is an array.
-     *
-     * @param item an item.
-     * @param i an integer.
-     */
-    default void putItemAt(Item item, int i) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Add all items in items at index i, if it is an array.
-     *
-     * @param items a list of items.
-     * @param i an integer.
-     */
-    default void putItemsAt(List<Item> items, int i) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Remove the item at index i, if it is an array.
-     *
-     * @param i an integer.
-     */
-    default void removeItemAt(int i) {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Adds a value pair, if it is an array item.
-     *
-     * @param value a value.
-     */
-    default void append(Item value) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
