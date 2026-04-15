@@ -143,7 +143,13 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 }
             } else if (item.isArray()) {
                 if (this.wildcard) {
-                    this.nextResult.addAll(item.getItems());
+                    if (item.isArrayOfItems()) {
+                        this.nextResult.addAll(item.getItemMembers());
+                    } else {
+                        for (List<Item> member : item.getSequenceMembers()) {
+                            this.nextResult.addAll(member);
+                        }
+                    }
                 } else {
                     for (Item key : this.lookupKeys) {
                         if (key.isString()) {
@@ -153,7 +159,12 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                             );
                         }
                         if (key.isNumeric()) {
-                            this.nextResult.add(item.getItemAt(key.castToIntValue() - 1));
+                            int idx = key.castToIntValue() - 1;
+                            if (item.isArrayOfItems()) {
+                                this.nextResult.add(item.getItemAt(idx));
+                            } else {
+                                this.nextResult.addAll(item.getSequenceAt(idx));
+                            }
                         }
                     }
                 }

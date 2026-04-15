@@ -386,15 +386,27 @@ public class SequenceType implements Serializable {
                 st = new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.OneOrMore);
                 break;
             case "array":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One);
+                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, SequenceType.Arity.One);
                 break;
             case "array?":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero);
+                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, SequenceType.Arity.OneOrZero);
                 break;
             case "array*":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore);
+                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, Arity.ZeroOrMore);
                 break;
             case "array+":
+                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, Arity.OneOrMore);
+                break;
+            case "item-array":
+                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One);
+                break;
+            case "item-array?":
+                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "item-array*":
+                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore);
+                break;
+            case "item-array+":
                 st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.OneOrMore);
                 break;
             case "anyAtomicType":

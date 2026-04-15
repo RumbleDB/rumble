@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.xml;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -119,16 +120,48 @@ public class StepExprIterator extends LocalRuntimeIterator {
         }
     }
 
+    private Item nodeTestItem(Item node, NodeTest testToApply) {
+        NodeTest previousNodeTest = this.nodeTest;
+        this.nodeTest = testToApply;
+        try {
+            return nodeTestItem(node);
+        } finally {
+            this.nodeTest = previousNodeTest;
+        }
+    }
+
     private Item documentKindTest(Item node) {
         DocumentTest documentTest = (DocumentTest) this.nodeTest;
-        if (documentTest.isEmptyCheck()) {
-            if (node.isDocumentNode()) {
-                return node;
-            }
+        if (!node.isDocumentNode()) {
             return null;
         }
-        this.nodeTest = documentTest.getNodeTest();
-        return nodeTestItem(node);
+        if (documentTest.isEmptyCheck()) {
+            return node;
+        }
+        Item documentElement = getDocumentElement(node);
+        if (documentElement == null) {
+            return null;
+        }
+        Item innerMatch = nodeTestItem(documentElement, documentTest.getNodeTest());
+        return innerMatch == null ? null : node;
+    }
+
+    private Item getDocumentElement(Item documentNode) {
+        List<Item> children = documentNode.children();
+        List<Item> elements = new ArrayList<>();
+        if (children == null) {
+            return null;
+        }
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                elements.add(child);
+            }
+        }
+        if (elements.size() == 1) {
+            // document-node(N) matches a document node with exactly one element child
+            return elements.get(0);
+        }
+        return null;
     }
 
     private Item nameKindTest(Item node) {
@@ -137,7 +170,13 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (!isPrincipalNodeKind(node)) {
                 return null;
             }
-            if (nameTest.getQName().equals(nodeNameLexical(node))) {
+            Item qItem = node.nodeName();
+            if (qItem == null || !qItem.isQName()) {
+                return null;
+            }
+            // Compare expanded names, not lexical strings: e.g. default element NS uses prefix "" in the name test
+            // while DOM nodes often have prefix null, so Name.toString() differs for the same expanded QName.
+            if (nameTest.getExpandedName().equals(qItem.getQNameValue())) {
                 return node;
             }
             return null;
@@ -244,7 +283,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return node;
         }
         // processing-instruction(target) matches PI nodes whose target name equals the given name
-        if (nodeNameLexical(node).equals(piTest.getTargetName())) {
+        if (StringUtils.normalizeSpace(nodeNameLexical(node)).equals(piTest.getTargetName())) {
             return node;
         }
         return null;

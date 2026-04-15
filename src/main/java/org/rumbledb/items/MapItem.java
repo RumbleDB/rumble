@@ -31,13 +31,10 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.EmptyMapItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -296,47 +293,9 @@ public class MapItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        if (this.storage.isEmpty()) {
-            return EmptyMapItemType.getInstance();
-        }
-
-        Iterator<Map.Entry<Item, List<Item>>> it = this.storage.entrySet().iterator();
-        Map.Entry<Item, List<Item>> first = it.next();
-        ItemType keyAtomicType = first.getKey().getDynamicType();
-        while (it.hasNext()) {
-            ItemType next = it.next().getKey().getDynamicType();
-            keyAtomicType = keyAtomicType.findLeastCommonSuperTypeWith(next);
-        }
-
-        SequenceType valueSequenceType = SequenceType.createSequenceType("()");
-        Iterator<List<Item>> vit = this.storage.values().iterator();
-        if (vit.hasNext()) {
-            valueSequenceType = sequenceTypeFromValueSequence(vit.next());
-            while (vit.hasNext()) {
-                SequenceType nextSequenceType = sequenceTypeFromValueSequence(vit.next());
-                valueSequenceType = valueSequenceType.leastCommonSupertypeWith(nextSequenceType);
-            }
-        }
-
-        return ItemTypeFactory.mapOf(keyAtomicType, valueSequenceType);
+        return BuiltinTypesCatalogue.mapItem;
     }
 
-    private static SequenceType sequenceTypeFromValueSequence(List<Item> valueSequence) {
-        if (valueSequence == null || valueSequence.isEmpty()) {
-            return SequenceType.createSequenceType("()");
-        }
-        ItemType valueItemType = valueSequence.get(0).getDynamicType();
-        for (int i = 1; i < valueSequence.size(); i++) {
-            valueItemType = valueItemType.findLeastCommonSuperTypeWith(
-                valueSequence.get(i).getDynamicType()
-            );
-        }
-        if (valueSequence.size() == 1) {
-            return new SequenceType(valueItemType, SequenceType.Arity.One);
-        }
-        // Non-empty sequence with cardinality >= 2
-        return new SequenceType(valueItemType, SequenceType.Arity.OneOrMore);
-    }
 
     @Override
     public boolean getEffectiveBooleanValue() {
