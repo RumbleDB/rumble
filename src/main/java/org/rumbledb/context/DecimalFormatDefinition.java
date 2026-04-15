@@ -1,7 +1,14 @@
 package org.rumbledb.context;
 
-public class DecimalFormatDefinition {
+import java.io.Serializable;
 
+public class DecimalFormatDefinition implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /*
+     * The default values for the properties of a decimal format definition, as specified in the XQuery/XPath 3.1
+     * functions specification, section 4.7.2
+     */
     public static final int DEFAULT_DECIMAL_SEPARATOR = '.';
     public static final int DEFAULT_GROUPING_SEPARATOR = ',';
     public static final String DEFAULT_INFINITY = "Infinity";
