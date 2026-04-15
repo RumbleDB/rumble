@@ -214,12 +214,23 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
 
     // region primary
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
-        ArrayConstructorExpression result = new ArrayConstructorExpression(
-                (expression.getExpression() == null)
-                    ? expression.getExpression()
-                    : (Expression) visit(expression.getExpression(), argument),
-                expression.getMetadata()
-        );
+        ArrayConstructorExpression result;
+        if (expression.isFixedSlotsArrayConstructor()) {
+            List<Expression> visitedMembers = new java.util.ArrayList<>();
+            if (expression.getMemberExpressions() != null) {
+                for (Expression memberExpr : expression.getMemberExpressions()) {
+                    visitedMembers.add((Expression) visit(memberExpr, argument));
+                }
+            }
+            result = new ArrayConstructorExpression(visitedMembers, true, expression.getMetadata());
+        } else {
+            result = new ArrayConstructorExpression(
+                    (expression.getExpression() == null)
+                        ? expression.getExpression()
+                        : (Expression) visit(expression.getExpression(), argument),
+                    expression.getMetadata()
+            );
+        }
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
     }

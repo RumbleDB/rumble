@@ -75,6 +75,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("map", Name.MAP_NS);
         defaultBindings.put("array", Name.ARRAY_NS);
         defaultBindings.put("xs", Name.XS_NS);
+        defaultBindings.put("xml", Name.XML_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
         // defaultBindings.put("an", Name.AN_NS);
