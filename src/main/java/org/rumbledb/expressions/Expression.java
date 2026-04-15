@@ -83,9 +83,7 @@ public abstract class Expression extends Node {
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
                 getMetadata(),
-                this.staticContext.getInScopeNamespaceBindings(),
-                this.staticContext.getDefaultDecimalFormat(),
-                this.staticContext.getDecimalFormats()
+                staticContext.getInScopeNamespaceBindings()
         );
     }
 

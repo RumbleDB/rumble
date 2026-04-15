@@ -2,8 +2,8 @@ package org.rumbledb.runtime.functions.base.formatting.pictures.FormatNumber;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DecimalFormatDefinition;
+import org.rumbledb.context.DecimalFormatRuntimeConfig;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidDecimalFormatName;
 
@@ -19,13 +19,13 @@ public class NumberPictureFormatter {
             Item valueItem,
             Item pictureItem,
             Item decimalFormatNameItem,
-            RuntimeStaticContext staticContext,
+            DecimalFormatRuntimeConfig decimalFormatRuntimeConfig,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDefinition decimalFormat = staticContext.getDefaultDecimalFormat();
+        DecimalFormatDefinition decimalFormat = decimalFormatRuntimeConfig.getDefaultDecimalFormat();
 
         if (decimalFormatNameItem != null) {
-            decimalFormat = resolveDecimalFormat(decimalFormatNameItem, staticContext, metadata);
+            decimalFormat = resolveDecimalFormat(decimalFormatNameItem, decimalFormatRuntimeConfig, metadata);
         }
 
         String pictureString = pictureItem.getStringValue();
@@ -65,30 +65,30 @@ public class NumberPictureFormatter {
 
     private static DecimalFormatDefinition resolveDecimalFormat(
             Item decimalFormatNameItem,
-            RuntimeStaticContext staticContext,
+            DecimalFormatRuntimeConfig decimalFormatRuntimeConfig,
             ExceptionMetadata metadata
     ) {
         String lexicalName = decimalFormatNameItem.getStringValue();
         String trimmedName = lexicalName == null ? "" : lexicalName.trim();
 
         if (trimmedName.isEmpty()) {
-            return staticContext.getDefaultDecimalFormat();
+            return decimalFormatRuntimeConfig.getDefaultDecimalFormat();
         }
 
         Name resolvedName = resolveDecimalFormatName(
             trimmedName,
-            staticContext.getStaticallyKnownNamespaces(),
+            decimalFormatRuntimeConfig.getStaticallyKnownNamespaces(),
             metadata
         );
 
-        if (!staticContext.hasDecimalFormat(resolvedName)) {
+        if (!decimalFormatRuntimeConfig.hasDecimalFormat(resolvedName)) {
             throw new InvalidDecimalFormatName(
                     "Decimal format not found: " + trimmedName,
                     metadata
             );
         }
 
-        return staticContext.getDecimalFormat(resolvedName);
+        return decimalFormatRuntimeConfig.getDecimalFormat(resolvedName);
     }
 
     private static Name resolveDecimalFormatName(

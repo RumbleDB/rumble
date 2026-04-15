@@ -223,21 +223,41 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
 
         RuntimeIterator functionCallIterator;
+        RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
+                conf,
+                builtinFunction.getSignature().getReturnType(),
+                executionMode,
+                metadata,
+                staticContext.getInScopeNamespaceBindings()
+        );
+
         try {
-            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                .getConstructor(List.class, RuntimeStaticContext.class);
-            functionCallIterator = constructor.newInstance(
-                arguments,
-                new RuntimeStaticContext(
-                        conf,
-                        builtinFunction.getSignature().getReturnType(),
-                        executionMode,
-                        metadata,
-                        staticContext.getInScopeNamespaceBindings(),
+            if (
+                identifier.getName().equals(new Name(Name.FN_NS, "fn", "format-number"))
+            ) {
+                DecimalFormatRuntimeConfig decimalFormatRuntimeConfig = new DecimalFormatRuntimeConfig(
                         staticContext.getDefaultDecimalFormat(),
-                        staticContext.getDecimalFormats()
-                )
-            );
+                        staticContext.getDecimalFormats(),
+                        staticContext.getInScopeNamespaceBindings()
+                );
+
+                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                    .getConstructor(List.class, RuntimeStaticContext.class, DecimalFormatRuntimeConfig.class);
+
+                functionCallIterator = constructor.newInstance(
+                    arguments,
+                    runtimeStaticContext,
+                    decimalFormatRuntimeConfig
+                );
+            } else {
+                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                    .getConstructor(List.class, RuntimeStaticContext.class);
+
+                functionCallIterator = constructor.newInstance(
+                    arguments,
+                    runtimeStaticContext
+                );
+            }
         } catch (ReflectiveOperationException ex) {
             RuntimeException e = new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
             e.initCause(ex);
@@ -250,7 +270,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             }
             functionCallIterator.setStaticContext(staticContext);
             SequenceType sequenceType = builtinFunction.getSignature().getReturnType();
-            RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
+            runtimeStaticContext = new RuntimeStaticContext(
                     conf,
                     sequenceType,
                     functionCallIterator.getHighestExecutionMode(),
