@@ -18,6 +18,8 @@ public class RuntimeStaticContext implements Serializable {
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
     private final Map<String, String> staticallyKnownNamespaces;
+    private DecimalFormatDefinition defaultDecimalFormat;
+    private Map<Name, DecimalFormatDefinition> decimalFormats;
 
     public RuntimeStaticContext(
             RumbleRuntimeConfiguration configuration,
@@ -33,13 +35,17 @@ public class RuntimeStaticContext implements Serializable {
             SequenceType staticType,
             ExecutionMode executionMode,
             ExceptionMetadata metadata,
-            Map<String, String> staticallyKnownNamespaces
+            StaticContext staticContext
     ) {
         this.configuration = configuration;
         this.staticType = staticType;
         this.executionMode = executionMode;
         this.metadata = metadata;
-        this.staticallyKnownNamespaces = staticallyKnownNamespaces;
+        staticallyKnownNamespaces = staticContext == null
+            ? Collections.emptyMap()
+            : staticContext.getInScopeNamespaceBindings();
+        this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
+        this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
     }
 
     public RuntimeStaticContext(
@@ -78,6 +84,19 @@ public class RuntimeStaticContext implements Serializable {
             return Collections.emptyMap();
         }
         return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
+    }
+
+    public void dropDecimalFormats() {
+        this.decimalFormats = null;
+        this.defaultDecimalFormat = null;
+    }
+
+    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
+        return this.decimalFormats;
+    }
+
+    public DecimalFormatDefinition getDefaultDecimalFormat() {
+        return this.defaultDecimalFormat;
     }
 
 }

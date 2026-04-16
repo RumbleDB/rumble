@@ -228,36 +228,20 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 builtinFunction.getSignature().getReturnType(),
                 executionMode,
                 metadata,
-                staticContext.getInScopeNamespaceBindings()
+                staticContext
         );
+        if (!"format-number".equals(identifier.getName().getLocalName())) {
+            runtimeStaticContext.dropDecimalFormats();
+        }
 
         try {
-            if (
-                identifier.getName().equals(new Name(Name.FN_NS, "fn", "format-number"))
-            ) {
-                DecimalFormatRuntimeConfig decimalFormatRuntimeConfig = new DecimalFormatRuntimeConfig(
-                        staticContext.getDefaultDecimalFormat(),
-                        staticContext.getDecimalFormats(),
-                        staticContext.getInScopeNamespaceBindings()
-                );
+            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                .getConstructor(List.class, RuntimeStaticContext.class);
 
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                    .getConstructor(List.class, RuntimeStaticContext.class, DecimalFormatRuntimeConfig.class);
-
-                functionCallIterator = constructor.newInstance(
-                    arguments,
-                    runtimeStaticContext,
-                    decimalFormatRuntimeConfig
-                );
-            } else {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                    .getConstructor(List.class, RuntimeStaticContext.class);
-
-                functionCallIterator = constructor.newInstance(
-                    arguments,
-                    runtimeStaticContext
-                );
-            }
+            functionCallIterator = constructor.newInstance(
+                arguments,
+                runtimeStaticContext
+            );
         } catch (ReflectiveOperationException ex) {
             RuntimeException e = new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
             e.initCause(ex);

@@ -2,14 +2,10 @@ package org.rumbledb.runtime.functions.base.formatting.pictures.FormatNumber;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DecimalFormatDefinition;
-import org.rumbledb.context.DecimalFormatRuntimeConfig;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidDecimalFormatName;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Map;
 
 public class NumberPictureFormatter {
     private NumberPictureFormatter() {
@@ -18,16 +14,9 @@ public class NumberPictureFormatter {
     public static String format(
             Item valueItem,
             Item pictureItem,
-            Item decimalFormatNameItem,
-            DecimalFormatRuntimeConfig decimalFormatRuntimeConfig,
+            DecimalFormatDefinition decimalFormat,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDefinition decimalFormat = decimalFormatRuntimeConfig.getDefaultDecimalFormat();
-
-        if (decimalFormatNameItem != null) {
-            decimalFormat = resolveDecimalFormat(decimalFormatNameItem, decimalFormatRuntimeConfig, metadata);
-        }
-
         String pictureString = pictureItem.getStringValue();
 
         FormatNumberPicture picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
@@ -61,88 +50,6 @@ public class NumberPictureFormatter {
         } else {
             return applySubPictureFormatting(resolvedNumber, picture.getPositiveSubPicture(), decimalFormat);
         }
-    }
-
-    private static DecimalFormatDefinition resolveDecimalFormat(
-            Item decimalFormatNameItem,
-            DecimalFormatRuntimeConfig decimalFormatRuntimeConfig,
-            ExceptionMetadata metadata
-    ) {
-        String lexicalName = decimalFormatNameItem.getStringValue();
-        String trimmedName = lexicalName == null ? "" : lexicalName.trim();
-
-        if (trimmedName.isEmpty()) {
-            return decimalFormatRuntimeConfig.getDefaultDecimalFormat();
-        }
-
-        Name resolvedName = resolveDecimalFormatName(
-            trimmedName,
-            decimalFormatRuntimeConfig.getStaticallyKnownNamespaces(),
-            metadata
-        );
-
-        if (!decimalFormatRuntimeConfig.hasDecimalFormat(resolvedName)) {
-            throw new InvalidDecimalFormatName(
-                    "Decimal format not found: " + trimmedName,
-                    metadata
-            );
-        }
-
-        return decimalFormatRuntimeConfig.getDecimalFormat(resolvedName);
-    }
-
-    private static Name resolveDecimalFormatName(
-            String text,
-            Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
-        if (text.startsWith("Q{")) {
-            int closingBrace = text.indexOf('}');
-            if (closingBrace < 0 || closingBrace == text.length() - 1) {
-                throw new InvalidDecimalFormatName(
-                        "Invalid URIQualifiedName: " + text,
-                        metadata
-                );
-            }
-
-            String namespace = text.substring(2, closingBrace);
-            String localName = text.substring(closingBrace + 1);
-
-            if (localName.isEmpty()) {
-                throw new InvalidDecimalFormatName(
-                        "Invalid URIQualifiedName, missing local name: " + text,
-                        metadata
-                );
-            }
-
-            return new Name(namespace, null, localName);
-        }
-
-        int colon = text.indexOf(':');
-
-        if (colon < 0) {
-            return Name.createVariableInNoNamespace(text);
-        }
-
-        String prefix = text.substring(0, colon);
-        String localName = text.substring(colon + 1);
-
-        if (prefix.isEmpty() || localName.isEmpty()) {
-            throw new InvalidDecimalFormatName(
-                    "Invalid QName: " + text,
-                    metadata
-            );
-        }
-
-        String namespace = staticallyKnownNamespaces.get(prefix);
-        if (namespace == null) {
-            throw new InvalidDecimalFormatName(
-                    "Prefix " + prefix + " could not be resolved against a namespace in scope.",
-                    metadata
-            );
-        }
-
-        return new Name(namespace, prefix, localName);
     }
 
     /**
