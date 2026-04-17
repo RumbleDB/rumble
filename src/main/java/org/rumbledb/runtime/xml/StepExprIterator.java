@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.xml;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -15,13 +16,6 @@ import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
-import org.rumbledb.items.xml.AttributeItem;
-import org.rumbledb.items.xml.CommentItem;
-import org.rumbledb.items.xml.DocumentItem;
-import org.rumbledb.items.xml.ElementItem;
-import org.rumbledb.items.xml.NamespaceItem;
-import org.rumbledb.items.xml.ProcessingInstructionItem;
-import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
@@ -94,6 +88,11 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return nodeTestResults;
     }
 
+    private static String nodeNameLexical(Item node) {
+        Item q = node.nodeName();
+        return q == null ? "" : q.getStringValue();
+    }
+
     private Item nodeTestItem(Item node) {
         if (this.nodeTest instanceof AnyKindTest) {
             return anyKindTest(node);
@@ -121,16 +120,48 @@ public class StepExprIterator extends LocalRuntimeIterator {
         }
     }
 
+    private Item nodeTestItem(Item node, NodeTest testToApply) {
+        NodeTest previousNodeTest = this.nodeTest;
+        this.nodeTest = testToApply;
+        try {
+            return nodeTestItem(node);
+        } finally {
+            this.nodeTest = previousNodeTest;
+        }
+    }
+
     private Item documentKindTest(Item node) {
         DocumentTest documentTest = (DocumentTest) this.nodeTest;
-        if (documentTest.isEmptyCheck()) {
-            if (node instanceof DocumentItem) {
-                return node;
-            }
+        if (!node.isDocumentNode()) {
             return null;
         }
-        this.nodeTest = documentTest.getNodeTest();
-        return nodeTestItem(node);
+        if (documentTest.isEmptyCheck()) {
+            return node;
+        }
+        Item documentElement = getDocumentElement(node);
+        if (documentElement == null) {
+            return null;
+        }
+        Item innerMatch = nodeTestItem(documentElement, documentTest.getNodeTest());
+        return innerMatch == null ? null : node;
+    }
+
+    private Item getDocumentElement(Item documentNode) {
+        List<Item> children = documentNode.children();
+        List<Item> elements = new ArrayList<>();
+        if (children == null) {
+            return null;
+        }
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                elements.add(child);
+            }
+        }
+        if (elements.size() == 1) {
+            // document-node(N) matches a document node with exactly one element child
+            return elements.get(0);
+        }
+        return null;
     }
 
     private Item nameKindTest(Item node) {
@@ -139,7 +170,13 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (!isPrincipalNodeKind(node)) {
                 return null;
             }
-            if (node.nodeName().equals(nameTest.getQName())) {
+            Item qItem = node.nodeName();
+            if (qItem == null || !qItem.isQName()) {
+                return null;
+            }
+            // Compare expanded names, not lexical strings: e.g. default element NS uses prefix "" in the name test
+            // while DOM nodes often have prefix null, so Name.toString() differs for the same expanded QName.
+            if (nameTest.getExpandedName().equals(qItem.getQNameValue())) {
                 return node;
             }
             return null;
@@ -150,7 +187,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             }
             return node;
         }
-        if (nameTest.getWildcardQName().equals(node.nodeName())) {
+        if (nameTest.getWildcardQName().equals(nodeNameLexical(node))) {
             return node;
         }
         return null;
@@ -167,53 +204,59 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private Item elementKindTest(Item node) {
         ElementTest elementTest = (ElementTest) this.nodeTest;
         if (elementTest.isEmptyCheck()) {
-            if (node instanceof ElementItem) {
+            if (node.isElementNode()) {
                 return node;
             }
             return null;
         }
         if (elementTest.isNameWithoutTypeCheck()) {
-            if (node instanceof ElementItem && node.nodeName().equals(elementTest.getElementName())) {
+            if (
+                node.isElementNode()
+                    && elementTest.getElementName().equals(node.nodeName().getQNameValue())
+            ) {
                 return node;
             }
             return null;
         }
         if (elementTest.isWildcardOnly()) {
-            if (node instanceof ElementItem) {
+            if (node.isElementNode()) {
                 return node;
             }
             return null;
         }
-        // TODO: add support for name and type
+        // TODO: add support for type test
         return null;
     }
 
     private Item attributeKindTest(Item node) {
         AttributeTest attributeTest = (AttributeTest) this.nodeTest;
         if (attributeTest.isEmptyCheck()) {
-            if (node instanceof AttributeItem) {
+            if (node.isAttributeNode()) {
                 return node;
             }
             return null;
         }
         if (attributeTest.isNameWithoutTypeCheck()) {
-            if (node instanceof AttributeItem && node.nodeName().equals(attributeTest.getAttributeName())) {
+            if (
+                node.isAttributeNode()
+                    && attributeTest.getAttributeName().equals(node.nodeName().getQNameValue())
+            ) {
                 return node;
             }
             return null;
         }
         if (attributeTest.isWildcardOnly()) {
-            if (node instanceof AttributeItem) {
+            if (node.isAttributeNode()) {
                 return node;
             }
             return null;
         }
-        // TODO: add support for name and type
+        // TODO: add support for type test
         return null;
     }
 
     private Item textKindTest(Item node) {
-        if (node instanceof TextItem) {
+        if (node.isTextNode()) {
             return node;
         }
         return null;
@@ -224,7 +267,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     private Item commentKindTest(Item node) {
-        if (node instanceof CommentItem) {
+        if (node.isCommentNode()) {
             return node;
         }
         return null;
@@ -232,7 +275,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
 
     private Item piKindTest(Item node) {
         PITest piTest = (PITest) this.nodeTest;
-        if (!(node instanceof ProcessingInstructionItem)) {
+        if (!node.isProcessingInstructionNode()) {
             return null;
         }
         // processing-instruction() matches any PI node
@@ -240,14 +283,14 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return node;
         }
         // processing-instruction(target) matches PI nodes whose target name equals the given name
-        if (node.nodeName().equals(piTest.getTargetName())) {
+        if (StringUtils.normalizeSpace(nodeNameLexical(node)).equals(piTest.getTargetName())) {
             return node;
         }
         return null;
     }
 
     private Item namespaceNodeKindTest(Item node) {
-        if (node instanceof NamespaceItem) {
+        if (node.isNamespaceNode()) {
             return node;
         }
         return null;

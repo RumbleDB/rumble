@@ -63,6 +63,7 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                 String content = tuple._2;
                 try {
                     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                    documentBuilderFactory.setNamespaceAware(true);
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                     Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
                     return ItemParser.getItemFromXML(

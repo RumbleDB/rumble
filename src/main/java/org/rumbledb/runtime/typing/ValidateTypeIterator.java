@@ -12,7 +12,6 @@ import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
@@ -31,6 +30,8 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.TypeMappings;
+
+import static org.apache.spark.sql.functions.expr;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -89,17 +90,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     this.itemType,
                     context,
                     this.isValidate,
-                    getConfiguration()
+                    staticContext
                 );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, getConfiguration());
+                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, staticContext);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, getConfiguration());
+            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, staticContext);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -115,9 +116,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             ItemType itemType,
             DynamicContext context,
             boolean isValidate,
-            RumbleRuntimeConfiguration configuration
+            RuntimeStaticContext staticContext
     ) {
-        if (!itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
+        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             throw new OurBadException(
                     "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
             );
@@ -129,7 +130,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
                 @Override
                 public Row call(Item item) {
-                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, configuration);
+                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, staticContext);
                     return convertLocalItemToRow(item, schema, context);
                 }
             }
@@ -169,9 +170,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     .createDataFrame(rowRDD, schema)
                     .withColumn(
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        org.apache.spark.sql.functions.expr(
-                            "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
-                        )
+                        expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
                     ),
                 BuiltinTypesCatalogue.item
         );
@@ -250,7 +249,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             ItemType itemType,
             DynamicContext context,
             boolean isValidate,
-            RumbleRuntimeConfiguration configuration
+            RuntimeStaticContext staticContext
     ) {
         if (items.isEmpty()) {
             return new JSoundDataFrame(
@@ -261,7 +260,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = convertToDataFrameSchema(itemType);
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, configuration);
+            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, staticContext);
             Row row = convertLocalItemToRow(item, schema, context);
             rows.add(row);
         }
@@ -296,9 +295,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         dataFrame = dataFrame.withColumn(
             SparkSessionManager.nonObjectJSONiqItemColumnName,
-            org.apache.spark.sql.functions.expr(
-                "parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)"
-            )
+            expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
         );
 
         return new JSoundDataFrame(
@@ -422,7 +419,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
-        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, getConfiguration()));
+        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, staticContext));
     }
 
     @Override
@@ -447,7 +444,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, getConfiguration());
+        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, staticContext);
     }
 
     private static Item validate(
@@ -455,7 +452,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             ItemType itemType,
             ExceptionMetadata metadata,
             boolean isValidate,
-            RumbleRuntimeConfiguration configuration
+            RuntimeStaticContext staticContext
     ) {
         if (!isValidate) {
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -473,7 +470,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 Item castType = CastIterator.castItemToType(
                     ItemFactory.getInstance().createStringItem(item.getStringValue()),
                     itemType,
-                    metadata
+                    metadata,
+                    staticContext
                 );
                 if (castType == null) {
                     throw new InvalidInstanceException(
@@ -495,7 +493,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, itemType.getArrayContentFacet(), metadata, true, configuration));
+                members.add(validate(member, itemType.getArrayContentFacet(), metadata, true, staticContext));
             }
 
             // Test of length facets
@@ -563,7 +561,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     if (value.isNull()) {
                         if (expectedType.equals(BuiltinTypesCatalogue.nullItem) || expectedType.isUnionType()) {
                             keys.add(key);
-                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
                         } else if (fieldDescriptor.isRequired()) {
                             throw new InvalidInstanceException(
                                     "Null associated with required key in object type "
@@ -571,13 +569,29 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                                         + " : "
                                         + key
                             );
-                        } else if (!configuration.getLaxJSONNullValidation()) {
+                        } else if (!staticContext.getConfiguration().getLaxJSONNullValidation()) {
                             keys.add(key);
-                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
+                        } else {
+                            // In lax mode, prefer a successful cast when possible (e.g., null -> "null" for strings),
+                            // and only treat null as absent if the cast fails.
+                            try {
+                                Item validatedNullValue = validate(
+                                    item.getItemByKey(key),
+                                    expectedType,
+                                    metadata,
+                                    true,
+                                    staticContext
+                                );
+                                keys.add(key);
+                                values.add(validatedNullValue);
+                            } catch (InvalidInstanceException ex) {
+                                // Keep lax behavior: consider JSON null as absent for optional fields.
+                            }
                         }
                     } else {
                         keys.add(key);
-                        values.add(validate(item.getItemByKey(key), expectedType, metadata, true, configuration));
+                        values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
                     }
                 } else {
                     if (itemType.getClosedFacet()) {
@@ -625,9 +639,22 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return item;
         }
         if (itemType.isUnionType()) {
-            for (ItemType memberType : itemType.getTypes()) {
+            List<ItemType> memberTypes = itemType.getTypes();
+            if (item.isNull()) {
+                for (ItemType memberType : memberTypes) {
+                    if (memberType.equals(BuiltinTypesCatalogue.nullItem)) {
+                        continue;
+                    }
+                    try {
+                        return validate(item, memberType, metadata, true, staticContext);
+                    } catch (InvalidInstanceException ex) {
+                        // try next type
+                    }
+                }
+            }
+            for (ItemType memberType : memberTypes) {
                 try {
-                    return validate(item, memberType, metadata, true, configuration);
+                    return validate(item, memberType, metadata, true, staticContext);
                 } catch (InvalidInstanceException ex) {
                     // try next type
                 }

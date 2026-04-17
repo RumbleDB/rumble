@@ -26,6 +26,7 @@ public enum ErrorCode {
     NumericOverflowOrUnderflow("FOAR0002"),
 
     ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
+    ArrayInvalidSubarrayLengthErrorCode("FOAY0002"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
@@ -53,9 +54,15 @@ public enum ErrorCode {
     InvalidReplacementStringErrorCode("FORX0004"),
 
     FunctionAtomizationErrorCode("FOTY0013"),
+    /** fn:string (and related) when applied to a map, array, or function item */
+    FunctionItemStringValueErrorCode("FOTY0014"),
 
 
     DuplicatePairNameErrorCode("XQDY0137"),
+
+    // JSON-related errors (FOJS000x).
+    DuplicateJSONKeyErrorCode("FOJS0003"),
+    InvalidOptionErrorCode("FOJS0005"),
 
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),
@@ -113,6 +120,8 @@ public enum ErrorCode {
     InvalidProcessingInstructionTargetErrorCode("XQDY0064"),
 
     InvalidSchemaErrorCode("XQST0012"),
+    /** Namespace declaration attribute value contains an enclosed expression (direct element constructor). */
+    NamespaceDeclarationAttributeEnclosedExpressionErrorCode("XQST0022"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     MultipleBaseURIExceptionCode("XQST0032"),

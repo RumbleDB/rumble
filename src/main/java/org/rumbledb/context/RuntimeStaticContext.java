@@ -97,6 +97,35 @@ public class RuntimeStaticContext implements Serializable {
 
     public DecimalFormatDefinition getDefaultDecimalFormat() {
         return this.defaultDecimalFormat;
+
+    /**
+     * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
+     * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
+     *
+     * @return the namespace URI, or {@code null} if the prefix is not bound
+     */
+    public String resolvePrefix(String prefix) {
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
+        }
+        return StaticContext.getBuiltinNamespaceBinding(prefix);
+    }
+
+    /**
+     * Same configuration, metadata, and namespace map; replaces static type and execution mode (e.g. when building
+     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
+     */
+    public RuntimeStaticContext withStaticTypeAndExecutionMode(
+            SequenceType newStaticType,
+            ExecutionMode newExecutionMode
+    ) {
+        return new RuntimeStaticContext(
+                this.configuration,
+                newStaticType,
+                newExecutionMode,
+                this.metadata,
+                this.staticallyKnownNamespaces
+        );
     }
 
 }

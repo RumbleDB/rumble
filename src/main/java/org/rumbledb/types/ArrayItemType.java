@@ -15,13 +15,13 @@ public class ArrayItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(
+    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
-                FacetTypes.ENUMERATION,
-                FacetTypes.CONTENT,
+                ConstrainingFacetTypes.ENUMERATION,
+                ConstrainingFacetTypes.CONTENT,
 
-                FacetTypes.MINLENGTH,
-                FacetTypes.MAXLENGTH
+                ConstrainingFacetTypes.MINLENGTH,
+                ConstrainingFacetTypes.MAXLENGTH
             )
     );
 
@@ -78,12 +78,40 @@ public class ArrayItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
+        if (((ItemType) other).isXQueryArrayItemType()) {
+            // delegate to the XQuery array item type equality check
+            return other.equals(this);
+        }
         return isEqualTo((ItemType) other);
     }
 
     @Override
     public boolean isArrayItemType() {
         return true;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isXQueryArrayItemType()) {
+            // an ArrayItemType (js:array()) with a base type of T <: array(T)
+            return new SequenceType(this.content, SequenceType.Arity.One).isSubtypeOf(
+                superType.getMemberSequenceType()
+            );
+        }
+        if (superType.isFunctionItemType()) {
+            ItemType xqueryArrayType = ItemTypeFactory.xqueryArrayOf(
+                new SequenceType(this.content, SequenceType.Arity.One)
+            );
+            return xqueryArrayType.isSubtypeOf(superType);
+        }
+        return ItemType.super.isSubtypeOf(superType);
     }
 
     @Override
@@ -125,7 +153,7 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 

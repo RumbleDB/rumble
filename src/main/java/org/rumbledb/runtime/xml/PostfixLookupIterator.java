@@ -106,23 +106,50 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
-            if (item.isObject()) {
+            if (item.isMap()) {
                 if (this.wildcard) {
-                    this.nextResult.addAll(item.getValues());
-                } else {
-                    for (Item key : this.lookupKeys) {
-                        if (key.isString()) {
-                            this.nextResult.add(item.getItemByKey(key.getStringValue()));
+                    if (item.isObject()) {
+                        // fast path: one item per key
+                        this.nextResult.addAll(item.getItemValues());
+                    } else {
+                        for (List<Item> valueSequence : item.getSequenceValues()) {
+                            this.nextResult.addAll(valueSequence);
                         }
-                        if (key.isNumeric()) {
-                            // TODO numeric maps
+                    }
+                } else {
+                    for (Item rawKey : this.lookupKeys) {
+                        // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
+                        List<Item> atomized = rawKey.atomizedValue();
+                        if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
+                            throw new UnexpectedTypeException(
+                                    "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
+                                    getMetadata()
+                            );
+                        }
+                        Item key = atomized.get(0);
+                        if (item.isObject()) {
+                            // fast path: one item per key
+                            Item value = item.getItemByKey(key);
+                            if (value != null) {
+                                this.nextResult.add(value);
+                            }
+                        } else {
+                            List<Item> valueSequence = item.getSequenceByKey(key);
+                            if (valueSequence != null && !valueSequence.isEmpty()) {
+                                this.nextResult.addAll(valueSequence);
+                            }
                         }
                     }
                 }
-
             } else if (item.isArray()) {
                 if (this.wildcard) {
-                    this.nextResult.addAll(item.getItems());
+                    if (item.isArrayOfItems()) {
+                        this.nextResult.addAll(item.getItemMembers());
+                    } else {
+                        for (List<Item> member : item.getSequenceMembers()) {
+                            this.nextResult.addAll(member);
+                        }
+                    }
                 } else {
                     for (Item key : this.lookupKeys) {
                         if (key.isString()) {
@@ -132,7 +159,12 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                             );
                         }
                         if (key.isNumeric()) {
-                            this.nextResult.add(item.getItemAt(key.castToIntValue() - 1));
+                            int idx = key.castToIntValue() - 1;
+                            if (item.isArrayOfItems()) {
+                                this.nextResult.add(item.getItemAt(idx));
+                            } else {
+                                this.nextResult.addAll(item.getSequenceAt(idx));
+                            }
                         }
                     }
                 }

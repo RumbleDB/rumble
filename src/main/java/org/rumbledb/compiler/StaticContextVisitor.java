@@ -71,6 +71,8 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -309,7 +311,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getCountVariableName(),
-            SequenceType.INTEGER,
+            SequenceType.createSequenceType("integer"),
             clause.getMetadata()
         );
         this.visit(clause.getNextClause(), result);
@@ -466,6 +468,25 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.getSequenceType().resolve(argument, expression.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDirElemConstructor(DirElemConstructorExpression expression, StaticContext argument) {
+        StaticContext contentContext = argument;
+        if (!expression.getNamespaceDeclarations().isEmpty()) {
+            contentContext = new StaticContext(argument);
+            for (NamespaceDeclaration namespaceDeclaration : expression.getNamespaceDeclarations()) {
+                contentContext.bindNamespace(namespaceDeclaration.getPrefix(), namespaceDeclaration.getUri());
+            }
+        }
+
+        for (Expression attribute : expression.getAttributes()) {
+            this.visit(attribute, argument);
+        }
+        for (Expression child : expression.getContent()) {
+            this.visit(child, contentContext);
+        }
         return argument;
     }
 

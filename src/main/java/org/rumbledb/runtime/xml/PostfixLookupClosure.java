@@ -43,37 +43,69 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<>();
 
-        if (this.wildcard) {
-            if (arg0.isObject()) {
-                results = arg0.getValues();
-            } else if (arg0.isArray()) {
-                results = arg0.getItems();
-            }
-            return results.iterator();
-        }
-        if (arg0.isObject()) {
-            for (Item key : this.keys) {
-                if (key.isString()) {
-                    Item i = arg0.getItemByKey(key.getStringValue());
-                    if (i != null)
-                        results.add(i);
+
+        if (arg0.isMap()) {
+            if (this.wildcard) {
+                if (arg0.isObject()) {
+                    results.addAll(arg0.getItemValues());
+                } else {
+                    for (List<Item> valueSequence : arg0.getSequenceValues()) {
+                        results.addAll(valueSequence);
+                    }
                 }
-                if (key.isNumeric()) {
-                    // TODO numeric maps
+            } else {
+                for (Item rawKey : this.keys) {
+                    // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
+                    List<Item> atomized = rawKey.atomizedValue();
+                    if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
+                        throw new UnexpectedTypeException(
+                                "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    Item key = atomized.get(0);
+                    if (arg0.isObject()) {
+                        // fast path: one item per key
+                        Item value = arg0.getItemByKey(key);
+                        if (value != null) {
+                            results.add(value);
+                        }
+                    } else {
+                        List<Item> valueSequence = arg0.getSequenceByKey(key);
+                        if (valueSequence != null && !valueSequence.isEmpty()) {
+                            results.addAll(valueSequence);
+                        }
+                    }
                 }
             }
         } else if (arg0.isArray()) {
-            for (Item key : this.keys) {
-                if (key.isString()) {
-                    throw new UnexpectedTypeException(
-                            "Type error; Lookup with String on Arrays is not possible",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+            if (this.wildcard) {
+                if (arg0.isArrayOfItems()) {
+                    results = arg0.getItemMembers();
+                } else {
+                    for (List<Item> member : arg0.getSequenceMembers()) {
+                        results.addAll(member);
+                    }
                 }
-                if (key.isNumeric()) {
-                    results.add(arg0.getItemAt(key.castToIntValue() - 1));
+            } else {
+                for (Item key : this.keys) {
+                    if (key.isString()) {
+                        throw new UnexpectedTypeException(
+                                "Type error; Lookup with String on Arrays is not possible",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    if (key.isNumeric()) {
+                        int idx = key.castToIntValue() - 1;
+                        if (arg0.isArrayOfItems()) {
+                            results.add(arg0.getItemAt(idx));
+                        } else {
+                            results.addAll(arg0.getSequenceAt(idx));
+                        }
+                    }
                 }
             }
+
         }
         return results.iterator();
     }

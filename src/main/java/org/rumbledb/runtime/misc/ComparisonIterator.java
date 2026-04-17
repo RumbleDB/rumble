@@ -145,6 +145,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+        }
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
+        }
+
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
@@ -320,6 +327,17 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             Boolean l = left.getBooleanValue();
             Boolean r = right.getBooleanValue();
             return processBoolean(l, r);
+        }
+        if (left.isQName() && right.isQName()) {
+            switch (comparisonOperator) {
+                case VC_EQ:
+                case GC_EQ:
+                case VC_NE:
+                case GC_NE:
+                    return left.getQNameValue().equals(right.getQNameValue()) ? 0 : 1;
+                default:
+                    return Long.MIN_VALUE;
+            }
         }
         if (left.isString() && right.isString()) {
             String l = left.getStringValue();

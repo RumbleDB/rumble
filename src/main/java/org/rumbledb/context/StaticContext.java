@@ -54,6 +54,12 @@ public class StaticContext implements Serializable, KryoSerializable {
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
 
+    /**
+     * XQuery {@code declare default function namespace}; when null, unprefixed function names use
+     * {@link Name#JSONIQ_DEFAULT_FUNCTION_NS} (Rumble's usual fn/jn/... resolution path).
+     */
+    private transient String defaultFunctionNamespaceUri;
+
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
@@ -72,6 +78,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("map", Name.MAP_NS);
         defaultBindings.put("array", Name.ARRAY_NS);
         defaultBindings.put("xs", Name.XS_NS);
+        defaultBindings.put("xml", Name.XML_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
         // defaultBindings.put("an", Name.AN_NS);
@@ -337,12 +344,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.staticallyKnownNamespaces != null) {
-            if (this.staticallyKnownNamespaces.containsKey(prefix)) {
-                return this.staticallyKnownNamespaces.get(prefix);
-            } else {
-                return null;
-            }
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
         }
         if (this.parent != null) {
             return this.parent.resolveNamespace(prefix);
@@ -412,6 +415,26 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = emptySequenceOrderLeast;
     }
 
+    /**
+     * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
+     */
+    public void setDefaultFunctionNamespaceUri(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Default function namespace can only be set in the root static context.");
+        }
+        this.defaultFunctionNamespaceUri = uri;
+    }
+
+    /**
+     * @return the declared default function namespace URI, or null if not set (use JSONiq default function NS)
+     */
+    public String getDefaultFunctionNamespaceUri() {
+        if (this.parent != null) {
+            return this.parent.getDefaultFunctionNamespaceUri();
+        }
+        return this.defaultFunctionNamespaceUri;
+    }
+
     public boolean isEmptySequenceOrderLeast() {
         if (this.parent != null) {
             return this.parent.isEmptySequenceOrderLeast();
@@ -470,6 +493,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         for (String prefix : defaultBindings.keySet()) {
             bindNamespace(prefix, defaultBindings.get(prefix));
         }
+    }
+
+    /**
+     * Built-in namespace bindings (fn, xs, map, ...) used when resolving QNames without a full static context.
+     */
+    public static String getBuiltinNamespaceBinding(String prefix) {
+        return defaultBindings.get(prefix);
     }
 
     public InScopeSchemaTypes getInScopeSchemaTypes() {

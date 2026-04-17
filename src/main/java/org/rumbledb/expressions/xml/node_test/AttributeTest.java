@@ -59,8 +59,12 @@ public class AttributeTest implements NodeTest {
         return this.attributeName != null && this.typeName == null;
     }
 
-    public String getAttributeName() {
-        return this.attributeName.getLocalName();
+    /**
+     * Expanded name from the kind test (namespace URI + local name). Only valid when
+     * {@link #isNameWithoutTypeCheck()} is true.
+     */
+    public Name getAttributeName() {
+        return this.attributeName;
     }
 
     public boolean isWildcardOnly() {

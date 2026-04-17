@@ -15,25 +15,38 @@ public class UnionItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    private static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(FacetTypes.CONTENT));
+    private static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
+            Arrays.asList(ConstrainingFacetTypes.CONTENT)
+    );
 
     private final Name name;
     private final ItemType baseType;
     private final int typeTreeDepth;
     private final List<ItemType> types;
+    private final boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
+        this(name, baseType, types, true);
+    }
+
+    UnionItemType(Name name, ItemType baseType, List<ItemType> types, boolean userDefined) {
         this.name = name;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.types = types;
+        this.userDefined = userDefined;
     }
 
     UnionItemType(Name name, List<ItemType> types) {
+        this(name, types, true);
+    }
+
+    UnionItemType(Name name, List<ItemType> types, boolean userDefined) {
         this.name = name;
         this.baseType = BuiltinTypesCatalogue.item;
         this.typeTreeDepth = 1;
         this.types = types;
+        this.userDefined = userDefined;
     }
 
     @Override
@@ -63,7 +76,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean hasName() {
-        return true;
+        return this.name != null;
     }
 
     @Override
@@ -83,7 +96,33 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return true;
+        return this.userDefined;
+    }
+
+    @Override
+    public boolean isNumeric() {
+        for (ItemType member : this.types) {
+            if (!member.isNumeric()) {
+                return false;
+            }
+        }
+        return !this.types.isEmpty();
+    }
+
+    @Override
+    public boolean isStaticallyCastableAs(ItemType other) {
+        if (other.equals(this)) {
+            return true;
+        }
+        if (other.isNumeric()) {
+            return true;
+        }
+        for (ItemType member : this.types) {
+            if (other.isSubtypeOf(member)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -97,7 +136,7 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 

@@ -38,31 +38,73 @@ import java.util.List;
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private boolean isFixedSlotsArrayConstructor;
 
+    /**
+     * Curly array constructor: single child whose items become singleton members.
+     */
     public ArrayRuntimeIterator(
             RuntimeIterator arrayItems,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
+        this.isFixedSlotsArrayConstructor = false;
         if (arrayItems != null) {
             this.children.add(arrayItems);
+        }
+    }
+
+    /**
+     * Square array constructor: each child iterator produces one member (possibly a sequence).
+     */
+    public ArrayRuntimeIterator(
+            List<RuntimeIterator> memberIterators,
+            boolean isFixedSlotsArrayConstructor,
+            RuntimeStaticContext staticContext
+    ) {
+        super(null, staticContext);
+        this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
+        if (memberIterators != null) {
+            this.children.addAll(memberIterators);
         }
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        List<Item> result = new ArrayList<>();
-        if (!this.children.isEmpty()) {
-            result.addAll(this.children.get(0).materialize(dynamicContext));
+        if (isEffectiveFixedSlotsArrayConstructor()) {
+            boolean allSingleton = true;
+            List<List<Item>> memberSequences = new ArrayList<>();
+            for (RuntimeIterator child : this.children) {
+                List<Item> member = child.materialize(dynamicContext);
+                if (allSingleton && member.size() != 1) {
+                    allSingleton = false;
+                }
+                memberSequences.add(member);
+            }
+            if (allSingleton) {
+                List<Item> items = new ArrayList<>();
+                for (List<Item> member : memberSequences) {
+                    items.add(member.get(0));
+                }
+                return ItemFactory.getInstance().createArrayItem(items, true);
+            } else {
+                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, true);
+            }
         }
-        Item item = ItemFactory.getInstance().createArrayItem(result, true);
-        return item;
+        List<Item> result = new ArrayList<>();
+        for (RuntimeIterator child : this.children) {
+            result.addAll(child.materialize(dynamicContext));
+        }
+        return ItemFactory.getInstance().createArrayItem(result, true);
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (!this.children.isEmpty()) {
+        if (isEffectiveFixedSlotsArrayConstructor()) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (this.children.size() == 1) {
             NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
@@ -90,5 +132,9 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                     new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
             );
         }
+    }
+
+    private boolean isEffectiveFixedSlotsArrayConstructor() {
+        return this.isFixedSlotsArrayConstructor;
     }
 }

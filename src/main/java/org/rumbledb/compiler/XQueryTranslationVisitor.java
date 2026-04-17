@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -80,6 +81,7 @@ import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
@@ -91,7 +93,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
-import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -150,16 +152,20 @@ import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
+import static org.rumbledb.types.SequenceType.createSequenceType;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -168,9 +174,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -184,18 +187,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
     private String code;
+    private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
+    private final CommonTokenStream xQueryTokenStream;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
             RumbleRuntimeConfiguration configuration,
-            String code
+            String code,
+            CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.configuration = configuration;
         this.isMainModule = isMainModule;
         this.code = code;
+        this.dirElemNamespaceFrames = new ArrayDeque<>();
+        this.xQueryTokenStream = xQueryTokenStream;
     }
 
     // endregion expr
@@ -237,7 +245,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     new VariableDeclaration(
                             Name.CONTEXT_ITEM,
                             true,
-                            SequenceType.ITEM,
+                            SequenceType.createSequenceType("item"),
                             null,
                             null,
                             createMetadataFromContext(ctx)
@@ -287,79 +295,37 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitProlog(XQueryParser.PrologContext ctx) {
-        // bind namespaces
-        for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-            this.processNamespaceDecl(namespace);
-        }
-        List<SetterContext> setters = ctx.setter();
-        boolean emptyOrderSet = false;
-        boolean defaultCollationSet = false;
-        boolean baseURISet = false;
-        for (SetterContext setterContext : setters) {
-            if (setterContext.emptyOrderDecl() != null) {
-                if (emptyOrderSet) {
-                    throw new MoreThanOneEmptyOrderDeclarationException(
-                            "The empty order was already set.",
-                            createMetadataFromContext(setterContext.emptyOrderDecl())
-                    );
-                }
-                processEmptySequenceOrder(setterContext.emptyOrderDecl());
-                emptyOrderSet = true;
-                continue;
-            }
-            XQueryParser.DecimalFormatDeclContext decimalFormatDeclarationContext = setterContext.decimalFormatDecl();
-            if (decimalFormatDeclarationContext != null) {
-                processDecimalFormatDeclaration(
-                    decimalFormatDeclarationContext,
-                    createMetadataFromContext(decimalFormatDeclarationContext)
-                );
-                continue;
-            }
-            if (setterContext.defaultCollationDecl() != null) {
-                if (defaultCollationSet) {
-                    throw new DefaultCollationException(
-                            "The default collation was already set.",
-                            createMetadataFromContext(setterContext.defaultCollationDecl())
-                    );
-                }
-                processDefaultCollation(setterContext.defaultCollationDecl());
-                defaultCollationSet = true;
-                continue;
-            }
-            if (setterContext.baseURIDecl() != null) {
-                if (baseURISet) {
-                    throw new MultipleBaseURIException(
-                            "The base-uri was already set.",
-                            createMetadataFromContext(setterContext.baseURIDecl())
-                    );
-                }
-                String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-                URI uri = FileSystemUtil.resolveURI(
-                    this.moduleContext.getStaticBaseURI(),
-                    uriString,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                this.moduleContext.setStaticBaseUri(uri);
-                baseURISet = true;
-                continue;
-            }
-            throw new UnsupportedFeatureException(
-                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
-                    createMetadataFromContext(setterContext)
-            );
-        }
         List<LibraryModule> libraryModules = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
-        for (XQueryParser.ModuleImportContext namespace : ctx.moduleImport()) {
-            LibraryModule libraryModule = this.processModuleImport(namespace);
-            libraryModules.add(libraryModule);
-            if (namespaces.contains(libraryModule.getNamespace())) {
-                throw new DuplicateModuleTargetNamespaceException(
-                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
-                        createMetadataFromContext(namespace)
-                );
+        PrologPhase1Flags phase1 = new PrologPhase1Flags();
+        for (int ci = 0; ci < ctx.getChildCount(); ci++) {
+            ParseTree child = ctx.getChild(ci);
+            if (child instanceof TerminalNode) {
+                continue;
             }
-            namespaces.add(libraryModule.getNamespace());
+            if (child instanceof XQueryParser.AnnotatedDeclContext) {
+                break;
+            }
+            if (child instanceof XQueryParser.DefaultNamespaceDeclContext) {
+                processDefaultNamespaceDecl((XQueryParser.DefaultNamespaceDeclContext) child, phase1);
+            } else if (child instanceof XQueryParser.NamespaceDeclContext) {
+                processNamespaceDecl((XQueryParser.NamespaceDeclContext) child);
+            } else if (child instanceof SetterContext) {
+                processPrologPhase1Setter((SetterContext) child, phase1);
+            } else if (child instanceof XQueryParser.SchemaImportContext) {
+                // Not supported yet; previously skipped as well.
+            } else if (child instanceof XQueryParser.ModuleImportContext) {
+                XQueryParser.ModuleImportContext namespace = (XQueryParser.ModuleImportContext) child;
+                LibraryModule libraryModule = this.processModuleImport(namespace);
+                libraryModules.add(libraryModule);
+                if (namespaces.contains(libraryModule.getNamespace())) {
+                    throw new DuplicateModuleTargetNamespaceException(
+                            "Duplicate module target namespace: " + libraryModule.getNamespace(),
+                            createMetadataFromContext(namespace)
+                    );
+                }
+                namespaces.add(libraryModule.getNamespace());
+            }
         }
 
         // parse variables and function
@@ -432,12 +398,107 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return prolog;
     }
 
+    private static final class PrologPhase1Flags {
+        boolean emptyOrderSet;
+        boolean defaultCollationSet;
+        boolean baseURISet;
+        boolean defaultFunctionNamespaceDeclared;
+    }
+
+    private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.emptyOrderDecl() != null) {
+            if (flags.emptyOrderSet) {
+                throw new MoreThanOneEmptyOrderDeclarationException(
+                        "The empty order was already set.",
+                        createMetadataFromContext(setterContext.emptyOrderDecl())
+                );
+            }
+            processEmptySequenceOrder(setterContext.emptyOrderDecl());
+            flags.emptyOrderSet = true;
+            return;
+        }
+        if (setterContext.decimalFormatDecl() != null) {
+              processDecimalFormatDeclaration(
+                  setterContext.decimalFormatDecl(),
+                  createMetadataFromContext(setterContext.decimalFormatDecl())
+              );
+              return;
+            }
+        }
+        if (setterContext.defaultCollationDecl() != null) {
+            if (flags.defaultCollationSet) {
+                throw new DefaultCollationException(
+                        "The default collation was already set.",
+                        createMetadataFromContext(setterContext.defaultCollationDecl())
+                );
+            }
+            processDefaultCollation(setterContext.defaultCollationDecl());
+            flags.defaultCollationSet = true;
+            return;
+        }
+        if (setterContext.baseURIDecl() != null) {
+            if (flags.baseURISet) {
+                throw new MultipleBaseURIException(
+                        "The base-uri was already set.",
+                        createMetadataFromContext(setterContext.baseURIDecl())
+                );
+            }
+            String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
+            URI uri = FileSystemUtil.resolveURI(
+                this.moduleContext.getStaticBaseURI(),
+                uriString,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            this.moduleContext.setStaticBaseUri(uri);
+            flags.baseURISet = true;
+            return;
+        }
+        throw new UnsupportedFeatureException(
+                "Setters are not supported yet, except for empty sequence ordering and default collations.",
+                createMetadataFromContext(setterContext)
+        );
+    }
+
+    private void processDefaultNamespaceDecl(
+            XQueryParser.DefaultNamespaceDeclContext ctx,
+            PrologPhase1Flags flags
+    ) {
+        String uri = processStringLiteral(ctx.stringLiteral());
+        int declType = ctx.type.getType();
+        if (declType == XQueryParser.KW_ELEMENT) {
+            bindNamespace("", uri, generateMetadata(ctx.getStop()));
+        } else if (declType == XQueryParser.KW_FUNCTION) {
+            if (flags.defaultFunctionNamespaceDeclared) {
+                throw new SemanticException(
+                        "The default function namespace has already been declared.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            this.moduleContext.setDefaultFunctionNamespaceUri(uri);
+            flags.defaultFunctionNamespaceDeclared = true;
+        } else {
+            throw new OurBadException("Unexpected default namespace declaration kind.");
+        }
+    }
+
+    private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
+    }
+
+    private Name nameForUnprefixedFunction(String localName) {
+        String uri = this.moduleContext.getDefaultFunctionNamespaceUri();
+        if (uri != null) {
+            return new Name(uri, "", localName);
+        }
+        return Name.createVariableInDefaultFunctionNamespace(localName);
+    }
+
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
         if (ctx.URIQualifiedName() != null) {
-            // TODO: implement URIQualifiedName support
-            throw new UnsupportedFeatureException(
-                    "URIQualifiedNames are not supported yet.",
-                    createMetadataFromContext(ctx)
+            return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                createMetadataFromContext(ctx)
             );
         } else if (ctx.FullQName() != null) {
             // Handle FullQName by parsing its text content
@@ -451,38 +512,77 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             String prefix = fullQNameText.substring(0, colonIndex);
             String localName = fullQNameText.substring(colonIndex + 1);
-            Name name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
-            if (name != null) {
-                return name;
-            } else {
-                throw new PrefixCannotBeExpandedException(
-                        "Cannot expand prefix " + prefix,
-                        generateMetadata(ctx.getStop())
-                );
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                return new Name(namespace, prefix, localName);
             }
+            throw new PrefixCannotBeExpandedException(
+                    "Cannot expand prefix " + prefix,
+                    generateMetadata(ctx.getStop())
+            );
         } else if (ctx.keywordOKForFunction() != null) {
             // if the rule matches a keyword, the prefix is not defined
-            return Name.createVariableInDefaultFunctionNamespace(ctx.keywordOKForFunction().getText());
+            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
         } else {
             // Handle NCName case
             String localName = ctx.NCName().getText();
-            return Name.createVariableInDefaultFunctionNamespace(localName);
+            return nameForUnprefixedFunction(localName);
         }
     }
 
-    public Name parseEqName(XQueryParser.EqNameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
+    /**
+     * Parse an EQName. Delegates to {@link #parseName} for the {@code qname} branch; URI-qualified names use
+     * {@link URIQualifiedNameParser}.
+     */
+    public Name parseEqName(
+            XQueryParser.EqNameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
         if (ctx.qname() != null) {
-            return parseName(ctx.qname(), isFunction, isType, isAnnotation);
-        } else {
-            // TODO: implement URIQualifiedName support
-            throw new UnsupportedFeatureException(
-                    "URIQualifiedNames are not supported yet.",
-                    createMetadataFromContext(ctx)
-            );
+            return parseName(ctx.qname(), isFunction, isType, isAnnotation, isElementConstructor);
         }
+        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
     }
 
-    public Name parseName(XQueryParser.QnameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
+    /**
+     * Resolves a QName while parsing an XQuery construct.
+     * <p>
+     * <strong>Prefix resolution (any prefixed QName):</strong> the prefix is always resolved with
+     * {@link #resolvePrefixForDirConstructor}, which consults {@link #dirElemNamespaceFrames} from innermost to
+     * outermost, then falls back to {@link org.rumbledb.context.StaticContext#resolveNamespace(String)} on the module
+     * context. So prefixed names can use namespace bindings established by {@code xmlns} / {@code xmlns:prefix} on an
+     * enclosing direct element constructor, in source order, as well as prolog and imported bindings.
+     * <p>
+     * <strong>Unprefixed names:</strong> which default applies depends on the role flags (mutually exclusive in
+     * typical use). These flags do not turn off prefix resolution for prefixed QNames; they only select behavior when
+     * there is no prefix.
+     * <ul>
+     * <li>{@code isFunction}: unprefixed function name (module default function namespace; not read from
+     * {@code dirElemNamespaceFrames}).</li>
+     * <li>{@code isType}: unprefixed type name; uses the in-scope default element/type namespace from
+     * {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} (constructor {@code xmlns=""} and/or
+     * prolog defaults) when bound; otherwise {@link Name#createVariableInDefaultTypeNamespace}.</li>
+     * <li>{@code isAnnotation}: unprefixed annotation EQName; same default-namespace rule as types when a default is
+     * bound; otherwise {@link Name#createVariableInDefaultAnnotationsNamespace}.</li>
+     * <li>{@code isElementConstructor}: unprefixed name in a direct element start tag or static computed element name;
+     * uses default element namespace from {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} if
+     * bound, otherwise no namespace ({@link Name#createVariableInNoNamespace}).</li>
+     * <li>Otherwise: no namespace ({@link Name#createVariableInNoNamespace}), e.g. variables.</li>
+     * </ul>
+     * The {@code isElementConstructor} parameter remains necessary so unprefixed <em>element tag</em> names are not
+     * treated like unprefixed type names or plain NCNames: default-namespace and fallback rules differ (see branches
+     * above).
+     */
+    public Name parseName(
+            XQueryParser.QnameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -509,16 +609,36 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInDefaultFunctionNamespace(localName);
+                name = nameForUnprefixedFunction(localName);
             } else if (isType) {
-                name = Name.createVariableInDefaultTypeNamespace(localName);
+                String defaultTypeNs = resolvePrefixForDirConstructor("");
+                if (defaultTypeNs != null) {
+                    name = new Name(defaultTypeNs, "", localName);
+                } else {
+                    name = Name.createVariableInDefaultTypeNamespace(localName);
+                }
             } else if (isAnnotation) {
-                name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                String defaultAnnotationNs = resolvePrefixForDirConstructor("");
+                if (defaultAnnotationNs != null) {
+                    name = new Name(defaultAnnotationNs, "", localName);
+                } else {
+                    name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                }
+            } else if (isElementConstructor) {
+                String defaultElementNs = resolvePrefixForDirConstructor("");
+                if (defaultElementNs != null) {
+                    name = new Name(defaultElementNs, "", localName);
+                } else {
+                    name = Name.createVariableInNoNamespace(localName);
+                }
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
         } else {
-            name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                name = new Name(namespace, prefix, localName);
+            }
         }
         if (name != null) {
             return name;
@@ -539,8 +659,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false);
-                paramType = ITEM_STAR;
+                paramName = parseName(param.qname(), false, false, false, false);
+                paramType = createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -551,7 +671,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1166,7 +1286,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             children.add(mainExpression);
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
             if (functionCallContext.eqName() != null) {
-                Name name = parseEqName(functionCallContext.eqName(), true, false, false);
+                Name name = parseEqName(functionCallContext.eqName(), true, false, false, false);
                 mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
                 continue;
             } else if (functionCallContext.varRef() != null) {
@@ -1537,7 +1657,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             values.add((Expression) this.visitExprSingle(currentPair.rhs));
         }
-        return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+        return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
     }
 
 
@@ -1611,6 +1731,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return -1;
     }
 
+    /**
+     * Whitespace in direct element content is lexed on the HIDDEN channel. Recover hidden tokens that appear
+     * between two adjacent {@code dirElemContent} parse nodes (each node’s own text uses
+     * {@link CommonTokenStream#getText(Interval)} in {@link #visitDirElemContent}).
+     */
+    private static void appendHiddenTokensAfter(
+            CommonTokenStream tokenStream,
+            int previousTokenIndex,
+            StringBuilder destination
+    ) {
+        List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
+        if (hidden == null) {
+            return;
+        }
+        for (Token t : hidden) {
+            destination.append(t.getText());
+        }
+    }
+
     @Override
     public Node visitDirElemConstructorOpenClose(XQueryParser.DirElemConstructorOpenCloseContext ctx) {
         // check that the start and end tags are the same
@@ -1621,94 +1760,111 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             );
         }
 
-        // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as adjacent
-        // siblings.
-        // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
-        // here, we merge adjacent text nodes into a single text node.
-        List<Expression> content = new ArrayList<>();
-        StringBuilder textAccumulator = null;
-        ExceptionMetadata firstTextMetadata = null;
-
-        for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
-            Expression childExpression = (Expression) this.visitDirElemContent(child);
-
-            if (childExpression instanceof TextNodeExpression) {
-                TextNodeExpression textNode = (TextNodeExpression) childExpression;
-
-                // If the parent of a text node is not empty, the Text Node must not contain the zero-length string as
-                // its content.
-                // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
-                // skip empty text nodes
-                if (textNode.getContent().isEmpty()) {
-                    continue;
-                }
-
-                if (textAccumulator == null) {
-                    // start accumulating text nodes
-                    textAccumulator = new StringBuilder();
-                    // keep metadata of the first node
-                    firstTextMetadata = textNode.getMetadata();
-                }
-
-                // accumulate the text content
-                textAccumulator.append(textNode.getContent());
-            } else {
-                // non-text node encountered
-                if (textAccumulator != null) {
-                    // finalize any accumulated text nodes
-                    content.add(
-                        new TextNodeExpression(
-                                textAccumulator.toString(),
-                                firstTextMetadata
-                        )
-                    );
-                    textAccumulator = null;
-                    firstTextMetadata = null;
-                }
-
-                // add the non-text node
-                content.add(childExpression);
+        this.dirElemNamespaceFrames.push(new HashMap<>());
+        try {
+            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            if (ctx.attributes != null) {
+                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
             }
-        }
 
-        // handle any remaining accumulated text at the end
-        if (textAccumulator != null) {
-            content.add(
-                new TextNodeExpression(
-                        textAccumulator.toString(),
-                        firstTextMetadata
-                )
+            // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as
+            // adjacent siblings.
+            // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+            // here, we merge adjacent text nodes into a single text node.
+            List<Expression> content = new ArrayList<>();
+            StringBuilder textAccumulator = null;
+            ExceptionMetadata firstTextMetadata = null;
+            Token previousToken = ctx.endOpen;
+
+            for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
+                Expression childExpression = (Expression) this.visitDirElemContent(child);
+
+                if (childExpression instanceof TextNodeExpression) {
+                    TextNodeExpression textNode = (TextNodeExpression) childExpression;
+
+                    // If the parent of a text node is not empty, the Text Node must not contain the zero-length
+                    // string as its content.
+                    // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+                    // skip empty text nodes
+                    if (textNode.getContent().isEmpty()) {
+                        previousToken = child.getStop();
+                        continue;
+                    }
+
+                    if (textAccumulator == null) {
+                        textAccumulator = new StringBuilder();
+                        firstTextMetadata = textNode.getMetadata();
+                    }
+                    appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
+                    textAccumulator.append(textNode.getContent());
+                } else {
+                    // non-text node encountered
+                    if (textAccumulator != null) {
+                        appendHiddenTokensAfter(
+                            this.xQueryTokenStream,
+                            previousToken.getTokenIndex(),
+                            textAccumulator
+                        );
+                        // finalize any accumulated text nodes
+                        content.add(
+                            new TextNodeExpression(
+                                    textAccumulator.toString(),
+                                    firstTextMetadata
+                            )
+                        );
+                        textAccumulator = null;
+                        firstTextMetadata = null;
+                    }
+
+                    // add the non-text node
+                    content.add(childExpression);
+                }
+                previousToken = child.getStop();
+            }
+
+            // handle any remaining accumulated text at the end
+            if (textAccumulator != null) {
+                appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
+                content.add(
+                    new TextNodeExpression(
+                            textAccumulator.toString(),
+                            firstTextMetadata
+                    )
+                );
+            }
+
+            return new DirElemConstructorExpression(
+                    parseName(ctx.open_tag_name, false, false, false, true),
+                    content,
+                    attributeResult.attributes,
+                    attributeResult.namespaceDeclarations,
+                    createMetadataFromContext(ctx)
             );
+        } finally {
+            this.dirElemNamespaceFrames.pop();
         }
-
-        List<Expression> attributes = new ArrayList<>();
-        if (ctx.attributes != null) {
-            attributes = this.getAttributesExpressionsList(ctx.attributes);
-        }
-
-        return new DirElemConstructorExpression(
-                ctx.open_tag_name.getText(),
-                content,
-                attributes,
-                createMetadataFromContext(ctx)
-        );
 
     }
 
     @Override
     public Node visitDirElemConstructorSingleTag(XQueryParser.DirElemConstructorSingleTagContext ctx) {
-        // Handle attributes in self-closing tags
-        List<Expression> attributes = new ArrayList<>();
-        if (ctx.attributes != null) {
-            attributes = this.getAttributesExpressionsList(ctx.attributes);
-        }
+        this.dirElemNamespaceFrames.push(new HashMap<>());
+        try {
+            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            if (ctx.attributes != null) {
+                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
+            }
 
-        return new DirElemConstructorExpression(
-                ctx.open_tag_name.getText(),
-                new ArrayList<>(),
-                attributes,
-                createMetadataFromContext(ctx)
-        );
+            return new DirElemConstructorExpression(
+                    parseName(ctx.open_tag_name, false, false, false, true),
+                    new ArrayList<>(),
+                    attributeResult.attributes,
+                    attributeResult.namespaceDeclarations,
+                    createMetadataFromContext(ctx)
+            );
+        } finally {
+            this.dirElemNamespaceFrames.pop();
+        }
     }
 
     @Override
@@ -1719,8 +1875,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         } else if (child instanceof XQueryParser.CommonContentContext) {
             return this.visitCommonContent((XQueryParser.CommonContentContext) child);
         } else {
-            // create a new text node
-            String text = child.getText();
+            // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
+            String text = this.xQueryTokenStream.getText(ctx.getSourceInterval());
             if (ctx.CDATA() != null) {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
@@ -1844,7 +2000,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.name != null) {
             // Static attribute name: attribute attributeName { value }
-            Name attributeName = this.parseEqName(ctx.name, false, false, false);
+            Name attributeName = this.parseEqName(ctx.name, false, false, false, false);
             return new ComputedAttributeConstructorExpression(
                     attributeName,
                     valueExpression,
@@ -1873,7 +2029,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
         if (ctx.eqName() != null) {
             // Static element name: element elementName { content }
-            Name elementName = this.parseEqName(ctx.eqName(), false, false, false);
+            Name elementName = parseEqName(ctx.eqName(), false, false, false, true);
             return new ComputedElementConstructorExpression(
                     elementName,
                     contentExpression,
@@ -1932,8 +2088,22 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof XQueryParser.SquareArrayConstructorContext) {
-            throw new UnsupportedFeatureException(
-                    "Square array constructor not yet implemented",
+            XQueryParser.SquareArrayConstructorContext sqCtx = (XQueryParser.SquareArrayConstructorContext) child;
+            List<XQueryParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
+            if (memberCtxs == null || memberCtxs.isEmpty()) {
+                return new ArrayConstructorExpression(
+                        new ArrayList<>(),
+                        true,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            List<Expression> memberExpressions = new ArrayList<>();
+            for (XQueryParser.ExprSingleContext memberCtx : memberCtxs) {
+                memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+            }
+            return new ArrayConstructorExpression(
+                    memberExpressions,
+                    true,
                     createMetadataFromContext(ctx)
             );
         }
@@ -1956,7 +2126,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitVarRef(XQueryParser.VarRefContext ctx) {
-        Name name = parseEqName(ctx.eqName(), false, false, false);
+        Name name = parseEqName(ctx.eqName(), false, false, false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -1967,7 +2137,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
         ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
@@ -1993,7 +2163,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
+            return SequenceType.createSequenceType("()");
         }
 
         ItemType itemType = processItemType(ctx.item);
@@ -2007,6 +2177,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.parenthesizedItemTest() != null) {
+            return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
+        }
+        if (itemTypeContext.KW_ITEM() != null) {
+            return BuiltinTypesCatalogue.item;
+        }
         if (itemTypeContext.functionTest() != null) {
             // we have a function item type
             XQueryParser.TypedFunctionTestContext typedFnCtx = itemTypeContext.functionTest().typedFunctionTest();
@@ -2023,8 +2199,39 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
+        if (itemTypeContext.mapTest() != null) {
+            XQueryParser.MapTestContext mapTestContext = itemTypeContext.mapTest();
+            if (mapTestContext.anyMapTest() != null) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            XQueryParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
+            if (typedMapTestContext != null) {
+                Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
+                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                ItemType keyType;
+                if (!BuiltinTypesCatalogue.typeExists(keyName)) {
+                    keyType = new ItemTypeReference(keyName);
+                } else {
+                    keyType = BuiltinTypesCatalogue.getItemTypeByName(keyName);
+                }
+                SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
+                return ItemTypeFactory.mapOf(keyType, valueSequenceType);
+            }
+        }
+        if (itemTypeContext.arrayTest() != null) {
+            XQueryParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
+            if (arrayTestContext.anyArrayTest() != null) {
+                // XQuery 3.1 array(*) is the XDM array type (members are sequences), not js:array().
+                return BuiltinTypesCatalogue.xqueryArrayItem;
+            }
+            XQueryParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
+            if (typedArrayTestContext != null) {
+                SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
+                return ItemTypeFactory.xqueryArrayOf(contentSequenceType);
+            }
+        }
         if (itemTypeContext.eqName() != null) {
-            Name name = parseEqName(itemTypeContext.eqName(), false, true, false);
+            Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
             name = ItemTypeReference.renameAtomic(this.configuration, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
@@ -2032,35 +2239,127 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return BuiltinTypesCatalogue.getItemTypeByName(name);
         }
         if (itemTypeContext.kindTest() != null) {
-            // TODO need to implement Node types
-            throw new UnsupportedFeatureException(
-                    "Kindtest not yet supported",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            return processKindTestAsItemType(itemTypeContext.kindTest());
         }
         throw new UnsupportedFeatureException(
                 "Unsupported itemtype encountered",
                 ExceptionMetadata.EMPTY_METADATA
         );
+    }
 
+    private ItemType processKindTestAsItemType(XQueryParser.KindTestContext kindTestContext) {
+        if (kindTestContext.anyKindTest() != null) {
+            return BuiltinTypesCatalogue.nodeItem;
+        }
+        if (kindTestContext.documentTest() != null) {
+            XQueryParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
+            if (documentTestContext.schemaElementTest() != null) {
+                throw new UnsupportedFeatureException(
+                        "Schema element tests (schema-element(...)) are not supported",
+                        createMetadataFromContext(documentTestContext)
+                );
+            }
+            if (documentTestContext.elementTest() != null) {
+                ElementNodeItemType elementTestType = getElementTestAsItemType(documentTestContext.elementTest());
+                return ItemTypeFactory.documentNodeItemType(elementTestType);
+            }
+            return BuiltinTypesCatalogue.documentNode;
+        }
+        if (kindTestContext.elementTest() != null) {
+            return getElementTestAsItemType(kindTestContext.elementTest());
+        }
+        if (kindTestContext.attributeTest() != null) {
+            XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
+            if (attributeTestContext.typeName() != null) {
+                throw new UnsupportedFeatureException(
+                        "Typed attribute item tests are not supported yet",
+                        createMetadataFromContext(attributeTestContext)
+                );
+            }
+            if (attributeTestContext.attributeNameOrWildcard() == null) {
+                return BuiltinTypesCatalogue.attributeNode;
+            }
+            if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
+                return BuiltinTypesCatalogue.attributeNode;
+            }
+            Name attributeName = parseEqName(
+                attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
+                false,
+                false,
+                false,
+                false
+            );
+            return ItemTypeFactory.attributeNodeItemType(attributeName);
+        }
+        if (kindTestContext.commentTest() != null) {
+            return BuiltinTypesCatalogue.commentNode;
+        }
+        if (kindTestContext.textTest() != null) {
+            return BuiltinTypesCatalogue.textNode;
+        }
+        if (kindTestContext.namespaceNodeTest() != null) {
+            return BuiltinTypesCatalogue.namespaceNode;
+        }
+        if (kindTestContext.piTest() != null) {
+            XQueryParser.PiTestContext piTestContext = kindTestContext.piTest();
+            if (piTestContext.ncName() != null) {
+                return ItemTypeFactory.processingInstructionNodeItemType(piTestContext.ncName().getText());
+            }
+            if (piTestContext.stringLiteral() != null) {
+                String rawValue = piTestContext.stringLiteral().getText();
+                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                return ItemTypeFactory.processingInstructionNodeItemType(targetName);
+            }
+            return BuiltinTypesCatalogue.processingInstructionNode;
+        }
+        throw new UnsupportedFeatureException(
+                "Unsupported kind test in item type: " + kindTestContext.getText(),
+                createMetadataFromContext(kindTestContext)
+        );
+    }
+
+    private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
+        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
+            throw new UnsupportedFeatureException(
+                    "Typed or nillable element item tests are not supported yet",
+                    createMetadataFromContext(elementTestContext)
+            );
+        }
+        if (elementTestContext.elementNameOrWildcard() == null) {
+            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+        }
+        if (elementTestContext.elementNameOrWildcard().elementName() == null) {
+            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+        }
+        Name elementName = parseEqName(
+            elementTestContext.elementNameOrWildcard().elementName().eqName(),
+            false,
+            false,
+            false,
+            false
+        );
+        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
-
-        Name typeName = name;
-        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
-            typeName = Name.createVariableInDefaultTypeNamespace(name.getLocalName());
-        }
         if (
-            BuiltinTypesCatalogue.typeExists(typeName)
+            BuiltinTypesCatalogue.typeExists(name)
                 && children.size() == 1
                 && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
-            return new CastExpression(
-                    children.get(0),
-                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName), SequenceType.Arity.OneOrZero),
-                    metadata
-            );
+            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(name);
+            // In XQuery, no constructor function exists for xs:NOTATION or xs:anyAtomicType.
+            // Keep these as unresolved function calls to raise XPST0017 as required.
+            if (
+                !targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+                    && !targetType.equals(BuiltinTypesCatalogue.atomicItem)
+            ) {
+                return new CastExpression(
+                        children.get(0),
+                        new SequenceType(targetType, SequenceType.Arity.OneOrZero),
+                        metadata
+                );
+            }
         }
         return new FunctionCallExpression(
                 name,
@@ -2135,13 +2434,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitInlineFunctionExpr(XQueryParser.InlineFunctionExprContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.ITEM_STAR;
+        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (XQueryParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false);
-                paramType = SequenceType.ITEM_STAR;
+                paramName = parseName(param.qname(), false, false, false, false);
+                paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -2152,7 +2451,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.ITEM_STAR;
+                    paramType = SequenceType.createSequenceType("item*");
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -2322,7 +2621,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false);
+                Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
@@ -2477,7 +2776,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitAssignStatement(XQueryParser.AssignStatementContext ctx) {
-        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false);
+        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false, false);
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
@@ -2619,7 +2918,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false);
+                Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchBlockStatements.containsKey(name.getLocalName())) {
                     catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
                 }
@@ -2853,7 +3152,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ForwardAxis forwardAxis;
         NodeTest nodeTest;
         if (ctx.nodeTest() == null) {
-            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
+            // Abbreviated step: unprefixed names use default element namespace on child axis, not on @attr.
+            boolean unprefixedUsesDefaultElementNs = ctx.abbrevForwardStep().AT() == null;
+            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest(), unprefixedUsesDefaultElementNs);
             if (ctx.abbrevForwardStep().AT() != null) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
@@ -2865,7 +3166,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
         }
         forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
-        nodeTest = getNodeTest(ctx.nodeTest());
+        boolean unprefixedUsesDefaultElementNs = forwardAxis != ForwardAxis.ATTRIBUTE;
+        nodeTest = getNodeTest(ctx.nodeTest(), unprefixedUsesDefaultElementNs);
         return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
     }
 
@@ -2877,17 +3179,32 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
         }
         ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
-        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        // Reverse axes only match element (and similar) nodes; unprefixed QNames use default element namespace.
+        NodeTest nodeTest = getNodeTest(ctx.nodeTest(), true);
         return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
     }
 
-    private NodeTest getNodeTest(XQueryParser.NodeTestContext nodeTestContext) {
+    /**
+     * @param unprefixedUsesDefaultElementNamespace when true, unprefixed QNames in a {@link NameTest} use the
+     *        in-scope default element namespace (child/descendant axes, etc.); when false (e.g. {@code attribute::}),
+     *        unprefixed names have no namespace.
+     */
+    private NodeTest getNodeTest(
+            XQueryParser.NodeTestContext nodeTestContext,
+            boolean unprefixedUsesDefaultElementNamespace
+    ) {
         if (nodeTestContext.nameTest() == null) {
             // kind test
             return getKindTest(nodeTestContext.kindTest().children.get(0));
         }
         if (nodeTestContext.nameTest().wildcard() == null) {
-            Name name = parseEqName(nodeTestContext.nameTest().eqName(), false, false, false);
+            Name name = parseEqName(
+                nodeTestContext.nameTest().eqName(),
+                false,
+                false,
+                false,
+                unprefixedUsesDefaultElementNamespace
+            );
             return new NameTest(name);
         } else {
             String wildcard = nodeTestContext.nameTest().wildcard().getText();
@@ -2940,17 +3257,18 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         elementContext.elementNameOrWildcard().elementName().eqName(),
                         false,
                         false,
-                        false
+                        false,
+                        true
                     );
                     if (elementContext.typeName() == null) {
                         return new ElementTest(elementName, null);
                     }
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false);
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
                     return new ElementTest(elementName, typeName);
                 }
                 // Wildcard case: element(*) or element(*, type)
                 if (elementContext.typeName() != null) {
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false);
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
                     return new ElementTest(typeName);
                 }
                 return new ElementTest(true);
@@ -2973,12 +3291,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
                         false,
                         false,
+                        false,
                         false
                     );
                     if (attributeTestContext.typeName() != null) {
                         Name typeName = parseEqName(
                             attributeTestContext.typeName().eqName(),
                             false,
+                            true,
                             false,
                             false
                         );
@@ -2992,6 +3312,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         Name typeName = parseEqName(
                             attributeTestContext.typeName().eqName(),
                             false,
+                            true,
                             false,
                             false
                         );
@@ -3015,7 +3336,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // XQuery 3.1 Section 2.5.5
             // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
             // processing-instruction() matches any processing-instruction node.
-            // processing-instruction(N) matches any processing-instruction node whose target name equals N.
+            // processing-instruction(N) matches any processing-instruction node whose target
+            // name equals fn:normalize-space(N).
             XQueryParser.PiTestContext piContext = (XQueryParser.PiTestContext) kindTest;
             if (piContext.ncName() != null) {
                 return new PITest(piContext.ncName().getText());
@@ -3169,7 +3491,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<Annotation> parsedAnnotations = new ArrayList<>();
         for (XQueryParser.AnnotationContext annotationContext : annotations.annotation()) {
             XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
-            Name name = parseEqName(eqNameContext, false, false, true);
+            Name name = parseEqName(eqNameContext, false, false, true, false);
             if (!annotationContext.literal().isEmpty()) {
                 throw new UnsupportedFeatureException(
                         "Literals are currently not supported in annotations!",
@@ -3182,41 +3504,99 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return parsedAnnotations;
     }
 
+    private String resolvePrefixForDirConstructor(String prefix) {
+        for (Map<String, String> frame : this.dirElemNamespaceFrames) {
+            if (frame.containsKey(prefix)) {
+                return frame.get(prefix);
+            }
+        }
+        return this.moduleContext.resolveNamespace(prefix);
+    }
 
-    private List<Expression> getAttributesExpressionsList(XQueryParser.DirAttributeListContext ctx) {
-        List<Expression> attributes = new ArrayList<>();
+    private void bindDirConstructorNamespaceDeclaration(String prefix, String uri) {
+        if (this.dirElemNamespaceFrames.isEmpty()) {
+            return;
+        }
+        this.dirElemNamespaceFrames.peek().put(prefix, uri);
+    }
+
+    private static class DirAttributeProcessingResult {
+        private final List<Expression> attributes;
+        private final List<NamespaceDeclaration> namespaceDeclarations;
+
+        private DirAttributeProcessingResult() {
+            this.attributes = new ArrayList<>();
+            this.namespaceDeclarations = new ArrayList<>();
+        }
+    }
+
+
+    private DirAttributeProcessingResult getAttributesExpressionsList(XQueryParser.DirAttributeListContext ctx) {
+        DirAttributeProcessingResult result = new DirAttributeProcessingResult();
 
         // Process each attribute name-value pair
         List<XQueryParser.QnameContext> attributeNames = ctx.attribute_qname;
         List<XQueryParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
 
         for (int i = 0; i < attributeNames.size(); i++) {
-            // Get the attribute name
-            Name attributeName = parseName(attributeNames.get(i), false, false, false);
-            String qname = attributeName.toString();
+            XQueryParser.QnameContext qnameCtx = attributeNames.get(i);
+            String lexical = qnameCtx.getText();
+            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
+                String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
+                String uri = getNamespaceDeclarationUri(attributeValues.get(i));
+                result.namespaceDeclarations.add(
+                    new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx))
+                );
+                bindDirConstructorNamespaceDeclaration(declaredPrefix, uri);
+                continue;
+            }
 
-            // Get the attribute value
-            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i));
-            // Create AttributeNodeExpression
+            Name attributeName = parseName(qnameCtx, false, false, false, false);
+
+            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
             AttributeNodeExpression attributeNode = new AttributeNodeExpression(
-                    qname,
+                    attributeName,
                     value,
                     createMetadataFromContext(ctx)
             );
-            attributes.add(attributeNode);
+            result.attributes.add(attributeNode);
         }
 
-        return attributes;
+        return result;
     }
 
-    private List<Expression> getAttributeValuesExpressionsList(XQueryParser.DirAttributeValueContext ctx) {
+    private List<Expression> getAttributeValuesExpressionsList(
+            XQueryParser.DirAttributeValueContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof XQueryParser.DirAttributeValueAposContext) {
-            return this.getDirAttributeValueAposExpressions((XQueryParser.DirAttributeValueAposContext) child);
+            return this.getDirAttributeValueAposExpressions(
+                (XQueryParser.DirAttributeValueAposContext) child,
+                allowEnclosedExpressions
+            );
         } else if (child instanceof XQueryParser.DirAttributeValueQuotContext) {
-            return this.getDirAttributeValueQuotExpressions((XQueryParser.DirAttributeValueQuotContext) child);
+            return this.getDirAttributeValueQuotExpressions(
+                (XQueryParser.DirAttributeValueQuotContext) child,
+                allowEnclosedExpressions
+            );
         }
         throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+    }
+
+    private String getNamespaceDeclarationUri(XQueryParser.DirAttributeValueContext ctx) {
+        List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
+        StringBuilder uriBuilder = new StringBuilder();
+        for (Expression expression : uriExpressions) {
+            if (!(expression instanceof AttributeNodeContentExpression)) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            uriBuilder.append(((AttributeNodeContentExpression) expression).getContent());
+        }
+        return uriBuilder.toString();
     }
 
 
@@ -3228,7 +3608,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private List<Expression> processQuotedAttributeValue(
             ParserRuleContext ctx,
             String escapeSequence,
-            String escapedChar
+            String escapedChar,
+            boolean allowEnclosedExpressions
     ) {
 
         // Similar to element content, we need to merge adjacent text content
@@ -3254,7 +3635,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
             } else {
                 // Try the content visitor for nested content or text
-                List<Expression> contentResult = processAttributeContent((ParserRuleContext) child);
+                List<Expression> contentResult = processAttributeContent(
+                    (ParserRuleContext) child,
+                    allowEnclosedExpressions
+                );
                 if (contentResult != null && !contentResult.isEmpty()) {
                     childExpressions.addAll(contentResult);
                 } else {
@@ -3310,27 +3694,43 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     /**
      * Helper method to process attribute content (handles nested quotes, expressions, and escaped braces).
      */
-    private List<Expression> processAttributeContent(ParserRuleContext ctx) {
+    private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
         ParseTree child = ctx.children.get(0);
         List<Expression> expressions = new ArrayList<>();
 
         if (ctx instanceof XQueryParser.DirAttributeValueAposContext) {
-            return this.getDirAttributeValueAposExpressions((XQueryParser.DirAttributeValueAposContext) ctx);
+            return this.getDirAttributeValueAposExpressions(
+                (XQueryParser.DirAttributeValueAposContext) ctx,
+                allowEnclosedExpressions
+            );
         } else if (ctx instanceof XQueryParser.DirAttributeValueQuotContext) {
-            return this.getDirAttributeValueQuotExpressions((XQueryParser.DirAttributeValueQuotContext) ctx);
+            return this.getDirAttributeValueQuotExpressions(
+                (XQueryParser.DirAttributeValueQuotContext) ctx,
+                allowEnclosedExpressions
+            );
         } else if (
             ctx instanceof XQueryParser.DirAttributeContentQuotContext
                 &&
                 ((XQueryParser.DirAttributeContentQuotContext) ctx).expr() != null
         ) {
-            // Expression in braces
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
             expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentQuotContext) ctx).expr()));
         } else if (
             ctx instanceof XQueryParser.DirAttributeContentAposContext
                 &&
                 ((XQueryParser.DirAttributeContentAposContext) ctx).expr() != null
         ) {
-            // Expression in braces
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
             expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentAposContext) ctx).expr()));
         } else {
             // handle other cases
@@ -3347,8 +3747,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
      * Process dirAttributeValueApos and return a list of expressions.
      * This method deviates from the strict visitor pattern to return multiple expressions.
      */
-    private List<Expression> getDirAttributeValueAposExpressions(XQueryParser.DirAttributeValueAposContext ctx) {
-        return processQuotedAttributeValue(ctx, "\"\"", "\"");
+    private List<Expression> getDirAttributeValueAposExpressions(
+            XQueryParser.DirAttributeValueAposContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        return processQuotedAttributeValue(ctx, "\"\"", "\"", allowEnclosedExpressions);
     }
 
     /**
@@ -3357,8 +3760,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
      * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
      * This method deviates from the strict visitor pattern to return multiple expressions.
      */
-    private List<Expression> getDirAttributeValueQuotExpressions(XQueryParser.DirAttributeValueQuotContext ctx) {
-        return processQuotedAttributeValue(ctx, "''", "'");
+    private List<Expression> getDirAttributeValueQuotExpressions(
+            XQueryParser.DirAttributeValueQuotContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        return processQuotedAttributeValue(ctx, "''", "'", allowEnclosedExpressions);
     }
 
 

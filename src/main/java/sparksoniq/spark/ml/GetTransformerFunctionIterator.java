@@ -121,9 +121,10 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     transformer,
                     new RuntimeStaticContext(
                             getConfiguration(),
-                            SequenceType.OBJECTS,
+                            SequenceType.createSequenceType("object*"),
                             ExecutionMode.DATAFRAME,
-                            getMetadata()
+                            getMetadata(),
+                            staticContext.getStaticallyKnownNamespaces()
                     )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
