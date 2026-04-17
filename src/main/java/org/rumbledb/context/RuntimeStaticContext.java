@@ -21,6 +21,21 @@ public class RuntimeStaticContext implements Serializable {
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("RuntimeStaticContext {\n");
+        sb.append("  configuration: ").append(configuration).append("\n");
+        sb.append("  staticType: ").append(staticType).append("\n");
+        sb.append("  executionMode: ").append(executionMode).append("\n");
+        sb.append("  metadata: ").append(metadata).append("\n");
+        sb.append("  staticallyKnownNamespaces: ").append(staticallyKnownNamespaces).append("\n");
+        sb.append("  decimalFormats: ").append(decimalFormats).append("\n");
+        sb.append("  defaultDecimalFormat: ").append(defaultDecimalFormat).append("\n");
+        sb.append("}");
+        return sb.toString();
+    }
+
     public RuntimeStaticContext(
             RuntimeStaticContext oldContext
     ) {
@@ -132,7 +147,7 @@ public class RuntimeStaticContext implements Serializable {
             SequenceType newStaticType
     ) {
         RuntimeStaticContext result = new RuntimeStaticContext(this);
-        this.staticType = newStaticType;
+        result.staticType = newStaticType;
         return result;
     }
 
@@ -144,7 +159,7 @@ public class RuntimeStaticContext implements Serializable {
             ExecutionMode newExecutionMode
     ) {
         RuntimeStaticContext result = new RuntimeStaticContext(this);
-        this.executionMode = newExecutionMode;
+        result.executionMode = newExecutionMode;
         return result;
     }
 
@@ -156,7 +171,7 @@ public class RuntimeStaticContext implements Serializable {
             ExceptionMetadata newMetadata
     ) {
         RuntimeStaticContext result = new RuntimeStaticContext(this);
-        this.metadata = newMetadata;
+        result.metadata = newMetadata;
         return result;
     }
 
