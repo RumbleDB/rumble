@@ -418,12 +418,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return;
         }
         if (setterContext.decimalFormatDecl() != null) {
-              processDecimalFormatDeclaration(
-                  setterContext.decimalFormatDecl(),
-                  createMetadataFromContext(setterContext.decimalFormatDecl())
-              );
-              return;
-            }
+            processDecimalFormatDeclaration(
+                setterContext.decimalFormatDecl(),
+                createMetadataFromContext(setterContext.decimalFormatDecl())
+            );
+            return;
         }
         if (setterContext.defaultCollationDecl() != null) {
             if (flags.defaultCollationSet) {
