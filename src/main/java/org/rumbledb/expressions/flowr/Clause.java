@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,6 +32,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.types.SequenceType;
 
 /**
  * This is a clause, which is a component of a FLWOR expression.
@@ -248,8 +250,10 @@ public abstract class Clause extends Node {
     ) {
         return new RuntimeStaticContext(
                 conf,
+                SequenceType.createSequenceType("item*"),
                 getHighestExecutionMode(visitorConfig),
-                getMetadata()
+                getMetadata(),
+                this.staticContext
         );
     }
 }
