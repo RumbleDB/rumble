@@ -209,14 +209,14 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                             rightTupleSideEqualityCriteria,
                             new RuntimeStaticContext(
                                     staticContext,
-                                    SequenceType.ITEM_STAR,
+                                    SequenceType.createSequenceType("item*"),
                                     ExecutionMode.LOCAL,
                                     metadata
                             )
                     ),
                     new RuntimeStaticContext(
                             staticContext,
-                            SequenceType.ITEM_STAR,
+                            SequenceType.createSequenceType("item*"),
                             ExecutionMode.LOCAL,
                             metadata
                     )
@@ -230,14 +230,14 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                             leftTupleSideEqualityCriteria,
                             new RuntimeStaticContext(
                                     staticContext,
-                                    SequenceType.ITEM_STAR,
+                                    SequenceType.createSequenceType("item*"),
                                     ExecutionMode.LOCAL,
                                     metadata
                             )
                     ),
                     new RuntimeStaticContext(
                             staticContext,
-                            SequenceType.ITEM_STAR,
+                            SequenceType.createSequenceType("item*"),
                             ExecutionMode.LOCAL,
                             metadata
                     )

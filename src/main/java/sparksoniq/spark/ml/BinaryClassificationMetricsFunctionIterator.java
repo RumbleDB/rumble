@@ -60,7 +60,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getRuntimeStaticContext(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata()
                 )
@@ -71,7 +71,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getRuntimeStaticContext(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata()
                 )
@@ -82,7 +82,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getRuntimeStaticContext(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata()
                 )
@@ -93,7 +93,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getRuntimeStaticContext(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata()
                 )
@@ -104,7 +104,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 rdd,
                 new RuntimeStaticContext(
                         getRuntimeStaticContext(),
-                        SequenceType.OBJECTS,
+                        SequenceType.createSequenceType("object*"),
                         ExecutionMode.RDD,
                         getMetadata()
                 )

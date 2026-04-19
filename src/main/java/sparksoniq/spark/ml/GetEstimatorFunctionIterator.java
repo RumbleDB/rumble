@@ -112,7 +112,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                     estimator,
                     new RuntimeStaticContext(
                             getRuntimeStaticContext(),
-                            SequenceType.FUNCTION,
+                            SequenceType.createSequenceType("function(*)"),
                             ExecutionMode.LOCAL,
                             getMetadata()
                     )

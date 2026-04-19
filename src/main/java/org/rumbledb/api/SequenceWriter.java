@@ -90,7 +90,7 @@ public class SequenceWriter {
 
     /**
      * Public entry-point constructor used by {@link SequenceOfItems#write()}.
-     *TODO: update comment here
+     * TODO: update comment here
      * It determines the initial mode:
      * - If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
      * fails, the writer is created in RDD mode.

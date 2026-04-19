@@ -65,7 +65,6 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -297,7 +296,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitProlog(XQueryParser.PrologContext ctx) {
         List<LibraryModule> libraryModules = new ArrayList<>();
-        List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
         PrologPhase1Flags phase1 = new PrologPhase1Flags();
         for (int ci = 0; ci < ctx.getChildCount(); ci++) {
@@ -382,10 +380,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 functionDeclarations.add(
                     new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
                 );
-            } else if (annotatedDeclaration.optionDecl() != null) {
-                optionDeclarations.add(
-                    this.processOptionDecl(annotatedDeclaration.optionDecl())
-                );
             }
         }
         for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
@@ -400,9 +394,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         );
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
-        }
-        for (OptionDeclaration optionDeclaration : optionDeclarations) {
-            prolog.addDeclaration(optionDeclaration);
         }
         return prolog;
     }
@@ -1520,8 +1511,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
+            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    processStringLiteral(ctx.lt),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1602,8 +1594,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
 
         if (child instanceof XQueryParser.StringLiteralContext) {
+            String rawValue = child.getText().substring(1, child.getText().length() - 1);
             return new StringLiteralExpression(
-                    processStringLiteral((XQueryParser.StringLiteralContext) child),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1638,11 +1631,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private String unescapeStringLiteral(String raw) {
         return StringEscapeUtils.unescapeXml(raw);
-    }
-
-    private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
-        String rawValue = ctx.getText();
-        return unescapeStringLiteral(rawValue.substring(1, rawValue.length() - 1));
     }
 
     @Override
@@ -3410,14 +3398,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
-        String rawValue = ctx.getText();
-        return unescapeStringLiteral(rawValue.substring(1, rawValue.length() - 1));
-    }
-
-    private OptionDeclaration processOptionDecl(XQueryParser.OptionDeclContext ctx) {
-        Name optionName = parseName(ctx.name, false, false, false);
-        String optionValue = processStringLiteral(ctx.value);
-        return new OptionDeclaration(optionName, optionValue, createMetadataFromContext(ctx));
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {

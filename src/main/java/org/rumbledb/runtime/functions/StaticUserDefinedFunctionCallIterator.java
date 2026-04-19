@@ -77,7 +77,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             if (this.userDefinedFunctionCallIterator == null) {
                 this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getNamedFunctions()
                     .getUserDefinedFunctionCallIterator(
-                        this.getRuntimeStaticContext(),
                         this.functionIdentifier,
                         this.staticContext,
                         this.functionArguments
@@ -164,7 +163,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         try {
             this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
-                    this.getRuntimeStaticContext(),
                     this.functionIdentifier,
                     this.staticContext,
                     this.functionArguments
@@ -180,7 +178,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         try {
             this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
-                    this.getRuntimeStaticContext(),
                     this.functionIdentifier,
                     this.staticContext,
                     this.functionArguments
@@ -210,7 +207,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         }
         this.userDefinedFunctionCallIterator = context.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
-                this.getRuntimeStaticContext(),
                 this.functionIdentifier,
                 this.staticContext,
                 this.functionArguments

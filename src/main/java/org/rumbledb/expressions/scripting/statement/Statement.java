@@ -1,6 +1,7 @@
 package org.rumbledb.expressions.scripting.statement;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -42,10 +43,11 @@ public abstract class Statement extends Node {
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
+            RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
         return new RuntimeStaticContext(
-                this.staticContext,
+                conf,
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
                 getMetadata(),
