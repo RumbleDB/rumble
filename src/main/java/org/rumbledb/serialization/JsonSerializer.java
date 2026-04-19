@@ -3,6 +3,7 @@ package org.rumbledb.serialization;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.items.xml.NamespaceItem;
 
 public class JsonSerializer implements Serializer, java.io.Serializable {
 
@@ -38,7 +39,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
-            for (Item member : item.getItems()) {
+            for (Item member : item.getItemMembers()) {
                 sb.append(separator);
                 if (firstTime) {
                     separator = "," + separator;
@@ -65,7 +66,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 sb.append(separator);
                 if (firstTime) {
                     separator = "," + separator;
@@ -87,28 +88,30 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             sb.append("}");
             return;
         }
+        if (item.isMap()) {
+            SerializerUtils.serializeMapAsJsonSafeObject(this, this.params, item, sb, indent, null);
+            return;
+        }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                sb.append("<");
-                sb.append(child.nodeName());
-                sb.append(">");
-                sb.append("\n");
-
-                for (Item descendant : child.children()) {
-                    serialize(descendant, sb, indent + "  ", isTopLevel);
+                StringBuffer childBuffer = new StringBuffer();
+                serialize(child, childBuffer, indent, isTopLevel);
+                if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
+                    childBuffer.setLength(childBuffer.length() - 1);
                 }
-                sb.append("</");
-                sb.append(child.nodeName());
-                sb.append(">");
+                sb.append(childBuffer);
             }
             return;
         }
         if (item.isElementNode()) {
             sb.append(indent);
             sb.append("<");
-            sb.append(item.nodeName());
+            SerializerUtils.appendDmNodeNameLexical(sb, item);
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
+            }
+            for (Item namespace : item.declaredNamespaceNodes()) {
+                serialize(namespace, sb, indent, isTopLevel);
             }
             sb.append(">");
             sb.append("\n");
@@ -118,23 +121,59 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             }
             sb.append(indent);
             sb.append("</");
-            sb.append(item.nodeName());
+            SerializerUtils.appendDmNodeNameLexical(sb, item);
             sb.append(">");
             sb.append("\n");
             return;
         }
+        if (item.isNamespaceNode()) {
+            NamespaceItem ns = (NamespaceItem) item;
+            sb.append(" ");
+            String nsPrefix = ns.getPrefix();
+            if (nsPrefix == null || nsPrefix.isEmpty()) {
+                sb.append("xmlns=\"");
+            } else {
+                sb.append("xmlns:");
+                sb.append(nsPrefix);
+                sb.append("=\"");
+            }
+            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
+            sb.append("\"");
+            return;
+        }
         if (item.isAttributeNode()) {
             sb.append(" ");
-            sb.append(item.nodeName());
+            SerializerUtils.appendDmNodeNameLexical(sb, item);
             sb.append("=");
             sb.append("\"");
-            sb.append(item.getStringValue());
+            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
             sb.append("\"");
+            return;
+        }
+        if (item.isProcessingInstructionNode()) {
+            sb.append(indent);
+            sb.append("<?");
+            SerializerUtils.appendDmNodeNameLexical(sb, item);
+            String content = item.getStringValue();
+            if (content != null && !content.isEmpty()) {
+                sb.append(" ");
+                sb.append(content);
+            }
+            sb.append("?>");
+            sb.append("\n");
             return;
         }
         if (item.isTextNode()) {
             sb.append(indent);
             sb.append(item.getStringValue());
+            sb.append("\n");
+            return;
+        }
+        if (item.isCommentNode()) {
+            sb.append(indent);
+            sb.append("<!--");
+            sb.append(item.getStringValue());
+            sb.append("-->");
             sb.append("\n");
         }
     }

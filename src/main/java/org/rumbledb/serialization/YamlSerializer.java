@@ -53,21 +53,48 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isArray()) {
             yamlGenerator.writeStartArray();
-            for (Item member : item.getItems()) {
+            for (Item member : item.getItemMembers()) {
                 generateYAML(member, yamlGenerator);
             }
             yamlGenerator.writeEndArray();
             return;
         }
+        if (item.isMap() && !item.isObject()) {
+            yamlGenerator.writeStartObject();
+            for (Item key : item.getItemKeys()) {
+                yamlGenerator.writeFieldName(key.getStringValue());
+                appendMapValue(item, key, yamlGenerator);
+            }
+            yamlGenerator.writeEndObject();
+            return;
+        }
         if (item.isObject()) {
             yamlGenerator.writeStartObject();
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 yamlGenerator.writeFieldName(key);
                 Item value = item.getItemByKey(key);
                 generateYAML(value, yamlGenerator);
             }
             yamlGenerator.writeEndObject();
         }
+    }
+
+    private void appendMapValue(Item mapItem, Item key, YAMLGenerator yamlGenerator) throws IOException {
+        java.util.List<Item> sequence = mapItem.getSequenceByKey(key);
+        if (sequence == null || sequence.isEmpty()) {
+            yamlGenerator.writeStartArray();
+            yamlGenerator.writeEndArray();
+            return;
+        }
+        if (sequence.size() == 1) {
+            generateYAML(sequence.get(0), yamlGenerator);
+            return;
+        }
+        yamlGenerator.writeStartArray();
+        for (Item value : sequence) {
+            generateYAML(value, yamlGenerator);
+        }
+        yamlGenerator.writeEndArray();
     }
 
     private void generateYAMLAtomicValue(Item item, YAMLGenerator generator) throws IOException {
