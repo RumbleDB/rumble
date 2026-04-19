@@ -2,6 +2,7 @@ package org.rumbledb.serialization;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 
 public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable {
@@ -93,54 +94,87 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                sb.append("<");
-                sb.append(child.nodeName());
-                sb.append(">");
-                sb.append("\n");
-
-                for (Item descendant : child.children()) {
-                    serialize(descendant, sb, indent + "  ", isTopLevel);
-                }
-                sb.append("</");
-                sb.append(child.nodeName());
-                sb.append(">");
+                serialize(child, sb, indent, isTopLevel);
             }
             return;
         }
         if (item.isElementNode()) {
-            sb.append(indent);
             sb.append("<");
-            sb.append(item.nodeName());
+            sb.append(getLexicalQName(item.nodeName()));
+            for (Item namespace : item.declaredNamespaceNodes()) {
+                serialize(namespace, sb, indent, isTopLevel);
+            }
             for (Item attribute : item.attributes()) {
                 serialize(attribute, sb, indent, isTopLevel);
             }
+            if (item.children().isEmpty()) {
+                sb.append("/>");
+                return;
+            }
             sb.append(">");
-            sb.append("\n");
-
             for (Item child : item.children()) {
                 serialize(child, sb, indent + "  ", isTopLevel);
             }
-            sb.append(indent);
             sb.append("</");
-            sb.append(item.nodeName());
+            sb.append(getLexicalQName(item.nodeName()));
             sb.append(">");
-            sb.append("\n");
+            return;
+        }
+        if (item.isNamespaceNode()) {
+            Name name = item.nodeName();
+            if (name == null) {
+                sb.append(" xmlns=\"");
+                sb.append(StringEscapeUtils.escapeXml10(item.getStringValue()));
+                sb.append("\"");
+            } else {
+                sb.append(" xmlns:");
+                sb.append(name.getLocalName());
+                sb.append("=\"");
+                sb.append(StringEscapeUtils.escapeXml10(item.getStringValue()));
+                sb.append("\"");
+            }
             return;
         }
         if (item.isAttributeNode()) {
             sb.append(" ");
-            sb.append(item.nodeName());
+            sb.append(getLexicalQName(item.nodeName()));
             sb.append("=");
             sb.append("\"");
-            sb.append(item.getStringValue());
+            sb.append(StringEscapeUtils.escapeXml10(item.getStringValue()));
             sb.append("\"");
             return;
         }
         if (item.isTextNode()) {
-            sb.append(indent);
-            sb.append(item.getStringValue());
-            sb.append("\n");
+            sb.append(StringEscapeUtils.escapeXml10(item.getStringValue()));
+            return;
         }
+        if (item.isCommentNode()) {
+            sb.append("<!--");
+            sb.append(item.getStringValue());
+            sb.append("-->");
+            return;
+        }
+        if (item.isProcessingInstructionNode()) {
+            sb.append("<?");
+            sb.append(getLexicalQName(item.nodeName()));
+            String content = item.getStringValue();
+            if (content != null && !content.isEmpty()) {
+                sb.append(" ");
+                sb.append(content);
+            }
+            sb.append("?>");
+        }
+    }
+
+    private String getLexicalQName(Name name) {
+        if (name == null) {
+            return "";
+        }
+        String prefix = name.getPrefix();
+        if (prefix != null && !prefix.isEmpty()) {
+            return prefix + ":" + name.getLocalName();
+        }
+        return name.getLocalName();
     }
 
     private void appendJSONAtomicItem(Item item, StringBuffer sb) {
