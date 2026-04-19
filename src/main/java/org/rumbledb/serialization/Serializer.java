@@ -51,19 +51,14 @@ public class Serializer implements java.io.Serializable {
     }
 
     private static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
-        Item q = item.nodeName();
-        if (q != null && q.isQName()) {
-            Name n = q.getQNameValue();
+        Name n = item.nodeName();
+        if (n != null) {
             String p = n.getPrefix();
             if (p != null && !p.isEmpty()) {
                 sb.append(p).append(':').append(n.getLocalName());
             } else {
                 sb.append(n.getLocalName());
             }
-            return;
-        }
-        if (q != null) {
-            sb.append(q.getStringValue());
         }
     }
 

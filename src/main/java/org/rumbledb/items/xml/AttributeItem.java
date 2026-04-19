@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -16,7 +16,7 @@ import java.util.List;
 
 public class AttributeItem implements Item {
     private static final long serialVersionUID = 1L;
-    private Item dmNodeName;
+    private Name dmNodeName;
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -27,12 +27,11 @@ public class AttributeItem implements Item {
     }
 
     public AttributeItem(Node attributeNode) {
-        this.dmNodeName = ItemFactory.getInstance()
-            .createQNameItem(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode));
+        this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
     }
 
-    public AttributeItem(Item dmNodeName, String stringValue) {
+    public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
     }
@@ -61,12 +60,12 @@ public class AttributeItem implements Item {
     public void read(Kryo kryo, Input input) {
         this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
         this.parent = (Item) kryo.readClassAndObject(input);
-        this.dmNodeName = kryo.readObject(input, QNameItem.class);
+        this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
     }
 
     @Override
-    public Item nodeName() {
+    public Name nodeName() {
         return this.dmNodeName;
     }
 
@@ -87,7 +86,7 @@ public class AttributeItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemTypeFactory.attributeNodeItemType(this.dmNodeName.getQNameValue());
+        return ItemTypeFactory.attributeNodeItemType(this.dmNodeName);
     }
 
     /**
