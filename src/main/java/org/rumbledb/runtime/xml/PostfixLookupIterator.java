@@ -34,8 +34,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * This Iterator is for the postfix lookup operator in XQuery. It is similar to ObjectLookup in JSONiq but supports both
- * Objects (should be maps in the future) and Arrays. The lookupIterator is null in case we have a wildcard
+ * Postfix lookup for JSONiq (and non-XQuery-3.1 modes). Missing array positions contribute nothing (empty);
+ * {@link org.rumbledb.exceptions.ArrayIndexOutOfBoundsException} is not raised for out-of-range array indices.
+ * For XQuery 3.1, use {@link XQueryPostfixLookupIterator}. The lookupIterator is null for a wildcard lookup.
  */
 public class PostfixLookupIterator extends HybridRuntimeIterator {
 
@@ -160,10 +161,14 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            if (item.isArrayOfItems()) {
-                                this.nextResult.add(item.getItemAt(idx));
-                            } else {
-                                this.nextResult.addAll(item.getSequenceAt(idx));
+                            try {
+                                if (item.isArrayOfItems()) {
+                                    this.nextResult.add(item.getItemAt(idx));
+                                } else {
+                                    this.nextResult.addAll(item.getSequenceAt(idx));
+                                }
+                            } catch (org.rumbledb.exceptions.ArrayIndexOutOfBoundsException e) {
+                                // JSONiq: out-of-range index yields no items for this key
                             }
                         }
                     }

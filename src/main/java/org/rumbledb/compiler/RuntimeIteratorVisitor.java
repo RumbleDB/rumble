@@ -236,6 +236,8 @@ import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.UnaryLookupIterator;
+import org.rumbledb.runtime.xml.XQueryPostfixLookupIterator;
+import org.rumbledb.runtime.xml.XQueryUnaryLookupIterator;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -829,11 +831,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
-        RuntimeIterator runtimeIterator = new PostfixLookupIterator(
-                mainIterator,
-                lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        RuntimeStaticContext staticContextForRuntime =
+            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
+        RuntimeIterator runtimeIterator =
+            "xquery31".equals(staticContextForRuntime.getConfiguration().getQueryLanguage())
+                ? new XQueryPostfixLookupIterator(mainIterator, lookupIterator, staticContextForRuntime)
+                : new PostfixLookupIterator(mainIterator, lookupIterator, staticContextForRuntime);
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
@@ -844,10 +847,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
-        RuntimeIterator runtimeIterator = new UnaryLookupIterator(
-                lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        RuntimeStaticContext staticContextForRuntime =
+            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
+        RuntimeIterator runtimeIterator =
+            "xquery31".equals(staticContextForRuntime.getConfiguration().getQueryLanguage())
+                ? new XQueryUnaryLookupIterator(lookupIterator, staticContextForRuntime)
+                : new UnaryLookupIterator(lookupIterator, staticContextForRuntime);
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }

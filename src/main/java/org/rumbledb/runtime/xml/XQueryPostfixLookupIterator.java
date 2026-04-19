@@ -20,66 +20,106 @@
 
 package org.rumbledb.runtime.xml;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * Unary lookup for JSONiq (and non-XQuery-3.1 modes). Out-of-range array indices contribute nothing.
- * For XQuery 3.1, use {@link XQueryUnaryLookupIterator}. The lookupIterator is null for a wildcard lookup.
+ * Postfix lookup for XQuery 3.1 only. Array index out of bounds yields err:FOAY0001 per XPath and XQuery Functions 3.1.
  */
-public class UnaryLookupIterator extends LocalRuntimeIterator {
+public class XQueryPostfixLookupIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator iterator;
     private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
-    private List<Item> contextItem;
     private Queue<Item> nextResult;
     private boolean wildcard;
 
-    public UnaryLookupIterator(
+    public XQueryPostfixLookupIterator(
+            RuntimeIterator object,
             RuntimeIterator lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
-            (lookupIterator != null) ? Collections.singletonList(lookupIterator) : new ArrayList<>(),
+            Stream.of(object, lookupIterator).filter(Objects::nonNull).collect(Collectors.toList()),
             staticContext
         );
+        this.iterator = object;
         this.nextResult = new LinkedList<>();
         this.lookupIterator = lookupIterator;
         this.wildcard = this.lookupIterator == null;
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.hasNext = true;
-        this.contextItem = this.currentDynamicContextForLocalExecution.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-        if (!this.wildcard)
-            this.lookupKeys = this.lookupIterator.materialize(context);
+    private void initLookupKey(DynamicContext context) {
+        if (this.wildcard)
+            return;
+        this.lookupKeys = this.lookupIterator.materialize(context);
+    }
 
-        for (Item item : this.contextItem) {
+    @Override
+    public void openLocal() {
+        initLookupKey(this.currentDynamicContextForLocalExecution);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.iterator.close();
+    }
+
+    @Override
+    public Item nextLocal() {
+        if (this.hasNext) {
+            Item result = this.nextResult.poll();
+            setNextResult();
+            return result;
+        }
+        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
+    }
+
+    public void setNextResult() {
+        if (!this.nextResult.isEmpty())
+            return;
+
+        while (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item.isMap()) {
                 if (this.wildcard) {
                     if (item.isObject()) {
-                        // fast path: one item per key
                         this.nextResult.addAll(item.getItemValues());
                     } else {
                         for (List<Item> valueSequence : item.getSequenceValues()) {
                             this.nextResult.addAll(valueSequence);
                         }
                     }
-
                 } else {
                     for (Item rawKey : this.lookupKeys) {
-                        // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
                         List<Item> atomized = rawKey.atomizedValue();
                         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                             throw new UnexpectedTypeException(
@@ -89,7 +129,6 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                         Item key = atomized.get(0);
                         if (item.isObject()) {
-                            // fast path: one item per key
                             Item value = item.getItemByKey(key);
                             if (value != null) {
                                 this.nextResult.add(value);
@@ -102,7 +141,6 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                     }
                 }
-
             } else if (item.isArray()) {
                 if (this.wildcard) {
                     if (item.isArrayOfItems()) {
@@ -122,14 +160,10 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            try {
-                                if (item.isArrayOfItems()) {
-                                    this.nextResult.add(item.getItemAt(idx));
-                                } else {
-                                    this.nextResult.addAll(item.getSequenceAt(idx));
-                                }
-                            } catch (org.rumbledb.exceptions.ArrayIndexOutOfBoundsException e) {
-                                // JSONiq: out-of-range index yields no items for this key
+                            if (item.isArrayOfItems()) {
+                                this.nextResult.add(item.getItemAt(idx));
+                            } else {
+                                this.nextResult.addAll(item.getSequenceAt(idx));
                             }
                         }
                     }
@@ -144,13 +178,24 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                 );
             }
         }
-        this.hasNext = !this.nextResult.isEmpty();
+
+        if (this.nextResult.isEmpty()) {
+            this.hasNext = false;
+        } else {
+            this.hasNext = true;
+        }
     }
 
     @Override
-    public Item next() {
-        Item result = this.nextResult.poll();
-        this.hasNext = !this.nextResult.isEmpty();
-        return result;
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        initLookupKey(dynamicContext);
+        List<Item> keys = this.lookupKeys;
+        FlatMapFunction<Item, Item> transformation = new XQueryPostfixLookupClosure(
+                keys,
+                this.wildcard,
+                getMetadata()
+        );
+        return childRDD.flatMap(transformation);
     }
 }
