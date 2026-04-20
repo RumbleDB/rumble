@@ -28,11 +28,15 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 /**
- * Unary lookup for JSONiq (and non-XQuery-3.1 modes). Out-of-range array indices contribute nothing.
- * For XQuery 3.1, use {@link XQueryUnaryLookupIterator}. The lookupIterator is null for a wildcard lookup.
+ * Unary lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
+ * per XPath and XQuery Functions 3.1.
  */
 public class UnaryLookupIterator extends LocalRuntimeIterator {
 
@@ -69,7 +73,6 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
             if (item.isMap()) {
                 if (this.wildcard) {
                     if (item.isObject()) {
-                        // fast path: one item per key
                         this.nextResult.addAll(item.getItemValues());
                     } else {
                         for (List<Item> valueSequence : item.getSequenceValues()) {
@@ -79,7 +82,6 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
 
                 } else {
                     for (Item rawKey : this.lookupKeys) {
-                        // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
                         List<Item> atomized = rawKey.atomizedValue();
                         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                             throw new UnexpectedTypeException(
@@ -89,7 +91,6 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                         Item key = atomized.get(0);
                         if (item.isObject()) {
-                            // fast path: one item per key
                             Item value = item.getItemByKey(key);
                             if (value != null) {
                                 this.nextResult.add(value);
@@ -122,14 +123,10 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            try {
-                                if (item.isArrayOfItems()) {
-                                    this.nextResult.add(item.getItemAt(idx));
-                                } else {
-                                    this.nextResult.addAll(item.getSequenceAt(idx));
-                                }
-                            } catch (org.rumbledb.exceptions.ArrayIndexOutOfBoundsException e) {
-                                // JSONiq: out-of-range index yields no items for this key
+                            if (item.isArrayOfItems()) {
+                                this.nextResult.add(item.getItemAt(idx));
+                            } else {
+                                this.nextResult.addAll(item.getSequenceAt(idx));
                             }
                         }
                     }

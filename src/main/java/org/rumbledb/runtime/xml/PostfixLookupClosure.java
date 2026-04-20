@@ -14,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Marco Schöb
- *
  */
 
 package org.rumbledb.runtime.xml;
@@ -29,20 +27,31 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Spark closure for postfix lookup with XQuery 3.1 semantics: array index out of bounds
+ * raises err:FOAY0001 (propagated from {@link org.rumbledb.exceptions.ArrayIndexOutOfBoundsException}).
+ */
 public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
 
     private static final long serialVersionUID = 1L;
     private final List<Item> keys;
-    private boolean wildcard;
+    private final boolean wildcard;
+    private final ExceptionMetadata expressionMetadata;
 
-    public PostfixLookupClosure(List<Item> keys, boolean wildcard) {
+    public PostfixLookupClosure(
+            List<Item> keys,
+            boolean wildcard,
+            ExceptionMetadata expressionMetadata
+    ) {
         this.keys = keys;
         this.wildcard = wildcard;
+        this.expressionMetadata =
+            expressionMetadata != null ? expressionMetadata : ExceptionMetadata.EMPTY_METADATA;
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<>();
-
 
         if (arg0.isMap()) {
             if (this.wildcard) {
@@ -55,17 +64,15 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                 }
             } else {
                 for (Item rawKey : this.keys) {
-                    // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
                     List<Item> atomized = rawKey.atomizedValue();
                     if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                         throw new UnexpectedTypeException(
                                 "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                                ExceptionMetadata.EMPTY_METADATA
+                                this.expressionMetadata
                         );
                     }
                     Item key = atomized.get(0);
                     if (arg0.isObject()) {
-                        // fast path: one item per key
                         Item value = arg0.getItemByKey(key);
                         if (value != null) {
                             results.add(value);
@@ -92,19 +99,15 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     if (key.isString()) {
                         throw new UnexpectedTypeException(
                                 "Type error; Lookup with String on Arrays is not possible",
-                                ExceptionMetadata.EMPTY_METADATA
+                                this.expressionMetadata
                         );
                     }
                     if (key.isNumeric()) {
                         int idx = key.castToIntValue() - 1;
-                        try {
-                            if (arg0.isArrayOfItems()) {
-                                results.add(arg0.getItemAt(idx));
-                            } else {
-                                results.addAll(arg0.getSequenceAt(idx));
-                            }
-                        } catch (org.rumbledb.exceptions.ArrayIndexOutOfBoundsException e) {
-                            // JSONiq: out-of-range index yields no items for this key
+                        if (arg0.isArrayOfItems()) {
+                            results.add(arg0.getItemAt(idx));
+                        } else {
+                            results.addAll(arg0.getSequenceAt(idx));
                         }
                     }
                 }
