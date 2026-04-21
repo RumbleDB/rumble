@@ -189,7 +189,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                elementName,
+                elementName.getQNameValue(),
                 processedContent.children,
                 processedContent.attributes
             );
@@ -401,11 +401,10 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         for (Item attribute : attributes) {
             if (attribute.isAttributeNode()) {
-                Item q = attribute.nodeName();
-                if (q != null && q.isQName()) {
-                    Name expanded = q.getQNameValue();
+                Name expanded = attribute.nodeName();
+                if (expanded != null) {
                     if (attributeNames.contains(expanded)) {
-                        throw new DuplicateAttributeException(q.getStringValue());
+                        throw new DuplicateAttributeException(expanded.toString());
                     }
                     attributeNames.add(expanded);
                 }

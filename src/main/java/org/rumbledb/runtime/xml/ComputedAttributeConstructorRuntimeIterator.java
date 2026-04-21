@@ -214,7 +214,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         this.hasNext = false;
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
-                attributeName,
+                attributeName.getQNameValue(),
                 attributeValue
             );
     }

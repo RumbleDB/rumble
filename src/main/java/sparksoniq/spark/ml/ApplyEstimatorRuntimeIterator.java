@@ -369,13 +369,9 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
-                new RuntimeStaticContext(
-                        getConfiguration(),
-                        new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One),
-                        ExecutionMode.DATAFRAME,
-                        getMetadata(),
-                        staticContext.getStaticallyKnownNamespaces()
-                )
+                staticContext.withStaticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
+                    .withExecutionMode(ExecutionMode.DATAFRAME)
+                    .withMetadata(getMetadata())
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(
