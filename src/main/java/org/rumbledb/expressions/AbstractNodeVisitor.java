@@ -46,6 +46,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -487,6 +488,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTypeDeclaration(TypeDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitOptionDeclaration(OptionDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
 

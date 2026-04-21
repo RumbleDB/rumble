@@ -17,7 +17,8 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializers;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -1354,11 +1355,21 @@ public interface Item extends Serializable, KryoSerializable {
     int hashCode();
 
     default String serialize() {
-        return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
+        SerializationParameters p = SerializationParameters.defaults();
+        p.setMethod("xml-json-hybrid");
+        p.setEncoding("UTF-8");
+        p.setIndent(false);
+        p.setItemSeparator("\n");
+        return Serializers.from(p).serialize(this);
     }
 
     default String serializeAsJSON() {
-        return new Serializer("UTF-8", Serializer.Method.JSON, false, "\n").serialize(this);
+        SerializationParameters p = SerializationParameters.defaults();
+        p.setMethod("json");
+        p.setEncoding("UTF-8");
+        p.setIndent(false);
+        p.setItemSeparator("\n");
+        return Serializers.from(p).serialize(this);
     }
 
     /**

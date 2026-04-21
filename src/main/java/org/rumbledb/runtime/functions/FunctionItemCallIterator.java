@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,19 +33,19 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
+import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import org.rumbledb.types.SequenceType.Arity;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -74,12 +79,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionBodyIterator = null;
         this.isUpdating = functionItem.getSignature().isUpdating();
 
-        FunctionCallArgumentCoercion.validateArity(functionItem, this.functionArguments, getMetadata());
-        FunctionCallArgumentCoercion.wrapAccordingToSignature(
-            functionItem,
-            this.functionArguments,
-            staticContext
-        );
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
         // Prepopulation of the dynamic context (without the parameters)
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
@@ -98,6 +99,68 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
+    }
+
+    private void validateNumberOfArguments() {
+        if (this.functionItem.getParameterNames().size() != this.functionArguments.size()) {
+            throw new UnexpectedTypeException(
+                    "Dynamic function "
+                        + this.functionItem.getIdentifier().getName()
+                        + " invoked with incorrect number of arguments. Expected: "
+                        + this.functionItem.getParameterNames().size()
+                        + ", Found: "
+                        + this.functionArguments.size(),
+                    getMetadata()
+            );
+        }
+    }
+
+    private void wrapArgumentIteratorsWithTypeCheckingIterators() {
+        if (this.functionItem.getSignature().getParameterTypes() != null) {
+            for (int i = 0; i < this.functionArguments.size(); i++) {
+                if (
+                    this.functionArguments.get(i) != null
+                        && !this.functionItem.getSignature()
+                            .getParameterTypes()
+                            .get(i)
+                            .equals(SequenceType.createSequenceType("item*"))
+                ) {
+                    SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
+                    ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
+                    if (
+                        sequenceType.isEmptySequence()
+                            || sequenceType.getArity().equals(Arity.One)
+                            || sequenceType.getArity().equals(Arity.OneOrZero)
+                    ) {
+                        executionMode = ExecutionMode.LOCAL;
+                    }
+                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
+                        .withExecutionMode(executionMode)
+                        .withMetadata(this.functionArguments.get(i).getMetadata());
+                    if (
+                        sequenceType.isEmptySequence()
+                            || sequenceType.getArity().equals(Arity.One)
+                            || sequenceType.getArity().equals(Arity.OneOrZero)
+                    ) {
+                        RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
+                                this.functionArguments.get(i),
+                                sequenceType,
+                                "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
+                                runtimeStaticContext
+                        );
+                        this.functionArguments.set(i, typePromotionIterator);
+                    } else {
+                        RuntimeIterator typePromotionIterator = new TypePromotionIterator(
+                                this.functionArguments.get(i),
+                                sequenceType,
+                                "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
+                                runtimeStaticContext
+                        );
+                        this.functionArguments.set(i, typePromotionIterator);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -173,13 +236,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 this.functionItem.getBodyIterator(),
                 localArgumentValues,
                 RDDArgumentValues,
-                DFArgumentValues,
-                this.functionItem.isBuiltinFunction()
+                DFArgumentValues
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
                 staticContext.withStaticType(
-                    SequenceType.createSequenceType("function")
+                    SequenceType.createSequenceType("function(*)")
                 ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(getMetadata())
         );
     }
@@ -227,17 +289,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
-        if (this.isPartialApplication) {
-            if (this.functionBodyIterator != null) {
-                this.functionBodyIterator.reset(this.currentDynamicContextForLocalExecution);
-            }
-            setNextResult();
-            return;
-        }
-        this.populateDynamicContextWithArguments(this.currentDynamicContextForLocalExecution);
-        if (this.functionBodyIterator != null) {
-            this.functionBodyIterator.reset(this.dynamicContextForCalls);
-        }
+        this.functionBodyIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
