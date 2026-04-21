@@ -393,6 +393,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (expression.isFixedSlotsArrayConstructor()) {
+            // Conservative: type as array(*) for fixed-slots constructors for now.
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+            return argument;
+        }
         Expression contentExpr = expression.getExpression();
         if (contentExpr == null) {
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
@@ -2182,7 +2187,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
 
             throwStaticTypeException(
-                "the type of a dynamic function call main expression must be function, instead inferred " + mainType,
+                "the type of a dynamic function call main expression must be function or array, instead inferred "
+                    + mainType,
                 expression.getMetadata()
             );
             return argument;

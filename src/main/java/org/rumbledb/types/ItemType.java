@@ -55,9 +55,6 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
-        if (this instanceof MapItemType && otherType instanceof MapItemType) {
-            return ((MapItemType) this).structurallyEqual((MapItemType) otherType);
-        }
         if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
             if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
                 return false;
@@ -96,6 +93,13 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it [this] is an array item type.
      */
     default boolean isArrayItemType() {
+        return false;
+    }
+
+    /**
+     * @return true it [this] is an XQuery array item type.
+     */
+    default boolean isXQueryArrayItemType() {
         return false;
     }
 
@@ -587,6 +591,20 @@ public interface ItemType extends Serializable, KryoSerializable {
     default SequenceType getMapValueSequenceType() {
         throw new UnsupportedOperationException(
                 "map value sequence type is allowed only for map item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    /**
+     * @return the sequence type for the members of the array item type
+     * @throws UnsupportedOperationException if the item type is not an xquery array item type
+     */
+    default SequenceType getMemberSequenceType() {
+        throw new UnsupportedOperationException(
+                "member sequence type is allowed only for array item types, but "
                     + getIdentifierString()
                     + " is not one (class "
                     + this.getClass().getCanonicalName()

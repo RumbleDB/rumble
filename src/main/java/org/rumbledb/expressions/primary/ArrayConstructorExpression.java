@@ -32,25 +32,63 @@ import java.util.List;
 public class ArrayConstructorExpression extends Expression {
 
     private Expression expression;
+    private List<Expression> memberExpressions;
+    private boolean isFixedSlotsArrayConstructor;
 
+    /**
+     * Curly array constructor: {@code array { expr }}.
+     * Each item produced by the expression becomes a singleton member.
+     */
     public ArrayConstructorExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.expression = expression;
+        this.memberExpressions = null;
+        this.isFixedSlotsArrayConstructor = false;
     }
 
+    /**
+     * Empty array constructor (curly or square with no members).
+     */
     public ArrayConstructorExpression(ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
+        this.memberExpressions = null;
+        this.isFixedSlotsArrayConstructor = false;
+    }
+
+    /**
+     * Square array constructor: {@code [ E1, E2, ... ]}.
+     * Each expression becomes a separate member whose result (possibly a sequence) is preserved.
+     */
+    public ArrayConstructorExpression(
+            List<Expression> memberExpressions,
+            boolean isFixedSlotsArrayConstructor,
+            ExceptionMetadata metadata
+    ) {
+        super(metadata);
+        this.expression = null;
+        this.memberExpressions = memberExpressions;
+        this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
     }
 
     public Expression getExpression() {
         return this.expression;
     }
 
+    public List<Expression> getMemberExpressions() {
+        return this.memberExpressions;
+    }
+
+    public boolean isFixedSlotsArrayConstructor() {
+        return this.isFixedSlotsArrayConstructor;
+    }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null) {
+        if (this.isFixedSlotsArrayConstructor && this.memberExpressions != null) {
+            result.addAll(this.memberExpressions);
+        } else if (this.expression != null) {
             result.add(this.expression);
         }
         return result;
@@ -59,9 +97,24 @@ public class ArrayConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("[");
-        this.expression.serializeToJSONiq(sb, 0);
-        sb.append("]\n");
+        if (this.isFixedSlotsArrayConstructor) {
+            sb.append("[");
+            if (this.memberExpressions != null) {
+                for (int i = 0; i < this.memberExpressions.size(); i++) {
+                    if (i > 0) {
+                        sb.append(", ");
+                    }
+                    this.memberExpressions.get(i).serializeToJSONiq(sb, 0);
+                }
+            }
+            sb.append("]\n");
+        } else {
+            sb.append("array {");
+            if (this.expression != null) {
+                this.expression.serializeToJSONiq(sb, 0);
+            }
+            sb.append("}\n");
+        }
     }
 
 
