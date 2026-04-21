@@ -77,7 +77,7 @@ public class RuntimeStaticContext implements Serializable {
             : staticContext.getInScopeNamespaceBindings();
         this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
         this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
-        this.serializationParameters = configuration.getSerializationParameters();
+        this.serializationParameters = staticContext == null ? null : staticContext.getSerializationParameters();
     }
 
     public RuntimeStaticContext(
