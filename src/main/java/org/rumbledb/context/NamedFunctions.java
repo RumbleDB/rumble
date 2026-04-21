@@ -36,7 +36,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
@@ -221,7 +221,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         sequenceType.getItemType().isAtomicItemType()
                             && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
                     ) {
-                        argumentIterator = new AtomizationIterator(
+                        argumentIterator = new DataFunctionIterator(
                                 Collections.singletonList(argumentIterator),
                                 argStaticContext
                         );
