@@ -25,18 +25,21 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Postfix lookup for JSONiq (and non-XQuery-3.1 modes). Missing array positions contribute nothing (empty);
- * {@link org.rumbledb.exceptions.ArrayIndexOutOfBoundsException} is not raised for out-of-range array indices.
- * For XQuery 3.1, use {@link XQueryPostfixLookupIterator}. The lookupIterator is null for a wildcard lookup.
+ * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
+ * per XPath and XQuery Functions 3.1.
  */
 public class PostfixLookupIterator extends HybridRuntimeIterator {
 
@@ -94,8 +97,8 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            Item result = this.nextResult.poll(); // save the result to be returned
-            setNextResult(); // calculate and store the next result
+            Item result = this.nextResult.poll();
+            setNextResult();
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
@@ -110,7 +113,6 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
             if (item.isMap()) {
                 if (this.wildcard) {
                     if (item.isObject()) {
-                        // fast path: one item per key
                         this.nextResult.addAll(item.getItemValues());
                     } else {
                         for (List<Item> valueSequence : item.getSequenceValues()) {
@@ -119,7 +121,6 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                     }
                 } else {
                     for (Item rawKey : this.lookupKeys) {
-                        // Align with map:get and FO lookup semantics: atomize and require exactly one atomic key.
                         List<Item> atomized = rawKey.atomizedValue();
                         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                             throw new UnexpectedTypeException(
@@ -129,7 +130,6 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                         }
                         Item key = atomized.get(0);
                         if (item.isObject()) {
-                            // fast path: one item per key
                             Item value = item.getItemByKey(key);
                             if (value != null) {
                                 this.nextResult.add(value);
@@ -161,14 +161,10 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                         }
                         if (key.isNumeric()) {
                             int idx = key.castToIntValue() - 1;
-                            try {
-                                if (item.isArrayOfItems()) {
-                                    this.nextResult.add(item.getItemAt(idx));
-                                } else {
-                                    this.nextResult.addAll(item.getSequenceAt(idx));
-                                }
-                            } catch (org.rumbledb.exceptions.ArrayIndexOutOfBoundsException e) {
-                                // JSONiq: out-of-range index yields no items for this key
+                            if (item.isArrayOfItems()) {
+                                this.nextResult.add(item.getItemAt(idx));
+                            } else {
+                                this.nextResult.addAll(item.getSequenceAt(idx));
                             }
                         }
                     }
@@ -196,7 +192,11 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         List<Item> keys = this.lookupKeys;
-        FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(keys, this.wildcard);
+        FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(
+                keys,
+                this.wildcard,
+                getMetadata()
+        );
         return childRDD.flatMap(transformation);
     }
 }

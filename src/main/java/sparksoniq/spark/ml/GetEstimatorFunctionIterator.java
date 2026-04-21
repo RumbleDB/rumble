@@ -110,12 +110,9 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
                     estimatorShortName,
                     estimator,
-                    new RuntimeStaticContext(
-                            getRuntimeStaticContext(),
-                            SequenceType.createSequenceType("function(*)"),
-                            ExecutionMode.LOCAL,
-                            getMetadata()
-                    )
+                    staticContext.withStaticType(SequenceType.createSequenceType("function(*)"))
+                        .withExecutionMode(ExecutionMode.LOCAL)
+                        .withMetadata(getMetadata())
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(
