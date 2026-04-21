@@ -31,20 +31,20 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.exceptions.OurBadException;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-public class AtomizationIterator extends HybridRuntimeIterator {
+public class DataFunctionIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private List<Item> nextResults;
+    private int nextIndex;
     private boolean usedContext = false;
 
-    public AtomizationIterator(
+    public DataFunctionIterator(
             List<RuntimeIterator> parameters,
             RuntimeStaticContext staticContext
     ) {
@@ -87,9 +87,9 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
+            Item result = this.nextResults.get(this.nextIndex); // save the result to be returned
+            ++this.nextIndex;
+            if (this.nextIndex >= this.nextResults.size()) {
                 setNextResult();
             }
             return result;
@@ -102,31 +102,49 @@ public class AtomizationIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        if (this.sequenceIterator != null)
+        if (this.sequenceIterator != null) {
             this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
+        }
         this.usedContext = false;
         setNextResult();
     }
 
     public void setNextResult() {
         if (this.sequenceIterator != null) {
-            if (this.sequenceIterator.hasNext()) {
-                try {
-                    this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
-                } catch (CannotAtomizeException e) {
-                    throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
-                }
+            if (!this.sequenceIterator.hasNext()) {
+                this.hasNext = false;
+                return;
             }
-        } else if (!this.usedContext) {
+            try {
+                this.nextResults = this.sequenceIterator.next().atomizedValue();
+                if (this.nextResults.isEmpty()) {
+                    this.hasNext = false;
+                } else {
+                    this.nextIndex = 0;
+                    this.hasNext = true;
+                }
+                return;
+            } catch (CannotAtomizeException e) {
+                throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
+            }
+        }
+        if (!this.usedContext) {
             this.usedContext = true;
             List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            for (Item item : items) {
-                this.nextResults.addAll(item.atomizedValue());
+            if (items.size() != 1) {
+                throw new OurBadException("The context item is not a singleton.", getMetadata());
             }
+            this.nextResults = items.get(0).atomizedValue();
+            if (this.nextResults.isEmpty()) {
+                this.hasNext = false;
+            } else {
+                this.nextIndex = 0;
+                this.hasNext = true;
+            }
+            return;
         }
-        this.hasNext = !this.nextResults.isEmpty();
+        this.hasNext = false;
     }
 
     @Override
@@ -139,8 +157,7 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         if (this.sequenceIterator != null)
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
+            this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         this.usedContext = false;
         setNextResult();
     }

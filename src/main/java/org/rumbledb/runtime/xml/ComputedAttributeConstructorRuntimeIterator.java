@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +45,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
     private static final long serialVersionUID = 1L;
     private Name staticAttributeName;
-    private AtomizationIterator nameIterator;
-    private AtomizationIterator contentExpression;
+    private DataFunctionIterator nameIterator;
+    private DataFunctionIterator contentExpression;
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }
@@ -57,7 +57,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
      */
     public ComputedAttributeConstructorRuntimeIterator(
             Name staticAttributeName,
-            AtomizationIterator contentExpression,
+            DataFunctionIterator contentExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentExpression), staticContext);
@@ -74,8 +74,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
      * @param staticContext The runtime static context
      */
     public ComputedAttributeConstructorRuntimeIterator(
-            AtomizationIterator nameIterator,
-            AtomizationIterator contentExpression,
+            DataFunctionIterator nameIterator,
+            DataFunctionIterator contentExpression,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(nameIterator, contentExpression), staticContext);
