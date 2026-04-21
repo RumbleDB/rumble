@@ -18,6 +18,35 @@ public class RuntimeStaticContext implements Serializable {
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
     private final Map<String, String> staticallyKnownNamespaces;
+    private DecimalFormatDefinition defaultDecimalFormat;
+    private Map<Name, DecimalFormatDefinition> decimalFormats;
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("RuntimeStaticContext {\n");
+        sb.append("  configuration: ").append(configuration).append("\n");
+        sb.append("  staticType: ").append(staticType).append("\n");
+        sb.append("  executionMode: ").append(executionMode).append("\n");
+        sb.append("  metadata: ").append(metadata).append("\n");
+        sb.append("  staticallyKnownNamespaces: ").append(staticallyKnownNamespaces).append("\n");
+        sb.append("  decimalFormats: ").append(decimalFormats).append("\n");
+        sb.append("  defaultDecimalFormat: ").append(defaultDecimalFormat).append("\n");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    public RuntimeStaticContext(
+            RuntimeStaticContext oldContext
+    ) {
+        this.configuration = oldContext.getConfiguration();
+        this.staticType = oldContext.getStaticType();
+        this.executionMode = oldContext.getExecutionMode();
+        this.metadata = oldContext.getMetadata();
+        this.staticallyKnownNamespaces = oldContext.getStaticallyKnownNamespaces();
+        this.decimalFormats = oldContext.getDecimalFormats();
+        this.defaultDecimalFormat = oldContext.getDefaultDecimalFormat();
+    }
 
     public RuntimeStaticContext(
             RumbleRuntimeConfiguration configuration,
@@ -33,13 +62,17 @@ public class RuntimeStaticContext implements Serializable {
             SequenceType staticType,
             ExecutionMode executionMode,
             ExceptionMetadata metadata,
-            Map<String, String> staticallyKnownNamespaces
+            StaticContext staticContext
     ) {
         this.configuration = configuration;
         this.staticType = staticType;
         this.executionMode = executionMode;
         this.metadata = metadata;
-        this.staticallyKnownNamespaces = staticallyKnownNamespaces;
+        staticallyKnownNamespaces = staticContext == null
+            ? Collections.emptyMap()
+            : staticContext.getInScopeNamespaceBindings();
+        this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
+        this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
     }
 
     public RuntimeStaticContext(
@@ -80,6 +113,19 @@ public class RuntimeStaticContext implements Serializable {
         return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
     }
 
+    public void dropDecimalFormats() {
+        this.decimalFormats = null;
+        this.defaultDecimalFormat = null;
+    }
+
+    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
+        return this.decimalFormats;
+    }
+
+    public DecimalFormatDefinition getDefaultDecimalFormat() {
+        return this.defaultDecimalFormat;
+    }
+
     /**
      * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
      * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
@@ -94,20 +140,39 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Same configuration, metadata, and namespace map; replaces static type and execution mode (e.g. when building
+     * Creates a new context with a different static type (e.g. when building
      * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
      */
-    public RuntimeStaticContext withStaticTypeAndExecutionMode(
-            SequenceType newStaticType,
+    public RuntimeStaticContext withStaticType(
+            SequenceType newStaticType
+    ) {
+        RuntimeStaticContext result = new RuntimeStaticContext(this);
+        result.staticType = newStaticType;
+        return result;
+    }
+
+    /**
+     * Creates a new context with a different execution mode (e.g. when building
+     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
+     */
+    public RuntimeStaticContext withExecutionMode(
             ExecutionMode newExecutionMode
     ) {
-        return new RuntimeStaticContext(
-                this.configuration,
-                newStaticType,
-                newExecutionMode,
-                this.metadata,
-                this.staticallyKnownNamespaces
-        );
+        RuntimeStaticContext result = new RuntimeStaticContext(this);
+        result.executionMode = newExecutionMode;
+        return result;
+    }
+
+    /**
+     * Creates a new context with different metadata (e.g. when building
+     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
+     */
+    public RuntimeStaticContext withMetadata(
+            ExceptionMetadata newMetadata
+    ) {
+        RuntimeStaticContext result = new RuntimeStaticContext(this);
+        result.metadata = newMetadata;
+        return result;
     }
 
 }

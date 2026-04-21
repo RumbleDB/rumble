@@ -178,13 +178,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                new RuntimeStaticContext(
-                        getConfiguration(),
-                        SequenceType.createSequenceType("function"),
-                        ExecutionMode.LOCAL,
-                        getMetadata(),
-                        staticContext.getStaticallyKnownNamespaces()
-                )
+                staticContext.withStaticType(
+                    SequenceType.createSequenceType("function")
+                ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(getMetadata())
         );
     }
 
