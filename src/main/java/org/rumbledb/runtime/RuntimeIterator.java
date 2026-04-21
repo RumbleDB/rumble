@@ -280,6 +280,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getConfiguration();
     }
 
+    public RuntimeStaticContext getRuntimeStaticContext() {
+        return this.staticContext;
+    }
+
     public boolean isRDDOrDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isRDDorDataFrame field in iterator without execution mode being set.");

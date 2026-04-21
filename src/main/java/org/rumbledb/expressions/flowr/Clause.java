@@ -248,8 +248,10 @@ public abstract class Clause extends Node {
     ) {
         return new RuntimeStaticContext(
                 conf,
+                null,
                 getHighestExecutionMode(visitorConfig),
-                getMetadata()
+                getMetadata(),
+                this.staticContext
         );
     }
 }

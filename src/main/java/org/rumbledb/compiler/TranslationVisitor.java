@@ -365,6 +365,14 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 emptyOrderSet = true;
                 continue;
             }
+            JsoniqParser.DecimalFormatDeclContext decimalFormatDeclContext = setterContext.decimalFormatDecl();
+            if (decimalFormatDeclContext != null) {
+                processDecimalFormatDeclaration(
+                    decimalFormatDeclContext,
+                    createMetadataFromContext(decimalFormatDeclContext)
+                );
+                continue;
+            }
             if (setterContext.defaultCollationDecl() != null) {
                 if (defaultCollationSet) {
                     throw new DefaultCollationException(
@@ -2868,6 +2876,21 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
 
         return parsedAnnotations;
+    }
+
+    private void processDecimalFormatDeclaration(
+            JsoniqParser.DecimalFormatDeclContext ctx,
+            ExceptionMetadata metadata
+    ) {
+        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
+            ctx,
+            ctx.Kdefault() != null,
+            ctx.qname(),
+            ctx.dfPropertyName(),
+            ctx.stringLiteral(),
+            this.moduleContext,
+            metadata
+        );
     }
 
 }

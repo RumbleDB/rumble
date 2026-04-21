@@ -33,7 +33,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +50,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
     private static final long serialVersionUID = 1L;
     private Name staticElementName;
-    private AtomizationIterator nameIterator;
+    private DataFunctionIterator nameIterator;
     private RuntimeIterator contentIterator;
 
     /**
@@ -79,7 +79,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      * @param staticContext The runtime static context
      */
     public ComputedElementConstructorRuntimeIterator(
-            AtomizationIterator nameIterator,
+            DataFunctionIterator nameIterator,
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
@@ -189,7 +189,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                elementName,
+                elementName.getQNameValue(),
                 processedContent.children,
                 processedContent.attributes
             );
@@ -401,11 +401,10 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         for (Item attribute : attributes) {
             if (attribute.isAttributeNode()) {
-                Item q = attribute.nodeName();
-                if (q != null && q.isQName()) {
-                    Name expanded = q.getQNameValue();
+                Name expanded = attribute.nodeName();
+                if (expanded != null) {
                     if (attributeNames.contains(expanded)) {
-                        throw new DuplicateAttributeException(q.getStringValue());
+                        throw new DuplicateAttributeException(expanded.toString());
                     }
                     attributeNames.add(expanded);
                 }
