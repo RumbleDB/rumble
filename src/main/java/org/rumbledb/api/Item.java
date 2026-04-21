@@ -1599,10 +1599,10 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
      * sequence if the node does not have a name."
      *
-     * @return the node name as an {@link Item}, or {@code null} when the accessor yields the empty sequence
+     * @return the expanded name ({@link Name}) of the node, or {@code null} when the accessor yields the empty sequence
      * @throws UnsupportedOperationException if called on an item that is not a node
      */
-    default Item nodeName() throws UnsupportedOperationException {
+    default Name nodeName() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

@@ -837,10 +837,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
+        RuntimeStaticContext staticContextForRuntime =
+            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
         RuntimeIterator runtimeIterator = new PostfixLookupIterator(
                 mainIterator,
                 lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                staticContextForRuntime
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -852,9 +854,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
+        RuntimeStaticContext staticContextForRuntime =
+            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
         RuntimeIterator runtimeIterator = new UnaryLookupIterator(
                 lookupIterator,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                staticContextForRuntime
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
