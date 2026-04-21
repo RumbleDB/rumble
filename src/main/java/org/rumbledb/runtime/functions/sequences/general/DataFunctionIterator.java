@@ -111,15 +111,24 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
 
     public void setNextResult() {
         if (this.sequenceIterator != null) {
-            if (this.sequenceIterator.hasNext()) {
-                try {
-                    this.nextResults = this.sequenceIterator.next().atomizedValue();
-                    this.nextIndex = 0;
-                } catch (CannotAtomizeException e) {
-                    throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
-                }
+            if (!this.sequenceIterator.hasNext()) {
+                this.hasNext = false;
+                return;
             }
-        } else if (!this.usedContext) {
+            try {
+                this.nextResults = this.sequenceIterator.next().atomizedValue();
+                if(this.nextResults.isEmpty()) {
+                    this.hasNext = false;
+                } else {
+                    this.nextIndex = 0;
+                    this.hasNext = true;
+                }
+                return;
+            } catch (CannotAtomizeException e) {
+                throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
+            }
+        }
+        if(!this.usedContext) {
             this.usedContext = true;
             List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
@@ -127,9 +136,15 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 throw new OurBadException("The context item is not a singleton.", getMetadata());
             }
             this.nextResults = items.get(0).atomizedValue();
-            this.nextIndex = 0;
+            if(this.nextResults.isEmpty()) {
+                this.hasNext = false;
+            } else {
+                this.nextIndex = 0;
+                this.hasNext = true;
+            }
+            return;
         }
-        this.hasNext = !this.nextResults.isEmpty();
+        this.hasNext = false;
     }
 
     @Override
@@ -142,7 +157,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         if (this.sequenceIterator != null)
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+            this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         this.usedContext = false;
         setNextResult();
     }
