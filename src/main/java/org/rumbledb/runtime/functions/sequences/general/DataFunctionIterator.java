@@ -117,7 +117,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             }
             try {
                 this.nextResults = this.sequenceIterator.next().atomizedValue();
-                if(this.nextResults.isEmpty()) {
+                if (this.nextResults.isEmpty()) {
                     this.hasNext = false;
                 } else {
                     this.nextIndex = 0;
@@ -128,7 +128,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
             }
         }
-        if(!this.usedContext) {
+        if (!this.usedContext) {
             this.usedContext = true;
             List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
@@ -136,7 +136,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 throw new OurBadException("The context item is not a singleton.", getMetadata());
             }
             this.nextResults = items.get(0).atomizedValue();
-            if(this.nextResults.isEmpty()) {
+            if (this.nextResults.isEmpty()) {
                 this.hasNext = false;
             } else {
                 this.nextIndex = 0;
