@@ -26,6 +26,7 @@ public enum ErrorCode {
     NumericOverflowOrUnderflow("FOAR0002"),
 
     ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
+    ArrayInvalidSubarrayLengthErrorCode("FOAY0002"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
@@ -40,6 +41,7 @@ public enum ErrorCode {
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
 
     IncorrectSyntaxFormatNumberErrorCode("FODF1310"),
+    InvalidDecimalFormatName("FODF1280"),
 
     CastErrorCode("FORG0001"),
     ZeroOrOneErrorCode("FORG0003"),
@@ -119,6 +121,8 @@ public enum ErrorCode {
     InvalidProcessingInstructionTargetErrorCode("XQDY0064"),
 
     InvalidSchemaErrorCode("XQST0012"),
+    /** Namespace declaration attribute value contains an enclosed expression (direct element constructor). */
+    NamespaceDeclarationAttributeEnclosedExpressionErrorCode("XQST0022"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     MultipleBaseURIExceptionCode("XQST0032"),
@@ -137,6 +141,7 @@ public enum ErrorCode {
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
     DirectElementConstructorTagMismatchErrorCode("XQST0118"),
+    InvalidDecimalFormatPropertyConflict("XQST0098"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),

@@ -43,7 +43,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.io.JSONOptions;
+import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -92,8 +92,18 @@ public class ItemParser implements Serializable {
         return arrayItem.getItemAt(0);
     }
 
-    public static Item getItemFromJSONDocument(String string, JSONOptions options, ExceptionMetadata metadata) {
-        return JSONParser.parse(string, options, metadata);
+    // TODO better naming and comments
+    public static Item getItemFromJSONDocument(String string, ExceptionMetadata metadata) {
+        return JSONParser.parse(string, metadata);
+    }
+
+    public static Item getItemFromJSONDocument(
+            String string,
+            JSONParsingOptions options,
+            String xmlVersion,
+            ExceptionMetadata metadata
+    ) {
+        return JSONParser.parse(string, options, xmlVersion, metadata);
     }
 
     /**

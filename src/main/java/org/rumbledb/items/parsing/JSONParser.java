@@ -5,40 +5,54 @@ import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.io.JSONOptions;
+import org.rumbledb.runtime.functions.json.JSONParsingOptions;
+import org.rumbledb.runtime.functions.xml.XMLUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+// TODO Write comment here on behaviour, usages and up-to-implementation details options incorporate xml version from
+// context
+/**
+ *
+ */
 public final class JSONParser {
 
     private final String input;
     private final ExceptionMetadata metadata;
-    private final JSONOptions options;
+    private final JSONParsingOptions options;
+    private final String xmlVersion;
     private int position;
 
-    private JSONParser(String input, JSONOptions options, ExceptionMetadata metadata) {
+    private JSONParser(String input, JSONParsingOptions options, String xmlVersion, ExceptionMetadata metadata) {
         if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
             this.input = input.substring(1);
         } else {
             this.input = input;
         }
-        this.options = options == null ? JSONOptions.defaultInstance() : options;
+        this.options = options == null ? JSONParsingOptions.defaultInstance() : options;
         this.metadata = metadata;
         this.position = 0;
+        this.xmlVersion = xmlVersion;
     }
 
     public static Item parse(String jsonText, ExceptionMetadata metadata) {
-        return parse(jsonText, JSONOptions.defaultInstance(), metadata);
+        return parse(jsonText, JSONParsingOptions.defaultInstance(), XMLUtils.defaultXMLVersion(), metadata);
     }
 
-    public static Item parse(String jsonText, JSONOptions options, ExceptionMetadata metadata) {
+    public static Item parse(
+            String jsonText,
+            JSONParsingOptions options,
+            String xmlVersion,
+            ExceptionMetadata metadata
+    ) {
         if (jsonText == null) {
             return null;
         }
-        JSONParser parser = new JSONParser(jsonText, options, metadata);
+        JSONParser parser = new JSONParser(jsonText, options, xmlVersion, metadata);
         return parser.parseDocument();
     }
 
@@ -74,7 +88,8 @@ public final class JSONParser {
             case '[':
                 return parseArray();
             case '"':
-                return ItemFactory.getInstance().createStringItem(parseString().rendered);
+                ParsedString s = parseString();
+                return ItemFactory.getInstance().createStringItem(s.rendered);
             case '\'':
                 if (this.options.isLiberal()) {
                     return ItemFactory.getInstance().createStringItem(parseString().rendered);
@@ -156,14 +171,14 @@ public final class JSONParser {
             } else {
                 String policy = this.options.getDuplicates();
 
-                if (JSONOptions.DUPLICATES_REJECT.equals(policy)) {
+                if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
                             "Duplicate key '" + key.rendered + "' found in JSON object.",
                             this.metadata
                     );
                 }
 
-                if (JSONOptions.DUPLICATES_USE_LAST.equals(policy)) {
+                if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
                     keys.set(existingIndex, key.rendered);
                     values.set(existingIndex, storedValue);
                 }
@@ -182,7 +197,8 @@ public final class JSONParser {
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keys, values, this.metadata, false);
+        Item objectItem = ItemFactory.getInstance().createObjectItem(keys, values, this.metadata, false);
+        return objectItem;
     }
 
     private Item parseArray() {
@@ -288,16 +304,16 @@ public final class JSONParser {
             }
         }
 
-        String lexeme = this.input.substring(start, this.position);
+        String number = this.input.substring(start, this.position);
         try {
-            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(lexeme));
+            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
         } catch (NumberFormatException e) {
-            InvalidJSONException ex = new InvalidJSONException(
-                    "Invalid number literal '" + lexeme + "'. [position " + start + "]",
+            InvalidJSONException error = new InvalidJSONException(
+                    "Invalid number literal '" + number + "'. [position " + start + "]",
                     this.metadata
             );
-            ex.initCause(e);
-            throw ex;
+            error.initCause(e);
+            throw error;
         }
     }
 
@@ -451,7 +467,11 @@ public final class JSONParser {
                             escapedComparison.appendCodePoint(codePoint);
                         }
                     } else {
-                        rendered.appendCodePoint(codePoint);
+                        if (isValidXMLCodePoint(codePoint)) {
+                            rendered.appendCodePoint(codePoint);
+                        } else {
+                            rendered.append(this.options.getFallback().apply(firstEscape + secondEscape));
+                        }
                         escapedComparison.appendCodePoint(codePoint);
                     }
                     return;
@@ -497,7 +517,7 @@ public final class JSONParser {
                 escapedComparison.appendCodePoint(first);
             }
         } else {
-            if (isValidXmlCodePoint(first)) {
+            if (isValidXMLCodePoint(first)) {
                 rendered.appendCodePoint(first);
                 escapedComparison.appendCodePoint(first);
             } else {
@@ -528,7 +548,7 @@ public final class JSONParser {
             return;
         }
 
-        if (isValidXmlCodePoint(decoded)) {
+        if (isValidXMLCodePoint(decoded)) {
             rendered.append(decoded);
         } else {
             rendered.append(this.options.getFallback().apply(originalEscape));
@@ -569,7 +589,7 @@ public final class JSONParser {
         if ((codePoint >= 0x00 && codePoint <= 0x1F) || (codePoint >= 0x7F && codePoint <= 0x9F)) {
             return true;
         }
-        return !isValidXmlCodePoint(codePoint);
+        return !isValidXMLCodePoint(codePoint);
     }
 
     private ParsedString parseUnquotedKey() {
@@ -645,6 +665,10 @@ public final class JSONParser {
         return this.input.charAt(this.position) == '\\' && this.input.charAt(this.position + 1) == 'u';
     }
 
+    /**
+     * Skips whitespace characters.
+     * If `options.liberal == true`, also skip comments
+     */
     private void skipIgnorable() {
         while (!isEnd()) {
             char c = peek();
@@ -689,11 +713,16 @@ public final class JSONParser {
                     }
                 }
             }
-
             break;
         }
     }
 
+    /**
+     * Advances the parser if next consumable token matches `expected`
+     *
+     * @param expected next expected character
+     * @throws InvalidJSONException (FOJS0001), if expected token doesn't match actual token or end is reached
+     */
     private void expect(char expected) {
         if (isEnd() || peek() != expected) {
             throw new InvalidJSONException(
@@ -710,6 +739,10 @@ public final class JSONParser {
         advance();
     }
 
+    /**
+     * @param expected next expected character
+     * @return `true` if `expected` matches next token and EOF is not reached, `false` otherwise
+     */
     private boolean tryConsume(char expected) {
         if (!isEnd() && peek() == expected) {
             advance();
@@ -718,45 +751,66 @@ public final class JSONParser {
         return false;
     }
 
+    /**
+     * @return true if parser position has reached EOF
+     */
     private boolean isEnd() {
         return this.position >= this.input.length();
     }
 
+    /**
+     * @return next consumable character
+     */
     private char peek() {
         return this.input.charAt(this.position);
     }
 
+    /**
+     * Advances the parser by one position
+     *
+     * @return new current character
+     */
     private char advance() {
         return this.input.charAt(this.position++);
     }
 
+    /**
+     *
+     * @param c
+     * @return true if c is an ASCII number
+     */
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
     }
 
+    /**
+     * @param c
+     * @return true if c is an ASCII number excluding zero
+     */
     private boolean isDigit19(char c) {
         return c >= '1' && c <= '9';
     }
 
+    /**
+     * Returns whether a character is valid as the first character of an identifier.
+     */
     private boolean isIdentifierStart(char c) {
         return Character.isLetter(c) || c == '_' || c == '$';
     }
 
+    /**
+     * Returns whether a character is valid inside an identifier after the first character.
+     */
     private boolean isIdentifierPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '$' || c == '-';
     }
 
-    private boolean isValidXmlCodePoint(int codePoint) {
-        return codePoint == 0x9
-            || codePoint == 0xA
-            || codePoint == 0xD
-            || (codePoint >= 0x20 && codePoint <= 0xD7FF)
-            || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
-            || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
-    }
-
     private String hex4(int value) {
         return String.format("%04X", value & 0xFFFF);
+    }
+
+    private boolean isValidXMLCodePoint(int codepoint) {
+        return XMLUtils.isValidCodePoint(codepoint, this.xmlVersion);
     }
 
     private String printable(char c) {

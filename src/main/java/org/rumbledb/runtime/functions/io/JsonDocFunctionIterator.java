@@ -19,6 +19,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+// TODO use spark
 public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
@@ -68,7 +70,8 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             ? this.optionsIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
             : null;
 
-        JSONOptions options = resolveOptions(optionsItem);
+        JSONParsingOptions options = resolveOptions(optionsItem);
+        System.err.println(options);
 
         if (pathItem == null) {
             return null;
@@ -77,7 +80,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
         String jsonText = readJsonResource(uri);
 
-        return ItemParser.getItemFromJSONDocument(jsonText, options, getMetadata());
+        return ItemParser.getItemFromJSONDocument(jsonText, options, getConfiguration().getXmlVersion(), getMetadata());
     }
 
     private URI resolveJsonDocURI(String href, ExceptionMetadata metadata) {
@@ -112,12 +115,12 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
 
     private String validatedDuplicateOption(String duplicates, ExceptionMetadata metadata) {
         if (duplicates == null) {
-            return JSONOptions.DEFAULT_DUPLICATES;
+            return JSONParsingOptions.DEFAULT_DUPLICATES;
         }
         if (
-            !duplicates.equals(JSONOptions.DUPLICATES_REJECT)
-                && !duplicates.equals(JSONOptions.DUPLICATES_USE_FIRST)
-                && !duplicates.equals(JSONOptions.DUPLICATES_USE_LAST)
+            !duplicates.equals(JSONParsingOptions.DUPLICATES_REJECT)
+                && !duplicates.equals(JSONParsingOptions.DUPLICATES_USE_FIRST)
+                && !duplicates.equals(JSONParsingOptions.DUPLICATES_USE_LAST)
         ) {
             throw new InvalidOptionException(
                     "Invalid value for option 'duplicates': expected one of ('reject', 'use-first', 'use-last'), but got '"
@@ -129,22 +132,18 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
         return duplicates;
     }
 
-    private JSONOptions resolveOptions(Item optionsItem) {
-        boolean liberal = JSONOptions.DEFAULT_LIBERAL;
-        String duplicates = JSONOptions.DEFAULT_DUPLICATES;
+    private JSONParsingOptions resolveOptions(Item optionsItem) {
+        boolean liberal = JSONParsingOptions.DEFAULT_LIBERAL;
+        String duplicates = JSONParsingOptions.DEFAULT_DUPLICATES;
 
-        // In the current qt3 behavior you are targeting for json-doc(),
-        // "escape" only affects behavior when it is explicitly supplied.
-        // So the default here is false, and FOJS0005 only fires if escape:true()
-        // is explicitly present together with fallback.
         boolean escape = false;
         boolean escapeExplicitlySet = false;
 
-        Function<String, String> fallback = JSONOptions.DEFAULT_FALLBACK;
+        Function<String, String> fallback = JSONParsingOptions.DEFAULT_FALLBACK;
         boolean fallbackExplicitlySet = false;
 
         if (optionsItem == null) {
-            return new JSONOptions(liberal, duplicates, escape, fallback);
+            return new JSONParsingOptions(liberal, duplicates, escape, fallback);
         }
 
         if (!optionsItem.isMap()) {
@@ -194,9 +193,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
                     fallbackExplicitlySet = true;
                     break;
                 }
-
                 default:
-                    // Unknown options are ignored.
                     break;
             }
         }
@@ -208,7 +205,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             );
         }
 
-        return new JSONOptions(liberal, duplicates, escape, fallback);
+        return new JSONParsingOptions(liberal, duplicates, escape, fallback);
     }
 
     private boolean requireSingleBooleanOption(String optionName, List<Item> sequence) {
@@ -264,6 +261,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
+    // TODO, this could be inefficient for very large json documents think about how to use spark for subobjects
     private String readAll(InputStream is) {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();

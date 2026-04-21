@@ -25,6 +25,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
+import org.rumbledb.runtime.functions.xml.XMLUtils;
 import org.rumbledb.serialization.Serializer;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -1238,7 +1239,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.arguments = kryo.readObject(input, HashMap.class);
     }
 
-    private String xmlVersion = "1.0"; // default fallback
+    private String xmlVersion = XMLUtils.defaultXMLVersion();
 
     /**
      * Returns the configured XML version.
