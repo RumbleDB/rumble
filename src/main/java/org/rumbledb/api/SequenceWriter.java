@@ -111,7 +111,7 @@ public class SequenceWriter {
         } else {
             try {
                 Dataset<Row> dataFrame = sequence.getAsDataFrame();
-                int requestedPartitions = configuration.getNumberOfOutputPartitions();
+                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
                 if (requestedPartitions > 0) {
                     dataFrame = dataFrame.repartition(requestedPartitions);
                 }

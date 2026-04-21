@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -32,17 +31,15 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class AtomizationIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
-    private boolean usedContext = false;
+    private List<Item> currentBatch;
+    private int nextInBatch;
 
     public AtomizationIterator(
             List<RuntimeIterator> parameters,
@@ -87,10 +84,10 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
+            Item result = this.currentBatch.get(this.nextInBatch); // save the result to be returned
+            ++this.nextInBatch; // move the pointer to the next item in the batch
+            if (this.nextInBatch >= this.currentBatch.size()) { // if we have exhausted the current batch
+                fetchNextBatch(); // fetch the next batch
             }
             return result;
         }
@@ -104,29 +101,22 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     public void openLocal() {
         if (this.sequenceIterator != null)
             this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-        this.usedContext = false;
-        setNextResult();
+        this.hasNext = false;
+        fetchNextBatch();
     }
 
-    public void setNextResult() {
+    public void fetchNextBatch() {
         if (this.sequenceIterator != null) {
             if (this.sequenceIterator.hasNext()) {
                 try {
-                    this.nextResults.addAll(this.sequenceIterator.next().atomizedValue());
+                    this.currentBatch = this.sequenceIterator.next().atomizedValue();
+                    this.nextInBatch = 0;
                 } catch (CannotAtomizeException e) {
                     throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
                 }
             }
-        } else if (!this.usedContext) {
-            this.usedContext = true;
-            List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            for (Item item : items) {
-                this.nextResults.addAll(item.atomizedValue());
-            }
         }
-        this.hasNext = !this.nextResults.isEmpty();
+        this.hasNext = !this.currentBatch.isEmpty();
     }
 
     @Override
@@ -140,9 +130,8 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     protected void resetLocal() {
         if (this.sequenceIterator != null)
             this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-        this.usedContext = false;
-        setNextResult();
+        this.currentBatch = null;
+        fetchNextBatch();
     }
 
     @Override
