@@ -20,6 +20,14 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -46,17 +54,8 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 
 
 public class JoinClauseSparkIterator extends RuntimeTupleIterator {
@@ -207,19 +206,14 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             rightTupleSideEqualityCriteria,
-                            new RuntimeStaticContext(
-                                    staticContext,
-                                    SequenceType.createSequenceType("item*"),
-                                    ExecutionMode.LOCAL,
-                                    metadata
-                            )
+                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
+                                .withExecutionMode(ExecutionMode.LOCAL)
+                                .withMetadata(metadata)
                     ),
-                    new RuntimeStaticContext(
-                            staticContext,
-                            SequenceType.createSequenceType("item*"),
-                            ExecutionMode.LOCAL,
-                            metadata
-                    )
+                    staticContext
+                        .withStaticType(SequenceType.createSequenceType("item*"))
+                        .withExecutionMode(ExecutionMode.LOCAL)
+                        .withMetadata(metadata)
             );
         }
         if (leftTupleSideEqualityCriteria.size() == 1) {
@@ -228,18 +222,14 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
                             leftTupleSideEqualityCriteria,
-                            new RuntimeStaticContext(
-                                    staticContext,
-                                    SequenceType.createSequenceType("item*"),
-                                    ExecutionMode.LOCAL,
-                                    metadata
-                            )
+                            staticContext.withStaticType(
+                                SequenceType.createSequenceType("item*")
+                            ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(metadata)
                     ),
                     new RuntimeStaticContext(
-                            staticContext,
-                            SequenceType.createSequenceType("item*"),
-                            ExecutionMode.LOCAL,
-                            metadata
+                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
+                                .withExecutionMode(ExecutionMode.LOCAL)
+                                .withMetadata(metadata)
                     )
             );
         }

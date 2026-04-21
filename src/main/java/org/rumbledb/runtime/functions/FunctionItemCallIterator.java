@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -41,11 +46,6 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -134,12 +134,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
-                    RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
-                            getRuntimeStaticContext(),
-                            sequenceType,
-                            executionMode,
-                            this.functionArguments.get(i).getMetadata()
-                    );
+                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
+                        .withExecutionMode(executionMode)
+                        .withMetadata(this.functionArguments.get(i).getMetadata());
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)

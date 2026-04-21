@@ -448,20 +448,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
-                        new RuntimeStaticContext(
-                                this.getStaticContext(),
-                                SequenceType.createSequenceType("item*"),
-                                ExecutionMode.LOCAL,
-                                getMetadata()
-                        )
+                        this.getStaticContext()
+                            .withStaticType(SequenceType.createSequenceType("item*"))
+                            .withExecutionMode(ExecutionMode.LOCAL)
+                            .withMetadata(getMetadata())
                 ),
                 predicateIterator,
-                new RuntimeStaticContext(
-                        this.getStaticContext(),
-                        SequenceType.createSequenceType("item*"),
-                        ExecutionMode.LOCAL,
-                        getMetadata()
-                )
+                this.getStaticContext()
+                    .withStaticType(SequenceType.createSequenceType("item*"))
+                    .withExecutionMode(ExecutionMode.LOCAL)
+                    .withMetadata(getMetadata())
         );
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,

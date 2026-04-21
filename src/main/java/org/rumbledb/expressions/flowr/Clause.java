@@ -245,10 +245,11 @@ public abstract class Clause extends Node {
             VisitorConfig visitorConfig
     ) {
         return new RuntimeStaticContext(
-                this.staticContext,
+                null,
                 null,
                 getHighestExecutionMode(visitorConfig),
-                getMetadata()
+                getMetadata(),
+                this.staticContext
         );
     }
 }
