@@ -3,6 +3,7 @@ package org.rumbledb.runtime.xml;
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -89,8 +90,8 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     private static String nodeNameLexical(Item node) {
-        Item q = node.nodeName();
-        return q == null ? "" : q.getStringValue();
+        Name n = node.nodeName();
+        return n == null ? "" : n.toString();
     }
 
     private Item nodeTestItem(Item node) {
@@ -170,13 +171,13 @@ public class StepExprIterator extends LocalRuntimeIterator {
             if (!isPrincipalNodeKind(node)) {
                 return null;
             }
-            Item qItem = node.nodeName();
-            if (qItem == null || !qItem.isQName()) {
+            Name qItem = node.nodeName();
+            if (qItem == null) {
                 return null;
             }
             // Compare expanded names, not lexical strings: e.g. default element NS uses prefix "" in the name test
             // while DOM nodes often have prefix null, so Name.toString() differs for the same expanded QName.
-            if (nameTest.getExpandedName().equals(qItem.getQNameValue())) {
+            if (nameTest.getExpandedName().equals(qItem)) {
                 return node;
             }
             return null;
@@ -212,7 +213,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         if (elementTest.isNameWithoutTypeCheck()) {
             if (
                 node.isElementNode()
-                    && elementTest.getElementName().equals(node.nodeName().getQNameValue())
+                    && elementTest.getElementName().equals(node.nodeName())
             ) {
                 return node;
             }
@@ -239,7 +240,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         if (attributeTest.isNameWithoutTypeCheck()) {
             if (
                 node.isAttributeNode()
-                    && attributeTest.getAttributeName().equals(node.nodeName().getQNameValue())
+                    && attributeTest.getAttributeName().equals(node.nodeName())
             ) {
                 return node;
             }

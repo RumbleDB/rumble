@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.BuiltinFunction;
@@ -38,10 +40,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
-
-import java.util.List;
 
 public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
@@ -164,6 +165,33 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     "Dynamic function calls can only be performed on functions, arrays, or maps.",
                     getMetadata()
             );
+        }
+        if (this.functionItem.isArray()) {
+            if (this.isPartialApplication) {
+                throw new UnexpectedTypeException(
+                        "Partial application is not supported when calling arrays as functions.",
+                        getMetadata()
+                );
+            }
+            if (this.functionArguments.size() != 1 || this.functionArguments.get(0) == null) {
+                throw new UnexpectedTypeException(
+                        "Array function calls must have exactly one argument.",
+                        getMetadata()
+                );
+            }
+            RuntimeIterator keyIterator = this.functionArguments.get(0);
+            RuntimeStaticContext staticContext = new RuntimeStaticContext(
+                    getConfiguration(),
+                    SequenceType.createSequenceType("item*"),
+                    ExecutionMode.LOCAL,
+                    getMetadata()
+            );
+            this.functionCallIterator = new ArrayFunctionCallIterator(
+                    this.functionItem,
+                    keyIterator,
+                    staticContext
+            );
+            return;
         }
         if (this.functionItem.isMap()) {
             if (this.isPartialApplication) {

@@ -1,15 +1,31 @@
 package org.rumbledb.runtime.functions.base.formatting;
 
 public final class GroupingPos {
-    public final int distanceFromRight;
+    // TODO refactor to remove String separator and completely replace by integer codepoints then remove overloaded
+    // constructor
+    public final int distanceFromRight; // TODO fractional grouping of format-number uses this but passes a left
+                                        // distance think about how to refactor
     public final String separator;
+    public final int separatorCP;
 
     public GroupingPos(int distanceFromRight, String separator) {
         this.distanceFromRight = distanceFromRight;
         this.separator = separator;
+        this.separatorCP = -1;
     }
 
-    int getDistanceFromRight() {
+    public GroupingPos(int distanceFromRight, int separator) {
+        this.distanceFromRight = distanceFromRight;
+        this.separator = null;
+        this.separatorCP = separator;
+    }
+
+    public int getDistanceFromRight() {
         return distanceFromRight;
+    }
+
+    @Override
+    public String toString() {
+        return Integer.toString(this.distanceFromRight);
     }
 }
