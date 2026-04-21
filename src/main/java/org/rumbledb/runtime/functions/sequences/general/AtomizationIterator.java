@@ -24,12 +24,14 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.exceptions.OurBadException;
 
 import java.util.List;
 
@@ -38,15 +40,17 @@ public class AtomizationIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
-    private List<Item> currentBatch;
-    private int nextInBatch;
+    private List<Item> nextResults;
+    private int nextIndex;
+    private boolean usedContext = false;
 
     public AtomizationIterator(
             List<RuntimeIterator> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
+        if (!this.children.isEmpty())
+            this.sequenceIterator = this.children.get(0);
     }
 
     @Override
@@ -83,10 +87,10 @@ public class AtomizationIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            Item result = this.currentBatch.get(this.nextInBatch); // save the result to be returned
-            ++this.nextInBatch; // move the pointer to the next item in the batch
-            if (this.nextInBatch >= this.currentBatch.size()) { // if we have exhausted the current batch
-                fetchNextBatch(); // fetch the next batch
+            Item result = this.nextResults.get(this.nextIndex); // save the result to be returned
+            ++this.nextIndex;
+            if (this.nextIndex >= this.nextResults.size()) {
+                setNextResult();
             }
             return result;
         }
@@ -98,35 +102,49 @@ public class AtomizationIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = false;
-        fetchNextBatch();
+        if (this.sequenceIterator != null) {
+            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        }
+        this.usedContext = false;
+        setNextResult();
     }
 
-    public void fetchNextBatch() {
-        if (!this.sequenceIterator.hasNext()) {
-            this.hasNext = false;
-            return;
+    public void setNextResult() {
+        if (this.sequenceIterator != null) {
+            if (this.sequenceIterator.hasNext()) {
+                try {
+                    this.nextResults = this.sequenceIterator.next().atomizedValue();
+                    this.nextIndex = 0;
+                } catch (CannotAtomizeException e) {
+                    throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
+                }
+            }
+        } else if (!this.usedContext) {
+            this.usedContext = true;
+            List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            if (items.size() != 1) {
+                throw new OurBadException("The context item is not a singleton.", getMetadata());
+            }
+            this.nextResults = items.get(0).atomizedValue();
+            this.nextIndex = 0;
         }
-        try {
-            this.currentBatch = this.sequenceIterator.next().atomizedValue();
-            this.nextInBatch = 0;
-            this.hasNext = !this.currentBatch.isEmpty();
-            return;
-        } catch (CannotAtomizeException e) {
-            throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
-        }
+        this.hasNext = !this.nextResults.isEmpty();
     }
 
     @Override
     protected void closeLocal() {
-        this.sequenceIterator.close();
+        if (this.sequenceIterator != null) {
+            this.sequenceIterator.close();
+        }
     }
 
     @Override
     protected void resetLocal() {
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        fetchNextBatch();
+        if (this.sequenceIterator != null)
+            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        this.usedContext = false;
+        setNextResult();
     }
 
     @Override
