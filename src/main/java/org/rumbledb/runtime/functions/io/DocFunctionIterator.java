@@ -49,6 +49,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
             try {
                 URI uri = FileSystemUtil.resolveURI(this.staticURI, path.getStringValue(), getMetadata());
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                documentBuilderFactory.setNamespaceAware(true);
                 InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                     uri,
                     this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),

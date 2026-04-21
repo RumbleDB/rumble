@@ -85,6 +85,9 @@ public class FunctionItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
+        if (other.isMapItemType()) {
+            return anyFunctionItem;
+        }
         if (other.isFunctionItemType()) {
             return anyFunctionItem;
         }
@@ -102,7 +105,7 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("function item types does not support facets");
     }
 

@@ -87,7 +87,7 @@ public class VariableDeclStatement extends Statement {
         if (this.variableExpression != null && this.variableExpression.getStaticSequenceType() != null) {
             return this.variableExpression.getStaticSequenceType();
         }
-        return SequenceType.ITEM_STAR;
+        return SequenceType.createSequenceType("item*");
     }
 
     public Name getVariableName() {

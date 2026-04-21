@@ -152,7 +152,7 @@ public class StringItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, '"' + this.value + '"', SequenceType.STRING);
+        return new NativeClauseContext(context, '"' + this.value + '"', SequenceType.createSequenceType("string"));
     }
 
     @Override

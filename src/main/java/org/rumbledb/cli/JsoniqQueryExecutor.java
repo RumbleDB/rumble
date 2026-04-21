@@ -20,28 +20,22 @@
 
 package org.rumbledb.cli;
 
-import org.apache.log4j.LogManager;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.DataFrameWriter;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.slf4j.Logger;
+import org.rumbledb.serialization.Serializer;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.spark.internal.Logging;
@@ -117,48 +111,16 @@ public class JsoniqQueryExecutor implements Logging {
         }
 
         if (outputPath != null) {
-            if (this.configuration.getOutputFormat().equals("xml-json-hybrid")) {
-                outputRDDToFile(outputPath, outputUri, sequence);
-            } else {
-                try {
-                    Dataset<Row> df = sequence.getAsDataFrame();
-                    if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                        df = df.repartition(this.configuration.getNumberOfOutputPartitions());
-                    }
-                    DataFrameWriter<Row> writer = df.write();
-                    Map<String, String> options = this.configuration.getOutputFormatOptions();
-                    for (String key : options.keySet()) {
-                        writer.option(key, options.get(key));
-                        LogManager.getLogger("JsoniqQueryExecutor")
-                            .info("Writing with option " + key + " : " + options.get(key));
-                    }
-                    String format = this.configuration.getOutputFormat();
-                    LogManager.getLogger("JsoniqQueryExecutor").info("Writing to format " + format);
-                    switch (format) {
-                        case "json":
-                            writer.json(outputPath);
-                            break;
-                        case "csv":
-                            writer.csv(outputPath);
-                            break;
-                        case "parquet":
-                            writer.parquet(outputPath);
-                            break;
-                        default:
-                            writer.format(format).save(outputPath);
-                    }
-                } catch (CannotInferSchemaOnNonStructuredDataException e) {
-                    // The output is not available as a data frame so we serialize.
-                    outputRDDToFile(outputPath, outputUri, sequence);
-                }
-            }
+            sequence.write().save(outputPath);
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
-            RumbleRuntimeConfiguration configuration = this.configuration;
+
+            Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
+
             List<String> lines = outputList.stream()
-                .map(x -> configuration.getSerializer().serialize(x))
+                .map(serializer::serialize)
                 .collect(Collectors.toList());
             System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
@@ -188,23 +150,6 @@ public class JsoniqQueryExecutor implements Logging {
             );
         }
         return outputList;
-    }
-
-    private void outputRDDToFile(String outputPath, URI outputUri, SequenceOfItems sequence) {
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        RumbleRuntimeConfiguration configuration = this.configuration;
-        JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
-        // If the user explicitly requests exactly one partition, then we collect all items
-        // and write them to a single file.
-        if (this.configuration.getNumberOfOutputPartitions() == 1) {
-            List<String> lines = outputRDD.take(1000000000);
-            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-        } else {
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
-            }
-            outputRDD.saveAsTextFile(outputPath);
-        }
     }
 
     public static void issueMaterializationWarning(long materializationCount, long resultSizeCap) {

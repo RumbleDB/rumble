@@ -26,6 +26,7 @@ public enum ErrorCode {
     NumericOverflowOrUnderflow("FOAR0002"),
 
     ArrayIndexOutOfBoundsErrorCode("FOAY0001"),
+    ArrayInvalidSubarrayLengthErrorCode("FOAY0002"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
@@ -39,6 +40,9 @@ public enum ErrorCode {
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
 
+    IncorrectSyntaxFormatNumberErrorCode("FODF1310"),
+    InvalidDecimalFormatName("FODF1280"),
+
     CastErrorCode("FORG0001"),
     ZeroOrOneErrorCode("FORG0003"),
     OneOrMoreErrorCode("FORG0004"),
@@ -50,9 +54,15 @@ public enum ErrorCode {
     InvalidReplacementStringErrorCode("FORX0004"),
 
     FunctionAtomizationErrorCode("FOTY0013"),
+    /** fn:string (and related) when applied to a map, array, or function item */
+    FunctionItemStringValueErrorCode("FOTY0014"),
 
 
     DuplicatePairNameErrorCode("XQDY0137"),
+
+    // JSON-related errors (FOJS000x).
+    DuplicateJSONKeyErrorCode("FOJS0003"),
+    InvalidOptionErrorCode("FOJS0005"),
 
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),
@@ -110,6 +120,8 @@ public enum ErrorCode {
     InvalidProcessingInstructionTargetErrorCode("XQDY0064"),
 
     InvalidSchemaErrorCode("XQST0012"),
+    /** Namespace declaration attribute value contains an enclosed expression (direct element constructor). */
+    NamespaceDeclarationAttributeEnclosedExpressionErrorCode("XQST0022"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     MultipleBaseURIExceptionCode("XQST0032"),
@@ -128,6 +140,7 @@ public enum ErrorCode {
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
     DirectElementConstructorTagMismatchErrorCode("XQST0118"),
+    InvalidDecimalFormatPropertyConflict("XQST0098"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
@@ -173,7 +186,9 @@ public enum ErrorCode {
     InvalidAssignableVariableComposability("SCCP0005"),
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
-    InvalidVariableDeclaration("SCIN0001");
+    InvalidVariableDeclaration("SCIN0001"),
+
+    InvalidSerializationParameterValue("SEPM0016");
 
     private String code;
 
