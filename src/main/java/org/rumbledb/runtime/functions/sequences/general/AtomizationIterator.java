@@ -125,7 +125,7 @@ public class AtomizationIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         fetchNextBatch();
     }
 
