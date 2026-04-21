@@ -42,14 +42,14 @@ public class RuntimeStaticContext implements Serializable {
     public RuntimeStaticContext(
             RuntimeStaticContext oldContext
     ) {
-        this.configuration = oldContext.getConfiguration();
-        this.staticType = oldContext.getStaticType();
-        this.executionMode = oldContext.getExecutionMode();
-        this.metadata = oldContext.getMetadata();
-        this.staticallyKnownNamespaces = oldContext.getStaticallyKnownNamespaces();
-        this.decimalFormats = oldContext.getDecimalFormats();
-        this.defaultDecimalFormat = oldContext.getDefaultDecimalFormat();
-        this.serializationParameters = oldContext.getSerializationParameters();
+        this.configuration = oldContext.configuration;
+        this.staticType = oldContext.staticType;
+        this.executionMode = oldContext.executionMode;
+        this.metadata = oldContext.metadata;
+        this.staticallyKnownNamespaces = oldContext.staticallyKnownNamespaces;
+        this.decimalFormats = oldContext.decimalFormats;
+        this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
+        this.serializationParameters = oldContext.serializationParameters;
     }
 
     public RuntimeStaticContext(
