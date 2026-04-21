@@ -280,6 +280,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getConfiguration();
     }
 
+    public RuntimeStaticContext getRuntimeStaticContext() {
+        return this.staticContext;
+    }
+
     public boolean isRDDOrDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isRDDorDataFrame field in iterator without execution mode being set.");
@@ -353,7 +357,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     this.getStaticType().getItemType(),
                     context,
                     true,
-                    getConfiguration()
+                    staticContext
                 );
             } else {
                 JavaRDD<Item> rdd = this.getRDD(context);
@@ -363,7 +367,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     type,
                     context,
                     true,
-                    getConfiguration()
+                    staticContext
                 );
             }
         }
@@ -375,7 +379,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 this.getStaticType().getItemType(),
                 context,
                 true,
-                getConfiguration()
+                staticContext
             );
         } else {
             ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
@@ -384,7 +388,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 type,
                 context,
                 true,
-                getConfiguration()
+                staticContext
             );
         }
     }

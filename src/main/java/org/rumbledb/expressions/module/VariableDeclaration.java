@@ -90,7 +90,7 @@ public class VariableDeclaration extends Node {
         if (this.expression != null && this.expression.getStaticSequenceType() != null) {
             return this.expression.getStaticSequenceType();
         }
-        return SequenceType.ITEM_STAR;
+        return SequenceType.createSequenceType("item*");
     }
 
     // as above but does NOT default to item*

@@ -129,7 +129,7 @@ public class FieldDescriptor implements Serializable, KryoSerializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null, context);
             if (castValue == null) {
                 throw new InvalidSchemaException(
                         "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),

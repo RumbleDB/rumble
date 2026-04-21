@@ -193,7 +193,11 @@ public class FloatItem implements Item {
         if (Float.isNaN(this.value)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.FLOAT);
+        return new NativeClauseContext(
+                context,
+                "CAST (" + this.value + "D AS FLOAT)",
+                SequenceType.createSequenceType("float")
+        );
     }
 
     @Override

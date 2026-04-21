@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -41,13 +46,6 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -125,7 +123,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         && !this.functionItem.getSignature()
                             .getParameterTypes()
                             .get(i)
-                            .equals(ITEM_STAR)
+                            .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
                     ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
@@ -136,12 +134,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
-                    RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
-                            getConfiguration(),
-                            sequenceType,
-                            executionMode,
-                            this.functionArguments.get(i).getMetadata()
-                    );
+                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
+                        .withExecutionMode(executionMode)
+                        .withMetadata(this.functionArguments.get(i).getMetadata());
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
@@ -245,7 +240,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                new RuntimeStaticContext(getConfiguration(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata())
+                staticContext.withStaticType(
+                    SequenceType.createSequenceType("function(*)")
+                ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(getMetadata())
         );
     }
 

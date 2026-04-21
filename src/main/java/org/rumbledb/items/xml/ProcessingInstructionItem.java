@@ -4,9 +4,11 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
 import java.util.Collections;
@@ -61,8 +63,8 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        return this.target;
+    public Name nodeName() {
+        return NamespaceBindingUtils.nameLocalOnly(this.target);
     }
 
     @Override
@@ -72,7 +74,7 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.processingInstructionNode;
+        return ItemTypeFactory.processingInstructionNodeItemType(this.target);
     }
 
     @Override

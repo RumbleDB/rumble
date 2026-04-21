@@ -7,8 +7,9 @@ import java.util.Set;
 
 /**
  * Class representing a concrete XML node item type at depth 2 in the type hierarchy.
- * This is used for all 7 concrete node types defined by the XPath Data Model 3.1, Section 2.7.4:
- * element(), attribute(), document-node(), comment(), text(), namespace-node(), processing-instruction().
+ * This class now covers the remaining concrete XML node kinds after dedicated implementations
+ * for element(), attribute(), document-node(), and processing-instruction():
+ * comment(), text(), namespace-node().
  *
  * All concrete node types share node() as their base type at depth 1.
  */
@@ -64,7 +65,7 @@ public class XmlNodeItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("XML node item type does not support facets");
     }
 

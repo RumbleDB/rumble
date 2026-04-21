@@ -28,6 +28,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionItemStringValueException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
@@ -42,6 +44,8 @@ public class ObjectItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<Item> values;
     private List<String> keys;
+    /** String key → index in {@link #keys} / {@link #values}; rebuilt after remove and Kryo read. */
+    private Map<String, Integer> keyStringToIndex;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -53,6 +57,7 @@ public class ObjectItem implements Item {
         super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
+        this.keyStringToIndex = new HashMap<>();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -66,6 +71,8 @@ public class ObjectItem implements Item {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
+        this.keyStringToIndex = new HashMap<>();
+        rebuildKeyStringIndex();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -111,29 +118,45 @@ public class ObjectItem implements Item {
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for
      *        functionality
      */
-    public ObjectItem(Map<String, List<Item>> keyValuePairs) {
+    public ObjectItem(Map<String, ?> keyValuePairs)
+
+    {
         super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
-        for (String key : keyValuePairs.keySet()) {
-            // add all keys to the keyList
-            keyList.add(key);
-            List<Item> values = keyValuePairs.get(key);
-            // for each key, convert the lists of values into arrayItems
-            if (values.size() > 1) {
-                Item valuesArray = ItemFactory.getInstance().createArrayItem(values, false);
-                valueList.add(valuesArray);
-            } else if (values.size() == 1) {
-                Item value = values.get(0);
-                valueList.add(value);
-            } else {
-                throw new RuntimeException("Unexpected list size found.");
+
+        if (keyValuePairs.size() > 0) {
+            for (String key : keyValuePairs.keySet()) {
+                // add all keys to the keyList
+                keyList.add(key);
+                if (keyValuePairs.get(key) instanceof List<?>) {
+                    List<Item> values = (List<Item>) keyValuePairs.get(key);
+                    // for each key, convert the lists of values into arrayItems
+                    if (values.size() > 1) {
+                        Item valuesArray = ItemFactory.getInstance().createArrayItem(values, false);
+                        valueList.add(valuesArray);
+                    } else if (values.size() == 1) {
+                        Item value = values.get(0);
+                        valueList.add(value);
+                    } else {
+                        throw new RuntimeException("Unexpected list size found.");
+                    }
+                } else if (keyValuePairs.get(key) instanceof Item) {
+                    Item value = (Item) keyValuePairs.get(key);
+                    valueList.add(value);
+                } else {
+                    throw new RuntimeException("Unexpected value type found.");
+                }
+
             }
         }
 
+
         this.keys = keyList;
         this.values = valueList;
+        this.keyStringToIndex = new HashMap<>();
+        rebuildKeyStringIndex();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -142,9 +165,48 @@ public class ObjectItem implements Item {
         this.topLevelOrder = 0.0;
     }
 
+
+
+    private void rebuildKeyStringIndex() {
+        if (this.keyStringToIndex == null) {
+            this.keyStringToIndex = new HashMap<>();
+        } else {
+            this.keyStringToIndex.clear();
+        }
+        for (int i = 0; i < this.keys.size(); i++) {
+            this.keyStringToIndex.put(this.keys.get(i), Integer.valueOf(i));
+        }
+    }
+
+    // region maps
+
+    @Override
+    public boolean isMap() {
+        return true;
+    }
+
+    @Override
+    public boolean isObject() {
+        return true;
+    }
+
     @Override
     public List<String> getKeys() {
         return this.keys;
+    }
+
+    @Override
+    public List<String> getStringKeys() {
+        return this.keys;
+    }
+
+    @Override
+    public List<Item> getItemKeys() {
+        List<Item> result = new ArrayList<>(this.keys.size());
+        for (String key : this.keys) {
+            result.add(ItemFactory.getInstance().createStringItem(key));
+        }
+        return result;
     }
 
     @Override
@@ -152,6 +214,143 @@ public class ObjectItem implements Item {
         return this.values;
     }
 
+    @Override
+    public List<Item> getItemValues() {
+        return this.values;
+    }
+
+    @Override
+    public List<List<Item>> getSequenceValues() {
+        List<List<Item>> result = new ArrayList<>(this.values.size());
+        for (Item value : this.values) {
+            result.add(Collections.singletonList(value));
+        }
+        return result;
+    }
+
+    @Override
+    public Item getItemByKey(String key) {
+        if (this.keyStringToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        Integer idx = this.keyStringToIndex.get(key);
+        if (idx == null) {
+            return null;
+        }
+        return this.values.get(idx.intValue());
+    }
+
+    @Override
+    public Item getItemByKey(Item key) {
+        if (!key.isString()) {
+            return null;
+        }
+        return getItemByKey(key.getStringValue());
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(String key) {
+        Item item = getItemByKey(key);
+        if (item == null) {
+            return null;
+        }
+        return Collections.singletonList(item);
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(Item key) {
+        if (!key.isString()) {
+            return null;
+        }
+        return getSequenceByKey(key.getStringValue());
+    }
+
+    @Override
+    public void putItemByKey(String key, Item value) {
+        if (this.keyStringToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        if (this.keyStringToIndex.containsKey(key)) {
+            throw new DuplicateObjectKeyException(key, ExceptionMetadata.EMPTY_METADATA);
+        }
+        int newIndex = this.keys.size();
+        this.keys.add(key);
+        this.values.add(value);
+        this.keyStringToIndex.put(key, Integer.valueOf(newIndex));
+    }
+
+    @Override
+    public void putItemByKey(Item key, Item value) {
+        if (!key.isString()) {
+            throw new OurBadException("ObjectItem keys must be strings.");
+        }
+        putItemByKey(key.getStringValue(), value);
+    }
+
+
+    @Override
+    public void putSequenceByKey(String key, List<Item> valueSequence) {
+        if (valueSequence == null) {
+            throw new OurBadException("Value sequence cannot be empty.");
+        }
+        if (valueSequence.size() == 1) {
+            putItemByKey(key, valueSequence.get(0));
+            return;
+        }
+        throw new OurBadException(
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
+        );
+    }
+
+    @Override
+    public void putSequenceByKey(Item key, List<Item> valueSequence) {
+        if (valueSequence == null) {
+            // throw an error
+            throw new OurBadException("Value sequence cannot be empty.");
+        }
+        if (valueSequence.size() == 1) {
+            putItemByKey(key, valueSequence.get(0));
+            return;
+        }
+        // throw an error
+        throw new OurBadException(
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
+        );
+    }
+
+    @Override
+    public void removeItemByKey(String key) {
+        if (this.keyStringToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        Integer idx = this.keyStringToIndex.remove(key);
+        if (idx == null) {
+            return;
+        }
+        int index = idx.intValue();
+        this.values.remove(index);
+        this.keys.remove(index);
+        rebuildKeyStringIndex();
+    }
+
+    @Override
+    public void removeItemByKey(Item key) {
+        if (key == null || !key.isString()) {
+            // if the key is not a string, then there is for sure nothing to remove.
+            return;
+        }
+        removeItemByKey(key.getStringValue());
+    }
+
+    // endregion maps
+
+    /**
+     * Checks for duplicate keys in the given list of keys.
+     *
+     * @param keys a list of keys.
+     * @param metadata the metadata of the item.
+     * @throws DuplicateObjectKeyException if the key is already present.
+     */
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
@@ -161,36 +360,6 @@ public class ObjectItem implements Item {
                 frequencies.put(key, 1);
             }
         }
-    }
-
-    @Override
-    public Item getItemByKey(String s) {
-        if (this.keys.contains(s)) {
-            return this.values.get(this.keys.indexOf(s));
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public void putItemByKey(String s, Item value) {
-        this.keys.add(s);
-        this.values.add(value);
-        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    @Override
-    public void removeItemByKey(String s) {
-        if (this.keys.contains(s)) {
-            int index = this.keys.indexOf(s);
-            this.values.remove(index);
-            this.keys.remove(index);
-        }
-    }
-
-    @Override
-    public boolean isObject() {
-        return true;
     }
 
     @Override
@@ -216,6 +385,7 @@ public class ObjectItem implements Item {
         this.location = kryo.readObject(input, String.class);
         this.topLevelOrder = input.readDouble();
         this.collection = kryo.readObjectOrNull(input, Collection.class);
+        rebuildKeyStringIndex();
     }
 
     public int hashCode() {
@@ -337,7 +507,11 @@ public class ObjectItem implements Item {
         for (int i = 0; i < keys.length; i++) {
             String key = keys[i];
             FieldDescriptor field = content.get(key);
-            int keyIndex = this.keys.indexOf(key);
+            if (this.keyStringToIndex == null) {
+                rebuildKeyStringIndex();
+            }
+            Integer ki = this.keyStringToIndex.get(key);
+            int keyIndex = ki == null ? -1 : ki.intValue();
 
             sb.append("\"");
             sb.append(key);
@@ -380,6 +554,14 @@ public class ObjectItem implements Item {
     @Override
     public List<Item> atomizedValue() {
         throw new CannotAtomizeException("tried to atomize Object", ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public String getStringValue() {
+        throw new FunctionItemStringValueException(
+                FunctionItemStringValueException.DEFAULT_MESSAGE,
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     @Override
