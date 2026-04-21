@@ -36,6 +36,7 @@ import org.rumbledb.types.SequenceType;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,8 +63,10 @@ public class StaticContext implements Serializable, KryoSerializable {
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
-
     private static final Map<String, String> defaultBindings;
+
+    private DecimalFormatDefinition defaultDecimalFormat;
+    private Map<Name, DecimalFormatDefinition> decimalFormats;
 
     private int currentMutabilityLevel;
 
@@ -93,6 +96,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
+        this.defaultDecimalFormat = null;
+        this.decimalFormats = new HashMap<>();
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -106,6 +111,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
+        this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
+        this.decimalFormats = new HashMap<>();
     }
 
     public StaticContext(StaticContext parent) {
@@ -117,6 +124,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.defaultDecimalFormat = null;
+        this.decimalFormats = null;
     }
 
     public StaticContext getParent() {
@@ -513,5 +522,44 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public boolean getIsAssignable(Name name) {
         return this.getInScopeVariable(name).isAssignable();
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat) {
+        if (this.parent != null) {
+            this.parent.setDefaultDecimalFormat(decimalFormat);
+            return;
+        }
+        this.defaultDecimalFormat = decimalFormat;
+    }
+
+    public void addDecimalFormat(Name name, DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
+        if (this.parent != null) {
+            this.parent.addDecimalFormat(name, decimalFormat, metadata);
+            return;
+        }
+        if (this.decimalFormats.containsKey(name)) {
+            throw new SemanticException(
+                    "Decimal format already declared: " + name,
+                    metadata
+            );
+        }
+        this.decimalFormats.put(name, decimalFormat);
+    }
+
+    public DecimalFormatDefinition getDefaultDecimalFormat() {
+        if (this.parent != null) {
+            return this.parent.getDefaultDecimalFormat();
+        }
+        return this.defaultDecimalFormat;
+    }
+
+    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
+        if (this.parent != null) {
+            return this.parent.getDecimalFormats();
+        }
+        if (this.decimalFormats == null) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(this.decimalFormats);
     }
 }

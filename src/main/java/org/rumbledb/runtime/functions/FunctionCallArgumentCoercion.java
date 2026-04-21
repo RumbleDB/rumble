@@ -81,13 +81,10 @@ public final class FunctionCallArgumentCoercion {
                 ) {
                     executionMode = ExecutionMode.LOCAL;
                 }
-                RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
-                        callerStaticContext.getConfiguration(),
-                        sequenceType,
-                        executionMode,
-                        functionArguments.get(i).getMetadata(),
-                        callerStaticContext.getStaticallyKnownNamespaces()
-                );
+                RuntimeStaticContext runtimeStaticContext =
+                    callerStaticContext.withStaticType(sequenceType)
+                        .withExecutionMode(executionMode)
+                        .withMetadata(functionArguments.get(i).getMetadata());
                 if (
                     sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
