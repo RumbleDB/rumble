@@ -356,7 +356,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     forClause.getPositionalVariableName(),
                     forClause.isAllowEmpty(),
                     assignmentIterator,
-                    forClause.getStaticContextForRuntime(this.visitorConfig)
+                    forClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof LetClause) {
             LetClause letClause = (LetClause) clause;
@@ -366,7 +366,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     letClause.getVariableName(),
                     letClause.getStaticType(),
                     assignmentIterator,
-                    letClause.getStaticContextForRuntime(this.visitorConfig)
+                    letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
@@ -390,7 +390,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new GroupByClauseSparkIterator(
                     previousIterator,
                     groupingExpressions,
-                    clause.getStaticContextForRuntime(this.visitorConfig)
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
@@ -416,19 +416,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     previousIterator,
                     expressionsWithIterator,
                     ((OrderByClause) clause).isStable(),
-                    clause.getStaticContextForRuntime(this.visitorConfig)
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof WhereClause) {
             return new WhereClauseSparkIterator(
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
-                    clause.getStaticContextForRuntime(this.visitorConfig)
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof CountClause) {
             return new CountClauseSparkIterator(
                     previousIterator,
                     ((CountClause) clause).getCountVariableName(),
-                    clause.getStaticContextForRuntime(this.visitorConfig)
+                    clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
         throw new OurBadException("Clause unrecognized.");
