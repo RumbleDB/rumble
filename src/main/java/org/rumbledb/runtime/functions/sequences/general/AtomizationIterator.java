@@ -46,8 +46,7 @@ public class AtomizationIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        if (!this.children.isEmpty())
-            this.sequenceIterator = this.children.get(0);
+        this.sequenceIterator = this.children.get(0);
     }
 
     @Override
@@ -99,38 +98,34 @@ public class AtomizationIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        if (this.sequenceIterator != null)
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = false;
         fetchNextBatch();
     }
 
     public void fetchNextBatch() {
-        if (this.sequenceIterator != null) {
-            if (this.sequenceIterator.hasNext()) {
-                try {
-                    this.currentBatch = this.sequenceIterator.next().atomizedValue();
-                    this.nextInBatch = 0;
-                } catch (CannotAtomizeException e) {
-                    throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
-                }
-            }
+        if (!this.sequenceIterator.hasNext()) {
+            this.hasNext = false;
+            return;
         }
-        this.hasNext = !this.currentBatch.isEmpty();
+        try {
+            this.currentBatch = this.sequenceIterator.next().atomizedValue();
+            this.nextInBatch = 0;
+            this.hasNext = !this.currentBatch.isEmpty();
+            return;
+        } catch (CannotAtomizeException e) {
+            throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
+        }
     }
 
     @Override
     protected void closeLocal() {
-        if (this.sequenceIterator != null) {
-            this.sequenceIterator.close();
-        }
+        this.sequenceIterator.close();
     }
 
     @Override
     protected void resetLocal() {
-        if (this.sequenceIterator != null)
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.currentBatch = null;
+        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         fetchNextBatch();
     }
 
