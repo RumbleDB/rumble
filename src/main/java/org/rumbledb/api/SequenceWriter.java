@@ -153,8 +153,7 @@ public class SequenceWriter {
         SerializationParameters params = SerializationParameters.copy(this.serializationParameters);
         params.setMethod(source);
         if (this.dataFrameWriter != null) {
-            if (!source.equals("xml-json-hybrid") && !source.equals("tyson"))
-            {
+            if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
                 return createNewInstance(
                     this.dataFrameWriter.format(source),
                     null,
@@ -165,8 +164,7 @@ public class SequenceWriter {
                 return createNewInstance(null, newMode, params);
             }
         }
-        if (!source.equals("xml-json-hybrid") && !source.equals("tyson"))
-        {
+        if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             try {
                 Dataset<Row> dataFrame = sequence.getAsDataFrame();
                 int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
