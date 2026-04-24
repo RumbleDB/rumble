@@ -97,9 +97,11 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             this.exitStatementLocalResult = exitStatementException.getLocalResult();
         }
         setNextResult();
-        if (
-            !this.tailCallOptimizationCandidate
-                && this.nextResult.isFunction()
+        if (this.tailCallOptimizationCandidate) {
+            return;
+        }
+        while (
+            this.nextResult.isFunction()
                 && this.nextResult.getIdentifier().getArity() == 0
         ) {
             this.userDefinedFunctionCallIterator.close();
