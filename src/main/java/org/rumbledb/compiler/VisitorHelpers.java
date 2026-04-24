@@ -40,7 +40,7 @@ public class VisitorHelpers {
 
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
         RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.isPrintIteratorTree() || conf.getShowErrorInfo()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.err.println(sb);
@@ -58,7 +58,7 @@ public class VisitorHelpers {
 
     private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
-        if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
+        if (conf.printInferredTypes() || conf.getShowErrorInfo()) {
             printTree(module, conf);
         }
     }
@@ -72,7 +72,7 @@ public class VisitorHelpers {
             System.err.println("***************************************");
         }
         new FunctionDependenciesVisitor().visit(result, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.getShowErrorInfo()) {
             printTree(module, conf);
         }
         // Inline non-recursive functions
@@ -83,7 +83,7 @@ public class VisitorHelpers {
                 System.err.println("***************************************");
             }
             result = (MainModule) new FunctionInliningVisitor().visit(result, null);
-            if (conf.isPrintIteratorTree()) {
+            if (conf.getShowErrorInfo()) {
                 printTree(result, conf);
             }
         }
@@ -95,7 +95,7 @@ public class VisitorHelpers {
                 System.err.println("***************************************");
             }
             result = (MainModule) new TailCallOptimizationVisitor().visit(result, null);
-            if (conf.isPrintIteratorTree()) {
+            if (conf.getShowErrorInfo()) {
                 printTree(result, conf);
             }
         }

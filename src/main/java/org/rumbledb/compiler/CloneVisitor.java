@@ -740,6 +740,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 arguments,
                 expression.getMetadata()
         );
+        if (expression.isTailCallOptimization()) {
+            System.err.println("Setting tail call optimization for function call: " + expression.getFunctionName());
+            ((FunctionCallExpression) result).setTailCallOptimization(true);
+        }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;

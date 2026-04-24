@@ -15,8 +15,8 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
                 (InlineFunctionExpression) visit(expression.getExpression(), argument),
                 expression.getMetadata()
         );
-        InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) expression.getExpression();
-        Expression body = inlineFunctionExpression.getBody();
+        InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) fd.getExpression();
+        Expression body = inlineFunctionExpression.getBody().getExpression();
         if (body instanceof ConditionalExpression) {
             if (((ConditionalExpression) body).getBranch() instanceof FunctionCallExpression) {
                 if (
@@ -52,6 +52,7 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
                             !((FunctionCallExpression) ((ConditionalExpression) body).getElseBranch())
                                 .isPartialApplication()
                         ) {
+                            System.err.println("Set tail call optimization for function " + fd.getFunctionIdentifier());
                             ((FunctionCallExpression) ((ConditionalExpression) body).getElseBranch())
                                 .setTailCallOptimization(
                                     true
