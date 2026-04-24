@@ -87,7 +87,7 @@ public class VisitorHelpers {
                 printTree(result, conf);
             }
         }
-        // Inline non-recursive functions
+        // Apply tail call optimization
         if (conf.tailCallOptimization()) {
             if (conf.debug()) {
                 System.err.println("***************************************");

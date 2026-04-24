@@ -138,12 +138,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
             .collect(Collectors.toList());
-        List<Node> declarations = expression.getFunctionDeclarations()
+        List<Node> declarations = expression.getDeclarations()
             .stream()
             .map(expr -> visit(expr, argument))
             .collect(Collectors.toList());
-        declarations.addAll(expression.getVariableDeclarations());
-        declarations.addAll(expression.getTypeDeclarations());
         expression.setDeclarations(declarations);
         expression.getImportedModules().clear();
         expression.getImportedModules().addAll(libraryModules);
