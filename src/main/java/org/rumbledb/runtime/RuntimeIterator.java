@@ -280,13 +280,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getConfiguration();
     }
 
-    public void alignRuntimeStaticContextWithOriginal(RuntimeIterator original) {
-        this.staticContext = original.staticContext;
-        for (int pos = 0; pos < this.children.size(); ++pos) {
-            this.children.get(pos).alignRuntimeStaticContextWithOriginal(original.children.get(pos));
-        }
-    }
-
     public RuntimeStaticContext getRuntimeStaticContext() {
         return this.staticContext;
     }
@@ -578,11 +571,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             byte[] data = bos.toByteArray();
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             ObjectInputStream ois = new ObjectInputStream(bis);
-            RuntimeIterator copy = (RuntimeIterator) ois.readObject();
-            // We retain the same static context reference so it is shared among all copies of the same iterator body to
-            // reduce the risk of stack overflow.
-            copy.alignRuntimeStaticContextWithOriginal(this);
-            return copy;
+            return (RuntimeIterator) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             RumbleException rumbleException = new OurBadException(
                     "Error while deep copying the function body runtimeIterator"
