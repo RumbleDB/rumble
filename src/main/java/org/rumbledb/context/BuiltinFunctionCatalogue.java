@@ -499,6 +499,14 @@ public class BuiltinFunctionCatalogue {
         ParseJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+    static final BuiltinFunction parse_json2 = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "parse-json"),
+        "string?",
+        "map",
+        "item?",
+        ParseJsonFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
     /**
      * function that parses a xml file
      */
@@ -3906,6 +3914,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(avro_file1.getIdentifier(), avro_file1);
         builtinFunctions.put(avro_file2.getIdentifier(), avro_file2);
         builtinFunctions.put(parse_json.getIdentifier(), parse_json);
+        builtinFunctions.put(parse_json2.getIdentifier(), parse_json2);
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
