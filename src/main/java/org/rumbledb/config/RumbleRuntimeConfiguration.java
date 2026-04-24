@@ -77,6 +77,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean dataFrameExecution;
     private boolean nativeExecution;
     private boolean tailCallOptimization;
+    private boolean debug;
     private boolean functionInlining;
     private boolean applyUpdates;
     private String queryLanguage;
@@ -493,6 +494,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.tailCallOptimization = this.arguments.get("tail-call-optimization").equals("yes");
         } else {
             this.tailCallOptimization = true;
+        }
+
+        if (this.arguments.containsKey("debug")) {
+            this.debug = this.arguments.get("debug").equals("yes");
+        } else {
+            this.debug = false;
         }
 
         if (this.arguments.containsKey("apply-updates")) {
@@ -996,21 +1003,39 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Returns whether function inlining is enabled.
+     * Returns whether tail call optimization is enabled.
      *
-     * @return true if function inlining is enabled, false otherwise.
+     * @return true if tail call optimization is enabled, false otherwise.
      */
     public boolean tailCallOptimization() {
         return this.tailCallOptimization;
     }
 
     /**
-     * Sets whether function inlining is enabled.
+     * Sets whether tail call optimization is enabled.
      *
-     * @param b true if function inlining is enabled, false otherwise.
+     * @param b true if tail call optimization is enabled, false otherwise.
      */
     public void settailCallOptimization(boolean b) {
         this.tailCallOptimization = b;
+    }
+
+    /**
+     * Returns whether debug output is enabled.
+     *
+     * @return true if debug output is enabled, false otherwise.
+     */
+    public boolean debug() {
+        return this.debug;
+    }
+
+    /**
+     * Sets whether debug output is enabled.
+     *
+     * @param b true if debug output is enabled, false otherwise.
+     */
+    public void setDebug(boolean b) {
+        this.debug = b;
     }
 
     /**
