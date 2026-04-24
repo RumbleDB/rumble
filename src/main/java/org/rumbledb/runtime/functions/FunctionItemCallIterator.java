@@ -56,6 +56,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     // calculated fields
     private boolean isPartialApplication;
+    private boolean isTailOptimization;
     private RuntimeIterator functionBodyIterator;
     private Item nextResult;
     private transient DynamicContext dynamicContextForCalls;
@@ -77,6 +78,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
         if (isTailOptimization) {
             this.isPartialApplication = true;
+            this.isTailOptimization = true;
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
@@ -225,9 +227,13 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
         }
 
+        Name functionItemName = this.functionItem.getIdentifier().getName();
+        if (this.isTailOptimization) {
+            functionItemName = Name.TAIL_CALL_OPTIMIZATION;
+        }
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
-                        this.functionItem.getIdentifier().getName(),
+                        functionItemName,
                         partialApplicationParamNames.size()
                 ),
                 partialApplicationParamNames,
