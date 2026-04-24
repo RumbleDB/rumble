@@ -64,7 +64,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public FunctionItemCallIterator(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean isTailOptimization
     ) {
         super(null, staticContext);
         for (RuntimeIterator arg : functionArguments) {
@@ -73,6 +74,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             } else {
                 this.children.add(arg);
             }
+        }
+        if (isTailOptimization) {
+            this.isPartialApplication = true;
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;

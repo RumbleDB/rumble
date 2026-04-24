@@ -73,14 +73,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     public RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<RuntimeIterator> arguments
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
                 getUserDefinedFunction(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
-                arguments
+                arguments,
+                isTailOptimization
             );
         }
         throw new UnknownFunctionCallException(
@@ -99,7 +101,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<RuntimeIterator> arguments
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
     ) {
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
@@ -130,7 +133,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             functionCallIterator = new FunctionItemCallIterator(
                     functionItem,
                     arguments,
-                    innerStaticContext
+                    innerStaticContext,
+                    isTailOptimization
             );
         }
         if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
