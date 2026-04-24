@@ -101,7 +101,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             this.hasNext
                 && this.nextResult.isFunction()
                 && this.nextResult.getIdentifier().getArity() == 0
-                && this.nextResult.getIdentifier().getName().equals(Name.TAIL_CALL_OPTIMIZATION)
+                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())
         ) {
             this.userDefinedFunctionCallIterator.close();
             this.userDefinedFunctionCallIterator = NamedFunctions.buildFunctionItemCallIterator(
