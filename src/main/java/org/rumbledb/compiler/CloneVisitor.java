@@ -138,12 +138,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
             .collect(Collectors.toList());
-        List<Node> declarations = expression.getFunctionDeclarations()
+        List<Node> declarations = expression.getDeclarations()
             .stream()
             .map(expr -> visit(expr, argument))
             .collect(Collectors.toList());
-        declarations.addAll(expression.getVariableDeclarations());
-        declarations.addAll(expression.getTypeDeclarations());
         expression.setDeclarations(declarations);
         expression.getImportedModules().clear();
         expression.getImportedModules().addAll(libraryModules);
@@ -740,6 +738,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 arguments,
                 expression.getMetadata()
         );
+        if (expression.isTailCallOptimization()) {
+            System.err.println("Setting tail call optimization for function call: " + expression.getFunctionName());
+            ((FunctionCallExpression) result).setTailCallOptimization(true);
+        }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
@@ -1125,7 +1127,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getVariableName(),
                 expression.external(),
                 expression.getActualSequenceType(),
-                (Expression) visit(expression.getExpression(), argument),
+                expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
                 expression.getAnnotations(),
                 expression.getMetadata()
         );
