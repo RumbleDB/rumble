@@ -180,7 +180,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         if (expression.getActualReturnType() != null) {
-            System.err.println(argument);
             expression.getActualReturnType().resolve(argument, declaration.getMetadata());
         }
         for (Entry<Name, SequenceType> itemType : expression.getParams().entrySet()) {
