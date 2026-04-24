@@ -70,14 +70,33 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             ? this.optionsIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
             : null;
 
-        JSONParsingOptions options = resolveOptions(optionsItem);
-        System.err.println(options);
-
         if (pathItem == null) {
             return null;
         }
 
-        URI uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
+        URI uri;
+        /*
+         * if (optionsItem == null) {
+         * System.err.println("called with one argument");
+         * uri = FileSystemUtil.resolveURI(
+         * this.staticURI,
+         * pathItem.getStringValue(),
+         * getMetadata()
+         * );
+         * InputStream is = FileSystemUtil.getDataInputStream(
+         * uri,
+         * this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+         * getMetadata()
+         * );
+         * JsonReader object = new JsonReader(new InputStreamReader(is));
+         * Item result = ItemParser.getItemFromObject(object, getMetadata());
+         * return result;
+         * }
+         */
+        JSONParsingOptions options = resolveOptions(optionsItem);
+        System.err.println(options);
+
+        uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
         String jsonText = readJsonResource(uri);
 
         return ItemParser.getItemFromJSONDocument(jsonText, options, getConfiguration().getXmlVersion(), getMetadata());
@@ -261,7 +280,6 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    // TODO, this could be inefficient for very large json documents think about how to use spark for subobjects
     private String readAll(InputStream is) {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
