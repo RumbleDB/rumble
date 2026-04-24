@@ -1127,7 +1127,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getVariableName(),
                 expression.external(),
                 expression.getActualSequenceType(),
-                expression.getExpression()==null ? null : (Expression) visit(expression.getExpression(), argument),
+                expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
                 expression.getAnnotations(),
                 expression.getMetadata()
         );
