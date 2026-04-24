@@ -76,6 +76,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean parallelExecution;
     private boolean dataFrameExecution;
     private boolean nativeExecution;
+    private boolean tailCallOptimization;
     private boolean functionInlining;
     private boolean applyUpdates;
     private String queryLanguage;
@@ -486,6 +487,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.functionInlining = this.arguments.get("function-inlining").equals("yes");
         } else {
             this.functionInlining = true;
+        }
+
+        if (this.arguments.containsKey("tail-call-optimization")) {
+            this.tailCallOptimization = this.arguments.get("tail-call-optimization").equals("yes");
+        } else {
+            this.tailCallOptimization = true;
         }
 
         if (this.arguments.containsKey("apply-updates")) {
@@ -986,6 +993,24 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     public void setFunctionInlining(boolean b) {
         this.functionInlining = b;
+    }
+
+    /**
+     * Returns whether function inlining is enabled.
+     *
+     * @return true if function inlining is enabled, false otherwise.
+     */
+    public boolean tailCallOptimization() {
+        return this.tailCallOptimization;
+    }
+
+    /**
+     * Sets whether function inlining is enabled.
+     *
+     * @param b true if function inlining is enabled, false otherwise.
+     */
+    public void settailCallOptimization(boolean b) {
+        this.tailCallOptimization = b;
     }
 
     /**

@@ -60,7 +60,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext,
-            boolean isUpdating
+            boolean isUpdating,
+            boolean tailCallOptimization
     ) {
         super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
@@ -68,15 +69,11 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.userDefinedFunctionCallIterator = null;
         this.nextExitStatementResult = 0;
         this.isUpdating = isUpdating;
-        this.tailCallOptimizationCandidate = false;
+        this.tailCallOptimizationCandidate = tailCallOptimization;
     }
 
     protected boolean implementsDataFrames() {
         return true;
-    }
-
-    public void setTailCallOptimizationCandidate(boolean tailCallOptimizationCandidate) {
-        this.tailCallOptimizationCandidate = tailCallOptimizationCandidate;
     }
 
     @Override
