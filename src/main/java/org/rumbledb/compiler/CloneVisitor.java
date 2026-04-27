@@ -57,9 +57,9 @@ import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
-import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -739,7 +739,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         if (expression.isTailCallOptimization()) {
-            System.err.println("Setting tail call optimization for function call: " + expression.getFunctionName());
             ((FunctionCallExpression) result).setTailCallOptimization(true);
         }
         result.setStaticContext(expression.getStaticContext());
