@@ -36,7 +36,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
@@ -73,14 +73,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     public RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<RuntimeIterator> arguments
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
                 getUserDefinedFunction(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
-                arguments
+                arguments,
+                isTailOptimization
             );
         }
         throw new UnknownFunctionCallException(
@@ -99,7 +101,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<RuntimeIterator> arguments
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
     ) {
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
@@ -130,7 +133,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             functionCallIterator = new FunctionItemCallIterator(
                     functionItem,
                     arguments,
-                    innerStaticContext
+                    innerStaticContext,
+                    isTailOptimization
             );
         }
         if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
@@ -221,7 +225,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         sequenceType.getItemType().isAtomicItemType()
                             && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
                     ) {
-                        argumentIterator = new AtomizationIterator(
+                        argumentIterator = new DataFunctionIterator(
                                 Collections.singletonList(argumentIterator),
                                 argStaticContext
                         );

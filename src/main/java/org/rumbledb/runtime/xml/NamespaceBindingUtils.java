@@ -308,19 +308,18 @@ public final class NamespaceBindingUtils {
         if (!attributeItem.isAttributeNode()) {
             return null;
         }
-        Item q = attributeItem.nodeName();
-        if (q == null || !q.isQName()) {
+        Name expanded = attributeItem.nodeName();
+        if (expanded == null) {
             return null;
         }
-        Name expanded = q.getQNameValue();
-        if (expanded != null && XMLNS_NAMESPACE_URI.equals(expanded.getNamespace())) {
+        if (XMLNS_NAMESPACE_URI.equals(expanded.getNamespace())) {
             String local = expanded.getLocalName();
             if ("xmlns".equals(local)) {
                 return new String[] { "", attributeItem.getStringValue() };
             }
             return new String[] { local, attributeItem.getStringValue() };
         }
-        String attributeName = q.getStringValue();
+        String attributeName = expanded.toString();
         if ("xmlns".equals(attributeName)) {
             return new String[] { "", attributeItem.getStringValue() };
         }

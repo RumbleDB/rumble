@@ -24,12 +24,15 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -53,6 +56,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    private SerializationParameters serializationParameters;
 
     /**
      * XQuery {@code declare default function namespace}; when null, unprefixed function names use
@@ -96,6 +100,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
+        this.serializationParameters = null;
         this.defaultDecimalFormat = null;
         this.decimalFormats = new HashMap<>();
     }
@@ -111,6 +116,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
+        this.serializationParameters = configuration.getSerializationParameters();
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
     }
@@ -124,6 +130,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.configuration = null;
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.serializationParameters = null;
         this.defaultDecimalFormat = null;
         this.decimalFormats = null;
     }
@@ -369,6 +376,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
+        kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
 
     @Override
@@ -376,6 +384,58 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
+        // Backward compatibility: older serialized artifacts may not contain this field, so it is null
+        this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
+        // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
+        if (this.serializationParameters == null && this.parent == null) {
+            this.serializationParameters = SerializationParameters.defaults();
+        }
+    }
+
+    /**
+     * Returns the default serialization parameters stored in the static context.
+     *
+     * Spec references:
+     * - XQuery 3.1 Static Context Components (link: https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
+     * - Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     */
+    public SerializationParameters getSerializationParameters() {
+        if (this.serializationParameters != null) {
+            return this.serializationParameters;
+        }
+        // Backward compatibility: if absent locally (e.g., contexts deserialized from older versions),
+        // delegate to parent to preserve inheritance instead of creating a shadow copy here.
+        if (this.parent != null) {
+            return this.parent.getSerializationParameters();
+        }
+        // Root context missing the field (e.g., deserialized from an older version): populate defaults once.
+        this.serializationParameters = SerializationParameters.defaults();
+        return this.serializationParameters;
+    }
+
+    /**
+     * Sets the default serialization parameters at this static context level.
+     */
+    public void setSerializationParameters(SerializationParameters serializationParameters) {
+        this.serializationParameters = serializationParameters;
+    }
+
+    /**
+     * Override the serialization parameters with the provided parameter name and value.
+     * Throws InvalidSerializationParameterValueException for invalid inputs.
+     *
+     * @param name the name of the parameter to update
+     * @param value the value of the parameter to update
+     * @throws org.rumbledb.exceptions.InvalidSerializationParameterValueException if the parameter value is invalid
+     */
+    public void overrideSerializationParameter(String name, String value) {
+        // ensure we have a local copy of the serialization parameters
+        if (this.serializationParameters == null) {
+            this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
+        }
+        // update the local copy of theserialization parameters with the provided parameter name and value
+        SerializationParameterBuilder.update(this.serializationParameters, name, value);
     }
 
     public void importModuleContext(StaticContext moduleContext) {

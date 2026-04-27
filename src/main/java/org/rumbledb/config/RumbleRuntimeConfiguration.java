@@ -25,7 +25,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.SerializationParameters;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -53,8 +53,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private int resultsSizeCap;
     private int materializationCap;
     private String inputFormat;
-    private String outputFormat;
-    private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
@@ -78,6 +76,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean parallelExecution;
     private boolean dataFrameExecution;
     private boolean nativeExecution;
+    private boolean tailCallOptimization;
+    private boolean debug;
     private boolean functionInlining;
     private boolean applyUpdates;
     private String queryLanguage;
@@ -91,6 +91,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
 
+    private SerializationParameters serializationParameters;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -104,7 +105,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.shortcutMap = new HashMap<>();
         this.shortcutMap.put("q", "query");
         this.shortcutMap.put("o", "output-path");
-        this.shortcutMap.put("f", "output-format");
         this.shortcutMap.put("O", "overwrite");
         this.shortcutMap.put("c", "materialization-cap");
         this.shortcutMap.put("I", "context-item");
@@ -143,7 +143,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                     System.err.println("Try it out! The old parameters will continue to work, though.");
                 }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-                if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && args[i + 1].startsWith(ARGUMENT_PREFIX))) {
+                if (
+                    i + 1 >= args.length
+                        || (!(args[i + 1].equals("-"))
+                            && (args[i + 1].startsWith(ARGUMENT_PREFIX) || args[i + 1].startsWith(SHORTCUT_PREFIX)))
+                ) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                 }
                 String argumentValue = args[i + 1];
@@ -153,6 +157,23 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
             if (args[i].startsWith(SHORTCUT_PREFIX)) {
                 String argumentName = args[i].trim().replace(SHORTCUT_PREFIX, "");
+                // Handle -o:<option> <value> pattern (distinct from -o output-path) separately
+                // from the other shortcuts
+                if (argumentName.startsWith("o:") && argumentName.length() > 2) {
+                    String optionName = argumentName.substring(2); // Remove "o:" prefix
+                    if (
+                        i + 1 < args.length
+                            && !args[i + 1].startsWith(ARGUMENT_PREFIX)
+                            && !args[i + 1].startsWith(SHORTCUT_PREFIX)
+                    ) {
+                        String optionValue = args[i + 1];
+                        this.arguments.put("output:" + optionName, optionValue);
+                        ++i;
+                        continue;
+                    } else {
+                        throw new CliException("Missing value for serialization parameter: " + optionName + ".");
+                    }
+                }
                 if (!this.yesNoShortcuts.contains(argumentName)) {
                     if (
                         i + 1 >= args.length
@@ -240,24 +261,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Returns the output format for writing the output of the query to the output path.
-     * 
-     * @return the output format.
-     */
-    public String getOutputFormat() {
-        return this.outputFormat;
-    }
-
-    /**
-     * Sets the output format for writing the output of the query to the output path.
-     * 
-     * @param newValue the output format.
-     */
-    public void setOutputFormat(String newValue) {
-        this.outputFormat = newValue;
-    }
-
-    /**
      * Returns the input format for reading from standard input.
      * 
      * @return the input format.
@@ -295,26 +298,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Returns the serialization options to write to the output path.
-     * 
-     * @return the serialization options.
-     */
-    public Map<String, String> getOutputFormatOptions() {
-        return this.outputFormatOptions;
-    }
-
-    /**
-     * Sets a serialization option to write to the output path.
-     * 
-     * @param key the serialization option key.
-     * @param value the serialization option value.
-     */
-    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
-        this.outputFormatOptions.put(key, value);
-        return this;
-    }
-
-    /**
      * Returns whether the return type of built-in functions is checked.
      * 
      * @return whether the return type of built-in functions is checked.
@@ -334,6 +317,17 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void init() {
+        Map<String, String> serializationOverrides = new HashMap<>();
+        for (Map.Entry<String, String> entry : this.arguments.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("output:")) {
+                // remove the output: prefix
+                serializationOverrides.put(key.substring(7), entry.getValue());
+            }
+        }
+        // this will throw an exception if the serialization parameters are invalid
+        this.serializationParameters = SerializationParameterBuilder.build(serializationOverrides);
+
         if (this.arguments.containsKey("print-iterator-tree")) {
             this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
         } else {
@@ -354,11 +348,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.allowedPrefixes = Arrays.asList();
         }
-        if (this.arguments.containsKey("output-format")) {
-            this.outputFormat = this.arguments.get("output-format").toLowerCase();
-        } else {
-            this.outputFormat = "json";
-        }
         if (this.arguments.containsKey("input-format")) {
             this.inputFormat = this.arguments.get("input-format").toLowerCase();
         } else {
@@ -368,14 +357,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
         } else {
             this.numberOfOutputPartitions = -1;
-        }
-        this.outputFormatOptions = new HashMap<>();
-        for (String s : this.arguments.keySet()) {
-            if (s.startsWith("output-format-option:")) {
-                String key = s.substring(21);
-                String value = this.arguments.get(s);
-                this.outputFormatOptions.put(key, value);
-            }
         }
         if (this.arguments.containsKey("materialization-cap")) {
             this.materializationCap = Integer.parseInt(this.arguments.get("materialization-cap"));
@@ -507,6 +488,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.functionInlining = this.arguments.get("function-inlining").equals("yes");
         } else {
             this.functionInlining = true;
+        }
+
+        if (this.arguments.containsKey("tail-call-optimization")) {
+            this.tailCallOptimization = this.arguments.get("tail-call-optimization").equals("yes");
+        } else {
+            this.tailCallOptimization = true;
+        }
+
+        if (this.arguments.containsKey("debug")) {
+            this.debug = this.arguments.get("debug").equals("yes");
+        } else {
+            this.debug = false;
         }
 
         if (this.arguments.containsKey("apply-updates")) {
@@ -1010,6 +1003,42 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
+     * Returns whether tail call optimization is enabled.
+     *
+     * @return true if tail call optimization is enabled, false otherwise.
+     */
+    public boolean tailCallOptimization() {
+        return this.tailCallOptimization;
+    }
+
+    /**
+     * Sets whether tail call optimization is enabled.
+     *
+     * @param b true if tail call optimization is enabled, false otherwise.
+     */
+    public void settailCallOptimization(boolean b) {
+        this.tailCallOptimization = b;
+    }
+
+    /**
+     * Returns whether debug output is enabled.
+     *
+     * @return true if debug output is enabled, false otherwise.
+     */
+    public boolean debug() {
+        return this.debug;
+    }
+
+    /**
+     * Sets whether debug output is enabled.
+     *
+     * @param b true if debug output is enabled, false otherwise.
+     */
+    public void setDebug(boolean b) {
+        this.debug = b;
+    }
+
+    /**
      * Returns whether the returned Pending Update List should be applied when executed on the command line.
      *
      * @return true if the Pending Update List should be applied, false otherwise.
@@ -1259,41 +1288,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     /**
-     * Returns the serializer in use according to the output format specified.
+     * Returns the SerializationParameters in use.
      *
-     * @return the serializer in use according to the output format specified.
+     * @return the SerializationParameters in use.
      */
-    public Serializer getSerializer() {
-        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
-        if (this.getOutputFormat().equals("tyson")) {
-            method = Serializer.Method.TYSON;
-        }
-        if (this.getOutputFormat().equals("json")) {
-            method = Serializer.Method.JSON;
-        }
-        if (this.getOutputFormat().equals("yaml")) {
-            method = Serializer.Method.YAML;
-        }
-        boolean indent = false;
-        Map<String, String> options = this.getOutputFormatOptions();
-        if (options.containsKey("indent")) {
-            if (options.get("indent").equals("yes")) {
-                indent = true;
-            }
-        }
-        String itemSeparator = "\n";
-        if (options.containsKey("item-separator")) {
-            itemSeparator = options.get("item-separator");
-        }
-        String encoding = "UTF-8";
-        if (options.containsKey("encoding")) {
-            itemSeparator = options.get("encoding");
-        }
-        return new Serializer(
-                encoding,
-                method,
-                indent,
-                itemSeparator
-        );
+    public SerializationParameters getSerializationParameters() {
+        return this.serializationParameters;
     }
 }
