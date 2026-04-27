@@ -46,7 +46,7 @@ statement                   : applyStatement
 
 applyStatement              : exprSimple ';' ;
 
-assignStatement             : '$' qname ':=' exprSingle ';' ;
+assignStatement             : '$' qname COLON_EQ exprSingle ';' ;
 
 blockStatement              : '{' statements '}' ;
 
@@ -82,7 +82,7 @@ annotations                 : annotation* ;
 
 varDeclStatement            : annotations Kvariable varDeclForStatement (COMMA varDeclForStatement)* ';' ;
 
-varDeclForStatement         : var_ref=varRef (KW_AS sequenceType)? (':=' expr_vals+=exprSingle)? ;
+varDeclForStatement         : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
 
 whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 
@@ -101,7 +101,7 @@ annotatedDecl           : functionDecl
                         | typeDecl
                         | contextItemDecl;
 
-defaultCollationDecl    : Kdeclare Kdefault Kcollation uriLiteral;
+defaultCollationDecl    : Kdeclare Kdefault KW_COLLATION uriLiteral;
 
 baseURIDecl            : Kdeclare 'base-uri' uriLiteral;
 
@@ -130,9 +130,9 @@ dfPropertyName          : 'decimal-separator'
 moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
 
 // TODO: Assignable variable decl
-varDecl                 : Kdeclare annotations Kvariable varRef (KW_AS sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+varDecl                 : Kdeclare annotations Kvariable varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
 
-contextItemDecl         : Kdeclare Kcontext Kitem (KW_AS sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+contextItemDecl         : Kdeclare Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
 
 functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
                           (KW_AS return_type=sequenceType)?
@@ -197,26 +197,35 @@ forVar: var_ref=varRef
 
 allowingEmpty: KW_ALLOWING KW_EMPTY;
 
-letClause               : Klet vars+=letVar (COMMA vars+=letVar)*;
+letClause: KW_LET vars+=letVar (COMMA vars+=letVar)* ;
 
-letVar                  : var_ref=varRef (KW_AS seq=sequenceType)? ':=' ex=exprSingle ;
+// renamed from letBinding to letVar to match the JSONiq grammar
+letVar: var_ref=varRef
+        // replaced with the typeDeclaration production to match the JSONiq grammar
+        (KW_AS seq=sequenceType)?
+        COLON_EQ ex=exprSingle ;
 
-whereClause             : Kwhere exprSingle;
+windowClause: KW_FOR ;
 
-groupByClause           : Kgroup Kby vars+=groupByVar (COMMA vars+=groupByVar)*;
+countClause: KW_COUNT varRef ;
 
-groupByVar              : var_ref=varRef
-                          ((KW_AS seq=sequenceType)? decl=':=' ex=exprSingle)?
-                          (Kcollation uri=uriLiteral)?;
+whereClause: KW_WHERE exprSingle ;
 
-orderByClause           : ((Korder Kby) | (stb=Kstable Korder Kby)) orderByExpr (COMMA orderByExpr)*;
+// replaced with the groupingSpecList production to match the JSONiq grammar
+groupByClause: KW_GROUP KW_BY vars+=groupByVar (COMMA vars+=groupByVar)* ;
+
+// renamed from groupingSpec to groupByVar to match the JSONiq grammar
+groupByVar: var_ref=varRef
+            // replaced with the typeDeclaration production to match the JSONiq grammar
+            ((KW_AS seq=sequenceType)? decl=COLON_EQ ex=exprSingle)?
+            (KW_COLLATION uri=uriLiteral)? ;
+
+orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderByExpr (COMMA specs+=orderByExpr)* ;
 
 orderByExpr             : ex=exprSingle
                           (Kascending | desc=Kdescending)?
                           (KW_EMPTY (gr=Kgreatest | ls=Kleast))?
-                          (Kcollation uril=uriLiteral)?;
-
-countClause             : Kcount varRef;
+                          (KW_COLLATION uril=uriLiteral)?;
 
 quantifiedExpr          : (so=Ksome | ev=Kevery)
                           vars+=quantifiedExprVar (COMMA vars+=quantifiedExprVar)*
@@ -357,7 +366,7 @@ appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_ex
 
 updateLocator           : main_expr=postFixExpr;
 
-copyDecl                : var_ref=varRef ':=' src_expr=exprSingle;
+copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
 
 // TODO: Direct element constructors
 
@@ -510,7 +519,7 @@ keyWords                : Kjsoniq
                         | Kand
                         | Kcast
                         | Kcastable
-                        | Kcollation
+                        | KW_COLLATION
                         | Kcontext
                         | Kdeclare
                         | Kdefault
@@ -537,7 +546,7 @@ keyWords                : Kjsoniq
                         | Ksome
                         | Kevery
                         | Ksatisfies
-                        | Kstable
+                        | KW_STABLE
                         | Kvariable
                         | Kascending
                         | Kdescending
@@ -548,12 +557,12 @@ keyWords                : Kjsoniq
                         | KW_IN
                         | Kif
                         | KW_FOR
-                        | Klet
-                        | Kwhere
-                        | Kgroup
-                        | Kby
-                        | Korder
-                        | Kcount
+                        | KW_LET
+                        | KW_WHERE
+                        | KW_GROUP
+                        | KW_BY
+                        | KW_ORDER
+                        | KW_COUNT
                         | KW_RETURN
                         | Kunordered
                         | Ktrue
@@ -632,17 +641,19 @@ keyWords                : Kjsoniq
 
 COMMA                   : ',';
 
+COLON_EQ                : ':=';
+
 KW_FOR                    : 'for';
 
-Klet                    : 'let';
+KW_LET                    : 'let';
 
-Kwhere                  : 'where';
+KW_WHERE                  : 'where';
 
-Kgroup                  : 'group';
+KW_GROUP                  : 'group';
 
-Kby                     : 'by';
+KW_BY                     : 'by';
 
-Korder                  : 'order';
+KW_ORDER                  : 'order';
 
 KW_RETURN                 : 'return';
 
@@ -658,9 +669,9 @@ KW_ALLOWING               : 'allowing';
 
 KW_EMPTY                  : 'empty';
 
-Kcount                  : 'count';
+KW_COUNT                  : 'count';
 
-Kstable                 : 'stable';
+KW_STABLE                 : 'stable';
 
 Kascending              : 'ascending';
 
@@ -672,7 +683,7 @@ Kevery                  : 'every';
 
 Ksatisfies              : 'satisfies';
 
-Kcollation              : 'collation';
+KW_COLLATION              : 'collation';
 
 Kgreatest               : 'greatest';
 
