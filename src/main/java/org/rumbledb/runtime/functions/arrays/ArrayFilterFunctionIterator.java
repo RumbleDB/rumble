@@ -171,7 +171,8 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             functionItem,
             staticContext,
             ExecutionMode.LOCAL,
-            arguments
+            arguments,
+            false
         );
         List<Item> result = functionCall.materialize(context);
         return booleanValueFromFilterResult(result);
