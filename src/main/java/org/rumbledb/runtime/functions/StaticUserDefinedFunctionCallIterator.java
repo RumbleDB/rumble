@@ -25,14 +25,17 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -51,13 +54,14 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     private List<Item> exitStatementLocalResult;
     private boolean encounteredExitStatement;
     private int nextExitStatementResult;
-
+    private boolean tailCallOptimizationCandidate;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext,
-            boolean isUpdating
+            boolean isUpdating,
+            boolean tailCallOptimization
     ) {
         super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
@@ -65,6 +69,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.userDefinedFunctionCallIterator = null;
         this.nextExitStatementResult = 0;
         this.isUpdating = isUpdating;
+        this.tailCallOptimizationCandidate = tailCallOptimization;
     }
 
     protected boolean implementsDataFrames() {
@@ -79,7 +84,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                     .getUserDefinedFunctionCallIterator(
                         this.functionIdentifier,
                         this.staticContext,
-                        this.functionArguments
+                        this.functionArguments,
+                        tailCallOptimizationCandidate
                     );
             }
             this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
@@ -88,6 +94,26 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             this.exitStatementLocalResult = exitStatementException.getLocalResult();
         }
         setNextResult();
+        if (this.tailCallOptimizationCandidate) {
+            return;
+        }
+        while (
+            this.hasNext
+                && this.nextResult.isFunction()
+                && this.nextResult.getIdentifier().getArity() == 0
+                && this.nextResult.getIdentifier().getName().equals(Name.TAIL_CALL_OPTIMIZATION)
+        ) {
+            this.userDefinedFunctionCallIterator.close();
+            this.userDefinedFunctionCallIterator = NamedFunctions.buildFunctionItemCallIterator(
+                this.nextResult,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                Collections.emptyList(),
+                false
+            );
+            this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
+            setNextResult();
+        }
     }
 
     @Override
@@ -165,7 +191,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    this.functionArguments
+                    this.functionArguments,
+                    false
                 );
             return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
         } catch (ExitStatementException exitStatementException) {
@@ -180,7 +207,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                 .getUserDefinedFunctionCallIterator(
                     this.functionIdentifier,
                     this.staticContext,
-                    this.functionArguments
+                    this.functionArguments,
+                    false
                 );
             return this.userDefinedFunctionCallIterator.getDataFrame(dynamicContext);
         } catch (ExitStatementException exitStatementException) {
@@ -209,7 +237,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.staticContext,
-                this.functionArguments
+                this.functionArguments,
+                false
             );
         return this.userDefinedFunctionCallIterator.getPendingUpdateList(context);
     }

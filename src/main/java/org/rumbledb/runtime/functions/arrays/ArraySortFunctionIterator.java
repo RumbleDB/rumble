@@ -249,7 +249,8 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             functionItem,
             staticContext,
             ExecutionMode.LOCAL,
-            arguments
+            arguments,
+            false
         );
         return materializeIterator(call, context);
     }
