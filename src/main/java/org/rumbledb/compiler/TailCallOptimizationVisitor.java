@@ -1,5 +1,6 @@
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
@@ -21,18 +22,17 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
         Expression body = inlineFunctionExpression.getBody().getExpression();
 
-        markTailCalls(body, fd);
+        markTailCalls(body, fd.getFunctionIdentifier());
 
         return fd;
     }
 
-    private void markTailCalls(Expression expression, FunctionDeclaration fd) {
+    private void markTailCalls(Expression expression, FunctionIdentifier fd) {
         if (expression == null) {
             return;
         }
 
-        if (expression instanceof FunctionCallExpression) {
-            FunctionCallExpression functionCall = (FunctionCallExpression) expression;
+        if (expression instanceof FunctionCallExpression functionCall) {
             if (isTailRecursiveCall(functionCall, fd)) {
                 // System.err.println("Set tail call optimization for function " + fd.getFunctionIdentifier());
                 functionCall.setTailCallOptimization(true);
@@ -41,16 +41,15 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
             return;
         }
 
-        if (expression instanceof ConditionalExpression) {
-            ConditionalExpression conditional = (ConditionalExpression) expression;
+        if (expression instanceof ConditionalExpression conditional) {
             markTailCalls(conditional.getBranch(), fd);
             markTailCalls(conditional.getElseBranch(), fd);
         }
     }
 
-    private boolean isTailRecursiveCall(FunctionCallExpression functionCall, FunctionDeclaration fd) {
-        return functionCall.getFunctionIdentifier().equals(fd.getFunctionIdentifier())
-            && functionCall.getArguments().size() == fd.getFunctionIdentifier().getArity()
+    private boolean isTailRecursiveCall(FunctionCallExpression functionCall, FunctionIdentifier fd) {
+        return functionCall.getFunctionIdentifier().equals(fd)
+            && functionCall.getArguments().size() == fd.getArity()
             && !functionCall.isPartialApplication();
     }
 }
