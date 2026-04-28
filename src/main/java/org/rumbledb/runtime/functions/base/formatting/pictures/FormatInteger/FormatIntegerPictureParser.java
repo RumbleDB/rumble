@@ -1,10 +1,9 @@
-package org.rumbledb.runtime.functions.base.formatting;
+package org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
-import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.FormatIntegerPicture;
-import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.IntegerFormatModifier;
-import org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger.PrimaryFormatToken;
+import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
 
 public final class FormatIntegerPictureParser {
 

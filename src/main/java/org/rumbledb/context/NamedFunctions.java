@@ -36,7 +36,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
@@ -73,14 +73,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     public RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<RuntimeIterator> arguments
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
                 getUserDefinedFunction(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
-                arguments
+                arguments,
+                isTailOptimization
             );
         }
         throw new UnknownFunctionCallException(
@@ -99,19 +101,21 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<RuntimeIterator> arguments
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
     ) {
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
         SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
-        RuntimeStaticContext outerStaticContext = callerRuntimeContext.withStaticTypeAndExecutionMode(
-            sequenceType,
-            executionModeForFunctionCall
-        );
-        RuntimeStaticContext innerStaticContext = callerRuntimeContext.withStaticTypeAndExecutionMode(
-            innerSequenceType,
-            executionModeForFunctionCall
-        );
+        RuntimeStaticContext outerStaticContext = callerRuntimeContext.withStaticType(
+            sequenceType
+        )
+            .withExecutionMode(
+                executionModeForFunctionCall
+            );
+        RuntimeStaticContext innerStaticContext = callerRuntimeContext.withStaticType(
+            innerSequenceType
+        ).withExecutionMode(executionModeForFunctionCall);
         RuntimeIterator functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
@@ -129,7 +133,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             functionCallIterator = new FunctionItemCallIterator(
                     functionItem,
                     arguments,
-                    innerStaticContext
+                    innerStaticContext,
+                    isTailOptimization
             );
         }
         if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
@@ -211,19 +216,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
-                    RuntimeStaticContext argStaticContext = new RuntimeStaticContext(
-                            conf,
-                            sequenceType,
-                            arguments.get(i).getHighestExecutionMode(),
-                            arguments.get(i).getMetadata(),
-                            callerStaticContext.getStaticallyKnownNamespaces()
-                    );
+                    RuntimeStaticContext argStaticContext =
+                        callerStaticContext.withStaticType(sequenceType)
+                            .withExecutionMode(arguments.get(i).getHighestExecutionMode())
+                            .withMetadata(arguments.get(i).getMetadata());
                     RuntimeIterator argumentIterator = arguments.get(i);
                     if (
                         sequenceType.getItemType().isAtomicItemType()
                             && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
                     ) {
-                        argumentIterator = new AtomizationIterator(
+                        argumentIterator = new DataFunctionIterator(
                                 Collections.singletonList(argumentIterator),
                                 argStaticContext
                         );
@@ -258,12 +260,14 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
 
         SequenceType catalogueReturnType = builtinFunction.getSignature().getReturnType();
-        RuntimeStaticContext delegateContext = callerStaticContext.getStaticType().equals(catalogueReturnType)
-            ? callerStaticContext
-            : callerStaticContext.withStaticTypeAndExecutionMode(
-                catalogueReturnType,
-                callerStaticContext.getExecutionMode()
-            );
+
+        RuntimeStaticContext delegateContext =
+            callerStaticContext.withStaticType(catalogueReturnType)
+                .withExecutionMode(callerStaticContext.getExecutionMode());
+
+        if (!"format-number".equals(identifier.getName().getLocalName())) {
+            delegateContext.dropDecimalFormats();
+        }
 
         RuntimeIterator functionCallIterator;
         try {
@@ -286,13 +290,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         if (!checkReturnTypesOfBuiltinFunctions) {
             return functionCallIterator;
         }
-        RuntimeStaticContext returnCheckContext = new RuntimeStaticContext(
-                conf,
-                catalogueReturnType,
-                functionCallIterator.getHighestExecutionMode(),
-                functionCallIterator.getMetadata(),
-                callerStaticContext.getStaticallyKnownNamespaces()
-        );
+        RuntimeStaticContext returnCheckContext = callerStaticContext.withStaticType(catalogueReturnType)
+            .withExecutionMode(functionCallIterator.getHighestExecutionMode())
+            .withMetadata(functionCallIterator.getMetadata());
         if (
             catalogueReturnType.isEmptySequence()
                 || catalogueReturnType.getArity().equals(Arity.One)

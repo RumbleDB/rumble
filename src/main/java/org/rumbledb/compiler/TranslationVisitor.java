@@ -365,6 +365,14 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 emptyOrderSet = true;
                 continue;
             }
+            JsoniqParser.DecimalFormatDeclContext decimalFormatDeclContext = setterContext.decimalFormatDecl();
+            if (decimalFormatDeclContext != null) {
+                processDecimalFormatDeclaration(
+                    decimalFormatDeclContext,
+                    createMetadataFromContext(decimalFormatDeclContext)
+                );
+                continue;
+            }
             if (setterContext.defaultCollationDecl() != null) {
                 if (defaultCollationSet) {
                     throw new DefaultCollationException(
@@ -663,8 +671,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (content instanceof JsoniqParser.ExprSimpleContext) {
             return this.visitExprSimple((JsoniqParser.ExprSimpleContext) content);
         }
-        if (content instanceof JsoniqParser.FlowrExprContext) {
-            return this.visitFlowrExpr((JsoniqParser.FlowrExprContext) content);
+        if (content instanceof JsoniqParser.FlworExprContext) {
+            return this.visitFlworExpr((JsoniqParser.FlworExprContext) content);
         }
         if (content instanceof JsoniqParser.IfExprContext) {
             return this.visitIfExpr((JsoniqParser.IfExprContext) content);
@@ -742,7 +750,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     // region Flowr
     @Override
-    public Node visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
+    public Node visitFlworExpr(JsoniqParser.FlworExprContext ctx) {
         Clause clause;
         // check the start clause, for or let
         if (ctx.start_for == null) {
@@ -2224,8 +2232,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (content instanceof JsoniqParser.ExitStatementContext) {
             return this.visitExitStatement((JsoniqParser.ExitStatementContext) content);
         }
-        if (content instanceof JsoniqParser.FlowrStatementContext) {
-            return this.visitFlowrStatement((JsoniqParser.FlowrStatementContext) content);
+        if (content instanceof JsoniqParser.FlworStatementContext) {
+            return this.visitFlworStatement((JsoniqParser.FlworStatementContext) content);
         }
         if (content instanceof JsoniqParser.IfStatementContext) {
             return this.visitIfStatement((JsoniqParser.IfStatementContext) content);
@@ -2298,7 +2306,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitFlowrStatement(JsoniqParser.FlowrStatementContext ctx) {
+    public Node visitFlworStatement(JsoniqParser.FlworStatementContext ctx) {
         Clause clause;
         // Check for start clause. Only for or let allowed.
         if (ctx.start_for == null) {
@@ -2868,6 +2876,21 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
 
         return parsedAnnotations;
+    }
+
+    private void processDecimalFormatDeclaration(
+            JsoniqParser.DecimalFormatDeclContext ctx,
+            ExceptionMetadata metadata
+    ) {
+        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
+            ctx,
+            ctx.Kdefault() != null,
+            ctx.qname(),
+            ctx.dfPropertyName(),
+            ctx.stringLiteral(),
+            this.moduleContext,
+            metadata
+        );
     }
 
 }

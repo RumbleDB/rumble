@@ -83,7 +83,7 @@ public abstract class Expression extends Node {
                 getStaticSequenceType(),
                 getHighestExecutionMode(visitorConfig),
                 getMetadata(),
-                staticContext.getInScopeNamespaceBindings()
+                this.staticContext
         );
     }
 

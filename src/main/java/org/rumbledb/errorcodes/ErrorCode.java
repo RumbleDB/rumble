@@ -41,6 +41,7 @@ public enum ErrorCode {
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
 
     IncorrectSyntaxFormatNumberErrorCode("FODF1310"),
+    InvalidDecimalFormatName("FODF1280"),
 
     CastErrorCode("FORG0001"),
     ZeroOrOneErrorCode("FORG0003"),
@@ -139,6 +140,7 @@ public enum ErrorCode {
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
     DirectElementConstructorTagMismatchErrorCode("XQST0118"),
+    InvalidDecimalFormatPropertyConflict("XQST0098"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
@@ -184,7 +186,9 @@ public enum ErrorCode {
     InvalidAssignableVariableComposability("SCCP0005"),
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
-    InvalidVariableDeclaration("SCIN0001");
+    InvalidVariableDeclaration("SCIN0001"),
+
+    InvalidSerializationParameterValue("SEPM0016");
 
     private String code;
 

@@ -121,7 +121,7 @@ import org.rumbledb.runtime.functions.sequences.cardinality.ExactlyOneIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.OneOrMoreIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ZeroOrOneIterator;
 import org.rumbledb.runtime.functions.sequences.general.*;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
@@ -2193,7 +2193,7 @@ public class BuiltinFunctionCatalogue {
                 "data"
         ),
         "anyAtomicType*",
-        AtomizationIterator.class,
+        DataFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2205,7 +2205,7 @@ public class BuiltinFunctionCatalogue {
         ),
         "item*",
         "anyAtomicType*",
-        AtomizationIterator.class,
+        DataFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**
@@ -2529,6 +2529,39 @@ public class BuiltinFunctionCatalogue {
         ),
         "date?",
         CurrentDateFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a string containing a numeric value formatted for display
+     */
+    static final BuiltinFunction format_number = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-number"
+        ),
+        "numeric?",
+        "string",
+        "string",
+        FormatNumberFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns a string containing a numeric value formatted for display
+     */
+    static final BuiltinFunction format_number3 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-number"
+        ),
+        "numeric?",
+        "string",
+        "string?",
+        "string",
+        FormatNumberFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -4008,6 +4041,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(adjust_date_to_timezone1.getIdentifier(), adjust_date_to_timezone1);
         builtinFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
 
+        builtinFunctions.put(format_number.getIdentifier(), format_number);
+        builtinFunctions.put(format_number3.getIdentifier(), format_number3);
         builtinFunctions.put(format_integer.getIdentifier(), format_integer);
         builtinFunctions.put(format_integer3.getIdentifier(), format_integer3);
 

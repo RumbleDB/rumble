@@ -417,6 +417,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             flags.emptyOrderSet = true;
             return;
         }
+        if (setterContext.decimalFormatDecl() != null) {
+            processDecimalFormatDeclaration(
+                setterContext.decimalFormatDecl(),
+                createMetadataFromContext(setterContext.decimalFormatDecl())
+            );
+            return;
+        }
         if (setterContext.defaultCollationDecl() != null) {
             if (flags.defaultCollationSet) {
                 throw new DefaultCollationException(
@@ -3760,4 +3767,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
 
+    @Override
+    public Node visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    private void processDecimalFormatDeclaration(
+            XQueryParser.DecimalFormatDeclContext ctx,
+            ExceptionMetadata metadata
+    ) {
+        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
+            ctx,
+            ctx.KW_DEFAULT() != null,
+            ctx.eqName(),
+            ctx.DFPropertyName(),
+            ctx.stringLiteral(),
+            this.moduleContext,
+            metadata
+        );
+    }
 }
