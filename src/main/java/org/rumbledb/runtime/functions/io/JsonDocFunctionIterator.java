@@ -65,7 +65,6 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
 
         // We use the GSON reader when the function is called without the options parameter
         if (optionsItem == null) {
-            System.err.println("[DEBUG] called with one argument");
             try {
                 uri = FileSystemUtil.resolveURI(
                     this.staticURI,
@@ -86,7 +85,6 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             }
         }
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, getMetadata());
-        System.err.println(options);
 
         uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
         String jsonText = readJsonResource(uri);
