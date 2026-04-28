@@ -76,7 +76,7 @@ public class RuntimeStaticContext implements Serializable {
         this.staticType = staticType;
         this.executionMode = executionMode;
         this.metadata = metadata;
-        staticallyKnownNamespaces = staticContext == null
+        this.staticallyKnownNamespaces = staticContext == null
             ? Collections.emptyMap()
             : staticContext.getInScopeNamespaceBindings();
         this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
