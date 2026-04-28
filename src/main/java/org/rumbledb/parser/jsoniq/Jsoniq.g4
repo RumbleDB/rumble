@@ -46,7 +46,7 @@ statement                   : applyStatement
 
 applyStatement              : exprSimple ';' ;
 
-assignStatement             : '$' qname COLON_EQ exprSingle ';' ;
+assignStatement             : DOLLAR qname COLON_EQ exprSingle ';' ;
 
 blockStatement              : '{' statements '}' ;
 
@@ -148,7 +148,7 @@ schemaLanguage          : 'jsound' 'compact'
 
 paramList               : param (COMMA param)*;
 
-param                   : '$' qname (KW_AS sequenceType)?;
+param                   : DOLLAR qname (KW_AS sequenceType)?;
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
@@ -345,7 +345,7 @@ primaryExpr             : NullLiteral
 blockExpr : '{' statementsAndExpr '}' ;
 
 
-varRef                  : '$' var_name=qname;
+varRef                  : DOLLAR var_name=qname;
 
 varName: eqName ;
 
