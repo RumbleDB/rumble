@@ -47,101 +47,38 @@ package org.rumbledb.parser.jsoniq;
 // this rule was added to match the JSONiq grammar
 moduleAndThisIsIt       : module EOF;
 
-module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
-                          (libraryModule | main=mainModule);
+module : // replaced with the versionDecl production to match the JSONiq grammar
+         (KW_JSONIQ Kversion vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
+         // TODO: subsequent optional main modules are currently ignored
+         (libraryModule | main=mainModule) ;
 
-mainModule              : prolog program;
+versionDecl: KW_JSONIQ KW_VERSION version=stringLiteral
+             (KW_ENCODING encoding=stringLiteral)?
+             SEMICOLON ;
 
-libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
+// mainModule and queryBody are replaced with the mainModule and program rules according to the XQuery Scripting Extension spec
+
+libraryModule: KW_MODULE KW_NAMESPACE NCName EQUAL uri=uriLiteral SEMICOLON prolog;
 
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
-prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
-                          (annotatedDecl ';')*;
+prolog: ((setter | namespaceDecl | moduleImport) SEMICOLON)*
+        (annotatedDecl SEMICOLON)* ;
 
-///////////////////////// Scripting addition - begin
+// added to match the JSONiq grammar
+annotatedDecl: functionDecl
+              | varDecl
+              | typeDecl
+              | contextItemDecl
+              ;
 
-program                 : statementsAndOptionalExpr ;
+setter: defaultCollationDecl
+      | baseURIDecl
+      | orderingModeDecl
+      | emptyOrderDecl
+      | decimalFormatDecl ;
 
-///////////////////////// Statements
-
-statements                  : statement* ;
-
-statementsAndExpr           : statements expr ;
-
-statementsAndOptionalExpr   : statements expr? ;
-
-statement                   : applyStatement
-                            | assignStatement
-                            | blockStatement
-                            | breakStatement
-                            | continueStatement
-                            | exitStatement
-                            | flworStatement
-                            | ifStatement
-                            | switchStatement
-                            | tryCatchStatement
-                            | typeSwitchStatement
-                            | varDeclStatement
-                            | whileStatement
-                            ;
-
-applyStatement              : exprSimple ';' ;
-
-assignStatement             : DOLLAR qname COLON_EQ exprSingle ';' ;
-
-blockStatement              : '{' statements '}' ;
-
-breakStatement              : Kbreak Kloop ';' ;
-
-continueStatement           : Kcontinue Kloop ';' ;
-
-exitStatement               : Kexit Kreturning exprSingle ';' ;
-
-flworStatement              : (start_for=forClause| start_let=letClause)
-                              (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
-                              KW_RETURN returnStmt=statement ;
-
-ifStatement:                Kif '(' test_expr=expr ')'
-                            Kthen branch=statement
-                            Kelse else_branch=statement ;
-
-switchStatement             : Kswitch '(' condExpr=expr ')' cases+=switchCaseStatement+ Kdefault KW_RETURN def=statement ;
-
-switchCaseStatement         : (Kcase cond+=exprSingle)+ KW_RETURN ret=statement ;
-
-tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseStatement+ ;
-
-catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
-
-typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement+ Kdefault (var_ref=varRef)? KW_RETURN def=statement ;
-
-caseStatement               : Kcase (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=statement ;
-
-annotation                  : ('%' name=qname ('(' Literal (COMMA Literal)* ')')? | updating=Kupdating);
-
-annotations                 : annotation* ;
-
-varDeclStatement            : annotations Kvariable varDeclForStatement (COMMA varDeclForStatement)* ';' ;
-
-varDeclForStatement         : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
-
-whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
-
-///////////////////////// Scripting addition - end
-
-setter                  : defaultCollationDecl
-                        | baseURIDecl
-                        | orderingModeDecl
-                        | emptyOrderDecl
-                        | decimalFormatDecl;
-
-namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
-
-annotatedDecl           : functionDecl
-                        | varDecl
-                        | typeDecl
-                        | contextItemDecl;
+namespaceDecl           : Kdeclare KW_NAMESPACE NCName EQUAL uriLiteral;
 
 defaultCollationDecl    : Kdeclare Kdefault KW_COLLATION uriLiteral;
 
@@ -149,11 +86,11 @@ baseURIDecl            : Kdeclare 'base-uri' uriLiteral;
 
 orderingModeDecl        : Kdeclare 'ordering' ('ordered' | 'unordered');
 
-emptyOrderDecl          : Kdeclare Kdefault 'order' KW_EMPTY (emptySequenceOrder=(Kgreatest | Kleast));
+emptyOrderDecl          : Kdeclare Kdefault 'order' KW_EMPTY (emptySequenceOrder=(KW_GREATEST | KW_LEAST));
 
 decimalFormatDecl       : Kdeclare
                           (('decimal-format' qname) | (Kdefault 'decimal-format'))
-                          (dfPropertyName '=' stringLiteral)*;
+                          (dfPropertyName EQUAL stringLiteral)*;
 
 eqName: qname ;
 
@@ -171,7 +108,7 @@ dfPropertyName          : 'decimal-separator'
                         | 'digit'
                         | 'pattern-separator';
 
-moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
+moduleImport            : 'import' KW_MODULE (KW_NAMESPACE prefix=NCName EQUAL)? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
 
 // TODO: Assignable variable decl
 varDecl                 : Kdeclare annotations Kvariable varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
@@ -190,7 +127,12 @@ schemaLanguage          : 'jsound' 'compact'
 
 paramList               : param (COMMA param)*;
 
-param                   : DOLLAR qname (KW_AS sequenceType)?;
+param                   : DOLLAR name=qname (KW_AS sequenceType)? ;
+
+annotations                 : annotation* ;
+
+// added the updating keyword to support the out-of-spec updating expressions extension
+annotation                  : ('%' name=qname ('(' Literal (COMMA Literal)* ')')? | updating=Kupdating);
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
@@ -284,16 +226,21 @@ groupByVar: var_ref=varRef
 
 orderByClause: stb=KW_STABLE? KW_ORDER KW_BY specs+=orderByExpr (COMMA specs+=orderByExpr)* ;
 
-orderByExpr             : ex=exprSingle
-                          (Kascending | desc=Kdescending)?
-                          (KW_EMPTY (gr=Kgreatest | ls=Kleast))?
-                          (KW_COLLATION uril=uriLiteral)?;
+// renamed from orderSpec to orderByExpr to match the JSONiq grammar
+orderByExpr: ex=exprSingle
+           (KW_ASCENDING | desc=KW_DESCENDING)?
+           (KW_EMPTY (gr=KW_GREATEST|ls=KW_LEAST))?
+           (KW_COLLATION uril=uriLiteral)?
+         ;
 
-quantifiedExpr          : (so=Ksome | ev=Kevery)
-                          vars+=quantifiedExprVar (COMMA vars+=quantifiedExprVar)*
-                          Ksatisfies exprSingle;
+quantifiedExpr: (so=KW_SOME | ev=KW_EVERY) vars+=quantifiedExprVar (COMMA vars+=quantifiedExprVar)*
+                KW_SATISFIES exprSingle ;
 
-quantifiedExprVar       : varRef (KW_AS sequenceType)? KW_IN exprSingle;
+// renamed from quantifiedVar to quantifiedExprVar to match the JSONiq grammar
+quantifiedExprVar: var_ref=varRef
+                  // replaced with the typeDeclaration production to match the JSONiq grammar
+                  (KW_AS seq=sequenceType)?
+                  KW_IN exprSingle ;
 
 switchExpr              : Kswitch '(' cond=expr ')' cases+=switchCaseClause+ Kdefault KW_RETURN def=exprSingle;
 
@@ -321,7 +268,7 @@ notExpr                 : op+=Knot ? main_expr=comparisonExpr;
 
 comparisonExpr          : main_expr=stringConcatExpr
                           ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
-                          | '=' | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
+                          | EQUAL | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
 
 stringConcatExpr        : main_expr=rangeExpr ( '||' rhs+=rangeExpr )* ;
 
@@ -341,7 +288,7 @@ castableExpr            : main_expr=castExpr ( Kcastable KW_AS single=singleType
 
 castExpr                : main_expr=arrowExpr ( Kcast KW_AS single=singleType )?;
 
-arrowExpr               : main_expr=unaryExpr (('=' '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
+arrowExpr               : main_expr=unaryExpr ((EQUAL '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
 
 arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
 
@@ -581,7 +528,9 @@ uriLiteral              : stringLiteral;
 
 stringLiteral           : STRING;
 
-keyWords                : Kjsoniq
+keyWords                : KW_JSONIQ
+                        | KW_MODULE
+                        | KW_NAMESPACE
                         | Kand
                         | Kcast
                         | Kcastable
@@ -590,12 +539,12 @@ keyWords                : Kjsoniq
                         | Kdeclare
                         | Kdefault
                         | Kelse
-                        | Kgreatest
+                        | KW_GREATEST
                         | Kinstance
                         | Kstatically
                         | Kis
                         | Kitem
-                        | Kleast
+                        | KW_LEAST
                         | Knot
                         | NullLiteral
                         | Kof
@@ -609,13 +558,13 @@ keyWords                : Kjsoniq
                         | Kcase
                         | Ktry
                         | Kcatch
-                        | Ksome
-                        | Kevery
-                        | Ksatisfies
+                        | KW_SOME
+                        | KW_EVERY
+                        | KW_SATISFIES
                         | KW_STABLE
                         | Kvariable
-                        | Kascending
-                        | Kdescending
+                        | KW_ASCENDING
+                        | KW_DESCENDING
                         | KW_EMPTY
                         | KW_ALLOWING
                         | KW_AS
@@ -718,6 +667,10 @@ COMMA                   : ',';
 
 COLON_EQ                : ':=';
 
+EQUAL                   : '=';
+
+SEMICOLON               : ';';
+
 KW_FOR                    : 'for';
 
 KW_LET                    : 'let';
@@ -768,21 +721,21 @@ KW_COUNT                  : 'count';
 
 KW_STABLE                 : 'stable';
 
-Kascending              : 'ascending';
+KW_ASCENDING              : 'ascending';
 
-Kdescending             : 'descending';
+KW_DESCENDING             : 'descending';
 
-Ksome                   : 'some';
+KW_SOME                   : 'some';
 
-Kevery                  : 'every';
+KW_EVERY                  : 'every';
 
-Ksatisfies              : 'satisfies';
+KW_SATISFIES              : 'satisfies';
 
 KW_COLLATION              : 'collation';
 
-Kgreatest               : 'greatest';
+KW_GREATEST               : 'greatest';
 
-Kleast                  : 'least';
+KW_LEAST                  : 'least';
 
 Kswitch                 : 'switch';
 
@@ -824,7 +777,11 @@ Kcastable               : 'castable';
 
 Kversion                : 'version';
 
-Kjsoniq                 : 'jsoniq';
+KW_JSONIQ                 : 'jsoniq';
+
+KW_MODULE               : 'module';
+
+KW_NAMESPACE            : 'namespace';
 
 Kunordered              : 'unordered';
 
@@ -900,7 +857,7 @@ Kbefore                 : 'before';
 ///////////////////////// XPath
 Kimport                 : 'import';
 Kschema                 : 'schema';
-Knamespace              : 'namespace';
+Knamespace              : KW_NAMESPACE;
 Kelement                : 'element';
 Kslash                  : '/';
 Kdslash                 : '//';
@@ -996,4 +953,74 @@ fragment NameChar       : NameStartChar
 XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 
 ContentChar             :  ~["'{}<&]  ;
+
+// XQuery Scripting Extension /////////////////////////////////////////////////////////////
+// the following section contains rules for the XQuery Scripting Extension Proposal
+
+// New query body for main modules
+
+mainModule              : prolog program;
+
+program                 : statementsAndOptionalExpr ;
+
+// Mixing Expressions and Statements
+
+statements                  : statement* ;
+
+statementsAndExpr           : statements expr ;
+
+statementsAndOptionalExpr   : statements expr? ;
+
+statement                   : applyStatement
+                            | assignStatement
+                            | blockStatement
+                            | breakStatement
+                            | continueStatement
+                            | exitStatement
+                            | flworStatement
+                            | ifStatement
+                            | switchStatement
+                            | tryCatchStatement
+                            | typeSwitchStatement
+                            | varDeclStatement
+                            | whileStatement
+                            ;
+
+applyStatement              : exprSimple SEMICOLON ;
+
+assignStatement             : DOLLAR qname COLON_EQ exprSingle SEMICOLON ;
+
+blockStatement              : '{' statements '}' ;
+
+breakStatement              : Kbreak Kloop SEMICOLON ;
+
+continueStatement           : Kcontinue Kloop SEMICOLON ;
+
+exitStatement               : Kexit Kreturning exprSingle SEMICOLON ;
+
+flworStatement              : (start_for=forClause| start_let=letClause)
+                              (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                              KW_RETURN returnStmt=statement ;
+
+ifStatement:                Kif '(' test_expr=expr ')'
+                            Kthen branch=statement
+                            Kelse else_branch=statement ;
+
+switchStatement             : Kswitch '(' condExpr=expr ')' cases+=switchCaseStatement+ Kdefault KW_RETURN def=statement ;
+
+switchCaseStatement         : (Kcase cond+=exprSingle)+ KW_RETURN ret=statement ;
+
+tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseStatement+ ;
+
+catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
+
+typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement+ Kdefault (var_ref=varRef)? KW_RETURN def=statement ;
+
+caseStatement               : Kcase (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=statement ;
+
+varDeclStatement            : annotations Kvariable varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
+
+varDeclForStatement         : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
+
+whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
 
