@@ -16,7 +16,7 @@
  *
  * Authors: Matteo Agnoletto (EPMatt) and RumbleDB team.
  *
- * A parser grammar for XQuery 3.1 that includes the XQuery Scripting Extensions, and additional update features.
+ * A parser grammar for JSONiq 1.0/3.1 that includes the XQuery Scripting Extensions, and additional update features.
  * This file is based on the XQuery parser grammar from the xqdoc project:
  * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
  * 
