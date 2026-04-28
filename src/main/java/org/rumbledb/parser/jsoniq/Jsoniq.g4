@@ -113,6 +113,8 @@ decimalFormatDecl       : Kdeclare
                           (('decimal-format' qname) | (Kdefault 'decimal-format'))
                           (dfPropertyName '=' stringLiteral)*;
 
+eqName: qname ;
+
 qname                   : ((ns=NCName | nskw=keyWords)':')?
                           (local_name=NCName | local_namekw = keyWords);
 
@@ -197,6 +199,8 @@ forVar: var_ref=varRef
 
 allowingEmpty: KW_ALLOWING KW_EMPTY;
 
+positionalVar: KW_AT DOLLAR pvar=varName ;
+
 letClause: KW_LET vars+=letVar (COMMA vars+=letVar)* ;
 
 // renamed from letBinding to letVar to match the JSONiq grammar
@@ -205,7 +209,23 @@ letVar: var_ref=varRef
         (KW_AS seq=sequenceType)?
         COLON_EQ ex=exprSingle ;
 
-windowClause: KW_FOR ;
+windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
+
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
+                          type=typeDeclaration? KW_IN exprSingle
+                          windowStartCondition windowEndCondition? ;
+
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
+                          type=typeDeclaration? KW_IN exprSingle
+                          windowStartCondition windowEndCondition ;
+
+windowStartCondition: KW_START windowVars KW_WHEN exprSingle ;
+
+windowEndCondition: KW_ONLY? KW_END windowVars KW_WHEN exprSingle ;
+
+windowVars: (DOLLAR currentItem=eqName)? positionalVar?
+                          (KW_PREVIOUS DOLLAR previousItem=eqName)?
+                          (KW_NEXT DOLLAR nextItem=eqName)?;
 
 countClause: KW_COUNT varRef ;
 
@@ -326,6 +346,8 @@ blockExpr : '{' statementsAndExpr '}' ;
 
 
 varRef                  : '$' var_name=qname;
+
+varName: eqName ;
 
 parenthesizedExpr       : '(' expr? ')';
 
@@ -489,6 +511,8 @@ typeName: qname;
 
 ///////////////////////// Types
 
+typeDeclaration: KW_AS sequenceType ;
+
 sequenceType            : '(' ')'
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
@@ -564,6 +588,15 @@ keyWords                : Kjsoniq
                         | KW_ORDER
                         | KW_COUNT
                         | KW_RETURN
+                        | KW_TUMBLING
+                        | KW_WINDOW
+                        | KW_SLIDING
+                        | KW_START
+                        | KW_WHEN
+                        | KW_ONLY
+                        | KW_END
+                        | KW_PREVIOUS
+                        | KW_NEXT
                         | Kunordered
                         | Ktrue
                         | Kfalse
@@ -650,6 +683,26 @@ KW_LET                    : 'let';
 KW_WHERE                  : 'where';
 
 KW_GROUP                  : 'group';
+
+KW_TUMBLING               : 'tumbling';
+
+KW_WINDOW                 : 'window';
+
+DOLLAR                    : '$';
+
+KW_SLIDING                : 'sliding';
+
+KW_START                  : 'start';
+
+KW_END                    : 'end';
+
+KW_ONLY                   : 'only';
+
+KW_WHEN                   : 'when';
+
+KW_PREVIOUS               : 'previous';
+
+KW_NEXT                   : 'next';
 
 KW_BY                     : 'by';
 
