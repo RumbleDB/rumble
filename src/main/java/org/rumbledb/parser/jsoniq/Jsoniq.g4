@@ -1,3 +1,29 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Authors: Matteo Agnoletto (EPMatt) and RumbleDB team.
+ *
+ * A parser grammar for XQuery 3.1 that includes the XQuery Scripting Extensions, and additional update features.
+ * This file is based on the XQuery parser grammar from the xqdoc project:
+ * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
+ * 
+ * See LICENSE-xqdoc.txt for the original license terms.
+ * 
+ */
+
 grammar Jsoniq;
 
 @header {
@@ -5,6 +31,20 @@ grammar Jsoniq;
 package org.rumbledb.parser.jsoniq;
 }
 
+// Mostly taken from http://www.w3.org/TR/xquery/#id-grammar, with some
+// simplifications:
+//
+// 1. The parser itself doesn't really enforce ws:explicit except for some easy
+//    cases (QNames and wildcards).  Walkers will need to do this (and also parse
+//    wildcards a bit).
+//
+// 2. When collecting element content, we will need to check the HIDDEN
+//    channel as well, for whitespace and XQuery comments (these should be
+//    treated as regular text inside elements).
+
+// MODULE HEADER ///////////////////////////////////////////////////////////////
+
+// this rule was added to match the JSONiq grammar
 moduleAndThisIsIt       : module EOF;
 
 module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
@@ -13,6 +53,8 @@ module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
 mainModule              : prolog program;
 
 libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
+
+// MODULE PROLOG ///////////////////////////////////////////////////////////////
 
 prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
                           (annotatedDecl ';')*;
