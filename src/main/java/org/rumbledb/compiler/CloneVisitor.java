@@ -57,9 +57,9 @@ import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
-import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -138,12 +138,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
             .collect(Collectors.toList());
-        List<Node> declarations = expression.getFunctionDeclarations()
+        List<Node> declarations = expression.getDeclarations()
             .stream()
             .map(expr -> visit(expr, argument))
             .collect(Collectors.toList());
-        declarations.addAll(expression.getVariableDeclarations());
-        declarations.addAll(expression.getTypeDeclarations());
         expression.setDeclarations(declarations);
         expression.getImportedModules().clear();
         expression.getImportedModules().addAll(libraryModules);
@@ -740,6 +738,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 arguments,
                 expression.getMetadata()
         );
+        if (expression.isTailCallOptimization()) {
+            ((FunctionCallExpression) result).setTailCallOptimization(true);
+        }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
@@ -1125,7 +1126,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getVariableName(),
                 expression.external(),
                 expression.getActualSequenceType(),
-                (Expression) visit(expression.getExpression(), argument),
+                expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
                 expression.getAnnotations(),
                 expression.getMetadata()
         );

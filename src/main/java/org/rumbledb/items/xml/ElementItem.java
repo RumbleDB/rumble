@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -23,7 +23,7 @@ public class ElementItem implements Item {
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
-    private Item dmNodeName;
+    private Name dmNodeName;
     private String stringValue;
     private Item parent;
     // TODO: add base-uri, schema-type, is-id, is-idrefs
@@ -37,7 +37,7 @@ public class ElementItem implements Item {
     /**
      * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
      */
-    public ElementItem(Item dmNodeName, List<Item> children, List<Item> attributes) {
+    public ElementItem(Name dmNodeName, List<Item> children, List<Item> attributes) {
         this.dmNodeName = dmNodeName;
         this.children = children;
         this.attributes = attributes;
@@ -55,8 +55,7 @@ public class ElementItem implements Item {
             List<Item> attributes,
             Map<String, String> namespaceBindings
     ) {
-        this.dmNodeName = ItemFactory.getInstance()
-            .createQNameItem(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode));
+        this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
@@ -114,7 +113,7 @@ public class ElementItem implements Item {
         this.children = kryo.readObject(input, ArrayList.class);
         this.attributes = kryo.readObject(input, ArrayList.class);
         this.namespaces = kryo.readObject(input, HashMap.class);
-        this.dmNodeName = kryo.readObject(input, QNameItem.class);
+        this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
     }
 
@@ -279,7 +278,7 @@ public class ElementItem implements Item {
     }
 
     @Override
-    public Item nodeName() {
+    public Name nodeName() {
         return this.dmNodeName;
     }
 
@@ -295,7 +294,7 @@ public class ElementItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemTypeFactory.elementNodeItemType(this.dmNodeName.getQNameValue());
+        return ItemTypeFactory.elementNodeItemType(this.dmNodeName);
     }
 
     @Override

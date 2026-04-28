@@ -28,8 +28,6 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.xml.XMLUtils;
-
 import java.util.List;
 
 public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -67,7 +65,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
                             this.children.get(0).getMetadata()
                     );
                 }
-                if (!XMLUtils.isValidCodePoint(codepoint, xmlVersion)) {
+                if (!isValidCodePoint(codepoint, xmlVersion)) {
                     throw new CodepointNotValidException(
                             "Non-XML-conformant codepoint: " + item.getIntegerValue(),
                             this.children.get(0).getMetadata()
@@ -80,5 +78,25 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
         }
 
         return ItemFactory.getInstance().createStringItem(sb.toString());
+    }
+
+    private static boolean isValidCodePoint(int codepoint, String xmlVersion) {
+        if (codepoint < 0 || codepoint > 1114111)
+            return false;
+
+        boolean isC0 = (codepoint >= 0 && codepoint <= 31);
+        boolean isC1 = (codepoint >= 127 && codepoint <= 159);
+
+        if (isC0 || isC1) {
+            if (xmlVersion.equals("1.0")) {
+                return codepoint == 9 || codepoint == 10 || codepoint == 13;
+            } else {
+                return codepoint != 0;
+            }
+        }
+
+        return (codepoint <= 55295)
+            || (57344 <= codepoint && codepoint <= 65533)
+            || (65536 <= codepoint);
     }
 }
