@@ -58,7 +58,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         JavaRDD<Item> rdd = tupleToArrays(bcm.pr().toJavaRDD(), "recall", "precision");
         RuntimeIterator it = new ConstantRDDRuntimeIterator(
                 rdd,
-                staticContext.withStaticType(
+                this.staticContext.withStaticType(
                     SequenceType.createSequenceType("object*")
                 ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
         );
@@ -66,7 +66,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         rdd = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD(), "threshold", "F-Measure");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                staticContext.withStaticType(
+                this.staticContext.withStaticType(
                     SequenceType.createSequenceType("object*")
                 ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
         );
@@ -74,7 +74,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         rdd = tupleToArrays(bcm.precisionByThreshold().toJavaRDD(), "threshold", "precision");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                staticContext.withStaticType(
+                this.staticContext.withStaticType(
                     SequenceType.createSequenceType("object*")
                 ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
         );
@@ -82,7 +82,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         rdd = tupleToArrays(bcm.recallByThreshold().toJavaRDD(), "threshold", "recall");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                staticContext
+                this.staticContext
                     .withStaticType(
                         SequenceType.createSequenceType("object*")
                     )
@@ -93,7 +93,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         rdd = tupleToArrays(bcm.roc().toJavaRDD(), "false positive rate", "true positive rate");
         it = new ConstantRDDRuntimeIterator(
                 rdd,
-                staticContext.withStaticType(
+                this.staticContext.withStaticType(
                     SequenceType.createSequenceType("object*")
                 ).withExecutionMode(ExecutionMode.RDD).withMetadata(getMetadata())
         );

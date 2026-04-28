@@ -48,7 +48,7 @@ package org.rumbledb.parser.jsoniq;
 moduleAndThisIsIt       : module EOF;
 
 module : // replaced with the versionDecl production to match the JSONiq grammar
-         (KW_JSONIQ Kversion vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
+         (KW_JSONIQ KW_VERSION vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
          // TODO: subsequent optional main modules are currently ignored
          (libraryModule | main=mainModule) ;
 
@@ -72,24 +72,28 @@ annotatedDecl: functionDecl
               | contextItemDecl
               ;
 
-setter: defaultCollationDecl
+setter: boundarySpaceDecl
+      | defaultCollationDecl
       | baseURIDecl
       | orderingModeDecl
       | emptyOrderDecl
       | decimalFormatDecl ;
 
-namespaceDecl           : Kdeclare KW_NAMESPACE NCName EQUAL uriLiteral;
+boundarySpaceDecl: KW_DECLARE KW_BOUNDARY_SPACE type=(KW_PRESERVE | KW_STRIP) ;
+defaultCollationDecl: KW_DECLARE KW_DEFAULT KW_COLLATION uriLiteral ;
+baseURIDecl: KW_DECLARE KW_BASE_URI uriLiteral;
+moduleImport            : 'import' KW_MODULE (KW_NAMESPACE prefix=NCName EQUAL)? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
 
-defaultCollationDecl    : Kdeclare Kdefault KW_COLLATION uriLiteral;
+namespaceDecl: KW_DECLARE KW_NAMESPACE NCName EQUAL uriLiteral;
 
-baseURIDecl            : Kdeclare 'base-uri' uriLiteral;
 
-orderingModeDecl        : Kdeclare 'ordering' ('ordered' | 'unordered');
 
-emptyOrderDecl          : Kdeclare Kdefault 'order' KW_EMPTY (emptySequenceOrder=(KW_GREATEST | KW_LEAST));
+orderingModeDecl        : KW_DECLARE 'ordering' ('ordered' | 'unordered');
 
-decimalFormatDecl       : Kdeclare
-                          (('decimal-format' qname) | (Kdefault 'decimal-format'))
+emptyOrderDecl          : KW_DECLARE KW_DEFAULT 'order' KW_EMPTY (emptySequenceOrder=(KW_GREATEST | KW_LEAST));
+
+decimalFormatDecl       : KW_DECLARE
+                          (('decimal-format' qname) | (KW_DEFAULT 'decimal-format'))
                           (dfPropertyName EQUAL stringLiteral)*;
 
 eqName: qname ;
@@ -108,18 +112,16 @@ dfPropertyName          : 'decimal-separator'
                         | 'digit'
                         | 'pattern-separator';
 
-moduleImport            : 'import' KW_MODULE (KW_NAMESPACE prefix=NCName EQUAL)? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
-
 // TODO: Assignable variable decl
-varDecl                 : Kdeclare annotations Kvariable varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
+varDecl                 : KW_DECLARE annotations Kvariable varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
 
-contextItemDecl         : Kdeclare Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
+contextItemDecl         : KW_DECLARE Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
 
-functionDecl            : Kdeclare annotations 'function' fn_name=qname '(' paramList? ')'
+functionDecl            : KW_DECLARE annotations 'function' fn_name=qname LPAREN paramList? RPAREN
                           (KW_AS return_type=sequenceType)?
                           ('{' (fn_body=statementsAndOptionalExpr) '}' | is_external='external');
 
-typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+typeDecl                : KW_DECLARE Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 schemaLanguage          : 'jsound' 'compact'
                         | 'jsound' 'verbose'
@@ -132,7 +134,7 @@ param                   : DOLLAR name=qname (KW_AS sequenceType)? ;
 annotations                 : annotation* ;
 
 // added the updating keyword to support the out-of-spec updating expressions extension
-annotation                  : ('%' name=qname ('(' Literal (COMMA Literal)* ')')? | updating=Kupdating);
+annotation                  : ('%' name=qname (LPAREN Literal (COMMA Literal)* RPAREN)? | updating=Kupdating);
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
@@ -242,15 +244,15 @@ quantifiedExprVar: var_ref=varRef
                   (KW_AS seq=sequenceType)?
                   KW_IN exprSingle ;
 
-switchExpr              : Kswitch '(' cond=expr ')' cases+=switchCaseClause+ Kdefault KW_RETURN def=exprSingle;
+switchExpr: KW_SWITCH LPAREN cond=expr RPAREN cases+=switchCaseClause+ KW_DEFAULT KW_RETURN def=exprSingle;
 
 switchCaseClause        : (Kcase cond+=exprSingle)+ KW_RETURN ret=exprSingle;
 
-typeSwitchExpr          : Ktypeswitch '(' cond=expr ')' cses+=caseClause+ Kdefault (var_ref=varRef)? KW_RETURN def=exprSingle;
+typeSwitchExpr          : Ktypeswitch LPAREN cond=expr RPAREN cses+=caseClause+ KW_DEFAULT (var_ref=varRef)? KW_RETURN def=exprSingle;
 
 caseClause              : Kcase (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=exprSingle;
 
-ifExpr                  : Kif '(' test_condition=expr ')'
+ifExpr                  : Kif LPAREN test_condition=expr RPAREN
                           Kthen branch=exprSingle
                           Kelse else_branch=exprSingle;
 
@@ -338,7 +340,7 @@ varRef                  : DOLLAR var_name=qname;
 
 varName: eqName ;
 
-parenthesizedExpr       : '(' expr? ')';
+parenthesizedExpr       : LPAREN expr? RPAREN;
 
 contextItemExpr         : '$$';
 
@@ -348,7 +350,7 @@ unorderedExpr           : 'unordered' '{' expr '}';
 
 functionCall            : fn_name=qname argumentList;
 
-argumentList            : '('  (args+=argument (COMMA args+=argument)*)? ')';
+argumentList            : LPAREN  (args+=argument (COMMA args+=argument)*)? RPAREN;
 
 argument                : exprSingle | ArgumentPlaceholder;
 
@@ -356,7 +358,7 @@ functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
 namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
-inlineFunctionExpr      : annotations 'function' '(' paramList? ')'
+inlineFunctionExpr      : annotations 'function' LPAREN paramList? RPAREN
                            (KW_AS return_type=sequenceType)?
                            ('{' (fn_body=statementsAndOptionalExpr) '}');
 
@@ -384,17 +386,17 @@ copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
 
 ///////////////////////// Top Level Updating Expressions
 
-createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')' (Kwith content=exprSingle)?;
+createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (Kwith content=exprSingle)?;
 
-deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
+deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
 
-insertIndexExpr         : Kinsert content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
+insertIndexExpr         : Kinsert content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
 
-truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) '(' collection_name=exprSimple ')';
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle KW_IN Kcollection;
 
@@ -460,33 +462,33 @@ kindTest: documentTest
         | anyKindTest
         ;
 
-anyKindTest: Knode '(' ')' ;
+anyKindTest: Knode LPAREN RPAREN ;
 
-binaryNodeTest: Kbinary '(' ')' ;
+binaryNodeTest: Kbinary LPAREN RPAREN ;
 
-documentTest: Kdocument_node '(' (elementTest | schemaElementTest)? ')' ;
+documentTest: Kdocument_node LPAREN (elementTest | schemaElementTest)? RPAREN ;
 
-textTest: Ktext '(' ')' ;
+textTest: Ktext LPAREN RPAREN ;
 
-commentTest: Kcomment '(' ')' ;
+commentTest: Kcomment LPAREN RPAREN ;
 
-namespaceNodeTest: Knamespace_node '(' ')' ;
+namespaceNodeTest: Knamespace_node LPAREN RPAREN ;
 
-piTest: Kpi '(' (NCName | stringLiteral)? ')' ;
+piTest: Kpi LPAREN (NCName | stringLiteral)? RPAREN ;
 
-attributeTest: Kattribute '(' (attributeNameOrWildcard (COMMA type=typeName)?)? ')' ;
+attributeTest: Kattribute LPAREN (attributeNameOrWildcard (COMMA type=typeName)?)? RPAREN ;
 
 attributeNameOrWildcard: attributeName | '*' ;
 
-schemaAttributeTest: Kschema_attribute '(' attributeDeclaration ')' ;
+schemaAttributeTest: Kschema_attribute LPAREN attributeDeclaration RPAREN ;
 
 attributeDeclaration: attributeName ;
 
-elementTest: Kelement '(' (elementNameOrWildcard (COMMA type=typeName optional='?'?)?)? ')' ;
+elementTest: Kelement LPAREN (elementNameOrWildcard (COMMA type=typeName optional='?'?)?)? RPAREN ;
 
 elementNameOrWildcard: elementName | '*' ;
 
-schemaElementTest: Kschema_element '(' elementDeclaration ')' ;
+schemaElementTest: Kschema_element LPAREN elementDeclaration RPAREN ;
 
 elementDeclaration: elementName ;
 
@@ -502,7 +504,7 @@ typeName: qname;
 
 typeDeclaration: KW_AS sequenceType ;
 
-sequenceType            : '(' ')'
+sequenceType            : LPAREN RPAREN
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
 objectConstructor       : '{' ( pairConstructor (COMMA pairConstructor)* )? '}'
@@ -514,9 +516,9 @@ itemType                : qname
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
 
-anyFunctionTest         : 'function' '(' '*' ')';
+anyFunctionTest         : 'function' LPAREN '*' RPAREN;
 
-typedFunctionTest	    : 'function' '(' (st+=sequenceType (COMMA st+=sequenceType)*)? ')' 'as' rt=sequenceType;
+typedFunctionTest	    : 'function' LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
 
 singleType              : item=itemType (question +='?')?;
 
@@ -536,8 +538,8 @@ keyWords                : KW_JSONIQ
                         | Kcastable
                         | KW_COLLATION
                         | Kcontext
-                        | Kdeclare
-                        | Kdefault
+                        | KW_DECLARE
+                        | KW_DEFAULT
                         | Kelse
                         | KW_GREATEST
                         | Kinstance
@@ -553,8 +555,8 @@ keyWords                : KW_JSONIQ
                         | Kto
                         | Ktreat
                         | Ktypeswitch
-                        | Kversion
-                        | Kswitch
+                        | KW_VERSION
+                        | KW_SWITCH
                         | Kcase
                         | Ktry
                         | Kcatch
@@ -671,6 +673,10 @@ EQUAL                   : '=';
 
 SEMICOLON               : ';';
 
+LPAREN                  : '(';
+
+RPAREN                  : ')';
+
 KW_FOR                    : 'for';
 
 KW_LET                    : 'let';
@@ -737,7 +743,7 @@ KW_GREATEST               : 'greatest';
 
 KW_LEAST                  : 'least';
 
-Kswitch                 : 'switch';
+KW_SWITCH                 : 'switch';
 
 Kcase                   : 'case';
 
@@ -745,7 +751,7 @@ Ktry                    : 'try';
 
 Kcatch                  : 'catch';
 
-Kdefault                : 'default';
+KW_DEFAULT                : 'default';
 
 Kthen                   : 'then';
 
@@ -775,13 +781,23 @@ Kcast                   : 'cast';
 
 Kcastable               : 'castable';
 
-Kversion                : 'version';
-
 KW_JSONIQ                 : 'jsoniq';
+
+KW_ENCODING                 : 'encoding';
+
+KW_VERSION                 : 'version';
 
 KW_MODULE               : 'module';
 
 KW_NAMESPACE            : 'namespace';
+
+KW_BOUNDARY_SPACE        : 'boundary-space';
+
+KW_PRESERVE              : 'preserve';
+
+KW_STRIP                 : 'strip';
+
+KW_BASE_URI              : 'base-uri';
 
 Kunordered              : 'unordered';
 
@@ -795,7 +811,7 @@ Kvalidate               : 'validate';
 
 Kannotate               : 'annotate';
 
-Kdeclare                : 'declare';
+KW_DECLARE                : 'declare';
 
 Kcontext                : 'context';
 
@@ -950,7 +966,7 @@ fragment NameChar       : NameStartChar
                         | '\u203F'..'\u2040'
                         ;
 
-XQComment               : '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
+XQComment               : LPAREN ':' (XQComment | LPAREN ~[:] | ':' ~[)] | ~[:(])* ':'+ RPAREN -> channel(HIDDEN);
 
 ContentChar             :  ~["'{}<&]  ;
 
@@ -1002,11 +1018,11 @@ flworStatement              : (start_for=forClause| start_let=letClause)
                               (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
                               KW_RETURN returnStmt=statement ;
 
-ifStatement:                Kif '(' test_expr=expr ')'
+ifStatement:                Kif LPAREN test_expr=expr RPAREN
                             Kthen branch=statement
                             Kelse else_branch=statement ;
 
-switchStatement             : Kswitch '(' condExpr=expr ')' cases+=switchCaseStatement+ Kdefault KW_RETURN def=statement ;
+switchStatement             : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
 
 switchCaseStatement         : (Kcase cond+=exprSingle)+ KW_RETURN ret=statement ;
 
@@ -1014,7 +1030,7 @@ tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseSt
 
 catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
 
-typeSwitchStatement         : Ktypeswitch '(' cond=expr ')' cases+=caseStatement+ Kdefault (var_ref=varRef)? KW_RETURN def=statement ;
+typeSwitchStatement         : Ktypeswitch LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? KW_RETURN def=statement ;
 
 caseStatement               : Kcase (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=statement ;
 
@@ -1022,5 +1038,5 @@ varDeclStatement            : annotations Kvariable varDeclForStatement (COMMA v
 
 varDeclForStatement         : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
 
-whileStatement              : Kwhile '(' test_expr=expr ')' stmt=statement ;
+whileStatement              : Kwhile LPAREN test_expr=expr RPAREN stmt=statement ;
 
