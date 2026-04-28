@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
