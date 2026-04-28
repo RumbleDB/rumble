@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 
 import java.io.StringReader;
 import java.util.List;
@@ -50,17 +51,27 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.string = this.children.get(0).materializeFirstItemOrNull(context);
+        Item optionsItem = this.children.size() > 1 ? this.children.get(1).materializeFirstItemOrNull(context) : null;
         if (this.string == null) {
             return null;
         }
-        try {
-            JsonReader object = new JsonReader(new StringReader(this.string.getStringValue()));
-            return ItemParser.getItemFromObject(object, getMetadata());
-        } catch (IteratorFlowException e) {
-            RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            ex.initCause(e);
-            throw ex;
+        if (optionsItem == null) {
+            try {
+                JsonReader object = new JsonReader(new StringReader(this.string.getStringValue()));
+                return ItemParser.getItemFromObject(object, getMetadata());
+            } catch (IteratorFlowException e) {
+                RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                ex.initCause(e);
+                throw ex;
+            }
         }
+        JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, getMetadata());
+        return ItemParser.getItemFromJSONDocument(
+            this.string.getStringValue(),
+            options,
+            staticContext.getConfiguration().getXmlVersion(),
+            getMetadata()
+        );
     }
 
     @Override
@@ -71,7 +82,4 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return;
         }
     }
-
-
-
 }

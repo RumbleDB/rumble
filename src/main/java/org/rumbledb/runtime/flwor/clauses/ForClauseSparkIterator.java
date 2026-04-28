@@ -502,7 +502,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.allowingEmpty,
             this.variableName,
             getMetadata(),
-            getStaticContext()
+            getConfiguration()
         );
     }
 

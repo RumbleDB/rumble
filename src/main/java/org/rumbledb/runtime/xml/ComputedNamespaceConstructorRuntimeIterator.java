@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,8 +46,8 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private String staticPrefix;
-    private DataFunctionIterator prefixIterator;
-    private DataFunctionIterator uriIterator;
+    private AtomizationIterator prefixIterator;
+    private AtomizationIterator uriIterator;
 
     /**
      * Constructor for static prefix: namespace prefix { uri }
@@ -58,7 +58,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
      */
     public ComputedNamespaceConstructorRuntimeIterator(
             String staticPrefix,
-            DataFunctionIterator uriIterator,
+            AtomizationIterator uriIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(uriIterator), staticContext);
@@ -75,8 +75,8 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
      * @param staticContext The runtime static context
      */
     public ComputedNamespaceConstructorRuntimeIterator(
-            DataFunctionIterator prefixIterator,
-            DataFunctionIterator uriIterator,
+            AtomizationIterator prefixIterator,
+            AtomizationIterator uriIterator,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(prefixIterator, uriIterator), staticContext);

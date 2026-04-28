@@ -127,8 +127,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             this.actionFunction,
             staticContext,
             ExecutionMode.LOCAL,
-            callbackArguments,
-            false
+            callbackArguments
         );
     }
 

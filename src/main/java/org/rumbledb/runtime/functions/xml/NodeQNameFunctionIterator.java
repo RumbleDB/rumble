@@ -25,7 +25,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
@@ -53,8 +52,8 @@ import java.util.List;
  * identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
  * function returns the empty sequence."
  *
- * The optional {@code xs:QName} result wraps the expanded {@link Name} from {@link Item#nodeName()} in a
- * {@link org.rumbledb.items.QNameItem}; otherwise the function returns the empty sequence.
+ * The optional {@code xs:QName} result is the value of {@link Item#nodeName()} when non-null
+ * (a {@link org.rumbledb.items.QNameItem}); otherwise the function returns the empty sequence.
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-node-name">XPath and XQuery Functions and
  *      Operators 3.1: fn:node-name</a>
@@ -94,7 +93,7 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         //
         // Here we use the generic XDM 3.1 node-name accessor defined on Item and implemented
         // by XML node item classes (see Item.nodeName()).
-        Name nodeName = node.nodeName();
+        Item nodeName = node.nodeName();
 
         // Spec: "If the dm:node-name accessor returns the empty sequence, then the function returns the empty
         // sequence."
@@ -102,7 +101,7 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
             this.resultItem = null;
             this.hasNext = false;
         } else {
-            this.resultItem = ItemFactory.getInstance().createQNameItem(nodeName);
+            this.resultItem = nodeName;
             this.hasNext = true;
         }
     }

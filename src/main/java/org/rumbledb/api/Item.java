@@ -17,8 +17,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializers;
+import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -1355,21 +1354,11 @@ public interface Item extends Serializable, KryoSerializable {
     int hashCode();
 
     default String serialize() {
-        SerializationParameters p = SerializationParameters.defaults();
-        p.setMethod("xml-json-hybrid");
-        p.setEncoding("UTF-8");
-        p.setIndent(false);
-        p.setItemSeparator("\n");
-        return Serializers.from(p).serialize(this);
+        return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
     }
 
     default String serializeAsJSON() {
-        SerializationParameters p = SerializationParameters.defaults();
-        p.setMethod("json");
-        p.setEncoding("UTF-8");
-        p.setIndent(false);
-        p.setItemSeparator("\n");
-        return Serializers.from(p).serialize(this);
+        return new Serializer("UTF-8", Serializer.Method.JSON, false, "\n").serialize(this);
     }
 
     /**
@@ -1610,10 +1599,10 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
      * sequence if the node does not have a name."
      *
-     * @return the expanded name ({@link Name}) of the node, or {@code null} when the accessor yields the empty sequence
+     * @return the node name as an {@link Item}, or {@code null} when the accessor yields the empty sequence
      * @throws UnsupportedOperationException if called on an item that is not a node
      */
-    default Name nodeName() throws UnsupportedOperationException {
+    default Item nodeName() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

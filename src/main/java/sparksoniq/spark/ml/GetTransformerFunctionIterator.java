@@ -119,7 +119,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     transformerShortName,
                     transformer,
-                    this.staticContext.withStaticType(SequenceType.createSequenceType("object*"))
+                    staticContext.withStaticType(SequenceType.createSequenceType("object*"))
                         .withExecutionMode(ExecutionMode.DATAFRAME)
                         .withMetadata(getMetadata())
             );

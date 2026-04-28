@@ -61,9 +61,10 @@ public enum ErrorCode {
     DuplicatePairNameErrorCode("XQDY0137"),
 
     // JSON-related errors (FOJS000x).
+    InvalidJSONErrorCode("FOJS0001"),
     DuplicateJSONKeyErrorCode("FOJS0003"),
     InvalidOptionErrorCode("FOJS0005"),
-
+    UnavailableResourceErrorCode("FOUT1170"),
 
     StringOfJSONiqItemsErrorCode("JNTY0024"),
 
@@ -186,9 +187,7 @@ public enum ErrorCode {
     InvalidAssignableVariableComposability("SCCP0005"),
     InvalidSequentialChildInNonSequentialParent("SCCP0006"),
     InvalidAnnotation("XQAN0001"),
-    InvalidVariableDeclaration("SCIN0001"),
-
-    InvalidSerializationParameterValue("SEPM0016");
+    InvalidVariableDeclaration("SCIN0001");
 
     private String code;
 

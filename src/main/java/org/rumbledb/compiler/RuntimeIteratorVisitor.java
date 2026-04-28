@@ -177,7 +177,7 @@ import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
@@ -837,12 +837,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
-        RuntimeStaticContext staticContextForRuntime =
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
         RuntimeIterator runtimeIterator = new PostfixLookupIterator(
                 mainIterator,
                 lookupIterator,
-                staticContextForRuntime
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -854,11 +852,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator lookupIterator = (lookup == null)
             ? null
             : this.visit(expression.getLookupExpression(), argument);
-        RuntimeStaticContext staticContextForRuntime =
-            expression.getStaticContextForRuntime(this.config, this.visitorConfig);
         RuntimeIterator runtimeIterator = new UnaryLookupIterator(
                 lookupIterator,
-                staticContextForRuntime
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -1000,10 +996,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitDirPIConstructor(DirPIConstructorExpression expression, RuntimeIterator argument) {
         Expression contentExpression = expression.getContentExpression();
-        DataFunctionIterator contentIterator = null;
+        AtomizationIterator contentIterator = null;
         if (contentExpression != null) {
             RuntimeIterator contentExpressionIterator = this.visit(contentExpression, argument);
-            contentIterator = new DataFunctionIterator(
+            contentIterator = new AtomizationIterator(
                     Collections.singletonList(contentExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1037,7 +1033,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else {
             // Dynamic element name: element { nameExpression } { content }
             RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
-            DataFunctionIterator nameIterator = new DataFunctionIterator(
+            AtomizationIterator nameIterator = new AtomizationIterator(
                     Collections.singletonList(nameExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1056,10 +1052,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             ComputedPIConstructorExpression expression,
             RuntimeIterator argument
     ) {
-        DataFunctionIterator contentIterator = null;
+        AtomizationIterator contentIterator = null;
         if (expression.getContentExpression() != null) {
             RuntimeIterator contentExpressionIterator = this.visit(expression.getContentExpression(), argument);
-            contentIterator = new DataFunctionIterator(
+            contentIterator = new AtomizationIterator(
                     Collections.singletonList(contentExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1074,7 +1070,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else {
             RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
-            DataFunctionIterator nameIterator = new DataFunctionIterator(
+            AtomizationIterator nameIterator = new AtomizationIterator(
                     Collections.singletonList(nameExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1094,7 +1090,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeIterator uriExpressionIterator = this.visit(expression.getUriExpression(), argument);
-        DataFunctionIterator uriIterator = new DataFunctionIterator(
+        AtomizationIterator uriIterator = new AtomizationIterator(
                 Collections.singletonList(uriExpressionIterator),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1108,7 +1104,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else {
             RuntimeIterator prefixExpressionIterator = this.visit(expression.getPrefixExpression(), argument);
-            DataFunctionIterator prefixIterator = new DataFunctionIterator(
+            AtomizationIterator prefixIterator = new AtomizationIterator(
                     Collections.singletonList(prefixExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1130,7 +1126,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator;
         // create atomized iterator for the content expression
         RuntimeIterator contentExpressionIterator = this.visit(expression.getValueExpression(), argument);
-        DataFunctionIterator atomizedContentIterator = new DataFunctionIterator(
+        AtomizationIterator atomizedContentIterator = new AtomizationIterator(
                 Collections.singletonList(contentExpressionIterator),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
@@ -1145,7 +1141,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             // Dynamic attribute name: attribute { nameExpression } { content }
             // create atomized iterator for the name expression
             RuntimeIterator nameExpressionIterator = this.visit(expression.getNameExpression(), argument);
-            DataFunctionIterator atomizedNameIterator = new DataFunctionIterator(
+            AtomizationIterator atomizedNameIterator = new AtomizationIterator(
                     Collections.singletonList(nameExpressionIterator),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
@@ -1166,7 +1162,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     ) {
         RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
         CommentNodeConstructorRuntimeIterator result = new CommentNodeConstructorRuntimeIterator(
-                new DataFunctionIterator(
+                new AtomizationIterator(
                         Collections.singletonList(contentIterator),
                         expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 ),
@@ -1197,7 +1193,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
 
         TextNodeConstructorRuntimeIterator result = new TextNodeConstructorRuntimeIterator(
-                new DataFunctionIterator(
+                new AtomizationIterator(
                         Collections.singletonList(contentIterator),
                         expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 ),
@@ -1219,10 +1215,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitAttributeNode(AttributeNodeExpression expression, RuntimeIterator argument) {
-        List<DataFunctionIterator> atomizedValues = expression.getValue()
+        List<AtomizationIterator> atomizedValues = expression.getValue()
             .stream()
             .map(
-                arg -> new DataFunctionIterator(
+                arg -> new AtomizationIterator(
                         Collections.singletonList(this.visit(arg, argument)),
                         expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 )
@@ -1311,8 +1307,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     identifier,
                     arguments,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isUpdating(),
-                    expression.isTailCallOptimization()
+                    expression.isUpdating()
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -1549,7 +1544,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         if (left instanceof StepExprIterator) {
             // We potentially need to atomize
-            left = new DataFunctionIterator(
+            left = new AtomizationIterator(
                     Collections.singletonList(left),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );

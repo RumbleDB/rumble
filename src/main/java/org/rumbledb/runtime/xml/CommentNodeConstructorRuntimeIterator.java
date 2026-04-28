@@ -26,7 +26,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidCommentContentException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,10 +41,10 @@ public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRun
 
     private static final long serialVersionUID = 1L;
     /** The content iterator */
-    private final DataFunctionIterator contentIterator;
+    private final AtomizationIterator contentIterator;
 
     public CommentNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
+            AtomizationIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);

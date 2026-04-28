@@ -410,13 +410,4 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return NativeClauseContext.NoNativeQuery;
     }
-
-    /**
-     * Returns the runtime static context of the clause.
-     * 
-     * @return the static context of the clause.
-     */
-    public RuntimeStaticContext getStaticContext() {
-        return this.staticContext;
-    }
 }

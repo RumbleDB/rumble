@@ -10,7 +10,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
@@ -255,16 +254,6 @@ public class SequenceOfItems {
     }
 
     /**
-     * Returns the runtime static context associated with this sequence.
-     *
-     * This context provides access to the default serialization parameters
-     * that should be used when serializing the results of this sequence.
-     */
-    public RuntimeStaticContext getRuntimeStaticContext() {
-        return this.iterator.getRuntimeStaticContext();
-    }
-
-    /**
      * Applies the PUL available when the iterator is updating.
      */
     public void applyPUL() {
@@ -406,7 +395,7 @@ public class SequenceOfItems {
      * Returns a SequenceWriter to save the sequence in various formats.
      */
     public SequenceWriter write() {
-        return new SequenceWriter(this);
+        return new SequenceWriter(this, this.configuration);
     }
 
 }

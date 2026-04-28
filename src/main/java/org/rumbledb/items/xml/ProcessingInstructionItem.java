@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
@@ -63,8 +62,8 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
-    public Name nodeName() {
-        return NamespaceBindingUtils.nameLocalOnly(this.target);
+    public Item nodeName() {
+        return ItemFactory.getInstance().createQNameItem(NamespaceBindingUtils.nameLocalOnly(this.target));
     }
 
     @Override

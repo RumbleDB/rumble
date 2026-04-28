@@ -351,7 +351,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 false,
                 null,
                 getMetadata(),
-                getStaticContext()
+                getConfiguration()
             );
             return result;
         } catch (Exception e) {

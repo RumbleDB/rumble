@@ -23,9 +23,7 @@ package org.rumbledb.compiler;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -46,7 +44,6 @@ import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -90,8 +87,6 @@ import java.util.Map.Entry;
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
-
-    private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
     private Map<String, StaticContext> importedModuleContexts;
 
@@ -437,32 +432,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // only first pass
         argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
         return argument;
-    }
-
-    @Override
-    public StaticContext visitOptionDeclaration(OptionDeclaration declaration, StaticContext argument) {
-        Name optionName = declaration.getName();
-        if (SERIALIZATION_NAMESPACE.equals(optionName.getNamespace())) {
-            // XQuery 3.1 §4.19.3: "Serialization option declarations use the namespace URI
-            // http://www.w3.org/2010/xslt-xquery-serialization."
-            String localName = optionName.getLocalName();
-            if (localName == null || localName.isEmpty()) {
-                throw new ParsingException(
-                        "Serialization option name must have a local part.",
-                        declaration.getMetadata()
-                );
-            }
-            argument.overrideSerializationParameter(localName, declaration.getValue());
-            return argument;
-        }
-        throw new UnsupportedFeatureException(
-                "Only serialization option declarations are supported at the moment ("
-                    + optionName
-                    + " = "
-                    + declaration.getValue()
-                    + ").",
-                declaration.getMetadata()
-        );
     }
 
     @Override

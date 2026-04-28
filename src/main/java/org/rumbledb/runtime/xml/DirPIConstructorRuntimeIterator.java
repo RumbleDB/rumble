@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.InvalidProcessingInstructionContentException;
 import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,11 +41,11 @@ import java.util.List;
 public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final String target;
-    private final DataFunctionIterator contentIterator;
+    private final AtomizationIterator contentIterator;
 
     public DirPIConstructorRuntimeIterator(
             String target,
-            DataFunctionIterator contentIterator,
+            AtomizationIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

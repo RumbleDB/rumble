@@ -197,8 +197,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
             functionItem,
             staticContext,
             ExecutionMode.LOCAL,
-            arguments,
-            false
+            arguments
         );
         return functionCall.materialize(context);
     }

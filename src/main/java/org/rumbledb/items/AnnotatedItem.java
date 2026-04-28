@@ -810,7 +810,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Name nodeName() {
+    public Item nodeName() {
         return this.itemToAnnotate.nodeName();
     }
 

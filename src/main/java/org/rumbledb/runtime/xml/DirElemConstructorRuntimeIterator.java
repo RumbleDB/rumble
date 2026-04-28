@@ -189,7 +189,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                this.elementName,
+                ItemFactory.getInstance().createQNameItem(this.elementName),
                 content,
                 attributes
             );

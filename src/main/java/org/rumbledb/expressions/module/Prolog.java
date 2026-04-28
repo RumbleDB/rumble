@@ -57,10 +57,6 @@ public class Prolog extends Node {
         return this.importedModules;
     }
 
-    public List<Node> getDeclarations() {
-        return this.declarations;
-    }
-
     public List<FunctionDeclaration> getFunctionDeclarations() {
         return this.declarations.stream()
             .filter(x -> x instanceof FunctionDeclaration)

@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -164,7 +163,7 @@ public class DocumentItem implements Item {
      * "For a Document Node, dm:node-name returns the empty sequence."
      */
     @Override
-    public Name nodeName() {
+    public Item nodeName() {
         return null;
     }
 

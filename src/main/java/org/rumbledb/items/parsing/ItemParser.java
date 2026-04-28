@@ -38,11 +38,9 @@ import org.apache.spark.sql.types.StructType;
 import java.time.ZoneId;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -64,10 +62,7 @@ import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ItemParser implements Serializable {
 
@@ -84,11 +79,36 @@ public class ItemParser implements Serializable {
     public static Item getItemFromString(String string, ExceptionMetadata metadata) {
         string = "[ " + string + " ]";
         JsonReader object = new JsonReader(new StringReader(string));
-        Item arrayItem = ItemParser.getItemFromObject(object, metadata);
+        Item arrayItem = ItemParser.parseOptionlessJSON(object, metadata);
         if (arrayItem.getSize() == 0) {
             throw new ParsingException("Empty string to parse as JSON!", metadata);
         }
         return arrayItem.getItemAt(0);
+    }
+
+    // TODO better naming and comments
+    public static Item getItemFromJSONDocument(String string, ExceptionMetadata metadata) {
+        return JSONParser.parse(string, metadata);
+    }
+
+    public static Item getItemFromJSONDocument(
+            String string,
+            JSONParsingOptions options,
+            String xmlVersion,
+            ExceptionMetadata metadata
+    ) {
+        return JSONParser.parse(string, options, xmlVersion, metadata);
+    }
+
+    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
+        try {
+
+            Item result = parseOptionlessJSON(object, metadata);
+            object.peek();
+            return result;
+        } catch (Exception e) {
+            throw new InvalidJSONException("Invalid JSON object!", metadata);
+        }
     }
 
     /**
@@ -98,20 +118,15 @@ public class ItemParser implements Serializable {
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
      */
-    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
+    public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata) {
         try {
             if (object.peek() == JsonToken.STRING) {
                 return ItemFactory.getInstance().createStringItem(object.nextString());
             }
             if (object.peek() == JsonToken.NUMBER) {
                 String number = object.nextString();
-                if (number.contains("E") || number.contains("e")) {
-                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
-                }
-                if (number.contains(".")) {
-                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-                }
-                return ItemFactory.getInstance().createIntegerItem(number);
+                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+
             }
             if (object.peek() == JsonToken.BOOLEAN) {
                 return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
@@ -120,7 +135,7 @@ public class ItemParser implements Serializable {
                 List<Item> values = new ArrayList<>();
                 object.beginArray();
                 while (object.hasNext()) {
-                    values.add(getItemFromObject(object, metadata));
+                    values.add(parseOptionlessJSON(object, metadata));
                 }
                 object.endArray();
                 return ItemFactory.getInstance().createArrayItem(values, false);
@@ -128,10 +143,20 @@ public class ItemParser implements Serializable {
             if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
+                Set<String> seenKeys = new HashSet<>();
+
                 object.beginObject();
                 while (object.hasNext()) {
-                    keys.add(object.nextName());
-                    values.add(getItemFromObject(object, metadata));
+                    String key = object.nextName();
+
+                    if (seenKeys.contains(key)) {
+                        object.skipValue(); // spec require default use-first policy
+                        continue;
+                    }
+
+                    seenKeys.add(key);
+                    keys.add(key);
+                    values.add(parseOptionlessJSON(object, metadata));
                 }
                 object.endObject();
                 return ItemFactory.getInstance()

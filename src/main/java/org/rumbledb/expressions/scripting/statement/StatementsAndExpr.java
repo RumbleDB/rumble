@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.statement;
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -65,4 +66,11 @@ public class StatementsAndExpr extends Expression {
         return this.expression;
     }
 
+    public StaticContext getStaticContext() {
+        return this.staticContext;
+    }
+
+    public void setStaticContext(StaticContext staticContext) {
+        this.staticContext = staticContext;
+    }
 }
