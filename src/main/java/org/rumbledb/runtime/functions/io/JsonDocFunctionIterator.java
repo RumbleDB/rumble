@@ -89,7 +89,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
         uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
         String jsonText = readJsonResource(uri);
 
-        return ItemParser.getItemFromJSONDocument(jsonText, options, getConfiguration().getXmlVersion(), getMetadata());
+        return ItemParser.getItemFromJSONString(jsonText, options, getConfiguration().getXmlVersion(), getMetadata());
     }
 
     private URI resolveJsonDocURI(String href, ExceptionMetadata metadata) {

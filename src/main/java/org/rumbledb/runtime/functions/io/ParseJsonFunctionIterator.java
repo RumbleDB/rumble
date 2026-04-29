@@ -66,7 +66,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             }
         }
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, getMetadata());
-        return ItemParser.getItemFromJSONDocument(
+        return ItemParser.getItemFromJSONString(
             this.string.getStringValue(),
             options,
             staticContext.getConfiguration().getXmlVersion(),

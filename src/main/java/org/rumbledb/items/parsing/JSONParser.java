@@ -14,9 +14,23 @@ import java.util.List;
 import java.util.Map;
 
 
-// TODO Write comment here on behaviour, usages and up-to-implementation details options
 /**
+ * Parser for JSON texts used by fn:parse-json and fn:json-doc.
  *
+ * The parser converts JSON values to RumbleDB items. It supports the parse-json
+ * options liberal, duplicates, escape, and fallback.
+ *
+ * If liberal is false, the input must follow the JSON grammar strictly. If liberal
+ * is true, this implementation accepts selected JSON extensions such as single-quoted
+ * strings, unquoted object keys, comments, trailing commas, leading plus signs, leading
+ * zeroes, and unescaped control characters.
+ *
+ * String parsing keeps two representations:
+ * - xdmValue: the string value stored in the resulting XDM item.
+ * - keyComparisonValue: the value used to detect duplicate object keys.
+ *
+ * These can differ when escape=false and invalid XML characters are replaced using
+ * the fallback function.
  */
 public final class JSONParser {
 
@@ -87,11 +101,10 @@ public final class JSONParser {
             case '[':
                 return parseArray();
             case '"':
-                ParsedString s = parseString();
-                return ItemFactory.getInstance().createStringItem(s.rendered);
+                return ItemFactory.getInstance().createStringItem(parseString().xdmValue);
             case '\'':
                 if (this.options.isLiberal()) {
-                    return ItemFactory.getInstance().createStringItem(parseString().rendered);
+                    return ItemFactory.getInstance().createStringItem(parseString().xdmValue);
                 }
                 throw new InvalidJSONException(
                         "Single-quoted strings are not allowed unless option 'liberal' is true. [position "
@@ -160,25 +173,24 @@ public final class JSONParser {
                 ? ItemFactory.getInstance().createNullItem()
                 : parsedValue;
 
-            String comparisonKey = this.options.isEscape() ? key.escapedComparison : key.comparison;
-            Integer existingIndex = seen.get(comparisonKey);
+            Integer existingIndex = seen.get(key.keyComparisonValue);
 
             if (existingIndex == null) {
-                seen.put(comparisonKey, keys.size());
-                keys.add(key.rendered);
+                seen.put(key.keyComparisonValue, keys.size());
+                keys.add(key.xdmValue);
                 values.add(storedValue);
             } else {
                 String policy = this.options.getDuplicates();
 
                 if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
-                            "Duplicate key '" + key.rendered + "' found in JSON object.",
+                            "Duplicate key '" + key.xdmValue + "' found in JSON object.",
                             this.metadata
                     );
                 }
 
                 if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
-                    keys.set(existingIndex, key.rendered);
+                    keys.set(existingIndex, key.xdmValue);
                     values.set(existingIndex, storedValue);
                 }
             }
@@ -316,6 +328,19 @@ public final class JSONParser {
         }
     }
 
+    /**
+     * Parses a quoted JSON string and returns both the XDM string value and the
+     * value used for duplicate-key comparison.
+     *
+     * The XDM value depends on the escape option:
+     * - escape=true: special characters are represented using JSON escape syntax.
+     * - escape=false: valid XML characters are inserted directly; invalid XML
+     * characters are replaced using the fallback function.
+     *
+     * The key comparison value follows the duplicate-key rules:
+     * - escape=true: keys are compared in escaped form.
+     * - escape=false: keys are compared after expanding escape sequences.
+     */
     private ParsedString parseString() {
         if (isEnd()) {
             throw new InvalidJSONException(
@@ -333,18 +358,16 @@ public final class JSONParser {
         }
         advance();
 
-        StringBuilder rendered = new StringBuilder();
-        StringBuilder comparison = new StringBuilder();
-        StringBuilder escapedComparison = new StringBuilder();
+        StringBuilder xdmValue = new StringBuilder();
+        StringBuilder keyComparisonValue = new StringBuilder();
 
         while (!isEnd()) {
             char c = advance();
 
             if (c == quote) {
                 return new ParsedString(
-                        rendered.toString(),
-                        comparison.toString(),
-                        escapedComparison.toString()
+                        xdmValue.toString(),
+                        keyComparisonValue.toString()
                 );
             }
 
@@ -359,28 +382,28 @@ public final class JSONParser {
                 char esc = advance();
                 switch (esc) {
                     case '"':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '"', "\\\"");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '"', "\\\"");
                         break;
                     case '\\':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\\', "\\\\");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\\', "\\\\");
                         break;
                     case '/':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '/', "\\/");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '/', "\\/");
                         break;
                     case 'b':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\b', "\\b");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\b', "\\b");
                         break;
                     case 'f':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\f', "\\f");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\f', "\\f");
                         break;
                     case 'n':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\n', "\\n");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\n', "\\n");
                         break;
                     case 'r':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\r', "\\r");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\r', "\\r");
                         break;
                     case 't':
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\t', "\\t");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\t', "\\t");
                         break;
                     case '\'':
                         if (!this.options.isLiberal()) {
@@ -389,10 +412,10 @@ public final class JSONParser {
                                     this.metadata
                             );
                         }
-                        appendDecodedChar(rendered, comparison, escapedComparison, '\'', "\\'");
+                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\'', "\\'");
                         break;
                     case 'u':
-                        parseUnicodeEscape(rendered, comparison, escapedComparison);
+                        parseUnicodeEscape(xdmValue, keyComparisonValue);
                         break;
                     default:
                         throw new InvalidJSONException(
@@ -416,15 +439,13 @@ public final class JSONParser {
                 }
             }
 
-            comparison.append(c);
-
-            if (this.options.isEscape() && needsEscapeWhenEscapeOptionTrue(c)) {
+            if (this.options.isEscape() && shouldEscapeInXdmOutput(c)) {
                 String escaped = normalizedEscapeForCodePoint(c);
-                rendered.append(escaped);
-                escapedComparison.append(escaped);
+                xdmValue.append(escaped);
+                keyComparisonValue.append(escaped);
             } else {
-                rendered.append(c);
-                escapedComparison.append(c);
+                xdmValue.append(c);
+                keyComparisonValue.append(c);
             }
         }
 
@@ -434,10 +455,18 @@ public final class JSONParser {
         );
     }
 
+    /**
+     * Parses a JSON Unicode escape sequence after the leading "\\u" has already
+     * been consumed.
+     *
+     * Handles surrogate pairs such as "\\uD83D\\uDE00" as a single Unicode codepoint.
+     * Unpaired surrogates are handled as invalid XML characters: with escape=true
+     * they are kept as "\\uXXXX"; with escape=false they are passed to the fallback
+     * function for the XDM value.
+     */
     private void parseUnicodeEscape(
-            StringBuilder rendered,
-            StringBuilder comparison,
-            StringBuilder escapedComparison
+            StringBuilder xdmValue,
+            StringBuilder keyComparisonValue
     ) {
         int first = parseHexQuad();
         String firstEscape = "\\u" + hex4(first);
@@ -448,111 +477,85 @@ public final class JSONParser {
             if (canReadLowSurrogateEscape()) {
                 expect('\\');
                 expect('u');
+
                 int second = parseHexQuad();
                 String secondEscape = "\\u" + hex4(second);
 
                 if (Character.isLowSurrogate((char) second)) {
                     int codePoint = Character.toCodePoint((char) first, (char) second);
 
-                    comparison.append((char) first).append((char) second);
-
-                    if (this.options.isEscape()) {
-                        if (needsEscapeWhenEscapeOptionTrue(codePoint)) {
-                            String escaped = normalizedEscapeForCodePoint(codePoint);
-                            rendered.append(escaped);
-                            escapedComparison.append(escaped);
-                        } else {
-                            rendered.appendCodePoint(codePoint);
-                            escapedComparison.appendCodePoint(codePoint);
-                        }
-                    } else {
-                        if (isValidXMLCodePoint(codePoint)) {
-                            rendered.appendCodePoint(codePoint);
-                        } else {
-                            rendered.append(this.options.getFallback().apply(firstEscape + secondEscape));
-                        }
-                        escapedComparison.appendCodePoint(codePoint);
-                    }
+                    handleEscapedCodePoint(
+                        xdmValue,
+                        keyComparisonValue,
+                        codePoint,
+                        firstEscape + secondEscape
+                    );
                     return;
                 }
 
                 this.position = save;
             }
 
-            comparison.append((char) first);
-
-            if (this.options.isEscape()) {
-                rendered.append(firstEscape);
-                escapedComparison.append(firstEscape);
-            } else {
-                rendered.append(this.options.getFallback().apply(firstEscape));
-                escapedComparison.append((char) first);
-            }
+            handleEscapedCodePoint(
+                xdmValue,
+                keyComparisonValue,
+                first,
+                firstEscape
+            );
             return;
         }
-
         if (Character.isLowSurrogate((char) first)) {
-            comparison.append((char) first);
-
-            if (this.options.isEscape()) {
-                rendered.append(firstEscape);
-                escapedComparison.append(firstEscape);
-            } else {
-                rendered.append(this.options.getFallback().apply(firstEscape));
-                escapedComparison.append((char) first);
-            }
+            handleEscapedCodePoint(
+                xdmValue,
+                keyComparisonValue,
+                first,
+                firstEscape
+            );
             return;
         }
-
-        comparison.appendCodePoint(first);
-
-        if (this.options.isEscape()) {
-            if (needsEscapeWhenEscapeOptionTrue(first)) {
-                String escaped = normalizedEscapeForCodePoint(first);
-                rendered.append(escaped);
-                escapedComparison.append(escaped);
-            } else {
-                rendered.appendCodePoint(first);
-                escapedComparison.appendCodePoint(first);
-            }
-        } else {
-            if (isValidXMLCodePoint(first)) {
-                rendered.appendCodePoint(first);
-                escapedComparison.appendCodePoint(first);
-            } else {
-                rendered.append(this.options.getFallback().apply(firstEscape));
-                escapedComparison.appendCodePoint(first);
-            }
-        }
+        handleEscapedCodePoint(
+            xdmValue,
+            keyComparisonValue,
+            first,
+            firstEscape
+        );
     }
 
-    private void appendDecodedChar(
-            StringBuilder rendered,
-            StringBuilder comparison,
-            StringBuilder escapedComparison,
-            char decoded,
+    /**
+     * Handles a decoded JSON escape sequence.
+     *
+     * xdmValue is the actual string value stored in the XDM result.
+     * keyComparisonValue is the string used for duplicate-key comparison.
+     *
+     * If escape=true, special characters are represented in escaped form in both values.
+     * If escape=false, xdmValue may use the fallback for invalid XML characters, while
+     * keyComparisonValue keeps the decoded character for duplicate-key comparison.
+     */
+    private void handleEscapedCodePoint(
+            StringBuilder xdmValue,
+            StringBuilder keyComparisonValue,
+            int codePoint,
             String originalEscape
     ) {
-        comparison.append(decoded);
-
         if (this.options.isEscape()) {
-            if (needsEscapeWhenEscapeOptionTrue(decoded)) {
-                String escaped = normalizedEscapeForCodePoint(decoded);
-                rendered.append(escaped);
-                escapedComparison.append(escaped);
+            if (shouldEscapeInXdmOutput(codePoint)) {
+                String escaped = normalizedEscapeForCodePoint(codePoint);
+                xdmValue.append(escaped);
+                keyComparisonValue.append(escaped);
             } else {
-                rendered.append(decoded);
-                escapedComparison.append(decoded);
+                xdmValue.appendCodePoint(codePoint);
+                keyComparisonValue.appendCodePoint(codePoint);
             }
             return;
         }
 
-        if (isValidXMLCodePoint(decoded)) {
-            rendered.append(decoded);
+        if (isValidXMLCodePoint(codePoint)) {
+            xdmValue.appendCodePoint(codePoint);
         } else {
-            rendered.append(this.options.getFallback().apply(originalEscape));
+            xdmValue.append(this.options.getFallback().apply(originalEscape));
         }
-        escapedComparison.append(decoded);
+
+        keyComparisonValue.appendCodePoint(codePoint);
     }
 
     private String normalizedEscapeForCodePoint(int codePoint) {
@@ -581,16 +584,22 @@ public final class JSONParser {
         return "\\u" + hex4(pair[0]) + "\\u" + hex4(pair[1]);
     }
 
-    private boolean needsEscapeWhenEscapeOptionTrue(int codePoint) {
-        if (codePoint == '\\') {
-            return true;
-        }
-        if ((codePoint >= 0x00 && codePoint <= 0x1F) || (codePoint >= 0x7F && codePoint <= 0x9F)) {
-            return true;
-        }
-        return !isValidXMLCodePoint(codePoint);
+    /**
+     * Returns true if a codepoint must be represented using a JSON escape sequence
+     * in the XDM output when option escape=true is enabled.
+     */
+    private boolean shouldEscapeInXdmOutput(int codePoint) {
+        return codePoint == '\\'
+            || XMLUtils.isControlCharacter(codePoint)
+            || !isValidXMLCodePoint(codePoint);
     }
 
+    /**
+     * Parses an unquoted object key accepted by this implementation in liberal mode.
+     *
+     * This is not valid standard JSON. It is an implementation-defined extension
+     * enabled only when liberal=true.
+     */
     private ParsedString parseUnquotedKey() {
         if (!this.options.isLiberal()) {
             throw new InvalidJSONException(
@@ -616,7 +625,7 @@ public final class JSONParser {
         }
 
         String key = this.input.substring(start, this.position);
-        return new ParsedString(key, key, key);
+        return new ParsedString(key, key);
     }
 
     private void parseLiteral(String literal) {
@@ -665,8 +674,8 @@ public final class JSONParser {
     }
 
     /**
-     * Skips whitespace characters.
-     * If `options.liberal == true`, also skip comments
+     * Skips whitespace. In liberal mode, this implementation also skips line and
+     * block comments.
      */
     private void skipIgnorable() {
         while (!isEnd()) {
@@ -819,15 +828,27 @@ public final class JSONParser {
         return String.valueOf(c);
     }
 
+    /**
+     * Result of parsing a JSON string.
+     *
+     * xdmValue is the string value stored in the resulting XDM item.
+     *
+     * keyComparisonValue is the string used to detect duplicate object keys.
+     * It is equal to the escaped form when escape=true, and to the decoded form
+     * when escape=false.
+     *
+     * The two values can differ when escape=false and a decoded character is not
+     * valid in the configured XML version. In that case, xdmValue contains the
+     * fallback result, while keyComparisonValue keeps the decoded character for
+     * duplicate-key comparison.
+     */
     private static final class ParsedString {
-        private final String rendered;
-        private final String comparison;
-        private final String escapedComparison;
+        private final String xdmValue;
+        private final String keyComparisonValue;
 
-        private ParsedString(String rendered, String comparison, String escapedComparison) {
-            this.rendered = rendered;
-            this.comparison = comparison;
-            this.escapedComparison = escapedComparison;
+        private ParsedString(String xdmValue, String keyComparisonValue) {
+            this.xdmValue = xdmValue;
+            this.keyComparisonValue = keyComparisonValue;
         }
     }
 }

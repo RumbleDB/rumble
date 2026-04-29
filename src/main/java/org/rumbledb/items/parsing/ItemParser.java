@@ -86,12 +86,7 @@ public class ItemParser implements Serializable {
         return arrayItem.getItemAt(0);
     }
 
-    // TODO better naming and comments
-    public static Item getItemFromJSONDocument(String string, ExceptionMetadata metadata) {
-        return JSONParser.parse(string, metadata);
-    }
-
-    public static Item getItemFromJSONDocument(
+    public static Item getItemFromJSONString(
             String string,
             JSONParsingOptions options,
             String xmlVersion,
@@ -102,7 +97,6 @@ public class ItemParser implements Serializable {
 
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
         try {
-
             Item result = parseOptionlessJSON(object, metadata);
             object.peek();
             return result;
