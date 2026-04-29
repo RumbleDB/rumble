@@ -166,7 +166,7 @@ public class SequenceWriter {
         }
         if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             try {
-                Dataset<Row> dataFrame = sequence.getAsDataFrame();
+                Dataset<Row> dataFrame = this.sequence.getAsDataFrame();
                 int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
                 if (requestedPartitions > 0) {
                     dataFrame = dataFrame.repartition(requestedPartitions);
