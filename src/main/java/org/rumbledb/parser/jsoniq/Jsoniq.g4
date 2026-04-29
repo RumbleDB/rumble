@@ -963,7 +963,7 @@ DoubleLiteral           : ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits 
 
 fragment Digits         : [0-9]+ ;
 
-WS                      : (' VBAR\rVBAR\tVBAR\n') -> channel(HIDDEN);
+WS                      : (' '|'\r'|'\t'|'\n') -> channel(HIDDEN);
 
 NCName                  : NameStartChar NameChar*;
 
