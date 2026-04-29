@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class JSONParsingOptions {
+public final class JSONParsingOptions {
     public static final String DUPLICATES_REJECT = "reject";
     public static final String DUPLICATES_USE_FIRST = "use-first";
     public static final String DUPLICATES_USE_LAST = "use-last";
@@ -70,6 +70,7 @@ public class JSONParsingOptions {
             + "]";
     }
 
+    // TODO look over this
     private static String callFallbackFunction(Item functionItem, String escapedSequence, ExceptionMetadata metadata) {
         try {
             if (functionItem == null || !functionItem.isFunction()) {
@@ -183,7 +184,7 @@ public class JSONParsingOptions {
 
                 case "duplicates":
                     duplicates = validatedDuplicateOption(
-                        requireSingleStringOption("duplicates", sequence, metadata),
+                        requireSingleStringOption(sequence, metadata),
                         metadata
                     );
                     break;
@@ -194,7 +195,7 @@ public class JSONParsingOptions {
                     break;
 
                 case "fallback": {
-                    Item functionItem = requireSingleFunctionOption("fallback", sequence, metadata);
+                    Item functionItem = requireSingleFunctionOption(sequence, metadata);
 
                     List<Name> parameterNames = functionItem.getParameterNames();
                     if (parameterNames == null || parameterNames.size() != 1) {
@@ -258,13 +259,12 @@ public class JSONParsingOptions {
     }
 
     private static String requireSingleStringOption(
-            String optionName,
             List<Item> sequence,
             ExceptionMetadata metadata
     ) {
         if (sequence == null || sequence.size() != 1 || sequence.get(0) == null || !sequence.get(0).isString()) {
             throw new UnexpectedTypeException(
-                    "Invalid value for option '" + optionName + "': expected exactly one xs:string.",
+                    "Invalid value for option 'duplicates': expected exactly one xs:string.",
                     metadata
             );
         }
@@ -272,13 +272,12 @@ public class JSONParsingOptions {
     }
 
     private static Item requireSingleFunctionOption(
-            String optionName,
             List<Item> sequence,
             ExceptionMetadata metadata
     ) {
         if (sequence == null || sequence.size() != 1 || sequence.get(0) == null || !sequence.get(0).isFunction()) {
             throw new UnexpectedTypeException(
-                    "Invalid value for option '" + optionName + "': expected exactly one function item.",
+                    "Invalid value for option 'fallback': expected exactly one function item.",
                     metadata
             );
         }
