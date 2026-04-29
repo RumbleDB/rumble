@@ -680,8 +680,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (content instanceof JsoniqParser.SwitchExprContext) {
             return this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
         }
-        if (content instanceof JsoniqParser.TypeSwitchExprContext) {
-            return this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
+        if (content instanceof JsoniqParser.TypeswitchExprContext) {
+            return this.visitTypeswitchExpr((JsoniqParser.TypeswitchExprContext) content);
         }
         if (content instanceof JsoniqParser.TryCatchExprContext) {
             return this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
@@ -1997,7 +1997,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     // region quantified
     @Override
-    public Node visitTypeSwitchExpr(JsoniqParser.TypeSwitchExprContext ctx) {
+    public Node visitTypeswitchExpr(JsoniqParser.TypeswitchExprContext ctx) {
         Expression condition = (Expression) this.visitExpr(ctx.cond);
         List<TypeswitchCase> cases = new ArrayList<>();
         for (JsoniqParser.CaseClauseContext expr : ctx.cses) {

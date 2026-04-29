@@ -75,26 +75,32 @@ annotatedDecl: functionDecl
 setter: boundarySpaceDecl
       | defaultCollationDecl
       | baseURIDecl
+      | constructionDecl
       | orderingModeDecl
       | emptyOrderDecl
+      | copyNamespacesDecl
       | decimalFormatDecl ;
 
 boundarySpaceDecl: KW_DECLARE KW_BOUNDARY_SPACE type=(KW_PRESERVE | KW_STRIP) ;
 defaultCollationDecl: KW_DECLARE KW_DEFAULT KW_COLLATION uriLiteral ;
-baseURIDecl: KW_DECLARE KW_BASE_URI uriLiteral;
+baseURIDecl: KW_DECLARE KW_BASE_URI uriLiteral ;
+constructionDecl: KW_DECLARE KW_CONSTRUCTION type=(KW_STRIP | KW_PRESERVE) ;
+orderingModeDecl: KW_DECLARE KW_ORDERING type=(KW_ORDERED | KW_UNORDERED) ;
+emptyOrderDecl: KW_DECLARE KW_DEFAULT KW_ORDER KW_EMPTY emptySequenceOrder=(KW_GREATEST | KW_LEAST) ;
+copyNamespacesDecl: KW_DECLARE KW_COPY_NS preserveMode COMMA inheritMode ;
+preserveMode: KW_PRESERVE | KW_NO_PRESERVE ;
+inheritMode: KW_INHERIT | KW_NO_INHERIT ;
+decimalFormatDecl: KW_DECLARE
+                   (('decimal-format' qname) | (KW_DEFAULT 'decimal-format'))
+                   (dfPropertyName EQUAL stringLiteral)*;
+
 moduleImport            : 'import' KW_MODULE (KW_NAMESPACE prefix=NCName EQUAL)? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
 
 namespaceDecl: KW_DECLARE KW_NAMESPACE NCName EQUAL uriLiteral;
 
 
 
-orderingModeDecl        : KW_DECLARE 'ordering' ('ordered' | 'unordered');
 
-emptyOrderDecl          : KW_DECLARE KW_DEFAULT 'order' KW_EMPTY (emptySequenceOrder=(KW_GREATEST | KW_LEAST));
-
-decimalFormatDecl       : KW_DECLARE
-                          (('decimal-format' qname) | (KW_DEFAULT 'decimal-format'))
-                          (dfPropertyName EQUAL stringLiteral)*;
 
 eqName: qname ;
 
@@ -145,7 +151,7 @@ exprSingle              : exprSimple
                         | ifExpr
                         | switchExpr
                         | tryCatchExpr
-                        | typeSwitchExpr
+                        | typeswitchExpr
                         ;
 
 exprSimple              : quantifiedExpr
@@ -244,19 +250,24 @@ quantifiedExprVar: var_ref=varRef
                   (KW_AS seq=sequenceType)?
                   KW_IN exprSingle ;
 
-switchExpr: KW_SWITCH LPAREN cond=expr RPAREN cases+=switchCaseClause+ KW_DEFAULT KW_RETURN def=exprSingle;
+switchExpr: KW_SWITCH LPAREN cond=expr RPAREN
+                cases+=switchCaseClause+
+                KW_DEFAULT KW_RETURN def=exprSingle ;
 
-switchCaseClause        : (Kcase cond+=exprSingle)+ KW_RETURN ret=exprSingle;
+switchCaseClause: (KW_CASE cond+=exprSingle)+ KW_RETURN ret=exprSingle ;
 
-typeSwitchExpr          : Ktypeswitch LPAREN cond=expr RPAREN cses+=caseClause+ KW_DEFAULT (var_ref=varRef)? KW_RETURN def=exprSingle;
+typeswitchExpr: KW_TYPESWITCH LPAREN cond=expr RPAREN
+                cses+=caseClause+
+                KW_DEFAULT (var_ref=varRef)? KW_RETURN def=exprSingle ;
 
-caseClause              : Kcase (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=exprSingle;
+caseClause: KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN
+            ret=exprSingle ;
 
-ifExpr                  : Kif LPAREN test_condition=expr RPAREN
-                          Kthen branch=exprSingle
-                          Kelse else_branch=exprSingle;
+ifExpr: KW_IF LPAREN test_condition=expr RPAREN
+        KW_THEN branch=exprSingle
+        KW_ELSE else_branch=exprSingle ;
 
-tryCatchExpr            : Ktry '{' try_expression=expr '}' catches+=catchClause+;
+tryCatchExpr: KW_TRY '{' try_expression=expr '}' catches+=catchClause+ ;
 
 catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* '{' catch_expression=expr '}';
 
@@ -344,9 +355,9 @@ parenthesizedExpr       : LPAREN expr? RPAREN;
 
 contextItemExpr         : '$$';
 
-orderedExpr             : 'ordered' '{' expr '}';
+orderedExpr             : KW_ORDERED '{' expr '}';
 
-unorderedExpr           : 'unordered' '{' expr '}';
+unorderedExpr           : KW_UNORDERED '{' expr '}';
 
 functionCall            : fn_name=qname argumentList;
 
@@ -540,7 +551,7 @@ keyWords                : KW_JSONIQ
                         | Kcontext
                         | KW_DECLARE
                         | KW_DEFAULT
-                        | Kelse
+                        | KW_ELSE
                         | KW_GREATEST
                         | Kinstance
                         | Kstatically
@@ -551,14 +562,14 @@ keyWords                : KW_JSONIQ
                         | NullLiteral
                         | Kof
                         | Kor
-                        | Kthen
+                        | KW_THEN
                         | Kto
                         | Ktreat
-                        | Ktypeswitch
+                        | KW_TYPESWITCH
                         | KW_VERSION
                         | KW_SWITCH
-                        | Kcase
-                        | Ktry
+                        | KW_CASE
+                        | KW_TRY
                         | Kcatch
                         | KW_SOME
                         | KW_EVERY
@@ -572,13 +583,12 @@ keyWords                : KW_JSONIQ
                         | KW_AS
                         | KW_AT
                         | KW_IN
-                        | Kif
+                        | KW_IF
                         | KW_FOR
                         | KW_LET
                         | KW_WHERE
                         | KW_GROUP
                         | KW_BY
-                        | KW_ORDER
                         | KW_COUNT
                         | KW_RETURN
                         | KW_TUMBLING
@@ -590,6 +600,20 @@ keyWords                : KW_JSONIQ
                         | KW_END
                         | KW_PREVIOUS
                         | KW_NEXT
+                        | KW_BASE_URI
+                        | KW_CONSTRUCTION
+                        | KW_PRESERVE
+                        | KW_STRIP
+                        | KW_BOUNDARY_SPACE
+                        | KW_ENCODING
+                        | KW_ORDERING
+                        | KW_ORDERED
+                        | KW_UNORDERED
+                        | KW_ORDER
+                        | KW_COPY_NS
+                        | KW_NO_PRESERVE
+                        | KW_INHERIT
+                        | KW_NO_INHERIT
                         | Kunordered
                         | Ktrue
                         | Kfalse
@@ -707,11 +731,9 @@ KW_NEXT                   : 'next';
 
 KW_BY                     : 'by';
 
-KW_ORDER                  : 'order';
-
 KW_RETURN                 : 'return';
 
-Kif                     : 'if';
+KW_IF                     : 'if';
 
 KW_IN                     : 'in';
 
@@ -745,19 +767,25 @@ KW_LEAST                  : 'least';
 
 KW_SWITCH                 : 'switch';
 
-Kcase                   : 'case';
+KW_ORDERING               : 'ordering';
 
-Ktry                    : 'try';
+KW_ORDERED                : 'ordered';
+
+KW_UNORDERED              : 'unordered';
+
+KW_CASE                   : 'case';
+
+KW_TRY                    : 'try';
 
 Kcatch                  : 'catch';
 
 KW_DEFAULT                : 'default';
 
-Kthen                   : 'then';
+KW_THEN                   : 'then';
 
-Kelse                   : 'else';
+KW_ELSE                   : 'else';
 
-Ktypeswitch             : 'typeswitch';
+KW_TYPESWITCH             : 'typeswitch';
 
 Kor                     : 'or';
 
@@ -799,7 +827,17 @@ KW_STRIP                 : 'strip';
 
 KW_BASE_URI              : 'base-uri';
 
-Kunordered              : 'unordered';
+KW_CONSTRUCTION          : 'construction';
+
+KW_ORDER                 : 'order';
+
+KW_COPY_NS               : 'copy-namespaces';
+
+KW_NO_PRESERVE           : 'no-preserve';
+
+KW_INHERIT               : 'inherit';
+
+KW_NO_INHERIT            : 'no-inherit';
 
 Ktrue                   : 'true';
 
@@ -1018,21 +1056,21 @@ flworStatement              : (start_for=forClause| start_let=letClause)
                               (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
                               KW_RETURN returnStmt=statement ;
 
-ifStatement:                Kif LPAREN test_expr=expr RPAREN
-                            Kthen branch=statement
-                            Kelse else_branch=statement ;
+ifStatement:                KW_IF LPAREN test_expr=expr RPAREN
+                            KW_THEN branch=statement
+                            KW_ELSE else_branch=statement ;
 
 switchStatement             : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
 
-switchCaseStatement         : (Kcase cond+=exprSingle)+ KW_RETURN ret=statement ;
+switchCaseStatement         : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
 
-tryCatchStatement           : Ktry try_block=blockStatement catches+=catchCaseStatement+ ;
+tryCatchStatement           : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
 
 catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
 
-typeSwitchStatement         : Ktypeswitch LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? KW_RETURN def=statement ;
+typeSwitchStatement         : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? KW_RETURN def=statement ;
 
-caseStatement               : Kcase (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=statement ;
+caseStatement               : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=statement ;
 
 varDeclStatement            : annotations Kvariable varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
 
