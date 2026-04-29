@@ -90,17 +90,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     this.itemType,
                     context,
                     this.isValidate,
-                    staticContext
+                    this.staticContext
                 );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, staticContext);
+                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, this.staticContext);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, staticContext);
+            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, this.staticContext);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -419,7 +419,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
-        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, staticContext));
+        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, this.staticContext));
     }
 
     @Override
@@ -444,7 +444,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, staticContext);
+        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, this.staticContext);
     }
 
     private static Item validate(

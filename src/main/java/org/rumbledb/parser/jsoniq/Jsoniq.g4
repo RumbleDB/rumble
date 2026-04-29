@@ -90,8 +90,10 @@ emptyOrderDecl: KW_DECLARE KW_DEFAULT KW_ORDER KW_EMPTY emptySequenceOrder=(KW_G
 copyNamespacesDecl: KW_DECLARE KW_COPY_NS preserveMode COMMA inheritMode ;
 preserveMode: KW_PRESERVE | KW_NO_PRESERVE ;
 inheritMode: KW_INHERIT | KW_NO_INHERIT ;
-decimalFormatDecl: KW_DECLARE
-                   (('decimal-format' qname) | (KW_DEFAULT 'decimal-format'))
+decimalFormatDecl: KW_DECLARE (
+                      (KW_DECIMAL_FORMAT eqName)
+                    | (KW_DEFAULT KW_DECIMAL_FORMAT)
+                   )
                    (dfPropertyName EQUAL stringLiteral)*;
 
 moduleImport            : 'import' KW_MODULE (KW_NAMESPACE prefix=NCName EQUAL)? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
@@ -119,13 +121,13 @@ dfPropertyName          : 'decimal-separator'
                         | 'pattern-separator';
 
 // TODO: Assignable variable decl
-varDecl                 : KW_DECLARE annotations Kvariable varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
+varDecl                 : KW_DECLARE annotations KW_VARIABLE varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
 
 contextItemDecl         : KW_DECLARE Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
 
 functionDecl            : KW_DECLARE annotations 'function' fn_name=qname LPAREN paramList? RPAREN
                           (KW_AS return_type=sequenceType)?
-                          ('{' (fn_body=statementsAndOptionalExpr) '}' | is_external='external');
+                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external='external');
 
 typeDecl                : KW_DECLARE Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -146,35 +148,10 @@ annotation                  : ('%' name=qname (LPAREN Literal (COMMA Literal)* R
 
 expr: exprSingle (COMMA exprSingle)* ;
 
-exprSingle              : exprSimple
-                        | flworExpr
-                        | ifExpr
-                        | switchExpr
-                        | tryCatchExpr
-                        | typeswitchExpr
-                        ;
-
-exprSimple              : quantifiedExpr
-                        | orExpr
-                        | insertExpr
-                        | deleteExpr
-                        | renameExpr
-                        | replaceExpr
-                        | transformExpr
-                        | appendExpr
-                        | createCollectionExpr
-                        | truncateCollectionExpr
-                        | deleteIndexExpr
-                        | deleteSearchExpr
-                        | editCollectionExpr
-                        | insertIndexExpr
-                        | insertSearchExpr
-                        ;
-
 flworExpr: // replaced with the initialClause production to match the JSONiq grammar
-           (start_for=forClause| start_let=letClause)
+           (start_for=forClause| start_let=letClause | start_window=windowClause)
            // replaced with the intermediateClause production to match the JSONiq grammar
-           (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+           (forClause | letClause | windowClause| whereClause | groupByClause | orderByClause | countClause)*
            // replaced with the returnClause production to match the JSONiq grammar
            KW_RETURN return_expr=exprSingle ;
 
@@ -260,16 +237,19 @@ typeswitchExpr: KW_TYPESWITCH LPAREN cond=expr RPAREN
                 cses+=caseClause+
                 KW_DEFAULT (var_ref=varRef)? KW_RETURN def=exprSingle ;
 
-caseClause: KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN
+caseClause: KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* KW_RETURN
             ret=exprSingle ;
 
 ifExpr: KW_IF LPAREN test_condition=expr RPAREN
         KW_THEN branch=exprSingle
         KW_ELSE else_branch=exprSingle ;
 
-tryCatchExpr: KW_TRY '{' try_expression=expr '}' catches+=catchClause+ ;
+// replaced with the tryClause and the enclosedTryTargetExpression productions to match the JSONiq grammar
+tryCatchExpr: KW_TRY LBRACE try_expression=expr? RBRACE catches+=catchClause+ ;
 
-catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* '{' catch_expression=expr '}';
+catchClause: KW_CATCH
+             // replaced with the catchErrorList production to match the JSONiq grammar
+             (jokers+='*' | errors+=qname) (VBAR (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
 
 ///////////////////////// expression
 
@@ -311,9 +291,9 @@ valueExpr               : simpleMap_expr=simpleMapExpr
                         | validate_expr=validateExpr
                         | annotate_expr=annotateExpr;
 
-validateExpr            : Kvalidate Ktype sequenceType '{' expr '}';
+validateExpr            : Kvalidate Ktype sequenceType LBRACE expr RBRACE;
 
-annotateExpr            : Kannotate Ktype sequenceType '{' expr '}';
+annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
 
 simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
 
@@ -344,7 +324,7 @@ primaryExpr             : NullLiteral
                         | blockExpr
                         ;
 
-blockExpr : '{' statementsAndExpr '}' ;
+blockExpr : LBRACE statementsAndExpr RBRACE ;
 
 
 varRef                  : DOLLAR var_name=qname;
@@ -355,9 +335,9 @@ parenthesizedExpr       : LPAREN expr? RPAREN;
 
 contextItemExpr         : '$$';
 
-orderedExpr             : KW_ORDERED '{' expr '}';
+orderedExpr             : KW_ORDERED LBRACE expr RBRACE;
 
-unorderedExpr           : KW_UNORDERED '{' expr '}';
+unorderedExpr           : KW_UNORDERED LBRACE expr RBRACE;
 
 functionCall            : fn_name=qname argumentList;
 
@@ -371,7 +351,7 @@ namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : annotations 'function' LPAREN paramList? RPAREN
                            (KW_AS return_type=sequenceType)?
-                           ('{' (fn_body=statementsAndOptionalExpr) '}');
+                           (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE);
 
 ///////////////////////// Updating Expressions
 
@@ -518,7 +498,7 @@ typeDeclaration: KW_AS sequenceType ;
 sequenceType            : LPAREN RPAREN
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
-objectConstructor       : '{' ( pairConstructor (COMMA pairConstructor)* )? '}'
+objectConstructor       : LBRACE ( pairConstructor (COMMA pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
@@ -570,12 +550,12 @@ keyWords                : KW_JSONIQ
                         | KW_SWITCH
                         | KW_CASE
                         | KW_TRY
-                        | Kcatch
+                        | KW_CATCH
                         | KW_SOME
                         | KW_EVERY
                         | KW_SATISFIES
                         | KW_STABLE
-                        | Kvariable
+                        | KW_VARIABLE
                         | KW_ASCENDING
                         | KW_DESCENDING
                         | KW_EMPTY
@@ -631,12 +611,12 @@ keyWords                : KW_JSONIQ
                         | Kposition
                         | Kvalidate
                         | Kannotate
-                        | Kbreak
-                        | Kloop
-                        | Kcontinue
-                        | Kexit
-                        | Kreturning
-                        | Kwhile
+                        | KW_BREAK
+                        | KW_LOOP
+                        | KW_CONTINUE
+                        | KW_EXIT
+                        | KW_RETURNING
+                        | KW_WHILE
                         | Kjson
                         | Ktext
                         | Kupdating
@@ -700,6 +680,12 @@ SEMICOLON               : ';';
 LPAREN                  : '(';
 
 RPAREN                  : ')';
+
+VBAR                    : '|';
+
+LBRACE                    : '{';
+
+RBRACE                    : '}';
 
 KW_FOR                    : 'for';
 
@@ -777,7 +763,7 @@ KW_CASE                   : 'case';
 
 KW_TRY                    : 'try';
 
-Kcatch                  : 'catch';
+KW_CATCH                  : 'catch';
 
 KW_DEFAULT                : 'default';
 
@@ -855,7 +841,7 @@ Kcontext                : 'context';
 
 Kitem                   : 'item';
 
-Kvariable               : 'variable';
+KW_VARIABLE               : 'variable';
 
 Kinsert                 : 'insert';
 
@@ -945,12 +931,12 @@ Kobject_node            : 'object-node';
 Kcomment                : 'comment';
 
 ///////////////////////// Scripting keywords
-Kbreak                  : 'break' ;
-Kloop                   : 'loop' ;
-Kcontinue               : 'continue' ;
-Kexit                   : 'exit' ;
-Kreturning              : 'returning' ;
-Kwhile                  : 'while' ;
+KW_BREAK                  : 'break' ;
+KW_LOOP                   : 'loop' ;
+KW_CONTINUE               : 'continue' ;
+KW_EXIT                   : 'exit' ;
+KW_RETURNING              : 'returning' ;
+KW_WHILE                  : 'while' ;
 
 STRING                  : '"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'';
 
@@ -977,7 +963,7 @@ DoubleLiteral           : ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits 
 
 fragment Digits         : [0-9]+ ;
 
-WS                      : (' '|'\r'|'\t'|'\n') -> channel(HIDDEN);
+WS                      : (' VBAR\rVBAR\tVBAR\n') -> channel(HIDDEN);
 
 NCName                  : NameStartChar NameChar*;
 
@@ -1025,56 +1011,87 @@ statementsAndExpr           : statements expr ;
 
 statementsAndOptionalExpr   : statements expr? ;
 
-statement                   : applyStatement
-                            | assignStatement
-                            | blockStatement
-                            | breakStatement
-                            | continueStatement
-                            | exitStatement
-                            | flworStatement
-                            | ifStatement
-                            | switchStatement
-                            | tryCatchStatement
-                            | typeSwitchStatement
-                            | varDeclStatement
-                            | whileStatement
-                            ;
+statement               : applyStatement
+                        | assignStatement
+                        | blockStatement
+                        | breakStatement
+                        | continueStatement
+                        | exitStatement
+                        | flworStatement
+                        | ifStatement
+                        | switchStatement
+                        | tryCatchStatement
+                        | typeSwitchStatement
+                        | varDeclStatement
+                        | whileStatement
+                        ;
 
-applyStatement              : exprSimple SEMICOLON ;
+applyStatement          : exprSimple SEMICOLON ;
 
-assignStatement             : DOLLAR qname COLON_EQ exprSingle SEMICOLON ;
+assignStatement         : DOLLAR qname COLON_EQ exprSingle SEMICOLON ;
 
-blockStatement              : '{' statements '}' ;
+blockStatement          : LBRACE statements RBRACE ;
 
-breakStatement              : Kbreak Kloop SEMICOLON ;
+breakStatement          : KW_BREAK KW_LOOP SEMICOLON ;
 
-continueStatement           : Kcontinue Kloop SEMICOLON ;
+continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
 
-exitStatement               : Kexit Kreturning exprSingle SEMICOLON ;
+exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
 
-flworStatement              : (start_for=forClause| start_let=letClause)
-                              (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
-                              KW_RETURN returnStmt=statement ;
+flworStatement          : (start_for=forClause| start_let=letClause)
+                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                          KW_RETURN returnStmt=statement ;
 
-ifStatement:                KW_IF LPAREN test_expr=expr RPAREN
-                            KW_THEN branch=statement
-                            KW_ELSE else_branch=statement ;
+ifStatement:            KW_IF LPAREN test_expr=expr RPAREN
+                        KW_THEN branch=statement
+                        KW_ELSE else_branch=statement ;
 
-switchStatement             : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
+switchStatement         : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
 
-switchCaseStatement         : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
+switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
 
-tryCatchStatement           : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
+tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
 
-catchCaseStatement          : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* catch_block=blockStatement;
+catchCaseStatement      : KW_CATCH (jokers+='*' | errors+=qname) (VBAR (jokers+='*' | errors+=qname))* catch_block=blockStatement;
 
-typeSwitchStatement         : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? KW_RETURN def=statement ;
+// replaced "$" varName with varRef to match the JSONiq grammar
+typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN) def=statement ;
 
-caseStatement               : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType ('|' union+=sequenceType)* KW_RETURN ret=statement ;
+// replaced "$" varName with varRef to match the JSONiq grammar
+caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN) ret=statement ;
 
-varDeclStatement            : annotations Kvariable varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
+varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
 
-varDeclForStatement         : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
+// added to match the JSONiq grammar
+varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
 
-whileStatement              : Kwhile LPAREN test_expr=expr RPAREN stmt=statement ;
+whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
 
+
+// Expressions
+
+// redefined according to the XQuery Scripting Extension spec
+exprSingle              : exprSimple
+                        | flworExpr
+                        | ifExpr
+                        | switchExpr
+                        | tryCatchExpr
+                        | typeswitchExpr
+                        ;
+
+exprSimple              : quantifiedExpr
+                        | orExpr
+                        | insertExpr
+                        | deleteExpr
+                        | renameExpr
+                        | replaceExpr
+                        | transformExpr
+                        | appendExpr
+                        | createCollectionExpr
+                        | truncateCollectionExpr
+                        | deleteIndexExpr
+                        | deleteSearchExpr
+                        | editCollectionExpr
+                        | insertIndexExpr
+                        | insertSearchExpr
+                        ;
