@@ -594,6 +594,7 @@ keyWords                : KW_JSONIQ
                         | KW_NO_PRESERVE
                         | KW_INHERIT
                         | KW_NO_INHERIT
+                        | KW_DECIMAL_FORMAT
                         | Kunordered
                         | Ktrue
                         | Kfalse
@@ -824,6 +825,8 @@ KW_NO_PRESERVE           : 'no-preserve';
 KW_INHERIT               : 'inherit';
 
 KW_NO_INHERIT            : 'no-inherit';
+
+KW_DECIMAL_FORMAT       : 'decimal-format';
 
 Ktrue                   : 'true';
 
