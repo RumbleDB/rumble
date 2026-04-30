@@ -2885,7 +2885,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
             ctx,
             ctx.KW_DEFAULT() != null,
-            ctx.qname(),
+            ctx.eqName(),
             ctx.dfPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
