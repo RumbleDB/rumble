@@ -399,7 +399,7 @@ unorderedExpr           : KW_UNORDERED LBRACE expr RBRACE;
 
 functionCall            : fn_name=qname argumentList;
 
-argument                : exprSingle | ArgumentPlaceholder;
+argument                : exprSingle | QUESTION;
 
 functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
@@ -1072,8 +1072,6 @@ fragment ESCapos            : '\\' (['\\/bfnrt] | UNICODE);
 fragment UNICODE        : 'u' HEX HEX HEX HEX;
 
 fragment HEX            : [0-9a-fA-F];
-
-ArgumentPlaceholder     : QUESTION;
 
 NullLiteral             : 'null';
 
