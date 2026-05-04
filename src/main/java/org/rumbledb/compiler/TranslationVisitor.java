@@ -550,7 +550,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
-        Name name = parseName(ctx.qname(), true, false, false);
+        Name name = parseName(ctx.functionName().qname(), true, false, false);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
@@ -593,6 +593,23 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 isExternal,
                 createMetadataFromContext(ctx)
         );
+    }
+
+    /**
+     * Parse an EQName. Delegates to {@link #parseName} for the {@code qname} branch; URI-qualified names use
+     * {@link URIQualifiedNameParser}.
+     */
+    public Name parseEqName(
+            JsoniqParser.EqNameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
+        if (ctx.qname() != null) {
+            return parseName(ctx.qname(), isFunction, isType, isAnnotation);
+        }
+        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
     }
 
     @Override
@@ -2867,9 +2884,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 parsedAnnotations.add(new Annotation(name, null));
                 continue;
             }
-            JsoniqParser.QnameContext qnameContext = annotationContext.qname();
-            Name name = parseName(qnameContext, false, false, true);
-            if (!annotationContext.Literal().isEmpty()) {
+            JsoniqParser.EqNameContext qnameContext = annotationContext.eqName();
+            Name name = parseEqName(qnameContext, false, false, true, false);
+            if (!annotationContext.literal().isEmpty()) {
                 throw new OurBadException("Literals are currently not supported in annotations!");
             }
             parsedAnnotations.add(new Annotation(name, null));

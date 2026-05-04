@@ -70,6 +70,7 @@ annotatedDecl: functionDecl
               | varDecl
               | typeDecl
               | contextItemDecl
+              | optionDecl
               ;
 
 setter: boundarySpaceDecl
@@ -96,7 +97,10 @@ decimalFormatDecl: KW_DECLARE (
                    )
                    (DFPropertyName EQUAL stringLiteral)*;
 
-eqName: qname ;
+eqName: qname | URIQualifiedName ;
+
+BracedURILiteral: 'Q' '{' (~[&{}])* '}' ;
+URIQualifiedName: BracedURILiteral NCName ;
 
 qname                   : ((ns=NCName | nskw=keyword)':')?
                           (local_name=NCName | local_namekw = keyword);
@@ -136,26 +140,42 @@ varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE
           | (external=KW_EXTERNAL (COLON_EQ exprSingle)?)
          ) ;
 
-contextItemDecl         : KW_DECLARE KW_CONTEXT KW_ITEM (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external=KW_EXTERNAL (COLON_EQ exprSingle)?));
+contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
+                 //(KW_AS itemType)?
+                 // TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+                 (KW_AS sequenceType)? // TODO: change to itemType, update expressions to use itemType, update back JSONiq grammar
+                 ((COLON_EQ value=exprSingle)
+                 | (external=KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
-functionDecl            : KW_DECLARE annotations 'function' fn_name=qname LPAREN paramList? RPAREN
-                          (KW_AS return_type=sequenceType)?
-                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=KW_EXTERNAL);
+// constrains to valid function names only
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+functionDecl: KW_DECLARE (annotations) KW_FUNCTION fn_name=functionName LPAREN paramList? RPAREN
+              // replaced with the functionReturn production to match the JSONiq grammar
+              (KW_AS return_type=sequenceType)?
+              // replaced functionBody to match the JSONiq grammar and the XQuery Scripting Extension spec
+              ( LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=KW_EXTERNAL) ;
+
+functionName: qname ;
+
+// renamed from functionParams to paramList to match the JSONiq grammar
+paramList: param (COMMA param)* ;
+
+// renamed from functionParam to param to match the JSONiq grammar
+// replaced with the typeDeclaration production to match the JSONiq grammar
+param: DOLLAR name=qname (KW_AS sequenceType)? ;
+
+annotations: annotation* ;
+
+// added the updating keyword to support the out-of-spec updating expressions extension
+annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating=KW_UPDATING ;
+
+optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
 typeDecl                : KW_DECLARE Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 schemaLanguage          : 'jsound' 'compact'
                         | 'jsound' 'verbose'
                         | 'json' 'schema';
-
-paramList               : param (COMMA param)*;
-
-param                   : DOLLAR name=qname (KW_AS sequenceType)? ;
-
-annotations: annotation* ;
-
-// added the updating keyword to support the out-of-spec updating expressions extension
-annotation                  : ('%' name=qname (LPAREN Literal (COMMA Literal)* RPAREN)? | updating=Kupdating);
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
@@ -335,6 +355,8 @@ primaryExpr             : NullLiteral
                         | blockExpr
                         ;
 
+literal: NumericLiteral | stringLiteral ;
+
 blockExpr : LBRACE statementsAndExpr RBRACE ;
 
 
@@ -360,7 +382,7 @@ functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
 namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
-inlineFunctionExpr      : annotations 'function' LPAREN paramList? RPAREN
+inlineFunctionExpr      : annotations KW_FUNCTION LPAREN paramList? RPAREN
                            (KW_AS return_type=sequenceType)?
                            (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE);
 
@@ -518,9 +540,9 @@ itemType                : qname
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
 
-anyFunctionTest         : 'function' LPAREN '*' RPAREN;
+anyFunctionTest         : KW_FUNCTION LPAREN '*' RPAREN;
 
-typedFunctionTest	    : 'function' LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
+typedFunctionTest	    : KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
 
 singleType              : item=itemType (question +='?')?;
 
@@ -608,6 +630,8 @@ keyword                : KW_JSONIQ
                         | KW_DECIMAL_FORMAT
                         | KW_EXTERNAL
                         | KW_UNORDERED
+                        | KW_FUNCTION
+                        | KW_OPTION
                         | Ktrue
                         | Kfalse
                         | Ktype
@@ -632,7 +656,7 @@ keyword                : KW_JSONIQ
                         | KW_WHILE
                         | Kjson
                         | Ktext
-                        | Kupdating
+                        | KW_UPDATING
                         | Kcreate
                         | Kcollection
                         | Ktable
@@ -699,6 +723,8 @@ VBAR                    : '|';
 LBRACE                    : '{';
 
 RBRACE                    : '}';
+
+MOD                       : '%';
 
 KW_FOR                    : 'for';
 
@@ -842,6 +868,8 @@ KW_DECIMAL_FORMAT       : 'decimal-format';
 
 KW_EXTERNAL             : 'external';
 
+KW_FUNCTION             : 'function';
+
 Ktrue                   : 'true';
 
 Kfalse                  : 'false';
@@ -859,6 +887,8 @@ KW_CONTEXT                : 'context';
 KW_ITEM                   : 'item';
 
 KW_VARIABLE               : 'variable';
+
+KW_OPTION                : 'option';
 
 Kinsert                 : 'insert';
 
@@ -884,7 +914,7 @@ Kposition               : 'position';
 
 Kjson                   : 'json';
 
-Kupdating               :  'updating';
+KW_UPDATING               :  'updating';
 
 Kcreate                 : 'create';
 
