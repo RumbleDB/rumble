@@ -839,6 +839,9 @@ keyword                : KW_JSONIQ
                         | Knumber_node
                         | Kobject_node
                         | KW_COMMENT
+                        | KW_UNION
+                        | KW_INTERSECT
+                        | KW_EXCEPT
                         ;
 
 ///////////////////////// literals
