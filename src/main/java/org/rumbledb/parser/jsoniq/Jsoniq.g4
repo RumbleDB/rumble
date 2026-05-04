@@ -489,7 +489,9 @@ primaryExpr: literal
            | blockExpr
            ;
 
-literal: Literal | stringLiteral ;
+literal: numericLiteral | stringLiteral ;
+
+numericLiteral: IntegerLiteral | DecimalLiteral | DoubleLiteral ;
 
 varRef: DOLLAR var_name=eqName;
 
@@ -1213,10 +1215,6 @@ fragment UNICODE        : 'u' HEX HEX HEX HEX;
 fragment HEX            : [0-9a-fA-F];
 
 NullLiteral             : 'null';
-
-Literal                 : NumericLiteral;
-
-NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
 
 IntegerLiteral          : Digits ;
 
