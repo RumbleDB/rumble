@@ -107,7 +107,7 @@ eqName: qname | URIQualifiedName ;
 BracedURILiteral: 'Q' '{' (~[&{}])* '}' ;
 URIQualifiedName: BracedURILiteral NCName ;
 
-qname                   : ((ns=NCName | nskw=keyword)':')?
+qname                   : ((ns=NCName | nskw=keyword)COLON)?
                           (local_name=NCName | local_namekw = keyword);
 
 // matches the definition of NCName in the XQuery 3.1 spec
@@ -183,7 +183,7 @@ annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating
 
 optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
-typeDecl                : KW_DECLARE Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+typeDecl                : KW_DECLARE KW_TYPE type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 schemaLanguage          : 'jsound' 'compact'
                         | 'jsound' 'verbose'
@@ -294,37 +294,35 @@ tryCatchExpr: KW_TRY LBRACE try_expression=expr? RBRACE catches+=catchClause+ ;
 
 catchClause: KW_CATCH
              // replaced with the catchErrorList production to match the JSONiq grammar
-             ((jokers+=STAR | errors+=eqName) (VBAR (jokers+=STAR | errors+=eqName))* | (LPAREN DOLLAR varName RPAREN))
+             ((jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* | (LPAREN DOLLAR varName RPAREN))
              // replaced with the enclosedExpression production to match the JSONiq grammar
              LBRACE catch_expression=expr? RBRACE ;
 
 orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
-andExpr                 : main_expr=notExpr ( Kand rhs+=notExpr )*;
+andExpr: main_expr=notExpr ( KW_AND rhs+=notExpr )*;
 
-notExpr                 : op+=Knot ? main_expr=comparisonExpr;
+notExpr: op+=Knot ? main_expr=comparisonExpr;
 
-comparisonExpr          : main_expr=stringConcatExpr
-                          ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
-                          | EQUAL | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
+comparisonExpr: main_expr=stringConcatExpr (  op+=compOp rhs+=stringConcatExpr )? ;
 
 stringConcatExpr: main_expr=rangeExpr (CONCATENATION rhs+=rangeExpr)* ;
 
 rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
-additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=multiplicativeExpr )*;
+additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
-multiplicativeExpr      : main_expr=instanceOfExpr ( op+=(STAR | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
+multiplicativeExpr: main_expr=instanceOfExpr ( op+=(STAR | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
-instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr: main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
 
-isStaticallyExpr        : main_expr=treatExpr ( Kis Kstatically seq=sequenceType)?;
+isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)?;
 
-treatExpr               : main_expr=castableExpr ( Ktreat KW_AS seq=sequenceType )?;
+treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType )? ;
 
-castableExpr            : main_expr=castExpr ( Kcastable KW_AS single=singleType )?;
+castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType )?;
 
-castExpr                : main_expr=arrowExpr ( Kcast KW_AS single=singleType )?;
+castExpr: main_expr=arrowExpr ( KW_CAST KW_AS single=singleType )? ;
 
 arrowExpr               : main_expr=unaryExpr ((EQUAL '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
 
@@ -332,23 +330,37 @@ arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
 
 unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 
-valueExpr               : simpleMap_expr=simpleMapExpr
-                        | validate_expr=validateExpr
-                        | annotate_expr=annotateExpr;
+valueExpr: validate_expr=validateExpr | extensionExpr | annotate_expr=annotateExpr | simpleMap_expr=simpleMapExpr ;
 
-validateExpr            : Kvalidate Ktype sequenceType LBRACE expr RBRACE;
+/* 
+ * this token was added to prevent the antlr error
+ * "label assigned to a block which is not a set" in the comparisonExpr token definition
+ */
+compOp: valueComp | generalComp | nodeComp ;
 
-annotateExpr            : Kannotate Ktype sequenceType LBRACE expr RBRACE;
+generalComp: EQUAL | NOT_EQUAL | LANGLE| (LANGLE EQUAL) | RANGLE | (RANGLE EQUAL) ;
 
-simpleMapExpr           : main_expr=pathExpr ('!' map_expr+=pathExpr)*;
+valueComp: KW_EQ | KW_NE | KW_LT | KW_LE | KW_GT | KW_GE ;
 
-postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
+nodeComp: KW_IS | (LANGLE LANGLE) | (RANGLE RANGLE) ;
+
+// replaced with the enclosedExpression production to match the JSONiq grammar
+// TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// TODO: replace with the proper rule, throw excep.
+// validateExpr: KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr? RBRACE ;
+validateExpr: KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE ;
+
+validationMode: KW_LAX | KW_STRICT ;
+
+annotateExpr            : Kannotate KW_TYPE sequenceType LBRACE expr RBRACE;
+
+extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
+
+simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
 arrayLookup             : '[' '[' expr ']' ']';
 
 arrayUnboxing           : '[' ']';
-
-predicate               : '[' expr ']';
 
 objectLookup            : '.' ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
@@ -386,8 +398,6 @@ orderedExpr             : KW_ORDERED LBRACE expr RBRACE;
 unorderedExpr           : KW_UNORDERED LBRACE expr RBRACE;
 
 functionCall            : fn_name=qname argumentList;
-
-argumentList            : LPAREN  (args+=argument (COMMA args+=argument)*)? RPAREN;
 
 argument                : exprSingle | ArgumentPlaceholder;
 
@@ -442,9 +452,9 @@ editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle KW_IN
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
-pathExpr: (Kslash singleslash=relativePathExpr?) | (Kdslash doubleslash=relativePathExpr) | relative=relativePathExpr ;
+pathExpr: (SLASH singleslash=relativePathExpr?) | (DSLASH doubleslash=relativePathExpr) | relative=relativePathExpr ;
 
-relativePathExpr: stepExpr (sep+=(Kslash|Kdslash) stepExpr)* ;
+relativePathExpr: stepExpr (sep+=(SLASH|DSLASH) stepExpr)* ;
 
 stepExpr: postFixExpr | axisStep ;
 
@@ -452,39 +462,50 @@ axisStep: (reverseStep | forwardStep) predicateList ;
 
 forwardStep: (forwardAxis nodeTest) | abbrevForwardStep ;
 
-forwardAxis: ( Kchild
-             | Kdescendant
-             | Kattribute
-             | Kself
-             | Kdescendant_or_self
-             | Kfollowing_sibling
-             | Kfollowing ) ':' ':' ;
+forwardAxis: ( KW_CHILD
+             | KW_DESCENDANT
+             | KW_ATTRIBUTE
+             | KW_SELF
+             | KW_DESCENDANT_OR_SELF
+             | KW_FOLLOWING_SIBLING
+             | KW_FOLLOWING ) COLON COLON ;
 
-abbrevForwardStep: Kat_symbol? nodeTest ;
+abbrevForwardStep: AT? nodeTest ;
 
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep ;
 
-reverseAxis: ( Kparent
-             | Kancestor
-             | Kpreceding_sibling
-             | Kpreceding
-             | Kancestor_or_self ) ':' ':';
+reverseAxis: ( KW_PARENT
+             | KW_ANCESTOR
+             | KW_PRECEDING_SIBLING
+             | KW_PRECEDING
+             | KW_ANCESTOR_OR_SELF ) COLON COLON;
 
-abbrevReverseStep: '..' ;
+abbrevReverseStep: DDOT ;
 
 nodeTest: nameTest | kindTest ;
 
-nameTest: qname | wildcard ;
+nameTest: eqName | wildcard ;
 
 wildcard: STAR            # allNames
         | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
         | nCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
+        | ( BracedURILiteral STAR )# BracedURILiteral
         ;
-nCNameWithLocalWildcard :  NCName ':' STAR ;
-nCNameWithPrefixWildcard: STAR ':' NCName ;
+nCNameWithLocalWildcard :  NCName COLON STAR ;
+nCNameWithPrefixWildcard: STAR COLON NCName ;
 
+postFixExpr: main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)*;
+
+argumentList: LPAREN (args+=argument (COMMA args+=argument)*)? RPAREN ;
 
 predicateList: predicate*;
+
+predicate: LBRACKET expr RBRACKET ;
+
+lookup: QUESTION keySpecifier ;
+
+// stringLiteral and varRef will be in XQuery 4.0
+keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | lt=stringLiteral | vr=varRef) ;
 
 kindTest: documentTest
         | elementTest
@@ -513,7 +534,7 @@ namespaceNodeTest: Knamespace_node LPAREN RPAREN ;
 
 piTest: Kpi LPAREN (NCName | stringLiteral)? RPAREN ;
 
-attributeTest: Kattribute LPAREN (attributeNameOrWildcard (COMMA type=typeName)?)? RPAREN ;
+attributeTest: KW_ATTRIBUTE LPAREN (attributeNameOrWildcard (COMMA type=typeName)?)? RPAREN ;
 
 attributeNameOrWildcard: attributeName | STAR ;
 
@@ -521,7 +542,7 @@ schemaAttributeTest: KW_SCHEMA_ATTRIBUTE LPAREN attributeDeclaration RPAREN ;
 
 attributeDeclaration: attributeName ;
 
-elementTest: KW_ELEMENT LPAREN (elementNameOrWildcard (COMMA type=typeName optional='?'?)?)? RPAREN ;
+elementTest: KW_ELEMENT LPAREN (elementNameOrWildcard (COMMA type=typeName optional=QUESTION?)?)? RPAREN ;
 
 elementNameOrWildcard: elementName | STAR ;
 
@@ -542,7 +563,7 @@ typeName: qname;
 typeDeclaration: KW_AS sequenceType ;
 
 sequenceType            : LPAREN RPAREN
-                        | item=itemType (question+='?' | star+=STAR | plus+='+')?;
+                        | item=itemType (question+=QUESTION | star+=STAR | plus+='+')?;
 
 objectConstructor       : LBRACE ( pairConstructor (COMMA pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
@@ -557,9 +578,9 @@ anyFunctionTest         : KW_FUNCTION LPAREN STAR RPAREN;
 
 typedFunctionTest	    : KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
 
-singleType              : item=itemType (question +='?')?;
+singleType              : item=itemType (question +=QUESTION)?;
 
-pairConstructor         :  ( lhs=exprSingle ) (':' | '?') rhs=exprSingle;
+pairConstructor         :  ( lhs=exprSingle ) (COLON | QUESTION) rhs=exprSingle;
 
 arrayConstructor        :  '[' expr? ']';
 
@@ -570,9 +591,9 @@ stringLiteral           : STRING;
 keyword                : KW_JSONIQ
                         | KW_MODULE
                         | KW_NAMESPACE
-                        | Kand
-                        | Kcast
-                        | Kcastable
+                        | KW_AND
+                        | KW_CAST
+                        | KW_CASTABLE
                         | KW_COLLATION
                         | KW_CONTEXT
                         | KW_DECLARE
@@ -581,7 +602,7 @@ keyword                : KW_JSONIQ
                         | KW_GREATEST
                         | Kinstance
                         | Kstatically
-                        | Kis
+                        | KW_IS
                         | KW_ITEM
                         | KW_LEAST
                         | Knot
@@ -590,7 +611,7 @@ keyword                : KW_JSONIQ
                         | KW_OR
                         | KW_THEN
                         | KW_TO
-                        | Ktreat
+                        | KW_TREAT
                         | KW_TYPESWITCH
                         | KW_VERSION
                         | KW_SWITCH
@@ -645,9 +666,15 @@ keyword                : KW_JSONIQ
                         | KW_UNORDERED
                         | KW_FUNCTION
                         | KW_OPTION
+                        | KW_EQ
+                        | KW_NE
+                        | KW_LT
+                        | KW_LE
+                        | KW_GT
+                        | KW_GE
                         | Ktrue
                         | Kfalse
-                        | Ktype
+                        | KW_TYPE
                         | Kinsert
                         | Kdelete
                         | Krename
@@ -659,7 +686,7 @@ keyword                : KW_JSONIQ
                         | Kvalue
                         | Kwith
                         | Kposition
-                        | Kvalidate
+                        | KW_VALIDATE
                         | Kannotate
                         | KW_BREAK
                         | KW_LOOP
@@ -686,21 +713,21 @@ keyword                : KW_JSONIQ
                         | KW_SCHEMA
                         | Knamespace
                         | KW_ELEMENT
-                        | Kslash
-                        | Kdslash
-                        | Kat_symbol
-                        | Kchild
-                        | Kdescendant
-                        | Kattribute
-                        | Kself
-                        | Kdescendant_or_self
-                        | Kfollowing_sibling
-                        | Kfollowing
-                        | Kparent
-                        | Kancestor
-                        | Kpreceding_sibling
-                        | Kpreceding
-                        | Kancestor_or_self
+                        | SLASH
+                        | DSLASH
+                        | AT
+                        | KW_CHILD
+                        | KW_DESCENDANT
+                        | KW_ATTRIBUTE
+                        | KW_SELF
+                        | KW_DESCENDANT_OR_SELF
+                        | KW_FOLLOWING_SIBLING
+                        | KW_FOLLOWING
+                        | KW_PARENT
+                        | KW_ANCESTOR
+                        | KW_PRECEDING_SIBLING
+                        | KW_PRECEDING
+                        | KW_ANCESTOR_OR_SELF
                         | Knode
                         | Kbinary
                         | Kdocument
@@ -725,6 +752,8 @@ COLON_EQ                : ':=';
 
 EQUAL                   : '=';
 
+NOT_EQUAL               : '!=';
+
 SEMICOLON               : ';';
 
 LPAREN                  : '(';
@@ -737,11 +766,32 @@ LBRACE                    : '{';
 
 RBRACE                    : '}';
 
+LBRACKET                  : '[';
+RBRACKET                  : ']';
+
+LANGLE                    : '<';
+
+RANGLE                    : '>';
+
 MOD                       : '%';
 
 STAR                  : '*';
 
+PRAGMA                  : '#';
+
 CONCATENATION                  : '||';
+
+BANG                  : '!';
+
+COLON                  : ':';
+
+DDOT                    : '..';
+
+PLUS                    : '+';
+
+MINUS                   : '-';
+
+QUESTION                : '?';
 
 KW_FOR                    : 'for';
 
@@ -831,7 +881,14 @@ KW_TYPESWITCH             : 'typeswitch';
 
 KW_OR                     : 'or';
 
-Kand                    : 'and';
+KW_EQ : 'eq';
+KW_NE : 'ne';
+KW_LT : 'lt';
+KW_LE : 'le';
+KW_GT : 'gt';
+KW_GE : 'ge';
+
+KW_AND                    : 'and';
 
 Knot                    : 'not' ;
 
@@ -843,13 +900,13 @@ Kof                     : 'of' ;
 
 Kstatically             : 'statically' ;
 
-Kis                     : 'is' ;
+KW_IS                     : 'is' ;
 
-Ktreat                  : 'treat';
+KW_TREAT                  : 'treat';
 
-Kcast                   : 'cast';
+KW_CAST                   : 'cast';
 
-Kcastable               : 'castable';
+KW_CASTABLE               : 'castable';
 
 KW_JSONIQ                 : 'jsoniq';
 
@@ -895,9 +952,12 @@ Ktrue                   : 'true';
 
 Kfalse                  : 'false';
 
-Ktype                   : 'type';
+KW_TYPE                   : 'type';
 
-Kvalidate               : 'validate';
+KW_VALIDATE               : 'validate';
+
+KW_LAX : 'lax';
+KW_STRICT : 'strict';
 
 Kannotate               : 'annotate';
 
@@ -965,21 +1025,21 @@ Kbefore                 : 'before';
 ///////////////////////// XPath
 KW_IMPORT                 : 'import';
 Knamespace              : KW_NAMESPACE;
-Kslash                  : '/';
-Kdslash                 : '//';
-Kat_symbol              : '@';
-Kchild                  : 'child';
-Kdescendant             : 'descendant';
-Kattribute              : 'attribute';
-Kself                   : 'self';
-Kdescendant_or_self     : 'descendant-or-self';
-Kfollowing_sibling      : 'following-sibling';
-Kfollowing              : 'following';
-Kparent                 : 'parent';
-Kancestor               : 'ancestor';
-Kpreceding_sibling      : 'preceding-sibling';
-Kpreceding              : 'preceding';
-Kancestor_or_self       : 'ancestor-or-self';
+SLASH                  : '/';
+DSLASH                 : '//';
+AT              : '@';
+KW_CHILD                  : 'child';
+KW_DESCENDANT             : 'descendant';
+KW_ATTRIBUTE              : 'attribute';
+KW_SELF                   : 'self';
+KW_DESCENDANT_OR_SELF     : 'descendant-or-self';
+KW_FOLLOWING_SIBLING      : 'following-sibling';
+KW_FOLLOWING              : 'following';
+KW_PARENT                 : 'parent';
+KW_ANCESTOR               : 'ancestor';
+KW_PRECEDING_SIBLING      : 'preceding-sibling';
+KW_PRECEDING              : 'preceding';
+KW_ANCESTOR_OR_SELF       : 'ancestor-or-self';
 Knode                   : 'node';
 Kbinary                 : 'binary';
 Kdocument               : 'document';
@@ -1013,7 +1073,7 @@ fragment UNICODE        : 'u' HEX HEX HEX HEX;
 
 fragment HEX            : [0-9a-fA-F];
 
-ArgumentPlaceholder     : '?';
+ArgumentPlaceholder     : QUESTION;
 
 NullLiteral             : 'null';
 
@@ -1056,7 +1116,7 @@ fragment NameChar       : NameStartChar
                         | '\u203F'..'\u2040'
                         ;
 
-XQComment               : LPAREN ':' (XQComment | LPAREN ~[:] | ':' ~[)] | ~[:(])* ':'+ RPAREN -> channel(HIDDEN);
+XQComment               : LPAREN COLON (XQComment | LPAREN ~[:] | COLON ~[)] | ~[:(])* COLON+ RPAREN -> channel(HIDDEN);
 
 ContentChar             :  ~["'{}<&]  ;
 

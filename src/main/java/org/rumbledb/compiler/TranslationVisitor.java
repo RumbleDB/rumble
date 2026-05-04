@@ -2676,7 +2676,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         NodeTest nodeTest;
         if (ctx.nodeTest() == null) {
             nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
-            if (ctx.abbrevForwardStep().Kat_symbol() != null) {
+            if (ctx.abbrevForwardStep().AT() != null) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
             } else if (nodeTest instanceof AttributeTest) {
@@ -2709,7 +2709,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             return getKindTest(nodeTestContext.kindTest().children.get(0));
         }
         if (nodeTestContext.nameTest().wildcard() == null) {
-            Name name = parseName(nodeTestContext.nameTest().qname(), false, false, false);
+            Name name = parseEqName(nodeTestContext.nameTest().eqName(), false, false, false, false);
             return new NameTest(name);
         } else {
             String wildcard = nodeTestContext.nameTest().wildcard().getText();
