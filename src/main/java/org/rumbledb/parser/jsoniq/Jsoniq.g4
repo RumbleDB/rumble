@@ -536,13 +536,11 @@ dirAttributeValue    : dirAttributeValueApos
                      ;
 
 dirAttributeContentQuot : contentChar                     
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueApos
                         | LBRACE expr? RBRACE
                         ;
 
 dirAttributeContentApos : contentChar                    
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueQuot
                         | LBRACE expr? RBRACE
                         ;
@@ -862,10 +860,6 @@ VBAR                    : '|';
 LBRACE                    : '{';
 
 RBRACE                    : '}';
-
-DOUBLE_LBRACE                    : '{{';
-
-DOUBLE_RBRACE                    : '}}';
 
 LBRACKET                  : '[';
 RBRACKET                  : ']';
