@@ -43,17 +43,7 @@ public class RumbleException extends RuntimeException {
 
     public RumbleException(String message, ErrorCode errorCode) {
         super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
-        if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
-            try {
-                return f.get(null).equals(errorCode);
-            } catch (IllegalAccessException e) {
-                return true;
-            }
-        })) {
-            this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
-        } else {
-            this.errorCode = errorCode;
-        }
+        this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.errorMessage = message;
         this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
@@ -61,17 +51,7 @@ public class RumbleException extends RuntimeException {
 
     RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(formatMessage(errorCode, metadata, message));
-        if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
-            try {
-                return f.get(null).equals(errorCode);
-            } catch (IllegalAccessException e) {
-                return true;
-            }
-        })) {
-            this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
-        } else {
-            this.errorCode = errorCode;
-        }
+        this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.metadata = metadata;
         this.errorMessage = message;
     }
