@@ -151,7 +151,6 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
-import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -2834,7 +2833,13 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         false
                     );
                     if (attributeTestContext.typeName() != null) {
-                        Name typeName = parseEqName(attributeTestContext.typeName().eqName(), false, false, false, false);
+                        Name typeName = parseEqName(
+                            attributeTestContext.typeName().eqName(),
+                            false,
+                            false,
+                            false,
+                            false
+                        );
                         return new AttributeTest(elementName, typeName);
                     } else {
                         return new AttributeTest(elementName, null);

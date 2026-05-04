@@ -360,45 +360,6 @@ objectLookup            : DOT ( kw=keyword | lt=stringLiteral | nc=NCName | pe=p
 blockExpr : LBRACE statementsAndExpr RBRACE ;
 
 
-///////////////////////// Updating Expressions
-
-insertExpr              : Kinsert KW_JSON to_insert_expr=exprSingle Kinto main_expr=exprSingle (KW_AT KW_POSITION pos_expr=exprSingle)?
-                        | Kinsert KW_JSON pairConstructor ( COMMA pairConstructor )* Kinto main_expr=exprSingle;
-
-deleteExpr              : Kdelete KW_JSON updateLocator;
-
-renameExpr              : Krename KW_JSON updateLocator KW_AS name_expr=exprSingle;
-
-replaceExpr             : Kreplace Kvalue KW_OF KW_JSON updateLocator Kwith replacer_expr=exprSingle;
-
-transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_expr=exprSingle KW_RETURN ret_expr=exprSingle;
-
-appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle Kinto array_expr=exprSingle;
-
-updateLocator           : main_expr=postFixExpr;
-
-copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
-
-// TODO: Direct element constructors
-
-
-///////////////////////// Top Level Updating Expressions
-
-createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (Kwith content=exprSingle)?;
-
-deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
-
-deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
-
-insertIndexExpr         : Kinsert content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
-
-insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
-
-truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
-
-editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle KW_IN Kcollection;
-
-
 ///////////////////////// XPath
 
 // PATHS ///////////////////////////////////////////////////////////////////////
@@ -438,12 +399,10 @@ nodeTest: nameTest | kindTest ;
 nameTest: eqName | wildcard ;
 
 wildcard: STAR            # allNames
-        | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
-        | nCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
+        | NCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
+        | NCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
         | ( BracedURILiteral STAR )# BracedURILiteral
         ;
-nCNameWithLocalWildcard :  NCName COLON STAR ;
-nCNameWithPrefixWildcard: STAR COLON NCName ;
 
 postFixExpr: main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)*;
 
@@ -591,7 +550,7 @@ namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
 // renamed from mapConstructor to objectConstructor to match the JSONiq grammar
-objectConstructor: LBRACE ( pairConstructor (COMMA pairConstructor)*)? RBRACE
+objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE
                  | merge_operator+='{|' expr '|}';
 
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
@@ -813,6 +772,147 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_POSITION
        | KW_UPDATING
        ;
+
+// XQuery Scripting Extension /////////////////////////////////////////////////////////////
+// the following section contains rules for the XQuery Scripting Extension Proposal
+
+// New query body for main modules
+
+mainModule              : prolog program;
+
+program                 : statementsAndOptionalExpr ;
+
+// Mixing Expressions and Statements
+
+statements                  : statement* ;
+
+statementsAndExpr           : statements expr ;
+
+statementsAndOptionalExpr   : statements expr? ;
+
+statement               : applyStatement
+                        | assignStatement
+                        | blockStatement
+                        | breakStatement
+                        | continueStatement
+                        | exitStatement
+                        | flworStatement
+                        | ifStatement
+                        | switchStatement
+                        | tryCatchStatement
+                        | typeSwitchStatement
+                        | varDeclStatement
+                        | whileStatement
+                        ;
+
+applyStatement          : exprSimple SEMICOLON ;
+
+assignStatement         : DOLLAR varName COLON_EQ exprSingle SEMICOLON ;
+
+blockStatement          : LBRACE statements RBRACE ;
+
+breakStatement          : KW_BREAK KW_LOOP SEMICOLON ;
+
+continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
+
+exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
+
+flworStatement          : (start_for=forClause| start_let=letClause)
+                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                          KW_RETURN returnStmt=statement ;
+
+ifStatement             :  KW_IF LPAREN test_expr=expr RPAREN
+                           KW_THEN branch=statement
+                           KW_ELSE else_branch=statement ;
+
+switchStatement         : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
+
+switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
+
+tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
+
+catchCaseStatement      : KW_CATCH (jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* catch_block=blockStatement;
+
+// replaced "$" varName with varRef to match the JSONiq grammar
+typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN) def=statement ;
+
+// replaced "$" varName with varRef to match the JSONiq grammar
+caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN) ret=statement ;
+
+varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
+
+// added to match the JSONiq grammar
+varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
+
+whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
+
+
+// Expressions
+
+// redefined according to the XQuery Scripting Extension spec
+exprSingle              : exprSimple
+                        | flworExpr
+                        | ifExpr
+                        | switchExpr
+                        | tryCatchExpr
+                        | typeswitchExpr
+                        ;
+
+exprSimple              : quantifiedExpr
+                        | orExpr
+                        | insertExpr
+                        | deleteExpr
+                        | renameExpr
+                        | replaceExpr
+                        | transformExpr
+                        | appendExpr
+                        | createCollectionExpr
+                        | truncateCollectionExpr
+                        | deleteIndexExpr
+                        | deleteSearchExpr
+                        | editCollectionExpr
+                        | insertIndexExpr
+                        | insertSearchExpr
+                        ;
+///////////////////////// Updating Expressions
+
+insertExpr              : Kinsert KW_JSON to_insert_expr=exprSingle Kinto main_expr=exprSingle (KW_AT KW_POSITION pos_expr=exprSingle)?
+                        | Kinsert KW_JSON pairConstructor ( COMMA pairConstructor )* Kinto main_expr=exprSingle;
+
+deleteExpr              : Kdelete KW_JSON updateLocator;
+
+renameExpr              : Krename KW_JSON updateLocator KW_AS name_expr=exprSingle;
+
+replaceExpr             : Kreplace Kvalue KW_OF KW_JSON updateLocator Kwith replacer_expr=exprSingle;
+
+transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_expr=exprSingle KW_RETURN ret_expr=exprSingle;
+
+appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle Kinto array_expr=exprSingle;
+
+updateLocator           : main_expr=postFixExpr;
+
+copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
+
+// TODO: Direct element constructors
+
+
+///////////////////////// Top Level Updating Expressions
+
+createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (Kwith content=exprSingle)?;
+
+deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+
+deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
+
+insertIndexExpr         : Kinsert content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+
+insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
+
+truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+
+editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle KW_IN Kcollection;
+
+
 
 
 ///////////////////////// Types
@@ -1449,104 +1549,3 @@ noQuotesNoBracesNoAmpNoLAng:
                    )+
  ;
 
-// XQuery Scripting Extension /////////////////////////////////////////////////////////////
-// the following section contains rules for the XQuery Scripting Extension Proposal
-
-// New query body for main modules
-
-mainModule              : prolog program;
-
-program                 : statementsAndOptionalExpr ;
-
-// Mixing Expressions and Statements
-
-statements                  : statement* ;
-
-statementsAndExpr           : statements expr ;
-
-statementsAndOptionalExpr   : statements expr? ;
-
-statement               : applyStatement
-                        | assignStatement
-                        | blockStatement
-                        | breakStatement
-                        | continueStatement
-                        | exitStatement
-                        | flworStatement
-                        | ifStatement
-                        | switchStatement
-                        | tryCatchStatement
-                        | typeSwitchStatement
-                        | varDeclStatement
-                        | whileStatement
-                        ;
-
-applyStatement          : exprSimple SEMICOLON ;
-
-assignStatement         : DOLLAR qname COLON_EQ exprSingle SEMICOLON ;
-
-blockStatement          : LBRACE statements RBRACE ;
-
-breakStatement          : KW_BREAK KW_LOOP SEMICOLON ;
-
-continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
-
-exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
-
-flworStatement          : (start_for=forClause| start_let=letClause)
-                          (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
-                          KW_RETURN returnStmt=statement ;
-
-ifStatement:            KW_IF LPAREN test_expr=expr RPAREN
-                        KW_THEN branch=statement
-                        KW_ELSE else_branch=statement ;
-
-switchStatement         : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
-
-switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
-
-tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
-
-catchCaseStatement      : KW_CATCH (jokers+=STAR | errors+=qname) (VBAR (jokers+=STAR | errors+=qname))* catch_block=blockStatement;
-
-// replaced "$" varName with varRef to match the JSONiq grammar
-typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN) def=statement ;
-
-// replaced "$" varName with varRef to match the JSONiq grammar
-caseStatement           : KW_CASE (var_ref=varRef KW_AS)? union+=sequenceType (VBAR union+=sequenceType)* (KW_RETURN) ret=statement ;
-
-varDeclStatement        : annotations KW_VARIABLE varDeclForStatement (COMMA varDeclForStatement)* SEMICOLON ;
-
-// added to match the JSONiq grammar
-varDeclForStatement     : var_ref=varRef (KW_AS sequenceType)? (COLON_EQ expr_vals+=exprSingle)? ;
-
-whileStatement          : KW_WHILE LPAREN test_expr=expr RPAREN stmt=statement ;
-
-
-// Expressions
-
-// redefined according to the XQuery Scripting Extension spec
-exprSingle              : exprSimple
-                        | flworExpr
-                        | ifExpr
-                        | switchExpr
-                        | tryCatchExpr
-                        | typeswitchExpr
-                        ;
-
-exprSimple              : quantifiedExpr
-                        | orExpr
-                        | insertExpr
-                        | deleteExpr
-                        | renameExpr
-                        | replaceExpr
-                        | transformExpr
-                        | appendExpr
-                        | createCollectionExpr
-                        | truncateCollectionExpr
-                        | deleteIndexExpr
-                        | deleteSearchExpr
-                        | editCollectionExpr
-                        | insertIndexExpr
-                        | insertSearchExpr
-                        ;
