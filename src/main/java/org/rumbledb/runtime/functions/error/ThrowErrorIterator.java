@@ -23,20 +23,27 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             // No argument case.
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
-                    ErrorCode.UnidentifiedErrorExceptionCode
-            );
+                    ErrorCode.UnidentifiedErrorExceptionCode);
         } else if (this.children.size() == 1) {
             // Error code argument case.
             Item errorCode = this.children.get(0).materializeFirstItemOrNull(context);
             throw new RumbleException(
                     "An error has been raised without an error description.",
-                    ErrorCode.valueOf(errorCode.getStringValue())
-            );
-        } else {
+                    ErrorCode.valueOf(errorCode.getStringValue()));
+        } else if (this.children.size() == 2) {
             // Error code and description arguments case.
             Item errorCode = this.children.get(0).materializeFirstItemOrNull(context);
             Item description = this.children.get(1).materializeFirstItemOrNull(context);
             throw new RumbleException(description.getStringValue(), ErrorCode.valueOf(errorCode.getStringValue()));
+        } else {
+            // Error code, description, and object case.
+            Item errorCode = this.children.get(0).materializeFirstItemOrNull(context);
+            Item description = this.children.get(1).materializeFirstItemOrNull(context);
+            Item object = this.children.get(2).materializeFirstItemOrNull(context);
+
+            String message = description.getStringValue() + ". Object: " + object.getStringValue();
+
+            throw new RumbleException(message, ErrorCode.valueOf(errorCode.getStringValue()));
         }
     }
 }
