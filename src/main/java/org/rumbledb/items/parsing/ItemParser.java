@@ -90,14 +90,19 @@ public class ItemParser implements Serializable {
             String string,
             JSONParsingOptions options,
             String xmlVersion,
+            boolean isJSONiq,
             ExceptionMetadata metadata
     ) {
-        return JSONParser.parse(string, options, xmlVersion, metadata);
+        return JSONParser.parse(string, options, xmlVersion, isJSONiq, metadata);
     }
 
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
+        return getItemFromObject(object, true, metadata);
+    }
+
+    public static Item getItemFromObject(JsonReader object, boolean isJSONiq, ExceptionMetadata metadata) {
         try {
-            Item result = parseOptionlessJSON(object, metadata);
+            Item result = parseOptionlessJSON(object, isJSONiq, metadata);
             object.peek();
             return result;
         } catch (Exception e) {
@@ -112,54 +117,118 @@ public class ItemParser implements Serializable {
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
      */
+    @Deprecated
     public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata) {
+        return parseOptionlessJSON(object, true, metadata);
+    }
+
+    public static Item parseOptionlessJSON(JsonReader object, boolean isJSONiq, ExceptionMetadata metadata) {
         try {
             if (object.peek() == JsonToken.STRING) {
                 return ItemFactory.getInstance().createStringItem(object.nextString());
             }
+
             if (object.peek() == JsonToken.NUMBER) {
                 String number = object.nextString();
                 return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
-
             }
+
             if (object.peek() == JsonToken.BOOLEAN) {
                 return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
             }
+
             if (object.peek() == JsonToken.BEGIN_ARRAY) {
                 List<Item> values = new ArrayList<>();
+                boolean containsJavaNull = false;
+
                 object.beginArray();
                 while (object.hasNext()) {
-                    values.add(parseOptionlessJSON(object, metadata));
+                    Item value = parseOptionlessJSON(object, isJSONiq, metadata);
+
+                    if (value == null) {
+                        containsJavaNull = true;
+                    }
+
+                    values.add(value);
                 }
                 object.endArray();
-                return ItemFactory.getInstance().createArrayItem(values, false);
+
+                if (!containsJavaNull) {
+                    return ItemFactory.getInstance().createArrayItem(values, false);
+                }
+
+                List<List<Item>> sequenceMembers = new ArrayList<>();
+
+                for (Item value : values) {
+                    if (value == null) {
+                        sequenceMembers.add(Collections.emptyList());
+                    } else {
+                        sequenceMembers.add(Collections.singletonList(value));
+                    }
+                }
+
+                return ItemFactory.getInstance().createSequenceArrayItem(sequenceMembers, false);
             }
+
             if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
                 Set<String> seenKeys = new HashSet<>();
+                boolean containsJavaNull = false;
 
                 object.beginObject();
                 while (object.hasNext()) {
                     String key = object.nextName();
 
                     if (seenKeys.contains(key)) {
-                        object.skipValue(); // spec require default use-first policy
+                        object.skipValue(); // spec requires default use-first policy
                         continue;
+                    }
+
+                    Item value = parseOptionlessJSON(object, isJSONiq, metadata);
+
+                    if (value == null) {
+                        containsJavaNull = true;
                     }
 
                     seenKeys.add(key);
                     keys.add(key);
-                    values.add(parseOptionlessJSON(object, metadata));
+                    values.add(value);
                 }
                 object.endObject();
-                return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata, false);
+
+                if (!containsJavaNull) {
+                    return ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+                }
+
+                List<Item> mapKeys = new ArrayList<>();
+                List<List<Item>> mapValues = new ArrayList<>();
+
+                for (String key : keys) {
+                    mapKeys.add(ItemFactory.getInstance().createStringItem(key));
+                }
+
+                for (Item value : values) {
+                    if (value == null) {
+                        mapValues.add(Collections.emptyList());
+                    } else {
+                        mapValues.add(Collections.singletonList(value));
+                    }
+                }
+
+                return ItemFactory.getInstance().createMapItem(mapKeys, mapValues, metadata, false);
             }
+
             if (object.peek() == JsonToken.NULL) {
                 object.nextNull();
-                return ItemFactory.getInstance().createNullItem();
+
+                if (isJSONiq) {
+                    return ItemFactory.getInstance().createNullItem();
+                }
+
+                return null;
             }
+
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
             RumbleException r = new ParsingException(

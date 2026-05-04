@@ -25,8 +25,6 @@ import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -39,8 +37,6 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private static final long serialVersionUID = 1L;
 
-    private transient Item string;
-
     public ParseJsonFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
@@ -50,36 +46,33 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.string = this.children.get(0).materializeFirstItemOrNull(context);
+        Item stringItem = this.children.get(0).materializeFirstItemOrNull(context);
         Item optionsItem = this.children.size() > 1 ? this.children.get(1).materializeFirstItemOrNull(context) : null;
-        if (this.string == null) {
+        if (stringItem == null) {
             return null;
         }
+        boolean isJSONiq = getConfiguration().getQueryLanguage().equals("jsoniq10");
         if (optionsItem == null) {
             try {
-                JsonReader object = new JsonReader(new StringReader(this.string.getStringValue()));
-                return ItemParser.getItemFromObject(object, getMetadata());
-            } catch (IteratorFlowException e) {
-                RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                ex.initCause(e);
-                throw ex;
+                JsonReader object = new JsonReader(new StringReader(stringItem.getStringValue()));
+                return ItemParser.getItemFromObject(object, isJSONiq, getMetadata());
+            } catch (Exception e) {
+                return ItemParser.getItemFromJSONString(
+                    stringItem.getStringValue(),
+                    JSONParsingOptions.defaultInstance(),
+                    staticContext.getConfiguration().getXmlVersion(),
+                    isJSONiq,
+                    getMetadata()
+                );
             }
         }
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, getMetadata());
         return ItemParser.getItemFromJSONString(
-            this.string.getStringValue(),
+            stringItem.getStringValue(),
             options,
             staticContext.getConfiguration().getXmlVersion(),
+            isJSONiq,
             getMetadata()
         );
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.string = this.children.get(0).materializeFirstItemOrNull(context);
-        if (this.string == null) {
-            return;
-        }
     }
 }

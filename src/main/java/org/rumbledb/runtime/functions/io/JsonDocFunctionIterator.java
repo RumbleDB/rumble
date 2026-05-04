@@ -6,8 +6,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 
@@ -18,11 +18,9 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
+public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator pathIterator;
-    private RuntimeIterator optionsIterator;
 
     public JsonDocFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -32,64 +30,61 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.pathIterator = this.children.get(0);
-        this.optionsIterator = this.children.size() > 1 ? this.children.get(1) : null;
-        this.pathIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.pathIterator.hasNext();
-        this.pathIterator.close();
-    }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        RuntimeIterator pathIterator = this.children.get(0);
+        RuntimeIterator optionsIterator = this.children.size() > 1 ? this.children.get(1) : null;
 
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-doc function",
-                    getMetadata()
-            );
-        }
-
-        this.hasNext = false;
-
-        Item pathItem = this.pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        Item optionsItem = this.optionsIterator != null
-            ? this.optionsIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+        Item pathItem = pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        Item optionsItem = optionsIterator != null
+            ? optionsIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
             : null;
 
         if (pathItem == null) {
             return null;
         }
 
-        URI uri;
+        boolean isJSONiq = getConfiguration().getQueryLanguage().equals("jsoniq10");
 
-        // We use the GSON reader when the function is called without the options parameter
+        URI uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
+
         if (optionsItem == null) {
-            try {
-                uri = FileSystemUtil.resolveURI(
-                    this.staticURI,
-                    pathItem.getStringValue(),
-                    getMetadata()
-                );
+            try (
                 InputStream is = FileSystemUtil.getDataInputStream(
                     uri,
                     this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                     getMetadata()
-                );
+                )
+            ) {
                 JsonReader object = new JsonReader(new InputStreamReader(is));
-                return ItemParser.getItemFromObject(object, getMetadata());
+                return ItemParser.getItemFromObject(object, isJSONiq, getMetadata());
             } catch (CannotRetrieveResourceException e) {
                 throw new UnavailableResourceException(e.getMessage(), getMetadata());
-            } catch (RumbleException e) {
-                throw new InvalidJSONException(e.getMessage(), getMetadata());
+            } catch (UnavailableResourceException e) {
+                throw e;
+            } catch (Exception e) {
+                String jsonText = readJsonResource(uri);
+
+                return ItemParser.getItemFromJSONString(
+                    jsonText,
+                    JSONParsingOptions.defaultInstance(),
+                    getConfiguration().getXmlVersion(),
+                    isJSONiq,
+                    getMetadata()
+                );
             }
         }
+
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, getMetadata());
 
-        uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
         String jsonText = readJsonResource(uri);
 
-        return ItemParser.getItemFromJSONString(jsonText, options, getConfiguration().getXmlVersion(), getMetadata());
+        return ItemParser.getItemFromJSONString(
+            jsonText,
+            options,
+            getConfiguration().getXmlVersion(),
+            isJSONiq,
+            getMetadata()
+        );
     }
 
     private URI resolveJsonDocURI(String href, ExceptionMetadata metadata) {
