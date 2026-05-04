@@ -1661,6 +1661,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (child instanceof JsoniqParser.LiteralContext) {
             return this.visitLiteral((JsoniqParser.LiteralContext) child);
         }
+        if (child instanceof TerminalNode) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+        }
         if (child instanceof JsoniqParser.ContextItemExprContext) {
             return this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
         }
