@@ -58,11 +58,11 @@ versionDecl: KW_JSONIQ KW_VERSION version=stringLiteral
 
 // mainModule and queryBody are replaced with the mainModule and program rules according to the XQuery Scripting Extension spec
 
-libraryModule: KW_MODULE KW_NAMESPACE NCName EQUAL uri=uriLiteral SEMICOLON prolog;
+libraryModule: KW_MODULE KW_NAMESPACE ncName EQUAL uri=uriLiteral SEMICOLON prolog;
 
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
-prolog: ((setter | namespaceDecl | moduleImport) SEMICOLON)*
+prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport) SEMICOLON)*
         (annotatedDecl SEMICOLON)* ;
 
 // added to match the JSONiq grammar
@@ -72,6 +72,11 @@ annotatedDecl: functionDecl
               | contextItemDecl
               | optionDecl
               ;
+
+defaultNamespaceDecl: KW_DECLARE KW_DEFAULT
+                      type=(KW_ELEMENT | KW_FUNCTION)
+                      KW_NAMESPACE
+                      uri=stringLiteral ;
 
 setter: boundarySpaceDecl
       | defaultCollationDecl
@@ -119,6 +124,13 @@ DFPropertyName          : 'decimal-separator'
                         | 'zero-digit'
                         | 'digit'
                         | 'pattern-separator';
+
+schemaImport: KW_IMPORT KW_SCHEMA
+              schemaPrefix?
+              nsURI=uriLiteral
+              (KW_AT locations+=uriLiteral (COMMA locations+=uriLiteral)*)? ;
+
+schemaPrefix: (KW_NAMESPACE ncName EQUAL | KW_DEFAULT KW_ELEMENT KW_NAMESPACE) ;
 
 moduleImport: KW_IMPORT KW_MODULE
               (KW_NAMESPACE prefix=ncName EQUAL)?
@@ -282,7 +294,9 @@ tryCatchExpr: KW_TRY LBRACE try_expression=expr? RBRACE catches+=catchClause+ ;
 
 catchClause: KW_CATCH
              // replaced with the catchErrorList production to match the JSONiq grammar
-             (jokers+='*' | errors+=qname) (VBAR (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
+             ((jokers+=STAR | errors+=eqName) (VBAR (jokers+=STAR | errors+=eqName))* | (LPAREN DOLLAR varName RPAREN))
+             // replaced with the enclosedExpression production to match the JSONiq grammar
+             LBRACE catch_expression=expr? RBRACE ;
 
 orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
@@ -294,13 +308,13 @@ comparisonExpr          : main_expr=stringConcatExpr
                           ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
                           | EQUAL | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
 
-stringConcatExpr        : main_expr=rangeExpr ( '||' rhs+=rangeExpr )* ;
+stringConcatExpr: main_expr=rangeExpr (CONCATENATION rhs+=rangeExpr)* ;
 
-rangeExpr               : main_expr=additiveExpr ( Kto rhs+=additiveExpr )?;
+rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
 additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=multiplicativeExpr )*;
 
-multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
+multiplicativeExpr      : main_expr=instanceOfExpr ( op+=(STAR | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
 instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
 
@@ -341,8 +355,7 @@ objectLookup            : '.' ( kw=keyword | lt=stringLiteral | nc=NCName | pe=p
 primaryExpr             : NullLiteral
                         | Ktrue
                         | Kfalse
-                        | Literal
-                        | stringLiteral
+                        | literal
                         | varRef
                         | parenthesizedExpr
                         | contextItemExpr
@@ -355,7 +368,7 @@ primaryExpr             : NullLiteral
                         | blockExpr
                         ;
 
-literal: NumericLiteral | stringLiteral ;
+literal: Literal | stringLiteral ;
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
 
@@ -463,12 +476,12 @@ nodeTest: nameTest | kindTest ;
 
 nameTest: qname | wildcard ;
 
-wildcard: '*'            # allNames
+wildcard: STAR            # allNames
         | nCNameWithLocalWildcard  # allWithNS    // walkers must strip out the trailing :*
         | nCNameWithPrefixWildcard # allWithLocal // walkers must strip out the leading *:
         ;
-nCNameWithLocalWildcard :  NCName ':' '*' ;
-nCNameWithPrefixWildcard: '*' ':' NCName ;
+nCNameWithLocalWildcard :  NCName ':' STAR ;
+nCNameWithPrefixWildcard: STAR ':' NCName ;
 
 
 predicateList: predicate*;
@@ -502,17 +515,17 @@ piTest: Kpi LPAREN (NCName | stringLiteral)? RPAREN ;
 
 attributeTest: Kattribute LPAREN (attributeNameOrWildcard (COMMA type=typeName)?)? RPAREN ;
 
-attributeNameOrWildcard: attributeName | '*' ;
+attributeNameOrWildcard: attributeName | STAR ;
 
-schemaAttributeTest: Kschema_attribute LPAREN attributeDeclaration RPAREN ;
+schemaAttributeTest: KW_SCHEMA_ATTRIBUTE LPAREN attributeDeclaration RPAREN ;
 
 attributeDeclaration: attributeName ;
 
-elementTest: Kelement LPAREN (elementNameOrWildcard (COMMA type=typeName optional='?'?)?)? RPAREN ;
+elementTest: KW_ELEMENT LPAREN (elementNameOrWildcard (COMMA type=typeName optional='?'?)?)? RPAREN ;
 
-elementNameOrWildcard: elementName | '*' ;
+elementNameOrWildcard: elementName | STAR ;
 
-schemaElementTest: Kschema_element LPAREN elementDeclaration RPAREN ;
+schemaElementTest: KW_SCHEMA_ELEMENT LPAREN elementDeclaration RPAREN ;
 
 elementDeclaration: elementName ;
 
@@ -529,7 +542,7 @@ typeName: qname;
 typeDeclaration: KW_AS sequenceType ;
 
 sequenceType            : LPAREN RPAREN
-                        | item=itemType (question+='?' | star+='*' | plus+='+')?;
+                        | item=itemType (question+='?' | star+=STAR | plus+='+')?;
 
 objectConstructor       : LBRACE ( pairConstructor (COMMA pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
@@ -540,7 +553,7 @@ itemType                : qname
 
 functionTest	        : (anyFunctionTest | typedFunctionTest);
 
-anyFunctionTest         : KW_FUNCTION LPAREN '*' RPAREN;
+anyFunctionTest         : KW_FUNCTION LPAREN STAR RPAREN;
 
 typedFunctionTest	    : KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
 
@@ -576,7 +589,7 @@ keyword                : KW_JSONIQ
                         | Kof
                         | KW_OR
                         | KW_THEN
-                        | Kto
+                        | KW_TO
                         | Ktreat
                         | KW_TYPESWITCH
                         | KW_VERSION
@@ -670,9 +683,9 @@ keyword                : KW_JSONIQ
                         | Kbefore
                         | Kafter
                         | KW_IMPORT
-                        | Kschema
+                        | KW_SCHEMA
                         | Knamespace
-                        | Kelement
+                        | KW_ELEMENT
                         | Kslash
                         | Kdslash
                         | Kat_symbol
@@ -694,8 +707,8 @@ keyword                : KW_JSONIQ
                         | Kdocument_node
                         | Kpi
                         | Knamespace_node
-                        | Kschema_attribute
-                        | Kschema_element
+                        | KW_SCHEMA_ATTRIBUTE
+                        | KW_SCHEMA_ELEMENT
                         | Karray_node
                         | Kboolean_node
                         | Knull_node
@@ -725,6 +738,10 @@ LBRACE                    : '{';
 RBRACE                    : '}';
 
 MOD                       : '%';
+
+STAR                  : '*';
+
+CONCATENATION                  : '||';
 
 KW_FOR                    : 'for';
 
@@ -818,7 +835,7 @@ Kand                    : 'and';
 
 Knot                    : 'not' ;
 
-Kto                     : 'to' ;
+KW_TO                     : 'to' ;
 
 Kinstance               : 'instance' ;
 
@@ -869,6 +886,10 @@ KW_DECIMAL_FORMAT       : 'decimal-format';
 KW_EXTERNAL             : 'external';
 
 KW_FUNCTION             : 'function';
+
+KW_ELEMENT             : 'element';
+
+KW_SCHEMA             : 'schema';
 
 Ktrue                   : 'true';
 
@@ -943,9 +964,7 @@ Kbefore                 : 'before';
 
 ///////////////////////// XPath
 KW_IMPORT                 : 'import';
-Kschema                 : 'schema';
 Knamespace              : KW_NAMESPACE;
-Kelement                : 'element';
 Kslash                  : '/';
 Kdslash                 : '//';
 Kat_symbol              : '@';
@@ -968,8 +987,8 @@ Kdocument_node          : 'document-node';
 Ktext                   : 'text';
 Kpi                     : 'processing-instruction';
 Knamespace_node         : 'namespace-node';
-Kschema_attribute       : 'schema-attribute';
-Kschema_element         : 'schema-element';
+KW_SCHEMA_ATTRIBUTE       : 'schema-attribute';
+KW_SCHEMA_ELEMENT         : 'schema-element';
 Karray_node             : 'array-node';
 Kboolean_node           : 'boolean-node';
 Knull_node              : 'null-node';
@@ -1099,7 +1118,7 @@ switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
 
 tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
 
-catchCaseStatement      : KW_CATCH (jokers+='*' | errors+=qname) (VBAR (jokers+='*' | errors+=qname))* catch_block=blockStatement;
+catchCaseStatement      : KW_CATCH (jokers+=STAR | errors+=qname) (VBAR (jokers+=STAR | errors+=qname))* catch_block=blockStatement;
 
 // replaced "$" varName with varRef to match the JSONiq grammar
 typeSwitchStatement     : KW_TYPESWITCH LPAREN cond=expr RPAREN cases+=caseStatement+ KW_DEFAULT (var_ref=varRef)? (KW_RETURN) def=statement ;

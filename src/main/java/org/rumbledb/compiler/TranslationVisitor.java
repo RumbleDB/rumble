@@ -321,7 +321,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
-        String prefix = ctx.NCName().getText();
+        String prefix = ctx.ncName().getText();
         String namespace = processURILiteral(ctx.uriLiteral());
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
@@ -1658,15 +1658,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (child instanceof JsoniqParser.ParenthesizedExprContext) {
             return this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
         }
-        if (child instanceof JsoniqParser.StringLiteralContext) {
-            String rawValue = child.getText().substring(1, child.getText().length() - 1);
-            return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+        if (child instanceof JsoniqParser.LiteralContext) {
+            return this.visitLiteral((JsoniqParser.LiteralContext) child);
         }
         if (child instanceof JsoniqParser.ContextItemExprContext) {
             return this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
@@ -1682,6 +1675,27 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitLiteral(JsoniqParser.LiteralContext ctx) {
+        ParseTree child = ctx.children.get(0);
+
+        if (child instanceof JsoniqParser.StringLiteralContext) {
+            String rawValue = child.getText().substring(1, child.getText().length() - 1);
+            return new StringLiteralExpression(
+                    unescapeStringLiteral(rawValue),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (child instanceof TerminalNode) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+        }
+
+        throw new UnsupportedFeatureException(
+                "Literal not yet implemented",
                 createMetadataFromContext(ctx)
         );
     }
@@ -2126,8 +2140,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Expression catchAllExpression = null;
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
-            for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
-                Name name = parseName(qnameCtx, false, false, false);
+            for (JsoniqParser.EqNameContext qnameCtx : catchCtx.errors) {
+                Name name = parseEqName(qnameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
