@@ -1951,7 +1951,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false, false);
+        Name name = parseName(ctx.fn_name.qname(), true, false, false);
         int arity = 0;
         try {
             arity = Integer.parseInt(ctx.arity.getText());

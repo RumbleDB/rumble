@@ -314,7 +314,7 @@ rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
 additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
-multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | MOD) rhs+=unionExpr )* ;
+multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
 unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
@@ -370,14 +370,6 @@ objectLookup            : DOT ( kw=keyword | lt=stringLiteral | nc=NCName | pe=p
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
 
-
-functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
-
-namedFunctionRef        : fn_name=qname '#' arity=Literal;
-
-inlineFunctionExpr      : annotations KW_FUNCTION LPAREN paramList? RPAREN
-                           (KW_AS return_type=sequenceType)?
-                           (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE);
 
 ///////////////////////// Updating Expressions
 
@@ -490,8 +482,10 @@ primaryExpr: literal
            | functionCall
            | orderedExpr
            | unorderedExpr
-           | arrayConstructor
+           | nodeConstructor
            | functionItemExpr
+           | objectConstructor
+           | arrayConstructor
            | blockExpr
            ;
 
@@ -505,9 +499,9 @@ parenthesizedExpr: LPAREN expr? RPAREN ;
 
 contextItemExpr: DOUBLE_DOLLAR ;
 
-orderedExpr: KW_ORDERED LBRACE expr RBRACE;
+orderedExpr: KW_ORDERED enclosedExpression ;
 
-unorderedExpr: KW_UNORDERED LBRACE expr RBRACE;
+unorderedExpr: KW_UNORDERED enclosedExpression ;
 
 functionCall: fn_name=functionName argumentList ;
 
@@ -597,6 +591,23 @@ compCommentConstructor: KW_COMMENT enclosedExpression ;
 
 compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
 
+functionItemExpr: namedFunctionRef | inlineFunctionExpr ;
+
+// constrains to valid function names only
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
+
+// renamed from inlineFunctionRef to inlineFunctionExpr to match the JSONiq grammar
+// replaced with the functionBody production to match the JSONiq grammar
+inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
+
+// renamed from mapConstructor to objectConstructor to match the JSONiq grammar
+objectConstructor: LBRACE ( pairConstructor (COMMA pairConstructor)*)? RBRACE
+                 | merge_operator+='{|' expr '|}';
+
+// renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
+pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
+
 kindTest: documentTest
         | elementTest
         | attributeTest
@@ -655,9 +666,6 @@ typeDeclaration: KW_AS sequenceType ;
 sequenceType            : LPAREN RPAREN
                         | item=itemType (question+=QUESTION | star+=STAR | plus+=PLUS)?;
 
-objectConstructor       : LBRACE ( pairConstructor (COMMA pairConstructor)* )? RBRACE
-                        | merge_operator+='{|' expr '|}';
-
 itemType                : qname
                         | NullLiteral
                         | functionTest;
@@ -669,8 +677,6 @@ anyFunctionTest         : KW_FUNCTION LPAREN STAR RPAREN;
 typedFunctionTest	    : KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
 
 singleType              : item=itemType (question +=QUESTION)?;
-
-pairConstructor         :  ( lhs=exprSingle ) (COLON | QUESTION) rhs=exprSingle;
 
 arrayConstructor        :  '[' expr? ']';
 
@@ -897,6 +903,7 @@ BACKSLASH       : '\\';
 ARROW : '=>';
 
 KW_DIV : 'div';
+KW_MOD : 'mod';
 KW_IDIV : 'idiv';
 KW_UNION : 'union';
 KW_INTERSECT : 'intersect';
