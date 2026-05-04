@@ -1149,13 +1149,13 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
-        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitUnionExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.rhs.size(); ++i) {
-            JsoniqParser.InstanceOfExprContext child = ctx.rhs.get(i);
-            Expression rightExpression = (Expression) this.visitInstanceOfExpr(child);
+            JsoniqParser.UnionExprContext child = ctx.rhs.get(i);
+            Expression rightExpression = (Expression) this.visitUnionExpr(child);
             result = new MultiplicativeExpression(
                     result,
                     rightExpression,
@@ -1164,6 +1164,20 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             );
         }
         return result;
+    }
+
+    @Override
+    public Node visitUnionExpr(JsoniqParser.UnionExprContext ctx) {
+        // TODO: implement this
+        // at the moment, just visit the first child
+        return (Expression) this.visitIntersectExceptExpr(ctx.intersectExceptExpr(0));
+    }
+
+    @Override
+    public Node visitIntersectExceptExpr(JsoniqParser.IntersectExceptExprContext ctx) {
+        // TODO: implement this
+        // at the moment, just visit the first child
+        return (Expression) this.visitInstanceOfExpr(ctx.instanceOfExpr(0));
     }
 
     @Override
@@ -1263,8 +1277,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             List<Expression> children = new ArrayList<Expression>();
             children.add(mainExpression);
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
-            if (functionCallContext.qname() != null) {
-                Name name = parseName(functionCallContext.qname(), true, false, false);
+            if (functionCallContext.eqName() != null) {
+                Name name = parseEqName(functionCallContext.eqName(), true, false, false, false);
                 mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
                 continue;
             } else if (functionCallContext.varRef() != null) {
@@ -1788,7 +1802,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        Name name = parseName(ctx.qname(), false, false, false);
+        Name name = parseEqName(ctx.eqName(), false, false, false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -1893,7 +1907,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false, false);
+        Name name = parseName(ctx.fn_name.qname(), true, false, false);
         return processFunctionCall(
             name,
             getArgumentsFromArgumentListContext(ctx.argumentList()),

@@ -427,7 +427,7 @@ orderedExpr: KW_ORDERED enclosedExpression ;
 
 unorderedExpr: KW_UNORDERED enclosedExpression ;
 
-functionCall: fn_name=functionName argumentList  ;
+functionCall: fn_name=functionName argumentList ;
 
 argument: exprSingle | QUESTION ;
 

@@ -298,6 +298,8 @@ catchClause: KW_CATCH
              // replaced with the enclosedExpression production to match the JSONiq grammar
              LBRACE catch_expression=expr? RBRACE ;
 
+enclosedExpression: LBRACE expr? RBRACE ;
+
 orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
 andExpr: main_expr=notExpr ( KW_AND rhs+=notExpr )*;
@@ -312,23 +314,25 @@ rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
 additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
-multiplicativeExpr: main_expr=instanceOfExpr ( op+=(STAR | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
+multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | MOD) rhs+=unionExpr )* ;
+
+unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
+
+intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
 instanceOfExpr: main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
 
 isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)?;
 
-treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType )? ;
+treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
-castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType )?;
+castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType)?;
 
-castExpr: main_expr=arrowExpr ( KW_CAST KW_AS single=singleType )? ;
+castExpr: main_expr=arrowExpr (KW_CAST KW_AS single=singleType)? ;
 
-arrowExpr               : main_expr=unaryExpr ((EQUAL '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
+arrowExpr: main_expr=unaryExpr (ARROW function+=arrowFunctionSpecifier arguments+=argumentList)* ;
 
-arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
-
-unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
+unaryExpr: op+=(MINUS | PLUS)* main_expr=valueExpr ;
 
 valueExpr: validate_expr=validateExpr | extensionExpr | annotate_expr=annotateExpr | simpleMap_expr=simpleMapExpr ;
 
@@ -362,44 +366,10 @@ arrayLookup             : '[' '[' expr ']' ']';
 
 arrayUnboxing           : '[' ']';
 
-objectLookup            : '.' ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
-
-primaryExpr             : NullLiteral
-                        | Ktrue
-                        | Kfalse
-                        | literal
-                        | varRef
-                        | parenthesizedExpr
-                        | contextItemExpr
-                        | objectConstructor
-                        | functionCall
-                        | orderedExpr
-                        | unorderedExpr
-                        | arrayConstructor
-                        | functionItemExpr
-                        | blockExpr
-                        ;
-
-literal: Literal | stringLiteral ;
+objectLookup            : DOT ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
 
-
-varRef                  : DOLLAR var_name=qname;
-
-varName: eqName ;
-
-parenthesizedExpr       : LPAREN expr? RPAREN;
-
-contextItemExpr         : '$$';
-
-orderedExpr             : KW_ORDERED LBRACE expr RBRACE;
-
-unorderedExpr           : KW_UNORDERED LBRACE expr RBRACE;
-
-functionCall            : fn_name=qname argumentList;
-
-argument                : exprSingle | QUESTION;
 
 functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
@@ -507,6 +477,126 @@ lookup: QUESTION keySpecifier ;
 // stringLiteral and varRef will be in XQuery 4.0
 keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | lt=stringLiteral | vr=varRef) ;
 
+arrowFunctionSpecifier: eqName | varRef | parenthesizedExpr ;
+
+primaryExpr: literal
+           | NullLiteral
+           | Ktrue
+           | Kfalse
+           | varRef
+           | parenthesizedExpr
+           | contextItemExpr
+           | objectConstructor
+           | functionCall
+           | orderedExpr
+           | unorderedExpr
+           | arrayConstructor
+           | functionItemExpr
+           | blockExpr
+           ;
+
+literal: Literal | stringLiteral ;
+
+varRef: DOLLAR var_name=eqName;
+
+varName: eqName ;
+
+parenthesizedExpr: LPAREN expr? RPAREN ;
+
+contextItemExpr: DOUBLE_DOLLAR ;
+
+orderedExpr: KW_ORDERED LBRACE expr RBRACE;
+
+unorderedExpr: KW_UNORDERED LBRACE expr RBRACE;
+
+functionCall: fn_name=functionName argumentList ;
+
+argument: exprSingle | QUESTION ;
+
+// CONSTRUCTORS ////////////////////////////////////////////////////////////////
+
+nodeConstructor: directConstructor | computedConstructor ;
+
+directConstructor: dirElemConstructorOpenClose
+                 | dirElemConstructorSingleTag
+                 | (COMMENT | PI)
+                 ;
+
+// [96]: we don't check that the closing tag is the same here. It should be
+// done elsewhere, if we really want to know. We've also simplified the rule
+// by removing the S? bits from ws:explicit. Tree walkers could handle this.
+dirElemConstructorOpenClose: LANGLE open_tag_name=qname attributes=dirAttributeList endOpen=RANGLE
+                             dirElemContent*
+                             startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
+
+dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeList slashClose=SLASH RANGLE ;
+
+// [97]: again, ws:explicit is better handled through the walker.
+dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
+
+dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
+dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
+
+dirAttributeValue    : dirAttributeValueApos
+                     | dirAttributeValueQuot
+                     ;
+
+dirAttributeContentQuot : contentChar                     
+                        | DOUBLE_LBRACE | DOUBLE_RBRACE
+                        | dirAttributeValueApos
+                        | LBRACE expr? RBRACE
+                        ;
+
+dirAttributeContentApos : contentChar                    
+                        | DOUBLE_LBRACE | DOUBLE_RBRACE
+                        | dirAttributeValueQuot
+                        | LBRACE expr? RBRACE
+                        ;
+
+// helper rule to match any content character
+contentChar:              ContentChar+ ;
+
+dirElemContent: directConstructor
+              | commonContent
+              | CDATA
+              // ~[{}<&] = '" + ~['"{}<&]
+              | Quot
+              | Apos
+              | noQuotesNoBracesNoAmpNoLAng
+              ;
+
+commonContent: (PredefinedEntityRef | CharRef) | LBRACE LBRACE | RBRACE RBRACE | (LBRACE expr? RBRACE) ;
+
+computedConstructor: compDocConstructor
+                   | compElemConstructor
+                   | compAttrConstructor
+                   | compNamespaceConstructor
+                   | compTextConstructor
+                   | compCommentConstructor
+                   | compPIConstructor
+                   ;
+
+compDocConstructor: KW_DOCUMENT enclosedExpression ;
+
+compElemConstructor: KW_ELEMENT ( eqName |(LBRACE expr RBRACE)) enclosedContentExpr ;
+
+enclosedContentExpr: enclosedExpression ;
+
+compAttrConstructor: KW_ATTRIBUTE (name=eqName | (LBRACE name_expr=expr RBRACE)) enclosedExpression ;
+
+// replaced with the prefix production to allow the usage of the prefix label in the moduleImport rule
+compNamespaceConstructor: KW_NAMESPACE (ncName | enclosedPrefixExpr) enclosedURIExpr ;
+
+enclosedPrefixExpr: enclosedExpression ;
+
+enclosedURIExpr: enclosedExpression ;
+
+compTextConstructor: KW_TEXT enclosedExpression ;
+
+compCommentConstructor: KW_COMMENT enclosedExpression ;
+
+compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
+
 kindTest: documentTest
         | elementTest
         | attributeTest
@@ -524,11 +614,11 @@ anyKindTest: Knode LPAREN RPAREN ;
 
 binaryNodeTest: Kbinary LPAREN RPAREN ;
 
-documentTest: Kdocument_node LPAREN (elementTest | schemaElementTest)? RPAREN ;
+documentTest: KW_DOCUMENT_node LPAREN (elementTest | schemaElementTest)? RPAREN ;
 
-textTest: Ktext LPAREN RPAREN ;
+textTest: KW_TEXT LPAREN RPAREN ;
 
-commentTest: Kcomment LPAREN RPAREN ;
+commentTest: KW_COMMENT LPAREN RPAREN ;
 
 namespaceNodeTest: Knamespace_node LPAREN RPAREN ;
 
@@ -563,7 +653,7 @@ typeName: qname;
 typeDeclaration: KW_AS sequenceType ;
 
 sequenceType            : LPAREN RPAREN
-                        | item=itemType (question+=QUESTION | star+=STAR | plus+='+')?;
+                        | item=itemType (question+=QUESTION | star+=STAR | plus+=PLUS)?;
 
 objectConstructor       : LBRACE ( pairConstructor (COMMA pairConstructor)* )? RBRACE
                         | merge_operator+='{|' expr '|}';
@@ -694,8 +784,9 @@ keyword                : KW_JSONIQ
                         | KW_EXIT
                         | KW_RETURNING
                         | KW_WHILE
+                        | KW_PI
                         | Kjson
-                        | Ktext
+                        | KW_TEXT
                         | KW_UPDATING
                         | Kcreate
                         | Kcollection
@@ -730,8 +821,8 @@ keyword                : KW_JSONIQ
                         | KW_ANCESTOR_OR_SELF
                         | Knode
                         | Kbinary
-                        | Kdocument
-                        | Kdocument_node
+                        | KW_DOCUMENT
+                        | KW_DOCUMENT_node
                         | Kpi
                         | Knamespace_node
                         | KW_SCHEMA_ATTRIBUTE
@@ -741,7 +832,7 @@ keyword                : KW_JSONIQ
                         | Knull_node
                         | Knumber_node
                         | Kobject_node
-                        | Kcomment
+                        | KW_COMMENT
                         ;
 
 ///////////////////////// literals
@@ -766,6 +857,10 @@ LBRACE                    : '{';
 
 RBRACE                    : '}';
 
+DOUBLE_LBRACE                    : '{{';
+
+DOUBLE_RBRACE                    : '}}';
+
 LBRACKET                  : '[';
 RBRACKET                  : ']';
 
@@ -777,7 +872,7 @@ MOD                       : '%';
 
 STAR                  : '*';
 
-PRAGMA                  : '#';
+HASH                  : '#';
 
 CONCATENATION                  : '||';
 
@@ -791,7 +886,46 @@ PLUS                    : '+';
 
 MINUS                   : '-';
 
+TILDE : '~';
+
+DOT : '.';
+
+GRAVE           : '`' ;
+CARAT           : '^' ;
+BACKSLASH       : '\\';
+
+ARROW : '=>';
+
+KW_DIV : 'div';
+KW_IDIV : 'idiv';
+KW_UNION : 'union';
+KW_INTERSECT : 'intersect';
+KW_EXCEPT : 'except';
+
 QUESTION                : '?';
+
+COMMENT : 'commentee637daa-5838-4675-975a-782077b371b9';
+
+PI : 'pi637daa-5838-4675-975a-782077b371b9';
+
+Quot : 'quot637daa-5838-4675-975a-782077b371b9';
+
+PredefinedEntityRef : 'predefineedentityref637daa-5838-4675-975a-782077b371b9';
+
+CharRef : 'charref637daa-5838-4675-975a-782077b371b9';
+
+EscapeQuot: 'escapequotref637daa-5838-4675-975a-782077b371b9';
+
+Apos: 'aposref637daa-5838-4675-975a-782077b371b9';
+
+EscapeApos: 'escapeaposref637daa-5838-4675-975a-782077b371b9';
+
+CDATA: 'cdataref637daa-5838-4675-975a-782077b371b9';
+
+PRAGMA: 'pragmaref637daa-5838-4675-975a-782077b371b9';
+FullQName: 'fullqnameref637daa-5838-4675-975a-782077b371b9';
+NCNameWithLocalWildcard: 'ncnamewithlocalwildcard637daa-5838-4675-975a-782077b371b9';
+NCNameWithPrefixWildcard: 'ncnamewithprefixwildcardef637daa-5838-4675-975a-782077b371b9';
 
 KW_FOR                    : 'for';
 
@@ -806,6 +940,8 @@ KW_TUMBLING               : 'tumbling';
 KW_WINDOW                 : 'window';
 
 DOLLAR                    : '$';
+
+DOUBLE_DOLLAR             : '$$';
 
 KW_SLIDING                : 'sliding';
 
@@ -887,6 +1023,8 @@ KW_LT : 'lt';
 KW_LE : 'le';
 KW_GT : 'gt';
 KW_GE : 'ge';
+
+KW_PI : 'pi';
 
 KW_AND                    : 'and';
 
@@ -1042,9 +1180,9 @@ KW_PRECEDING              : 'preceding';
 KW_ANCESTOR_OR_SELF       : 'ancestor-or-self';
 Knode                   : 'node';
 Kbinary                 : 'binary';
-Kdocument               : 'document';
-Kdocument_node          : 'document-node';
-Ktext                   : 'text';
+KW_DOCUMENT               : 'document';
+KW_DOCUMENT_node          : 'document-node';
+KW_TEXT                   : 'text';
 Kpi                     : 'processing-instruction';
 Knamespace_node         : 'namespace-node';
 KW_SCHEMA_ATTRIBUTE       : 'schema-attribute';
@@ -1054,7 +1192,7 @@ Kboolean_node           : 'boolean-node';
 Knull_node              : 'null-node';
 Knumber_node            : 'number-node';
 Kobject_node            : 'object-node';
-Kcomment                : 'comment';
+KW_COMMENT                : 'comment';
 
 ///////////////////////// Scripting keywords
 KW_BREAK                  : 'break' ;
@@ -1081,9 +1219,9 @@ NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
 
 IntegerLiteral          : Digits ;
 
-DecimalLiteral          : '.' Digits | Digits '.' [0-9]* ;
+DecimalLiteral          : DOT Digits | Digits DOT [0-9]* ;
 
-DoubleLiteral           : ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits ;
+DoubleLiteral           : (DOT Digits | Digits (DOT [0-9]*)?) [eE] [+-]? Digits ;
 
 fragment Digits         : [0-9]+ ;
 
@@ -1106,8 +1244,8 @@ fragment NameStartChar  : [_a-zA-Z]
                         ;
 
 fragment NameChar       : NameStartChar
-                        | '-'
-                        // no . in JSONIQ names | '.'
+                        | MINUS
+                        // no . in JSONIQ names | DOT
                         | [0-9]
                         | '\u00B7'
                         | '\u0300'..'\u036F'
@@ -1117,6 +1255,56 @@ fragment NameChar       : NameStartChar
 XQComment               : LPAREN COLON (XQComment | LPAREN ~[:] | COLON ~[)] | ~[:(])* COLON+ RPAREN -> channel(HIDDEN);
 
 ContentChar             :  ~["'{}<&]  ;
+
+noQuotesNoBracesNoAmpNoLAng:
+                   ( keyword
+                   | ( IntegerLiteral
+                     | DecimalLiteral
+                     | DoubleLiteral
+                     //| stringLiteral
+                     | PRAGMA
+                     | EQUAL
+                     | HASH
+                     | NOT_EQUAL
+                     | LPAREN
+                     | RPAREN
+                     | LBRACKET
+                     | RBRACKET
+                     | STAR
+                     | PLUS
+                     | MINUS
+                     | TILDE
+                     | COMMA
+                     | ARROW
+                     | KW_NEXT
+                     | KW_PREVIOUS
+                     | MOD
+                     | DOT
+                     | GRAVE
+                     | DDOT
+                     | COLON
+                     | CARAT
+                     | COLON_EQ
+                     | SEMICOLON
+                     | SLASH
+                     | DSLASH
+                     | BACKSLASH
+                     | COMMENT
+                     | VBAR
+                     | RANGLE
+                     | QUESTION
+                     | AT
+                     | DOLLAR
+                     | BANG
+                     | FullQName
+                     | URIQualifiedName
+                     | NCNameWithLocalWildcard
+                     | NCNameWithPrefixWildcard
+                     | NCName
+                     | ContentChar
+                     )
+                   )+
+ ;
 
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
