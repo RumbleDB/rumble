@@ -8,6 +8,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
 
 public class RuntimeStaticContext implements Serializable {
@@ -18,6 +19,7 @@ public class RuntimeStaticContext implements Serializable {
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
     private final Map<String, String> staticallyKnownNamespaces;
+    private final SerializationParameters serializationParameters;
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
@@ -25,13 +27,14 @@ public class RuntimeStaticContext implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("RuntimeStaticContext {\n");
-        sb.append("  configuration: ").append(configuration).append("\n");
-        sb.append("  staticType: ").append(staticType).append("\n");
-        sb.append("  executionMode: ").append(executionMode).append("\n");
-        sb.append("  metadata: ").append(metadata).append("\n");
-        sb.append("  staticallyKnownNamespaces: ").append(staticallyKnownNamespaces).append("\n");
-        sb.append("  decimalFormats: ").append(decimalFormats).append("\n");
-        sb.append("  defaultDecimalFormat: ").append(defaultDecimalFormat).append("\n");
+        sb.append("  configuration: ").append(this.configuration).append("\n");
+        sb.append("  staticType: ").append(this.staticType).append("\n");
+        sb.append("  executionMode: ").append(this.executionMode).append("\n");
+        sb.append("  metadata: ").append(this.metadata).append("\n");
+        sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
+        sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
+        sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
+        sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
         sb.append("}");
         return sb.toString();
     }
@@ -39,13 +42,14 @@ public class RuntimeStaticContext implements Serializable {
     public RuntimeStaticContext(
             RuntimeStaticContext oldContext
     ) {
-        this.configuration = oldContext.getConfiguration();
-        this.staticType = oldContext.getStaticType();
-        this.executionMode = oldContext.getExecutionMode();
-        this.metadata = oldContext.getMetadata();
-        this.staticallyKnownNamespaces = oldContext.getStaticallyKnownNamespaces();
-        this.decimalFormats = oldContext.getDecimalFormats();
-        this.defaultDecimalFormat = oldContext.getDefaultDecimalFormat();
+        this.configuration = oldContext.configuration;
+        this.staticType = oldContext.staticType;
+        this.executionMode = oldContext.executionMode;
+        this.metadata = oldContext.metadata;
+        this.staticallyKnownNamespaces = oldContext.staticallyKnownNamespaces;
+        this.decimalFormats = oldContext.decimalFormats;
+        this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
+        this.serializationParameters = oldContext.serializationParameters;
     }
 
     /*
@@ -72,11 +76,12 @@ public class RuntimeStaticContext implements Serializable {
         this.staticType = staticType;
         this.executionMode = executionMode;
         this.metadata = metadata;
-        staticallyKnownNamespaces = staticContext == null
+        this.staticallyKnownNamespaces = staticContext == null
             ? Collections.emptyMap()
             : staticContext.getInScopeNamespaceBindings();
         this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
         this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
+        this.serializationParameters = staticContext == null ? null : staticContext.getSerializationParameters();
     }
 
     /**
@@ -142,6 +147,10 @@ public class RuntimeStaticContext implements Serializable {
             return Collections.emptyMap();
         }
         return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
+    }
+
+    public SerializationParameters getSerializationParameters() {
+        return this.serializationParameters;
     }
 
     /**

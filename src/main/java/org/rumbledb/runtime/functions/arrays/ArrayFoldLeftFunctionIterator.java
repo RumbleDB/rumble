@@ -169,7 +169,8 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator {
             functionItem,
             staticContext,
             ExecutionMode.LOCAL,
-            arguments
+            arguments,
+            false
         );
         return functionCall.materialize(context);
     }

@@ -30,7 +30,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 /**
  * Runtime iterator for attribute nodes in a direct element constructor.
@@ -41,11 +41,11 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
 
     private static final long serialVersionUID = 1L;
     private Name attributeName;
-    private List<AtomizationIterator> atomizedValues;
+    private List<DataFunctionIterator> atomizedValues;
 
     public AttributeNodeRuntimeIterator(
             Name attributeName,
-            List<AtomizationIterator> atomizedValues,
+            List<DataFunctionIterator> atomizedValues,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(atomizedValues), staticContext);
@@ -53,7 +53,7 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         this.atomizedValues = atomizedValues;
     }
 
-    private static List<RuntimeIterator> createChildList(List<AtomizationIterator> atomizedValues) {
+    private static List<RuntimeIterator> createChildList(List<DataFunctionIterator> atomizedValues) {
         return Arrays.asList(atomizedValues.toArray(new RuntimeIterator[0]));
     }
 
@@ -62,7 +62,7 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         StringBuilder sb = new StringBuilder();
         // follow the spec as defined in https://www.w3.org/TR/xquery-31/#id-attributes
         // 2. Each enclosed expression is converted to a string as follows:
-        for (AtomizationIterator atomizedValueIterator : this.atomizedValues) {
+        for (DataFunctionIterator atomizedValueIterator : this.atomizedValues) {
 
             // 2.a Atomization is applied to each enclosed expression, converting it to a sequence of atomic values.
             List<Item> atomizedItems = atomizedValueIterator.materialize(dynamicContext);
@@ -94,7 +94,7 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         this.hasNext = false;
         return ItemFactory.getInstance()
             .createXmlAttributeNode(
-                ItemFactory.getInstance().createQNameItem(this.attributeName),
+                this.attributeName,
                 sb.toString()
             );
     }

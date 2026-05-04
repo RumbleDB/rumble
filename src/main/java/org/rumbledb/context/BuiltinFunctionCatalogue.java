@@ -121,7 +121,7 @@ import org.rumbledb.runtime.functions.sequences.cardinality.ExactlyOneIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.OneOrMoreIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ZeroOrOneIterator;
 import org.rumbledb.runtime.functions.sequences.general.*;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
@@ -2209,7 +2209,7 @@ public class BuiltinFunctionCatalogue {
                 "data"
         ),
         "anyAtomicType*",
-        AtomizationIterator.class,
+        DataFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2221,7 +2221,7 @@ public class BuiltinFunctionCatalogue {
         ),
         "item*",
         "anyAtomicType*",
-        AtomizationIterator.class,
+        DataFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**

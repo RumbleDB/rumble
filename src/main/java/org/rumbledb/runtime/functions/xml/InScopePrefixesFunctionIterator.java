@@ -20,6 +20,7 @@
 package org.rumbledb.runtime.functions.xml;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -118,9 +119,9 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
         // "For namespace bindings that have a prefix, the prefix is returned."
         // "For the default namespace, if it exists, the zero-length string is returned."
         for (Item nsNode : element.namespaceNodes()) {
-            Item q = nsNode.nodeName();
+            Name q = nsNode.nodeName();
             result.add(
-                ItemFactory.getInstance().createStringItem(q == null ? "" : q.getStringValue())
+                ItemFactory.getInstance().createStringItem(q == null ? "" : q.toString())
             );
         }
 

@@ -26,6 +26,7 @@ import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.items.ItemFactory;
@@ -37,6 +38,7 @@ import scala.Tuple2;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -44,15 +46,9 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private static final long serialVersionUID = 1L;
 
     private static boolean sameExpandedNodeName(Item node1, Item node2) {
-        Item q1 = node1.nodeName();
-        Item q2 = node2.nodeName();
-        if (q1 == null && q2 == null) {
-            return true;
-        }
-        if (q1 == null || q2 == null || !q1.isQName() || !q2.isQName()) {
-            return false;
-        }
-        return q1.getQNameValue().equals(q2.getQNameValue());
+        Name q1 = node1.nodeName();
+        Name q2 = node2.nodeName();
+        return Objects.equals(q1, q2);
     }
 
 

@@ -31,13 +31,13 @@ import java.util.Collections;
  * </p>
  *
  * <ul>
- *   <li>single-quoted strings</li>
- *   <li>unquoted object keys</li>
- *   <li>comments</li>
- *   <li>trailing commas</li>
- *   <li>leading plus signs</li>
- *   <li>leading zeroes</li>
- *   <li>unescaped control characters</li>
+ * <li>single-quoted strings</li>
+ * <li>unquoted object keys</li>
+ * <li>comments</li>
+ * <li>trailing commas</li>
+ * <li>leading plus signs</li>
+ * <li>leading zeroes</li>
+ * <li>unescaped control characters</li>
  * </ul>
  *
  * <p>
@@ -45,12 +45,12 @@ import java.util.Collections;
  * </p>
  *
  * <ul>
- *   <li>
- *     {@code xdmValue}: the string value stored in the resulting XDM item
- *   </li>
- *   <li>
- *     {@code keyComparisonValue}: the value used to detect duplicate object keys
- *   </li>
+ * <li>
+ * {@code xdmValue}: the string value stored in the resulting XDM item
+ * </li>
+ * <li>
+ * {@code keyComparisonValue}: the value used to detect duplicate object keys
+ * </li>
  * </ul>
  *
  * <p>
@@ -412,8 +412,8 @@ public final class JSONParser {
      * Parses a quoted JSON string and returns both:
      *
      * <ul>
-     *   <li>the XDM string value</li>
-     *   <li>the value used for duplicate-key comparison</li>
+     * <li>the XDM string value</li>
+     * <li>the value used for duplicate-key comparison</li>
      * </ul>
      *
      * <p>
@@ -421,13 +421,13 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code escape=true}: special characters are represented using JSON escape syntax
-     *   </li>
-     *   <li>
-     *     {@code escape=false}: valid XML characters are inserted directly; invalid XML
-     *     characters are replaced using the fallback function
-     *   </li>
+     * <li>
+     * {@code escape=true}: special characters are represented using JSON escape syntax
+     * </li>
+     * <li>
+     * {@code escape=false}: valid XML characters are inserted directly; invalid XML
+     * characters are replaced using the fallback function
+     * </li>
      * </ul>
      *
      * <p>
@@ -435,12 +435,12 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code escape=true}: keys are compared in escaped form
-     *   </li>
-     *   <li>
-     *     {@code escape=false}: keys are compared after expanding escape sequences
-     *   </li>
+     * <li>
+     * {@code escape=true}: keys are compared in escaped form
+     * </li>
+     * <li>
+     * {@code escape=false}: keys are compared after expanding escape sequences
+     * </li>
      * </ul>
      */
     private ParsedString parseString() {
@@ -571,12 +571,12 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code escape=true}: they are kept as {@code "\\uXXXX"}
-     *   </li>
-     *   <li>
-     *     {@code escape=false}: they are passed to the fallback function for the XDM value
-     *   </li>
+     * <li>
+     * {@code escape=true}: they are kept as {@code "\\uXXXX"}
+     * </li>
+     * <li>
+     * {@code escape=false}: they are passed to the fallback function for the XDM value
+     * </li>
      * </ul>
      */
     private void parseUnicodeEscape(
@@ -644,12 +644,12 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code xdmValue}: the actual string value stored in the XDM result
-     *   </li>
-     *   <li>
-     *     {@code keyComparisonValue}: the string used for duplicate-key comparison
-     *   </li>
+     * <li>
+     * {@code xdmValue}: the actual string value stored in the XDM result
+     * </li>
+     * <li>
+     * {@code keyComparisonValue}: the string used for duplicate-key comparison
+     * </li>
      * </ul>
      *
      * <p>
@@ -657,15 +657,15 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code escape=true}: special characters are represented in escaped form
-     *     in both values
-     *   </li>
-     *   <li>
-     *     {@code escape=false}: {@code xdmValue} may use the fallback for invalid XML
-     *     characters, while {@code keyComparisonValue} keeps the decoded character
-     *     for duplicate-key comparison
-     *   </li>
+     * <li>
+     * {@code escape=true}: special characters are represented in escaped form
+     * in both values
+     * </li>
+     * <li>
+     * {@code escape=false}: {@code xdmValue} may use the fallback for invalid XML
+     * characters, while {@code keyComparisonValue} keeps the decoded character
+     * for duplicate-key comparison
+     * </li>
      * </ul>
      */
     private void handleEscapedCodePoint(
@@ -972,12 +972,12 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code xdmValue}: the string value stored in the resulting XDM item
-     *   </li>
-     *   <li>
-     *     {@code keyComparisonValue}: the string used to detect duplicate object keys
-     *   </li>
+     * <li>
+     * {@code xdmValue}: the string value stored in the resulting XDM item
+     * </li>
+     * <li>
+     * {@code keyComparisonValue}: the string used to detect duplicate object keys
+     * </li>
      * </ul>
      *
      * <p>
@@ -985,12 +985,12 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code escape=true}: uses the escaped form
-     *   </li>
-     *   <li>
-     *     {@code escape=false}: uses the decoded form
-     *   </li>
+     * <li>
+     * {@code escape=true}: uses the escaped form
+     * </li>
+     * <li>
+     * {@code escape=false}: uses the decoded form
+     * </li>
      * </ul>
      *
      * <p>
@@ -999,12 +999,12 @@ public final class JSONParser {
      * </p>
      *
      * <ul>
-     *   <li>
-     *     {@code xdmValue}: contains the fallback result
-     *   </li>
-     *   <li>
-     *     {@code keyComparisonValue}: keeps the decoded character for duplicate-key comparison
-     *   </li>
+     * <li>
+     * {@code xdmValue}: contains the fallback result
+     * </li>
+     * <li>
+     * {@code keyComparisonValue}: keeps the decoded character for duplicate-key comparison
+     * </li>
      * </ul>
      */
     private static final class ParsedString {
