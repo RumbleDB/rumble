@@ -164,7 +164,8 @@ public final class ErrorCode implements Serializable {
      * element constructor).
      */
     public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode = registerBuiltIn(
-            "XQST0022");
+        "XQST0022"
+    );
     public static final ErrorCode ModuleDeclarationErrorCode = registerBuiltIn("XQST0016");
     public static final ErrorCode InvalidJsoniqVersionErrorCode = registerBuiltIn("XQST0031");
     public static final ErrorCode MultipleBaseURIExceptionCode = registerBuiltIn("XQST0032");

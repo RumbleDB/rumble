@@ -4139,7 +4139,10 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(error.getIdentifier(), error);
         builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
         builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
-        builtinFunctions.put(error_with_code_description_and_object.getIdentifier(), error_with_code_description_and_object);
+        builtinFunctions.put(
+            error_with_code_description_and_object.getIdentifier(),
+            error_with_code_description_and_object
+        );
         builtinFunctions.put(item_type.getIdentifier(), item_type);
         builtinFunctions.put(is_null.getIdentifier(), is_null);
         builtinFunctions.put(

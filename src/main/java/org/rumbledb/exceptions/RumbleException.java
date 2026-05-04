@@ -22,7 +22,6 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-import java.util.Arrays;
 
 import org.apache.spark.SparkException;
 
