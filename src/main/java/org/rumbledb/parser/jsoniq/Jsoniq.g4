@@ -131,22 +131,16 @@ varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE
          (KW_AS sequenceType)?
          (
           // replaced with the varValue production to match the JSONiq grammar
-            (COLON_EQ expr)
+            (COLON_EQ exprSingle)
           // replaced with the varDefaultValue production to match the JSONiq grammar
-          | (external=KW_EXTERNAL (COLON_EQ expr)?)
-          | (LBRACE varValue RBRACE)
-          | (external=KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
+          | (external=KW_EXTERNAL (COLON_EQ exprSingle)?)
          ) ;
 
-varValue: expr ;
-
-varDefaultValue: expr ;
-
-contextItemDecl         : KW_DECLARE Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external=EXTERNAL (COLON_EQ exprSingle)?));
+contextItemDecl         : KW_DECLARE KW_CONTEXT KW_ITEM (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external=KW_EXTERNAL (COLON_EQ exprSingle)?));
 
 functionDecl            : KW_DECLARE annotations 'function' fn_name=qname LPAREN paramList? RPAREN
                           (KW_AS return_type=sequenceType)?
-                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=EXTERNAL);
+                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=KW_EXTERNAL);
 
 typeDecl                : KW_DECLARE Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -545,7 +539,7 @@ keyword                : KW_JSONIQ
                         | Kcast
                         | Kcastable
                         | KW_COLLATION
-                        | Kcontext
+                        | KW_CONTEXT
                         | KW_DECLARE
                         | KW_DEFAULT
                         | KW_ELSE
@@ -553,12 +547,12 @@ keyword                : KW_JSONIQ
                         | Kinstance
                         | Kstatically
                         | Kis
-                        | Kitem
+                        | KW_ITEM
                         | KW_LEAST
                         | Knot
                         | NullLiteral
                         | Kof
-                        | Kor
+                        | KW_OR
                         | KW_THEN
                         | Kto
                         | Ktreat
@@ -613,7 +607,7 @@ keyword                : KW_JSONIQ
                         | KW_NO_INHERIT
                         | KW_DECIMAL_FORMAT
                         | KW_EXTERNAL
-                        | Kunordered
+                        | KW_UNORDERED
                         | Ktrue
                         | Kfalse
                         | Ktype
@@ -792,7 +786,7 @@ KW_ELSE                   : 'else';
 
 KW_TYPESWITCH             : 'typeswitch';
 
-Kor                     : 'or';
+KW_OR                     : 'or';
 
 Kand                    : 'and';
 
@@ -860,9 +854,9 @@ Kannotate               : 'annotate';
 
 KW_DECLARE                : 'declare';
 
-Kcontext                : 'context';
+KW_CONTEXT                : 'context';
 
-Kitem                   : 'item';
+KW_ITEM                   : 'item';
 
 KW_VARIABLE               : 'variable';
 

@@ -2147,8 +2147,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
         external = (ctx.external != null);
         Expression expr = null;
-        if (ctx.expr() != null) {
-            expr = (Expression) this.visitExpr(ctx.expr());
+        if (ctx.exprSingle() != null) {
+            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
             if (seq != null) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
