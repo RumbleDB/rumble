@@ -608,6 +608,29 @@ objectConstructor: LBRACE ( pairConstructor (COMMA pairConstructor)*)? RBRACE
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
 pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
 
+// TYPES AND TYPE TESTS ////////////////////////////////////////////////////////
+
+// TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
+// singleType: item=simpleTypeName (question+=QUESTION)? ;
+// TODO: change to simpletypeName, update expressions.
+// but this is not required to pass all the xquery qt3-tests.
+singleType: item=itemType (question+=QUESTION)? ;
+
+typeDeclaration: KW_AS sequenceType ;
+
+sequenceType: LPAREN RPAREN | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
+
+itemType: kindTest
+        | (KW_ITEM LPAREN RPAREN)
+        | functionTest
+        | mapTest
+        | arrayTest
+        // simplification compared to XQuery 3.1 grammar
+        // removes the need for a separate atomicOrUnionType rule
+        | NullLiteral
+        | eqName
+        ;
+
 kindTest: documentTest
         | elementTest
         | attributeTest
@@ -621,62 +644,65 @@ kindTest: documentTest
         | anyKindTest
         ;
 
-anyKindTest: Knode LPAREN RPAREN ;
+anyKindTest: KW_NODE LPAREN RPAREN ;
 
-binaryNodeTest: Kbinary LPAREN RPAREN ;
+binaryNodeTest: KW_BINARY LPAREN RPAREN ;
 
-documentTest: KW_DOCUMENT_node LPAREN (elementTest | schemaElementTest)? RPAREN ;
+documentTest: KW_DOCUMENT_NODE LPAREN (elementTest | schemaElementTest)? RPAREN ;
 
 textTest: KW_TEXT LPAREN RPAREN ;
 
 commentTest: KW_COMMENT LPAREN RPAREN ;
 
-namespaceNodeTest: Knamespace_node LPAREN RPAREN ;
+namespaceNodeTest: KW_NAMESPACE_NODE LPAREN RPAREN ;
 
-piTest: Kpi LPAREN (NCName | stringLiteral)? RPAREN ;
+piTest: KW_PI LPAREN (ncName | stringLiteral)? RPAREN ;
 
 attributeTest: KW_ATTRIBUTE LPAREN (attributeNameOrWildcard (COMMA type=typeName)?)? RPAREN ;
 
 attributeNameOrWildcard: attributeName | STAR ;
 
-schemaAttributeTest: KW_SCHEMA_ATTRIBUTE LPAREN attributeDeclaration RPAREN ;
-
-attributeDeclaration: attributeName ;
+schemaAttributeTest: KW_SCHEMA_ATTR LPAREN attributeDeclaration RPAREN ;
 
 elementTest: KW_ELEMENT LPAREN (elementNameOrWildcard (COMMA type=typeName optional=QUESTION?)?)? RPAREN ;
 
 elementNameOrWildcard: elementName | STAR ;
 
-schemaElementTest: KW_SCHEMA_ELEMENT LPAREN elementDeclaration RPAREN ;
+schemaElementTest: KW_SCHEMA_ELEM LPAREN elementDeclaration RPAREN ;
 
 elementDeclaration: elementName ;
 
-attributeName: qname ;
+attributeName: eqName ;
 
-elementName: qname ;
+elementName: eqName ;
 
 simpleTypeName: typeName ;
 
-typeName: qname;
+typeName: eqName;
+
+functionTest: annotation* (anyFunctionTest | typedFunctionTest) ;
+
+anyFunctionTest: KW_FUNCTION LPAREN STAR RPAREN ;
+
+typedFunctionTest: KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN KW_AS rt=sequenceType ;
+
+mapTest: anyMapTest | typedMapTest ;
+
+anyMapTest: KW_MAP LPAREN STAR RPAREN ;
+
+typedMapTest: KW_MAP LPAREN eqName COMMA sequenceType RPAREN ;
+
+arrayTest: anyArrayTest | typedArrayTest ;
+
+anyArrayTest: KW_ARRAY LPAREN STAR RPAREN ;
+
+typedArrayTest: KW_ARRAY LPAREN sequenceType RPAREN ;
+
+parenthesizedItemTest: LPAREN itemType RPAREN ;
+
+attributeDeclaration: attributeName ;
 
 ///////////////////////// Types
-
-typeDeclaration: KW_AS sequenceType ;
-
-sequenceType            : LPAREN RPAREN
-                        | item=itemType (question+=QUESTION | star+=STAR | plus+=PLUS)?;
-
-itemType                : qname
-                        | NullLiteral
-                        | functionTest;
-
-functionTest	        : (anyFunctionTest | typedFunctionTest);
-
-anyFunctionTest         : KW_FUNCTION LPAREN STAR RPAREN;
-
-typedFunctionTest	    : KW_FUNCTION LPAREN (st+=sequenceType (COMMA st+=sequenceType)*)? RPAREN 'as' rt=sequenceType;
-
-singleType              : item=itemType (question +=QUESTION)?;
 
 arrayConstructor        :  '[' expr? ']';
 
@@ -825,20 +851,21 @@ keyword                : KW_JSONIQ
                         | KW_PRECEDING_SIBLING
                         | KW_PRECEDING
                         | KW_ANCESTOR_OR_SELF
-                        | Knode
-                        | Kbinary
+                        | KW_NODE
+                        | KW_BINARY
                         | KW_DOCUMENT
-                        | KW_DOCUMENT_node
-                        | Kpi
-                        | Knamespace_node
-                        | KW_SCHEMA_ATTRIBUTE
-                        | KW_SCHEMA_ELEMENT
+                        | KW_DOCUMENT_NODE
+                        | KW_NAMESPACE_NODE
+                        | KW_SCHEMA_ATTR
+                        | KW_SCHEMA_ELEM
                         | Karray_node
                         | Kboolean_node
                         | Knull_node
                         | Knumber_node
                         | Kobject_node
                         | KW_COMMENT
+                        | KW_MAP
+                        | KW_ARRAY
                         ;
 
 ///////////////////////// literals
@@ -1026,8 +1053,8 @@ KW_LT : 'lt';
 KW_LE : 'le';
 KW_GT : 'gt';
 KW_GE : 'ge';
-
-KW_PI : 'pi';
+KW_MAP : 'map';
+KW_ARRAY : 'array';
 
 KW_AND                    : 'and';
 
@@ -1181,15 +1208,15 @@ KW_ANCESTOR               : 'ancestor';
 KW_PRECEDING_SIBLING      : 'preceding-sibling';
 KW_PRECEDING              : 'preceding';
 KW_ANCESTOR_OR_SELF       : 'ancestor-or-self';
-Knode                   : 'node';
-Kbinary                 : 'binary';
+KW_NODE                   : 'node';
+KW_BINARY                 : 'binary';
 KW_DOCUMENT               : 'document';
-KW_DOCUMENT_node          : 'document-node';
+KW_DOCUMENT_NODE          : 'document-node';
 KW_TEXT                   : 'text';
-Kpi                     : 'processing-instruction';
-Knamespace_node         : 'namespace-node';
-KW_SCHEMA_ATTRIBUTE       : 'schema-attribute';
-KW_SCHEMA_ELEMENT         : 'schema-element';
+KW_PI                     : 'processing-instruction';
+KW_NAMESPACE_NODE         : 'namespace-node';
+KW_SCHEMA_ATTR       : 'schema-attribute';
+KW_SCHEMA_ELEM         : 'schema-element';
 Karray_node             : 'array-node';
 Kboolean_node           : 'boolean-node';
 Knull_node              : 'null-node';

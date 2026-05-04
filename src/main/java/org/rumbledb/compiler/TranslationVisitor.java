@@ -1873,7 +1873,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        Name name = parseName(itemTypeContext.qname(), false, true, false);
+        Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
         name = ItemTypeReference.renameAtomic(this.configuration, name);
         if (!BuiltinTypesCatalogue.typeExists(name)) {
             return new ItemTypeReference(name);
@@ -2750,8 +2750,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             if (elementContext.elementNameOrWildcard() != null) {
                 boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
                 if (!hasWildcard) {
-                    elementName = parseName(
-                        elementContext.elementNameOrWildcard().elementName().qname(),
+                    elementName = parseEqName(
+                        elementContext.elementNameOrWildcard().elementName().eqName(),
+                        false,
                         false,
                         false,
                         false
@@ -2759,7 +2760,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     if (elementContext.typeName() == null) {
                         return new ElementTest(elementName, null);
                     }
-                    Name typeName = parseName(elementContext.typeName().qname(), false, false, false);
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false, false);
                     return new ElementTest(elementName, typeName);
                 }
                 return new ElementTest(true);
@@ -2772,14 +2773,15 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             if (attributeTestContext.attributeNameOrWildcard() != null) {
                 boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
                 if (!hasWildcard) {
-                    elementName = parseName(
-                        attributeTestContext.attributeNameOrWildcard().attributeName().qname(),
+                    elementName = parseEqName(
+                        attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
+                        false,
                         false,
                         false,
                         false
                     );
                     if (attributeTestContext.typeName() != null) {
-                        Name typeName = parseName(attributeTestContext.typeName().qname(), false, false, false);
+                        Name typeName = parseEqName(attributeTestContext.typeName().eqName(), false, false, false, false);
                         return new AttributeTest(elementName, typeName);
                     } else {
                         return new AttributeTest(elementName, null);
